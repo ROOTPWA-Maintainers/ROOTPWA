@@ -552,7 +552,51 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configRoot,
+rpwa::massDepFit::massDepFit::updateConfig(Setting* configRoot,
+                                           const rpwa::massDepFit::model& fitModel,
+                                           const Minimizer* minimizer,
+                                           const double chi2,
+                                           const int ndf,
+                                           const double chi2red) const
+{
+	if(_debug) {
+		printDebug << "updating configuration file." << endl;
+	}
+
+	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	if(not updateConfigModel(configModel, fitModel, minimizer)) {
+		printErr << "error while updating 'model' section of configuration file." << endl;
+		return false;
+	}
+
+	Setting* configFitquality = NULL;
+	if(not configRoot->exists("fitquality")) {
+		configFitquality = &(configRoot->add("fitquality", libconfig::Setting::TypeGroup));
+	} else {
+		configFitquality = &((*configRoot)["fitquality"]);
+	}
+
+	if(not configFitquality->exists("chi2")) {
+		configFitquality->add("chi2", libconfig::Setting::TypeFloat);
+	}
+	(*configFitquality)["chi2"] = chi2;
+
+	if(not configFitquality->exists("ndf")) {
+		configFitquality->add("ndf", libconfig::Setting::TypeInt);
+	}
+	(*configFitquality)["ndf"] = ndf;
+
+	if(not configFitquality->exists("redchi2")) {
+		configFitquality->add("redchi2", libconfig::Setting::TypeFloat);
+	}
+	(*configFitquality)["redchi2"] = chi2red;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configModel,
                                                 const rpwa::massDepFit::model& fitModel,
                                                 const Minimizer* minimizer) const
 {
@@ -560,7 +604,6 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configRoot,
 		printDebug << "updating fit model in configuration file." << endl;
 	}
 
-	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
 	if(not configModel) {
 		printErr << "error while updating 'components' section in configuration file." << endl;
 		return false;
@@ -1949,7 +1992,7 @@ main(int    argc,
 		printErr << "could not read configuration file '" << configFileName << "'." << endl;
 		return 1;
 	}
-	const Setting& configRoot = configFile.getRoot();
+	Setting& configRoot = configFile.getRoot();
 
 	// input section
 	const Setting* configInput = findLibConfigGroup(configRoot, "input");
@@ -2019,7 +2062,7 @@ main(int    argc,
 		minimizer->SetMaxIterations   (maxNmbOfIterations);
 		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
-		// Set startvalues
+		// set startvalues
 		if(not releasePars(minimizer, compset, mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0)) {
 			printErr << "error while setting start parameters." << endl;
 			return 1;
@@ -2028,116 +2071,109 @@ main(int    argc,
 		const unsigned int nmbPar  = L.NDim();
 		printInfo << nmbPar << " parameters in fit." << endl;
 
+		// keep track of the time spend in the fit
+		TStopwatch stopwatch;
+
+		// only do couplings
 		printInfo << "performing first minimization step: masses and widths fixed, couplings free (" << minimizer->NFree() << " free parameters)." << endl;
+		stopwatch.Start();
+		bool success = minimizer->Minimize();
+		stopwatch.Stop();
 
+		if(not success) {
+			printWarn << "minimization failed." << endl;
+		} else {
+			printInfo << "minimization successful." << endl;
+		}
+		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
-  // find minimum of likelihood function
-  double chi2=0;
+		// release masses
+		releasePars(minimizer, compset, mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
+		printInfo << "performing second minimization step: widths fixed, masses and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
+		stopwatch.Start();
+		success &= minimizer->Minimize();
+		stopwatch.Stop();
+		if(not success) {
+			printWarn << "minimization failed." << endl;
+		} else {
+			printInfo << "minimization successful." << endl;
+		}
+		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
-    // only do couplings
-    TStopwatch fitW;
-    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
-    bool success = minimizer->Minimize();
-    if(!success)printWarn << "minimization failed." << endl;
-    else printInfo << "minimization successful." << endl;
-    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
-    //release masses
-    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
-    printInfo << "performing second minimization step: widths fixed, masses and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
-    fitW.Start();
-    success &= minimizer->Minimize();
-    if(!success)printWarn << "minimization failed." << endl;
-    else printInfo << "minimization successful." << endl;
-    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
-    //release widths
-    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
-    printInfo << "performing third minimization step: masses, widths and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
-    fitW.Start();
-    success &= minimizer->Minimize();
-    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
+		//release widths
+		releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
+		printInfo << "performing third minimization step: masses, widths and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
+		stopwatch.Start();
+		success &= minimizer->Minimize();
+		stopwatch.Stop();
+		if(not success) {
+			printWarn << "minimization failed." << endl;
+		} else {
+			printInfo << "minimization successful." << endl;
+		}
+		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
-    const double* par=minimizer->X();
-    compset.setParameters(par);
-    cerr << compset << endl;
-    if (success){
-      printInfo << "minimization finished successfully." << endl;
-      chi2=minimizer->MinValue();
-    }
-    else
-      printWarn << "minimization failed." << endl;
-    if (runHesse) {
-      printInfo << "calculating Hessian matrix." << endl;
-      success = minimizer->Hesse();  // comes only with ROOT 5.24+
-      if (!success)
-	printWarn << "calculation of Hessian matrix failed." << endl;
-    }
+		if(runHesse) {
+			printInfo << "calculating Hessian matrix." << endl;
+			stopwatch.Start();
+			success &= minimizer->Hesse();
+			stopwatch.Stop();
+			if(not success) {
+				printWarn << "calculation of Hessian matrix failed." << endl;
+			} else {
+				printInfo << "calculation of Hessian matrix successful." << endl;
+			}
+		}
 
-  printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
-	    << "    total number of parameters .......................... " << minimizer->NDim()             << endl
-	    << "    number of free parameters ........................... " << minimizer->NFree()            << endl
-	    << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
-	    << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
-	    << "    minimizer status .................................... " << minimizer->Status()           << endl
-	    << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
-	    << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
-	    << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
-	    << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
-	    << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
-	    << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
+		printInfo << "minimizer status summary:" << endl
+		          << "    total number of parameters .......................... " << minimizer->NDim()             << endl
+		          << "    number of free parameters ........................... " << minimizer->NFree()            << endl
+		          << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
+		          << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
+		          << "    minimizer status .................................... " << minimizer->Status()           << endl
+		          << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
+		          << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
+		          << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
+		          << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
+		          << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
+		          << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
 
+		// print results
+		ostringstream output;
+		for (unsigned int i = 0; i< nmbPar; ++i) {
+			output << "    parameter [" << setw(3) << i << "] ";
+			output << minimizer->VariableName(i) << " " ;
+			output << maxPrecisionAlign(minimizer->X()[i]) << " +- " << maxPrecisionAlign(minimizer->Errors()[i]);
 
-  // ---------------------------------------------------------------------------
-  // print results
-  //map<TString, double> errormap;
-  printInfo << "minimization result:" << endl;
-  for (unsigned int i = 0; i< nmbPar; ++i) {
-    cout << "    parameter [" << setw(3) << i << "] ";
-    cout << minimizer->VariableName(i) << " " ;
-      //	 << setw(maxParNameLength); //<< L.parName(i) << " = ";
-    //if (parIsFixed[i])
-    //  cout << minimizer->X()[i] << " (fixed)" << endl;
-    //else
-      cout << setw(12) << maxPrecisionAlign(minimizer->X()[i]) << " +- "
-	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[i]);
-      //errormap[minimizer]=minimizer->Errors()[i];
+			if (runMinos) {  // does not work for all parameters
+				double minosErrLow, minosErrUp;
+				if (minimizer->GetMinosError(i, minosErrLow, minosErrUp)) {
+					output << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]";
+				}
+			}
+			output << endl;
+		}
+		printInfo << "minimization result:" << endl
+		          << output.str();
 
+		const double* par=minimizer->X();
+		double chi2 = 0.;
+		if(success) {
+			chi2 = L.DoEval(par);
+		}
+		printInfo << "chi2 = " << maxPrecisionAlign(chi2) << endl;
+		compset.setParameters(par);
 
-      if (runMinos && (i == 156)) {  // does not work for all parameters
-	double minosErrLow = 0;
-	double minosErrUp  = 0;
-	const bool success = minimizer->GetMinosError(i, minosErrLow, minosErrUp);
-	if (success)
-	  cout << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]" << endl;
-      } else
-	cout << endl;
-  }
+		const unsigned int nrDataPoints = L.NDataPoints();
+		const unsigned int nrFree = minimizer->NFree();
+		const unsigned int ndf = nrDataPoints - nrFree;
+		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << "=" << ndf << endl;
 
- cout << "---------------------------------------------------------------------" << endl;
- // Reduced chi2
+		double chi2red = chi2/(double)ndf;
+		printInfo << "chi2/ndf = " << maxPrecisionAlign(chi2red) << endl;
 
- printInfo << chi2 << " chi2" << endl;
- const unsigned int numdata=L.NDataPoints();
- const unsigned int nfree=minimizer->NFree();
- // numDOF
- const unsigned int numDOF=numdata-nfree;
- printInfo << numDOF << " degrees of freedom" << endl;
- double redChi2 = chi2/(double)numDOF;
- printInfo << redChi2 << " chi2/nDF" << endl;
- cout << "---------------------------------------------------------------------" << endl;
-
-
-  // write out results
-  // Likelihood and such
- const Setting& fitqualS= configRoot["fitquality"];
- Setting& chi2S=fitqualS["chi2"];
- chi2S=chi2;
- Setting& ndfS=fitqualS["ndf"];
- ndfS=(int)numDOF;
- Setting& redchi2S=fitqualS["redchi2"];
- redchi2S=redChi2;
-
-		if(not mdepFit.updateConfigModel(&configRoot, compset, minimizer)) {
-			printErr << "error while updating fit model in configuration file." << endl;
+		if(not mdepFit.updateConfig(&configRoot, compset, minimizer, chi2, ndf, chi2red)) {
+			printErr << "error while updating configuration file." << endl;
 			return 1;
 		}
 	}
