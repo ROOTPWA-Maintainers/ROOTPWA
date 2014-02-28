@@ -154,6 +154,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << endl;
 		return false;
 	}
+	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
 
 	ostringstream output;
 	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
@@ -172,11 +173,8 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 
 		const size_t nrChannels = _components[idxComponent]->getNrChannels();
 		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannelWaveName(idxChannel);
-			if(_idxAnchorComponent == idxComponent && _idxAnchorChannel == idxChannel) {
-				output << " (anchor)";
-			}
-			output << endl;
+			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannelWaveName(idxChannel)
+			       << (_components[idxComponent]->getChannel(idxChannel).isAnchor() ? " (anchor)" : "") << endl;
 		}
 	}
 	printInfo << _waveNames.size() << " waves and " << _components.size() << " components in fit model:" << endl

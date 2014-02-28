@@ -29,6 +29,7 @@ rpwa::massDepFit::channel::channel(const std::string& waveName,
                                    const std::vector<double>& massBinCenters,
                                    const std::vector<double>& phaseSpace)
 	: _waveName(waveName),
+	  _anchor(false),
 	  _coupling(coupling),
 	  _massBinCenters(massBinCenters),
 	  _phaseSpace(phaseSpace)
@@ -39,6 +40,7 @@ rpwa::massDepFit::channel::channel(const std::string& waveName,
 
 rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
 	: _waveName(ch._waveName),
+	  _anchor(ch._anchor),
 	  _coupling(ch._coupling),
 	  _massBinCenters(ch._massBinCenters),
 	  _phaseSpace(ch._phaseSpace)
