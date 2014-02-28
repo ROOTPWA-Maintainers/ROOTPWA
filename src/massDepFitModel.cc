@@ -155,6 +155,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		return false;
 	}
 	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
+	_nrParameters -= 1;
 
 	ostringstream output;
 	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {

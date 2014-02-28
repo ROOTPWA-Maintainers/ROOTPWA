@@ -265,9 +265,14 @@ size_t
 rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
-	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
+	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
 		par[counter] = it->getCoupling().real();
-		par[counter+1] = it->getCoupling().imag();
+		counter += 1;
+
+		if(not it->isAnchor()) {
+			par[counter] = it->getCoupling().imag();
+			counter += 1;
+		}
 	}
 
 	return counter;
@@ -278,8 +283,16 @@ size_t
 rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
-	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
-		it->setCoupling(complex<double>(par[counter], par[counter+1]));
+	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+		complex<double> coupling;
+		if(it->isAnchor()) {
+			coupling = complex<double>(par[counter], 0.);
+			counter += 1;
+		} else {
+			coupling = complex<double>(par[counter], par[counter+1]);
+			counter += 2;
+		}
+		it->setCoupling(coupling);
 	}
 
 	return counter;

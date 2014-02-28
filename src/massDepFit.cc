@@ -1781,8 +1781,6 @@ usage(const string& progName,
 bool
 releasePars(Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
-            const std::string& anchorWaveName,
-            const std::string& anchorComponentName,
             const int level)
 {
 	// save current state
@@ -1864,21 +1862,16 @@ releasePars(Minimizer* minimizer,
 			                       (comp->getName() + "__" + it->getWaveName() + "__real").c_str(),
 			                       par[parcount],
 			                       0.1);
-			      ++parcount;
+			++parcount;
 
-			if(comp->getName() == anchorComponentName && it->getWaveName() == anchorWaveName){
-				printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__imag") << "') fixed to " << 0. << endl;
-				minimizer->SetFixedVariable(parcount,
-				                            (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
-				                            0.);
-			} else {
+			if(not it->isAnchor()) {
 				printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__imag") << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
 				                       (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
 				                       par[parcount],
 				                       0.1);
+				++parcount;
 			}
-			++parcount;
 		} // end loop over channels
 	}// end loop over components
 
@@ -2075,7 +2068,7 @@ main(int    argc,
 		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
 		// set startvalues
-		if(not releasePars(minimizer, compset, mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0)) {
+		if(not releasePars(minimizer, compset, 0)) {
 			printErr << "error while setting start parameters." << endl;
 			return 1;
 		}
@@ -2100,7 +2093,7 @@ main(int    argc,
 		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
 		// release masses
-		releasePars(minimizer, compset, mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
+		releasePars(minimizer, compset, 1);
 		printInfo << "performing second minimization step: widths fixed, masses and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
 		stopwatch.Start();
 		success &= minimizer->Minimize();
@@ -2113,7 +2106,7 @@ main(int    argc,
 		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
 		//release widths
-		releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
+		releasePars(minimizer, compset, 2);
 		printInfo << "performing third minimization step: masses, widths and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
 		stopwatch.Start();
 		success &= minimizer->Minimize();
