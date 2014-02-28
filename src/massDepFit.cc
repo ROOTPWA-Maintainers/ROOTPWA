@@ -1905,7 +1905,7 @@ main(int    argc,
 	const string       valTreeName           = "pwa";
 	const string       valBranchName         = "fitResult_v2";
 	const unsigned int maxNmbOfIterations    = 20000;
-	const unsigned int maxNmbOfFunctionCalls = 40000;
+	const unsigned int maxNmbOfFunctionCalls = 2000000;
 	const bool         runHesse              = true;
 	const bool         runMinos              = false;
 
