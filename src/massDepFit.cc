@@ -1851,6 +1851,7 @@ releasePars(Minimizer* minimizer,
 
 		// second add couplings
 		for(std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
+			printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__real") << "') set to " << par[parcount] << endl;
 			minimizer->SetVariable(parcount,
 			                       (comp->getName() + "__" + it->getWaveName() + "__real").c_str(),
 			                       par[parcount],
@@ -1858,10 +1859,12 @@ releasePars(Minimizer* minimizer,
 			      ++parcount;
 
 			if(comp->getName() == anchorComponentName && it->getWaveName() == anchorWaveName){
+				printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__imag") << "') fixed to " << 0. << endl;
 				minimizer->SetFixedVariable(parcount,
 				                            (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
 				                            0.);
 			} else {
+				printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__imag") << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
 				                       (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
 				                       par[parcount],
@@ -1879,6 +1882,7 @@ releasePars(Minimizer* minimizer,
 		compset.getFsmdParameterLimits(ifreeFsmd, lower, upper);
 		ostringstream name;
 		name << "PSP_" << ifreeFsmd;
+		printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << val << endl;
 		minimizer->SetLimitedVariable(parcount,
 		                              name.str().c_str(),
 		                              val,
