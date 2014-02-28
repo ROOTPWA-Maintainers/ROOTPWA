@@ -199,7 +199,14 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		if(not configParameter->exists("error")) {
 			configParameter->add("error", libconfig::Setting::TypeFloat);
 		}
-		(*configParameter)["error"] = minimizer->Errors()[minimizer->VariableIndex((getName() + _parametersName[idxParameter]).c_str())];
+
+		const int varIndex = minimizer->VariableIndex(getName() + _parametersName[idxParameter]);
+		if(varIndex == -1) {
+			printErr << "variable '" << (getName() + _parametersName[idxParameter]) << "' used to extract the error for the parameter '"
+			         << _parametersName[idxParameter] << "' of '" << getName() << "' not known to the minimizer." << endl;
+			return false;
+		}
+		(*configParameter)["error"] = minimizer->Errors()[varIndex];
 	}
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
