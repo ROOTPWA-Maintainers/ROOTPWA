@@ -385,6 +385,9 @@ bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configComponents,
                                                         rpwa::massDepFit::model& fitModel) const
 {
+	// FIXME: remove asserts, make code able to handle multiple bins
+	assert(_inPhaseSpaceIntegrals.size() == 1);
+
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
 		return false;
@@ -439,7 +442,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			return false;
 		}
 
-		if(not component->init(configComponent, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, _debug)) {
+		if(not component->init(configComponent, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals[0], _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << endl;
 			return false;
@@ -743,13 +746,13 @@ bool
 rpwa::massDepFit::massDepFit::readInFiles(const string& valTreeName,
                                           const string& valBranchName)
 {
-	if(_nrBins != 1) {
-		printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
+	if(not readInFileFirst(valTreeName, valBranchName)) {
+		printErr << "error while reading first file." << endl;
 		return false;
 	}
 
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		if(not readInFile(_inFileName[idxBin], _inOverwritePhaseSpace[idxBin], valTreeName, valBranchName)) {
+	for(size_t idxBin=1; idxBin<_nrBins; ++idxBin) {
+		if(not readInFile(idxBin, valTreeName, valBranchName)) {
 			printErr << "error while reading file entry " << idxBin << "." << endl;
 			return false;
 		}
@@ -760,34 +763,32 @@ rpwa::massDepFit::massDepFit::readInFiles(const string& valTreeName,
 
 
 bool
-rpwa::massDepFit::massDepFit::readInFile(const string& fileName,
-                                         const vector<string>& overwritePhaseSpace,
-                                         const string& valTreeName,
-                                         const string& valBranchName)
+rpwa::massDepFit::massDepFit::readInFileFirst(const string& valTreeName,
+                                              const string& valBranchName)
 {
 	if(_debug) {
-		printDebug << "reading fit result from file '" << fileName << "'." << endl;
+		printDebug << "reading fit result from file '" << _inFileName[0] << "'." << endl;
 	}
 
-	TFile* inFile = TFile::Open(fileName.c_str());
+	TFile* inFile = TFile::Open(_inFileName[0].c_str());
 	if(not inFile) {
-		printErr << "input file '" << fileName << "' not found."<< endl;
+		printErr << "input file '" << _inFileName[0] << "' not found."<< endl;
 		return false;
 	}
 	if(inFile->IsZombie()) {
-		printErr << "error while reading input file '" << fileName << "'."<< endl;
+		printErr << "error while reading input file '" << _inFileName[0] << "'."<< endl;
 		delete inFile;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << fileName << "'." << endl;
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName[0] << "'." << endl;
 	}
 
 	TTree* inTree;
 	inFile->GetObject(valTreeName.c_str(), inTree);
 	if(not inTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << fileName << "'."<< endl;
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName[0] << "'."<< endl;
 		delete inFile;
 		return false;
 	}
@@ -804,37 +805,141 @@ rpwa::massDepFit::massDepFit::readInFile(const string& fileName,
 	}
 
 	if(not readFitResultMassBins(inTree, inFit)) {
-		printErr << "could not extract mass bins from fit result tree in '" << fileName << "'." << endl;
+		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[0] << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
 	vector<Long64_t> inMapping;
 	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << fileName << "'." << endl;
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[0] << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
-	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices,
-	                             _inIntensities, _inPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << fileName << "'." << endl;
+	// resize all array to store the information
+	_inSpinDensityMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves]);
+	_inSpinDensityCovarianceMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2][2]);
+	_inPhaseSpaceIntegrals.resize(extents[_nrBins][_nrMassBins][_nrWaves]);
+	_inIntensities.resize(extents[_nrBins][_nrMassBins][_nrWaves][2]);
+	_inPhases.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2]);
+
+	multi_array<complex<double>, 3> tempSpinDensityMatrices;
+	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
+	multi_array<double, 3> tempIntensities;
+	multi_array<double, 4> tempPhases;
+	if(not readFitResultMatrices(inTree, inFit, inMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
+	                             tempIntensities, tempPhases)) {
+		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[0] << "'." << endl;
 		delete inFile;
 		return false;
 	}
-	if(not readFitResultIntegrals(inTree, inFit, inMapping, _inPhaseSpaceIntegrals)) {
-		printErr << "error while reading phase-space integrals from fit result tree in '" << fileName << "'." << endl;
+	_inSpinDensityMatrices[0] = tempSpinDensityMatrices;
+	_inSpinDensityCovarianceMatrices[0] = tempSpinDensityCovarianceMatrices;
+	_inIntensities[0] = tempIntensities;
+	_inPhases[0] = tempPhases;
+
+	multi_array<double, 2> tempPhaseSpaceIntegrals;
+	if(not readFitResultIntegrals(inTree, inFit, inMapping, tempPhaseSpaceIntegrals)) {
+		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[0] << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
-	if(overwritePhaseSpace.size() > 0) {
-		if(not readPhaseSpaceIntegralMatrices(overwritePhaseSpace, _inPhaseSpaceIntegrals)) {
+	if(_inOverwritePhaseSpace[0].size() > 0) {
+		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace[0], tempPhaseSpaceIntegrals)) {
 			printErr << "error while reading phase-space integrals from integral matrices." << endl;
 			delete inFile;
 			return false;
 		}
 	}
+	_inPhaseSpaceIntegrals[0] = tempPhaseSpaceIntegrals;
+
+	delete inFile;
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
+                                         const string& valTreeName,
+                                         const string& valBranchName)
+{
+	if(_debug) {
+		printDebug << "reading fit result from file '" << _inFileName[idxBin] << "'." << endl;
+	}
+
+	TFile* inFile = TFile::Open(_inFileName[idxBin].c_str());
+	if(not inFile) {
+		printErr << "input file '" << _inFileName[idxBin] << "' not found."<< endl;
+		return false;
+	}
+	if(inFile->IsZombie()) {
+		printErr << "error while reading input file '" << _inFileName[idxBin] << "'."<< endl;
+		delete inFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName[idxBin] << "'." << endl;
+	}
+
+	TTree* inTree;
+	inFile->GetObject(valTreeName.c_str(), inTree);
+	if(not inTree) {
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName[idxBin] << "'."<< endl;
+		delete inFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << endl;
+	}
+
+	fitResult* inFit = NULL;
+	if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
+		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	vector<Long64_t> inMapping;
+	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	multi_array<complex<double>, 3> tempSpinDensityMatrices;
+	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
+	multi_array<double, 3> tempIntensities;
+	multi_array<double, 4> tempPhases;
+	if(not readFitResultMatrices(inTree, inFit, inMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
+	                             tempIntensities, tempPhases)) {
+		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << endl;
+		delete inFile;
+		return false;
+	}
+	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
+	_inSpinDensityCovarianceMatrices[idxBin] = tempSpinDensityCovarianceMatrices;
+	_inIntensities[idxBin] = tempIntensities;
+	_inPhases[idxBin] = tempPhases;
+
+	multi_array<double, 2> tempPhaseSpaceIntegrals;
+	if(not readFitResultIntegrals(inTree, inFit, inMapping, tempPhaseSpaceIntegrals)) {
+		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[idxBin] << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	if(_inOverwritePhaseSpace[idxBin].size() > 0) {
+		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace[idxBin], tempPhaseSpaceIntegrals)) {
+			printErr << "error while reading phase-space integrals from integral matrices." << endl;
+			delete inFile;
+			return false;
+		}
+	}
+	_inPhaseSpaceIntegrals[idxBin] = tempPhaseSpaceIntegrals;
 
 	delete inFile;
 	return true;
@@ -849,6 +954,12 @@ rpwa::massDepFit::massDepFit::readSystematicsFiles(const string& valTreeName,
 		return true;
 	}
 
+	// FIXME: make systematic errors work with multiple bins
+	if(_nrBins > 1) {
+		printErr << "systematic errors not yet supported for multiple bins." << endl;
+		return false;
+	}
+
 	if(_debug) {
 		printDebug << "reading fit results for systematic errors from " << _nrSystematics << " files." << endl;
 	}
@@ -858,10 +969,10 @@ rpwa::massDepFit::massDepFit::readSystematicsFiles(const string& valTreeName,
 	_sysIntensities.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][2]);
 	_sysPhases.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves][2]);
 
-	_sysSpinDensityMatrices[0] = _inSpinDensityMatrices;
-	_sysSpinDensityCovarianceMatrices[0] = _inSpinDensityCovarianceMatrices;
-	_sysIntensities[0] = _inIntensities;
-	_sysPhases[0] = _inPhases;
+	_sysSpinDensityMatrices[0] = _inSpinDensityMatrices[0];
+	_sysSpinDensityCovarianceMatrices[0] = _inSpinDensityCovarianceMatrices[0];
+	_sysIntensities[0] = _inIntensities[0];
+	_sysPhases[0] = _inPhases[0];
 
 	for(size_t idxSystematics=1; idxSystematics<_nrSystematics; ++idxSystematics) {
 		readSystematicsFile(idxSystematics, valTreeName, valBranchName);
@@ -923,8 +1034,8 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
-	boost::multi_array<double, 3> tempIntensities;
-	boost::multi_array<double, 4> tempPhases;
+	multi_array<double, 3> tempIntensities;
+	multi_array<double, 4> tempPhases;
 	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
 	                             tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << endl;
@@ -1240,7 +1351,7 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 bool
 rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const vector<string>& overwritePhaseSpace,
-                                                             boost::multi_array<double, 2>& phaseSpaceIntegrals) const
+                                                             multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	phaseSpaceIntegrals.resize(extents[_nrMassBins][_nrWaves]);
 
@@ -1407,6 +1518,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
                                               const bool rangePlotting,
                                               const size_t idxWave) const
 {
+	// FIXME: remove asserts, make code able to handle multiple bins
+	assert(_inIntensities.size() == 1);
+	assert(_inPhaseSpaceIntegrals.size() == 1);
+
 	if(_debug) {
 		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "'." << endl;
 	}
@@ -1475,9 +1590,9 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		const double mass = _massBinCenters[idxMass] * MASSSCALE;
 		const double halfBin = _massStep/2000.;
 
-		data->SetPoint(point, mass, _inIntensities[idxMass][idxWave][0]);
-		data->SetPointError(point, halfBin, _inIntensities[idxMass][idxWave][1]);
-		maxIE = max(maxIE, _inIntensities[idxMass][idxWave][0]+_inIntensities[idxMass][idxWave][1]);
+		data->SetPoint(point, mass, _inIntensities[0][idxMass][idxWave][0]);
+		data->SetPointError(point, halfBin, _inIntensities[0][idxMass][idxWave][1]);
+		maxIE = max(maxIE, _inIntensities[0][idxMass][idxWave][0]+_inIntensities[0][idxMass][idxWave][1]);
 
 		if(_sysPlotting) {
 			double maxSI = -numeric_limits<double>::max();
@@ -1491,8 +1606,9 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			maxIE = max(maxIE, maxSI);
 		}
 
-		phaseSpace->SetPoint(point, mass, _inPhaseSpaceIntegrals[idxMass][idxWave] * _inPhaseSpaceIntegrals[idxMass][idxWave]);
-		maxP = max(maxP, _inPhaseSpaceIntegrals[idxMass][idxWave] * _inPhaseSpaceIntegrals[idxMass][idxWave]);
+		const double ps = pow(_inPhaseSpaceIntegrals[0][idxMass][idxWave], 2);
+		phaseSpace->SetPoint(point, mass, ps);
+		maxP = max(maxP, ps);
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1537,6 +1653,11 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
                                                   const size_t idxWave,
                                                   const size_t jdxWave) const
 {
+	// FIXME: remove asserts, make code able to handle multiple bins
+	assert(_inPhases.size() == 1);
+	assert(_inSpinDensityMatrices.size() == 1);
+	assert(_inSpinDensityCovarianceMatrices.size() == 1);
+
 	if(_debug) {
 		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
 	}
@@ -1644,17 +1765,17 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		const double mass = _massBinCenters[idxMass] * MASSSCALE;
 		const double halfBin = _massStep/2000.;
 
-		phaseData->SetPoint(point, mass, _inPhases[idxMass][idxWave][jdxWave][0]);
-		phaseData->SetPointError(point, halfBin, _inPhases[idxMass][idxWave][jdxWave][1]);
+		phaseData->SetPoint(point, mass, _inPhases[0][idxMass][idxWave][jdxWave][0]);
+		phaseData->SetPointError(point, halfBin, _inPhases[0][idxMass][idxWave][jdxWave][1]);
 
-		realData->SetPoint(point, mass, _inSpinDensityMatrices[idxMass][idxWave][jdxWave].real());
-		realData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0]));
+		realData->SetPoint(point, mass, _inSpinDensityMatrices[0][idxMass][idxWave][jdxWave].real());
+		realData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[0][idxMass][idxWave][jdxWave][0][0]));
 
-		imagData->SetPoint(point, mass, _inSpinDensityMatrices[idxMass][idxWave][jdxWave].imag());
-		imagData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][1]));
+		imagData->SetPoint(point, mass, _inSpinDensityMatrices[0][idxMass][idxWave][jdxWave].imag());
+		imagData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[0][idxMass][idxWave][jdxWave][1][1]));
 
 		if(_sysPlotting) {
-			const double dataP = _inPhases[idxMass][idxWave][jdxWave][0];
+			const double dataP = _inPhases[0][idxMass][idxWave][jdxWave][0];
 			double maxSP = -numeric_limits<double>::max();
 			double minSP = numeric_limits<double>::max();
 
@@ -2082,12 +2203,16 @@ main(int    argc,
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << endl;
 	} else {
+		// FIXME: remove asserts, make code able to handle multiple bins
+		assert(mdepFit.getInSpinDensityMatrices().size() == 1);
+		assert(mdepFit.getInSpinDensityCovarianceMatrices().size() == 1);
+
 		// set-up likelihood
 		rpwa::massDepFit::likelihood L;
 		L.init(&compset,
 		       mdepFit.getMassBinCenters(),
-		       mdepFit.getInSpinDensityMatrices(),
-		       mdepFit.getInSpinDensityCovarianceMatrices(),
+		       mdepFit.getInSpinDensityMatrices()[0],
+		       mdepFit.getInSpinDensityCovarianceMatrices()[0],
 		       mdepFit.getWavePairMassBinLimits(),
 		       doCov);
 
