@@ -74,9 +74,9 @@ namespace rpwa {
 // FIXME: get rid
 			const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 // FIXME: get rid
-			const boost::multi_array<std::complex<double>, 3>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
+			const boost::multi_array<std::complex<double>, 4>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
 // FIXME: get rid
-			const boost::multi_array<double, 5>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
+			const boost::multi_array<double, 6>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
 
 			static void setDebug(bool debug) { _debug = debug; }
 
@@ -102,8 +102,9 @@ namespace rpwa {
 			                           const rpwa::massDepFit::model& fitModel,
 			                           const ROOT::Math::Minimizer* minimizer) const;
 
-			bool readInFile(const std::string& fileName,
-			                const std::vector<std::string>& overwritePhaseSpace,
+			bool readInFileFirst(const std::string& valTreeName   = "pwa",
+			                     const std::string& valBranchName = "fitResult_v2");
+			bool readInFile(const size_t idxBin,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -161,12 +162,12 @@ namespace rpwa {
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
 
-			boost::multi_array<std::complex<double>, 3> _inSpinDensityMatrices;
-			boost::multi_array<double, 5> _inSpinDensityCovarianceMatrices;
-			boost::multi_array<double, 2> _inPhaseSpaceIntegrals;
+			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
+			boost::multi_array<double, 6> _inSpinDensityCovarianceMatrices;
+			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
 
-			boost::multi_array<double, 3> _inIntensities;
-			boost::multi_array<double, 4> _inPhases;
+			boost::multi_array<double, 4> _inIntensities;
+			boost::multi_array<double, 5> _inPhases;
 
 			boost::multi_array<std::complex<double>, 4> _sysSpinDensityMatrices;
 			boost::multi_array<double, 6> _sysSpinDensityCovarianceMatrices;
