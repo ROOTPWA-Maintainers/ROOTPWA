@@ -40,8 +40,8 @@ namespace rpwa {
 
 			void init(rpwa::massDepFit::model* compset,
 			          const std::vector<double>& massBinCenters,
-			          const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-			          const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+			          const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
 			          bool useCovariance);
 
@@ -49,13 +49,14 @@ namespace rpwa {
 
 			rpwa::massDepFit::model* _compset;
 
+			size_t _nrBins;
 			size_t _nrMassBins;
 			size_t _nrWaves;
 
 			std::vector<double> _massBinCenters;
 
-			boost::multi_array<std::complex<double>, 3> _spinDensityMatrices;
-			boost::multi_array<double, 5> _spinDensityCovarianceMatrices;
+			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
+			boost::multi_array<double, 6> _spinDensityCovarianceMatrices;
 
 			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
 

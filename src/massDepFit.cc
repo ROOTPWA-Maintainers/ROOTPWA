@@ -36,7 +36,6 @@
 
 
 #include <algorithm>
-#include <cassert>
 #include <complex>
 #include <iomanip>
 #include <iostream>
@@ -1958,22 +1957,30 @@ releasePars(Minimizer* minimizer,
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
 		for(vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
-			const string prefixName = "coupling__" + comp->getName() + "__" + it->getWaveName();
+			for(size_t idxBin=0; idxBin<it->getNrBins(); ++idxBin) {
+				ostringstream prefixName;
+				prefixName << "coupling__bin"
+				           << idxBin
+				           << "__"
+				           << comp->getName()
+				           << "__"
+				           << it->getWaveName();
 
-			printInfo << "parameter " << parcount << " ('" << (prefixName + "__real") << "') set to " << par[parcount] << endl;
-			minimizer->SetVariable(parcount,
-			                       prefixName + "__real",
-			                       par[parcount],
-			                       0.1);
-			++parcount;
-
-			if(not it->isAnchor()) {
-				printInfo << "parameter " << parcount << " ('" << (prefixName + "__imag") << "') set to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
-				                       prefixName + "__imag",
+				                       prefixName.str() + "__real",
 				                       par[parcount],
 				                       0.1);
 				++parcount;
+
+				if(not it->isAnchor()) {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << par[parcount] << endl;
+					minimizer->SetVariable(parcount,
+					                       prefixName.str() + "__imag",
+					                       par[parcount],
+					                       0.1);
+					++parcount;
+				}
 			}
 		} // end loop over channels
 	} // end loop over components
@@ -2206,16 +2213,12 @@ main(int    argc,
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << endl;
 	} else {
-		// FIXME: remove asserts, make code able to handle multiple bins
-		assert(mdepFit.getInSpinDensityMatrices().size() == 1);
-		assert(mdepFit.getInSpinDensityCovarianceMatrices().size() == 1);
-
 		// set-up likelihood
 		rpwa::massDepFit::likelihood L;
 		L.init(&compset,
 		       mdepFit.getMassBinCenters(),
-		       mdepFit.getInSpinDensityMatrices()[0],
-		       mdepFit.getInSpinDensityCovarianceMatrices()[0],
+		       mdepFit.getInSpinDensityMatrices(),
+		       mdepFit.getInSpinDensityCovarianceMatrices(),
 		       mdepFit.getWavePairMassBinLimits(),
 		       doCov);
 
