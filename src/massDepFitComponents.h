@@ -37,9 +37,10 @@ namespace rpwa {
 		public:
 
 			channel(const std::string& waveName,
-			        std::complex<double> coupling,
+			        const size_t nrBins,
+			        const std::vector<std::complex<double> >& couplings,
 			        const std::vector<double>& massBinCenters,
-			        const std::vector<double>& phaseSpace);
+			        const boost::multi_array<double, 2>& phaseSpace);
 			channel(const rpwa::massDepFit::channel& ch);
 			~channel();
 
@@ -48,13 +49,18 @@ namespace rpwa {
 			bool isAnchor() const { return _anchor; }
 			void setAnchor(const bool anchor) { _anchor = anchor; }
 
-			std::complex<double> getCoupling() const { return _coupling; }
-			void setCoupling(std::complex<double> coupling) { _coupling = coupling; }
+			size_t getNrBins() const { return _nrBins; }
 
-			double getPhaseSpace(const double mass,
+			std::complex<double> getCoupling(const size_t idxBin) const { return _couplings[idxBin]; }
+			const std::vector<std::complex<double> >& getCouplings() const { return _couplings; }
+			void setCouplings(const std::vector<std::complex<double> >& couplings) { _couplings = couplings; }
+
+			double getPhaseSpace(const size_t idxBin,
+			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			std::complex<double> getCouplingPhaseSpace(const double mass,
+			std::complex<double> getCouplingPhaseSpace(const size_t idxBin,
+			                                           const double mass,
 			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 		private:
@@ -62,11 +68,14 @@ namespace rpwa {
 			std::string _waveName;
 
 			bool _anchor;
-			std::complex<double> _coupling;
+
+			size_t _nrBins;
+
+			std::vector<std::complex<double> > _couplings;
 
 			std::vector<double> _massBinCenters;
-			std::vector<double> _phaseSpace;
-			ROOT::Math::Interpolator* _interpolator;
+			boost::multi_array<double, 2> _phaseSpace;
+			std::vector<ROOT::Math::Interpolator*> _interpolator;
 
 		};
 
@@ -81,9 +90,10 @@ namespace rpwa {
 			const std::string& getName() const { return _name; }
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
-			                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool debug);
 
 			virtual bool update(const libconfig::Setting* configComponent,
@@ -112,7 +122,8 @@ namespace rpwa {
 			virtual const std::string& getParameterName(const size_t idx) const { return _parametersName[idx]; }
 			virtual double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
 
-			virtual std::complex<double> val(const double m) const = 0;
+			virtual std::complex<double> val(const size_t idxBin,
+			                                 const double m) const = 0;
 
 			virtual std::ostream& print(std::ostream& out) const;
 
@@ -144,12 +155,14 @@ namespace rpwa {
 			pwacomponent(const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
-			                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const double m) const;
+			virtual std::complex<double> val(const size_t idxBin,
+			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out) const;
 
@@ -166,12 +179,14 @@ namespace rpwa {
 			pwabkg(const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
-			                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const double m) const;
+			virtual std::complex<double> val(const size_t idxBin,
+			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out) const;
 
@@ -189,23 +204,25 @@ namespace rpwa {
 
 inline
 double
-rpwa::massDepFit::channel::getPhaseSpace(const double mass,
+rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
+                                         const double mass,
                                          const size_t idxMass) const
 {
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		return _phaseSpace[idxMass];
+		return _phaseSpace[idxBin][idxMass];
 	}
 
-	return _interpolator->Eval(mass);
+	return _interpolator[idxBin]->Eval(mass);
 }
 
 
 inline
 std::complex<double>
-rpwa::massDepFit::channel::getCouplingPhaseSpace(const double mass,
+rpwa::massDepFit::channel::getCouplingPhaseSpace(const size_t idxBin,
+                                                 const double mass,
                                                  const size_t idxMass) const
 {
-	return _coupling * getPhaseSpace(mass, idxMass);
+	return getCoupling(idxBin) * getPhaseSpace(idxBin, mass, idxMass);
 }
 
 

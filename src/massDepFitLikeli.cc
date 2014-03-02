@@ -85,7 +85,8 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 				}
 
 				// calculate target spin density matrix element
-				const complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, mass, idxMass);
+				// FIXME: replace 0 by idxBin
+				const complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, 0, mass, idxMass);
 
 				const complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxMass][idxWave][jdxWave];
 
