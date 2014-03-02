@@ -132,14 +132,16 @@ namespace rpwa {
 			                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
 			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
-			                     TFile* outFile,
+			                     TDirectory* outDirectory,
 			                     const bool rangePlotting,
-			                     const size_t idxWave) const;
+			                     const size_t idxWave,
+			                     const size_t idxBin) const;
 			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
-			                         TFile* outFile,
+			                         TDirectory* outDirectory,
 			                         const bool rangePlotting,
 			                         const size_t idxWave,
-			                         const size_t jdxWave) const;
+			                         const size_t jdxWave,
+			                         const size_t idxBin) const;
 
 			std::vector<std::string> _inFileName;
 			std::vector<std::vector<std::string> > _inOverwritePhaseSpace;
