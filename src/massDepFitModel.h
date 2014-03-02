@@ -55,20 +55,25 @@ namespace rpwa {
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
 
 			std::complex<double> productionAmplitude(const size_t idxWave,
+			                                         const size_t idxBin,
 			                                         const double mass,
 			                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double intensity(const size_t idxWave,
+			                 const size_t idxBin,
 			                 const double mass,
 			                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double phaseAbsolute(const size_t idxWave,
+			                     const size_t idxBin,
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			std::complex<double> spinDensityMatrix(const size_t idxWave,
 			                                       const size_t jdxWave,
+			                                       const size_t idxBin,
 			                                       const double mass,
 			                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double phase(const size_t idxWave,
 			             const size_t jdxWave,
+			             const size_t idxBin,
 			             const double mass,
 			             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 

@@ -25,32 +25,45 @@ using namespace std;
 
 
 rpwa::massDepFit::channel::channel(const std::string& waveName,
-                                   std::complex<double> coupling,
+                                   const size_t nrBins,
+                                   const std::vector<std::complex<double> >& couplings,
                                    const std::vector<double>& massBinCenters,
-                                   const std::vector<double>& phaseSpace)
+                                   const boost::multi_array<double, 2>& phaseSpace)
 	: _waveName(waveName),
 	  _anchor(false),
-	  _coupling(coupling),
+	  _nrBins(nrBins),
+	  _couplings(couplings),
 	  _massBinCenters(massBinCenters),
 	  _phaseSpace(phaseSpace)
 {
-	_interpolator = new ROOT::Math::Interpolator(_massBinCenters, _phaseSpace, ROOT::Math::Interpolation::kLINEAR);
+	_interpolator.resize(_nrBins);
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
+		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
+	}
 }
 
 
 rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
 	: _waveName(ch._waveName),
 	  _anchor(ch._anchor),
-	  _coupling(ch._coupling),
+	  _nrBins(ch._nrBins),
+	  _couplings(ch._couplings),
 	  _massBinCenters(ch._massBinCenters),
 	  _phaseSpace(ch._phaseSpace)
 {
-	_interpolator = new ROOT::Math::Interpolator(_massBinCenters, _phaseSpace, ROOT::Math::Interpolation::kLINEAR);
+	_interpolator.resize(_nrBins);
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
+		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
+	}
 }
 
 
 rpwa::massDepFit::channel::~channel() {
-	delete _interpolator;
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		delete _interpolator[idxBin];
+	}
 }
 
 
@@ -72,9 +85,10 @@ rpwa::massDepFit::component::component(const string& name,
 
 bool
 rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
+                                  const size_t nrBins,
                                   const vector<double>& massBinCenters,
                                   const map<string, size_t>& waveIndices,
-                                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                   const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'component' for component '" << getName() << "'." << endl;
@@ -128,8 +142,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		map<string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
 		                     ("amp", libconfig::Setting::TypeString)
-		                     ("coupling_Re", libconfig::Setting::TypeFloat)
-		                     ("coupling_Im", libconfig::Setting::TypeFloat);
+		                     ("couplings", libconfig::Setting::TypeList);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
 			return false;
@@ -146,25 +159,58 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			}
 		}
 
-		double couplingReal;
-		decayChannel->lookupValue("coupling_Re", couplingReal);
-
-		double couplingImag;
-		decayChannel->lookupValue("coupling_Im", couplingImag);
-
-		const std::complex<double> coupling(couplingReal, couplingImag);
-
 		const map<string, size_t>::const_iterator it = waveIndices.find(waveName);
 		if(it == waveIndices.end()) {
 			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << endl;
 			return false;
 		}
 
-		boost::multi_array<double, 2>::const_array_view<1>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 2>::index_range()][it->second]];
-		_channels.push_back(rpwa::massDepFit::channel(waveName, coupling, massBinCenters, std::vector<double>(view.begin(), view.end())));
+		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+		if(not configCouplings) {
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << endl;
+			return false;
+		}
+
+		const int nrCouplings = configCouplings->getLength();
+		if(nrCouplings != nrBins) {
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << nrBins << "." << endl;
+			return false;
+		}
+
+		std::vector<std::complex<double> > couplings;
+		for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
+			const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+
+			map<string, libconfig::Setting::Type> mandatoryArguments;
+			boost::assign::insert(mandatoryArguments)
+			                     ("coupling_Re", libconfig::Setting::TypeFloat)
+			                     ("coupling_Im", libconfig::Setting::TypeFloat);
+			if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
+				printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << endl;
+				return false;
+			}
+
+			double couplingReal;
+			configCoupling->lookupValue("coupling_Re", couplingReal);
+
+			double couplingImag;
+			configCoupling->lookupValue("coupling_Im", couplingImag);
+
+			const std::complex<double> coupling(couplingReal, couplingImag);
+			couplings.push_back(coupling);
+		}
+
+		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
+		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, couplings, massBinCenters, view));
 
 		if(debug) {
-			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << coupling << "." << endl;
+			ostringstream output;
+			output << "( ";
+			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+				output << couplings[idxBin] << " ";
+			}
+			output << ")";
+			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << endl;
 		}
 	}
 
@@ -229,7 +275,8 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 
 		map<string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("amp", libconfig::Setting::TypeString);
+		                     ("amp", libconfig::Setting::TypeString)
+		                     ("couplings", libconfig::Setting::TypeList);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
 			return false;
@@ -250,8 +297,24 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			return false;
 		}
 
-		(*decayChannel)["coupling_Re"] = channel->getCoupling().real();
-		(*decayChannel)["coupling_Im"] = channel->getCoupling().imag();
+		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+		if(not configCouplings) {
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << endl;
+			return false;
+		}
+
+		const int nrCouplings = configCouplings->getLength();
+		if(nrCouplings != channel->getNrBins()) {
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << endl;
+			return false;
+		}
+
+		for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
+			const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+
+			(*configCoupling)["coupling_Re"] = channel->getCoupling(idxCoupling).real();
+			(*configCoupling)["coupling_Im"] = channel->getCoupling(idxCoupling).imag();
+		}
 	}
 
 	if(debug) {
@@ -267,12 +330,16 @@ rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
 	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		par[counter] = it->getCoupling().real();
-		counter += 1;
-
-		if(not it->isAnchor()) {
-			par[counter] = it->getCoupling().imag();
+		const size_t nrBins = it->getNrBins();
+		const std::vector<complex<double> >& couplings = it->getCouplings();
+		for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+			par[counter] = couplings[idxBin].real();
 			counter += 1;
+
+			if(not it->isAnchor()) {
+				par[counter] = couplings[idxBin].imag();
+				counter += 1;
+			}
 		}
 	}
 
@@ -285,15 +352,21 @@ rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
 	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		complex<double> coupling;
+		std::vector<complex<double> > couplings;
 		if(it->isAnchor()) {
-			coupling = complex<double>(par[counter], 0.);
-			counter += 1;
+			const size_t nrBins = it->getNrBins();
+			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+				couplings.push_back(complex<double>(par[counter], 0.));
+				counter += 1;
+			}
 		} else {
-			coupling = complex<double>(par[counter], par[counter+1]);
-			counter += 2;
+			const size_t nrBins = it->getNrBins();
+			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+				couplings.push_back(complex<double>(par[counter], par[counter+1]));
+				counter += 2;
+			}
 		}
-		it->setCoupling(coupling);
+		it->setCouplings(couplings);
 	}
 
 	return counter;
@@ -327,7 +400,13 @@ rpwa::massDepFit::component::print(ostream& out) const
 {
 	out << "Decay modes:" << endl;
 	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		out << it->getWaveName() << "    C=" << it->getCoupling() << endl;
+		ostringstream output;
+		output << "( ";
+		for(size_t idxBin=0; idxBin<it->getNrBins(); ++idxBin) {
+			output << it->getCoupling(idxBin) << " ";
+		}
+		output << ")";
+		out << it->getWaveName() << "    C=" << output.str() << endl;
 	}
 	return out;
 }
@@ -346,15 +425,16 @@ rpwa::massDepFit::pwacomponent::pwacomponent(const string& name)
 
 bool
 rpwa::massDepFit::pwacomponent::init(const libconfig::Setting* configComponent,
+                                     const size_t nrBins,
                                      const vector<double>& massBinCenters,
                                      const map<string, size_t>& waveIndices,
-                                     const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                                     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                      const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'pwacomponent' for component '" << getName() << "'." << endl;
 	}
 
-	if(not component::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
 		printErr << "error while reading configuration of 'component' class." << endl;
 		return false;
 	}
@@ -406,7 +486,8 @@ rpwa::massDepFit::pwacomponent::init(const libconfig::Setting* configComponent,
 
 
 complex<double>
-rpwa::massDepFit::pwacomponent::val(const double m) const {
+rpwa::massDepFit::pwacomponent::val(const size_t idxBin,
+                                    const double m) const {
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
 	// calculate dynamic width:
@@ -415,8 +496,8 @@ rpwa::massDepFit::pwacomponent::val(const double m) const {
 	if(!_constWidth){
 		ps=0; // no not forget to reset phase space here!
 		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
-			const double ps0 = itChan->getPhaseSpace(m0, std::numeric_limits<size_t>::max());
-			const double ratio = itChan->getPhaseSpace(m, std::numeric_limits<size_t>::max()) / ps0;
+			const double ps0 = itChan->getPhaseSpace(idxBin, m0, std::numeric_limits<size_t>::max());
+			const double ratio = itChan->getPhaseSpace(idxBin, m, std::numeric_limits<size_t>::max()) / ps0;
 			ps += ratio*ratio;
 		}
 		ps /= getNrChannels();
@@ -449,15 +530,16 @@ rpwa::massDepFit::pwabkg::pwabkg(const string& name)
 
 bool
 rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
+                               const size_t nrBins,
                                const vector<double>& massBinCenters,
                                const map<string, size_t>& waveIndices,
-                               const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'pwabkg' for component '" << getName() << "'." << endl;
 	}
 
-	if(not component::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
 		printErr << "error while reading configuration of 'component' class." << endl;
 		return false;
 	}
@@ -512,7 +594,8 @@ rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
 
 
 complex<double>
-rpwa::massDepFit::pwabkg::val(const double m) const {
+rpwa::massDepFit::pwabkg::val(const size_t idxBin,
+                              const double m) const {
 	// shift baseline mass
 	const double mass = m - _parameters[0];
 

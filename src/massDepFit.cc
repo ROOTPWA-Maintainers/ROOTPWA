@@ -385,9 +385,6 @@ bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configComponents,
                                                         rpwa::massDepFit::model& fitModel) const
 {
-	// FIXME: remove asserts, make code able to handle multiple bins
-	assert(_inPhaseSpaceIntegrals.size() == 1);
-
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
 		return false;
@@ -442,7 +439,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			return false;
 		}
 
-		if(not component->init(configComponent, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals[0], _debug)) {
+		if(not component->init(configComponent, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << endl;
 			return false;
@@ -1562,8 +1559,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
 	graphs.Add(phaseSpace, "CP");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
-	std::vector<TGraph*> components;
+	const vector<pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
+	vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
@@ -1617,15 +1614,18 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 		++pointLimit;
 
-		fit->SetPoint(pointLimit, mass, fitModel.intensity(idxWave, _massBinCenters[idxMass], idxMass));
-		maxIE = max(maxIE, fitModel.intensity(idxWave, _massBinCenters[idxMass], idxMass));
+		// FIXME: replace 0 by idxBin
+		const double intensity = fitModel.intensity(idxWave, 0, _massBinCenters[idxMass], idxMass);
+		fit->SetPoint(pointLimit, mass, intensity);
+		maxIE = max(maxIE, intensity);
 
 		for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 			const size_t idxComponent = compChannel[idxComponents].first;
 			const size_t idxChannel = compChannel[idxComponents].second;
 
-			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(_massBinCenters[idxMass]);
-			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(_massBinCenters[idxMass], idxMass);
+			// FIXME: replace 0 by idxBin
+			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(0, _massBinCenters[idxMass]);
+			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(0, _massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
@@ -1811,7 +1811,8 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 		}
 
-		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
+		// FIXME: replace 0 by idxBin
+		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, 0, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1820,9 +1821,10 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		}
 		++pointLimit;
 
-		realFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).real());
-
-		imagFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).imag());
+		// FIXME: replace 0 by idxBin
+		const complex<double> element = fitModel.spinDensityMatrix(idxWave, jdxWave, 0, _massBinCenters[idxMass], idxMass);
+		realFit->SetPoint(pointLimit, mass, element.real());
+		imagFit->SetPoint(pointLimit, mass, element.imag());
 	}
 
 	// rectify phase graphs
@@ -1954,7 +1956,7 @@ releasePars(Minimizer* minimizer,
 	// first add all couplings
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-		for(std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
+		for(vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
 			const string prefixName = "coupling__" + comp->getName() + "__" + it->getWaveName();
 
 			printInfo << "parameter " << parcount << " ('" << (prefixName + "__real") << "') set to " << par[parcount] << endl;

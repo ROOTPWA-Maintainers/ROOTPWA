@@ -280,6 +280,7 @@ rpwa::massDepFit::model::calcFsmd(const double mass,
 
 complex<double>
 rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
+                                             const size_t idxBin,
                                              const double mass,
                                              const size_t idxMass) const
 {
@@ -293,7 +294,7 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _components[idxComponent]->val(mass) * _components[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(mass, idxMass);
+		prodAmp += _components[idxComponent]->val(idxBin, mass) * _components[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(idxBin, mass, idxMass);
 	}
 
 	prodAmp *= calcFsmd(mass, idxMass);
@@ -304,10 +305,11 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 
 double
 rpwa::massDepFit::model::intensity(const size_t idxWave,
+                                   const size_t idxBin,
                                    const double mass,
                                    const size_t idxMass) const
 {
-	const complex<double> prodAmp = productionAmplitude(idxWave, mass, idxMass);
+	const complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
 
 	return norm(prodAmp);
 }
@@ -315,10 +317,11 @@ rpwa::massDepFit::model::intensity(const size_t idxWave,
 
 double
 rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
+                                       const size_t idxBin,
                                        const double mass,
                                        const size_t idxMass) const
 {
-	const complex<double> prodAmp = productionAmplitude(idxWave, mass, idxMass);
+	const complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
 
 	return arg(prodAmp);
 }
@@ -327,11 +330,12 @@ rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
 complex<double>
 rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
                                            const size_t jdxWave,
+                                           const size_t idxBin,
                                            const double mass,
                                            const size_t idxMass) const
 {
-	const complex<double> prodAmpI = productionAmplitude(idxWave, mass, idxMass);
-	const complex<double> prodAmpJ = productionAmplitude(jdxWave, mass, idxMass);
+	const complex<double> prodAmpI = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const complex<double> prodAmpJ = productionAmplitude(jdxWave, idxBin, mass, idxMass);
 
 	return prodAmpI * conj(prodAmpJ);
 }
@@ -340,10 +344,11 @@ rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
 double
 rpwa::massDepFit::model::phase(const size_t idxWave,
                                const size_t jdxWave,
+                               const size_t idxBin,
                                const double mass,
                                const size_t idxMass) const
 {
-	return arg(spinDensityMatrix(idxWave, jdxWave, mass, idxMass));
+	return arg(spinDensityMatrix(idxWave, jdxWave, idxBin, mass, idxMass));
 }
 
 
