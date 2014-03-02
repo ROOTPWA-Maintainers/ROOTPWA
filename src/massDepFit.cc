@@ -1466,18 +1466,29 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		printDebug << "start creating plots." << endl;
 	}
 
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		if(not createPlotsWave(fitModel, outFile, rangePlotting, idxWave)) {
-			printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "'." << endl;
-			return false;
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		TDirectory* outDirectory = NULL;
+		if(_nrBins == 1) {
+			outDirectory = outFile;
+		} else {
+			ostringstream name;
+			name << "bin" << idxBin;
+			outDirectory = outFile->mkdir(name.str().c_str());
 		}
-	}
 
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
-			if(not createPlotsWavePair(fitModel, outFile, rangePlotting, idxWave, jdxWave)) {
-				printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			if(not createPlotsWave(fitModel, outDirectory, rangePlotting, idxWave, idxBin)) {
+				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << endl;
 				return false;
+			}
+		}
+
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
+				if(not createPlotsWavePair(fitModel, outDirectory, rangePlotting, idxWave, jdxWave, idxBin)) {
+					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << endl;
+					return false;
+				}
 			}
 		}
 	}
@@ -1498,6 +1509,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			graph.SetPoint(point, mass, pow(func->Eval(_massBinCenters[idxMass]), 2.));
 		}
 
+		outFile->cd();
 		graph.Write();
 	}
 
@@ -1511,16 +1523,13 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 
 bool
 rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fitModel,
-                                              TFile* outFile,
+                                              TDirectory* outDirectory,
                                               const bool rangePlotting,
-                                              const size_t idxWave) const
+                                              const size_t idxWave,
+                                              const size_t idxBin) const
 {
-	// FIXME: remove asserts, make code able to handle multiple bins
-	assert(_inIntensities.size() == 1);
-	assert(_inPhaseSpaceIntegrals.size() == 1);
-
 	if(_debug) {
-		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "'." << endl;
+		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << endl;
 	}
 
 	TMultiGraph graphs;
@@ -1587,9 +1596,9 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		const double mass = _massBinCenters[idxMass] * MASSSCALE;
 		const double halfBin = _massStep/2000.;
 
-		data->SetPoint(point, mass, _inIntensities[0][idxMass][idxWave][0]);
-		data->SetPointError(point, halfBin, _inIntensities[0][idxMass][idxWave][1]);
-		maxIE = max(maxIE, _inIntensities[0][idxMass][idxWave][0]+_inIntensities[0][idxMass][idxWave][1]);
+		data->SetPoint(point, mass, _inIntensities[idxBin][idxMass][idxWave][0]);
+		data->SetPointError(point, halfBin, _inIntensities[idxBin][idxMass][idxWave][1]);
+		maxIE = max(maxIE, _inIntensities[idxBin][idxMass][idxWave][0]+_inIntensities[idxBin][idxMass][idxWave][1]);
 
 		if(_sysPlotting) {
 			double maxSI = -numeric_limits<double>::max();
@@ -1603,7 +1612,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			maxIE = max(maxIE, maxSI);
 		}
 
-		const double ps = pow(_inPhaseSpaceIntegrals[0][idxMass][idxWave], 2);
+		const double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
 		phaseSpace->SetPoint(point, mass, ps);
 		maxP = max(maxP, ps);
 
@@ -1614,8 +1623,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 		++pointLimit;
 
-		// FIXME: replace 0 by idxBin
-		const double intensity = fitModel.intensity(idxWave, 0, _massBinCenters[idxMass], idxMass);
+		const double intensity = fitModel.intensity(idxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		fit->SetPoint(pointLimit, mass, intensity);
 		maxIE = max(maxIE, intensity);
 
@@ -1623,9 +1631,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxComponent = compChannel[idxComponents].first;
 			const size_t idxChannel = compChannel[idxComponents].second;
 
-			// FIXME: replace 0 by idxBin
-			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(0, _massBinCenters[idxMass]);
-			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(0, _massBinCenters[idxMass], idxMass);
+			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(idxBin, _massBinCenters[idxMass]);
+			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(idxBin, _massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
@@ -1639,7 +1646,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		phaseSpace->SetPoint(idx, x, y * 0.5 * maxIE/maxP);
 	}
 
-	outFile->cd();
+	outDirectory->cd();
 	graphs.Write();
 
 	return true;
@@ -1648,18 +1655,14 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 bool
 rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
-                                                  TFile* outFile,
+                                                  TDirectory* outDirectory,
                                                   const bool rangePlotting,
                                                   const size_t idxWave,
-                                                  const size_t jdxWave) const
+                                                  const size_t jdxWave,
+                                                  const size_t idxBin) const
 {
-	// FIXME: remove asserts, make code able to handle multiple bins
-	assert(_inPhases.size() == 1);
-	assert(_inSpinDensityMatrices.size() == 1);
-	assert(_inSpinDensityCovarianceMatrices.size() == 1);
-
 	if(_debug) {
-		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
+		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << endl;
 	}
 
 	const string phaseName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__phase";
@@ -1765,17 +1768,17 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		const double mass = _massBinCenters[idxMass] * MASSSCALE;
 		const double halfBin = _massStep/2000.;
 
-		phaseData->SetPoint(point, mass, _inPhases[0][idxMass][idxWave][jdxWave][0]);
-		phaseData->SetPointError(point, halfBin, _inPhases[0][idxMass][idxWave][jdxWave][1]);
+		phaseData->SetPoint(point, mass, _inPhases[idxBin][idxMass][idxWave][jdxWave][0]);
+		phaseData->SetPointError(point, halfBin, _inPhases[idxBin][idxMass][idxWave][jdxWave][1]);
 
-		realData->SetPoint(point, mass, _inSpinDensityMatrices[0][idxMass][idxWave][jdxWave].real());
-		realData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[0][idxMass][idxWave][jdxWave][0][0]));
+		realData->SetPoint(point, mass, _inSpinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].real());
+		realData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][0]));
 
-		imagData->SetPoint(point, mass, _inSpinDensityMatrices[0][idxMass][idxWave][jdxWave].imag());
-		imagData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[0][idxMass][idxWave][jdxWave][1][1]));
+		imagData->SetPoint(point, mass, _inSpinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].imag());
+		imagData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1]));
 
 		if(_sysPlotting) {
-			const double dataP = _inPhases[0][idxMass][idxWave][jdxWave][0];
+			const double dataP = _inPhases[idxBin][idxMass][idxWave][jdxWave][0];
 			double maxSP = -numeric_limits<double>::max();
 			double minSP = numeric_limits<double>::max();
 
@@ -1811,8 +1814,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 		}
 
-		// FIXME: replace 0 by idxBin
-		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, 0, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
+		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1821,8 +1823,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		}
 		++pointLimit;
 
-		// FIXME: replace 0 by idxBin
-		const complex<double> element = fitModel.spinDensityMatrix(idxWave, jdxWave, 0, _massBinCenters[idxMass], idxMass);
+		const complex<double> element = fitModel.spinDensityMatrix(idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		realFit->SetPoint(pointLimit, mass, element.real());
 		imagFit->SetPoint(pointLimit, mass, element.imag());
 	}
@@ -1884,7 +1885,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		phaseFit->SetPoint(pointLimit, mass, valueFit);
 	}
 
-	outFile->cd();
+	outDirectory->cd();
 	phase.Write();
 	real.Write();
 	imag.Write();
