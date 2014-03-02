@@ -59,7 +59,7 @@ void
 rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 {
 	_components.push_back(comp);
-	_nrParameters += comp->getNrParameters() + 2*comp->getNrChannels();
+	_nrParameters += comp->getNrParameters() + 2 * comp->getNrChannels() * comp->getChannel(0).getNrBins();
 }
 
 
@@ -155,7 +155,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		return false;
 	}
 	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
-	_nrParameters -= 1;
+	_nrParameters -= _components[_idxAnchorComponent]->getChannel(_idxAnchorChannel).getNrBins();
 
 	ostringstream output;
 	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
