@@ -68,6 +68,8 @@ namespace rpwa {
 // FIXME: get rid
 			const std::vector<std::string>& getWaveNames() const { return _waveNames; }
 // FIXME: get rid
+			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
+// FIXME: get rid
 			const std::string& getAnchorWaveName() const { return _anchorWaveName; }
 // FIXME: get rid
 			const std::string& getAnchorComponentName() const { return _anchorComponentName; }
@@ -85,6 +87,7 @@ namespace rpwa {
 			bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
 			bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
 			bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
+			bool readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters);
 
 			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 			bool readConfigModelComponents(const libconfig::Setting* configComponents,
@@ -160,6 +163,8 @@ namespace rpwa {
 			std::vector<std::pair<size_t, size_t> > _waveMassBinLimits;
 
 			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
+
+			std::vector<std::string> _freeParameters;
 
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;

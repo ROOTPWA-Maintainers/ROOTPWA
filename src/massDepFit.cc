@@ -43,6 +43,7 @@
 #include <string>
 
 #include <boost/assign/std/vector.hpp>
+#include <boost/tokenizer.hpp>
 
 #include <Math/Minimizer.h>
 #include <Math/Factory.h>
@@ -127,6 +128,13 @@ rpwa::massDepFit::massDepFit::readConfigInput(const Setting* configInput)
 	const Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
 	if(not readConfigInputSystematics(configInputSystematics)) {
 		printErr << "error while reading 'waves' in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	// get information for which parameters to release in which order
+	const Setting* configInputFreeParameters = findLibConfigArray(*configInput, "freeparameters", false);
+	if(not readConfigInputFreeParameters(configInputFreeParameters)) {
+		printErr << "error while reading 'freeparameters' in section '" << configInput->getName() << "' in configuration file." << endl;
 		return false;
 	}
 
@@ -310,6 +318,46 @@ rpwa::massDepFit::massDepFit::readConfigInputSystematics(const Setting* configIn
 	_nrSystematics = _sysFileNames.size() + 1;
 	if(_debug) {
 		printDebug << "in total " << _nrSystematics << " files to be read to get information for systematic errors." << endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const Setting* configInputFreeParameters)
+{
+	if(not configInputFreeParameters) {
+		_freeParameters.clear();
+		_freeParameters.push_back("");
+		_freeParameters.push_back("mass m0");
+		_freeParameters.push_back("*");
+		return true;
+	}
+
+	_freeParameters.clear();
+
+	const int nrItems = configInputFreeParameters->getLength();
+
+	if(_debug) {
+		printDebug << "going to extract " << nrItems << " items from '" << configInputFreeParameters->getName() << "'." << endl;
+	}
+
+	for(int idxItem=0; idxItem<nrItems; ++idxItem) {
+		const Setting& item = (*configInputFreeParameters)[idxItem];
+
+		if(item.getType() != Setting::TypeString) {
+			printErr << "'" << configInputFreeParameters->getName() << "' must be array of strings." << endl;
+			return false;
+		}
+
+		const std::string name = item;
+
+		if(_debug) {
+			printDebug << idxItem << ": '" << name << "'." << endl;
+		}
+
+		_freeParameters.push_back(name);
 	}
 
 	return true;
@@ -721,7 +769,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
 
 			ostringstream sName;
-			sName << "PSP_" << iPar;
+			sName << "PSP__" << iPar;
 			const int varIndex = minimizer->VariableIndex(sName.str());
 			if(varIndex == -1) {
 				printErr << "variable '" << sName.str() << "' used to extract the error for one parameter "
@@ -1936,18 +1984,23 @@ usage(const string& progName,
 bool
 releasePars(Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
-            const int level)
+            const string& freeParameters)
 {
 	// save current state
 	const size_t npar = compset.getNrParameters();
 	double par[npar];
-	if(level == 0) {
+
+	if(minimizer->NFree() == 0) {
 		compset.getParameters(par);
 	} else {
 		for(size_t i=0; i<npar; ++i) {
 			par[i]=minimizer->X()[i];
 		}
 	}
+
+	// tokenize freeParameters string (default deparators also include '*')
+	char_separator<char> separators(" ,\t\n");
+	tokenizer<char_separator<char> > tokenizeFreeParameters(freeParameters, separators);
 
 	// reset minimizer
 	minimizer->Clear();
@@ -1991,15 +2044,15 @@ releasePars(Minimizer* minimizer,
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
 			const string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
 
-			bool fix = false;
+			bool free = false;
+			if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
+			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getName())!=tokenizeFreeParameters.end()
+			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getParameterName(idxParameter))!=tokenizeFreeParameters.end()
+			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getName() + "__" + comp->getParameterName(idxParameter))!=tokenizeFreeParameters.end()) {
+				free = true;
+			}
+			bool fix = not free;
 			if(comp->getParameterFixed(idxParameter)) {
-				fix = true;
-			}
-			if(level == 0) {
-				fix = true;
-			}
-			if(level == 1 && (comp->getParameterName(idxParameter)=="width"
-			                  || comp->getParameterName(idxParameter)=="g")) {
 				fix = true;
 			}
 
@@ -2052,7 +2105,7 @@ releasePars(Minimizer* minimizer,
 		double lower,upper;
 		compset.getFsmdParameterLimits(ifreeFsmd, lower, upper);
 		ostringstream name;
-		name << "PSP_" << ifreeFsmd;
+		name << "PSP__" << ifreeFsmd;
 		printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << val << endl;
 		minimizer->SetLimitedVariable(parcount,
 		                              name.str().c_str(),
@@ -2237,67 +2290,48 @@ main(int    argc,
 		minimizer->SetMaxIterations   (maxNmbOfIterations);
 		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
-		// set startvalues
-		if(not releasePars(minimizer, compset, 0)) {
-			printErr << "error while setting start parameters." << endl;
-			return 1;
+		// keep list of parameters to free
+		const vector<string> freeParameters = mdepFit.getFreeParameters();
+		const size_t nrSteps = freeParameters.size();
+
+		bool success = true;
+		for(size_t step=0; step<nrSteps; ++step) {
+			// set startvalues
+			if(not releasePars(minimizer, compset, freeParameters[step])) {
+				printErr << "error while setting start parameters for step " << step << "." << endl;
+				return 1;
+			}
+
+			// keep track of the time spend in the fit
+			TStopwatch stopwatch;
+
+			printInfo << "performing minimization step " << step << ": '" << freeParameters[step] << "' (" << minimizer->NFree() << " free parameters)." << endl;
+			stopwatch.Start();
+			success &= minimizer->Minimize();
+			stopwatch.Stop();
+
+			if(not success) {
+				printWarn << "minimization failed." << endl;
+			} else {
+				printInfo << "minimization successful." << endl;
+			}
+			printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 		}
-
-		const unsigned int nmbPar  = L.NDim();
-		printInfo << nmbPar << " parameters in fit." << endl;
-
-		// keep track of the time spend in the fit
-		TStopwatch stopwatch;
-
-		// only do couplings
-		printInfo << "performing first minimization step: masses and widths fixed, couplings free (" << minimizer->NFree() << " free parameters)." << endl;
-		stopwatch.Start();
-		bool success = minimizer->Minimize();
-		stopwatch.Stop();
-
-		if(not success) {
-			printWarn << "minimization failed." << endl;
-		} else {
-			printInfo << "minimization successful." << endl;
-		}
-		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
-
-		// release masses
-		releasePars(minimizer, compset, 1);
-		printInfo << "performing second minimization step: widths fixed, masses and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
-		stopwatch.Start();
-		success &= minimizer->Minimize();
-		stopwatch.Stop();
-		if(not success) {
-			printWarn << "minimization failed." << endl;
-		} else {
-			printInfo << "minimization successful." << endl;
-		}
-		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
-
-		//release widths
-		releasePars(minimizer, compset, 2);
-		printInfo << "performing third minimization step: masses, widths and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
-		stopwatch.Start();
-		success &= minimizer->Minimize();
-		stopwatch.Stop();
-		if(not success) {
-			printWarn << "minimization failed." << endl;
-		} else {
-			printInfo << "minimization successful." << endl;
-		}
-		printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 
 		if(runHesse) {
+			TStopwatch stopwatch;
+
 			printInfo << "calculating Hessian matrix." << endl;
 			stopwatch.Start();
 			success &= minimizer->Hesse();
 			stopwatch.Stop();
+
 			if(not success) {
 				printWarn << "calculation of Hessian matrix failed." << endl;
 			} else {
 				printInfo << "calculation of Hessian matrix successful." << endl;
 			}
+			printInfo << "calculating Hessian matrix took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
 		}
 
 		printInfo << "minimizer status summary:" << endl
@@ -2315,7 +2349,8 @@ main(int    argc,
 
 		// print results
 		ostringstream output;
-		for (unsigned int i = 0; i< nmbPar; ++i) {
+		const unsigned int nmbPar  = L.NDim();
+		for (unsigned int i = 0; i<nmbPar; ++i) {
 			output << "    parameter [" << setw(3) << i << "] ";
 			output << minimizer->VariableName(i) << " " ;
 			output << maxPrecisionAlign(minimizer->X()[i]) << " +- " << maxPrecisionAlign(minimizer->Errors()[i]);
