@@ -475,7 +475,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		if(type == "fixedWidthBreitWigner") {
 			component = new fixedWidthBreitWigner(name);
 		} else if(type == "exponentialBackground") {
-			component = new pwabkg(name);
+			component = new exponentialBackground(name);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << endl;
 			return false;

@@ -519,7 +519,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
 }
 
 
-rpwa::massDepFit::pwabkg::pwabkg(const string& name)
+rpwa::massDepFit::exponentialBackground::exponentialBackground(const string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "m0";
@@ -531,14 +531,15 @@ rpwa::massDepFit::pwabkg::pwabkg(const string& name)
 
 
 bool
-rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
-                               const size_t nrBins,
-                               const vector<double>& massBinCenters,
-                               const map<string, size_t>& waveIndices,
-                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                               const bool debug) {
+rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configComponent,
+                                              const size_t nrBins,
+                                              const vector<double>& massBinCenters,
+                                              const map<string, size_t>& waveIndices,
+                                              const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                              const bool debug)
+{
 	if(debug) {
-		printDebug << "starting initialization of 'pwabkg' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'exponentialBackground' for component '" << getName() << "'." << endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
@@ -588,7 +589,7 @@ rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
 
 		printDebug << "component '" << getName() << "':" << endl << output.str();
 
-		printDebug << "finished initialization of 'pwabkg'." << endl;
+		printDebug << "finished initialization of 'exponentialBackground'." << endl;
 	}
 
 	return true;
@@ -596,8 +597,9 @@ rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
 
 
 complex<double>
-rpwa::massDepFit::pwabkg::val(const size_t idxBin,
-                              const double m) const {
+rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
+                                             const double m) const
+{
 	// shift baseline mass
 	const double mass = m - _parameters[0];
 
@@ -612,7 +614,7 @@ rpwa::massDepFit::pwabkg::val(const size_t idxBin,
 
 
 ostream&
-rpwa::massDepFit::pwabkg::print(ostream& out) const
+rpwa::massDepFit::exponentialBackground::print(ostream& out) const
 {
 	out << getName() << endl
 	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
