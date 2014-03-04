@@ -148,11 +148,11 @@ namespace rpwa {
 
 		};
 
-		class pwacomponent : public component {
+		class fixedWidthBreitWigner : public component {
 
 		public:
 
-			pwacomponent(const std::string& name);
+			fixedWidthBreitWigner(const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,

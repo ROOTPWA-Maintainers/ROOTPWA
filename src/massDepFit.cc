@@ -462,9 +462,9 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		string type;
 		if(not configComponent->lookupValue("type", type)) {
 			if(_debug) {
-				printDebug << "component '" << name << "' has no type, use 'relativisticBreitWigner'." << endl;
+				printDebug << "component '" << name << "' has no type, use 'fixedWidthBreitWigner'." << endl;
 			}
-			type = "relativisticBreitWigner";
+			type = "fixedWidthBreitWigner";
 		}
 
 		if(_debug) {
@@ -472,8 +472,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		}
 
 		rpwa::massDepFit::component* component = NULL;
-		if(type == "relativisticBreitWigner") {
-			component = new pwacomponent(name);
+		if(type == "fixedWidthBreitWigner") {
+			component = new fixedWidthBreitWigner(name);
 		} else if(type == "exponentialBackground") {
 			component = new pwabkg(name);
 		} else {
