@@ -1,8 +1,8 @@
 //-----------------------------------------------------------
 //
 // Description:
-//      Implementation of class pwacomponent
-//      see pwacomponent.h for details
+//      Implementation of components and channels
+//      see massDepFitComponents.h for details
 //
 //
 // Author List:
@@ -412,7 +412,7 @@ rpwa::massDepFit::component::print(ostream& out) const
 }
 
 
-rpwa::massDepFit::pwacomponent::pwacomponent(const string& name)
+rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "mass";
@@ -424,14 +424,15 @@ rpwa::massDepFit::pwacomponent::pwacomponent(const string& name)
 
 
 bool
-rpwa::massDepFit::pwacomponent::init(const libconfig::Setting* configComponent,
-                                     const size_t nrBins,
-                                     const vector<double>& massBinCenters,
-                                     const map<string, size_t>& waveIndices,
-                                     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                     const bool debug) {
+rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configComponent,
+                                              const size_t nrBins,
+                                              const vector<double>& massBinCenters,
+                                              const map<string, size_t>& waveIndices,
+                                              const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                              const bool debug)
+{
 	if(debug) {
-		printDebug << "starting initialization of 'pwacomponent' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'fixedWidthBreitWigner' for component '" << getName() << "'." << endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
@@ -479,15 +480,16 @@ rpwa::massDepFit::pwacomponent::init(const libconfig::Setting* configComponent,
 
 		printDebug << "component '" << getName() << "':" << endl << output.str();
 
-		printDebug << "finished initialization of 'pwacomponent'." << endl;
+		printDebug << "finished initialization of 'fixedWidthBreitWigner'." << endl;
 	}
 	return true;
 }
 
 
 complex<double>
-rpwa::massDepFit::pwacomponent::val(const size_t idxBin,
-                                    const double m) const {
+rpwa::massDepFit::fixedWidthBreitWigner::val(const size_t idxBin,
+                                             const double m) const
+{
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
 	// calculate dynamic width:
@@ -509,7 +511,7 @@ rpwa::massDepFit::pwacomponent::val(const size_t idxBin,
 
 
 ostream&
-rpwa::massDepFit::pwacomponent::print(ostream& out) const
+rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
 {
 	out << getName() << endl
 	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    ConstWidth=" << _constWidth << endl;
