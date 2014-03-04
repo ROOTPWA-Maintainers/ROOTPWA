@@ -483,6 +483,8 @@ main(int    argc,
 		double chi2 = 0.;
 		if(success) {
 			chi2 = L.DoEval(par);
+		} else {
+			printInfo << "chi2 (if fit were successful) = " << maxPrecisionAlign(L.DoEval(par)) << endl;
 		}
 		printInfo << "chi2 = " << maxPrecisionAlign(chi2) << endl;
 		compset.setParameters(par);
