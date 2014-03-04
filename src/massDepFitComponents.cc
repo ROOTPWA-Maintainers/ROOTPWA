@@ -172,7 +172,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		const int nrCouplings = configCouplings->getLength();
-		if(nrCouplings != nrBins) {
+		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
 			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << nrBins << "." << endl;
 			return false;
 		}
@@ -265,7 +265,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 	}
 
 	const int nrDecayChannels = decayChannels->getLength();
-	if(nrDecayChannels != getNrChannels()) {
+	if(nrDecayChannels < 0 || static_cast<size_t>(nrDecayChannels) != getNrChannels()) {
 		printErr << "number of decay channels in configuration file and fit model does not match." << endl;
 		return false;
 	}
@@ -286,7 +286,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		decayChannel->lookupValue("amp", waveName);
 
 		const rpwa::massDepFit::channel* channel = NULL;
-		for(size_t idx=0; idx<nrDecayChannels; ++idx) {
+		for(size_t idx=0; idx<getNrChannels(); ++idx) {
 			if(getChannelWaveName(idx) == waveName) {
 				channel = &getChannel(idx);
 				break;
@@ -304,7 +304,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		}
 
 		const int nrCouplings = configCouplings->getLength();
-		if(nrCouplings != channel->getNrBins()) {
+		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != channel->getNrBins()) {
 			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << endl;
 			return false;
 		}
