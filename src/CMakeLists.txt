@@ -53,6 +53,7 @@ set(SOURCES
 	complexMatrix.cc
 	pwaLikelihood.cc
 	pwaPlotter.cc
+	massDepFit.cc
 	massDepFitComponents.cc
 	massDepFitLikeli.cc
 	massDepFitModel.cc
@@ -92,7 +93,7 @@ make_shared_library(
 make_executable(pwafit            pwafit.cc            ${THIS_LIB} "${UTILITIES_LIBS}")
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
-make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${UTILITIES_LIBS}" "${Libconfig_LIBS}")
+make_executable(pwaMassFit        pwaMassFit.cc        ${THIS_LIB} "${UTILITIES_LIBS}" "${Libconfig_LIBS}")
 
 # build tests
 add_subdirectory(test)
