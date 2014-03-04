@@ -376,18 +376,25 @@ main(int    argc,
 		return 1;
 	}
 
+	// set-up likelihood
+	rpwa::massDepFit::likelihood L;
+	L.init(&compset,
+	       mdepFit.getMassBinCenters(),
+	       mdepFit.getInSpinDensityMatrices(),
+	       mdepFit.getInSpinDensityCovarianceMatrices(),
+	       mdepFit.getWavePairMassBinLimits(),
+	       doCov);
+
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << endl;
-	} else {
-		// set-up likelihood
-		rpwa::massDepFit::likelihood L;
-		L.init(&compset,
-		       mdepFit.getMassBinCenters(),
-		       mdepFit.getInSpinDensityMatrices(),
-		       mdepFit.getInSpinDensityCovarianceMatrices(),
-		       mdepFit.getWavePairMassBinLimits(),
-		       doCov);
 
+		// still calculate a chi2 from the values in the configuration file
+		const size_t npar = compset.getNrParameters();
+		double par[npar];
+		compset.getParameters(par);
+
+		printInfo << "chi2 (valid only if fit was successful) = " << maxPrecisionAlign(L.DoEval(par)) << endl;
+	} else {
 		// setup minimizer
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 		          << "using algorithm '" << minimizerType[1] << "'" << endl;
