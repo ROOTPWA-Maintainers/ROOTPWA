@@ -172,11 +172,11 @@ namespace rpwa {
 
 		};
 
-		class pwabkg : public component {
+		class exponentialBackground : public component {
 
 		public:
 
-			pwabkg(const std::string& name);
+			exponentialBackground(const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
