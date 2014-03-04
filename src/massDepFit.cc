@@ -196,7 +196,7 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const Setting* configInp
 			if(_debug) {
 				ostringstream output;
 				output << "[ '";
-				for(int idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
+				for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
 					if(idxPart > 0) {
 						output << "', '";
 					}
@@ -457,7 +457,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		string name;
 		configComponent->lookupValue("name", name);
 
-		for(int idx=0; idx<fitModel.getNrComponents(); ++idx) {
+		for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
 			if(fitModel.getComponent(idx)->getName() == name) {
 				printErr << "component '" << name << "' defined twice." << endl;
 				return false;
@@ -538,7 +538,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 	configFsmd->lookupValue("formula", formula);
 
 	TF1* fsmdFunction = new TF1("finalStateMassDependence", formula.c_str(), _massMin, _massMax);
-	const unsigned int nrPar = fsmdFunction->GetNpar();
+	const Int_t nrPar = fsmdFunction->GetNpar();
 
 	const Setting& configFsmdValue = (*configFsmd)["val"];
 	if(configFsmdValue.getLength() != nrPar) {
@@ -590,7 +590,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		return false;
 	}
 
-	for(unsigned int i=0; i<nrPar; ++i) {
+	for(Int_t i=0; i<nrPar; ++i) {
 		fsmdFunction->SetParameter(i, configFsmdValue[i]);
 		fsmdFunction->SetParError(i, configFsmdError[i]);
 		fsmdFunction->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
@@ -695,7 +695,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 	}
 
 	const int nrComponents = configComponents->getLength();
-	if(nrComponents != fitModel.getNrComponents()) {
+	if(nrComponents < 0 || static_cast<size_t>(nrComponents) != fitModel.getNrComponents()) {
 		printErr << "number of components in configuration file and fit model does not match." << endl;
 		return false;
 	}
@@ -717,7 +717,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 		configComponent->lookupValue("name", name);
 
 		const rpwa::massDepFit::component* component = NULL;
-		for(size_t idx=0; idx<nrComponents; ++idx) {
+		for(size_t idx=0; fitModel.getNrComponents(); ++idx) {
 			if(fitModel.getComponent(idx)->getName() == name) {
 				component = fitModel.getComponent(idx);
 				break;
@@ -1107,7 +1107,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	}
 
 	// reset mapping
-	mapping.assign(_nrMassBins, numeric_limits<size_t>::max());
+	mapping.assign(_nrMassBins, numeric_limits<Long64_t>::max());
 
 	// extract data from tree
 	const Long64_t nrEntries = tree->GetEntries();
@@ -1144,8 +1144,8 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 			return false;
 		}
 
-		if(mapping[idxMass] != numeric_limits<size_t>::max()) {
-			printErr << "cannat map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2)  "
+		if(mapping[idxMass] != numeric_limits<Long64_t>::max()) {
+			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2)  "
 			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << endl;
 			return false;
 		}
@@ -1158,7 +1158,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 
 	// check that all mass bins are mapped
 	for(size_t idx=0; idx<mapping.size(); ++idx) {
-		if(mapping[idx] == numeric_limits<size_t>::max()) {
+		if(mapping[idx] == numeric_limits<Long64_t>::max()) {
 			printErr << "mass bin " << idx << " (" << _massBinCenters[idx] << " MeV/c^2) not mapped." << endl;
 			return false;
 		}

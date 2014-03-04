@@ -14,6 +14,7 @@
 #define MASSDEPFITMODEL_HH
 
 #include <complex>
+#include <limits>
 #include <vector>
 
 class TF1;
