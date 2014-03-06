@@ -34,7 +34,6 @@
 {
 	// set include paths
 	gSystem->AddIncludePath("-I$BOOST_ROOT");
-	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 
 	// define macro ROOT_CINT; used to exclude code parts from ACLiC compilation
@@ -47,7 +46,6 @@
 	gSystem->SetMakeSharedLib(cmd.Data());
 
 	// load shared libraries
-	gSystem->Load("libpp.so");
 	gSystem->Load("libRootPwa.so");
 	gSystem->Load("libRootPwaAmp.so");
 }
