@@ -440,17 +440,6 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		return false;
 	}
 
-	const libconfig::Setting* configWidth = findLibConfigGroup(*configComponent, "width");
-	if(not configWidth) {
-		printErr << "component '" << getName() << "' has no section 'width'." << endl;
-		return false;
-	}
-
-	if(not configWidth->lookupValue("dyn", _constWidth)) {
-		_constWidth = false;
-	}
-	_constWidth = !_constWidth;
-
 	if(debug) {
 		ostringstream output;
 		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
@@ -475,8 +464,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[1] ? "(FIXED) " : "");
-		output << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
 
 		printDebug << "component '" << getName() << "':" << endl << output.str();
 
@@ -492,21 +480,8 @@ rpwa::massDepFit::fixedWidthBreitWigner::val(const size_t idxBin,
 {
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
-	// calculate dynamic width:
-	// loop over decay channels
-	double ps = 1.;
-	if(!_constWidth){
-		ps=0; // no not forget to reset phase space here!
-		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
-			const double ps0 = itChan->getPhaseSpace(idxBin, m0, std::numeric_limits<size_t>::max());
-			const double ratio = itChan->getPhaseSpace(idxBin, m, std::numeric_limits<size_t>::max()) / ps0;
-			ps += ratio*ratio;
-		}
-		ps /= getNrChannels();
-	}
-	const double gamma = gamma0*ps;
 
-	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
+	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma0*m0);
 }
 
 
@@ -514,7 +489,7 @@ ostream&
 rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
 {
 	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    ConstWidth=" << _constWidth << endl;
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
 	return component::print(out);
 }
 

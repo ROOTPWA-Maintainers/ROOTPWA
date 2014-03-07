@@ -166,10 +166,6 @@ namespace rpwa {
 
 			virtual std::ostream& print(std::ostream& out) const;
 
-		private:
-
-			bool _constWidth;
-
 		};
 
 		class exponentialBackground : public component {
