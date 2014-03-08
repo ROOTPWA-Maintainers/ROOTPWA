@@ -494,6 +494,142 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
 }
 
 
+rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const string& name)
+	: component(name, 2),
+	  _nrBins(0)
+{
+	_parametersName[0] = "mass";
+	_parametersName[1] = "width";
+
+	_parametersStep[0] = 1.0;
+	_parametersStep[1] = 1.0;
+}
+
+
+rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const rpwa::massDepFit::parameterizationA1Bowler& comp)
+	: component(comp),
+	  _nrBins(comp._nrBins),
+	  _massBinCenters(comp._massBinCenters),
+	  _phaseSpace(comp._phaseSpace)
+{
+	_interpolator.resize(_nrBins);
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
+		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
+	}
+}
+
+
+rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
+{
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		delete _interpolator[idxBin];
+	}
+}
+
+
+bool
+rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* configComponent,
+                                                 const size_t nrBins,
+                                                 const vector<double>& massBinCenters,
+                                                 const map<string, size_t>& waveIndices,
+                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                 const bool debug)
+{
+	if(debug) {
+		printDebug << "starting initialization of 'parameterizationA1Bowler' for component '" << getName() << "'." << endl;
+	}
+
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+		printErr << "error while reading configuration of 'component' class." << endl;
+		return false;
+	}
+
+	if(getNrChannels() != 1) {
+		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << endl;
+		return false;
+	}
+
+	const std::string& waveName = getChannelWaveName(0);
+
+	const map<string, size_t>::const_iterator it = waveIndices.find(waveName);
+	if(it == waveIndices.end()) {
+		printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << endl;
+		return false;
+	}
+
+	_nrBins = nrBins;
+	_massBinCenters = massBinCenters;
+
+	_phaseSpace.resize(boost::extents[_nrBins][_massBinCenters.size()]);
+	boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
+	_phaseSpace = view;
+
+	_interpolator.resize(_nrBins);
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
+		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
+	}
+
+	if(debug) {
+		ostringstream output;
+		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[0]) {
+			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[0]) {
+			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+
+		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[1]) {
+			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[1]) {
+			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
+
+		printDebug << "component '" << getName() << "':" << endl << output.str();
+
+		printDebug << "finished initialization of 'parameterizationA1Bowler'." << endl;
+	}
+	return true;
+}
+
+
+complex<double>
+rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
+                                                const double m) const
+{
+	const double& m0 = _parameters[0];
+	const double& gamma0 = _parameters[1];
+
+	const double ps = _interpolator[idxBin]->Eval(m);
+	const double ps0 = _interpolator[idxBin]->Eval(m0);
+
+	const double gamma = gamma0 * m0/m * (ps*ps)/(ps0*ps0);
+
+	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
+}
+
+
+ostream&
+rpwa::massDepFit::parameterizationA1Bowler::print(ostream& out) const
+{
+	out << getName() << endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
+	return component::print(out);
+}
+
+
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const string& name)
 	: component(name, 2)
 {

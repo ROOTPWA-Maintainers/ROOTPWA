@@ -474,6 +474,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		rpwa::massDepFit::component* component = NULL;
 		if(type == "fixedWidthBreitWigner") {
 			component = new fixedWidthBreitWigner(name);
+		} else if(type == "parameterizationA1Bowler") {
+			component = new parameterizationA1Bowler(name);
 		} else if(type == "exponentialBackground") {
 			component = new exponentialBackground(name);
 		} else {
