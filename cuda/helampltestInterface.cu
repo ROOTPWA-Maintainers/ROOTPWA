@@ -2,7 +2,7 @@
 #include <complex>
 #include "complex.cuh"
 #include <cuda.h>
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 #include <TROOT.h>
 #include "TFile.h"
 #include "TH1.h"
@@ -454,7 +454,7 @@ namespace cupwa {
   void DMAccess(vertexdata* data, int N)
   {
     printf("address0 before: %x\n",&data[0].JX);
-    cutilSafeCall( cudaHostAlloc((void**)&data, N*sizeof(vertexdata), cudaHostAllocDefault) );
+    checkCudaErrors( cudaHostAlloc((void**)&data, N*sizeof(vertexdata), cudaHostAllocDefault) );
     printf("address0 after: %x\n",&data[0].JX);    
   }
     
@@ -465,8 +465,8 @@ namespace cupwa {
 	  timespec bartime_beg, bartime_end; 
 	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bartime_beg);
       cudaEvent_t start, stop;
-      cutilSafeCall( cudaEventCreate(&start) );
-      cutilSafeCall( cudaEventCreate(&stop)  );
+      checkCudaErrors( cudaEventCreate(&start) );
+      checkCudaErrors( cudaEventCreate(&stop)  );
 	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bartime_end); 
 	  printf("\n\n%.3f ms required for creating cuda-events (timespec)\n", ( ( (bartime_end.tv_sec - bartime_beg.tv_sec) ) + (bartime_end.tv_nsec - bartime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
           
@@ -477,45 +477,45 @@ namespace cupwa {
     cuda::complex<double>* dev_result_GPUAmp;
     vertexdata* dev_data; 
 	      
-	  cutilSafeCall( cudaEventRecord( start, 0) );
+	  checkCudaErrors( cudaEventRecord( start, 0) );
 	  timespec footime_beg, footime_end; 
 	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &footime_beg); 
-    cutilSafeCall( cudaHostAlloc((void**)&result_GPUAmp, N*sres, cudaHostAllocDefault) );
-// //    cutilSafeCall( cudaHostAlloc((void**)&data, N*sdata, cudaHostAllocDefault) ); //doesn't work properly
+    checkCudaErrors( cudaHostAlloc((void**)&result_GPUAmp, N*sres, cudaHostAllocDefault) );
+// //    checkCudaErrors( cudaHostAlloc((void**)&data, N*sdata, cudaHostAllocDefault) ); //doesn't work properly
 	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &footime_end); 
 	  printf("\n\n%.3f ms required for allocating memory (timespec)\n", ( ( (footime_end.tv_sec - footime_beg.tv_sec) ) + (footime_end.tv_nsec - footime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
-          cutilSafeCall( cudaEventRecord( stop, 0) );
-	  cutilSafeCall( cudaEventSynchronize( stop ) );
-	  cutilSafeCall( cudaEventElapsedTime( &timer[0], start, stop));
+          checkCudaErrors( cudaEventRecord( stop, 0) );
+	  checkCudaErrors( cudaEventSynchronize( stop ) );
+	  checkCudaErrors( cudaEventElapsedTime( &timer[0], start, stop));
 	  printf("%.3f ms required for allocating memory\n",timer[0]);
      
-    cutilSafeCall( cudaMalloc((void**)&dev_result_GPUAmp, N*sres) );
-    cutilSafeCall( cudaMalloc((void**)&dev_data, N*sdata) );
+    checkCudaErrors( cudaMalloc((void**)&dev_result_GPUAmp, N*sres) );
+    checkCudaErrors( cudaMalloc((void**)&dev_data, N*sdata) );
 	  
-	  cutilSafeCall( cudaEventRecord( start, 0) );
-    cutilSafeCall( cudaMemcpy(dev_data, data, N*sdata, cudaMemcpyHostToDevice) );
-          cutilSafeCall( cudaEventRecord( stop, 0) );
-	  cutilSafeCall( cudaEventSynchronize( stop ) );
-	  cutilSafeCall( cudaEventElapsedTime( &timer[1], start, stop));
+	  checkCudaErrors( cudaEventRecord( start, 0) );
+    checkCudaErrors( cudaMemcpy(dev_data, data, N*sdata, cudaMemcpyHostToDevice) );
+          checkCudaErrors( cudaEventRecord( stop, 0) );
+	  checkCudaErrors( cudaEventSynchronize( stop ) );
+	  checkCudaErrors( cudaEventElapsedTime( &timer[1], start, stop));
 	  printf("%.3f ms required for uploading\n",timer[1]);
 	  printf("%f GB/s bandwidth for upload\n",(N*(sdata/(timer[1]/1e3))/(1024*1024*1024)));
 	  
     int threadsPerBlock = 512;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;    
-	  cutilSafeCall( cudaEventRecord( start, 0) );
+	  checkCudaErrors( cudaEventRecord( start, 0) );
     GPUAmp2<<<blocksPerGrid, threadsPerBlock>>>(dev_data,dev_result_GPUAmp,N);
-	  cutilSafeCall( cudaThreadSynchronize() );
-	  cutilSafeCall( cudaEventRecord( stop, 0) );
-	  cutilSafeCall( cudaEventSynchronize( stop ) );
-	  cutilSafeCall( cudaEventElapsedTime( &timer[2], start, stop));
+	  checkCudaErrors( cudaThreadSynchronize() );
+	  checkCudaErrors( cudaEventRecord( stop, 0) );
+	  checkCudaErrors( cudaEventSynchronize( stop ) );
+	  checkCudaErrors( cudaEventElapsedTime( &timer[2], start, stop));
 	  printf("%.3f ms required for calculating on device\n",timer[2]);
 	  printf("%f GB/s Bandwidth\n", (N*(sdata+sres)/(timer[2]/1e3))/(1024*1024*1024) );
     
-          cutilSafeCall( cudaEventRecord( start, 0) );
-    cutilSafeCall( cudaMemcpy(result_GPUAmp, dev_result_GPUAmp, N*sres, cudaMemcpyDeviceToHost) );
-          cutilSafeCall( cudaEventRecord( stop, 0) );
-	  cutilSafeCall( cudaEventSynchronize( stop ) );
-	  cutilSafeCall( cudaEventElapsedTime( &timer[3], start, stop));
+          checkCudaErrors( cudaEventRecord( start, 0) );
+    checkCudaErrors( cudaMemcpy(result_GPUAmp, dev_result_GPUAmp, N*sres, cudaMemcpyDeviceToHost) );
+          checkCudaErrors( cudaEventRecord( stop, 0) );
+	  checkCudaErrors( cudaEventSynchronize( stop ) );
+	  checkCudaErrors( cudaEventElapsedTime( &timer[3], start, stop));
 	  printf("%.3f ms required for downloading\n",timer[3]);
 	  printf("%f GB/s bandwidth for download\n",(N*(sres/(timer[3]/1e3))/(1024*1024*1024)));
 	  printf("%.3f ms required for GPU call without malloc stuff, etc.\n",timer[1]+timer[2]+timer[3]);
@@ -531,7 +531,7 @@ namespace cupwa {
   if (1) {
     timespec roottime_beg, roottime_end; 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &roottime_beg); 
-    cutilSafeCall( cudaEventRecord( start, 0) );
+    checkCudaErrors( cudaEventRecord( start, 0) );
     // Visualize results via root
     // Create a root file and a TTree
     // Structure to hold the variables for the branch
@@ -576,22 +576,22 @@ namespace cupwa {
     // Check what the tree looks like
     tree->Print();
     f->Write();
-    cutilSafeCall( cudaEventRecord( stop, 0) );
-    cutilSafeCall( cudaEventSynchronize( stop ) );
-    cutilSafeCall( cudaEventElapsedTime( &timer[4], start, stop));
+    checkCudaErrors( cudaEventRecord( stop, 0) );
+    checkCudaErrors( cudaEventSynchronize( stop ) );
+    checkCudaErrors( cudaEventElapsedTime( &timer[4], start, stop));
     printf("%.3f ms required for root stuff\n",timer[4]);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &roottime_end); 
     printf("\n\n%.3f ms required for root stuff (time spec)\n", ( ( (roottime_end.tv_sec - roottime_beg.tv_sec) ) + (roottime_end.tv_nsec - roottime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
  
   }
 	
-    cutilSafeCall( cudaFreeHost(result_GPUAmp) );
-//    cutilSafeCall( cudaFreeHost(data) );
+    checkCudaErrors( cudaFreeHost(result_GPUAmp) );
+//    checkCudaErrors( cudaFreeHost(data) );
     cudaFree(dev_result_GPUAmp);
     cudaFree(dev_data);
    
-    cutilSafeCall( cudaEventDestroy(start) );
-    cutilSafeCall( cudaEventDestroy(stop) );
+    checkCudaErrors( cudaEventDestroy(start) );
+    checkCudaErrors( cudaEventDestroy(stop) );
 
   }
 
@@ -656,38 +656,38 @@ namespace cupwa {
     result_GPUAmp = (cuda::complex<double>*)malloc(sizeof(cuda::complex<double>));
     if (result_GPUAmp == 0) free(result_GPUAmp);
   
-    cutilSafeCall( cudaMalloc((void**)&dev_result_GPUAmp, sizeof(cuda::complex<double>)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_result_GPUAmp, sizeof(cuda::complex<double>)) );
     
-    cutilSafeCall( cudaMalloc((void**)&dev_theta1, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_theta2, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_phi1, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_phi2, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_wX, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_wf2, sizeof(double)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_JX, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_Lambda, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_J1, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_L1, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_S1, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_J2, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_L2, sizeof(int)) );
-    cutilSafeCall( cudaMalloc((void**)&dev_S2, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_theta1, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_theta2, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_phi1, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_phi2, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_wX, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_wf2, sizeof(double)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_JX, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_Lambda, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_J1, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_L1, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_S1, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_J2, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_L2, sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&dev_S2, sizeof(int)) );
     
-    cutilSafeCall( cudaMemcpy(dev_theta1, &theta1, sizeof(double), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_theta2, &theta2, sizeof(double), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_phi1,	  &phi1,   sizeof(double), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_phi2,	  &phi2,   sizeof(double), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_wX,	  &wX,     sizeof(double), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_wf2,	  &wf2,    sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_theta1, &theta1, sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_theta2, &theta2, sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_phi1,	  &phi1,   sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_phi2,	  &phi2,   sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_wX,	  &wX,     sizeof(double), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_wf2,	  &wf2,    sizeof(double), cudaMemcpyHostToDevice) );
     
-    cutilSafeCall( cudaMemcpy(dev_Lambda, &Lambda, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_JX, &JX, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_J1, &J1, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_L1, &L1, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_S1, &S1, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_J2, &J2, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_L2, &L2, sizeof(int), cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(dev_S2, &S2, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_Lambda, &Lambda, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_JX, &JX, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_J1, &J1, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_L1, &L1, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_S1, &S1, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_J2, &J2, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_L2, &L2, sizeof(int), cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(dev_S2, &S2, sizeof(int), cudaMemcpyHostToDevice) );
     
     
     
@@ -696,7 +696,7 @@ namespace cupwa {
     
     GPUAmp<<<blocksPerGrid, threadsPerBlock>>>(dev_theta1,dev_phi1,dev_theta2,dev_phi2,dev_wX,dev_wf2,dev_JX,dev_Lambda,dev_J1,dev_L1,dev_S1,dev_J2,dev_L2,dev_S2,dev_result_GPUAmp);
     
-    cutilSafeCall( cudaMemcpy(result_GPUAmp, dev_result_GPUAmp, sizeof(cuda::complex<double>), cudaMemcpyDeviceToHost) );
+    checkCudaErrors( cudaMemcpy(result_GPUAmp, dev_result_GPUAmp, sizeof(cuda::complex<double>), cudaMemcpyDeviceToHost) );
     
     
     printf("\nresult: %2.20f + i*(%2.20f)\n\n", result_GPUAmp[0].real(), result_GPUAmp[0].imag() );

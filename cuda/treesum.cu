@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <cuda.h>
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 #include <time.h>
 #include <iostream>
 #include <unistd.h>
@@ -65,17 +65,17 @@ int main(int argc, char *argv[]) {
   int N = atoi( argv[1] );
   float timer[10];
   cudaEvent_t start, stop;
-  cutilSafeCall( cudaEventCreate(&start) );
-  cutilSafeCall( cudaEventCreate(&stop)  );
+  checkCudaErrors( cudaEventCreate(&start) );
+  checkCudaErrors( cudaEventCreate(&stop)  );
   
   double *A, *partial_result, C, CPU_result;
   double *dev_A, *dev_partial_result;
   
-  cutilSafeCall( cudaHostAlloc((void**)&A, N*sizeof(double), cudaHostAllocDefault) );
-  cutilSafeCall( cudaHostAlloc((void**)&partial_result, N*sizeof(double), cudaHostAllocDefault) );
+  checkCudaErrors( cudaHostAlloc((void**)&A, N*sizeof(double), cudaHostAllocDefault) );
+  checkCudaErrors( cudaHostAlloc((void**)&partial_result, N*sizeof(double), cudaHostAllocDefault) );
   
-  cutilSafeCall( cudaMalloc((void**)&dev_A,N*sizeof(double)) );
-  cutilSafeCall( cudaMalloc((void**)&dev_partial_result,blocksPerGrid*sizeof(double)) );
+  checkCudaErrors( cudaMalloc((void**)&dev_A,N*sizeof(double)) );
+  checkCudaErrors( cudaMalloc((void**)&dev_partial_result,blocksPerGrid*sizeof(double)) );
   
   timespec init_beg, init_end; 
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &init_beg);    
@@ -83,27 +83,27 @@ int main(int argc, char *argv[]) {
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &init_end); 
   printf("%.3f ms required for initializing random numbers\n", ( ( (init_end.tv_sec - init_beg.tv_sec) ) + (init_end.tv_nsec - init_beg.tv_nsec) / 1e9 ) * 1e3 );     
 
-  cutilSafeCall( cudaEventRecord( start, 0) );  
-  cutilSafeCall( cudaMemcpy(dev_A,A,N*sizeof(double),cudaMemcpyHostToDevice) );
-  cutilSafeCall( cudaEventRecord( stop, 0) );
-  cutilSafeCall( cudaEventSynchronize( stop ) );
-  cutilSafeCall( cudaEventElapsedTime( &timer[1], start, stop));
+  checkCudaErrors( cudaEventRecord( start, 0) );  
+  checkCudaErrors( cudaMemcpy(dev_A,A,N*sizeof(double),cudaMemcpyHostToDevice) );
+  checkCudaErrors( cudaEventRecord( stop, 0) );
+  checkCudaErrors( cudaEventSynchronize( stop ) );
+  checkCudaErrors( cudaEventElapsedTime( &timer[1], start, stop));
   printf("%.3f ms required for uploading\n",timer[1]);
   printf("%f GB/s Uploading bandwidth\n", (N*sizeof(double)/(timer[1]/1e3))/(1024*1024*1024) ); 
   
-  cutilSafeCall( cudaEventRecord( start, 0) );  
+  checkCudaErrors( cudaEventRecord( start, 0) );  
   tsum<<<blocksPerGrid,threadsPerBlock>>>(dev_A,dev_partial_result,N);
-  cutilSafeCall( cudaEventRecord( stop, 0) );
-  cutilSafeCall( cudaEventSynchronize( stop ) );
-  cutilSafeCall( cudaEventElapsedTime( &timer[0], start, stop));
+  checkCudaErrors( cudaEventRecord( stop, 0) );
+  checkCudaErrors( cudaEventSynchronize( stop ) );
+  checkCudaErrors( cudaEventElapsedTime( &timer[0], start, stop));
   printf("--------------------------------%.3f ms required for calculation on device\n",timer[0]);
   printf("%f GB/s Calculation bandwidth\n", ((N+blocksPerGrid)*sizeof(double)/(timer[0]/1e3))/(1024*1024*1024) );   
   
-  cutilSafeCall( cudaEventRecord( start, 0) );    
-  cutilSafeCall( cudaMemcpy(partial_result,dev_partial_result,blocksPerGrid*sizeof(double),cudaMemcpyDeviceToHost) );
-  cutilSafeCall( cudaEventRecord( stop, 0) );
-  cutilSafeCall( cudaEventSynchronize( stop ) );
-  cutilSafeCall( cudaEventElapsedTime( &timer[2], start, stop));
+  checkCudaErrors( cudaEventRecord( start, 0) );    
+  checkCudaErrors( cudaMemcpy(partial_result,dev_partial_result,blocksPerGrid*sizeof(double),cudaMemcpyDeviceToHost) );
+  checkCudaErrors( cudaEventRecord( stop, 0) );
+  checkCudaErrors( cudaEventSynchronize( stop ) );
+  checkCudaErrors( cudaEventElapsedTime( &timer[2], start, stop));
   printf("%.3f ms required for downloading\n",timer[2]);
   printf("%f GB/s Downloading bandwidth\n", (blocksPerGrid*sizeof(double)/(timer[2]/1e3))/(1024*1024*1024) ); 
   
@@ -128,9 +128,9 @@ int main(int argc, char *argv[]) {
   cudaFree(dev_A);
   cudaFree(dev_partial_result);
   
-  cutilSafeCall( cudaFreeHost(A) );
-  cutilSafeCall( cudaFreeHost(partial_result) );
+  checkCudaErrors( cudaFreeHost(A) );
+  checkCudaErrors( cudaFreeHost(partial_result) );
   
-  cutilSafeCall( cudaEventDestroy(start) );
-  cutilSafeCall( cudaEventDestroy(stop) );
+  checkCudaErrors( cudaEventDestroy(start) );
+  checkCudaErrors( cudaEventDestroy(stop) );
 }

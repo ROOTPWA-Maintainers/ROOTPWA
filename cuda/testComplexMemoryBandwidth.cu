@@ -38,7 +38,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 #include "reportingUtils.hpp"
 #include "arrayUtils.hpp"
@@ -56,7 +56,7 @@ printCudaDeviceInfo(const int deviceId)
 	const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
 
 	cudaDeviceProp deviceProp;
-	cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
+	checkCudaErrors(cudaGetDeviceProperties(&deviceProp, deviceId));
 	if (deviceId == 0) {
 		// fields for both major & minor fields are 9999, if no CUDA capable devices are present
 		if ((deviceProp.major == 9999) and (deviceProp.minor == 9999)) {
@@ -68,9 +68,9 @@ printCudaDeviceInfo(const int deviceId)
     
 	// print info
 	int driverVersion = 0;
-	cutilSafeCall(cudaDriverGetVersion(&driverVersion));
+	checkCudaErrors(cudaDriverGetVersion(&driverVersion));
 	int runtimeVersion = 0;     
-	cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
+	checkCudaErrors(cudaRuntimeGetVersion(&runtimeVersion));
 	cout << "    driver version: .................................. " << driverVersion / 1000 << "." << driverVersion % 100 << endl
 	     << "    runtime version: ................................. " << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
 	     << "    capability major revision number: ................ " << deviceProp.major << endl
@@ -420,9 +420,9 @@ void runKernel(const unsigned int nmbBlocks,
 	// create device arrays and copy host data to device
 	T* deviceInData;
 	T* deviceOutData;
-	cutilSafeCall(cudaMalloc((void**) &deviceInData,  dataSizeIn ));
-	cutilSafeCall(cudaMalloc((void**) &deviceOutData, dataSizeOut));
-	cutilSafeCall(cudaMemcpy(deviceInData, hostInData, dataSizeIn, cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMalloc((void**) &deviceInData,  dataSizeIn ));
+	checkCudaErrors(cudaMalloc((void**) &deviceOutData, dataSizeOut));
+	checkCudaErrors(cudaMemcpy(deviceInData, hostInData, dataSizeIn, cudaMemcpyHostToDevice));
 
 	// bind texture
 	textureReaderT::bindTexture(deviceInData, dataSizeIn);
@@ -433,9 +433,9 @@ void runKernel(const unsigned int nmbBlocks,
 
 	// setup and start timer
 	cudaEvent_t start, end;
-	cutilSafeCall(cudaEventCreate(&start));
-	cutilSafeCall(cudaEventCreate(&end  ));
-	cutilSafeCall(cudaEventRecord(start, 0));
+	checkCudaErrors(cudaEventCreate(&start));
+	checkCudaErrors(cudaEventCreate(&end  ));
+	checkCudaErrors(cudaEventRecord(start, 0));
 
 	// run kernel
 	for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration)
@@ -443,12 +443,12 @@ void runKernel(const unsigned int nmbBlocks,
 		                    deviceOutData, nmbElementsPerThread);
 
 	// stop timer
-	cutilSafeCall(cudaEventRecord(end, 0));
-	cutilSafeCall(cudaEventSynchronize(end));
+	checkCudaErrors(cudaEventRecord(end, 0));
+	checkCudaErrors(cudaEventSynchronize(end));
 
 	// calculate and report bandwidth
 	float elapsedTime;
-	cutilSafeCall(cudaEventElapsedTime(&elapsedTime, start, end));
+	checkCudaErrors(cudaEventElapsedTime(&elapsedTime, start, end));
 	elapsedTime /= nmbIterations * 1000;  // [sec] per iteration
 	const unsigned long dataSize  = kernelCallerT::dataSize(nmbBlocks, nmbThreadsPerBlock,
 	                                                        nmbElementsPerThread);
@@ -456,11 +456,11 @@ void runKernel(const unsigned int nmbBlocks,
 	printInfo << "processed " << dataSize / (1024. * 1024.) << " MiBytes in "
 	          << elapsedTime * 1000 << " msec; "
 	          << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
-	cutilSafeCall(cudaEventDestroy(start));
-	cutilSafeCall(cudaEventDestroy(end  ));
+	checkCudaErrors(cudaEventDestroy(start));
+	checkCudaErrors(cudaEventDestroy(end  ));
 
 	// copy kernel output data to host
-	cutilSafeCall(cudaMemcpy(hostOutData, deviceOutData, dataSizeOut, cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(hostOutData, deviceOutData, dataSizeOut, cudaMemcpyDeviceToHost));
 
 	// test data
 	if (kernelCallerT::verify(hostInData, hostOutData, nmbBlocks,
@@ -475,8 +475,8 @@ void runKernel(const unsigned int nmbBlocks,
 	// cleanup memory
 	free(hostInData );
 	free(hostOutData);
-	cutilSafeCall(cudaFree(deviceInData ));
-	cutilSafeCall(cudaFree(deviceOutData));
+	checkCudaErrors(cudaFree(deviceInData ));
+	checkCudaErrors(cudaFree(deviceOutData));
 	cudaThreadExit();
 }
 
@@ -486,7 +486,7 @@ int main(int    argc,
 {
 	// get number of CUDA devices in system
 	int deviceCount = 0;
-	cutilSafeCall(cudaGetDeviceCount(&deviceCount));
+	checkCudaErrors(cudaGetDeviceCount(&deviceCount));
 	if (deviceCount == 0) {
 		printWarn << "there is no CUDA device" << endl;
 		return 0;
@@ -498,11 +498,11 @@ int main(int    argc,
 		printCudaDeviceInfo(deviceId);
   
 	// use most powerful GPU in system
-	const int deviceId = cutGetMaxGflopsDeviceId();
+	const int deviceId = gpuGetMaxGflopsDeviceId();
 	cudaDeviceProp deviceProp;
-	cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
+	checkCudaErrors(cudaGetDeviceProperties(&deviceProp, deviceId));
 	printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
-	cutilSafeCall(cudaSetDevice(deviceId));
+	checkCudaErrors(cudaSetDevice(deviceId));
 
 	// create maximum number of threads for all blocks
 	const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;

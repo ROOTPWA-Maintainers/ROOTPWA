@@ -42,7 +42,7 @@ set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
-	${CUDA_INCLUDE_DIR}
+	${CUDACODE_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
@@ -86,17 +86,16 @@ make_shared_library(
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${PWA2000_LIBS}"
-	"${CUDA_LIBS}"
+	"${CUDACODE_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	)
 
 
 # executables
-make_executable(pwafit            pwafit.cc            ${THIS_LIB})
-make_executable(selector          selector.cc          ${THIS_LIB})
-make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
-
-make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${Libconfig_LIBS}")
+make_executable(pwafit     pwafit.cc     ${THIS_LIB})
+make_executable(selector   selector.cc   ${THIS_LIB})
+make_executable(pwaplot    pwaplots.cc   ${THIS_LIB})
+make_executable(pwaMassFit massDepFit.cc ${THIS_LIB} "${Libconfig_LIBS}")
 
 # build tests
 add_subdirectory(test)

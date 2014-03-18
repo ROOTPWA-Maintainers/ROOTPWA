@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <cuda.h>
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 #include <time.h>
 #include <iostream>
 #include <unistd.h>
@@ -104,8 +104,8 @@ tmpltest(int N)
     
     // Set cuda event for measuring time and bandwidth
     cudaEvent_t start, stop;
-    cutilSafeCall( cudaEventCreate(&start) );
-    cutilSafeCall( cudaEventCreate(&stop)  );
+    checkCudaErrors( cudaEventCreate(&start) );
+    checkCudaErrors( cudaEventCreate(&stop)  );
 
     size_t size = N * sizeof(T); 	// used for allocating memory on host and device
     size_t sdoc = sizeof(T);            // used for distinguishing from doubles, floats, ...
@@ -120,9 +120,9 @@ tmpltest(int N)
 //     if (h_BW == 0) free(h_BW);    
     
     // Testing page-locked memory here to speed up down and uploading; allocating values in host memory
-    cutilSafeCall( cudaHostAlloc((void**)&h_A, size, cudaHostAllocDefault) );
-    cutilSafeCall( cudaHostAlloc((void**)&h_B, size, cudaHostAllocDefault) ); 
-    cutilSafeCall( cudaHostAlloc((void**)&h_C, size, cudaHostAllocDefault) );    
+    checkCudaErrors( cudaHostAlloc((void**)&h_A, size, cudaHostAllocDefault) );
+    checkCudaErrors( cudaHostAlloc((void**)&h_B, size, cudaHostAllocDefault) ); 
+    checkCudaErrors( cudaHostAlloc((void**)&h_C, size, cudaHostAllocDefault) );    
     
     // Initialize randomnumbers
     gRandom->SetSeed(111990);
@@ -130,38 +130,38 @@ tmpltest(int N)
     RandomInit(h_B,N);
   
     // Allocate randomnumbers in device memory
-    cutilSafeCall( cudaMalloc((void**)&d_A, size) );
-    cutilSafeCall( cudaMalloc((void**)&d_B, size) );
-    cutilSafeCall( cudaMalloc((void**)&d_C, size) );    
+    checkCudaErrors( cudaMalloc((void**)&d_A, size) );
+    checkCudaErrors( cudaMalloc((void**)&d_B, size) );
+    checkCudaErrors( cudaMalloc((void**)&d_C, size) );    
   
     // Copy randomnumbers from host memory to device memory
-    cutilSafeCall( cudaEventRecord( start, 0) );    
-    cutilSafeCall( cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice) );
-    cutilSafeCall( cudaEventRecord( stop, 0) );
-    cutilSafeCall( cudaEventSynchronize( stop ) );
-    cutilSafeCall( cudaEventElapsedTime( &t_htd, start, stop));
+    checkCudaErrors( cudaEventRecord( start, 0) );    
+    checkCudaErrors( cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice) );
+    checkCudaErrors( cudaEventRecord( stop, 0) );
+    checkCudaErrors( cudaEventSynchronize( stop ) );
+    checkCudaErrors( cudaEventElapsedTime( &t_htd, start, stop));
     printf("%.3f ms required for uploading\n",t_htd);
     printf("%f GB/s Upload\n", ((2*size)/(t_htd/1e3))/(1024*1024*1024) );    
     
     // Invoke kernel 
-    cutilSafeCall( cudaEventRecord( start, 0) );    
+    checkCudaErrors( cudaEventRecord( start, 0) );    
     int threadsPerBlock = 512;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
     testPow<T><<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, N);
-    cutilSafeCall( cudaThreadSynchronize() );
-    cutilSafeCall( cudaEventRecord( stop, 0) );
-    cutilSafeCall( cudaEventSynchronize( stop ) );
-    cutilSafeCall( cudaEventElapsedTime( &t_cod, start, stop));
+    checkCudaErrors( cudaThreadSynchronize() );
+    checkCudaErrors( cudaEventRecord( stop, 0) );
+    checkCudaErrors( cudaEventSynchronize( stop ) );
+    checkCudaErrors( cudaEventElapsedTime( &t_cod, start, stop));
     printf("%.3f ms required for calculation on device\n", t_cod );
     printf("Bandwidth: %f GB/s\n", ((size*3)/(t_cod/1e3))/(1024*1024*1024) );    ///  bandwidth = (bytes_read + bytes_written) / time 
     
     // Copy result from device memory to host memory
-    cutilSafeCall( cudaEventRecord( start, 0) );
-    cutilSafeCall( cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost) );
-    cutilSafeCall( cudaEventRecord( stop, 0) );
-    cutilSafeCall( cudaEventSynchronize( stop ) );
-    cutilSafeCall( cudaEventElapsedTime( &t_dth, start, stop));
+    checkCudaErrors( cudaEventRecord( start, 0) );
+    checkCudaErrors( cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost) );
+    checkCudaErrors( cudaEventRecord( stop, 0) );
+    checkCudaErrors( cudaEventSynchronize( stop ) );
+    checkCudaErrors( cudaEventElapsedTime( &t_dth, start, stop));
     printf("%.3f ms required for download\n", t_dth ); 
     printf("%f GB/s Download\n", ((size)/(t_dth/1e3))/(1024*1024*1024) ); // because of complex numbers doubles the size of memory
     
@@ -270,16 +270,16 @@ tmpltest(int N)
 //     free(h_BW);
     
     // Freeing allocated host memory from cudaHostAlloc
-    cutilSafeCall( cudaFreeHost(h_A) );
-    cutilSafeCall( cudaFreeHost(h_B) );    
-    cutilSafeCall( cudaFreeHost(h_C) );    
+    checkCudaErrors( cudaFreeHost(h_A) );
+    checkCudaErrors( cudaFreeHost(h_B) );    
+    checkCudaErrors( cudaFreeHost(h_C) );    
     
     // Free device memory
     cudaFree(d_A);
     cudaFree(d_B);
     cudaFree(d_C);
-    cutilSafeCall( cudaEventDestroy(start) );
-    cutilSafeCall( cudaEventDestroy(stop) );
+    checkCudaErrors( cudaEventDestroy(start) );
+    checkCudaErrors( cudaEventDestroy(stop) );
     
 }
   

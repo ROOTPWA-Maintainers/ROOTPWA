@@ -44,7 +44,7 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}
-	${CUDA_SDK_ROOT_DIR}/common/inc
+	SYSTEM ${CUDA_SAMPLES_INC_DIR}
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
   ${AMPLITUDE_INCLUDE_DIR}
@@ -54,34 +54,36 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # compile CUDA library
-cuda_add_library(cuda likelihoodInterface.cu SHARED)
-cuda_add_library(cupwa helampltestInterface.cu SHARED)
+cuda_add_library(RootPwaCuda    likelihoodInterface.cu  SHARED)
+cuda_add_library(RootPwaCudaAmp helampltestInterface.cu SHARED)
 
 
-# compile CUDA executable
+# compile HOST executables
 make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
-target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda ${ROOT_LIBS})
-
-cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
-target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
-
-cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
-target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
-
-cuda_add_executable(square square.cu)
-target_link_libraries(square ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+target_link_libraries(testLikelihoodMockup RootPwaCuda ${ROOT_LIBS})
 
 make_executable(helampltest helampltest.cc)
-target_link_libraries(helampltest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS} ${AMPLITUDE_LIBS})
-
-cuda_add_executable(templtest templtest.cu)
-target_link_libraries(templtest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
-
-cuda_add_executable(bwig bwig.cu)
-target_link_libraries(bwig ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
-
-cuda_add_executable(treesum treesum.cu)
-target_link_libraries(treesum ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+target_link_libraries(helampltest ${ROOT_LIBS} ${AMPLITUDE_LIBS})
 
 make_executable(testAmplitudeSpeed testAmplitudeSpeed.cc)
-target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS} ${CUDA_CUTIL_LIBRARY} cupwa cuda)
+target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS} RootPwaCudaAmp RootPwaCuda)
+
+
+# compile DEVICE executables
+cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+#target_link_libraries(testComplexMemoryBandwidth)
+
+cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
+#target_link_libraries(benchmarkMemoryBandwidth)
+
+cuda_add_executable(square square.cu)
+target_link_libraries(square ${ROOT_LIBS})
+
+cuda_add_executable(templtest templtest.cu)
+target_link_libraries(templtest ${ROOT_LIBS})
+
+cuda_add_executable(bwig bwig.cu)
+target_link_libraries(bwig ${ROOT_LIBS})
+
+cuda_add_executable(treesum treesum.cu)
+target_link_libraries(treesum ${ROOT_LIBS})
