@@ -251,7 +251,6 @@ add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
-add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 set(CUDA_SHADER_MODELS "13" "20")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
 	# use default SDK path, if not defined by user
@@ -316,16 +315,13 @@ else()
 		endif()
 	endif()
 endif()
-if(CUDA_FOUND AND NOT USE_CUDA)
-	disable_feature(CUDA)
-endif()
+add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 
 
 # setup MPI
 message(STATUS "")
 message(STATUS ">>> Setting up MPI.")
 option(USE_MPI "En/Disables compilation of MPI components" OFF)
-add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
 find_package(MPI)
 set_package_properties(MPI
 	PROPERTIES
@@ -363,26 +359,25 @@ else()
 		message(STATUS "Enabling compilation of MPI components.")
 		add_definitions(-DUSE_MPI)
 	else()
-		disable_feature(MPI)
 		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
 			"No MPI components will be generated.")
 	endif()
 endif()
+add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
 
 
 # setup Python
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
-add_feature_info(Python_scripting USE_PYTHON "The Python_scripting feature provides a scripting interface for some classes.")
 if(ROOT_VERSION VERSION_LESS "5.34.04")
 	message(STATUS "Python bindings require ROOT version 5.34.04 or newer "
 		"(found ${ROOT_VERSION}).")
 	message(STATUS "No Python bindings will be generated")
 	set(USE_PYTHON OFF)
 else()
-	find_package(Python 2.7)
-	set_package_properties(Python
+	find_package(PYTHON 2.7)
+	set_package_properties(PYTHON
 		PROPERTIES
 		DESCRIPTION "General-purpose, high-level programming language"
 		URL "http://www.python.org"
@@ -408,7 +403,7 @@ else()
 		endforeach()
 		unset(_BOOST_PYTHON_COMPONENTS)
 		if(USE_PYTHON)
-			message(STATUS "Setting up ROOT with PyROOT library.")
+			message(STATUS "Setting up ROOT again now with PyROOT library.")
 			find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS} PyROOT)
 			message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
 			message(STATUS "Enabling compilation of Python components.")
@@ -418,13 +413,13 @@ else()
 			file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
 			message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 		else()
-			disable_feature(Python)
 			message(STATUS "Found Python installation, but Boost.Python is not built correctly (consult INSTALL). "
 				"No Python bindings will be generated.")
 		endif()
 	endif()
 endif()
 unset(_ROOT_COMPONENTS)
+add_feature_info(Python_scripting USE_PYTHON "The Python_scripting feature provides a scripting interface for some classes.")
 
 
 # make git hash accessible via predefined macro GIT_HASH

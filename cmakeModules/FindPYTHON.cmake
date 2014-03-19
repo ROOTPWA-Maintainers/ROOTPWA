@@ -22,9 +22,8 @@
 #//
 #// Description:
 #//      cmake module for finding PYTHON installation
-#//      replaces the official FindPython that comes with Cmake which for several reasons is unusable
+#//      replaces the official FindPYTHON that comes with Cmake which for several reasons is unusable
 #//      requires executable of Python interpreter to be in PATH
-#//      if both Pyhton 2 and 3 are found, Python 3 will be preferred
 #//
 #//      following variables are defined:
 #//      PYTHONINTERP_FOUND        - Was the Python executable found
@@ -39,7 +38,7 @@
 #//      PYTHONLIBS_VERSION_STRING - version of the Python libs found
 #//
 #//      Example usage:
-#//          find_package(Python 2.7 REQUIRED)
+#//          find_package(PYTHON 2.7 REQUIRED)
 #//
 #//
 #// Author List:
@@ -49,6 +48,7 @@
 #//-------------------------------------------------------------------------
 
 
+set(PYTHON_FOUND        FALSE)
 set(PYTHONINTERP_FOUND  FALSE)
 set(PYTHONLIBS_FOUND    FALSE)
 set(PYTHON_ERROR_REASON "")
@@ -85,17 +85,17 @@ if(PYTHONINTERP_FOUND)
 	set(PYTHON_VERSION_STRING "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
 
 	# compare version
-	if(Python_FIND_VERSION_EXACT)
-		if(NOT PYTHON_VERSION_STRING VERSION_EQUAL Python_FIND_VERSION)
+	if(PYTHON_FIND_VERSION_EXACT)
+		if(NOT PYTHON_VERSION_STRING VERSION_EQUAL PYTHON_FIND_VERSION)
 			set(PYTHONINTERP_FOUND FALSE)
 			set(PYTHONLIBS_FOUND   FALSE)
-			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python interpreter version ${PYTHON_VERSION_STRING} does not match requested version ${Python_FIND_VERSION}.")
+			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python interpreter version ${PYTHON_VERSION_STRING} does not match requested version ${PYTHON_FIND_VERSION}.")
 		endif()
 	else()
-		if(PYTHON_VERSION_STRING VERSION_LESS Python_FIND_VERSION)
+		if(PYTHON_VERSION_STRING VERSION_LESS PYTHON_FIND_VERSION)
 			set(PYTHONINTERP_FOUND FALSE)
 			set(PYTHONLIBS_FOUND   FALSE)
-			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python interpreter version ${PYTHON_VERSION_STRING} is lower than requested version ${Python_FIND_VERSION}.")
+			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python interpreter version ${PYTHON_VERSION_STRING} is lower than requested version ${PYTHON_FIND_VERSION}.")
 		endif()
 	endif()
 
@@ -173,11 +173,11 @@ mark_as_advanced(
 if(PYTHONINTERP_FOUND)
 	message(STATUS "Found Python interpreter version ${PYTHON_VERSION_STRING} at '${PYTHON_EXECUTABLE}'.")
 else()
-	if(Python_FIND_REQUIRED)
+	if(PYTHON_FIND_REQUIRED)
 		message(FATAL_ERROR "Unable to find requested Python interpreter:${PYTHON_ERROR_REASON}")
 	else()
-		if(NOT Python_FIND_QUIETLY)
-			message(STATUS "Python interpreter version ${Python_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
+		if(NOT PYTHON_FIND_QUIETLY)
+			message(STATUS "Python interpreter version ${PYTHON_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
 		endif()
 	endif()
 endif()
@@ -186,11 +186,14 @@ if(PYTHONLIBS_FOUND)
 	message(STATUS "Using Python libraries '${PYTHON_LIBRARIES}'.")
 	message(STATUS "Using Python include directory '${PYTHON_INCLUDE_DIRS}'.")
 else()
-	if(Python_FIND_REQUIRED)
+	if(PYTHON_FIND_REQUIRED)
 		message(FATAL_ERROR "Unable to find requested Python libraries:${PYTHON_ERROR_REASON}")
 	else()
-		if(NOT Python_FIND_QUIETLY)
-			message(STATUS "Python library version ${Python_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
+		if(NOT PYTHON_FIND_QUIETLY)
+			message(STATUS "Python library version ${PYTHON_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
 		endif()
 	endif()
+endif()
+if(PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND)
+	set(PYTHON_FOUND TRUE)
 endif()

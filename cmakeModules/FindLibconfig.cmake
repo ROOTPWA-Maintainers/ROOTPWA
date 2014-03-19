@@ -23,7 +23,7 @@
 #// Description:
 #//      cmake module for finding libconfig installation
 #//      libconfig installation location is defined by environment variable $LIBCONFIG
-#//	 
+#//
 #//      following variables are defined:
 #//      Libconfig_VERSION          - libconfig version
 #//      Libconfig_MAJOR_VERSION    - libconfig major version
@@ -33,11 +33,11 @@
 #//      Libconfig_INCLUDE_DIR      - libconfig header directory
 #//      Libconfig_LIBRARY_DIR      - libconfig library directory
 #//      Libconfig_LIBS             - libconfig library files
-#//	 
+#//
 #//      Example usage:
 #//          find_package(Libconfig 1.4 REQUIRED)
-#//	 
-#//	 
+#//
+#//
 #//-------------------------------------------------------------------------
 
 
@@ -65,7 +65,7 @@ else()
 		set(Libconfig_FOUND FALSE)
 		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Directory '${Libconfig_LIBRARY_DIR}' does not exist.")
 	endif()
-	
+
 	set(_Libconfig_LIB_NAMES "config++")
 	find_library(Libconfig_LIBS
 		NAMES ${_Libconfig_LIB_NAMES}
