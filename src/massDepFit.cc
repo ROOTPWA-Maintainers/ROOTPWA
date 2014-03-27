@@ -158,7 +158,8 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const Setting* configInp
 
 		map<string, Setting::Type> mandatoryArguments;
 		insert(mandatoryArguments)
-		      ("name", Setting::TypeString);
+		      ("name", Setting::TypeString)
+		      ("tPrimeMean", Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
 			printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
 			return false;
@@ -170,6 +171,14 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const Setting* configInp
 
 		if(_debug) {
 			printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << endl;
+		}
+
+		double tPrimeMean;
+		configInputFitResult->lookupValue("tPrimeMean", tPrimeMean);
+		_tPrimeMeans.push_back(tPrimeMean);
+
+		if(_debug) {
+			printDebug << "read mean t' value: '" << tPrimeMean << "'." << endl;
 		}
 
 		vector<string> overwritePhaseSpace;
