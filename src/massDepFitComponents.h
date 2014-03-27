@@ -168,6 +168,33 @@ namespace rpwa {
 
 		};
 
+		class relativisticBreitWigner : public component {
+
+		public:
+
+			relativisticBreitWigner(const std::string& name);
+
+			virtual bool init(const libconfig::Setting* configComponent,
+			                  const size_t nrBins,
+			                  const std::vector<double>& massBinCenters,
+			                  const std::map<std::string, size_t>& waveIndices,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool debug);
+
+			virtual std::complex<double> val(const size_t idxBin,
+			                                 const double m) const;
+
+			virtual std::ostream& print(std::ostream& out) const;
+
+		private:
+
+			std::vector<double> _ratio;
+			std::vector<int> _l;
+			std::vector<double> _m1;
+			std::vector<double> _m2;
+
+		};
+
 		class parameterizationA1Bowler : public component {
 
 		public:
