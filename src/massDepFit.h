@@ -152,6 +152,8 @@ namespace rpwa {
 			bool _sysPlotting;
 			std::vector<std::string> _sysFileNames;
 
+			std::vector<double> _tPrimeMeans;
+
 			double _massMax;
 			double _massMin;
 			double _massStep;
