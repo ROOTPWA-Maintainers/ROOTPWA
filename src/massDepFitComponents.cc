@@ -905,3 +905,134 @@ rpwa::massDepFit::exponentialBackground::print(ostream& out) const
 	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
 	return component::print(out);
 }
+
+
+rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const string& name)
+	: component(name, 5)
+{
+	_parametersName[0] = "m0";
+	_parametersName[1] = "c0";
+	_parametersName[2] = "c1";
+	_parametersName[3] = "c2";
+	_parametersName[4] = "c3";
+
+	_parametersStep[0] = 1.0;
+	_parametersStep[1] = 1.0e-3;
+	_parametersStep[2] = 1.0e-6;
+	_parametersStep[3] = 1.0e-12;
+	_parametersStep[4] = 1.0e-18;
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<double> tPrimeMeans)
+{
+	_tPrimeMeans = tPrimeMeans;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* configComponent,
+                                                  const size_t nrBins,
+                                                  const vector<double>& massBinCenters,
+                                                  const map<string, size_t>& waveIndices,
+                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                  const bool debug)
+{
+	if(debug) {
+		printDebug << "starting initialization of 'tPrimeDependentBackground' for component '" << getName() << "'." << endl;
+	}
+
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+		printErr << "error while reading configuration of 'component' class." << endl;
+		return false;
+	}
+
+	map<string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	boost::assign::insert(mandatoryArgumentsIsobarMasses)
+	                     ("mIsobar1", libconfig::Setting::TypeFloat)
+	                     ("mIsobar2", libconfig::Setting::TypeFloat);
+	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
+		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << endl;
+		return false;
+	}
+
+	configComponent->lookupValue("mIsobar1", _m1);
+	configComponent->lookupValue("mIsobar2", _m2);
+
+	if(_tPrimeMeans.size() != nrBins) {
+		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << endl;
+		return false;
+	}
+
+	if(debug) {
+		ostringstream output;
+		output << "    mass threshold: " << _parameters[0] << " MeV/c^2, ";
+		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[0]) {
+			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[0]) {
+			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+
+		for(size_t i=1; i<_parameters.size(); ++i) {
+			output << "    c" << i-1 << ": " << _parameters[i] << " , ";
+			if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
+				output << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " MeV/c^2 ";
+			} else if(_parametersLimitedLower[i]) {
+				output << "    lower limit: " << _parametersLimitLower[i] << " MeV/c^2 ";
+			} else if(_parametersLimitedUpper[i]) {
+				output << "    upper limit: " << _parametersLimitUpper[i] << " MeV/c^2 ";
+			} else {
+				output << "    unlimited ";
+			}
+			output << (_parametersFixed[i] ? "(FIXED) " : "") << endl;
+		}
+
+		output << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+
+		output << "    for " << nrBins << " bins with mean t' values: " << _tPrimeMeans[0];
+		for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
+			output << ", " << _tPrimeMeans[i];
+		}
+		output << endl;
+
+		printDebug << "component '" << getName() << "':" << endl << output.str();
+
+		printDebug << "finished initialization of 'tPrimeDependentBackground'." << endl;
+	}
+
+	return true;
+}
+
+
+complex<double>
+rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
+                                                 const double m) const
+{
+	// calculate breakup momentum
+	if(m < _m1+_m2) {
+		return complex<double>(1,0);
+	}
+	const double q2 = rpwa::breakupMomentumSquared(m, _m1, _m2);
+
+	// get mean t' value for current bin
+	const double tPrime = _tPrimeMeans[idxBin];
+
+	return std::pow(m - _parameters[0], _parameters[1]) * exp(-(_parameters[2] + _parameters[3]*tPrime + _parameters[4]*tPrime*tPrime)*q2);
+}
+
+
+ostream&
+rpwa::massDepFit::tPrimeDependentBackground::print(ostream& out) const
+{
+	out << getName() << endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
+	return component::print(out);
+}

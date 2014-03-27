@@ -250,6 +250,34 @@ namespace rpwa {
 
 		};
 
+		class tPrimeDependentBackground : public component {
+
+		public:
+
+			tPrimeDependentBackground(const std::string& name);
+
+			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+
+			virtual bool init(const libconfig::Setting* configComponent,
+			                  const size_t nrBins,
+			                  const std::vector<double>& massBinCenters,
+			                  const std::map<std::string, size_t>& waveIndices,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool debug);
+
+			virtual std::complex<double> val(const size_t idxBin,
+			                                 const double m) const;
+
+			virtual std::ostream& print(std::ostream& out) const;
+
+		private:
+
+			std::vector<double> _tPrimeMeans;
+			double _m1;
+			double _m2;
+
+		};
+
 	} // end namespace massDepFit
 
 } // end namespace rpwa

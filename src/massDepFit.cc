@@ -489,6 +489,9 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			component = new parameterizationA1Bowler(name);
 		} else if(type == "exponentialBackground") {
 			component = new exponentialBackground(name);
+		} else if(type == "tPrimeDependentBackground") {
+			component = new tPrimeDependentBackground(name);
+			((tPrimeDependentBackground*)component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << endl;
 			return false;
