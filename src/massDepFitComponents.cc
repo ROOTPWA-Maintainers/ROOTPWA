@@ -494,6 +494,180 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
 }
 
 
+rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const string& name)
+	: component(name, 2)
+{
+	_parametersName[0] = "mass";
+	_parametersName[1] = "width";
+
+	_parametersStep[0] = 1.0;
+	_parametersStep[1] = 1.0;
+}
+
+
+bool
+rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* configComponent,
+                                                const size_t nrBins,
+                                                const vector<double>& massBinCenters,
+                                                const map<string, size_t>& waveIndices,
+                                                const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                const bool debug)
+{
+	if(debug) {
+		printDebug << "starting initialization of 'relativisticBreitWigner' for component '" << getName() << "'." << endl;
+	}
+
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+		printErr << "error while reading configuration of 'component' class." << endl;
+		return false;
+	}
+
+	map<string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("mIsobar1", libconfig::Setting::TypeArray)
+	                     ("mIsobar2", libconfig::Setting::TypeArray)
+	                     ("relAngularMom", libconfig::Setting::TypeArray);
+	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+		printErr << "not all required arrays are defined for the component '" << getName() << "'." << endl;
+		return false;
+	}
+
+	const libconfig::Setting& configMassIsobar1 = (*configComponent)["mIsobar1"];
+	const libconfig::Setting& configMassIsobar2 = (*configComponent)["mIsobar2"];
+	const libconfig::Setting& configRelAngularMom = (*configComponent)["relAngularMom"];
+
+	const int nrDecayChannels = configMassIsobar1.getLength();
+	if(configMassIsobar2.getLength() != nrDecayChannels || configRelAngularMom.getLength() != nrDecayChannels) {
+		printErr << "not all arrays have the same length for component '" << getName() << "'." << endl;
+		return false;
+	}
+
+	if(configMassIsobar1[0].getType() != libconfig::Setting::TypeFloat
+	   || configMassIsobar2[0].getType() != libconfig::Setting::TypeFloat
+	   || configRelAngularMom[0].getType() != libconfig::Setting::TypeInt) {
+		printErr << "not all arrays have the correct type for component '" << getName() << "'." << endl;
+		return false;
+	}
+
+	_ratio.resize(nrDecayChannels);
+	_l.resize(nrDecayChannels);
+	_m1.resize(nrDecayChannels);
+	_m2.resize(nrDecayChannels);
+
+	for(int i=0; i<nrDecayChannels; ++i) {
+		_l[i] = configRelAngularMom[i];
+		_m1[i] = configMassIsobar1[i];
+		_m2[i] = configMassIsobar2[i];
+	}
+
+	if(nrDecayChannels > 1) {
+		boost::assign::insert(mandatoryArguments)
+		                     ("branchingRatio", libconfig::Setting::TypeArray);
+		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+			printErr << "not all required arrays are defined for the component '" << getName() << "'." << endl;
+			return false;
+		}
+
+		const libconfig::Setting& configBranchingRatio = (*configComponent)["branchingRatio"];
+		if(configBranchingRatio.getLength() != nrDecayChannels) {
+			printErr << "not all arrays have the same length for component '" << getName() << "'." << endl;
+			return false;
+		}
+		if(configBranchingRatio[0].getType() != libconfig::Setting::TypeFloat) {
+			printErr << "not all arrays have the correct type for component '" << getName() << "'." << endl;
+			return false;
+		}
+
+		double sum = 0.;
+		for(int i=0; i<nrDecayChannels; ++i) {
+			_ratio[i] = configBranchingRatio[i];
+			sum += _ratio[i];
+		}
+		for(size_t i=0; i<_ratio.size(); ++i) {
+			_ratio[i] *= 1. / sum;
+		}
+	} else {
+		_ratio[0] = 1.;
+	}
+
+	if(debug) {
+		ostringstream output;
+		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[0]) {
+			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[0]) {
+			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+
+		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[1]) {
+			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[1]) {
+			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
+
+		output << "    " << _ratio.size() << " decay channels:" << endl;
+		for(size_t i=0; i<_ratio.size(); ++i) {
+			output << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << endl;
+			output << "        mass of isobar 1: " << _m1[i] << " MeV/c^2, mass of isobar 2: " << _m2[i] << " MeV/c^2" << endl;
+			output << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << endl;
+		}
+
+		printDebug << "component '" << getName() << "':" << endl << output.str();
+
+		printDebug << "finished initialization of 'relativisticBreitWigner'." << endl;
+	}
+	return true;
+}
+
+
+complex<double>
+rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
+                                               const double m) const
+{
+	const double& m0 = _parameters[0];
+	const double& gamma0 = _parameters[1];
+
+	double gamma = 0.;
+	for(size_t i=0; i<_ratio.size(); ++i) {
+		if (m >= _m1[i] + _m2[i]) {
+			// calculate breakup momenta
+			const double q = rpwa::breakupMomentum(m, _m1[i], _m2[i]);
+			const double q0 = rpwa::breakupMomentum(m0, _m1[i], _m2[i]);
+
+			// calculate barrier factors
+			// break-up momentum needs to be in GeV
+			const double f2 = rpwa::barrierFactorSquared(2*_l[i], q / 1000.);
+			const double f20 = rpwa::barrierFactorSquared(2*_l[i], q0 / 1000.);
+
+			gamma += _ratio[i] * q/q0 * f2/f20;
+		}
+	}
+	gamma *= gamma0 * m0/m;
+
+	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
+}
+
+
+ostream&
+rpwa::massDepFit::relativisticBreitWigner::print(ostream& out) const
+{
+	out << getName() << endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
+	return component::print(out);
+}
+
+
 rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const string& name)
 	: component(name, 2),
 	  _nrBins(0)
