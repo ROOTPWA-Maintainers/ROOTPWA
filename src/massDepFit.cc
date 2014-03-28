@@ -67,8 +67,6 @@
 #include "massDepFitModel.h"
 #include "reportingUtils.hpp"
 
-#define MASSSCALE 0.001
-
 using namespace std;
 using namespace libconfig;
 using namespace ROOT::Math;
@@ -267,7 +265,7 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const Setting* configInputWav
 		_waveMassLimits.push_back(make_pair(massLower, massUpper));
 
 		if(_debug) {
-			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2, index: " << _waveIndices[name] << ")" << endl;
+			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " GeV/c^2, index: " << _waveIndices[name] << ")" << endl;
 		}
 	}
 
@@ -1134,10 +1132,10 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 			return false;
 		}
 		//FIXME: this would also be the place to select the best fit in case one file contains more than one fit result per mass bin
-		const double mass = fit->massBinCenter();
+		const double mass = fit->massBinCenter() / 1000.;
 
 		if(_debug) {
-			printDebug << "entry " << idx << ": center of mass bin at " << mass << " MeV/c^2" << endl;
+			printDebug << "entry " << idx << ": center of mass bin at " << mass << " GeV/c^2" << endl;
 		}
 
 		bool found = false;
@@ -1151,18 +1149,18 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 		}
 
 		if(not found) {
-			printErr << "could not map mass bin centered at " << mass << " MeV/c^2 to a known mass bin." << endl;
+			printErr << "could not map mass bin centered at " << mass << " GeV/c^2 to a known mass bin." << endl;
 			return false;
 		}
 
 		if(mapping[idxMass] != numeric_limits<Long64_t>::max()) {
-			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2)  "
+			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2)  "
 			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << endl;
 			return false;
 		}
 
 		if(_debug) {
-			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) to tree entry " << idx << "." << endl;
+			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) to tree entry " << idx << "." << endl;
 		}
 		mapping[idxMass] = idx;
 	} // end loop over entries in tree
@@ -1170,7 +1168,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	// check that all mass bins are mapped
 	for(size_t idx=0; idx<mapping.size(); ++idx) {
 		if(mapping[idx] == numeric_limits<Long64_t>::max()) {
-			printErr << "mass bin " << idx << " (" << _massBinCenters[idx] << " MeV/c^2) not mapped." << endl;
+			printErr << "mass bin " << idx << " (" << _massBinCenters[idx] << " GeV/c^2) not mapped." << endl;
 			return false;
 		}
 	}
@@ -1209,10 +1207,10 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 			printErr << "error while reading entry " << idx << " from tree." << endl;
 			return false;
 		}
-		const double newMass = fit->massBinCenter();
+		const double newMass = fit->massBinCenter() / 1000.;
 
 		if(_debug) {
-			printDebug << "entry " << idx << ": center of mass bin at " << newMass << " MeV/c^2" << endl;
+			printDebug << "entry " << idx << ": center of mass bin at " << newMass << " GeV/c^2" << endl;
 		}
 
 		bool found = false;
@@ -1227,7 +1225,7 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 		}
 
 		if(not found) {
-			_massBinCenters.push_back(fit->massBinCenter());
+			_massBinCenters.push_back(newMass);
 		}
 	} // end loop over entries in tree
 
@@ -1237,25 +1235,25 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 	_nrMassBins = _massBinCenters.size();
 
 	printInfo << "found " << _nrMassBins << " mass bins, center of first and last mass bins: "
-	          << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
+	          << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " GeV/c^2." << endl;
 
 	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
 	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
 		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*numeric_limits<double>::epsilon()) {
-			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " MeV/c^2) and "
-			         << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) does not agree with nominal distance "
-			         << _massStep << " MeV/c^2" << endl;
+			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " GeV/c^2) and "
+			         << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
+			         << _massStep << " GeV/c^2" << endl;
 			return false;
 		}
 	}
 	if(_debug) {
-		printDebug << "distance between two mass bins is " << _massStep << " MeV/c^2." << endl;
+		printDebug << "distance between two mass bins is " << _massStep << " GeV/c^2." << endl;
 	}
 
 	_massMin=_massBinCenters[0] - _massStep / 2;
 	_massMax=_massBinCenters[_nrMassBins - 1] + _massStep / 2;
 	if(_debug) {
-		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " MeV/c^2." << endl;
+		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " GeV/c^2." << endl;
 	}
 
 	return true;
@@ -1288,7 +1286,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from tree." << endl;
 		}
 		// FIXME: in case of reading the fit result for a systematic tree this might happen, so this should be allowed in certain cases
 		if(tree->GetEntry(mapping[idxMass]) == 0) {
@@ -1377,7 +1375,7 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from tree." << endl;
 		}
 		if(tree->GetEntry(mapping[idxMass]) == 0) {
 			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << endl;
@@ -1419,15 +1417,15 @@ rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const vector<string
 		for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
 			sFileName << overwritePhaseSpace[idxPart];
 			if(idxPart == 0) {
-				sFileName << _massMin + idxMass*_massStep;
+				sFileName << (_massMin + idxMass*_massStep) * 1000.;
 			} else if(idxPart == 1) {
-				sFileName << _massMin + (idxMass+1)*_massStep;
+				sFileName << (_massMin + (idxMass+1)*_massStep) * 1000.;
 			}
 		}
 		const string fileName = sFileName.str();
 
 		if(_debug) {
-			printDebug << "reading phase-space integrals for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from file '" << fileName << "'." << endl;
+			printDebug << "reading phase-space integrals for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from file '" << fileName << "'." << endl;
 		}
 
 		ampIntegralMatrix intMatrix;
@@ -1458,7 +1456,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 {
 	if(_debug) {
 		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins << " mass bins, center of first and last mass bins: "
-		           << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
+		           << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " GeV/c^2." << endl;
 	}
 
 	_waveMassBinLimits.clear();
@@ -1485,7 +1483,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 		if(_debug) {
 			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
 			           << "mass range: " << (_waveMassLimits[idxWave].first<0. ? _massMin : _waveMassLimits[idxWave].first)
-			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMax : _waveMassLimits[idxWave].second) << " MeV/c^2, "
+			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMax : _waveMassLimits[idxWave].second) << " GeV/c^2, "
 			           << "bin range " << binFirst << "-" << binLast << endl;
 		}
 		_waveMassBinLimits.push_back(make_pair(binFirst, binLast));
@@ -1562,7 +1560,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		Int_t point = -1;
 		for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 			++point;
-			const double mass = _massBinCenters[idxMass] * MASSSCALE;
+			const double mass = _massBinCenters[idxMass];
 
 			graph.SetPoint(point, mass, pow(func->Eval(_massBinCenters[idxMass]), 2.));
 		}
@@ -1651,8 +1649,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	Int_t pointLimit = -1;
 	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		++point;
-		const double mass = _massBinCenters[idxMass] * MASSSCALE;
-		const double halfBin = _massStep/2000.;
+		const double mass = _massBinCenters[idxMass];
+		const double halfBin = _massStep/2.;
 
 		data->SetPoint(point, mass, _inIntensities[idxBin][idxMass][idxWave][0]);
 		data->SetPointError(point, halfBin, _inIntensities[idxBin][idxMass][idxWave][1]);
@@ -1823,8 +1821,8 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	Int_t pointLimit = -1;
 	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		++point;
-		const double mass = _massBinCenters[idxMass] * MASSSCALE;
-		const double halfBin = _massStep/2000.;
+		const double mass = _massBinCenters[idxMass];
+		const double halfBin = _massStep/2.;
 
 		phaseData->SetPoint(point, mass, _inPhases[idxBin][idxMass][idxWave][jdxWave][0]);
 		phaseData->SetPointError(point, halfBin, _inPhases[idxBin][idxMass][idxWave][jdxWave][1]);
@@ -1891,7 +1889,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	pointLimit = -1;
 	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		++point;
-		const double mass = _massBinCenters[idxMass] * MASSSCALE;
+		const double mass = _massBinCenters[idxMass];
 
 		double valueFit=0;
 		if(point != 0) {
