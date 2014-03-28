@@ -1017,7 +1017,7 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
 {
 	// calculate breakup momentum
 	if(m < _m1+_m2) {
-		return complex<double>(1,0);
+		return std::pow(m - _parameters[0], _parameters[1]);
 	}
 	const double q2 = rpwa::breakupMomentumSquared(m, _m1, _m2);
 
