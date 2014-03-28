@@ -418,8 +418,8 @@ rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const string& nam
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
 
-	_parametersStep[0] = 1.0;
-	_parametersStep[1] = 1.0;
+	_parametersStep[0] = 0.001;
+	_parametersStep[1] = 0.001;
 }
 
 
@@ -442,25 +442,25 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 
 	if(debug) {
 		ostringstream output;
-		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
 		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
 
-		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
@@ -500,8 +500,8 @@ rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const string&
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
 
-	_parametersStep[0] = 1.0;
-	_parametersStep[1] = 1.0;
+	_parametersStep[0] = 0.001;
+	_parametersStep[1] = 0.001;
 }
 
 
@@ -592,25 +592,25 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 
 	if(debug) {
 		ostringstream output;
-		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
 		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
 
-		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
@@ -619,7 +619,7 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 		output << "    " << _ratio.size() << " decay channels:" << endl;
 		for(size_t i=0; i<_ratio.size(); ++i) {
 			output << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << endl;
-			output << "        mass of isobar 1: " << _m1[i] << " MeV/c^2, mass of isobar 2: " << _m2[i] << " MeV/c^2" << endl;
+			output << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << endl;
 			output << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << endl;
 		}
 
@@ -646,9 +646,8 @@ rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
 			const double q0 = rpwa::breakupMomentum(m0, _m1[i], _m2[i]);
 
 			// calculate barrier factors
-			// break-up momentum needs to be in GeV
-			const double f2 = rpwa::barrierFactorSquared(2*_l[i], q / 1000.);
-			const double f20 = rpwa::barrierFactorSquared(2*_l[i], q0 / 1000.);
+			const double f2 = rpwa::barrierFactorSquared(2*_l[i], q);
+			const double f20 = rpwa::barrierFactorSquared(2*_l[i], q0);
 
 			gamma += _ratio[i] * q/q0 * f2/f20;
 		}
@@ -675,8 +674,8 @@ rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const strin
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
 
-	_parametersStep[0] = 1.0;
-	_parametersStep[1] = 1.0;
+	_parametersStep[0] = 0.001;
+	_parametersStep[1] = 0.001;
 }
 
 
@@ -747,25 +746,25 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 
 	if(debug) {
 		ostringstream output;
-		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
 		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
 
-		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
@@ -810,8 +809,8 @@ rpwa::massDepFit::exponentialBackground::exponentialBackground(const string& nam
 	_parametersName[0] = "m0";
 	_parametersName[1] = "g";
 
-	_parametersStep[0] = 1.0;
-	_parametersStep[1] = 1.0e-6;
+	_parametersStep[0] = 0.001;
+	_parametersStep[1] = 1.0;
 }
 
 
@@ -846,31 +845,31 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 
 	if(debug) {
 		ostringstream output;
-		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
 		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
 
-		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
 		output << (_parametersFixed[1] ? "(FIXED) " : "") << endl;
 
-		output << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << endl;
 
 		printDebug << "component '" << getName() << "':" << endl << output.str();
 
@@ -916,11 +915,11 @@ rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const str
 	_parametersName[3] = "c2";
 	_parametersName[4] = "c3";
 
-	_parametersStep[0] = 1.0;
+	_parametersStep[0] = 0.001;
 	_parametersStep[1] = 1.0e-3;
-	_parametersStep[2] = 1.0e-6;
-	_parametersStep[3] = 1.0e-12;
-	_parametersStep[4] = 1.0e-18;
+	_parametersStep[2] = 1.0;
+	_parametersStep[3] = 1.0;
+	_parametersStep[4] = 1.0;
 }
 
 
@@ -969,13 +968,13 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 
 	if(debug) {
 		ostringstream output;
-		output << "    mass threshold: " << _parameters[0] << " MeV/c^2, ";
+		output << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
 		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
 		} else {
 			output << "    unlimited ";
 		}
@@ -984,18 +983,18 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 		for(size_t i=1; i<_parameters.size(); ++i) {
 			output << "    c" << i-1 << ": " << _parameters[i] << " , ";
 			if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
-				output << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " MeV/c^2 ";
+				output << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2 ";
 			} else if(_parametersLimitedLower[i]) {
-				output << "    lower limit: " << _parametersLimitLower[i] << " MeV/c^2 ";
+				output << "    lower limit: " << _parametersLimitLower[i] << " GeV/c^2 ";
 			} else if(_parametersLimitedUpper[i]) {
-				output << "    upper limit: " << _parametersLimitUpper[i] << " MeV/c^2 ";
+				output << "    upper limit: " << _parametersLimitUpper[i] << " GeV/c^2 ";
 			} else {
 				output << "    unlimited ";
 			}
 			output << (_parametersFixed[i] ? "(FIXED) " : "") << endl;
 		}
 
-		output << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << endl;
 
 		output << "    for " << nrBins << " bins with mean t' values: " << _tPrimeMeans[0];
 		for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
