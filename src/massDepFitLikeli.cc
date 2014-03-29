@@ -42,6 +42,8 @@ rpwa::massDepFit::likelihood::NDataPoints() const {
 void
 rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
                                    const std::vector<double>& massBinCenters,
+                                   const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+                                   const boost::multi_array<double, 5>& productionAmplitudesCovariance,
                                    const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
                                    const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
                                    const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
@@ -50,6 +52,11 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_compset = compset;
 
 	_massBinCenters = massBinCenters;
+
+	_productionAmplitudes.resize(std::vector<size_t>(productionAmplitudes.shape(), productionAmplitudes.shape()+productionAmplitudes.num_dimensions()));
+	_productionAmplitudes = productionAmplitudes;
+	_productionAmplitudesCovariance.resize(std::vector<size_t>(productionAmplitudesCovariance.shape(), productionAmplitudesCovariance.shape()+productionAmplitudesCovariance.num_dimensions()));
+	_productionAmplitudesCovariance = productionAmplitudesCovariance;
 
 	_spinDensityMatrices.resize(std::vector<size_t>(spinDensityMatrices.shape(), spinDensityMatrices.shape()+spinDensityMatrices.num_dimensions()));
 	_spinDensityMatrices = spinDensityMatrices;
@@ -72,6 +79,12 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 	// set parameters for resonances, background and phase space
 	_compset->setParameters(par);
 
+	return DoEvalSpinDensityMatrix();
+}
+
+
+double
+rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const {
 	double chi2=0;
 
 	// loop over bins

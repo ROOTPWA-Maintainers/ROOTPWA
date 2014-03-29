@@ -380,6 +380,8 @@ main(int    argc,
 	rpwa::massDepFit::likelihood L;
 	L.init(&compset,
 	       mdepFit.getMassBinCenters(),
+	       mdepFit.getInProductionAmplitudes(),
+	       mdepFit.getInProductionAmplitudesCovariance(),
 	       mdepFit.getInSpinDensityMatrices(),
 	       mdepFit.getInSpinDensityCovarianceMatrices(),
 	       mdepFit.getWavePairMassBinLimits(),
