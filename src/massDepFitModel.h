@@ -55,6 +55,8 @@ namespace rpwa {
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
 
+			size_t getAnchorWave() const { return _idxAnchorWave; }
+
 			std::complex<double> productionAmplitude(const size_t idxWave,
 			                                         const size_t idxBin,
 			                                         const double mass,
