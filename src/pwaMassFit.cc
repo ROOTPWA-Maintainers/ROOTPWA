@@ -378,14 +378,17 @@ main(int    argc,
 
 	// set-up likelihood
 	rpwa::massDepFit::likelihood L;
-	L.init(&compset,
-	       mdepFit.getMassBinCenters(),
-	       mdepFit.getInProductionAmplitudes(),
-	       mdepFit.getInProductionAmplitudesCovariance(),
-	       mdepFit.getInSpinDensityMatrices(),
-	       mdepFit.getInSpinDensityCovarianceMatrices(),
-	       mdepFit.getWavePairMassBinLimits(),
-	       doCov);
+	if(not L.init(&compset,
+	              mdepFit.getMassBinCenters(),
+	              mdepFit.getInProductionAmplitudes(),
+	              mdepFit.getInProductionAmplitudesCovariance(),
+	              mdepFit.getInSpinDensityMatrices(),
+	              mdepFit.getInSpinDensityCovarianceMatrices(),
+	              mdepFit.getWavePairMassBinLimits(),
+	              doCov)) {
+		printErr << "error while initializing the likelihood calculator." << endl;
+		return 1;
+	}
 
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << endl;

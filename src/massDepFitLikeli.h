@@ -38,7 +38,7 @@ namespace rpwa {
 
 			unsigned int NDataPoints() const;
 
-			void init(rpwa::massDepFit::model* compset,
+			bool init(rpwa::massDepFit::model* compset,
 			          const std::vector<double>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			          const boost::multi_array<double, 5>& productionAmplitudesCovariance,

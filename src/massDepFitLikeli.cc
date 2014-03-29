@@ -39,7 +39,7 @@ rpwa::massDepFit::likelihood::NDataPoints() const {
 }
 
 
-void
+bool
 rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
                                    const std::vector<double>& massBinCenters,
                                    const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -71,6 +71,8 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_nrBins = _spinDensityMatrices.size();
 	_nrMassBins = _massBinCenters.size();
 	_nrWaves = _wavePairMassBinLimits.size();
+
+	return true;
 }
 
 
