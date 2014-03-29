@@ -640,7 +640,7 @@ rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
 
 	double gamma = 0.;
 	for(size_t i=0; i<_ratio.size(); ++i) {
-		if (m >= _m1[i] + _m2[i]) {
+		if(m >= _m1[i] + _m2[i]) {
 			// calculate breakup momenta
 			const double q = rpwa::breakupMomentum(m, _m1[i], _m2[i]);
 			const double q0 = rpwa::breakupMomentum(m0, _m1[i], _m2[i]);

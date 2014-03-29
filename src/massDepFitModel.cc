@@ -71,7 +71,7 @@ rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
 	// clear list of free parameters
 	_fsmdFreeParameterIndices.clear();
 
-	if (_fsmdFunction == NULL) {
+	if(_fsmdFunction == NULL) {
 		_fsmdFixed = true;
 		return;
 	}

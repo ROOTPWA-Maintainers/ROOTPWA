@@ -1549,7 +1549,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if (fitModel.getFsmdFunction() != NULL) {
+	if(fitModel.getFsmdFunction() != NULL) {
 		TF1* func = fitModel.getFsmdFunction();
 
 		TGraph graph;
