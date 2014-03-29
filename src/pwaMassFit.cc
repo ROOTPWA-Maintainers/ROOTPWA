@@ -470,14 +470,14 @@ main(int    argc,
 		// print results
 		ostringstream output;
 		const unsigned int nmbPar  = L.NDim();
-		for (unsigned int i = 0; i<nmbPar; ++i) {
+		for(unsigned int i = 0; i<nmbPar; ++i) {
 			output << "    parameter [" << setw(3) << i << "] ";
 			output << minimizer->VariableName(i) << " " ;
 			output << maxPrecisionAlign(minimizer->X()[i]) << " +- " << maxPrecisionAlign(minimizer->Errors()[i]);
 
-			if (runMinos) {  // does not work for all parameters
+			if(runMinos) {  // does not work for all parameters
 				double minosErrLow, minosErrUp;
-				if (minimizer->GetMinosError(i, minosErrLow, minosErrUp)) {
+				if(minimizer->GetMinosError(i, minosErrLow, minosErrUp)) {
 					output << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]";
 				}
 			}
