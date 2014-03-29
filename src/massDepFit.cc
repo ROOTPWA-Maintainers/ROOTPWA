@@ -871,22 +871,28 @@ rpwa::massDepFit::massDepFit::readInFileFirst(const string& valTreeName,
 	}
 
 	// resize all array to store the information
+	_inProductionAmplitudes.resize(extents[_nrBins][_nrMassBins][_nrWaves]);
+	_inProductionAmplitudesCovariance.resize(extents[_nrBins][_nrMassBins][_nrWaves][2][2]);
 	_inSpinDensityMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves]);
 	_inSpinDensityCovarianceMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2][2]);
 	_inPhaseSpaceIntegrals.resize(extents[_nrBins][_nrMassBins][_nrWaves]);
 	_inIntensities.resize(extents[_nrBins][_nrMassBins][_nrWaves][2]);
 	_inPhases.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2]);
 
+	multi_array<complex<double>, 2> tempProductionAmplitudes;
+	multi_array<double, 4> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
 	multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(inTree, inFit, inMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
-	                             tempIntensities, tempPhases)) {
+	if(not readFitResultMatrices(inTree, inFit, inMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[0] << "'." << endl;
 		delete inFile;
 		return false;
 	}
+	_inProductionAmplitudes[0] = tempProductionAmplitudes;
+	_inProductionAmplitudesCovariance[0] = tempProductionAmplitudesCovariance;
 	_inSpinDensityMatrices[0] = tempSpinDensityMatrices;
 	_inSpinDensityCovarianceMatrices[0] = tempSpinDensityCovarianceMatrices;
 	_inIntensities[0] = tempIntensities;
@@ -963,16 +969,20 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 		return false;
 	}
 
+	multi_array<complex<double>, 2> tempProductionAmplitudes;
+	multi_array<double, 4> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
 	multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(inTree, inFit, inMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
-	                             tempIntensities, tempPhases)) {
+	if(not readFitResultMatrices(inTree, inFit, inMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << endl;
 		delete inFile;
 		return false;
 	}
+	_inProductionAmplitudes[idxBin] = tempProductionAmplitudes;
+	_inProductionAmplitudesCovariance[idxBin] = tempProductionAmplitudesCovariance;
 	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
 	_inSpinDensityCovarianceMatrices[idxBin] = tempSpinDensityCovarianceMatrices;
 	_inIntensities[idxBin] = tempIntensities;
@@ -1085,12 +1095,14 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 		return false;
 	}
 
+	multi_array<complex<double>, 2> tempProductionAmplitudes;
+	multi_array<double, 4> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
 	multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
-	                             tempIntensities, tempPhases)) {
+	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << endl;
 		delete sysFile;
 		return false;
@@ -1264,6 +1276,8 @@ bool
 rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
                                                     rpwa::fitResult* fit,
                                                     const vector<Long64_t>& mapping,
+                                                    multi_array<complex<double>, 2>& productionAmplitudes,
+                                                    multi_array<double, 4>& productionAmplitudesCovariance,
                                                     multi_array<complex<double>, 3>& spinDensityMatrices,
                                                     multi_array<double, 5>& spinDensityCovarianceMatrices,
                                                     multi_array<double, 3>& intensities,
@@ -1277,6 +1291,9 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 	if(_debug) {
 		printDebug << "reading spin-density matrices for " << _nrWaves << " waves from fit result." << endl;
 	}
+
+	productionAmplitudes.resize(extents[_nrMassBins][_nrWaves]);
+	productionAmplitudesCovariance.resize(extents[_nrMassBins][_nrWaves][2][2]);
 
 	spinDensityMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves]);
 	spinDensityCovarianceMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves][2][2]);
@@ -1324,11 +1341,53 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 			}
 		}
 
+		// for the production amplitudes loop over the production
+		// amplitudes of the fit result
+		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
+			const string waveName = fit->waveNameForProdAmp(idxProdAmp).Data();
+
+			const map<string, size_t>::const_iterator it = _waveIndices.find(waveName);
+			// most of the waves are ignored
+			if(it == _waveIndices.end()) {
+				continue;
+			}
+			size_t idxWave = it->second;
+
+			int rank = fit->rankOfProdAmp(idxProdAmp);
+			// TODO: multiple ranks, in that case also check that rank is not -1
+			if(rank != 0) {
+				printErr << "can only handle rank-1 fit (production amplitude '" << fit->prodAmpName(idxProdAmp)
+				         << "' of wave '" << waveName << "' has rank " << rank << ")." << endl;
+				return false;
+			}
+
+			productionAmplitudes[idxMass][idxWave] = fit->prodAmp(idxProdAmp);
+
+			const TMatrixD covariance = fit->prodAmpCov(idxProdAmp);
+			productionAmplitudesCovariance[idxMass][idxWave][0][0] = covariance(0, 0);
+			productionAmplitudesCovariance[idxMass][idxWave][0][1] = covariance(0, 1);
+			productionAmplitudesCovariance[idxMass][idxWave][1][0] = covariance(1, 0);
+			productionAmplitudesCovariance[idxMass][idxWave][1][1] = covariance(1, 1);
+		}
+
 		if(_debug) {
+			ostringstream outputProdAmp;
+			ostringstream outputProdAmpCovariance;
 			ostringstream output;
 			ostringstream outputCovariance;
 
+			outputProdAmp << " (";
+			outputProdAmpCovariance << " (";
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+				outputProdAmp << " " << productionAmplitudes[idxMass][idxWave];
+				for(size_t idx=0; idx<2; ++idx) {
+					outputProdAmpCovariance << " (";
+					for(size_t jdx=0; jdx<2; ++jdx) {
+						outputProdAmpCovariance << " " << productionAmplitudesCovariance[idxMass][idxWave][idx][jdx];
+					}
+					outputProdAmpCovariance << " )";
+				}
+
 				output << " (";
 				outputCovariance << " (";
 				for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
@@ -1346,7 +1405,11 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 				output << " )";
 				outputCovariance << " )";
 			}
+			outputProdAmp << " )";
+			outputProdAmpCovariance << " )";
 
+			printDebug << "production amplitudes: " << outputProdAmp.str() << endl;
+			printDebug << "production amplitudes covariances: " << outputProdAmpCovariance.str() << endl;
 			printDebug << "spin-density matrix: " << output.str() << endl;
 			printDebug << "spin-density covariance matrix: " << outputCovariance.str() << endl;
 		}

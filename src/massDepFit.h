@@ -76,6 +76,10 @@ namespace rpwa {
 // FIXME: get rid
 			const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 // FIXME: get rid
+			const boost::multi_array<std::complex<double>, 3>& getInProductionAmplitudes() const { return _inProductionAmplitudes; }
+// FIXME: get rid
+			const boost::multi_array<double, 5>& getInProductionAmplitudesCovariance() const { return _inProductionAmplitudesCovariance; }
+// FIXME: get rid
 			const boost::multi_array<std::complex<double>, 4>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
 // FIXME: get rid
 			const boost::multi_array<double, 6>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
@@ -123,6 +127,8 @@ namespace rpwa {
 			bool readFitResultMatrices(TTree* tree,
 			                           rpwa::fitResult* fit,
 			                           const std::vector<Long64_t>& mapping,
+			                           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
+			                           boost::multi_array<double, 4>& productionAmplitudesCovariance,
 			                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
 			                           boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
 			                           boost::multi_array<double, 3>& intensities,
@@ -171,6 +177,8 @@ namespace rpwa {
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
 
+			boost::multi_array<std::complex<double>, 3> _inProductionAmplitudes;
+			boost::multi_array<double, 5> _inProductionAmplitudesCovariance;
 			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
 			boost::multi_array<double, 6> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
