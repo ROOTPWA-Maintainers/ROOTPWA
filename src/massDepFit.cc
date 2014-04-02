@@ -872,7 +872,7 @@ rpwa::massDepFit::massDepFit::readInFileFirst(const string& valTreeName,
 
 	// resize all array to store the information
 	_inProductionAmplitudes.resize(extents[_nrBins][_nrMassBins][_nrWaves]);
-	_inProductionAmplitudesCovariance.resize(extents[_nrBins][_nrMassBins][_nrWaves][2][2]);
+	_inProductionAmplitudesCovariance.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2][2]);
 	_inSpinDensityMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves]);
 	_inSpinDensityCovarianceMatrices.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2][2]);
 	_inPhaseSpaceIntegrals.resize(extents[_nrBins][_nrMassBins][_nrWaves]);
@@ -880,7 +880,7 @@ rpwa::massDepFit::massDepFit::readInFileFirst(const string& valTreeName,
 	_inPhases.resize(extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2]);
 
 	multi_array<complex<double>, 2> tempProductionAmplitudes;
-	multi_array<double, 4> tempProductionAmplitudesCovariance;
+	multi_array<double, 5> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
@@ -970,7 +970,7 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 	}
 
 	multi_array<complex<double>, 2> tempProductionAmplitudes;
-	multi_array<double, 4> tempProductionAmplitudesCovariance;
+	multi_array<double, 5> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
@@ -1096,7 +1096,7 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	}
 
 	multi_array<complex<double>, 2> tempProductionAmplitudes;
-	multi_array<double, 4> tempProductionAmplitudesCovariance;
+	multi_array<double, 5> tempProductionAmplitudesCovariance;
 	multi_array<complex<double>, 3> tempSpinDensityMatrices;
 	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
 	multi_array<double, 3> tempIntensities;
@@ -1277,7 +1277,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
                                                     rpwa::fitResult* fit,
                                                     const vector<Long64_t>& mapping,
                                                     multi_array<complex<double>, 2>& productionAmplitudes,
-                                                    multi_array<double, 4>& productionAmplitudesCovariance,
+                                                    multi_array<double, 5>& productionAmplitudesCovariance,
                                                     multi_array<complex<double>, 3>& spinDensityMatrices,
                                                     multi_array<double, 5>& spinDensityCovarianceMatrices,
                                                     multi_array<double, 3>& intensities,
@@ -1293,7 +1293,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 	}
 
 	productionAmplitudes.resize(extents[_nrMassBins][_nrWaves]);
-	productionAmplitudesCovariance.resize(extents[_nrMassBins][_nrWaves][2][2]);
+	productionAmplitudesCovariance.resize(extents[_nrMassBins][_nrWaves][_nrWaves][2][2]);
 
 	spinDensityMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves]);
 	spinDensityCovarianceMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves][2][2]);
@@ -1343,6 +1343,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 		// for the production amplitudes loop over the production
 		// amplitudes of the fit result
+		std::vector<unsigned int> prodAmpIndicesForCov(_nrWaves);
 		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
 			const string waveName = fit->waveNameForProdAmp(idxProdAmp).Data();
 
@@ -1363,11 +1364,17 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 			productionAmplitudes[idxMass][idxWave] = fit->prodAmp(idxProdAmp);
 
-			const TMatrixD covariance = fit->prodAmpCov(idxProdAmp);
-			productionAmplitudesCovariance[idxMass][idxWave][0][0] = covariance(0, 0);
-			productionAmplitudesCovariance[idxMass][idxWave][0][1] = covariance(0, 1);
-			productionAmplitudesCovariance[idxMass][idxWave][1][0] = covariance(1, 0);
-			productionAmplitudesCovariance[idxMass][idxWave][1][1] = covariance(1, 1);
+			prodAmpIndicesForCov[idxWave] = idxProdAmp;
+		}
+
+		const TMatrixD covariance = fit->prodAmpCov(prodAmpIndicesForCov);
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+				productionAmplitudesCovariance[idxMass][idxWave][jdxWave][0][0] = covariance(2*idxWave + 0, 2*jdxWave + 0);
+				productionAmplitudesCovariance[idxMass][idxWave][jdxWave][0][1] = covariance(2*idxWave + 0, 2*jdxWave + 1);
+				productionAmplitudesCovariance[idxMass][idxWave][jdxWave][1][0] = covariance(2*idxWave + 1, 2*jdxWave + 0);
+				productionAmplitudesCovariance[idxMass][idxWave][jdxWave][1][1] = covariance(2*idxWave + 1, 2*jdxWave + 1);
+			}
 		}
 
 		if(_debug) {
@@ -1377,36 +1384,35 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 			ostringstream outputCovariance;
 
 			outputProdAmp << " (";
-			outputProdAmpCovariance << " (";
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 				outputProdAmp << " " << productionAmplitudes[idxMass][idxWave];
-				for(size_t idx=0; idx<2; ++idx) {
-					outputProdAmpCovariance << " (";
-					for(size_t jdx=0; jdx<2; ++jdx) {
-						outputProdAmpCovariance << " " << productionAmplitudesCovariance[idxMass][idxWave][idx][jdx];
-					}
-					outputProdAmpCovariance << " )";
-				}
 
+				outputProdAmpCovariance << " (";
 				output << " (";
 				outputCovariance << " (";
 				for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 					output << " " << spinDensityMatrices[idxMass][idxWave][jdxWave];
+
+					outputProdAmpCovariance << " (";
 					outputCovariance << " (";
 					for(size_t idx=0; idx<2; ++idx) {
+						outputProdAmpCovariance << " (";
 						outputCovariance << " (";
 						for(size_t jdx=0; jdx<2; ++jdx) {
+							outputProdAmpCovariance << " " << productionAmplitudesCovariance[idxMass][idxWave][jdxWave][idx][jdx];
 							outputCovariance << " " << spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][idx][jdx];
 						}
+						outputProdAmpCovariance << " )";
 						outputCovariance << " )";
 					}
+					outputProdAmpCovariance << " )";
 					outputCovariance << " )";
 				}
+				outputProdAmpCovariance << " )";
 				output << " )";
 				outputCovariance << " )";
 			}
 			outputProdAmp << " )";
-			outputProdAmpCovariance << " )";
 
 			printDebug << "production amplitudes: " << outputProdAmp.str() << endl;
 			printDebug << "production amplitudes covariances: " << outputProdAmpCovariance.str() << endl;
