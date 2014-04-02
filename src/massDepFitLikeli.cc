@@ -1,6 +1,7 @@
 #include "massDepFitLikeli.h"
 
 #include "massDepFitModel.h"
+#include "reportingUtils.hpp"
 
 
 rpwa::massDepFit::likelihood*
@@ -17,17 +18,30 @@ rpwa::massDepFit::likelihood::NDim() const {
 
 unsigned int
 rpwa::massDepFit::likelihood::NDataPoints() const {
-	// calculate data points:
-	// * diagonal elements are real numbers
-	// * non-diagonal elements are complex numbers
-	// * remember (Re,Im) => factor 2
-	// * diagonal elements are only checked once, of diagonal elements with
-	//   the two different combinations (i,j) and (j,i)
 	unsigned int nrPts(0);
 
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-			nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
+	if(_fitProductionAmplitudes) {
+		// calculate data points:
+		// * production amplitudes in general are complex numbers
+		// * for the anchor wave it might be real
+		// * remember (Re,Im) => factor 2
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
+			if(idxWave != _idxAnchorWave or not _realAnchorWave) {
+				nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
+			}
+		}
+	} else {
+		// calculate data points:
+		// * diagonal elements are real numbers
+		// * off-diagonal elements are complex numbers
+		// * remember (Re,Im) => factor 2
+		// * diagonal elements are only checked once, off-diagonal elements with
+		//   the two different combinations (i,j) and (j,i)
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+				nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
+			}
 		}
 	}
 
@@ -45,6 +59,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
                                    const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
                                    const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
                                    const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
+                                   bool fitProductionAmplitudes,
                                    bool useCovariance)
 {
 	_compset = compset;
@@ -64,11 +79,76 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_wavePairMassBinLimits.resize(std::vector<size_t>(wavePairMassBinLimits.shape(), wavePairMassBinLimits.shape()+wavePairMassBinLimits.num_dimensions()));
 	_wavePairMassBinLimits = wavePairMassBinLimits;
 
+	_idxAnchorWave = _compset->getAnchorWave();
+
+	_fitProductionAmplitudes = fitProductionAmplitudes;
 	_useCovariance = useCovariance;
 
 	_nrBins = _spinDensityMatrices.size();
 	_nrMassBins = _massBinCenters.size();
 	_nrWaves = _wavePairMassBinLimits.size();
+
+	// test if the anchor wave is real valued
+	// (only if fitting to the production amplitude)
+	_realAnchorWave = false;
+	if(_fitProductionAmplitudes) {
+		_realAnchorWave = true;
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				_realAnchorWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].imag() == 0.);
+				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][1] == 0.);
+				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][0] == 0.);
+				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][1] == 0.);
+			}
+		}
+	}
+
+	// at the moment production amplitude can only be fitted, if the anchor wave is real valued
+	if(_fitProductionAmplitudes and not _realAnchorWave) {
+		printErr << "production amplitudes cannot be fitted if the anchor wave is not real valued." << std::endl;
+		return false;
+	}
+
+	if(_fitProductionAmplitudes) {
+		// transfer measured production amplitude such that the anchor wave is always positive
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				if(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].real() < 0.) {
+					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+						_productionAmplitudes[idxBin][idxMass][idxWave] *= -1.;
+					}
+				}
+			}
+		}
+
+		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				// import covariance matrix of production amplitudes
+				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves - 1, 2*_nrWaves - 1);
+
+				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+					for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+						if(idxWave != jdxWave && not _useCovariance) {
+							continue;
+						}
+
+						const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
+						const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
+
+						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
+						if(idxWave != _idxAnchorWave || jdxWave != _idxAnchorWave) {
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
+						}
+					}
+				}
+
+				_productionAmplitudesCovMatInv[idxBin][idxMass].Invert();
+			}
+		}
+	}
 
 	return true;
 }
@@ -79,7 +159,59 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 	// set parameters for resonances, background and phase space
 	_compset->setParameters(par);
 
-	return DoEvalSpinDensityMatrix();
+	if(_fitProductionAmplitudes) {
+		return DoEvalProductionAmplitudes();
+	} else {
+		return DoEvalSpinDensityMatrix();
+	}
+}
+
+
+double
+rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
+	double chi2=0;
+
+	// loop over bins
+	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
+		// loop over mass-bins
+		for(unsigned idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+			const double mass = _massBinCenters[idxMass];
+
+			TMatrixT<double> prodAmpDiffMat(2*_nrWaves - 1, 1);
+
+			// sum over the contributions to chi2
+			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+				// check that this mass bin should be taken into account for this
+				// combination of waves
+				if(idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
+					continue;
+				}
+
+				// phase of fit in anchor wave
+				const std::complex<double> anchorFit = _compset->productionAmplitude(_idxAnchorWave, idxBin, mass, idxMass);
+				const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
+
+				// calculate target spin density matrix element
+				const std::complex<double> prodAmpFit = _compset->productionAmplitude(idxWave, idxBin, mass, idxMass) / anchorFitPhase;
+
+				const std::complex<double> prodAmpDiff = prodAmpFit - _productionAmplitudes[idxBin][idxMass][idxWave];
+
+				const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
+				prodAmpDiffMat(row + 0, 0) = prodAmpDiff.real();
+				if(idxWave != _idxAnchorWave) {
+					prodAmpDiffMat(row + 1, 0) = prodAmpDiff.imag();
+				}
+			} // end loop over idxWave
+
+			const TMatrixT<double> prodAmpDiffMatT(TMatrixT<double>::kTransposed, prodAmpDiffMat);
+
+			const TMatrixT<double> dChi2Mat(prodAmpDiffMatT * _productionAmplitudesCovMatInv[idxBin][idxMass] * prodAmpDiffMat);
+
+			chi2 += dChi2Mat(0, 0);
+		} // end loop over mass-bins
+	} // end loop over bins
+
+	return chi2;
 }
 
 

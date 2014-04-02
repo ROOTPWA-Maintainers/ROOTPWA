@@ -16,6 +16,7 @@
 #include <boost/multi_array.hpp>
 
 #include <Math/IFunction.h>
+#include <TMatrixT.h>
 
 namespace rpwa {
 
@@ -45,10 +46,12 @@ namespace rpwa {
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
 			          const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
+			          bool fitProductionAmplitudes,
 			          bool useCovariance);
 
 		private:
 
+			double DoEvalProductionAmplitudes() const;
 			double DoEvalSpinDensityMatrix() const;
 
 			rpwa::massDepFit::model* _compset;
@@ -61,12 +64,17 @@ namespace rpwa {
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
 			boost::multi_array<double, 6> _productionAmplitudesCovariance;
+			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
 
 			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
 			boost::multi_array<double, 6> _spinDensityCovarianceMatrices;
 
 			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
 
+			size_t _idxAnchorWave;
+
+			bool _fitProductionAmplitudes;
+			bool _realAnchorWave;
 			bool _useCovariance;
 
 		};

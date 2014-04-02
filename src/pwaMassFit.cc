@@ -78,7 +78,9 @@ usage(const string& progName,
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 	     << "        -P         plotting only - no fit" << endl
 	     << "        -R         plot in fit range only" << endl
-	     << "        -C         switch OFF covariances between real and imag part" << endl
+	     << "        -A         fit to the production amplitudes (default: spin-density matrix)" << endl
+	     << "        -C         fit to spin-density matrix:   switch OFF covariances between real and imag part" << endl
+	     << "                   fit to production amplitudes: switch OFF covariances between amplitudes" << endl
 	     << "        -d         additional debug output (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -259,13 +261,14 @@ main(int    argc,
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
 	bool         onlyPlotting       = false;
 	bool         rangePlotting      = false;
+	bool         doProdAmp          = false;
 	bool         doCov              = true;
 	bool         debug              = false;
 	bool         quiet              = false;
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRCdqh")) != -1) {
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRACdqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -287,6 +290,9 @@ main(int    argc,
 			break;
 		case 'R':
 			rangePlotting=true;
+			break;
+		case 'A':
+			doProdAmp=true;
 			break;
 		case 'C':
 			doCov=false;
@@ -321,6 +327,7 @@ main(int    argc,
 	          << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
 	          << "    only plotting .................................. "  << yesNo(onlyPlotting) << endl
 	          << "    plot in fit range only ......................... "  << yesNo(rangePlotting) << endl
+	          << "    fit to production amplitudes ................... "  << yesNo(doProdAmp) << endl
 	          << "    take covariance into account ................... "  << yesNo(doCov) << endl
 	          << "    debug .......................................... "  << yesNo(debug) << endl
 	          << "    quiet .......................................... "  << yesNo(quiet) << endl;
@@ -385,6 +392,7 @@ main(int    argc,
 	              mdepFit.getInSpinDensityMatrices(),
 	              mdepFit.getInSpinDensityCovarianceMatrices(),
 	              mdepFit.getWavePairMassBinLimits(),
+	              doProdAmp,
 	              doCov)) {
 		printErr << "error while initializing the likelihood calculator." << endl;
 		return 1;
