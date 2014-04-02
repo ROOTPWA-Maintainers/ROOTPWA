@@ -2,8 +2,6 @@
 
 #include "massDepFitModel.h"
 
-using namespace std;
-
 
 rpwa::massDepFit::likelihood*
 rpwa::massDepFit::likelihood::Clone() const {
@@ -105,9 +103,9 @@ rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const {
 					}
 
 					// calculate target spin density matrix element
-					const complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, idxBin, mass, idxMass);
+					const std::complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, idxBin, mass, idxMass);
 
-					const complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
+					const std::complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
 
 					double dchi;
 					if(idxWave==jdxWave) {

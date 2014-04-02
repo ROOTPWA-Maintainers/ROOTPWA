@@ -21,8 +21,6 @@
 #include "physUtils.hpp"
 #include "reportingUtils.hpp"
 
-using namespace std;
-
 
 rpwa::massDepFit::channel::channel(const std::string& waveName,
                                    const size_t nrBins,
@@ -67,7 +65,7 @@ rpwa::massDepFit::channel::~channel() {
 }
 
 
-rpwa::massDepFit::component::component(const string& name,
+rpwa::massDepFit::component::component(const std::string& name,
                                        const size_t nrParameters)
 	: _name(name),
 	  _nrParameters(nrParameters),
@@ -86,32 +84,32 @@ rpwa::massDepFit::component::component(const string& name,
 bool
 rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
                                   const size_t nrBins,
-                                  const vector<double>& massBinCenters,
-                                  const map<string, size_t>& waveIndices,
+                                  const std::vector<double>& massBinCenters,
+                                  const std::map<std::string, size_t>& waveIndices,
                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                   const bool debug) {
 	if(debug) {
-		printDebug << "starting initialization of 'component' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'component' for component '" << getName() << "'." << std::endl;
 	}
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "reading parameter '" << _parametersName[idxParameter] << "'." << endl;
+			printDebug << "reading parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 		}
 
 		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << endl;
+			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << std::endl;
 			return false;
 		}
 
-		map<string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
 		                     ("val", libconfig::Setting::TypeFloat)
 		                     ("fix", libconfig::Setting::TypeBoolean);
 
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "the '" << _parametersName[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << endl;
+			printErr << "the '" << _parametersName[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
 		}
 
@@ -131,7 +129,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
 	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << endl;
+		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
 		return false;
 	}
 
@@ -139,41 +137,41 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
 
-		map<string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
 		                     ("amp", libconfig::Setting::TypeString)
 		                     ("couplings", libconfig::Setting::TypeList);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
 		}
 
-		string waveName;
+		std::string waveName;
 		decayChannel->lookupValue("amp", waveName);
 
 		// check that a wave with this wave is not yet in the decay channels
 		for(size_t idx=0; idx<_channels.size(); ++idx) {
 			if(_channels[idx].getWaveName() == waveName) {
-				printErr << "wave '" << waveName << "' defined twice in the decay channels of '" << getName() << "'." << endl;
+				printErr << "wave '" << waveName << "' defined twice in the decay channels of '" << getName() << "'." << std::endl;
 				return false;
 			}
 		}
 
-		const map<string, size_t>::const_iterator it = waveIndices.find(waveName);
+		const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
 		if(it == waveIndices.end()) {
-			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << endl;
+			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
 			return false;
 		}
 
 		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
 		if(not configCouplings) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << endl;
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
 			return false;
 		}
 
 		const int nrCouplings = configCouplings->getLength();
 		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << nrBins << "." << endl;
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
 			return false;
 		}
 
@@ -181,12 +179,12 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
 			const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
 
-			map<string, libconfig::Setting::Type> mandatoryArguments;
+			std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 			boost::assign::insert(mandatoryArguments)
 			                     ("coupling_Re", libconfig::Setting::TypeFloat)
 			                     ("coupling_Im", libconfig::Setting::TypeFloat);
 			if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
-				printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << endl;
+				printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
 				return false;
 			}
 
@@ -204,18 +202,18 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, couplings, massBinCenters, view));
 
 		if(debug) {
-			ostringstream output;
+			std::ostringstream output;
 			output << "( ";
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
 				output << couplings[idxBin] << " ";
 			}
 			output << ")";
-			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << endl;
+			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << std::endl;
 		}
 	}
 
 	if(debug) {
-		printDebug << "finished initialization of 'component'." << endl;
+		printDebug << "finished initialization of 'component'." << std::endl;
 	}
 
 	return true;
@@ -228,17 +226,17 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
                                     const bool debug) const
 {
 	if(debug) {
-		printDebug << "starting updating of 'component' for component '" << getName() << "'." << endl;
+		printDebug << "starting updating of 'component' for component '" << getName() << "'." << std::endl;
 	}
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "updating parameter '" << _parametersName[idxParameter] << "'." << endl;
+			printDebug << "updating parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 		}
 
 		libconfig::Setting* configParameter = &((*configComponent)[_parametersName[idxParameter]]);
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << endl;
+			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << std::endl;
 			return false;
 		}
 
@@ -248,11 +246,11 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			configParameter->add("error", libconfig::Setting::TypeFloat);
 		}
 
-		const string varName = getName() + "__" + _parametersName[idxParameter];
+		const std::string varName = getName() + "__" + _parametersName[idxParameter];
 		const int varIndex = minimizer->VariableIndex(varName);
 		if(varIndex == -1) {
 			printErr << "variable '" << varName << "' used to extract the error for the parameter '"
-			         << _parametersName[idxParameter] << "' of '" << getName() << "' not known to the minimizer." << endl;
+			         << _parametersName[idxParameter] << "' of '" << getName() << "' not known to the minimizer." << std::endl;
 			return false;
 		}
 		(*configParameter)["error"] = minimizer->Errors()[varIndex];
@@ -260,29 +258,29 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
 	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << endl;
+		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
 		return false;
 	}
 
 	const int nrDecayChannels = decayChannels->getLength();
 	if(nrDecayChannels < 0 || static_cast<size_t>(nrDecayChannels) != getNrChannels()) {
-		printErr << "number of decay channels in configuration file and fit model does not match." << endl;
+		printErr << "number of decay channels in configuration file and fit model does not match." << std::endl;
 		return false;
 	}
 
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
 
-		map<string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
 		                     ("amp", libconfig::Setting::TypeString)
 		                     ("couplings", libconfig::Setting::TypeList);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
 		}
 
-		string waveName;
+		std::string waveName;
 		decayChannel->lookupValue("amp", waveName);
 
 		const rpwa::massDepFit::channel* channel = NULL;
@@ -293,19 +291,19 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			}
 		}
 		if(not channel) {
-			printErr << "could not find channel '" << waveName << "' for component '" << getName() << "'." << endl;
+			printErr << "could not find channel '" << waveName << "' for component '" << getName() << "'." << std::endl;
 			return false;
 		}
 
 		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
 		if(not configCouplings) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << endl;
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
 			return false;
 		}
 
 		const int nrCouplings = configCouplings->getLength();
 		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != channel->getNrBins()) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << endl;
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << std::endl;
 			return false;
 		}
 
@@ -318,7 +316,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 	}
 
 	if(debug) {
-		printDebug << "finished updating of 'component'." << endl;
+		printDebug << "finished updating of 'component'." << std::endl;
 	}
 
 	return true;
@@ -329,9 +327,9 @@ size_t
 rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
-	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+	for(std::vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
 		const size_t nrBins = it->getNrBins();
-		const std::vector<complex<double> >& couplings = it->getCouplings();
+		const std::vector<std::complex<double> >& couplings = it->getCouplings();
 		for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
 			par[counter] = couplings[idxBin].real();
 			counter += 1;
@@ -351,18 +349,18 @@ size_t
 rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
-	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		std::vector<complex<double> > couplings;
+	for(std::vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+		std::vector<std::complex<double> > couplings;
 		if(it->isAnchor()) {
 			const size_t nrBins = it->getNrBins();
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				couplings.push_back(complex<double>(par[counter], 0.));
+				couplings.push_back(std::complex<double>(par[counter], 0.));
 				counter += 1;
 			}
 		} else {
 			const size_t nrBins = it->getNrBins();
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				couplings.push_back(complex<double>(par[counter], par[counter+1]));
+				couplings.push_back(std::complex<double>(par[counter], par[counter+1]));
 				counter += 2;
 			}
 		}
@@ -395,24 +393,24 @@ rpwa::massDepFit::component::setParameters(const double* par)
 }
 
 
-ostream&
-rpwa::massDepFit::component::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::component::print(std::ostream& out) const
 {
-	out << "Decay modes:" << endl;
-	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		ostringstream output;
+	out << "Decay modes:" << std::endl;
+	for(std::vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+		std::ostringstream output;
 		output << "( ";
 		for(size_t idxBin=0; idxBin<it->getNrBins(); ++idxBin) {
 			output << it->getCoupling(idxBin) << " ";
 		}
 		output << ")";
-		out << it->getWaveName() << "    C=" << output.str() << endl;
+		out << it->getWaveName() << "    C=" << output.str() << std::endl;
 	}
 	return out;
 }
 
 
-rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const string& name)
+rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const std::string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "mass";
@@ -426,22 +424,22 @@ rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const string& nam
 bool
 rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                               const size_t nrBins,
-                                              const vector<double>& massBinCenters,
-                                              const map<string, size_t>& waveIndices,
+                                              const std::vector<double>& massBinCenters,
+                                              const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'fixedWidthBreitWigner' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
-		printErr << "error while reading configuration of 'component' class." << endl;
+		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
 
 	if(debug) {
-		ostringstream output;
+		std::ostringstream output;
 		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
@@ -452,7 +450,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
 
 		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
@@ -464,37 +462,37 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
 
-		printDebug << "component '" << getName() << "':" << endl << output.str();
+		printDebug << "component '" << getName() << "':" << std::endl << output.str();
 
-		printDebug << "finished initialization of 'fixedWidthBreitWigner'." << endl;
+		printDebug << "finished initialization of 'fixedWidthBreitWigner'." << std::endl;
 	}
 	return true;
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::fixedWidthBreitWigner::val(const size_t idxBin,
                                              const double m) const
 {
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
 
-	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma0*m0);
+	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
 }
 
 
-ostream&
-rpwa::massDepFit::fixedWidthBreitWigner::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 {
-	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
+	out << getName() << std::endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
 	return component::print(out);
 }
 
 
-rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const string& name)
+rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const std::string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "mass";
@@ -508,27 +506,27 @@ rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const string&
 bool
 rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* configComponent,
                                                 const size_t nrBins,
-                                                const vector<double>& massBinCenters,
-                                                const map<string, size_t>& waveIndices,
+                                                const std::vector<double>& massBinCenters,
+                                                const std::map<std::string, size_t>& waveIndices,
                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                 const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'relativisticBreitWigner' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'relativisticBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
-		printErr << "error while reading configuration of 'component' class." << endl;
+		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
 
-	map<string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
 	                     ("mIsobar1", libconfig::Setting::TypeArray)
 	                     ("mIsobar2", libconfig::Setting::TypeArray)
 	                     ("relAngularMom", libconfig::Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-		printErr << "not all required arrays are defined for the component '" << getName() << "'." << endl;
+		printErr << "not all required arrays are defined for the component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
@@ -538,14 +536,14 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 
 	const int nrDecayChannels = configMassIsobar1.getLength();
 	if(configMassIsobar2.getLength() != nrDecayChannels || configRelAngularMom.getLength() != nrDecayChannels) {
-		printErr << "not all arrays have the same length for component '" << getName() << "'." << endl;
+		printErr << "not all arrays have the same length for component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
 	if(configMassIsobar1[0].getType() != libconfig::Setting::TypeFloat
 	   || configMassIsobar2[0].getType() != libconfig::Setting::TypeFloat
 	   || configRelAngularMom[0].getType() != libconfig::Setting::TypeInt) {
-		printErr << "not all arrays have the correct type for component '" << getName() << "'." << endl;
+		printErr << "not all arrays have the correct type for component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
@@ -564,17 +562,17 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 		boost::assign::insert(mandatoryArguments)
 		                     ("branchingRatio", libconfig::Setting::TypeArray);
 		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "not all required arrays are defined for the component '" << getName() << "'." << endl;
+			printErr << "not all required arrays are defined for the component '" << getName() << "'." << std::endl;
 			return false;
 		}
 
 		const libconfig::Setting& configBranchingRatio = (*configComponent)["branchingRatio"];
 		if(configBranchingRatio.getLength() != nrDecayChannels) {
-			printErr << "not all arrays have the same length for component '" << getName() << "'." << endl;
+			printErr << "not all arrays have the same length for component '" << getName() << "'." << std::endl;
 			return false;
 		}
 		if(configBranchingRatio[0].getType() != libconfig::Setting::TypeFloat) {
-			printErr << "not all arrays have the correct type for component '" << getName() << "'." << endl;
+			printErr << "not all arrays have the correct type for component '" << getName() << "'." << std::endl;
 			return false;
 		}
 
@@ -591,7 +589,7 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 	}
 
 	if(debug) {
-		ostringstream output;
+		std::ostringstream output;
 		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
@@ -602,7 +600,7 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
 
 		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
@@ -614,24 +612,24 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
 
-		output << "    " << _ratio.size() << " decay channels:" << endl;
+		output << "    " << _ratio.size() << " decay channels:" << std::endl;
 		for(size_t i=0; i<_ratio.size(); ++i) {
-			output << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << endl;
-			output << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << endl;
-			output << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << endl;
+			output << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << std::endl;
+			output << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << std::endl;
+			output << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << std::endl;
 		}
 
-		printDebug << "component '" << getName() << "':" << endl << output.str();
+		printDebug << "component '" << getName() << "':" << std::endl << output.str();
 
-		printDebug << "finished initialization of 'relativisticBreitWigner'." << endl;
+		printDebug << "finished initialization of 'relativisticBreitWigner'." << std::endl;
 	}
 	return true;
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
                                                const double m) const
 {
@@ -654,20 +652,20 @@ rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
 	}
 	gamma *= gamma0 * m0/m;
 
-	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
+	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 }
 
 
-ostream&
-rpwa::massDepFit::relativisticBreitWigner::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::relativisticBreitWigner::print(std::ostream& out) const
 {
-	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
+	out << getName() << std::endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
 	return component::print(out);
 }
 
 
-rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const string& name)
+rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const std::string& name)
 	: component(name, 2),
 	  _nrBins(0)
 {
@@ -704,30 +702,30 @@ rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
 bool
 rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* configComponent,
                                                  const size_t nrBins,
-                                                 const vector<double>& massBinCenters,
-                                                 const map<string, size_t>& waveIndices,
+                                                 const std::vector<double>& massBinCenters,
+                                                 const std::map<std::string, size_t>& waveIndices,
                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                  const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'parameterizationA1Bowler' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'parameterizationA1Bowler' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
-		printErr << "error while reading configuration of 'component' class." << endl;
+		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
 
 	if(getNrChannels() != 1) {
-		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << endl;
+		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << std::endl;
 		return false;
 	}
 
 	const std::string& waveName = getChannelWaveName(0);
 
-	const map<string, size_t>::const_iterator it = waveIndices.find(waveName);
+	const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
 	if(it == waveIndices.end()) {
-		printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << endl;
+		printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
 		return false;
 	}
 
@@ -745,7 +743,7 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 	}
 
 	if(debug) {
-		ostringstream output;
+		std::ostringstream output;
 		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
@@ -756,7 +754,7 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
 
 		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
@@ -768,17 +766,17 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
 
-		printDebug << "component '" << getName() << "':" << endl << output.str();
+		printDebug << "component '" << getName() << "':" << std::endl << output.str();
 
-		printDebug << "finished initialization of 'parameterizationA1Bowler'." << endl;
+		printDebug << "finished initialization of 'parameterizationA1Bowler'." << std::endl;
 	}
 	return true;
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
                                                 const double m) const
 {
@@ -790,20 +788,20 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
 
 	const double gamma = gamma0 * m0/m * (ps*ps)/(ps0*ps0);
 
-	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
+	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 }
 
 
-ostream&
-rpwa::massDepFit::parameterizationA1Bowler::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
 {
-	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << endl;
+	out << getName() << std::endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
 	return component::print(out);
 }
 
 
-rpwa::massDepFit::exponentialBackground::exponentialBackground(const string& name)
+rpwa::massDepFit::exponentialBackground::exponentialBackground(const std::string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "m0";
@@ -817,26 +815,26 @@ rpwa::massDepFit::exponentialBackground::exponentialBackground(const string& nam
 bool
 rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configComponent,
                                               const size_t nrBins,
-                                              const vector<double>& massBinCenters,
-                                              const map<string, size_t>& waveIndices,
+                                              const std::vector<double>& massBinCenters,
+                                              const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'exponentialBackground' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'exponentialBackground' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
-		printErr << "error while reading configuration of 'component' class." << endl;
+		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
 
-	map<string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	std::map<std::string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
 	                     ("mIsobar1", libconfig::Setting::TypeFloat)
 	                     ("mIsobar2", libconfig::Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
-		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << endl;
+		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
@@ -844,7 +842,7 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 	configComponent->lookupValue("mIsobar2", _m2);
 
 	if(debug) {
-		ostringstream output;
+		std::ostringstream output;
 		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
@@ -855,7 +853,7 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
 
 		output << "    width: " << _parameters[1] << " GeV/c^2, ";
 		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
@@ -867,20 +865,20 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[1] ? "(FIXED) " : "") << endl;
+		output << (_parametersFixed[1] ? "(FIXED) " : "") << std::endl;
 
-		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << endl;
+		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 
-		printDebug << "component '" << getName() << "':" << endl << output.str();
+		printDebug << "component '" << getName() << "':" << std::endl << output.str();
 
-		printDebug << "finished initialization of 'exponentialBackground'." << endl;
+		printDebug << "finished initialization of 'exponentialBackground'." << std::endl;
 	}
 
 	return true;
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
                                              const double m) const
 {
@@ -889,7 +887,7 @@ rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
 
 	// calculate breakup momentum
 	if(mass < _m1+_m2) {
-		return complex<double>(1,0);
+		return std::complex<double>(1,0);
 	}
 	const double q2 = rpwa::breakupMomentumSquared(mass, _m1, _m2);
 
@@ -897,16 +895,16 @@ rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
 }
 
 
-ostream&
-rpwa::massDepFit::exponentialBackground::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 {
-	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
+	out << getName() << std::endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << std::endl;
 	return component::print(out);
 }
 
 
-rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const string& name)
+rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const std::string& name)
 	: component(name, 5)
 {
 	_parametersName[0] = "m0";
@@ -935,26 +933,26 @@ rpwa::massDepFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<do
 bool
 rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* configComponent,
                                                   const size_t nrBins,
-                                                  const vector<double>& massBinCenters,
-                                                  const map<string, size_t>& waveIndices,
+                                                  const std::vector<double>& massBinCenters,
+                                                  const std::map<std::string, size_t>& waveIndices,
                                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                   const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'tPrimeDependentBackground' for component '" << getName() << "'." << endl;
+		printDebug << "starting initialization of 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
-		printErr << "error while reading configuration of 'component' class." << endl;
+		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
 
-	map<string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	std::map<std::string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
 	                     ("mIsobar1", libconfig::Setting::TypeFloat)
 	                     ("mIsobar2", libconfig::Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
-		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << endl;
+		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
@@ -962,12 +960,12 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 	configComponent->lookupValue("mIsobar2", _m2);
 
 	if(_tPrimeMeans.size() != nrBins) {
-		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << endl;
+		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
 		return false;
 	}
 
 	if(debug) {
-		ostringstream output;
+		std::ostringstream output;
 		output << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
@@ -978,7 +976,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 		} else {
 			output << "    unlimited ";
 		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
 
 		for(size_t i=1; i<_parameters.size(); ++i) {
 			output << "    c" << i-1 << ": " << _parameters[i] << " , ";
@@ -991,27 +989,27 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 			} else {
 				output << "    unlimited ";
 			}
-			output << (_parametersFixed[i] ? "(FIXED) " : "") << endl;
+			output << (_parametersFixed[i] ? "(FIXED) " : "") << std::endl;
 		}
 
-		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << endl;
+		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 
 		output << "    for " << nrBins << " bins with mean t' values: " << _tPrimeMeans[0];
 		for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
 			output << ", " << _tPrimeMeans[i];
 		}
-		output << endl;
+		output << std::endl;
 
-		printDebug << "component '" << getName() << "':" << endl << output.str();
+		printDebug << "component '" << getName() << "':" << std::endl << output.str();
 
-		printDebug << "finished initialization of 'tPrimeDependentBackground'." << endl;
+		printDebug << "finished initialization of 'tPrimeDependentBackground'." << std::endl;
 	}
 
 	return true;
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
                                                  const double m) const
 {
@@ -1028,10 +1026,10 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
 }
 
 
-ostream&
-rpwa::massDepFit::tPrimeDependentBackground::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 {
-	out << getName() << endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
+	out << getName() << std::endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << std::endl;
 	return component::print(out);
 }
