@@ -18,15 +18,12 @@
 #include "massDepFitComponents.h"
 #include "reportingUtils.hpp"
 
-using namespace std;
-using namespace rpwa;
-
 
 rpwa::massDepFit::model::model()
 	: _nrParameters(0),
-	  _idxAnchorWave(numeric_limits<size_t>::max()),
-	  _idxAnchorComponent(numeric_limits<size_t>::max()),
-	  _idxAnchorChannel(numeric_limits<size_t>::max()),
+	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
+	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
+	  _idxAnchorChannel(std::numeric_limits<size_t>::max()),
 	  _fsmdFunction(NULL),
 	  _fsmdFixed(false)
 {
@@ -34,20 +31,20 @@ rpwa::massDepFit::model::model()
 
 
 bool
-rpwa::massDepFit::model::init(const vector<string>& waveNames,
-                              const vector<double>& massBinCenters,
+rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
+                              const std::vector<double>& massBinCenters,
                               const std::string& anchorWaveName,
                               const std::string& anchorComponentName)
 {
 	_waveNames = waveNames;
 
 	if(not initMapping(anchorWaveName, anchorComponentName)) {
-		printErr << "error while mapping the waves to the decay channels and components." << endl;
+		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
 		return false;
 	}
 
 	if(not initFsmd(massBinCenters)) {
-		printErr << "error precalculating the final-state mass dependence." << endl;
+		printErr << "error precalculating the final-state mass dependence." << std::endl;
 		return false;
 	}
 
@@ -103,19 +100,19 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 	// check that all waves used in a decay channel have been defined
 	const size_t nrComponents = _components.size();
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
+		for(std::vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
 			if(find(_waveNames.begin(), _waveNames.end(), itChan->getWaveName()) == _waveNames.end()) {
-				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _components[idxComponent]->getName() << "'." << endl;
+				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _components[idxComponent]->getName() << "'." << std::endl;
 				return false;
 			}
 		}
 	}
 
 	// check that all defined waves are also used
-	for(vector<string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
+	for(std::vector<std::string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
 		bool found(false);
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-			for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
+			for(std::vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
 				if(itChan->getWaveName() == *itWave) {
 					found = true;
 					break;
@@ -124,7 +121,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		}
 
 		if(not found) {
-			printErr << "wave '" << *itWave << "' defined but not used in any decay." << endl;
+			printErr << "wave '" << *itWave << "' defined but not used in any decay." << std::endl;
 			return false;
 		}
 	}
@@ -137,7 +134,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 			const size_t nrChannels = _components[idxComponent]->getNrChannels();
 			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
 				if(_components[idxComponent]->getChannelWaveName(idxChannel) == _waveNames[idxWave]) {
-					_waveComponentChannel[idxWave].push_back(pair<size_t, size_t>(idxComponent,idxChannel));
+					_waveComponentChannel[idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
 
 					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _components[idxComponent]->getName()) {
 						_idxAnchorWave = idxWave;
@@ -150,35 +147,35 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 	}
 
 	// test that anchor wave is present
-	if(_idxAnchorWave == numeric_limits<size_t>::max() || _idxAnchorComponent == numeric_limits<size_t>::max() || _idxAnchorChannel == numeric_limits<size_t>::max()) {
-		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << endl;
+	if(_idxAnchorWave == std::numeric_limits<size_t>::max() || _idxAnchorComponent == std::numeric_limits<size_t>::max() || _idxAnchorChannel == std::numeric_limits<size_t>::max()) {
+		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << std::endl;
 		return false;
 	}
 	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
 	_nrParameters -= _components[_idxAnchorComponent]->getChannel(_idxAnchorChannel).getNrBins();
 
-	ostringstream output;
+	std::ostringstream output;
 	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
-		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << endl;
+		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
 		for(size_t idxComponents=0; idxComponents<_waveComponentChannel[idxWave].size(); idxComponents++) {
 			const size_t idxComponent = _waveComponentChannel[idxWave][idxComponents].first;
 			output << "        component " << idxComponents << ": " << idxComponent << " '" << _components[idxComponent]->getName() << "'";
 			if(_idxAnchorWave == idxWave && _idxAnchorComponent == idxComponent) {
 				output << " (anchor)";
 			}
-			output << endl;
+			output << std::endl;
 		}
 	}
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		output << "    component '" << _components[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << endl;
+		output << "    component '" << _components[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << std::endl;
 
 		const size_t nrChannels = _components[idxComponent]->getNrChannels();
 		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
 			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannelWaveName(idxChannel)
-			       << (_components[idxComponent]->getChannel(idxChannel).isAnchor() ? " (anchor)" : "") << endl;
+			       << (_components[idxComponent]->getChannel(idxChannel).isAnchor() ? " (anchor)" : "") << std::endl;
 		}
 	}
-	printInfo << _waveNames.size() << " waves and " << _components.size() << " components in fit model:" << endl
+	printInfo << _waveNames.size() << " waves and " << _components.size() << " components in fit model:" << std::endl
 	          << output.str();
 
 	return true;
@@ -186,14 +183,14 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 
 
 bool
-rpwa::massDepFit::model::initFsmd(const vector<double>& massBinCenters)
+rpwa::massDepFit::model::initFsmd(const std::vector<double>& massBinCenters)
 {
 	const size_t nrMassBins = massBinCenters.size();
 
 	_fsmdValues.resize(nrMassBins);
 
 	for(size_t idxMassBin=0; idxMassBin<nrMassBins; ++idxMassBin) {
-		_fsmdValues[idxMassBin] = calcFsmd(massBinCenters[idxMassBin], numeric_limits<size_t>::max());
+		_fsmdValues[idxMassBin] = calcFsmd(massBinCenters[idxMassBin], std::numeric_limits<size_t>::max());
 	}
 
 	return true;
@@ -266,7 +263,7 @@ double
 rpwa::massDepFit::model::calcFsmd(const double mass,
                                   const size_t idxMass) const
 {
-	if(_fsmdFixed && idxMass != numeric_limits<size_t>::max()) {
+	if(_fsmdFixed && idxMass != std::numeric_limits<size_t>::max()) {
 		return _fsmdValues[idxMass];
 	}
 
@@ -278,17 +275,17 @@ rpwa::massDepFit::model::calcFsmd(const double mass,
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
                                              const size_t idxBin,
                                              const double mass,
                                              const size_t idxMass) const
 {
 	// loop over all components and pick up those that contribute to this channels
-	complex<double> prodAmp(0., 0.);
+	std::complex<double> prodAmp(0., 0.);
 
 	// get entry from mapping
-	const vector<pair<size_t, size_t> >& components = _waveComponentChannel[idxWave];
+	const std::vector<std::pair<size_t, size_t> >& components = _waveComponentChannel[idxWave];
 	size_t nrComponents = components.size();
 
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
@@ -309,7 +306,7 @@ rpwa::massDepFit::model::intensity(const size_t idxWave,
                                    const double mass,
                                    const size_t idxMass) const
 {
-	const complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
 
 	return norm(prodAmp);
 }
@@ -321,21 +318,21 @@ rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
                                        const double mass,
                                        const size_t idxMass) const
 {
-	const complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
 
 	return arg(prodAmp);
 }
 
 
-complex<double>
+std::complex<double>
 rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
                                            const size_t jdxWave,
                                            const size_t idxBin,
                                            const double mass,
                                            const size_t idxMass) const
 {
-	const complex<double> prodAmpI = productionAmplitude(idxWave, idxBin, mass, idxMass);
-	const complex<double> prodAmpJ = productionAmplitude(jdxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmpI = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmpJ = productionAmplitude(jdxWave, idxBin, mass, idxMass);
 
 	return prodAmpI * conj(prodAmpJ);
 }
