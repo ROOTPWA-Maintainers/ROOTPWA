@@ -74,7 +74,6 @@ namespace rpwa {
 			size_t _idxAnchorWave;
 
 			bool _fitProductionAmplitudes;
-			bool _realAnchorWave;
 			bool _useCovariance;
 
 		};
