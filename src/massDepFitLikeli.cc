@@ -27,7 +27,7 @@ rpwa::massDepFit::likelihood::NDataPoints() const {
 		// * remember (Re,Im) => factor 2
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
-			if(idxWave != _idxAnchorWave or not _realAnchorWave) {
+			if(idxWave != _idxAnchorWave) {
 				nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
 			}
 		}
@@ -88,28 +88,42 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_nrMassBins = _massBinCenters.size();
 	_nrWaves = _wavePairMassBinLimits.size();
 
-	// test if the anchor wave is real valued
-	// (only if fitting to the production amplitude)
-	_realAnchorWave = false;
+	// do some stuff specific to the fit to the production amplitudes
 	if(_fitProductionAmplitudes) {
-		_realAnchorWave = true;
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-				_realAnchorWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].imag() == 0.);
-				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][1] == 0.);
-				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][0] == 0.);
-				_realAnchorWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][1] == 0.);
+		// test if the anchor wave is real valued
+		// test that any non-anchor wave is not real valued
+		bool realAnchorWave = true;
+		bool realOtherWaves = false;
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			bool realThisWave = true;
+			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+				for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+					realThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
+					realThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][0][1] == 0.);
+					realThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][0] == 0.);
+					realThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][1] == 0.);
+				}
+			}
+
+			if(idxWave == _idxAnchorWave) {
+				realAnchorWave &= realThisWave;
+			} else {
+				realOtherWaves |= realThisWave;
 			}
 		}
-	}
 
-	// at the moment production amplitude can only be fitted, if the anchor wave is real valued
-	if(_fitProductionAmplitudes and not _realAnchorWave) {
-		printErr << "production amplitudes cannot be fitted if the anchor wave is not real valued." << std::endl;
-		return false;
-	}
+		// at the moment production amplitude can only be fitted, if the anchor wave is real valued
+		if(not realAnchorWave) {
+			printErr << "production amplitudes cannot be fitted if the anchor wave is not real valued." << std::endl;
+			return false;
+		}
 
-	if(_fitProductionAmplitudes) {
+		// error if any non-anchor wave is real
+		if(realOtherWaves) {
+			printErr << "production amplitudes cannot be fitted if a non-anchor wave is real valued." << std::endl;
+			return false;
+		}
+
 		// transfer measured production amplitude such that the anchor wave is always positive
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
