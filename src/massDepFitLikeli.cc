@@ -124,17 +124,6 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 			return false;
 		}
 
-		// transfer measured production amplitude such that the anchor wave is always positive
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-				if(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].real() < 0.) {
-					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-						_productionAmplitudes[idxBin][idxMass][idxWave] *= -1.;
-					}
-				}
-			}
-		}
-
 		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
@@ -160,6 +149,16 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 				}
 
 				_productionAmplitudesCovMatInv[idxBin][idxMass].Invert();
+			}
+		}
+
+		// modify measured production amplitude such that the anchor wave is always real and positive
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				const std::complex<double> anchorPhase = _productionAmplitudes[idxBin][idxMass][_idxAnchorWave] / abs(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave]);
+				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+					_productionAmplitudes[idxBin][idxMass][idxWave] /= anchorPhase;
+				}
 			}
 		}
 	}
