@@ -200,8 +200,6 @@ namespace rpwa {
 		public:
 
 			parameterizationA1Bowler(const std::string& name);
-			parameterizationA1Bowler(const rpwa::massDepFit::parameterizationA1Bowler& comp);
-			~parameterizationA1Bowler();
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
@@ -214,14 +212,6 @@ namespace rpwa {
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out) const;
-
-		private:
-
-			size_t _nrBins;
-
-			std::vector<double> _massBinCenters;
-			boost::multi_array<double, 2> _phaseSpace;
-			std::vector<ROOT::Math::Interpolator*> _interpolator;
 
 		};
 
