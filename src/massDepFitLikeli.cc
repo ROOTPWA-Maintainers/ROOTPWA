@@ -102,17 +102,26 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	if(_fitProductionAmplitudes) {
 		// test that the anchor wave is non-zero over the complete fit range
 		bool zeroAnchorWave = false;
+		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_nrMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
-				bool zeroThisWave = true;
-				zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].real() == 0.);
-				zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].imag() == 0.);
-				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][0] == 0.);
-				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][1] == 0.);
-				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][0] == 0.);
-				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][1] == 0.);
+				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+					bool zeroThisWave = true;
+					zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].real() == 0.);
+					zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
+					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][0][0] == 0.);
+					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][0][1] == 0.);
+					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][0] == 0.);
+					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][1] == 0.);
 
-				zeroAnchorWave |= zeroThisWave;
+					if(zeroThisWave) {
+						zeroWaves[idxBin][idxMass].push_back(idxWave);
+					}
+
+					if(idxWave == _idxAnchorWave) {
+						zeroAnchorWave |= zeroThisWave;
+					}
+				}
 			}
 		}
 
