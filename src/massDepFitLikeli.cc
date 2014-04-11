@@ -100,6 +100,28 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 
 	// do some stuff specific to the fit to the production amplitudes
 	if(_fitProductionAmplitudes) {
+		// test that the anchor wave is non-zero over the complete fit range
+		bool zeroAnchorWave = false;
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+				bool zeroThisWave = true;
+				zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].real() == 0.);
+				zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][_idxAnchorWave].imag() == 0.);
+				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][0] == 0.);
+				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][0][1] == 0.);
+				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][0] == 0.);
+				zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][_idxAnchorWave][_idxAnchorWave][1][1] == 0.);
+
+				zeroAnchorWave |= zeroThisWave;
+			}
+		}
+
+		// error if anchor wave is zero in one mass bin
+		if(zeroAnchorWave) {
+			printErr << "production amplitudes of anchor wave zero in same mass bins (mass limit in mass-independent fit)." << std::endl;
+			return false;
+		}
+
 		// test if the anchor wave is real valued
 		// test that any non-anchor wave is not real valued
 		bool realAnchorWave = true;
@@ -130,7 +152,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 
 		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
 				// import covariance matrix of production amplitudes
 				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves - 1, 2*_nrWaves - 1);
 
@@ -229,7 +251,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 
 		// modify measured production amplitude such that the anchor wave is always real and positive
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
 				const std::complex<double> anchorPhase = _productionAmplitudes[idxBin][idxMass][_idxAnchorWave] / abs(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave]);
 				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 					_productionAmplitudes[idxBin][idxMass][idxWave] /= anchorPhase;
