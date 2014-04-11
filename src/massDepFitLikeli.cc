@@ -265,6 +265,10 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
 		for(unsigned idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
 			const double mass = _massBinCenters[idxMass];
 
+			// phase of fit in anchor wave
+			const std::complex<double> anchorFit = _compset->productionAmplitude(_idxAnchorWave, idxBin, mass, idxMass);
+			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
+
 			TMatrixT<double> prodAmpDiffMat(2*_nrWaves - 1, 1);
 
 			// sum over the contributions to chi2
@@ -274,10 +278,6 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
 				if(idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
 					continue;
 				}
-
-				// phase of fit in anchor wave
-				const std::complex<double> anchorFit = _compset->productionAmplitude(_idxAnchorWave, idxBin, mass, idxMass);
-				const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
 				// calculate target spin density matrix element
 				const std::complex<double> prodAmpFit = _compset->productionAmplitude(idxWave, idxBin, mass, idxMass) / anchorFitPhase;
