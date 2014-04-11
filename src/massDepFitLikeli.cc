@@ -112,12 +112,6 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 			}
 		}
 
-		// at the moment production amplitude can only be fitted, if the anchor wave is real valued
-		if(not realAnchorWave) {
-			printErr << "production amplitudes cannot be fitted if the anchor wave is not real valued." << std::endl;
-			return false;
-		}
-
 		// error if any non-anchor wave is real
 		if(realOtherWaves) {
 			printErr << "production amplitudes cannot be fitted if a non-anchor wave is real valued." << std::endl;
@@ -130,20 +124,91 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 				// import covariance matrix of production amplitudes
 				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves - 1, 2*_nrWaves - 1);
 
-				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-					for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-						if(idxWave != jdxWave && not _useCovariance) {
-							continue;
+				if(realAnchorWave) {
+					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+						for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+							if(idxWave != jdxWave && not _useCovariance) {
+								continue;
+							}
+
+							const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
+							const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
+
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
+							if(jdxWave != _idxAnchorWave) {
+								_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
+							}
+							if(idxWave != _idxAnchorWave) {
+								_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
+							}
+							if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
+								_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
+							}
 						}
+					}
+				} else {
+					TMatrixT<double> covariance(2*_nrWaves, 2*_nrWaves);
+					TMatrixT<double> jacobian(2*_nrWaves - 1, 2*_nrWaves);
 
-						const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
-						const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
+					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+						for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+							covariance(2*idxWave + 0, 2*jdxWave + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
+							covariance(2*idxWave + 0, 2*jdxWave + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
+							covariance(2*idxWave + 1, 2*jdxWave + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
+							covariance(2*idxWave + 1, 2*jdxWave + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
 
-						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
-						if(idxWave != _idxAnchorWave || jdxWave != _idxAnchorWave) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
+							const double n = abs(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave]);
+							const double n3 = std::pow(n, 3);
+							const double xa1 = _productionAmplitudes[idxBin][idxMass][_idxAnchorWave].real();
+							const double xa2 = _productionAmplitudes[idxBin][idxMass][_idxAnchorWave].imag();
+							const double xi1 = _productionAmplitudes[idxBin][idxMass][idxWave].real();
+							const double xi2 = _productionAmplitudes[idxBin][idxMass][idxWave].imag();
+
+							const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
+							if(idxWave == _idxAnchorWave && jdxWave == _idxAnchorWave) {
+								jacobian(row + 0, 2*jdxWave + 0) = xa1 / n;
+								jacobian(row + 0, 2*jdxWave + 1) = xa2 / n;
+							} else if(jdxWave == _idxAnchorWave) {
+								jacobian(row + 0, 2*jdxWave + 0) = xi1 / n - xa1 * (xi1*xa1 + xi2*xa2) / n3;
+								jacobian(row + 0, 2*jdxWave + 1) = xi2 / n - xa2 * (xi1*xa1 + xi2*xa2) / n3;
+								if(idxWave != _idxAnchorWave) {
+									jacobian(row + 1, 2*jdxWave + 0) =   xi2 / n - xa1 * (xi2*xa1 - xi1*xa2) / n3;
+									jacobian(row + 1, 2*jdxWave + 1) = - xi1 / n - xa2 * (xi2*xa1 - xi1*xa2) / n3;
+								}
+							} else if(idxWave == jdxWave) {
+								jacobian(row + 0, 2*jdxWave + 0) =   xa1 / n;
+								jacobian(row + 0, 2*jdxWave + 1) =   xa2 / n;
+								jacobian(row + 1, 2*jdxWave + 0) = - xa2 / n;
+								jacobian(row + 1, 2*jdxWave + 1) =   xa1 / n;
+							}
+						}
+					}
+
+					TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
+
+					_productionAmplitudesCovMatInv[idxBin][idxMass] = jacobian * covariance * jacobianT;
+
+					if(not _useCovariance) {
+						for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+							for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+								if(idxWave == jdxWave) {
+									continue;
+								}
+
+								const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
+								const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
+
+								_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = 0.;
+								if(jdxWave != _idxAnchorWave) {
+									_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = 0.;
+								}
+								if(idxWave != _idxAnchorWave) {
+									_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = 0.;
+								}
+								if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
+									_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = 0.;
+								}
+							}
 						}
 					}
 				}
