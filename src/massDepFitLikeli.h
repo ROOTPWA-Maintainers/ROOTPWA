@@ -60,6 +60,9 @@ namespace rpwa {
 			size_t _nrMassBins;
 			size_t _nrWaves;
 
+			size_t _idxMassMin;
+			size_t _idxMassMax;
+
 			std::vector<double> _massBinCenters;
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;

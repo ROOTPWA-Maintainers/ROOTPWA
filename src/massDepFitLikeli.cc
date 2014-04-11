@@ -88,6 +88,16 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_nrMassBins = _massBinCenters.size();
 	_nrWaves = _wavePairMassBinLimits.size();
 
+	_idxMassMin = _nrMassBins;
+	_idxMassMax = 0;
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			_idxMassMin = std::min(_idxMassMin, _wavePairMassBinLimits[idxWave][idxWave].first);
+			_idxMassMax = std::max(_idxMassMax, _wavePairMassBinLimits[idxWave][idxWave].second);
+			
+		}
+	}
+
 	// do some stuff specific to the fit to the production amplitudes
 	if(_fitProductionAmplitudes) {
 		// test if the anchor wave is real valued
@@ -252,7 +262,7 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
 	// loop over bins
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
-		for(unsigned idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		for(unsigned idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
 			const double mass = _massBinCenters[idxMass];
 
 			TMatrixT<double> prodAmpDiffMat(2*_nrWaves - 1, 1);
@@ -300,7 +310,7 @@ rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const {
 	// loop over bins
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
-		for(unsigned idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		for(unsigned idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
 			const double mass = _massBinCenters[idxMass];
 
 			// sum over the contributions to chi2 -> rho_ij
