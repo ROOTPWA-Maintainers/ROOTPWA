@@ -666,36 +666,13 @@ rpwa::massDepFit::relativisticBreitWigner::print(std::ostream& out) const
 
 
 rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const std::string& name)
-	: component(name, 2),
-	  _nrBins(0)
+	: component(name, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
 
 	_parametersStep[0] = 0.001;
 	_parametersStep[1] = 0.001;
-}
-
-
-rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const rpwa::massDepFit::parameterizationA1Bowler& comp)
-	: component(comp),
-	  _nrBins(comp._nrBins),
-	  _massBinCenters(comp._massBinCenters),
-	  _phaseSpace(comp._phaseSpace)
-{
-	_interpolator.resize(_nrBins);
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
-		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
-	}
-}
-
-
-rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
-{
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		delete _interpolator[idxBin];
-	}
 }
 
 
@@ -716,30 +693,11 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 		return false;
 	}
 
+	// just to be on the safe side, in principle this should be possible,
+	// but probably one should then also give branching ratios somewhere.
 	if(getNrChannels() != 1) {
 		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << std::endl;
 		return false;
-	}
-
-	const std::string& waveName = getChannelWaveName(0);
-
-	const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
-	if(it == waveIndices.end()) {
-		printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
-		return false;
-	}
-
-	_nrBins = nrBins;
-	_massBinCenters = massBinCenters;
-
-	_phaseSpace.resize(boost::extents[_nrBins][_massBinCenters.size()]);
-	boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
-	_phaseSpace = view;
-
-	_interpolator.resize(_nrBins);
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		boost::multi_array<double, 2>::const_array_view<1>::type view = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range()]];
-		_interpolator[idxBin] = new ROOT::Math::Interpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
 	}
 
 	if(debug) {
@@ -783,10 +741,15 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
 
-	const double ps = _interpolator[idxBin]->Eval(m);
-	const double ps0 = _interpolator[idxBin]->Eval(m0);
+	double gamma = 0.;
+	for(size_t i=0; i<getNrChannels(); ++i) {
+		const rpwa::massDepFit::channel& channel = getChannel(i);
+		const double ps = channel.getPhaseSpace(idxBin, m, std::numeric_limits<size_t>::max());
+		const double ps0 = channel.getPhaseSpace(idxBin, m0, std::numeric_limits<size_t>::max());
 
-	const double gamma = gamma0 * m0/m * (ps*ps)/(ps0*ps0);
+		gamma += (ps*ps) / (ps0*ps0);
+	}
+	gamma *= gamma0 * m0/m;
 
 	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 }
