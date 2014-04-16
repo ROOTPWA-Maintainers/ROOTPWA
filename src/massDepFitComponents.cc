@@ -171,7 +171,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 		const int nrCouplings = configCouplings->getLength();
 		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
+			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
 			return false;
 		}
 
