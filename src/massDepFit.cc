@@ -594,8 +594,8 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
 		return false;
 	}
-	if(configFsmdFix.getLength() > 0 and not configFsmdFix[0].isNumber()) {
-		printErr << "'fix' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+	if(configFsmdFix.getLength() > 0 and configFsmdFix[0].getType() != Setting::TypeBoolean) {
+		printErr << "'fix' in 'finalStateMassDependence' has to be made up of booleans." << endl;
 		return false;
 	}
 
@@ -604,7 +604,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		fsmdFunction->SetParError(i, configFsmdError[i]);
 		fsmdFunction->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
 
-		if(((int)configFsmdFix[i]) != 0) {
+		if(configFsmdFix[i]) {
 			fsmdFunction->FixParameter(i, configFsmdValue[i]);
 		}
 	}
@@ -774,7 +774,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 	const unsigned int nrPar =fitModel.getFsmdFunction()->GetNpar();
 	unsigned int iPar = 0;
 	for(unsigned int i=0; i<nrPar; ++i) {
-		if(((int)configFsmdFix[i]) == 0) {
+		if(not configFsmdFix[i]) {
 			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
 
 			ostringstream sName;
