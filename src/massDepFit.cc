@@ -554,7 +554,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
 		return false;
 	}
-	if(configFsmdValue.getLength() > 0 and not configFsmdValue[0].isNumber()) {
+	if(configFsmdValue.getLength() > 0 and configFsmdValue[0].getType() != Setting::TypeFloat) {
 		printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
 		return false;
 	}
@@ -564,7 +564,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
 		return false;
 	}
-	if(configFsmdLower.getLength() > 0 and not configFsmdLower[0].isNumber()) {
+	if(configFsmdLower.getLength() > 0 and configFsmdLower[0].getType() != Setting::TypeFloat) {
 		printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
 		return false;
 	}
@@ -574,7 +574,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
 		return false;
 	}
-	if(configFsmdUpper.getLength() > 0 and not configFsmdUpper[0].isNumber()) {
+	if(configFsmdUpper.getLength() > 0 and configFsmdUpper[0].getType() != Setting::TypeFloat) {
 		printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
 		return false;
 	}
@@ -584,7 +584,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
 		return false;
 	}
-	if(configFsmdError.getLength() > 0 and not configFsmdError[0].isNumber()) {
+	if(configFsmdError.getLength() > 0 and configFsmdError[0].getType() != Setting::TypeFloat) {
 		printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
 		return false;
 	}
