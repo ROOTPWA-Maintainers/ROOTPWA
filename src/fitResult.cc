@@ -230,6 +230,10 @@ fitResult::evidenceComponents() const
 	const unsigned int nwaves = nmbWaves();
 	double logprob = 0;
 	for (unsigned int iwaves = 0; iwaves < nwaves; ++iwaves) {
+		// exclude flat wave
+		if (waveName(iwaves) == "flat")
+			continue;
+
 		// check that this wave is not amongst the thresholded waves
 		if (thrWaveIndices.count(iwaves) > 0)
 			continue;
@@ -625,7 +629,7 @@ fitResult::reset()
 	_covMatrixValid = false;
 	_fitParCovMatrix.ResizeTo(0, 0);
 	_fitParCovMatrixIndices.clear();
-	_normIntegral.ResizeTo(0, 0);
+	_normIntegral.resizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
 	_converged  = false;
@@ -668,7 +672,7 @@ fitResult::fill
 		_covMatrixValid = true;
 	else
 		_covMatrixValid = false;
-	_normIntegral.ResizeTo(normIntegral.nRows(), normIntegral.nCols());
+	_normIntegral.resizeTo(normIntegral.nRows(), normIntegral.nCols());
 	_normIntegral       = normIntegral;
 	_phaseSpaceIntegral = phaseSpaceIntegral;
 

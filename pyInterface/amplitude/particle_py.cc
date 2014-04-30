@@ -26,12 +26,17 @@ namespace {
 		                const int                       index    = -1,
 		                const int                       spinProj = 0,
 		                const int                       refl     = 0,
-		                const bp::object&               momentum = bp::object())
+		                const bp::object&               pyMomentum = bp::object())
 			: rpwa::particle(partProp, index, spinProj, refl),
 			  bp::wrapper<rpwa::particle>()
 		{
-			if(!(momentum.is_none())) {
-				rpwa::particle::setMomentum(*(rpwa::py::convertFromPy<TVector3*>(momentum.ptr())));
+			if(not pyMomentum.is_none()) {
+				TVector3* momentum = rpwa::py::convertFromPy<TVector3*>(pyMomentum.ptr());
+				if(not momentum) {
+					PyErr_SetString(PyExc_TypeError, "Got invalid input for momentum when executing rpwa::particle()");
+					bp::throw_error_already_set();
+				}
+				rpwa::particle::setMomentum(*momentum);
 			}
 		}
 

@@ -38,6 +38,7 @@ namespace rpwa {
 		virtual void setTPrimeAndMassPicker(const massAndTPrimePickerPtr& pickerFunction) {
 			_pickerFunction = pickerFunction;
 		}
+		virtual const massAndTPrimePickerPtr& getTPrimeAndMassPicker() { return _pickerFunction; }
 		virtual void setPrimaryVertexGenerator(const beamAndVertexGeneratorPtr& beamAndVertexGenerator) {
 			_beamAndVertexGenerator = beamAndVertexGenerator;
 		}

@@ -136,7 +136,6 @@ namespace rpwa {
 		/// returns covariance of fit parameters at index A and B
 		double      fitParameterCov(const unsigned int parIndexA,
 		                            const unsigned int parIndexB) const { return _fitParCovMatrix[parIndexA][parIndexB]; }
-		inline void fitParameters  (double*            parArray ) const;  ///< copies fit parameters into array
 
 		/// returns production amplitude value at index
 		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const
@@ -255,24 +254,9 @@ namespace rpwa {
 
 	public:
 
-		ClassDef(fitResult, 4)
+		ClassDef(fitResult, 5)
 
 	};  // class fitResult
-
-
-	/// copies fit parameters into array; assumes that array has sufficient size
-	inline
-	void
-	fitResult::fitParameters(double* parArray) const
-	{
-		unsigned int countPar = 0;
-		for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-			parArray[countPar++] = prodAmp(i).real();
-			// check if amplitude has imaginary part
-			if (_fitParCovMatrixIndices[i].second >= 0)
-				parArray[countPar++] = prodAmp(i).imag();
-		}
-	}
 
 
 	/// returns covariance matrix for a single production amplitude

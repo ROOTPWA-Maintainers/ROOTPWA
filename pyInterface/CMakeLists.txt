@@ -36,8 +36,10 @@ message(STATUS ">>> Setting up 'pyInterface' directory.")
 
 set(AMPLITUDE_SUBDIR amplitude)
 set(GENERATORS_SUBDIR generators)
-set(UTILITIES_SUBDIR utilities)
 set(PYUTILS_SUBDIR pyUtils)
+set(SRC_SUBDIR src)
+set(UTILITIES_SUBDIR utilities)
+
 
 
 # set include directories
@@ -46,14 +48,16 @@ set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${GEN_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_SUBDIR}
 	${GENERATORS_SUBDIR}
-	${UTILITIES_SUBDIR}
 	${PYUTILS_SUBDIR}
+	${SRC_SUBDIR}
+	${UTILITIES_SUBDIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -88,6 +92,8 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
+	${SRC_SUBDIR}/complexMatrix_py.cc
+	${SRC_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 

@@ -36,14 +36,15 @@ namespace {
 		}
 
 		bp::tuple default_massRange__() {
-			std::pair<double, double> retval = rpwa::massAndTPrimePicker::massRange();
+			const std::pair<double, double>& retval = rpwa::massAndTPrimePicker::massRange();
 			return bp::make_tuple(retval.first, retval.second);
 		}
 
 	};
 
 	bp::tuple massAndTPrimePicker_massRange(const rpwa::massAndTPrimePicker& self) {
-		return bp::tuple(self.massRange());
+		const std::pair<double, double>& retval = self.massRange();
+		return bp::make_tuple(retval.first, retval.second);
 	}
 
 	struct uniformMassExponentialTPickerWrapper : public rpwa::uniformMassExponentialTPicker,

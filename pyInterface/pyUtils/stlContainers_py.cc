@@ -38,8 +38,20 @@ void rpwa::py::exportStlContainers() {
 	bp::class_<std::vector<rpwa::isobarDecayVertexPtr> >("__vector_isobarDecayVertexPtr")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::isobarDecayVertexPtr>, true>());
 
+	// std::vector<std::string>
+	bp::class_<std::vector<std::string> >("__vector_string")
+		.def(bp::vector_indexing_suite<std::vector<std::string> >());
+
 	// std::vector<unsigned int>
 	bp::class_<std::vector<unsigned int> >("__vector_unsigned_int")
 		.def(bp::vector_indexing_suite<std::vector<unsigned int> >());
+
+	// std::vector<double>
+		bp::class_<std::vector<double> >("__vector_double")
+			.def(bp::vector_indexing_suite<std::vector<double> >());
+
+	// std::vector<std::complex<double> >
+		bp::class_<std::vector<std::complex<double> > >("__vector_complex_double")
+			.def(bp::vector_indexing_suite<std::vector<std::complex<double> > >());
 
 }

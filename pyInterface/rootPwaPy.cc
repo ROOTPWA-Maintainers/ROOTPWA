@@ -29,6 +29,8 @@
 #include "generatorParameters_py.h"
 #include "generatorPickerFunctions_py.h"
 #include "beamAndVertexGenerator_py.h"
+#include "complexMatrix_py.h"
+#include "fitResult_py.h"
 #include "utils_py.h"
 
 namespace bp = boost::python;
@@ -61,6 +63,8 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportGeneratorParameters();
 	rpwa::py::exportGeneratorPickerFunctions();
 	rpwa::py::exportBeamAndVertexGenerator();
+	rpwa::py::exportComplexMatrix();
+	rpwa::py::exportFitResult();
 	rpwa::py::exportUtils();
 
 }

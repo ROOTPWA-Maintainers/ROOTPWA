@@ -1,6 +1,8 @@
 
 #include "generator_py.h"
 
+#include <generatorPickerFunctions.h>
+
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
@@ -105,6 +107,17 @@ namespace {
 
 		void default_setTPrimeAndMassPicker(const rpwa::massAndTPrimePickerPtr& pickerFunction) {
 			rpwa::generator::setTPrimeAndMassPicker(pickerFunction);
+		}
+
+		const rpwa::massAndTPrimePickerPtr& getTPrimeAndMassPicker() {
+			if(bp::override getTPrimeAndMassPicker = this->get_override("getTPrimeAndMassPicker")) {
+				return getTPrimeAndMassPicker();
+			}
+			return rpwa::generator::getTPrimeAndMassPicker();
+		}
+
+		const rpwa::massAndTPrimePickerPtr& default_getTPrimeAndMassPicker() {
+			return rpwa::generator::getTPrimeAndMassPicker();
 		}
 
 		void setPrimaryVertexGenerator(const rpwa::beamAndVertexGeneratorPtr& beamAndVertexGenerator) {
@@ -252,6 +265,15 @@ void rpwa::py::exportGenerator() {
 			, &generatorWrapper::default_setTPrimeAndMassPicker
 		)
 		.def("setTPrimeAndMassPicker", &rpwa::generator::setTPrimeAndMassPicker)
+		.def("getTPrimeAndMassPicker"
+			, &generatorWrapper::getTPrimeAndMassPicker
+			, &generatorWrapper::default_getTPrimeAndMassPicker
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
+		.def("getTPrimeAndMassPicker"
+			, &rpwa::generator::getTPrimeAndMassPicker
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def(
 			"setPrimaryVertexGenerator"
 			, &generatorWrapper::setPrimaryVertexGenerator
