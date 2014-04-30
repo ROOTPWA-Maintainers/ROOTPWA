@@ -544,6 +544,10 @@ main(int    argc,
 		printDebug << "name of output ROOT file: '" << confFileName << "'." << endl;
 	}
 	std::auto_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
+	if(outFile.get() == NULL || outFile->IsZombie()) {
+		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< endl;
+		return 1;
+	}
 	if(not mdepFit.createPlots(compset, outFile.get(), rangePlotting)) {
 		printErr << "error while creating plots." << endl;
 		return 1;
