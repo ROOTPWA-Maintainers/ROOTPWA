@@ -411,8 +411,8 @@ main(int    argc,
 		// setup minimizer
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 		          << "using algorithm '" << minimizerType[1] << "'" << endl;
-		ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-		if(not minimizer) {
+		std::auto_ptr<ROOT::Math::Minimizer> minimizer(ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]));
+		if(minimizer.get() == NULL) {
 			printErr << "could not create minimizer. exiting." << endl;
 			return 1;
 		}
@@ -430,7 +430,7 @@ main(int    argc,
 		bool success = true;
 		for(size_t step=0; step<nrSteps; ++step) {
 			// set startvalues
-			if(not releasePars(minimizer, compset, freeParameters[step])) {
+			if(not releasePars(minimizer.get(), compset, freeParameters[step])) {
 				printErr << "error while setting start parameters for step " << step << "." << endl;
 				return 1;
 			}
@@ -517,7 +517,7 @@ main(int    argc,
 		double chi2red = chi2/(double)ndf;
 		printInfo << "chi2/ndf = " << maxPrecisionAlign(chi2red) << endl;
 
-		if(not mdepFit.updateConfig(&configRoot, compset, minimizer, chi2, ndf, chi2red)) {
+		if(not mdepFit.updateConfig(&configRoot, compset, minimizer.get(), chi2, ndf, chi2red)) {
 			printErr << "error while updating configuration file." << endl;
 			return 1;
 		}
