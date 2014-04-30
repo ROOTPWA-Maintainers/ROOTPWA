@@ -543,8 +543,8 @@ main(int    argc,
 	if(debug) {
 		printDebug << "name of output ROOT file: '" << confFileName << "'." << endl;
 	}
-	TFile* outFile = TFile::Open(rootFileName.c_str(), "RECREATE");
-	if(not mdepFit.createPlots(compset, outFile, rangePlotting)) {
+	std::auto_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
+	if(not mdepFit.createPlots(compset, outFile.get(), rangePlotting)) {
 		printErr << "error while creating plots." << endl;
 		return 1;
 	}
