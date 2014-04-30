@@ -63,6 +63,9 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 void
 rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
 {
+	if(_fsmdFunction != NULL) {
+		delete _fsmdFunction;
+	}
 	_fsmdFunction = fsmdFunction;
 
 	// clear list of free parameters
