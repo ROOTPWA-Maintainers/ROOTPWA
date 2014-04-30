@@ -30,6 +30,19 @@ rpwa::massDepFit::model::model()
 }
 
 
+rpwa::massDepFit::model::~model() {
+	for(std::vector<rpwa::massDepFit::component*>::iterator it=_components.begin(); it!=_components.end(); ++it) {
+		delete *it;
+	}
+	_components.clear();
+
+	if(_fsmdFunction != NULL) {
+		delete _fsmdFunction;
+		_fsmdFunction = NULL;
+	}
+}
+
+
 bool
 rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
                               const std::vector<double>& massBinCenters,

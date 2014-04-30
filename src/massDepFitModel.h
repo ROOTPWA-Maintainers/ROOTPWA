@@ -30,7 +30,7 @@ namespace rpwa {
 		public:
 
 			model();
-			~model() {}
+			~model();
 
 			void add(rpwa::massDepFit::component* comp);
 
