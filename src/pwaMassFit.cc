@@ -286,16 +286,16 @@ main(int    argc,
 			minimizerTolerance = atof(optarg);
 			break;
 		case 'P':
-			onlyPlotting=true;
+			onlyPlotting = true;
 			break;
 		case 'R':
-			rangePlotting=true;
+			rangePlotting = true;
 			break;
 		case 'A':
-			doProdAmp=true;
+			doProdAmp = true;
 			break;
 		case 'C':
-			doCov=false;
+			doCov = false;
 			break;
 		case 'd':
 			debug = true;
