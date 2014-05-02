@@ -21,6 +21,7 @@
 
 rpwa::massDepFit::model::model()
 	: _nrParameters(0),
+	  _useBranchings(false),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
 	  _idxAnchorChannel(std::numeric_limits<size_t>::max()),

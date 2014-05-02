@@ -57,6 +57,9 @@ namespace rpwa {
 
 			size_t getAnchorWave() const { return _idxAnchorWave; }
 
+			bool useBranchings() const { return _useBranchings; }
+			void useBranchings(const bool val) { _useBranchings = val; }
+
 			std::complex<double> productionAmplitude(const size_t idxWave,
 			                                         const size_t idxBin,
 			                                         const double mass,
@@ -96,6 +99,8 @@ namespace rpwa {
 			size_t _nrParameters;
 
 			std::vector<rpwa::massDepFit::component*> _components;
+
+			bool _useBranchings;
 
 			size_t _idxAnchorWave;
 			size_t _idxAnchorComponent;
