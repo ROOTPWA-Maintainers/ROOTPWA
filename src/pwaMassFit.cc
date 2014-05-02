@@ -90,12 +90,9 @@ usage(const string& progName,
 
 
 // changes status of variables (fixed/released)
-// fixed values from config remain fixed
-// parameters are taken from current status of fitter
-// level
-// 0 = release only couplings
-// 1 = release couplings and masses
-// 2 = release couplings, masses and widths
+// * fixed values from config remain
+// * additional parameters can be freed with freeParameters
+// * couplings are always free
 bool
 releasePars(ROOT::Math::Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
