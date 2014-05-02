@@ -91,9 +91,10 @@ usage(const string& progName,
 
 
 // changes status of variables (fixed/released)
-// * fixed values from config remain
-// * additional parameters can be freed with freeParameters
 // * couplings are always free
+// * additional parameters can be freed with freeParameters
+// * branchings also have to be freed explicitely
+// * fixed values from config remain fixed
 bool
 releasePars(ROOT::Math::Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
@@ -180,10 +181,29 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				           << "__"
 				           << waveDecay;
 
+				bool free = false;
+				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
+				   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching")!=tokenizeFreeParameters.end() ) {
+					free = true;
+				}
+				bool fix = not free;
+
 				if(idxChannel == 0) {
 					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__real",
+					                            par[parcount]);
+					++parcount;
+				} else if (fix) {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
+					minimizer->SetFixedVariable(parcount,
+					                            prefixName.str() + "__real",
+					                            par[parcount]);
+					++parcount;
+
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << par[parcount] << endl;
+					minimizer->SetFixedVariable(parcount,
+					                            prefixName.str() + "__imag",
 					                            par[parcount]);
 					++parcount;
 				} else {
