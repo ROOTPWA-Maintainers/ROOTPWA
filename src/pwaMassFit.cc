@@ -124,15 +124,21 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 	// first add all couplings
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-		for(vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
-			for(size_t idxBin=0; idxBin<it->getNrBins(); ++idxBin) {
+		for(size_t idxChannel=0; idxChannel<comp->getNrChannels(); ++idxChannel) {
+			// if branchings are used, not every channel has its own coupling
+			if(idxChannel != comp->getChannelIdxCoupling(idxChannel)) {
+				continue;
+			}
+
+			const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
+			for(size_t idxBin=0; idxBin<channel.getNrBins(); ++idxBin) {
 				ostringstream prefixName;
 				prefixName << "coupling__bin"
 				           << idxBin
 				           << "__"
 				           << comp->getName()
 				           << "__"
-				           << it->getWaveName();
+				           << channel.getWaveName();
 
 				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
@@ -141,7 +147,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				                       0.1);
 				++parcount;
 
-				if(not it->isAnchor()) {
+				if(not channel.isAnchor()) {
 					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << par[parcount] << endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__imag",

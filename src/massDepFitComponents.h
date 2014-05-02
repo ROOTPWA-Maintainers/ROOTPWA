@@ -101,6 +101,7 @@ namespace rpwa {
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
+			size_t getChannelIdxCoupling(const size_t i) const { return _channelsCoupling[i]; }
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t getCouplings(double* par) const;
@@ -134,6 +135,7 @@ namespace rpwa {
 			const std::string _name;
 
 			std::vector<channel> _channels;
+			std::vector<size_t> _channelsCoupling;
 
 			const size_t _nrParameters;
 			size_t _nrCouplings;
@@ -297,7 +299,7 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const size_t idxChannel,
                                                    const double mass,
                                                    const size_t idxMass) const
 {
-	const channel& channelCoupling = _channels[idxChannel];
+	const channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
 	const std::complex<double> coupling = channelCoupling.getCoupling(idxBin);
 
 	const channel& channelPhaseSpace = _channels[idxChannel];
