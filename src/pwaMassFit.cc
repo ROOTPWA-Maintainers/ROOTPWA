@@ -79,6 +79,7 @@ usage(const string& progName,
 	     << "        -P         plotting only - no fit" << endl
 	     << "        -R         plot in fit range only" << endl
 	     << "        -A         fit to the production amplitudes (default: spin-density matrix)" << endl
+	     << "        -B         use branchings (reducing number of couplings)" << endl
 	     << "        -C         fit to spin-density matrix:   switch OFF covariances between real and imag part" << endl
 	     << "                   fit to production amplitudes: switch OFF covariances between amplitudes" << endl
 	     << "        -d         additional debug output (default: false)" << endl
@@ -265,13 +266,14 @@ main(int    argc,
 	bool         onlyPlotting       = false;
 	bool         rangePlotting      = false;
 	bool         doProdAmp          = false;
+	bool         doBranching        = false;
 	bool         doCov              = true;
 	bool         debug              = false;
 	bool         quiet              = false;
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRACdqh")) != -1) {
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRABCdqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -296,6 +298,9 @@ main(int    argc,
 			break;
 		case 'A':
 			doProdAmp = true;
+			break;
+		case 'B':
+			doBranching = true;
 			break;
 		case 'C':
 			doCov = false;
@@ -331,6 +336,7 @@ main(int    argc,
 	          << "    only plotting .................................. "  << yesNo(onlyPlotting) << endl
 	          << "    plot in fit range only ......................... "  << yesNo(rangePlotting) << endl
 	          << "    fit to production amplitudes ................... "  << yesNo(doProdAmp) << endl
+	          << "    use branchings ................................. "  << yesNo(doBranching) << endl
 	          << "    take covariance into account ................... "  << yesNo(doCov) << endl
 	          << "    debug .......................................... "  << yesNo(debug) << endl
 	          << "    quiet .......................................... "  << yesNo(quiet) << endl;
@@ -376,6 +382,7 @@ main(int    argc,
 
 	// set-up fit model (resonances, background, final-state mass dependence
 	rpwa::massDepFit::model compset;
+	compset.useBranchings(doBranching);
 	if(not mdepFit.readConfigModel(&configRoot, compset)) {
 		printErr << "error while reading fit model from configuration file." << endl;
 		return 1;
