@@ -392,6 +392,13 @@ main(int    argc,
 	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
+	rpwa::massDepFit::model compset;
+	compset.useBranchings(doBranching);
+
+	rpwa::massDepFit::likelihood L;
+	L.fitProductionAmplitudes(doProdAmp);
+	L.useCovariance(doCov);
+
 	libconfig::Config configFile;
 	if(not parseLibConfigFile(configFileName, configFile, debug)) {
 		printErr << "could not read configuration file '" << configFileName << "'." << endl;
@@ -399,60 +406,15 @@ main(int    argc,
 	}
 	libconfig::Setting& configRoot = configFile.getRoot();
 
-	// input section
-	const libconfig::Setting* configInput = findLibConfigGroup(configRoot, "input");
-	if(not configInput) {
-		printErr << "'input' section in configuration file does not exist." << endl;
-		return 1;
-	}
-	if(not mdepFit.readConfigInput(configInput)) {
-		printErr << "error while reading 'input' section from configuration file." << endl;
+	// read configuration file
+	if(not mdepFit.readConfig(&configRoot, compset, valTreeName, valBranchName)) {
+		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
 		return 1;
 	}
 
-	// extract information from fit results
-	if(not mdepFit.readInFiles(valTreeName, valBranchName)) {
-		printErr << "error while trying to read fit result." << endl;
-		return 1;
-	}
-
-	// extract information for systematic errors
-	if(not mdepFit.readSystematicsFiles(valTreeName, valBranchName)) {
-		printErr << "error while trying to read fit results for systematic errors." << endl;
-		return 1;
-	}
-
-	// prepare mass limits
-	if(not mdepFit.prepareMassLimits()) {
-		printErr << "error determine which bins to use in the fit." << endl;
-		return 1;
-	}
-
-	// set-up fit model (resonances, background, final-state mass dependence
-	rpwa::massDepFit::model compset;
-	compset.useBranchings(doBranching);
-	if(not mdepFit.readConfigModel(&configRoot, compset)) {
-		printErr << "error while reading fit model from configuration file." << endl;
-		return 1;
-	}
-
-	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters(), mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName())) {
-		printErr << "error while initializing the fit model." << endl;
-		return 1;
-	}
-
-	// set-up likelihood
-	rpwa::massDepFit::likelihood L;
-	L.fitProductionAmplitudes(doProdAmp);
-	L.useCovariance(doCov);
-	if(not L.init(&compset,
-	              mdepFit.getMassBinCenters(),
-	              mdepFit.getInProductionAmplitudes(),
-	              mdepFit.getInProductionAmplitudesCovariance(),
-	              mdepFit.getInSpinDensityMatrices(),
-	              mdepFit.getInSpinDensityCovarianceMatrices(),
-	              mdepFit.getWavePairMassBinLimits())) {
-		printErr << "error while initializing the likelihood calculator." << endl;
+	// set-up fit model and likelihood
+	if(not mdepFit.init(compset, L)) {
+		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
 		return 1;
 	}
 
