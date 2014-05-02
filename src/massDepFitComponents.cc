@@ -70,6 +70,7 @@ rpwa::massDepFit::component::component(const std::string& name,
 	: _name(name),
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
+	  _nrBranchings(0),
 	  _parameters(nrParameters),
 	  _parametersFixed(nrParameters),
 	  _parametersLimitLower(nrParameters),
@@ -135,6 +136,8 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		return false;
 	}
 
+	std::map<std::string, size_t> couplingsQN;
+	std::map<std::string, size_t> branchingDecay;
 	const int nrDecayChannels = decayChannels->getLength();
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
@@ -165,7 +168,40 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		bool readCouplings = true;
+		bool readBranching = false;
 		size_t couplingIndex = _channels.size();
+		size_t branchingIndex = _branchings.size();
+		if(useBranchings && nrDecayChannels > 1) {
+			const std::string waveQN = waveName.substr(0, 7);
+			const std::string waveDecay = waveName.substr(7);
+			if(debug) {
+				printDebug << "extracted quantum numbers '" << waveQN << "' and decay chain '" << waveDecay << "' from wave name '" << waveName << "'." << std::endl;
+			}
+
+			std::map<std::string, size_t>::const_iterator mappingQN = couplingsQN.find(waveQN);
+			std::map<std::string, size_t>::const_iterator mappingDecay = branchingDecay.find(waveDecay);
+			if(mappingQN == couplingsQN.end() && mappingDecay == branchingDecay.end()) {
+				readCouplings = true;
+				couplingsQN[waveQN] = couplingIndex;
+				readBranching = true;
+				branchingDecay[waveDecay] = branchingIndex;
+			} else if(mappingQN == couplingsQN.end()) {
+				readCouplings = true;
+				couplingsQN[waveQN] = couplingIndex;
+				readBranching = false;
+				branchingIndex = mappingDecay->second;
+			} else if(mappingDecay == branchingDecay.end()) {
+				readCouplings = false;
+				couplingIndex = mappingQN->second;
+				readBranching = true;
+				branchingDecay[waveDecay] = branchingIndex;
+			} else {
+				readCouplings = false;
+				couplingIndex = mappingQN->second;
+				readBranching = false;
+				branchingIndex = mappingDecay->second;
+			}
+		}
 
 		std::vector<std::complex<double> > couplings;
 		if(readCouplings) {
@@ -217,9 +253,56 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			}
 		}
 
+		if(readBranching) {
+			++_nrBranchings;
+
+			boost::assign::insert(mandatoryArguments)
+			                     ("branching", libconfig::Setting::TypeGroup);
+			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				return false;
+			}
+
+			const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
+			if(not configBranching) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no branching." << std::endl;
+				return false;
+			}
+
+			std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+			boost::assign::insert(mandatoryArguments)
+			                     ("branching_Re", libconfig::Setting::TypeFloat)
+			                     ("branching_Im", libconfig::Setting::TypeFloat);
+			if(not checkIfAllVariablesAreThere(configBranching, mandatoryArguments)) {
+				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				return false;
+			}
+
+			double branchingReal;
+			configBranching->lookupValue("branching_Re", branchingReal);
+
+			double branchingImag;
+			configBranching->lookupValue("branching_Im", branchingImag);
+
+			if(branchingIndex == 0) {
+				// the first branching should always be 1.
+				if(branchingReal != 1.0 || branchingImag != 0.0) {
+					printWarn << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' forced to 1." << std::endl;
+					branchingReal = 1.0;
+					branchingImag = 0.0;
+				}
+			}
+
+			const std::complex<double> branching(branchingReal, branchingImag);
+			_branchings.push_back(branching);
+		} else {
+			_branchings.push_back(std::complex<double>(1.0, 0.0));
+		}
+
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
 		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, couplings, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
+		_channelsBranching.push_back(branchingIndex);
 
 		if(debug) {
 			std::ostringstream output;
@@ -231,6 +314,14 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 				output << ")";
 			} else {
 				output << "of wave '" << _channels[couplingIndex].getWaveName() << "' (index " << couplingIndex << ")";
+			}
+			if(useBranchings) {
+				output << " and branching ";
+				if(branchingIndex == _branchings.size()-1) {
+					output << _branchings[branchingIndex];
+				} else {
+					output << "of wave '" << _channels[branchingIndex].getWaveName() << "' (index " << branchingIndex << ")";
+				}
 			}
 			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << std::endl;
 		}
@@ -347,6 +438,24 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 				(*configCoupling)["coupling_Re"] = channel->getCoupling(idxCoupling).real();
 				(*configCoupling)["coupling_Im"] = channel->getCoupling(idxCoupling).imag();
 			}
+		}
+
+		if(useBranchings && nrDecayChannels > 1 && channelIdx == _channelsBranching[channelIdx]) {
+			boost::assign::insert(mandatoryArguments)
+			                     ("branching", libconfig::Setting::TypeGroup);
+			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				return false;
+			}
+
+			const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
+			if(not configBranching) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no branching." << std::endl;
+				return false;
+			}
+
+			(*configBranching)["branching_Re"] = _branchings[_channelsBranching[channelIdx]].real();
+			(*configBranching)["branching_Im"] = _branchings[_channelsBranching[channelIdx]].imag();
 		}
 	}
 
