@@ -69,6 +69,7 @@ rpwa::massDepFit::component::component(const std::string& name,
                                        const size_t nrParameters)
 	: _name(name),
 	  _nrParameters(nrParameters),
+	  _nrCouplings(0),
 	  _parameters(nrParameters),
 	  _parametersFixed(nrParameters),
 	  _parametersLimitLower(nrParameters),
@@ -162,6 +163,8 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
 			return false;
 		}
+
+		++_nrCouplings;
 
 		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
 		if(not configCouplings) {
