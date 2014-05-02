@@ -173,6 +173,10 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << std::endl;
 		return false;
 	}
+	if(_idxAnchorChannel != 0) {
+		printErr << "anchor wave '" << anchorWaveName << "' has to be first channel in anchor component '" << anchorComponentName << "'." << std::endl;
+		return false;
+	}
 	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
 	_nrParameters -= _components[_idxAnchorComponent]->getChannel(_idxAnchorChannel).getNrBins();
 
@@ -243,6 +247,13 @@ rpwa::massDepFit::model::getParameters(double* par) const
 		parcount += _components[idxComponent]->getCouplings(&par[parcount]);
 	}
 
+	// branchings
+	if(_useBranchings) {
+		for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
+			parcount += _components[idxComponent]->getBranchings(&par[parcount]);
+		}
+	}
+
 	// parameters
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
 		parcount += _components[idxComponent]->getParameters(&par[parcount]);
@@ -265,6 +276,13 @@ rpwa::massDepFit::model::setParameters(const double* par)
 	// couplings
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
 		parcount += _components[idxComponent]->setCouplings(&par[parcount]);
+	}
+
+	// branchings
+	if(_useBranchings) {
+		for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
+			parcount += _components[idxComponent]->setBranchings(&par[parcount]);
+		}
 	}
 
 	// parameters
