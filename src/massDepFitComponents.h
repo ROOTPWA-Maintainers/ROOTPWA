@@ -104,10 +104,13 @@ namespace rpwa {
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 			size_t getChannelIdxCoupling(const size_t i) const { return _channelsCoupling[i]; }
+			size_t getChannelIdxBranching(const size_t i) const { return _channelsBranching[i]; }
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t getCouplings(double* par) const;
 			size_t setCouplings(const double* par);
+
+			size_t getNrBranchings() const { return _nrBranchings; }
 
 			size_t getNrParameters() const { return _nrParameters; }
 			virtual size_t getParameters(double* par) const;
@@ -138,9 +141,13 @@ namespace rpwa {
 
 			std::vector<channel> _channels;
 			std::vector<size_t> _channelsCoupling;
+			std::vector<size_t> _channelsBranching;
+
+			std::vector<std::complex<double> > _branchings;
 
 			const size_t _nrParameters;
 			size_t _nrCouplings;
+			size_t _nrBranchings;
 
 		protected:
 
@@ -309,10 +316,12 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const size_t idxChannel,
 	const channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
 	const std::complex<double> coupling = channelCoupling.getCoupling(idxBin);
 
+	const std::complex<double> branching = _branchings[_channelsBranching[idxChannel]];
+
 	const channel& channelPhaseSpace = _channels[idxChannel];
 	const double phaseSpace = channelPhaseSpace.getPhaseSpace(idxBin, mass, idxMass);
 
-	return coupling * phaseSpace;
+	return coupling * branching * phaseSpace;
 }
 
 
