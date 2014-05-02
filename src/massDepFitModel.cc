@@ -76,6 +76,11 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 
 	// number of coupling parameters
 	_nrParameters += 2 * comp->getNrCouplings() * comp->getChannel(0).getNrBins();
+
+	// number of branching parameters (first branching is always real and fixed to 1)
+	if(_useBranchings && comp->getNrChannels() > 1) {
+		_nrParameters += 2 * comp->getNrBranchings() - 1;
+	}
 }
 
 

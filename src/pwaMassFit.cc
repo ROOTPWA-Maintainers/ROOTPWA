@@ -135,8 +135,13 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				           << idxBin
 				           << "__"
 				           << comp->getName()
-				           << "__"
-				           << channel.getWaveName();
+				           << "__";
+				if(compset.useBranchings() && comp->getNrChannels() > 1) {
+					const std::string waveQN = channel.getWaveName().substr(0, 7);
+					prefixName << waveQN;
+				} else {
+					prefixName << channel.getWaveName();
+				}
 
 				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
@@ -157,7 +162,50 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 		} // end loop over channels
 	} // end loop over components
 
-	// second add parameters of the components, i.e. mass and width
+	// second eventually add all branchings
+	if(compset.useBranchings()) {
+		for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
+			const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
+			for(size_t idxChannel=0; idxChannel<comp->getNrChannels(); ++idxChannel) {
+				// if branchings are used, not every channel has its own coupling
+				if(idxChannel != comp->getChannelIdxBranching(idxChannel) || comp->getNrChannels() <= 1) {
+					continue;
+				}
+
+				const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
+				const std::string waveDecay = channel.getWaveName().substr(7);
+				ostringstream prefixName;
+				prefixName << "branching__"
+				           << comp->getName()
+				           << "__"
+				           << waveDecay;
+
+				if(idxChannel == 0) {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
+					minimizer->SetFixedVariable(parcount,
+					                            prefixName.str() + "__real",
+					                            par[parcount]);
+					++parcount;
+				} else {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
+					minimizer->SetVariable(parcount,
+					                       prefixName.str() + "__real",
+					                       par[parcount],
+					                       0.1);
+					++parcount;
+
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << par[parcount] << endl;
+					minimizer->SetVariable(parcount,
+					                       prefixName.str() + "__imag",
+					                       par[parcount],
+					                       0.1);
+					++parcount;
+				}
+			} // end loop over channels
+		} // end loop over components
+	}
+
+	// third add parameters of the components, i.e. mass and width
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
