@@ -88,6 +88,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
                                   const std::vector<double>& massBinCenters,
                                   const std::map<std::string, size_t>& waveIndices,
                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                  const bool useBranchings,
                                   const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'component' for component '" << getName() << "'." << std::endl;
@@ -246,6 +247,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 bool
 rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
                                     const ROOT::Math::Minimizer* minimizer,
+                                    const bool useBranchings,
                                     const bool debug) const
 {
 	if(debug) {
@@ -470,13 +472,14 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
                                               const std::vector<double>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                              const bool useBranchings,
                                               const bool debug)
 {
 	if(debug) {
 		printDebug << "starting initialization of 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -552,13 +555,14 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
                                                 const std::vector<double>& massBinCenters,
                                                 const std::map<std::string, size_t>& waveIndices,
                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                const bool useBranchings,
                                                 const bool debug)
 {
 	if(debug) {
 		printDebug << "starting initialization of 'relativisticBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -725,13 +729,14 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
                                                  const std::vector<double>& massBinCenters,
                                                  const std::map<std::string, size_t>& waveIndices,
                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                 const bool useBranchings,
                                                  const bool debug)
 {
 	if(debug) {
 		printDebug << "starting initialization of 'parameterizationA1Bowler' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -824,13 +829,14 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
                                               const std::vector<double>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                              const bool useBranchings,
                                               const bool debug)
 {
 	if(debug) {
 		printDebug << "starting initialization of 'exponentialBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -942,13 +948,14 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
                                                   const std::vector<double>& massBinCenters,
                                                   const std::map<std::string, size_t>& waveIndices,
                                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                  const bool useBranchings,
                                                   const bool debug)
 {
 	if(debug) {
 		printDebug << "starting initialization of 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}

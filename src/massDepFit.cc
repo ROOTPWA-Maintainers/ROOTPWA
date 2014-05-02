@@ -495,7 +495,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			return false;
 		}
 
-		if(not component->init(configComponent, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, _debug)) {
+		if(not component->init(configComponent, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << endl;
 			return false;
@@ -737,7 +737,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 			return false;
 		}
 
-		if(not component->update(configComponent, minimizer, _debug)) {
+		if(not component->update(configComponent, minimizer, fitModel.useBranchings(), _debug)) {
 			printErr << "error while updating component '" << name << "'." << endl;
 			return false;
 		}

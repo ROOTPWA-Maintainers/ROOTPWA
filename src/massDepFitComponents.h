@@ -90,10 +90,12 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual bool update(const libconfig::Setting* configComponent,
 			                    const ROOT::Math::Minimizer* minimizer,
+			                    const bool useBranchings,
 			                    const bool debug) const;
 
 			const size_t getNrChannels() const { return _channels.size(); }
@@ -164,6 +166,7 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual std::complex<double> val(const size_t idxBin,
@@ -184,6 +187,7 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual std::complex<double> val(const size_t idxBin,
@@ -211,6 +215,7 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual std::complex<double> val(const size_t idxBin,
@@ -231,6 +236,7 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual std::complex<double> val(const size_t idxBin,
@@ -258,6 +264,7 @@ namespace rpwa {
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
 			                  const bool debug);
 
 			virtual std::complex<double> val(const size_t idxBin,
