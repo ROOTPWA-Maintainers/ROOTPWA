@@ -82,6 +82,7 @@ void
 rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
 {
 	if(_fsmdFunction != NULL) {
+		_nrParameters -= _fsmdFreeParameterIndices.size();
 		delete _fsmdFunction;
 	}
 	_fsmdFunction = fsmdFunction;
