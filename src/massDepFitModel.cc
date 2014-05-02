@@ -312,7 +312,7 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _components[idxComponent]->val(idxBin, mass) * _components[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(idxBin, mass, idxMass);
+		prodAmp += _components[idxComponent]->val(idxBin, mass) * _components[idxComponent]->getCouplingPhaseSpace(idxChannel, idxBin, mass, idxMass);
 	}
 
 	prodAmp *= calcFsmd(mass, idxMass);
