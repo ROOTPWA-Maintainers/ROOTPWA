@@ -111,6 +111,8 @@ namespace rpwa {
 			size_t setCouplings(const double* par);
 
 			size_t getNrBranchings() const { return _nrBranchings; }
+			size_t getBranchings(double* par) const;
+			size_t setBranchings(const double* par);
 
 			size_t getNrParameters() const { return _nrParameters; }
 			virtual size_t getParameters(double* par) const;

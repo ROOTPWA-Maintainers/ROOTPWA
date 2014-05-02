@@ -526,6 +526,58 @@ rpwa::massDepFit::component::setCouplings(const double* par)
 
 
 size_t
+rpwa::massDepFit::component::getBranchings(double* par) const
+{
+	if(_channels.size() <= 1) {
+		return 0;
+	}
+
+	size_t counter=0;
+	for(size_t idx=0; idx<_channels.size(); ++idx) {
+		if(idx != _channelsBranching[idx]) {
+			continue;
+		}
+
+		par[counter] = _branchings[idx].real();
+		counter += 1;
+
+		if(idx != 0) {
+			par[counter] = _branchings[idx].imag();
+			counter += 1;
+		}
+	}
+
+	return counter;
+}
+
+
+size_t
+rpwa::massDepFit::component::setBranchings(const double* par)
+{
+	if(_channels.size() <= 1) {
+		return 0;
+	}
+
+	size_t counter=0;
+	for(size_t idx=0; idx<_channels.size(); ++idx) {
+		if(idx != _channelsBranching[idx]) {
+			continue;
+		}
+
+		if(idx == 0) {
+			_branchings[idx] = std::complex<double>(par[counter], 0.);
+			counter += 1;
+		} else {
+			_branchings[idx] = std::complex<double>(par[counter], par[counter+1]);
+			counter += 2;
+		}
+	}
+
+	return counter;
+}
+
+
+size_t
 rpwa::massDepFit::component::getParameters(double* par) const
 {
 	for(size_t idx=0; idx<_nrParameters; ++idx) {
