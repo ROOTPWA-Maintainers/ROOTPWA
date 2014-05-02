@@ -443,15 +443,15 @@ main(int    argc,
 
 	// set-up likelihood
 	rpwa::massDepFit::likelihood L;
+	L.fitProductionAmplitudes(doProdAmp);
+	L.useCovariance(doCov);
 	if(not L.init(&compset,
 	              mdepFit.getMassBinCenters(),
 	              mdepFit.getInProductionAmplitudes(),
 	              mdepFit.getInProductionAmplitudesCovariance(),
 	              mdepFit.getInSpinDensityMatrices(),
 	              mdepFit.getInSpinDensityCovarianceMatrices(),
-	              mdepFit.getWavePairMassBinLimits(),
-	              doProdAmp,
-	              doCov)) {
+	              mdepFit.getWavePairMassBinLimits())) {
 		printErr << "error while initializing the likelihood calculator." << endl;
 		return 1;
 	}
