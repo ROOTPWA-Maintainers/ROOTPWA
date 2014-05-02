@@ -36,6 +36,7 @@
 
 #include <Math/Minimizer.h>
 #include <Math/Factory.h>
+#include <Minuit2/Minuit2Minimizer.h>
 #include <TFile.h>
 #include <TStopwatch.h>
 
@@ -462,6 +463,13 @@ main(int    argc,
 		minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
 		minimizer->SetMaxIterations   (maxNmbOfIterations);
 		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
+
+		// special for Minuit2
+		if(dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer.get())) {
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
+			((ROOT::Minuit2::Minuit2Minimizer*)minimizer.get())->SetStorageLevel(0);
+#endif
+		}
 
 		// keep list of parameters to free
 		const vector<string> freeParameters = mdepFit.getFreeParameters();
