@@ -140,8 +140,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("amp", libconfig::Setting::TypeString)
-		                     ("couplings", libconfig::Setting::TypeList);
+		                     ("amp", libconfig::Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
@@ -164,41 +163,56 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			return false;
 		}
 
-		++_nrCouplings;
-
-		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
-		if(not configCouplings) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
-			return false;
-		}
-
-		const int nrCouplings = configCouplings->getLength();
-		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
-			return false;
-		}
+		bool readCouplings = true;
 
 		std::vector<std::complex<double> > couplings;
-		for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
-			const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+		if(readCouplings) {
+			++_nrCouplings;
 
-			std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 			boost::assign::insert(mandatoryArguments)
-			                     ("coupling_Re", libconfig::Setting::TypeFloat)
-			                     ("coupling_Im", libconfig::Setting::TypeFloat);
-			if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
-				printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			                     ("couplings", libconfig::Setting::TypeList);
+			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 				return false;
 			}
 
-			double couplingReal;
-			configCoupling->lookupValue("coupling_Re", couplingReal);
+			const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+			if(not configCouplings) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
+				return false;
+			}
 
-			double couplingImag;
-			configCoupling->lookupValue("coupling_Im", couplingImag);
+			const int nrCouplings = configCouplings->getLength();
+			if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
+				return false;
+			}
 
-			const std::complex<double> coupling(couplingReal, couplingImag);
-			couplings.push_back(coupling);
+			for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
+				const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+
+				std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+				boost::assign::insert(mandatoryArguments)
+				                     ("coupling_Re", libconfig::Setting::TypeFloat)
+				                     ("coupling_Im", libconfig::Setting::TypeFloat);
+				if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
+					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
+					return false;
+				}
+
+				double couplingReal;
+				configCoupling->lookupValue("coupling_Re", couplingReal);
+
+				double couplingImag;
+				configCoupling->lookupValue("coupling_Im", couplingImag);
+
+				const std::complex<double> coupling(couplingReal, couplingImag);
+				couplings.push_back(coupling);
+			}
+		} else {
+			for(size_t i=0; i<nrBins; ++i) {
+				couplings.push_back(std::complex<double>(1.0, 0.0));
+			}
 		}
 
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
