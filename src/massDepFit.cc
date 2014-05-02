@@ -376,8 +376,8 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const Setting* confi
 {
 	if(not configInputFreeParameters) {
 		_freeParameters.clear();
-		_freeParameters.push_back("");
-		_freeParameters.push_back("mass m0");
+		_freeParameters.push_back("branching");
+		_freeParameters.push_back("branching mass m0");
 		_freeParameters.push_back("*");
 		return true;
 	}
