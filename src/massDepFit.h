@@ -24,6 +24,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class likelihood;
 		class model;
 
 		class massDepFit {
@@ -33,16 +34,14 @@ namespace rpwa {
 			massDepFit();
 			~massDepFit() {};
 
-// FIXME: make private
-			bool prepareMassLimits();
+			bool readConfig(const libconfig::Setting* configRoot,
+			                rpwa::massDepFit::model& fitModel,
+			                const std::string& valTreeName   = "pwa",
+			                const std::string& valBranchName = "fitResult_v2");
 
-// FIXME: make private
-			bool readConfigInput(const libconfig::Setting* configInput);
-// FIXME: make private
-			bool readConfigModel(const libconfig::Setting* configRoot,
-			                     rpwa::massDepFit::model& fitModel);
+			bool init(rpwa::massDepFit::model& fitModel,
+			          rpwa::massDepFit::likelihood& L);
 
-// FIXME: make private
 			bool updateConfig(libconfig::Setting* configRoot,
 			                  const rpwa::massDepFit::model& fitModel,
 			                  const ROOT::Math::Minimizer* minimizer,
@@ -51,48 +50,27 @@ namespace rpwa {
 			                  const double chi2red) const;
 
 // FIXME: make private
-			bool readInFiles(const std::string& valTreeName   = "pwa",
-			                 const std::string& valBranchName = "fitResult_v2");
-
-// FIXME: make private
-			bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
-			                          const std::string& valBranchName = "fitResult_v2");
-
-// FIXME: make private
 			bool createPlots(const rpwa::massDepFit::model& fitModel,
 			                 TFile* outFile,
 			                 const bool rangePlotting) const;
 
 // FIXME: get rid
-			const std::vector<double>& getMassBinCenters() const { return _massBinCenters; }
-// FIXME: get rid
-			const std::vector<std::string>& getWaveNames() const { return _waveNames; }
-// FIXME: get rid
 			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
-// FIXME: get rid
-			const std::string& getAnchorWaveName() const { return _anchorWaveName; }
-// FIXME: get rid
-			const std::string& getAnchorComponentName() const { return _anchorComponentName; }
-// FIXME: get rid
-			const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
-// FIXME: get rid
-			const boost::multi_array<std::complex<double>, 3>& getInProductionAmplitudes() const { return _inProductionAmplitudes; }
-// FIXME: get rid
-			const boost::multi_array<double, 6>& getInProductionAmplitudesCovariance() const { return _inProductionAmplitudesCovariance; }
-// FIXME: get rid
-			const boost::multi_array<std::complex<double>, 4>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
-// FIXME: get rid
-			const boost::multi_array<double, 6>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
 
 			static void setDebug(bool debug) { _debug = debug; }
 
 		private:
 
+			bool prepareMassLimits();
+
+			bool readConfigInput(const libconfig::Setting* configInput);
 			bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
 			bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
 			bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
 			bool readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters);
 
+			bool readConfigModel(const libconfig::Setting* configRoot,
+			                     rpwa::massDepFit::model& fitModel);
 			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 			bool readConfigModelComponents(const libconfig::Setting* configComponents,
 			                               rpwa::massDepFit::model& fitModel) const;
@@ -109,12 +87,16 @@ namespace rpwa {
 			                           const rpwa::massDepFit::model& fitModel,
 			                           const ROOT::Math::Minimizer* minimizer) const;
 
+			bool readInFiles(const std::string& valTreeName   = "pwa",
+			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFileFirst(const std::string& valTreeName   = "pwa",
 			                     const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
+			bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
+			                          const std::string& valBranchName = "fitResult_v2");
 			bool readSystematicsFile(const size_t idxSystematics,
 			                         const std::string& valTreeName   = "pwa",
 			                         const std::string& valBranchName = "fitResult_v2");

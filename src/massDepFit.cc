@@ -88,6 +88,51 @@ rpwa::massDepFit::massDepFit::massDepFit()
 
 
 bool
+rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
+                                         rpwa::massDepFit::model& fitModel,
+                                         const std::string& valTreeName,
+                                         const std::string& valBranchName)
+{
+	// input section
+	const libconfig::Setting* configInput = findLibConfigGroup(*configRoot, "input");
+	if(not configInput) {
+		printErr << "'input' section in configuration file does not exist." << endl;
+		return false;
+	}
+	if(not readConfigInput(configInput)) {
+		printErr << "error while reading 'input' section from configuration file." << endl;
+		return false;
+	}
+
+	// extract information from fit results
+	if(not readInFiles(valTreeName, valBranchName)) {
+		printErr << "error while trying to read fit result." << endl;
+		return false;
+	}
+
+	// extract information for systematic errors
+	if(not readSystematicsFiles(valTreeName, valBranchName)) {
+		printErr << "error while trying to read fit results for systematic errors." << endl;
+		return false;
+	}
+
+	// prepare mass limits
+	if(not prepareMassLimits()) {
+		printErr << "error determine which bins to use in the fit." << endl;
+		return false;
+	}
+
+	// set-up fit model (resonances, background, final-state mass dependence
+	if(not readConfigModel(configRoot, fitModel)) {
+		printErr << "error while reading fit model from configuration file." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
 rpwa::massDepFit::massDepFit::readConfigInput(const Setting* configInput)
 {
 	if(not configInput) {
@@ -616,6 +661,32 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 	return true;
 }
 
+
+bool
+rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
+                                   rpwa::massDepFit::likelihood& L)
+{
+	if(not fitModel.init(_waveNames,
+	                     _massBinCenters,
+	                     _anchorWaveName,
+	                     _anchorComponentName)) {
+		printErr << "error while initializing the fit model." << endl;
+		return false;
+	}
+
+	if(not L.init(&fitModel,
+	              _massBinCenters,
+	              _inProductionAmplitudes,
+	              _inProductionAmplitudesCovariance,
+	              _inSpinDensityMatrices,
+	              _inSpinDensityCovarianceMatrices,
+	              _wavePairMassBinLimits)) {
+		printErr << "error while initializing the likelihood calculator." << endl;
+		return false;
+	}
+
+	return true;
+}
 
 bool
 rpwa::massDepFit::massDepFit::updateConfig(Setting* configRoot,
