@@ -164,6 +164,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		bool readCouplings = true;
+		size_t couplingIndex = _channels.size();
 
 		std::vector<std::complex<double> > couplings;
 		if(readCouplings) {
@@ -217,14 +218,19 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
 		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, couplings, massBinCenters, view));
+		_channelsCoupling.push_back(couplingIndex);
 
 		if(debug) {
 			std::ostringstream output;
-			output << "( ";
-			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				output << couplings[idxBin] << " ";
+			if(couplingIndex == _channels.size()-1) {
+				output << "( ";
+				for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+					output << couplings[idxBin] << " ";
+				}
+				output << ")";
+			} else {
+				output << "of wave '" << _channels[couplingIndex].getWaveName() << "' (index " << couplingIndex << ")";
 			}
-			output << ")";
 			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << std::endl;
 		}
 	}
@@ -290,8 +296,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 
 		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("amp", libconfig::Setting::TypeString)
-		                     ("couplings", libconfig::Setting::TypeList);
+		                     ("amp", libconfig::Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
@@ -301,9 +306,11 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		decayChannel->lookupValue("amp", waveName);
 
 		const rpwa::massDepFit::channel* channel = NULL;
+		size_t channelIdx = 0;
 		for(size_t idx=0; idx<getNrChannels(); ++idx) {
 			if(getChannelWaveName(idx) == waveName) {
 				channel = &getChannel(idx);
+				channelIdx = idx;
 				break;
 			}
 		}
@@ -312,23 +319,32 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			return false;
 		}
 
-		const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
-		if(not configCouplings) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
-			return false;
-		}
+		if(channelIdx == _channelsCoupling[channelIdx]) {
+			boost::assign::insert(mandatoryArguments)
+			                     ("couplings", libconfig::Setting::TypeList);
+			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				return false;
+			}
 
-		const int nrCouplings = configCouplings->getLength();
-		if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != channel->getNrBins()) {
-			printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << std::endl;
-			return false;
-		}
+			const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+			if(not configCouplings) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
+				return false;
+			}
 
-		for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
-			const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+			const int nrCouplings = configCouplings->getLength();
+			if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != channel->getNrBins()) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << std::endl;
+				return false;
+			}
 
-			(*configCoupling)["coupling_Re"] = channel->getCoupling(idxCoupling).real();
-			(*configCoupling)["coupling_Im"] = channel->getCoupling(idxCoupling).imag();
+			for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
+				const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
+
+				(*configCoupling)["coupling_Re"] = channel->getCoupling(idxCoupling).real();
+				(*configCoupling)["coupling_Im"] = channel->getCoupling(idxCoupling).imag();
+			}
 		}
 	}
 
@@ -344,14 +360,19 @@ size_t
 rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
-	for(std::vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		const size_t nrBins = it->getNrBins();
-		const std::vector<std::complex<double> >& couplings = it->getCouplings();
+	for(size_t idx=0; idx<_channels.size(); ++idx) {
+		if(idx != _channelsCoupling[idx]) {
+			continue;
+		}
+
+		const rpwa::massDepFit::channel& channel = _channels[idx];
+		const std::vector<std::complex<double> >& couplings = channel.getCouplings();
+		const size_t nrBins = channel.getNrBins();
 		for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
 			par[counter] = couplings[idxBin].real();
 			counter += 1;
 
-			if(not it->isAnchor()) {
+			if(not channel.isAnchor()) {
 				par[counter] = couplings[idxBin].imag();
 				counter += 1;
 			}
@@ -366,22 +387,27 @@ size_t
 rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
-	for(std::vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+	for(size_t idx=0; idx<_channels.size(); ++idx) {
+		if(idx != _channelsCoupling[idx]) {
+			continue;
+		}
+
+		rpwa::massDepFit::channel& channel = _channels[idx];
 		std::vector<std::complex<double> > couplings;
-		if(it->isAnchor()) {
-			const size_t nrBins = it->getNrBins();
+		if(channel.isAnchor()) {
+			const size_t nrBins = channel.getNrBins();
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
 				couplings.push_back(std::complex<double>(par[counter], 0.));
 				counter += 1;
 			}
 		} else {
-			const size_t nrBins = it->getNrBins();
+			const size_t nrBins = channel.getNrBins();
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
 				couplings.push_back(std::complex<double>(par[counter], par[counter+1]));
 				counter += 2;
 			}
 		}
-		it->setCouplings(couplings);
+		channel.setCouplings(couplings);
 	}
 
 	return counter;
