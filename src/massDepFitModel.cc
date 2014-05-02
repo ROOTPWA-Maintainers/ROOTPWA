@@ -69,7 +69,12 @@ void
 rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 {
 	_components.push_back(comp);
-	_nrParameters += comp->getNrParameters() + 2 * comp->getNrChannels() * comp->getChannel(0).getNrBins();
+
+	// number of resonance parameters
+	_nrParameters += comp->getNrParameters();
+
+	// number of coupling parameters
+	_nrParameters += 2 * comp->getNrCouplings() * comp->getChannel(0).getNrBins();
 }
 
 

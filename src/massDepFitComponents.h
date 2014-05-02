@@ -106,6 +106,7 @@ namespace rpwa {
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
+			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t getCouplings(double* par) const;
 			size_t setCouplings(const double* par);
 
@@ -134,6 +135,7 @@ namespace rpwa {
 			std::vector<channel> _channels;
 
 			const size_t _nrParameters;
+			size_t _nrCouplings;
 
 		protected:
 
