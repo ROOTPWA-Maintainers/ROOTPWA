@@ -59,10 +59,6 @@ namespace rpwa {
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			std::complex<double> getCouplingPhaseSpace(const size_t idxBin,
-			                                           const double mass,
-			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 		private:
 
 			std::string _waveName;
@@ -125,6 +121,11 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const = 0;
+
+			std::complex<double> getCouplingPhaseSpace(const size_t idxChannel,
+			                                           const size_t idxBin,
+			                                           const double mass,
+			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out) const;
 
@@ -291,11 +292,18 @@ rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
 
 inline
 std::complex<double>
-rpwa::massDepFit::channel::getCouplingPhaseSpace(const size_t idxBin,
-                                                 const double mass,
-                                                 const size_t idxMass) const
+rpwa::massDepFit::component::getCouplingPhaseSpace(const size_t idxChannel,
+                                                   const size_t idxBin,
+                                                   const double mass,
+                                                   const size_t idxMass) const
 {
-	return getCoupling(idxBin) * getPhaseSpace(idxBin, mass, idxMass);
+	const channel& channelCoupling = _channels[idxChannel];
+	const std::complex<double> coupling = channelCoupling.getCoupling(idxBin);
+
+	const channel& channelPhaseSpace = _channels[idxChannel];
+	const double phaseSpace = channelPhaseSpace.getPhaseSpace(idxBin, mass, idxMass);
+
+	return coupling * phaseSpace;
 }
 
 

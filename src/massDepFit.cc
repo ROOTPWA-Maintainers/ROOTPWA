@@ -1757,7 +1757,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxChannel = compChannel[idxComponents].second;
 
 			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(idxBin, _massBinCenters[idxMass]);
-			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(idxBin, _massBinCenters[idxMass], idxMass);
+			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
