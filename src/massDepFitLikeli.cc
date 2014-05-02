@@ -58,9 +58,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
                                    const boost::multi_array<double, 6>& productionAmplitudesCovariance,
                                    const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
                                    const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
-                                   const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
-                                   bool fitProductionAmplitudes,
-                                   bool useCovariance)
+                                   const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
 {
 	_compset = compset;
 
@@ -80,9 +78,6 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 	_wavePairMassBinLimits = wavePairMassBinLimits;
 
 	_idxAnchorWave = _compset->getAnchorWave();
-
-	_fitProductionAmplitudes = fitProductionAmplitudes;
-	_useCovariance = useCovariance;
 
 	_nrBins = _spinDensityMatrices.size();
 	_nrMassBins = _massBinCenters.size();
