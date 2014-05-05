@@ -303,28 +303,6 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, couplings, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
-
-		if(debug) {
-			std::ostringstream output;
-			if(couplingIndex == _channels.size()-1) {
-				output << "( ";
-				for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-					output << couplings[idxBin] << " ";
-				}
-				output << ")";
-			} else {
-				output << "of wave '" << _channels[couplingIndex].getWaveName() << "' (index " << couplingIndex << ")";
-			}
-			if(useBranchings) {
-				output << " and branching ";
-				if(branchingIndex == _branchings.size()-1) {
-					output << _branchings[branchingIndex];
-				} else {
-					output << "of wave '" << _channels[branchingIndex].getWaveName() << "' (index " << branchingIndex << ")";
-				}
-			}
-			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << output.str() << "." << std::endl;
-		}
 	}
 
 	if(debug) {
@@ -603,14 +581,25 @@ std::ostream&
 rpwa::massDepFit::component::print(std::ostream& out) const
 {
 	out << "Decay modes:" << std::endl;
-	for(std::vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		std::ostringstream output;
-		output << "( ";
-		for(size_t idxBin=0; idxBin<it->getNrBins(); ++idxBin) {
-			output << it->getCoupling(idxBin) << " ";
+	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+		const rpwa::massDepFit::channel& channel = _channels[idxChannel];
+		out << idxChannel << ", '" << channel.getWaveName() << "': ";
+                
+		const rpwa::massDepFit::channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
+		out << "C=( ";
+		for(size_t idxBin=0; idxBin<channelCoupling.getNrBins(); ++idxBin) {
+			out << channelCoupling.getCoupling(idxBin) << " ";
 		}
-		output << ")";
-		out << it->getWaveName() << "    C=" << output.str() << std::endl;
+		out << ")";
+		if(idxChannel != _channelsCoupling[idxChannel]) {
+			out << " (same as wave " << _channelsCoupling[idxChannel] << ")";
+		}
+		out << "; ";
+
+		out << "B=" << _branchings[_channelsBranching[idxChannel]] << std::endl;
+		if(idxChannel != _channelsBranching[idxChannel]) {
+			out << " (same as wave " << _channelsBranching[idxChannel] << ")";
+		}
 	}
 	return out;
 }
@@ -646,33 +635,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 	}
 
 	if(debug) {
-		std::ostringstream output;
-		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
-		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
-
-		output << "    width: " << _parameters[1] << " GeV/c^2, ";
-		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
-
-		printDebug << "component '" << getName() << "':" << std::endl << output.str();
-
+		print(printDebug);
 		printDebug << "finished initialization of 'fixedWidthBreitWigner'." << std::endl;
 	}
 	return true;
@@ -693,8 +656,32 @@ rpwa::massDepFit::fixedWidthBreitWigner::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 {
-	out << getName() << std::endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
+	out << "component '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
+
+	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[0]) {
+		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+
+	out << "    width: " << _parameters[1] << " GeV/c^2, ";
+	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[1]) {
+		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[1]) {
+		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+
 	return component::print(out);
 }
 
@@ -797,40 +784,7 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 	}
 
 	if(debug) {
-		std::ostringstream output;
-		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
-		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
-
-		output << "    width: " << _parameters[1] << " GeV/c^2, ";
-		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
-
-		output << "    " << _ratio.size() << " decay channels:" << std::endl;
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			output << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << std::endl;
-			output << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << std::endl;
-			output << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << std::endl;
-		}
-
-		printDebug << "component '" << getName() << "':" << std::endl << output.str();
-
+		print(printDebug);
 		printDebug << "finished initialization of 'relativisticBreitWigner'." << std::endl;
 	}
 	return true;
@@ -867,8 +821,39 @@ rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::relativisticBreitWigner::print(std::ostream& out) const
 {
-	out << getName() << std::endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
+	out << "component '" << getName() << "' (relativisticBreitWigner):" << std::endl;
+
+	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[0]) {
+		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+
+	out << "    width: " << _parameters[1] << " GeV/c^2, ";
+	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[1]) {
+		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[1]) {
+		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+
+	out << "    " << _ratio.size() << " decay channels:" << std::endl;
+	for(size_t i=0; i<_ratio.size(); ++i) {
+		out << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << std::endl;
+		out << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << std::endl;
+		out << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << std::endl;
+	}
+
 	return component::print(out);
 }
 
@@ -910,33 +895,7 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 	}
 
 	if(debug) {
-		std::ostringstream output;
-		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
-		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
-
-		output << "    width: " << _parameters[1] << " GeV/c^2, ";
-		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
-
-		printDebug << "component '" << getName() << "':" << std::endl << output.str();
-
+		print(printDebug);
 		printDebug << "finished initialization of 'parameterizationA1Bowler'." << std::endl;
 	}
 	return true;
@@ -967,8 +926,32 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
 {
-	out << getName() << std::endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << std::endl;
+	out << "component '" << getName() << "' (parameterizationA1Bowler):" << std::endl;
+
+	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[0]) {
+		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+
+	out << "    width: " << _parameters[1] << " GeV/c^2, ";
+	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[1]) {
+		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[1]) {
+		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+
 	return component::print(out);
 }
 
@@ -1015,35 +998,7 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 	configComponent->lookupValue("mIsobar2", _m2);
 
 	if(debug) {
-		std::ostringstream output;
-		output << "    mass: " << _parameters[0] << " GeV/c^2, ";
-		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
-
-		output << "    width: " << _parameters[1] << " GeV/c^2, ";
-		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[1]) {
-			output << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[1]) {
-			output << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[1] ? "(FIXED) " : "") << std::endl;
-
-		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
-
-		printDebug << "component '" << getName() << "':" << std::endl << output.str();
-
+		print(printDebug);
 		printDebug << "finished initialization of 'exponentialBackground'." << std::endl;
 	}
 
@@ -1071,8 +1026,34 @@ rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 {
-	out << getName() << std::endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << std::endl;
+	out << "component '" << getName() << "' (exponentialBackground):" << std::endl;
+
+	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[0]) {
+		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+
+	out << "    width: " << _parameters[1] << " GeV/c^2, ";
+	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[1]) {
+		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[1]) {
+		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[1] ? "(FIXED) " : "") << std::endl;
+
+	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
+
 	return component::print(out);
 }
 
@@ -1139,43 +1120,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 	}
 
 	if(debug) {
-		std::ostringstream output;
-		output << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
-		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedLower[0]) {
-			output << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
-		} else if(_parametersLimitedUpper[0]) {
-			output << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
-		} else {
-			output << "    unlimited ";
-		}
-		output << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
-
-		for(size_t i=1; i<_parameters.size(); ++i) {
-			output << "    c" << i-1 << ": " << _parameters[i] << " , ";
-			if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
-				output << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2 ";
-			} else if(_parametersLimitedLower[i]) {
-				output << "    lower limit: " << _parametersLimitLower[i] << " GeV/c^2 ";
-			} else if(_parametersLimitedUpper[i]) {
-				output << "    upper limit: " << _parametersLimitUpper[i] << " GeV/c^2 ";
-			} else {
-				output << "    unlimited ";
-			}
-			output << (_parametersFixed[i] ? "(FIXED) " : "") << std::endl;
-		}
-
-		output << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
-
-		output << "    for " << nrBins << " bins with mean t' values: " << _tPrimeMeans[0];
-		for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
-			output << ", " << _tPrimeMeans[i];
-		}
-		output << std::endl;
-
-		printDebug << "component '" << getName() << "':" << std::endl << output.str();
-
+                print(printDebug);
 		printDebug << "finished initialization of 'tPrimeDependentBackground'." << std::endl;
 	}
 
@@ -1203,7 +1148,41 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 {
-	out << getName() << std::endl
-	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << std::endl;
+	out << "component '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
+
+	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedLower[0]) {
+		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+	} else {
+		out << "    unlimited ";
+	}
+	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+
+	for(size_t i=1; i<_parameters.size(); ++i) {
+		out << "    c" << i-1 << ": " << _parameters[i] << " , ";
+		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
+			out << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2 ";
+		} else if(_parametersLimitedLower[i]) {
+			out << "    lower limit: " << _parametersLimitLower[i] << " GeV/c^2 ";
+		} else if(_parametersLimitedUpper[i]) {
+			out << "    upper limit: " << _parametersLimitUpper[i] << " GeV/c^2 ";
+		} else {
+			out << "    unlimited ";
+		}
+		out << (_parametersFixed[i] ? "(FIXED) " : "") << std::endl;
+	}
+
+	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
+
+	out << "    for " << _tPrimeMeans.size() << " bins with mean t' values: " << _tPrimeMeans[0];
+	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
+		out << ", " << _tPrimeMeans[i];
+	}
+	out << std::endl;
+
 	return component::print(out);
 }
