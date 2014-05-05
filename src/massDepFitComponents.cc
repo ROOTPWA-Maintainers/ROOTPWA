@@ -584,7 +584,7 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
 		const rpwa::massDepFit::channel& channel = _channels[idxChannel];
 		out << idxChannel << ", '" << channel.getWaveName() << "': ";
-                
+
 		const rpwa::massDepFit::channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
 		out << "C=( ";
 		for(size_t idxBin=0; idxBin<channelCoupling.getNrBins(); ++idxBin) {
@@ -1120,7 +1120,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 	}
 
 	if(debug) {
-                print(printDebug);
+		print(printDebug);
 		printDebug << "finished initialization of 'tPrimeDependentBackground'." << std::endl;
 	}
 

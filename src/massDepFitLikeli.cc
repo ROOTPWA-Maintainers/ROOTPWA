@@ -89,7 +89,6 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			_idxMassMin = std::min(_idxMassMin, _wavePairMassBinLimits[idxWave][idxWave].first);
 			_idxMassMax = std::max(_idxMassMax, _wavePairMassBinLimits[idxWave][idxWave].second);
-			
 		}
 	}
 
