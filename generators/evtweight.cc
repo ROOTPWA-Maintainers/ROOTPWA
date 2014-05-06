@@ -136,7 +136,7 @@ main(int    argc,
 	const long int treeCacheSize     = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "o:yw:i:d:n:sm:b:p:t:l:vh")) != -1) {
+	while ((c = getopt(argc, argv, "o:esw:n:i:d:m:b:t:l:vh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -144,8 +144,14 @@ main(int    argc,
 		case 'e':
 			doCopyEventData = false;
 			break;
+		case 's':
+			writeSingleWaveWeights = true;
+			break;
 		case 'w':
 			fitResultFileName = optarg;
+			break;
+		case 'n':
+			nmbProdAmpSamples = atoi(optarg);
 			break;
 		case 'i':
 			intFileName = optarg;
@@ -153,21 +159,12 @@ main(int    argc,
 		case 'd':
 			ampDirName = optarg;
 			break;
-		case 'n':
-			nmbProdAmpSamples = atoi(optarg);
-			break;
-		case 's':
-			writeSingleWaveWeights = true;
-			break;
 		case 'm':
 			massBinCenter = atof(optarg);
 			break;
 		case 'b':
 			massBinWidth = atof(optarg);
 			break;
-		// case 'p':
-		// 	pdgFileName = optarg;
-		// 	break;
 		case 't':
 			inTreeName = optarg;
 			break;
