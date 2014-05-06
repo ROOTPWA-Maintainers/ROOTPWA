@@ -381,7 +381,7 @@ main(int    argc,
 	double         weightPosRef;
 	double         weightNegRef;
 	double         weightFlat;
-	vector<double> weights(nmbWaves);                        // branches will take pointer to elements
+	vector<double> weightWaves(nmbWaves);                    // branches will take pointer to elements
 	vector<double> weightProdAmpSamples(nmbProdAmpSamples);  // branches will take pointer to elements
 	// book branches
 	outTree->Branch("weight",       &weight,       "weight/D");
@@ -393,7 +393,7 @@ main(int    argc,
 		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
 			TString weightName("Wintens_");
 			weightName += waveNames[iWave];
-			outTree->Branch(weightName.Data(), &weights[iWave], (weightName + "/D").Data());
+			outTree->Branch(weightName.Data(), &weightWaves[iWave], (weightName + "/D").Data());
 		}
 	}
 	// create branches for the weights calculated from the varied production amplitudes
@@ -490,11 +490,11 @@ main(int    argc,
 					if (waveName == "flat") {
 						flatAmp = prodAmp / sqrt(nmbEvents);
 						if (iSample == 0)  // set weights of individual waves
-							weights[iWave] = norm(flatAmp);
+							weightWaves[iWave] = norm(flatAmp);
 					} else {
 						const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
 						if (iSample == 0)  // set weights of individual waves
-							weights[iWave] = norm(amp);
+							weightWaves[iProdAmp] = norm(amp);
 						if (reflectivities[iWave] == +1)
 							posReflAmpSums[ranks[iWave]] += amp;
 						else if (reflectivities[iWave] == -1)
