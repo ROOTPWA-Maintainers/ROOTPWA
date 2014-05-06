@@ -502,18 +502,25 @@ main(int    argc,
 					}
 				}  // end loop over waves
 
-				// incoherent sum over rank and reflectivities
-				weightPosRef = 0;
-				weightNegRef = 0;
+				// incoherent sum over rank
+				double sampleWeightPosRef = 0;
+				double sampleWeightNegRef = 0;
 				for (int iRank = 0; iRank < maxRank; ++iRank) {
-					weightPosRef += norm(posReflAmpSums[iRank]);
-					weightNegRef += norm(negReflAmpSums[iRank]);
+					sampleWeightPosRef += norm(posReflAmpSums[iRank]);
+					sampleWeightNegRef += norm(negReflAmpSums[iRank]);
 				}
-				weightFlat = norm(flatAmp);
-				// weight is incoherent sum of the two reflectivities and the flat wave
-				weight = weightPosRef + weightNegRef + weightFlat;
+				// total weight is incoherent sum of the two reflectivities and the flat wave
+				double sampleWeightFlat = norm(flatAmp);
+				double sampleWeight     = sampleWeightPosRef + sampleWeightNegRef + sampleWeightFlat;
 
-				weightProdAmpSamples[iSample] = weight;
+				if (iSample == 0) {
+					weightPosRef = sampleWeightPosRef;
+					weightNegRef = sampleWeightNegRef;
+					weightFlat   = sampleWeightFlat;
+					weight       = sampleWeight;
+				}
+
+				weightProdAmpSamples[iSample] = sampleWeight;
 
 			}  // end loop over production-amplitude samples
 			outTree->Fill();
