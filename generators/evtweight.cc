@@ -241,7 +241,7 @@ main(int    argc,
 	vector<vector<complex<double> > > prodAmps(nmbProdAmpSamples);  // production amplitudes [sample index][wave index]
 	vector<string>                    waveNames;                    // wave names [wave index]
 	vector<int>                       reflectivities;               // [wave index]
-	vector<int>                       ranks;
+	vector<int>                       ranks;                        // [wave index]
 	int                               maxRank = 0;
 	{
 		// open fit-result file
@@ -321,8 +321,7 @@ main(int    argc,
 				int rank = 0;
 				int refl = 0;
 				if (waveName(0) == 'V') {
-					// we multiply rank by to to make space for refl+- production vectors
-					rank     = 2 * atoi(waveName(1, 1).Data());
+					rank     = atoi(waveName(1, 1).Data());
 					// check reflectivity to sort into correct production vector
 					refl     = ((waveName(9) == '+') ? +1 : -1);
 					waveName = waveName(3, waveName.Length());
@@ -343,7 +342,7 @@ main(int    argc,
 				}
 
 				printDebug << "read production amplitude [" << iWave << "] = " << prodAmp
-				           << " for wave '" << waveName << "'; rank = " << rank / 2
+				           << " for wave '" << waveName << "'; rank = " << rank
 				           << ", reflectivity = " << refl << endl;
 			}
 
