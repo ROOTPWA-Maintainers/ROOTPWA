@@ -391,6 +391,7 @@ main(int    argc,
 	double         weightPosRef;
 	double         weightNegRef;
 	double         weightFlat;
+	vector<double> weightWaves(nmbWaves);                    // branches will take pointer to elements
 	vector<double> weightProdAmps(nmbProdAmps);              // branches will take pointer to elements
 	vector<double> weightProdAmpSamples(nmbProdAmpSamples);  // branches will take pointer to elements
 	// book branches
@@ -400,10 +401,18 @@ main(int    argc,
 	outTree->Branch("weightFlat",   &weightFlat,   "weightFlat/D");
 	if (writeSingleWaveWeights) {
 		// create weight branches for each individual wave
-		for (unsigned int iProdAmp = 0; iProdAmp < nmbProdAmps; ++iProdAmp) {
-			TString weightName("Wintens_");
-			weightName += waveNames[iProdAmp];
-			outTree->Branch(weightName.Data(), &weightProdAmps[iProdAmp], (weightName + "/D").Data());
+		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+			TString weightName("weightWave_");
+			weightName += waveNames[iWave];
+			outTree->Branch(weightName.Data(), &weightWaves[iWave], (weightName + "/D").Data());
+		}
+		// if not a rank-1 fit, also create weights for each rank
+		if (maxRank > 1) {
+			for (unsigned int iProdAmp = 0; iProdAmp < nmbProdAmps; ++iProdAmp) {
+				TString weightName("weightProdAmp_");
+				weightName += prodAmpNames[iProdAmp];
+				outTree->Branch(weightName.Data(), &weightProdAmps[iProdAmp], (weightName + "/D").Data());
+			}
 		}
 	}
 	// create branches for the weights calculated from the varied production amplitudes
@@ -525,6 +534,13 @@ main(int    argc,
 				double sampleWeight     = sampleWeightPosRef + sampleWeightNegRef + sampleWeightFlat;
 
 				if (iSample == 0) {
+					for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave)
+						weightWaves[iWave] = 0;
+					// in the end the following corresponds to a sum over ranks,
+					// which is an incoherent sum
+					for (unsigned int iProdAmp = 0; iProdAmp < nmbProdAmps; ++iProdAmp)
+						weightWaves[waveIndex[iProdAmp]] += weightProdAmps[iProdAmp];
+
 					weightPosRef = sampleWeightPosRef;
 					weightNegRef = sampleWeightNegRef;
 					weightFlat   = sampleWeightFlat;
