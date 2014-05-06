@@ -240,7 +240,7 @@ main(int    argc,
 	// load production amplitudes and wave information
 	vector<vector<complex<double> > > prodAmps(nmbProdAmpSamples);  // production amplitudes [sample index][wave index]
 	vector<string>                    waveNames;                    // wave names [wave index]
-	vector<int>                       reflectivities;
+	vector<int>                       reflectivities;               // [wave index]
 	vector<int>                       ranks;
 	int                               maxRank = 0;
 	{
@@ -324,10 +324,10 @@ main(int    argc,
 					// we multiply rank by to to make space for refl+- production vectors
 					rank     = 2 * atoi(waveName(1, 1).Data());
 					// check reflectivity to sort into correct production vector
-					refl     = ((waveName(9) == '+') ? 0 : 1);
+					refl     = ((waveName(9) == '+') ? +1 : -1);
 					waveName = waveName(3, waveName.Length());
 				} else if (waveName != "flat")
-					refl = ((waveName(6) == '+') ? 0 : 1);
+					refl = ((waveName(6) == '+') ? +1 : -1);
 				// read production amplitude
 				const complex<double> prodAmp = result->prodAmp(iWave);
 				if (prodAmp == 0.)
@@ -496,9 +496,9 @@ main(int    argc,
 						const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
 						if (iSample == 0)  // set weights of individual waves
 							weights[iWave] = norm(amp);
-						if (reflectivities[iWave] == 0)
+						if (reflectivities[iWave] == +1)
 							posReflAmpSums[ranks[iWave]] += amp;
-						else if (reflectivities[iWave] == 1)
+						else if (reflectivities[iWave] == -1)
 							negReflAmpSums[ranks[iWave]] += amp;
 					}
 				}  // end loop over waves
