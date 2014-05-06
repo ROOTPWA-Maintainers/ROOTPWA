@@ -35,9 +35,6 @@
 //        amplitude files. also the use of friend trees should be
 //        investigated in order to avoid copying of event data.
 //
-//      * the code reading the production amplitudes and calculating
-//        the weigt is correct only for rank-1
-//
 //      * the parsing of wave names to extract quantum numbers is not
 //        implemented in an error safe way
 //
@@ -238,10 +235,13 @@ main(int    argc,
 	}
 
 	// load production amplitudes and wave information
-	vector<vector<complex<double> > > prodAmps(nmbProdAmpSamples);  // production amplitudes [sample index][wave index]
 	vector<string>                    waveNames;                    // wave names [wave index]
-	vector<int>                       reflectivities;               // [wave index]
-	vector<int>                       ranks;                        // [wave index]
+	vector<unsigned int>              waveIndex;                    // wave index [production amplitude index]
+	                                                                // mapping from production amplitude to wave
+	vector<string>                    prodAmpNames;                 // names of production amplitudes [production amplitude index]
+	vector<vector<complex<double> > > prodAmps(nmbProdAmpSamples);  // production amplitudes [sample index][production amplitude index]
+	vector<int>                       reflectivities;               // [production amplitude index]
+	vector<int>                       ranks;                        // [production amplitude index]
 	int                               maxRank = 0;
 	{
 		// open fit-result file
@@ -302,6 +302,9 @@ main(int    argc,
 			resultBest = result;
 		}
 
+		// resize wave names to number of waves in fit result
+		waveNames.resize(resultBest->nmbWaves(), "");
+
 		// read production amplitudes, wave names, reflectivities, and rank
 		// if nmbProdAmpSamples > 1 vary production amplitudes according to covariances
 		for (unsigned int iSample = 0; iSample < nmbProdAmpSamples; ++iSample) {
@@ -313,35 +316,41 @@ main(int    argc,
 				result = resultBest->variedProdAmps();
 			}
 
-			for (unsigned int iWave = 0; iWave < result->nmbWaves(); ++iWave) {
-				TString  waveName = result->waveName(iWave);
-				if (waveName.Length() < 2)
-					continue;
+			for (unsigned int iProdAmp = 0; iProdAmp < result->nmbProdAmps(); ++iProdAmp) {
+				const string prodAmpName = result->prodAmpName(iProdAmp).Data();
+				const string waveName    = result->waveNameForProdAmp(iProdAmp).Data();
+				const int iWave          = result->waveIndex(waveName);
+
 				// extract rank and reflectivity from wave name
 				int rank = 0;
 				int refl = 0;
-				if (waveName(0) == 'V') {
-					rank     = atoi(waveName(1, 1).Data());
+				if (prodAmpName != "V_flat") {
+					// get position of first underscore
+					// this underscore separates the rank from the wave name
+					size_t division = prodAmpName.find('_');
+					// rank follows the 'V' until the first underscore
+					rank = atoi(prodAmpName.substr(1, division-1).c_str());
 					// check reflectivity to sort into correct production vector
-					refl     = ((waveName(9) == '+') ? +1 : -1);
-					waveName = waveName(3, waveName.Length());
-				} else if (waveName != "flat")
-					refl = ((waveName(6) == '+') ? +1 : -1);
+					refl = ((waveName[6] == '+') ? +1 : -1);
+				}
 				// read production amplitude
-				const complex<double> prodAmp = result->prodAmp(iWave);
+				const complex<double> prodAmp = result->prodAmp(iProdAmp);
 				if (prodAmp == 0.)
 					continue;
 				prodAmps[iSample].push_back(prodAmp);
 				// for first fit result store wave info
 				if (iSample == 0) {
-					waveNames.push_back     (waveName.Data());
+					waveNames[iWave] = waveName;
+					waveIndex.push_back     (iWave);
+					prodAmpNames.push_back  (prodAmpName);
 					reflectivities.push_back(refl);
 					ranks.push_back         (rank);
 					if (maxRank < rank)
 						maxRank = rank;
 				}
 
-				printDebug << "read production amplitude [" << iWave << "] = " << prodAmp
+				printDebug << "read production amplitude '" << prodAmpName << "'"
+				           << " [" << iProdAmp << "] = " << prodAmp
 				           << " for wave '" << waveName << "'; rank = " << rank
 				           << ", reflectivity = " << refl << endl;
 			}
@@ -355,6 +364,7 @@ main(int    argc,
 	}
 
 	const unsigned int nmbWaves = waveNames.size();
+	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
 	vector<ifstream*> ampFiles(nmbWaves, 0);
@@ -381,7 +391,7 @@ main(int    argc,
 	double         weightPosRef;
 	double         weightNegRef;
 	double         weightFlat;
-	vector<double> weightWaves(nmbWaves);                    // branches will take pointer to elements
+	vector<double> weightProdAmps(nmbProdAmps);              // branches will take pointer to elements
 	vector<double> weightProdAmpSamples(nmbProdAmpSamples);  // branches will take pointer to elements
 	// book branches
 	outTree->Branch("weight",       &weight,       "weight/D");
@@ -390,10 +400,10 @@ main(int    argc,
 	outTree->Branch("weightFlat",   &weightFlat,   "weightFlat/D");
 	if (writeSingleWaveWeights) {
 		// create weight branches for each individual wave
-		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+		for (unsigned int iProdAmp = 0; iProdAmp < nmbProdAmps; ++iProdAmp) {
 			TString weightName("Wintens_");
-			weightName += waveNames[iWave];
-			outTree->Branch(weightName.Data(), &weightWaves[iWave], (weightName + "/D").Data());
+			weightName += waveNames[iProdAmp];
+			outTree->Branch(weightName.Data(), &weightProdAmps[iProdAmp], (weightName + "/D").Data());
 		}
 	}
 	// create branches for the weights calculated from the varied production amplitudes
@@ -482,23 +492,24 @@ main(int    argc,
 				vector<complex<double> > negReflAmpSums(maxRank, 0);  // negative-reflectivity amplitude sums [rank]
 				complex<double>          flatAmp = 0;
 
-				for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+				for (unsigned int iProdAmp = 0; iProdAmp < nmbProdAmps; ++iProdAmp) {
+					const unsigned int    iWave     = waveIndex        [iProdAmp];
 					const complex<double> decayAmp  = decayAmps        [iWave];
-					const complex<double> prodAmp   = prodAmps[iSample][iWave];
+					const complex<double> prodAmp   = prodAmps[iSample][iProdAmp];
 					const string          waveName  = waveNames        [iWave];
 					const double          nmbEvents = normInt.nmbEvents();
 					if (waveName == "flat") {
 						flatAmp = prodAmp / sqrt(nmbEvents);
-						if (iSample == 0)  // set weights of individual waves
-							weightWaves[iWave] = norm(flatAmp);
+						if (iSample == 0)  // set weights of individual production amplitudes
+							weightProdAmps[iProdAmp] = norm(flatAmp);
 					} else {
 						const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
-						if (iSample == 0)  // set weights of individual waves
-							weightWaves[iProdAmp] = norm(amp);
-						if (reflectivities[iWave] == +1)
-							posReflAmpSums[ranks[iWave]] += amp;
-						else if (reflectivities[iWave] == -1)
-							negReflAmpSums[ranks[iWave]] += amp;
+						if (iSample == 0)  // set weights of individual production amplitudes
+							weightProdAmps[iProdAmp] = norm(amp);
+						if (reflectivities[iProdAmp] == +1)
+							posReflAmpSums[ranks[iProdAmp]] += amp;
+						else if (reflectivities[iProdAmp] == -1)
+							negReflAmpSums[ranks[iProdAmp]] += amp;
 					}
 				}  // end loop over waves
 
