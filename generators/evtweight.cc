@@ -322,14 +322,9 @@ main(int    argc,
 				const int iWave          = result->waveIndex(waveName);
 
 				// extract rank and reflectivity from wave name
-				int rank = 0;
+				int rank = result->rankOfProdAmp(iProdAmp);
 				int refl = 0;
 				if (prodAmpName != "V_flat") {
-					// get position of first underscore
-					// this underscore separates the rank from the wave name
-					size_t division = prodAmpName.find('_');
-					// rank follows the 'V' until the first underscore
-					rank = atoi(prodAmpName.substr(1, division-1).c_str());
 					// check reflectivity to sort into correct production vector
 					refl = ((waveName[6] == '+') ? +1 : -1);
 				}
