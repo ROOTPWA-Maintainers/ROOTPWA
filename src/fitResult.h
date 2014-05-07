@@ -128,6 +128,8 @@ namespace rpwa {
 		TString prodAmpName   (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex];                          }  ///< returns name of production amplitude at index
 		TString prodAmpNameEsc(const unsigned int prodAmpIndex) const { return escapeRegExpSpecialChar(_prodAmpNames[prodAmpIndex]); }  ///< returns name of production amplitude at index with special regexp characters escaped
 		inline TString waveNameForProdAmp(const unsigned int prodAmpIndex) const;
+		inline int     rankOfProdAmp     (const unsigned int prodAmpIndex) const;
+
 
 		int waveIndex   (const std::string& waveName   ) const;  ///< returns wave index corresponding to wave name
 		int prodAmpIndex(const std::string& prodAmpName) const;  ///< returns production amplitude index corresponding to production amplitude name
@@ -234,8 +236,6 @@ namespace rpwa {
 
 		// helper functions
 		inline static TMatrixT<double> matrixRepr(const std::complex<double>& c);
-
-		inline int rankOfProdAmp(const unsigned int prodAmpIndex) const;
 
 		std::complex<double> normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 		                                            const unsigned int prodAmpIndexB) const;
@@ -443,12 +443,14 @@ namespace rpwa {
 	int
 	fitResult::rankOfProdAmp(const unsigned int prodAmpIndex) const
 	{
-		const TString ampName = _prodAmpNames[prodAmpIndex];
-		if (ampName.Contains("flat"))
+		const std::string& ampName = _prodAmpNames[prodAmpIndex];
+		if (ampName == "V_flat")
 			return -1;
 		else
-			// the rank is encoded in second character of parameter name
-			return TString(ampName(1, 1)).Atoi();
+			// the rank is encoded between the V and the next underscore,
+			// so starting from the second character to the first character
+			// which cannot be converted
+			return atoi(&ampName.c_str()[1]);
 	}
 
 
