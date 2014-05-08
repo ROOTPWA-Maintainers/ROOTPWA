@@ -75,6 +75,29 @@ using namespace rpwa;
 
 
 void
+openBinAmpFiles(const string&         ampDirName,
+                const vector<string>& waveNames,
+                vector <ifstream*>&   ampFiles)
+{
+	ampFiles.assign(waveNames.size(), NULL);
+	for (size_t iWave = 0; iWave < waveNames.size(); ++iWave) {
+		if (waveNames[iWave] == "flat") {
+			ampFiles.push_back(0);
+			continue;
+		}
+		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
+		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
+		ifstream* ampFile = new ifstream(ampFilePath.c_str());
+		if (not ampFile->good()) {
+			printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
+			exit(1);
+		}
+		ampFiles[iWave] = ampFile;
+	}
+}
+
+
+void
 usage(const string& progName,
       const int     errCode = 0)
 {
@@ -362,21 +385,8 @@ main(int    argc,
 	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
-	vector<ifstream*> ampFiles(nmbWaves, 0);
-	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-		if (waveNames[iWave] == "flat") {
-			ampFiles.push_back(0);
-			continue;
-		}
-		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
-		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
-		ifstream* ampFile = new ifstream(ampFilePath.c_str());
-		if (not ampFile->good()) {
-			printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
-			exit(1);
-		}
-		ampFiles[iWave] = ampFile;
-	}
+	vector<ifstream*> ampFiles;
+	openBinAmpFiles(ampDirName, waveNames, ampFiles);
 
 	// create output file and tree
 	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
