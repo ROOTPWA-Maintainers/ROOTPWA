@@ -407,10 +407,10 @@ main(int    argc,
 	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
-	vector<ifstream*> ampFiles;
-	openBinAmpFiles(ampDirName, waveNames, ampFiles);
+	vector<ifstream*> ampBinFiles;
+	openBinAmpFiles(ampDirName, waveNames, ampBinFiles);
 	// test that an amplitude file was opened for each wave
-	if (waveNames.size() != ampFiles.size()) {
+	if (waveNames.size() != ampBinFiles.size()) {
 		printErr << "error opening binary amplitude files." << endl;
 		exit(1);
 	}
@@ -517,11 +517,11 @@ main(int    argc,
 			// read decay amplitudes for this event
 			vector<complex<double> > decayAmps(nmbWaves);
 			for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-				if (not ampFiles[iWave])  // e.g. flat wave
+				if (not ampBinFiles[iWave])  // e.g. flat wave
 					decayAmps[iWave] = complex<double>(0);
 				else {
 					complex<double> decayAmp;
-					ampFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
+					ampBinFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
 					decayAmps[iWave] = decayAmp;
 				}
 			}
@@ -600,12 +600,12 @@ main(int    argc,
 
 	// cleanup
 	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-		if (ampFiles[iWave]) {
-			ampFiles[iWave]->close();
-			delete ampFiles[iWave];
+		if (ampBinFiles[iWave]) {
+			ampBinFiles[iWave]->close();
+			delete ampBinFiles[iWave];
 		}
 	}
-	ampFiles.clear();
+	ampBinFiles.clear();
 	prodAmps.clear();
 
 	return 0;
