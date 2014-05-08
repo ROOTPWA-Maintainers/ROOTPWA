@@ -60,10 +60,12 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TClonesArray.h"
+#include "TROOT.h"
 #include "TString.h"
 #include "TStopwatch.h"
 
 #include "ampIntegralMatrix.h"
+#include "amplitudeTreeLeaf.h"
 #include "fitResult.h"
 #include "fileUtils.hpp"
 #include "evtTreeHelper.h"
@@ -72,6 +74,72 @@
 using namespace std;
 using namespace boost;
 using namespace rpwa;
+
+
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+unsigned long
+openRootAmpFiles(const string&               ampDirName,
+                 const vector<string>&       waveNames,
+                 vector<TTree*>&             ampRootTrees,
+                 vector<amplitudeTreeLeaf*>& ampRootLeafs,
+                 const string&               ampLeafName = "amplitude")
+{
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
+	gROOT->ProcessLine("#include <complex>");
+
+	ampRootTrees.clear();
+	ampRootLeafs.assign(waveNames.size(), NULL);
+	unsigned long nmbAmpValues = 0;
+	for (size_t iWave = 0; iWave < waveNames.size(); ++iWave) {
+		// no amplitude file for the flat wave
+		if (waveNames[iWave] == "flat") {
+			ampRootTrees.push_back(NULL);
+			continue;
+		}
+
+		// try to open amplitude file
+		const string ampFilePath = changeFileExtension(ampDirName + "/" + waveNames[iWave], ".root");
+		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
+		TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
+		if (not ampFile or ampFile->IsZombie()) {
+			printErr << "cannot open amplitude file '" << ampFilePath << "'. skipping wave." << endl;
+			continue;
+		}
+
+		// find amplitude tree
+		TTree* ampTree = NULL;
+		const string ampTreeName = changeFileExtension(waveNames[iWave], ".amp");
+		ampFile->GetObject(ampTreeName.c_str(), ampTree);
+		if (not ampTree) {
+			printErr << "cannot find tree '" << ampTreeName << "' in file "
+			         << "'" << ampFilePath << "'. skipping wave." << endl;
+			continue;
+		}
+
+		// check that all tree have the same number of entries
+		const unsigned long nmbEntries = ampTree->GetEntriesFast();
+		if (nmbEntries == 0) {
+			printErr << "amplitude tree '" << ampTree->GetName() << "' has zero entries. "
+			         << "skipping wave." << endl;
+			continue;
+		}
+		if (nmbAmpValues == 0)
+			nmbAmpValues = nmbEntries;
+		else if (nmbEntries != nmbAmpValues) {
+			printErr << "amplitude tree '" << ampTree->GetName() << "' has different number "
+			         << "of entries than previous tree. skipping wave." << endl;
+			continue;
+		}
+
+		// connect tree leaf
+		ampRootTrees.push_back(ampTree);
+		ampTree->SetBranchAddress(ampLeafName.c_str(), &ampRootLeafs[iWave]);
+	}
+
+	return nmbAmpValues;
+}
+#endif
 
 
 unsigned long
@@ -127,7 +195,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-o output file -e -s -w fit-result file -n # of samples -i integral file -d amplitude directory] -m mass [-b mass bin width] "
+	     << " [-o output file -e -s -w fit-result file -n # of samples -i integral file -d amplitude directory -R] -m mass [-b mass bin width] "
 	     << "-t tree name -l leaf names -v -h] "
 	     << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
@@ -138,6 +206,11 @@ usage(const string& progName,
 	     << "        -n #       if > 1, additional production amplitudes are generated according to covariances (default: 1)"<< endl
 	     << "        -i file    integral file (default: './norm.int')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	     << "        -R         use .root amplitude files (default: false)" << endl
+#else
+	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
+#endif
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
@@ -168,6 +241,7 @@ main(int    argc,
 	const string   fitResultLeafName = "fitResult_v2";
 	string         intFileName       = "./norm.int";
 	string         ampDirName        = ".";
+	bool           useRootAmps       = false;                   // if true .root amplitude files are read
 	unsigned int   nmbProdAmpSamples = 1;
 	bool           writeSingleWaveWeights        = false;
 	double         massBinCenter     = 0;   // [MeV/c^2]
@@ -178,7 +252,7 @@ main(int    argc,
 	const long int treeCacheSize     = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "o:esw:n:i:d:m:b:t:l:vh")) != -1) {
+	while ((c = getopt(argc, argv, "o:esw:n:i:d:Rm:b:t:l:vh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -200,6 +274,11 @@ main(int    argc,
 			break;
 		case 'd':
 			ampDirName = optarg;
+			break;
+		case 'R':
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+			useRootAmps = true;
+#endif
 			break;
 		case 'm':
 			massBinCenter = atof(optarg);
@@ -407,12 +486,30 @@ main(int    argc,
 	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	vector<TTree*> ampRootTrees;
+	vector<amplitudeTreeLeaf*> ampRootLeafs;
+#endif
 	vector<ifstream*> ampBinFiles;
-	openBinAmpFiles(ampDirName, waveNames, ampBinFiles);
-	// test that an amplitude file was opened for each wave
-	if (waveNames.size() != ampBinFiles.size()) {
-		printErr << "error opening binary amplitude files." << endl;
-		exit(1);
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	if (useRootAmps) {
+		openRootAmpFiles(ampDirName, waveNames, ampRootTrees, ampRootLeafs);
+		// test that an amplitude file was opened for each wave
+		// note that ampRootLeafs cannot be used for this check
+		if (waveNames.size() != ampRootTrees.size()) {
+			printErr << "error opening ROOT amplitude files." << endl;
+			exit(1);
+		}
+	} else
+#endif
+	{
+		openBinAmpFiles(ampDirName, waveNames, ampBinFiles);
+		//const unsigned long nmbBinEvents = openBinAmpFiles(ampDirName, waveNames, ampFiles);
+		// test that an amplitude file was opened for each wave
+		if (waveNames.size() != ampBinFiles.size()) {
+			printErr << "error opening binary amplitude files." << endl;
+			exit(1);
+		}
 	}
 
 	// create output file and tree
@@ -517,12 +614,25 @@ main(int    argc,
 			// read decay amplitudes for this event
 			vector<complex<double> > decayAmps(nmbWaves);
 			for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-				if (not ampBinFiles[iWave])  // e.g. flat wave
-					decayAmps[iWave] = complex<double>(0);
-				else {
-					complex<double> decayAmp;
-					ampBinFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
-					decayAmps[iWave] = decayAmp;
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+				if (useRootAmps) {
+					if (not ampRootTrees[iWave])  // e.g. flat wave
+						decayAmps[iWave] = complex<double>(0);
+					else {
+						ampRootTrees[iWave]->GetEntry(eventCounter);
+						assert(ampRootLeafs[iWave]->nmbIncohSubAmps() == 1);
+						decayAmps[iWave] = ampRootLeafs[iWave]->incohSubAmp(0);
+					}
+				} else
+#endif
+				{
+					if (not ampBinFiles[iWave])  // e.g. flat wave
+						decayAmps[iWave] = complex<double>(0);
+					else {
+						complex<double> decayAmp;
+						ampBinFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
+						decayAmps[iWave] = decayAmp;
+					}
 				}
 			}
 
@@ -600,12 +710,27 @@ main(int    argc,
 
 	// cleanup
 	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-		if (ampBinFiles[iWave]) {
-			ampBinFiles[iWave]->close();
-			delete ampBinFiles[iWave];
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+		if (useRootAmps) {
+		} else
+#endif
+		{
+			if (ampBinFiles[iWave]) {
+				ampBinFiles[iWave]->close();
+				delete ampBinFiles[iWave];
+			}
 		}
 	}
-	ampBinFiles.clear();
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	if (useRootAmps) {
+		ampRootTrees.clear();
+		ampRootLeafs.clear();
+	} else
+#endif
+	{
+		ampBinFiles.clear();
+	}
+
 	prodAmps.clear();
 
 	return 0;
