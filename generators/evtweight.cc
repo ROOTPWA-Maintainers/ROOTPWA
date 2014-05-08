@@ -74,26 +74,48 @@ using namespace boost;
 using namespace rpwa;
 
 
-void
+unsigned long
 openBinAmpFiles(const string&         ampDirName,
                 const vector<string>& waveNames,
                 vector <ifstream*>&   ampFiles)
 {
-	ampFiles.assign(waveNames.size(), NULL);
+	ampFiles.clear();
+	streampos ampFileSize = 0;
 	for (size_t iWave = 0; iWave < waveNames.size(); ++iWave) {
+		// no amplitude file for the flat wave
 		if (waveNames[iWave] == "flat") {
 			ampFiles.push_back(0);
 			continue;
 		}
+
+		// try to open amplitde file
 		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
 		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
 		ifstream* ampFile = new ifstream(ampFilePath.c_str());
 		if (not ampFile->good()) {
-			printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
-			exit(1);
+			printErr << "cannot open amplitude file '" << ampFilePath << "'. skipping file." << endl;
+			continue;
 		}
-		ampFiles[iWave] = ampFile;
+
+		// check that all files have the same size
+		const streampos fileSize = rpwa::fileSize(*ampFile);
+		if (fileSize == 0) {
+			printErr << "amplitude file '" << ampFilePath << "' has zero size. skipping file." << endl;
+			continue;
+		}
+		if (ampFileSize == 0)
+			ampFileSize = fileSize;
+		else if (fileSize != ampFileSize) {
+			printErr << "amplitude file '" << ampFilePath << "' has different size "
+			         << "than previous file. skipping file." << endl;
+			continue;
+		}
+
+		ampFiles.push_back(ampFile);
 	}
+
+	const unsigned long nmbAmpValues = ampFileSize / sizeof(complex<double>);
+	return nmbAmpValues;
 }
 
 
@@ -387,6 +409,11 @@ main(int    argc,
 	// open decay amplitude files
 	vector<ifstream*> ampFiles;
 	openBinAmpFiles(ampDirName, waveNames, ampFiles);
+	// test that an amplitude file was opened for each wave
+	if (waveNames.size() != ampFiles.size()) {
+		printErr << "error opening binary amplitude files." << endl;
+		exit(1);
+	}
 
 	// create output file and tree
 	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
