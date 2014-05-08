@@ -141,30 +141,30 @@ openBinAmpFiles(const string&         ampDirName,
 	for (size_t iWave = 0; iWave < waveNames.size(); ++iWave) {
 		// no amplitude file for the flat wave
 		if (waveNames[iWave] == "flat") {
-			ampFiles.push_back(0);
+			ampFiles.push_back(NULL);
 			continue;
 		}
 
-		// try to open amplitde file
+		// try to open amplitude file
 		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
 		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
 		ifstream* ampFile = new ifstream(ampFilePath.c_str());
 		if (not ampFile->good()) {
-			printErr << "cannot open amplitude file '" << ampFilePath << "'. skipping file." << endl;
+			printErr << "cannot open amplitude file '" << ampFilePath << "'. skipping wave." << endl;
 			continue;
 		}
 
 		// check that all files have the same size
 		const streampos fileSize = rpwa::fileSize(*ampFile);
 		if (fileSize == 0) {
-			printErr << "amplitude file '" << ampFilePath << "' has zero size. skipping file." << endl;
+			printErr << "amplitude file '" << ampFilePath << "' has zero size. skipping wave." << endl;
 			continue;
 		}
 		if (ampFileSize == 0)
 			ampFileSize = fileSize;
 		else if (fileSize != ampFileSize) {
 			printErr << "amplitude file '" << ampFilePath << "' has different size "
-			         << "than previous file. skipping file." << endl;
+			         << "than previous file. skipping wave." << endl;
 			continue;
 		}
 
@@ -184,8 +184,9 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-o output file -s -w fit-result file -n # of samples -i integral file -d amplitude directory -R] -m mass [-b mass bin width] "
-	     << "-t tree name -v -h]" << endl
+	     << " [-o output file -s -w fit-result file -n # of samples "
+	     << "-i integral file -d amplitude directory -R] "
+	     << "-m mass [-b mass bin width -t tree name -v -h]" << endl
 	     << "    where:" << endl
 	     << "        -o file    ROOT output file (default: './genpw.root')"<< endl
 	     << "        -s         write out weights for each single wave (caution: this vastly increase the size of the output file)" << endl
@@ -218,20 +219,20 @@ main(int    argc,
 	cout << endl;
 
 	// parse command line options
-	const string   progName          = argv[0];
-	string         outFileName       = "./genpw.root";
-	string         fitResultFileName = "./fitresult.root";
-	const string   fitResultTreeName = "pwa";
-	const string   fitResultLeafName = "fitResult_v2";
-	string         intFileName       = "./norm.int";
-	string         ampDirName        = ".";
-	bool           useRootAmps       = false;                   // if true .root amplitude files are read
-	unsigned int   nmbProdAmpSamples = 1;
-	bool           writeSingleWaveWeights        = false;
-	double         massBinCenter     = 0;   // [MeV/c^2]
-	double         massBinWidth      = 60;  // [MeV/c^2]
-	string         outTreeName       = "rootPwaWeightTree";
-	bool           debug             = false;
+	const string   progName                 = argv[0];
+	string         outFileName              = "./genpw.root";
+	string         fitResultFileName        = "./fitresult.root";
+	const string   fitResultTreeName        = "pwa";
+	const string   fitResultLeafName        = "fitResult_v2";
+	string         intFileName              = "./norm.int";
+	string         ampDirName               = ".";
+	bool           useRootAmps              = false;                   // if true .root amplitude files are read
+	unsigned int   nmbProdAmpSamples        = 1;
+	bool           writeSingleWaveWeights   = false;
+	double         massBinCenter            = 0;                       // [MeV/c^2]
+	double         massBinWidth             = 60;                      // [MeV/c^2]
+	string         outTreeName              = "rootPwaWeightTree";
+	bool           debug                    = false;
 
 	int c;
 	while ((c = getopt(argc, argv, "o:sw:n:i:d:Rm:b:t:vh")) != -1) {
@@ -327,12 +328,12 @@ main(int    argc,
 		// if there are more than one such fit results, take the one which has the best likelihood
 		printInfo << "searching for the best fit result with mass-bin center closest to m = "
 		          << massBinCenter << " MeV/c^2." << endl;
-		fitResult* resultBest = 0;
+		fitResult* resultBest = NULL;
 		{
 			unsigned int indexBest         = 0;
 			double       massBinCenterBest = 0;
 			double       logLikeBest       = 0;
-			fitResult*   result            = 0;
+			fitResult*   result            = NULL;
 			fitResultTree->SetBranchAddress(fitResultLeafName.c_str(), &result);
 			for (unsigned int iTree = 0; iTree < fitResultTree->GetEntries(); ++iTree) {
 				fitResultTree->GetEntry(iTree);
@@ -374,7 +375,7 @@ main(int    argc,
 		// if nmbProdAmpSamples > 1 vary production amplitudes according to covariances
 		for (unsigned int iSample = 0; iSample < nmbProdAmpSamples; ++iSample) {
 
-			fitResult* result = 0;
+			fitResult* result = NULL;
 			if (iSample == 0) {
 				result = resultBest;
 			} else {
