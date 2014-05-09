@@ -376,7 +376,7 @@ if(ROOT_VERSION VERSION_LESS "5.34.04")
 	message(STATUS "No Python bindings will be generated")
 	set(USE_PYTHON OFF)
 else()
-	find_package(PYTHON 2.7)
+	find_package(PYTHON 2.6)
 	set_package_properties(PYTHON
 		PROPERTIES
 		DESCRIPTION "General-purpose, high-level programming language"
