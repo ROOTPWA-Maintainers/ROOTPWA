@@ -688,11 +688,17 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	// get amplitude leafs
 	_waveNames.resize(waveIndex + nmbAmpTrees + 1);
 	_waveDescriptions.resize(waveIndex + nmbAmpTrees + 1);
+	ampTrees.resize(nmbAmpTrees, NULL);
+	ampTreeLeafs.resize(nmbAmpTrees, NULL);
 	for (unsigned int i = 0; i < nmbAmpTrees; ++i) {
-		// connect tree leaf
-		amplitudeTreeLeaf* treeLeaf = 0;
-		trees[i]->SetBranchAddress(ampLeafName.c_str(), &treeLeaf);
-	    
+		// check that wave is not yet used in this integral
+		const string waveName = fileNameNoExtFromPath(trees[i]->GetName());
+		if (containsWave(waveName)) {
+			printWarn << "wave '" << waveName << "' already exists in integral matrix. "
+			          << "ignoring tree '" << trees[i]->GetName() << "'." << endl;
+			continue;
+		}
+
 		// check that all trees have the same number of entries
 		const unsigned long nmbEntries = numeric_cast<unsigned long>(trees[i]->GetEntriesFast());
 		if (nmbEntries == 0) {
@@ -708,18 +714,17 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 			continue;
 		}
 
-		// fill wave name into name-to-index map, if not already existent
-		const string waveName = fileNameNoExtFromPath(trees[i]->GetName());
-		if (not containsWave(waveName)) {
-			_waveNameToIndexMap[waveName] = waveIndex;
-			_waveNames       [waveIndex] = waveName;
-			_waveDescriptions[waveIndex] = *(waveDescs[i]);
-			++waveIndex;
-			ampTrees.push_back    (trees[i]);
-			ampTreeLeafs.push_back(treeLeaf);
-		} else
-			printWarn << "wave '" << waveName << "' already exists in integral matrix. "
-			          << "ignoring tree '" << trees[i]->GetName() << "'." << endl;
+		// fill wave name into name-to-index map
+		_waveNameToIndexMap[waveName] = waveIndex;
+		_waveNames       [waveIndex] = waveName;
+		_waveDescriptions[waveIndex] = *(waveDescs[i]);
+
+		// connect tree leaf
+		ampTrees[waveIndex-waveIndexOffset] = trees[i];
+		ampTreeLeafs[waveIndex-waveIndexOffset] = NULL;
+		ampTrees[waveIndex-waveIndexOffset]->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeafs[waveIndex-waveIndexOffset]);
+
+		++waveIndex;
 	}
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
