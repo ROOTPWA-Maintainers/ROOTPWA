@@ -49,7 +49,70 @@ set(Libconfig_LIBS)
 
 set(Libconfig_DIR $ENV{LIBCONFIG})
 if(NOT Libconfig_DIR)
-	set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Environment variable LIBCONFIG='${Libconfig_DIR}' is not set correctly.")
+
+	set(Libconfig_FOUND TRUE)
+
+	set(_Libconfig_LIB_NAMES "config++")
+	find_library(Libconfig_LIBS
+		NAMES ${_Libconfig_LIB_NAMES})
+	if(NOT Libconfig_LIBS)
+		set(Libconfig_FOUND FALSE)
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig library '${_Libconfig_LIB_NAMES}'.")
+	else()
+		get_filename_component(Libconfig_DIR ${Libconfig_LIBS} PATH)
+	endif()
+	unset(_Libconfig_LIB_NAMES)
+
+	set(_Libconfig_HEADER_FILE_NAME "libconfig.h++")
+	find_file(_Libconfig_HEADER_FILE
+		NAMES ${_Libconfig_HEADER_FILE_NAME})
+	if(NOT _Libconfig_HEADER_FILE)
+		set(Libconfig_FOUND FALSE)
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig header file '${_Libconfig_HEADER_FILE_NAME}'.")
+	else()
+		get_filename_component(Libconfig_INCLUDE_DIR ${_Libconfig_HEADER_FILE} PATH)
+		# parse version string
+		file(STRINGS ${_Libconfig_HEADER_FILE} _Libconfig_VERSIONS
+			REGEX "LIBCONFIGXX_VER_(MAJOR|MINOR|REVISION)")
+		list(LENGTH _Libconfig_VERSIONS _NMB_Libconfig_VERSIONS)
+		if(NOT _NMB_Libconfig_VERSIONS EQUAL 3)
+			set(Libconfig_FOUND FALSE)
+			set(Libconfig_ERROR_REASON "Cannot determine libconfig version from file '${_Libconfig_HEADER_FILE}'.")
+		else()
+			string(REGEX REPLACE
+				"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_MAJOR[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
+				"\\1"	Libconfig_MAJOR_VERSION "${_Libconfig_VERSIONS}")
+			string(REGEX REPLACE
+				"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_MINOR[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
+				"\\1" Libconfig_MINOR_VERSION "${_Libconfig_VERSIONS}")
+			string(REGEX REPLACE
+				"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_REVISION[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
+				"\\1"	Libconfig_SUBMINOR_VERSION "${_Libconfig_VERSIONS}")
+		endif()
+		unset(_Libconfig_VERSIONS)
+		set(Libconfig_VERSION
+			"${Libconfig_MAJOR_VERSION}.${Libconfig_MINOR_VERSION}.${Libconfig_SUBMINOR_VERSION}")
+	endif()
+	unset(_Libconfig_HEADER_FILE_NAME)
+	unset(_Libconfig_HEADER_FILE)
+
+	# compare version
+	if(Libconfig_FIND_VERSION_EXACT)
+		if(NOT Libconfig_VERSION VERSION_EQUAL Libconfig_FIND_VERSION)
+			set(Libconfig_FOUND FALSE)
+			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} does not match requested version ${Libconfig_FIND_VERSION}.")
+		endif()
+	else()
+		if(Libconfig_VERSION VERSION_LESS Libconfig_FIND_VERSION)
+			set(Libconfig_FOUND FALSE)
+			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} is lower than requested version ${Libconfig_FIND_VERSION}.")
+		endif()
+	endif()
+
+	if(NOT Libconfig_FOUND)
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig not found in system directories (and environment variable LIBCONFIG is not set).")
+	endif()
+
 else()
 
 	set(Libconfig_FOUND TRUE)
