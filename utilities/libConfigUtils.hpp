@@ -295,11 +295,11 @@ namespace rpwa {
 			libconfig::Setting::Type type = it->second;
 			if(not group->exists(name)) {
 				printWarn << "'" << name << "' not found "
-				          << "in '" << group->getName() << "' section." << std::endl;
+				          << "in '" << (group->getName() ? group->getName() : "???") << "' section." << std::endl;
 				return false;
 			}
 			if((*group)[name].getType() != type) {
-				printWarn << "'" << name << "' in section '" << group->getName() << "' has wrong type." << std::endl;
+				printWarn << "'" << name << "' in section '" << (group->getName() ? group->getName() : "???") << "' has wrong type." << std::endl;
 				return false;
 			}
 		}
