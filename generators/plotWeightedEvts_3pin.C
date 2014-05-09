@@ -543,12 +543,16 @@ createWeightedPlots(const std::string& dataFileName,
                     const std::string& mcPspProdKinMomentaName,
                     const std::string& mcPspDecayKinPartNamesName,
                     const std::string& mcPspDecayKinMomentaName,
+                    const std::string& mcPspWeightFileName,
+                    const std::string& mcPspWeightTreeName,
                     const std::string& mcAccFileName,
                     const std::string& mcAccTreeName,
                     const std::string& mcAccProdKinPartNamesName,
                     const std::string& mcAccProdKinMomentaName,
                     const std::string& mcAccDecayKinPartNamesName,
                     const std::string& mcAccDecayKinMomentaName,
+                    const std::string& mcAccWeightFileName,
+                    const std::string& mcAccWeightTreeName,
                     const std::string& massBin,
                     const std::string& outFileName,
                     const std::string& pdgFileName,
@@ -592,9 +596,12 @@ createWeightedPlots(const std::string& dataFileName,
 	// open weighted MC file
 	TFile* mcPspFile = TFile::Open(mcPspFileName.c_str());
 
-	// tree containing the phase space events and weights
+	// tree containing the phase space events
 	TTree* mcPspTree;
 	mcPspFile->GetObject(mcPspTreeName.c_str(), mcPspTree);
+
+	// add friend containing weights
+	mcPspTree->AddFriend(mcPspWeightTreeName.c_str(), mcPspWeightFileName.c_str());
 
 	// names of particles in tree
 	TClonesArray* mcPspProdKinPartNames(NULL);
@@ -623,10 +630,15 @@ createWeightedPlots(const std::string& dataFileName,
 		mcAccFile = TFile::Open(mcAccFileName.c_str());
 	}
 
-	// tree containing the phase space events and weights
+	// tree containing the phase space events
 	TTree* mcAccTree(NULL);
 	if (mcAccFile != NULL) {
 		mcAccFile->GetObject(mcAccTreeName.c_str(), mcAccTree);
+	}
+
+	// add friend containing weights
+	if (mcAccFile != NULL) {
+		mcAccTree->AddFriend(mcAccWeightTreeName.c_str(), mcAccWeightFileName.c_str());
 	}
 
 	// names of particles in tree
@@ -995,6 +1007,7 @@ createWeightedPlots(const std::string& dataFileName,
 void
 plotWeightedEvts_3pin(const std::string& dataFileName,
                       const std::string& mcFileName,
+                      const std::string& mcWeightFileName,
                       const std::string& massBin,
                       const std::string& outFileName)
 {
@@ -1009,6 +1022,7 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcProdKinMomentaName      = "prodKinMomenta";
 	const std::string mcDecayKinPartNamesName   = "decayKinParticles";
 	const std::string mcDecayKinMomentaName     = "decayKinMomenta";
+	const std::string mcWeightTreeName          = "rootPwaWeightTree";
 
 	// guess path to particleDataTable.txt
 	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
@@ -1018,7 +1032,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 
 	createWeightedPlots(dataFileName, dataTreeName, dataProdKinPartNamesName, dataProdKinMomentaName, dataDecayKinPartNamesName, dataDecayKinMomentaName,
 	                    mcFileName,   mcTreeName,   mcProdKinPartNamesName,   mcProdKinMomentaName,   mcDecayKinPartNamesName,   mcDecayKinMomentaName,
+	                    mcWeightFileName, mcWeightTreeName,
 	                    "",           "",           "",                       "",                     "",                        "",
+	                    "",               "",
 	                    massBin, outFileName,
 	                    pdgFileName, treeCacheSize);
 }
@@ -1026,7 +1042,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 void
 plotWeightedEvts_3pin(const std::string& dataFileName,
                       const std::string& mcPspFileName,
+                      const std::string& mcPspWeightFileName,
                       const std::string& mcAccFileName,
+                      const std::string& mcAccWeightFileName,
                       const std::string& massBin,
                       const std::string& outFileName)
 {
@@ -1041,11 +1059,13 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcPspProdKinMomentaName    = "prodKinMomenta";
 	const std::string mcPspDecayKinPartNamesName = "decayKinParticles";
 	const std::string mcPspDecayKinMomentaName   = "decayKinMomenta";
+	const std::string mcPspWeightTreeName        = "rootPwaWeightTree";
 	const std::string mcAccTreeName              = "rootPwaEvtTree";
 	const std::string mcAccProdKinPartNamesName  = "prodKinParticles";
 	const std::string mcAccProdKinMomentaName    = "prodKinMomenta";
 	const std::string mcAccDecayKinPartNamesName = "decayKinParticles";
 	const std::string mcAccDecayKinMomentaName   = "decayKinMomenta";
+	const std::string mcAccWeightTreeName        = "rootPwaWeightTree";
 
 	// guess path to particleDataTable.txt
 	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
@@ -1055,7 +1075,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 
 	createWeightedPlots(dataFileName,  dataTreeName,  dataProdKinPartNamesName,  dataProdKinMomentaName,  dataDecayKinPartNamesName,  dataDecayKinMomentaName,
 	                    mcPspFileName, mcPspTreeName, mcPspProdKinPartNamesName, mcPspProdKinMomentaName, mcPspDecayKinPartNamesName, mcPspDecayKinMomentaName,
+	                    mcPspWeightFileName, mcPspWeightTreeName,
 	                    mcAccFileName, mcAccTreeName, mcAccProdKinPartNamesName, mcAccProdKinMomentaName, mcAccDecayKinPartNamesName, mcAccDecayKinMomentaName,
+	                    mcAccWeightFileName, mcAccWeightTreeName,
 	                    massBin, outFileName,
 	                    pdgFileName, treeCacheSize);
 }
