@@ -135,7 +135,7 @@ ampIntegralMatrix::operator +=(const ampIntegralMatrix& integral)
 	for (unsigned int i = 0; i < _nmbWaves; ++i) {
 		const string waveNameI = waveName(i);
 		for (unsigned int j = 0; j < _nmbWaves; ++j)
-			_integrals[i][j] += integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
+			_integrals[i][j] += integral.matrix()[integral.waveIndex(waveNameI)][integral.waveIndex(waveName(j))];
 	}
 	_nmbEvents       += integral.nmbEvents();
 	_waveDescriptions = integral._waveDescriptions;
@@ -155,7 +155,7 @@ ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
 	for (unsigned int i = 0; i < _nmbWaves; ++i) {
 		const string waveNameI = waveName(i);
 		for (unsigned int j = 0; j < _nmbWaves; ++j)
-			_integrals[i][j] -= integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
+			_integrals[i][j] -= integral.matrix()[integral.waveIndex(waveNameI)][integral.waveIndex(waveName(j))];
 	}
 	_nmbEvents       -= integral.nmbEvents();
 	_waveDescriptions = integral._waveDescriptions;
