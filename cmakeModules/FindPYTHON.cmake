@@ -99,14 +99,25 @@ if(PYTHONINTERP_FOUND)
 		endif()
 	endif()
 
-	# get name of shared library
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print('python' + sysconfig.get_config_var('VERSION'))"
-		OUTPUT_VARIABLE _PYTHON_LIBRARY_NAME
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-	# get path of shared library
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBPL'))"
-		OUTPUT_VARIABLE _PYTHON_LIBRARY_DIR
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if(PYTHON_VERSION_STRING VERSION_LESS 3.2)
+		# get name of shared library
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print('python' + sysconfig.get_config_var('VERSION'))"
+			OUTPUT_VARIABLE _PYTHON_LIBRARY_NAME
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		# get path of shared library
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBPL'))"
+			OUTPUT_VARIABLE _PYTHON_LIBRARY_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+	else()
+		# get name of shared library
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; print('python' + sysconfig.get_config_var('VERSION') + sys.abiflags)"
+			OUTPUT_VARIABLE _PYTHON_LIBRARY_NAME
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		# get path of shared library
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBPL'))"
+			OUTPUT_VARIABLE _PYTHON_LIBRARY_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+	endif()
 	# find shared library
 	find_library(PYTHON_LIBRARIES
 		NAMES ${_PYTHON_LIBRARY_NAME}
@@ -124,12 +135,17 @@ if(PYTHONINTERP_FOUND)
 	if(PYTHONLIBS_FOUND)
 
 		# get include directories
-		execute_process(
-			# Python 2.7 on Ubuntu 12.04 requires to define the 'posix_prefix' scheme here explicitely
-			# otherwise a nonexisting path is returned; sigh!
-			COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print('{};{}'.format(sysconfig.get_path('include', 'posix_prefix'), sysconfig.get_path('platinclude', 'posix_prefix')))"
-			OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		if(PYTHON_VERSION_STRING VERSION_LESS 3.2)
+			execute_process(
+				COMMAND ${PYTHON_EXECUTABLE} -c "from distutils import sysconfig; print('{0};{1}'.format(sysconfig.get_python_inc(), sysconfig.get_python_inc(plat_specific=True)))"
+				OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+		else()
+			execute_process(
+				COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print('{};{}'.format(sysconfig.get_path('include', 'posix_prefix'), sysconfig.get_path('platinclude', 'posix_prefix')))"
+				OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+		endif()
 		list(REMOVE_DUPLICATES PYTHON_INCLUDE_DIRS)
 		foreach(_PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_DIRS})
 			if(NOT EXISTS "${_PYTHON_INCLUDE_DIR}")
