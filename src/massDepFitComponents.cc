@@ -584,7 +584,7 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 	out << "Decay modes:" << std::endl;
 	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
 		const rpwa::massDepFit::channel& channel = _channels[idxChannel];
-		out << idxChannel << ", '" << channel.getWaveName() << "': ";
+		out << "    " << idxChannel << ", '" << channel.getWaveName() << "': ";
 
 		const rpwa::massDepFit::channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
 		out << "C=( ";
@@ -661,27 +661,27 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
-		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[0]) {
-		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width: " << _parameters[1] << " GeV/c^2, ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
-		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[1]) {
-		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
 
 	return component::print(out);
 }
@@ -826,27 +826,27 @@ rpwa::massDepFit::relativisticBreitWigner::print(std::ostream& out) const
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
-		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[0]) {
-		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width: " << _parameters[1] << " GeV/c^2, ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
-		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[1]) {
-		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
 
 	out << "    " << _ratio.size() << " decay channels:" << std::endl;
 	for(size_t i=0; i<_ratio.size(); ++i) {
@@ -931,27 +931,27 @@ rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
-		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[0]) {
-		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width: " << _parameters[1] << " GeV/c^2, ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
-		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[1]) {
-		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
 
 	return component::print(out);
 }
@@ -1031,27 +1031,27 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 
 	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
-		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[0]) {
-		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width: " << _parameters[1] << " GeV/c^2, ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
-		out << "    lower limit: " << _parametersLimitLower[1] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[1]) {
-		out << "    upper limit: " << _parametersLimitUpper[1] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? "(FIXED) " : "") << std::endl;
+	out << (_parametersFixed[1] ? " (FIXED) " : "") << std::endl;
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 
@@ -1153,28 +1153,28 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
-		out << "    lower limit: " << _parametersLimitLower[0] << " GeV/c^2 ";
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
 	} else if(_parametersLimitedUpper[0]) {
-		out << "    upper limit: " << _parametersLimitUpper[0] << " GeV/c^2 ";
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
 	} else {
-		out << "    unlimited ";
+		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? "(FIXED)" : "") << std::endl;
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	for(size_t i=1; i<_parameters.size(); ++i) {
 		out << "    c" << i-1 << ": " << _parameters[i] << " , ";
 		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
-			out << "    limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2 ";
+			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
 		} else if(_parametersLimitedLower[i]) {
-			out << "    lower limit: " << _parametersLimitLower[i] << " GeV/c^2 ";
+			out << "lower limit: " << _parametersLimitLower[i] << " GeV/c^2";
 		} else if(_parametersLimitedUpper[i]) {
-			out << "    upper limit: " << _parametersLimitUpper[i] << " GeV/c^2 ";
+			out << "upper limit: " << _parametersLimitUpper[i] << " GeV/c^2";
 		} else {
-			out << "    unlimited ";
+			out << "unlimited";
 		}
-		out << (_parametersFixed[i] ? "(FIXED) " : "") << std::endl;
+		out << (_parametersFixed[i] ? " (FIXED) " : "") << std::endl;
 	}
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
