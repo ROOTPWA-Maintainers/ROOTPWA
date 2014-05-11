@@ -321,6 +321,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 {
 	if(debug) {
 		printDebug << "starting updating of 'component' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
 	}
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
