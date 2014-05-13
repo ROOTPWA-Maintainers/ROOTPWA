@@ -15,7 +15,7 @@ class rootPwaConfig:
 	massBinDirectoryNamePattern           = ""
 	dataDirectory                         = ""
 	dataFileExtensionQualifier            = ""
-	phaseSpaceEventFileExtenisonQualifier = ""
+	phaseSpaceEventFileExtensionQualifier = ""
 	accCorrPSEventFileExtensionQualifier  = ""
 
 	# amplitude section
@@ -66,7 +66,7 @@ class rootPwaConfig:
 			else:
 				self.dataFileExtensionQualifier = self.config.get('general', 'dataFileExtensionQualifier')
 
-			self.phaseSpaceEventFileExtenisonQualifier = self.config.get('general', 'phaseSpaceEventFileExtenisonQualifier')
+			self.phaseSpaceEventFileExtensionQualifier = self.config.get('general', 'phaseSpaceEventFileExtensionQualifier')
 			self.accCorrPSEventFileExtensionQualifier  = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
 			self.massBinDirectoryNamePattern           = self.config.get('general', 'massBinDirectoryNamePattern')
 			rawKeyfilePattern                          = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
@@ -107,7 +107,7 @@ class rootPwaConfig:
 			pyRootPwa.utils.printErr("Data directory invalid. Aborting...")
 			sys.exit(1)
 
-		if self.phaseSpaceEventFileExtenisonQualifier == "":
+		if self.phaseSpaceEventFileExtensionQualifier == "":
 			pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
 		if self.accCorrPSEventFileExtensionQualifier == "":
 			pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")

@@ -64,7 +64,7 @@ def getListOfInputFiles(massBins):
 	inputAccPSFiles = []
 
 	dataFileExtensionQualifier = pyRootPwa.config.dataFileExtensionQualifier
-	phaseSpaceEventFileExtenisonQualifier = pyRootPwa.config.phaseSpaceEventFileExtenisonQualifier
+	phaseSpaceEventFileExtensionQualifier = pyRootPwa.config.phaseSpaceEventFileExtensionQualifier
 	accCorrPSEventFileExtensionQualifier = pyRootPwa.config.accCorrPSEventFileExtensionQualifier
 
 	for massBin in massBins:
@@ -76,8 +76,8 @@ def getListOfInputFiles(massBins):
 			inputDataFiles.append(inputFile)
 		else:
 			pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not contain data input file "' + inputFile + '{.root/.evt}".')
-		if phaseSpaceEventFileExtenisonQualifier != "":
-			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + phaseSpaceEventFileExtenisonQualifier
+		if phaseSpaceEventFileExtensionQualifier != "":
+			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + phaseSpaceEventFileExtensionQualifier
 			inputFile = _evtOrRoot(inputFile)
 			if inputFile:
 				inputPSFiles.append(inputFile)
