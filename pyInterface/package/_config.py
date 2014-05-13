@@ -11,30 +11,33 @@ class rootPwaConfig:
 	configFileName = ""
 
 	# general section
-	pdgFileName                           = ""
-	massBinDirectoryNamePattern           = ""
-	dataDirectory                         = ""
-	dataFileExtensionQualifier            = ""
-	phaseSpaceEventFileExtensionQualifier = ""
-	accCorrPSEventFileExtensionQualifier  = ""
+	pdgFileName                            = ""
+	massBinDirectoryNamePattern            = ""
+	dataDirectory                          = ""
+	dataFileExtensionQualifier             = ""
+	phaseSpaceEventFileExtensionQualifier  = ""
+	accCorrPSEventFileExtensionQualifier   = ""
+	phaseSpaceWeightFileExtensionQualifier = ""
+	accCorrPSWeightFileExtensionQualifier  = ""
 
 	# amplitude section
-	keyfilePattern                        = ""
-	dataAmplitudeDirectoryName            = ""
-	phaseSpaceAmpDirectoryName            = ""
-	accCorrPSAmpDirectoryName             = ""
-	amplitudeLeafName                     = ""
-	inTreeName                            = ""
-	prodKinPartNamesObjName               = ""
-	prodKinMomentaLeafName                = ""
-	decayKinPartNamesObjName              = ""
-	decayKinMomentaLeafName               = ""
-	outputFileFormat                      = ""
-	outputCacheSize                       = 0
+	keyfilePattern                         = ""
+	dataAmplitudeDirectoryName             = ""
+	phaseSpaceAmpDirectoryName             = ""
+	accCorrPSAmpDirectoryName              = ""
+	amplitudeLeafName                      = ""
+	inTreeName                             = ""
+	prodKinPartNamesObjName                = ""
+	prodKinMomentaLeafName                 = ""
+	decayKinPartNamesObjName               = ""
+	decayKinMomentaLeafName                = ""
+	weightTreeName                         = ""
+	outputFileFormat                       = ""
+	outputCacheSize                        = 0
 
 	# fit section
-	fitResultTreeName                     = ""
-	fitResultBranchName                   = ""
+	fitResultTreeName                      = ""
+	fitResultBranchName                    = ""
 
 
 	def __init__(self, configFileName):
@@ -66,24 +69,29 @@ class rootPwaConfig:
 			else:
 				self.dataFileExtensionQualifier = self.config.get('general', 'dataFileExtensionQualifier')
 
-			self.phaseSpaceEventFileExtensionQualifier = self.config.get('general', 'phaseSpaceEventFileExtensionQualifier')
-			self.accCorrPSEventFileExtensionQualifier  = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
-			self.massBinDirectoryNamePattern           = self.config.get('general', 'massBinDirectoryNamePattern')
-			rawKeyfilePattern                          = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
+			self.phaseSpaceEventFileExtensionQualifier  = self.config.get('general', 'phaseSpaceEventFileExtensionQualifier')
+			self.accCorrPSEventFileExtensionQualifier   = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
+			self.phaseSpaceWeightFileExtensionQualifier = self.config.get('general', 'phaseSpaceWeightFileExtensionQualifier')
+			self.accCorrPSWeightFileExtensionQualifier  = self.config.get('general', 'accCorrPSWeightFileExtensionQualifier')
+			self.massBinDirectoryNamePattern            = self.config.get('general', 'massBinDirectoryNamePattern')
+			rawKeyfilePattern                           = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
 
-			self.dataAmplitudeDirectoryName            = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
-			self.phaseSpaceAmpDirectoryName            = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')
-			self.accCorrPSAmpDirectoryName             = self.config.get('amplitudes', 'accCorrPSAmpDirectoryName')
-			self.amplitudeLeafName                     = self.config.get('amplitudes', 'amplitudeLeafName')
-			self.inTreeName                            = self.config.get('amplitudes', 'inTreeName')
+			self.dataAmplitudeDirectoryName             = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
+			self.phaseSpaceAmpDirectoryName             = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')
+			self.accCorrPSAmpDirectoryName              = self.config.get('amplitudes', 'accCorrPSAmpDirectoryName')
+			self.amplitudeLeafName                      = self.config.get('amplitudes', 'amplitudeLeafName')
+			self.inTreeName                             = self.config.get('amplitudes', 'inTreeName')
 
-			self.prodKinPartNamesObjName               = self.config.get('amplitudes', 'prodKinPartNamesObjName')
-			self.prodKinMomentaLeafName                = self.config.get('amplitudes', 'prodKinMomentaLeafName')
-			self.decayKinPartNamesObjName              = self.config.get('amplitudes', 'decayKinPartNamesObjName')
-			self.decayKinMomentaLeafName               = self.config.get('amplitudes', 'decayKinMomentaLeafName')
-			self.outputCacheSize                       = self.config.get('amplitudes', 'outputCacheSize')
+			self.prodKinPartNamesObjName                = self.config.get('amplitudes', 'prodKinPartNamesObjName')
+			self.prodKinMomentaLeafName                 = self.config.get('amplitudes', 'prodKinMomentaLeafName')
+			self.decayKinPartNamesObjName               = self.config.get('amplitudes', 'decayKinPartNamesObjName')
+			self.decayKinMomentaLeafName                = self.config.get('amplitudes', 'decayKinMomentaLeafName')
 
-			self.outputFileFormat                    = self.config.get('amplitudes', 'outputFileFormat').lower()
+			self.weightTreeName                         = self.config.get('amplitudes', 'weightTreeName')
+
+			self.outputCacheSize                        = self.config.get('amplitudes', 'outputCacheSize')
+
+			self.outputFileFormat                       = self.config.get('amplitudes', 'outputFileFormat').lower()
 			if not self.outputFileFormat in ['binary', 'ascii', 'root']:
 				pyRootPwa.utils.printErr('"outputFileFormat" option of the "amplitude" section has to be either "binary" or "ascii" (found "' + self.outputFileFormat + '). Aborting...')
 				sys.exit(1)
