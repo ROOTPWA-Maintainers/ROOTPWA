@@ -268,13 +268,20 @@ if __name__ == "__main__":
 
 		for dataFileName in inputFileRanges[rangeName]:
 
-			if arguments.useWeightInformation:
-				dataFileName = dataFileName[:dataFileName.rfind(".root")] + ".weighted.root"
-
 			# Do all the initialization
 			pyRootPwa.utils.printInfo("Opening input file " + dataFileName)
 			dataFile = pyRootPwa.ROOT.TFile.Open(dataFileName)
 			dataTree = dataFile.Get(pyRootPwa.config.inTreeName)
+
+			if arguments.useWeightInformation:
+				if arguments.type == "gen":
+					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)] + pyRootPwa.config.phaseSpaceWeightFileExtensionQualifier + dataFileName[dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)+len(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier):]
+				elif arguments.type == "acc":
+					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)] + pyRootPwa.config.accCorrPSWeightFileExtensionQualifier + dataFileName[dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)+len(pyRootPwa.config.accCorrPSEventFileExtensionQualifier):]
+				else:
+					pyRootPwa.utils.printErr("weighting can only be used for data type 'gen' or 'acc'. Aborting...")
+					sys.exit(5)
+				dataTree.AddFriend(pyRootPwa.config.weightTreeName, weightFileName)
 
 			prodKinParticles = dataFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
 			decayKinParticles = dataFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
