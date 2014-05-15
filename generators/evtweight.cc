@@ -224,6 +224,7 @@ main(int    argc,
 	const string   fitResultTreeName        = "pwa";
 	const string   fitResultLeafName        = "fitResult_v2";
 	string         intFileName              = "./norm.int";
+	const string   intTKeyName              = "integral";              // key name in case of ROOT integrals
 	string         ampDirName               = ".";
 	bool           useRootAmps              = false;                   // if true .root amplitude files are read
 	unsigned int   nmbProdAmpSamples        = 1;
@@ -293,10 +294,28 @@ main(int    argc,
 
 	// load integrals
 	ampIntegralMatrix normInt;
-	if (not normInt.readAscii(intFileName)) {
-		printErr << "cannot read normalization integral from file '"
-		         << intFileName << "'. aborting." << endl;
-		exit(1);
+	const string intFileExt  = extensionFromPath(intFileName);
+	if (intFileExt == "root") {
+		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
+		if (not intFile or intFile->IsZombie()) {
+			printErr << "cannot open normalization integral file '" << intFileName << "'. "
+			         << "aborting." << endl;
+			exit(1);
+		}
+		ampIntegralMatrix* integral = 0;
+		intFile->GetObject(intTKeyName.c_str(), integral);
+		if (not integral) {
+			printErr << "cannot find integral object in TKey '" << intTKeyName << "' in file "
+			         << "'" << intFileName << "'. aborting." << endl;
+			exit(1);
+		}
+		normInt = *integral;
+	} else {
+		if (not normInt.readAscii(intFileName)) {
+			printErr << "cannot read normalization integral from file '"
+			         << intFileName << "'. aborting." << endl;
+			exit(1);
+		}
 	}
 
 	// load production amplitudes and wave information
