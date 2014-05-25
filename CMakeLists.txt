@@ -379,6 +379,27 @@ if (NOT USE_MPI)
 endif()
 
 
+# setup BAT
+message(STATUS "")
+message(STATUS ">>> Setting up BAT.")
+option(USE_BAT "En/Disables usage of BAT" OFF)
+find_package(BAT 0.9)
+set_package_properties(BAT
+	PROPERTIES
+	DESCRIPTION "Bayesian Analysis Toolkit"
+	URL "http://mpp.mpg.de/bat/"
+	PURPOSE "Used in the mass-dependent fitter"
+	)
+if(NOT BAT_FOUND)
+	set(USE_BAT OFF)
+	message(STATUS "Cannot find BAT installation. BAT will not be used.")
+else()
+	set(USE_BAT ON)
+	add_definitions(-DUSE_BAT)
+endif()
+add_feature_info(Bayesian_Analysis_Toolkit USE_BAT "Allow usage of the Bayesian Analysis Toolkit.")
+
+
 # make git hash accessible via predefined macro GIT_HASH
 message(STATUS "")
 message(STATUS ">>> Setting up Git.")
