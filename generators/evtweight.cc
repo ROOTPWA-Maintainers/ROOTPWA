@@ -371,6 +371,10 @@ main(int    argc,
 						logLikeBest       = logLike;
 					}
 				}
+				if (debug)
+					printDebug << "tree index [" << iTree << "] with m = " << mass
+					           << " MeV/c^2 and log-likelihood " << logLike
+					           << ((indexBest == iTree) ? " (best candidate so far)." : ".") << endl;
 			}  // end loop over fit results
 
 			// check that mass-bin center of found fit result lies in given bin width
@@ -380,8 +384,9 @@ main(int    argc,
 				         << massBinWidth / 2. << " MeV/c^2" << endl;
 				exit(1);
 			}
-			printInfo << "found best matching fit result centered at m = " << massBinCenterBest
-			          << " MeV/c^2 at tree index [" << indexBest << "]." << endl;
+			if (debug)
+				printDebug << "found best matching fit result centered at m = " << massBinCenterBest
+				           << " MeV/c^2 at tree index [" << indexBest << "]." << endl;
 			fitResultTree->GetEntry(indexBest);
 			resultBest = result;
 		}
@@ -428,17 +433,18 @@ main(int    argc,
 						maxRank = rank;
 				}
 
-				printDebug << "read production amplitude '" << prodAmpName << "'"
-				           << " [" << iProdAmp << "] = " << prodAmp
-				           << " for wave '" << waveName << "'; rank = " << rank
-				           << ", reflectivity = " << refl << endl;
+				if (debug)
+					printDebug << "read production amplitude '" << prodAmpName << "'"
+					           << " [" << iProdAmp << "] = " << prodAmp
+					           << " for wave '" << waveName << "'; rank = " << rank
+					           << ", reflectivity = " << refl << endl;
 			}
 
 			if (iSample > 0)
 				delete result;
 
 			++maxRank;
-			printDebug << "rank of fit is " << maxRank << endl;
+			printInfo << "rank of fit is " << maxRank << endl;
 		}  // end loop over variations of production amplitudes
 	}
 
