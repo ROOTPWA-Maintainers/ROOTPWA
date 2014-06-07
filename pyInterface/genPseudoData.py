@@ -147,6 +147,8 @@ if __name__ == "__main__":
 		waveNames.append(waveName)
 		reflectivities.append(1 if waveName[6] == '+' else -1)
 		waveIndex = fitResult.waveIndex(waveName)
+		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
+			printErr("Mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		if waveIndex < 0:
 			printErr("Keyfile '" + keyfile + "' not found in fit result file '" + args.fitResult +"'. Aborting...")
 			sys.exit(1)
