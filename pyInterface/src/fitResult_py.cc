@@ -2,6 +2,7 @@
 #include "fitResult_py.h"
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 #include <TPython.h>
 
@@ -15,15 +16,25 @@ namespace {
 	                    const double                              massBinCenter,
 	                    const double                              logLikelihood,
 	                    const int                                 rank,
-	                    const std::vector<std::complex<double> >& prodAmps,
-	                    const std::vector<std::string>&           prodAmpNames,
+	                    const bp::object&                         pyProdAmps,
+	                    const bp::object&                         pyProdAmpNames,
 	                    PyObject*                                 pyFitParCovMatrix,
 	                    const bp::object&                         pyFitParCovMatrixIndices,
 	                    const rpwa::complexMatrix&                normIntegral,
-	                    const std::vector<double>&                phaseSpaceIntegral,
+	                    const bp::object&                         pyPhaseSpaceIntegral,
 	                    const bool                                converged,
 	                    const bool                                hasHessian)
 	{
+		std::vector<std::complex<double> > prodAmps;
+		if(not rpwa::py::convertBPObjectToVector<std::complex<double> >(pyProdAmps, prodAmps)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for prodAmps when executing rpwa::fitResult::fill()");
+			bp::throw_error_already_set();
+		}
+		std::vector<std::string> prodAmpNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProdAmpNames, prodAmpNames)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for prodAmpNames when executing rpwa::fitResult::fill()");
+			bp::throw_error_already_set();
+		}
 		TMatrixT<double>* fitParCovMatrix = rpwa::py::convertFromPy<TMatrixT<double>* >(pyFitParCovMatrix);
 		if(not fitParCovMatrix) {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for fitParCovMatrix when executing rpwa::fitResult::fill()");
@@ -35,6 +46,11 @@ namespace {
 			bp::tuple tuple = bp::extract<bp::tuple>(pyListFitParCovMatrixIndices[i]);
 			fitParCovMatrixIndices[i].first  = bp::extract<int>(tuple[0]);
 			fitParCovMatrixIndices[i].second = bp::extract<int>(tuple[1]);
+		}
+		std::vector<double> phaseSpaceIntegral;
+		if(not rpwa::py::convertBPObjectToVector<double>(pyPhaseSpaceIntegral, phaseSpaceIntegral)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
+			bp::throw_error_already_set();
 		}
 		self.fill(nmbEvents, normNmbEvents, massBinCenter, logLikelihood, rank, prodAmps, prodAmpNames,
 		          *fitParCovMatrix, fitParCovMatrixIndices, normIntegral, phaseSpaceIntegral, converged, hasHessian);
