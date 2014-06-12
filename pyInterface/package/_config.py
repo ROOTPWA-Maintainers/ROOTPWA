@@ -107,8 +107,8 @@ class rootPwaConfig:
 			self.fitResultTreeName = self.config.get('fit', 'treeName')
 			self.fitResultBranchName = self.config.get('fit', 'fitResultBranch')
 
-		except ConfigParser.Error:
-			pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")
+		except ConfigParser.Error as exc:
+			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "'). Aborting...")
 			sys.exit(1)
 
 		if not os.path.isdir(self.dataDirectory):
