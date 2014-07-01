@@ -51,13 +51,9 @@ void printUsage(char* prog, int errCode = 0)
 	     << "    where:" << endl
 	     << "        -n #       (max) number of events to generate (default: 100)" << endl
 	     << "        -a #       (max) number of attempts to do (default: infinity)" << endl
-	     << "        -m #       maxWeight FEATURE DISABLED" << endl
 	     << "        -o <file>  ASCII output file (if not specified, generated automatically)" << endl
 	     << "        -p         path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -w <file>  wavelist file (contains production amplitudes) FEATURE DISABLED" << endl
 	     << "        -c         if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
-	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there) FEATURE DISABLED" << endl
-	     << "        -i <file>  integral file FEATURE DISABLED" << endl
 	     << "        -r <file>  reaction config file" << endl
 	     << "        -s #       set seed " << endl
 	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
@@ -65,11 +61,6 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        --beamfile <file> path to beam file (overrides values from config file)" << endl
 	     << "        --noRandomBeam     read the events from the beamfile sequentially" << endl
 	     << "        --randomBlockBeam  like --noRandomBeam but with random starting position" << endl
-	     << endl
-	     << "A comment regarding the disabled features: these options have been taken out\n"
-	     << "for the time being. If you want to get them back, check GIT revision\n"
-	     << "cb48b651809e1058ab740441c2b6bd8a1579d46d or use the _v1 branch (or one of its\n"
-	     << "tags)." << endl
 	     << endl;
 	exit(errCode);
 }
@@ -128,32 +119,8 @@ int main(int argc, char** argv)
 			case 'p':
 				pdgFileName = optarg;
 				break;
-			case 'w':
-				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check GIT revision "
-				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
-				exit(10);
-				break;
-			case 'i':
-				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check GIT revision "
-				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
-				exit(10);
-				break;
-			case 'k':
-				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check GIT revision "
-				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
-				exit(10);
-				break;
 			case 'r':
 				reactionFile = optarg;
-				break;
-			case 'm':
-				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check GIT revision "
-				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
-				exit(10);
 				break;
 			case 'c':
 				writeComgeantOut = true;
