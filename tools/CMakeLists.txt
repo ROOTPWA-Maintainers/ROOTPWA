@@ -82,4 +82,3 @@ make_shared_library(
 make_executable(addamp          addamp.cc          ${THIS_LIB})
 make_executable(key2tex         key2tex.cc         ${THIS_LIB})
 make_executable(addisokey       addisokey.cc       ${THIS_LIB})
-make_executable(mutator         mutator.cc         ${THIS_LIB})
