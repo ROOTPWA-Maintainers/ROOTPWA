@@ -664,6 +664,8 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createFlatRangeMassDependence();
 	else if (massDepType == "f_0(980)")
 		massDep = createF0980BreitWigner();
+	else if (massDepType == "f_0(980)Flatte")
+		massDep = createF0980Flatte();
 	else if (massDepType == "piPiSWaveAuMorganPenningtonM")
 		massDep = createPiPiSWaveAuMorganPenningtonM();
 	else if (massDepType == "piPiSWaveAuMorganPenningtonVes")

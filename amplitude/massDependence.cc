@@ -222,6 +222,60 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+f0980Flatte::f0980Flatte()
+	: massDependence()
+{
+	particleDataTable& pdt = particleDataTable::instance();
+	const string partList[] = {"pi+", "pi0", "K+", "K0"};
+	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
+		if (not pdt.isInTable(partList[i])) {
+			printErr << "cannot find particle " << partList[i] << " in particle data table. "
+			         << "aborting." << endl;
+			throw;
+		}
+	_piChargedMass   = pdt.entry("pi+")->mass();
+	_kaonChargedMass = pdt.entry("K+" )->mass();
+}
+
+
+complex<double>
+f0980Flatte::amp(const isobarDecayVertex& v)
+{
+	const complex<double> imag(0, 1);
+
+	const particlePtr& parent = v.parent();
+
+	// get masses of states involved
+	const double M      = parent->lzVec().M();         // parent mass
+
+	// Flatte parameters
+	const double M0   = 0.965;
+	const double g1   = 0.165;
+	const double g2g1 = 4.21;
+
+	// break-up momenta
+	const std::complex<double> kPi = breakupMomentumComplex(M, _piChargedMass,   _piChargedMass);
+	const std::complex<double> kK  = breakupMomentumComplex(M, _kaonChargedMass, _kaonChargedMass);
+
+	// phase space factors
+	const std::complex<double> rhoPi = 2. * kPi / M;
+	const std::complex<double> rhoK  = 2. * kK  / M;
+
+	std::complex<double> denom(M0*M0 - M*M, 0.);
+
+	denom -= imag * g1 * (rhoPi + g2g1*rhoK);
+
+	const std::complex<double> amp(1. / denom);
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, g1 = " << maxPrecision(g1) << " GeV/c^2, g2/g1 = " << maxPrecision(g2g1)
+		           << ") = " << maxPrecisionDouble(amp) << endl;
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	: massDependence(),
 	  _T       (2, 2),
