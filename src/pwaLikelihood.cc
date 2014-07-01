@@ -952,10 +952,10 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
                                               complexMatrix&  accMatrix,
                                               vector<double>& phaseSpaceIntegral) const
 {
-  phaseSpaceIntegral.clear();
-  phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
-  unsigned int iIndex = 0;
-  for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+	phaseSpaceIntegral.clear();
+	phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
+	unsigned int iIndex = 0;
+	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 			phaseSpaceIntegral[iIndex] = _phaseSpaceIntegral[iRefl][iWave];
 			unsigned int jIndex = 0;
@@ -970,11 +970,11 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 			}
 			++iIndex;
 		}
-  }
+	}
 	// add flat
-  normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
-  accMatrix.set (_nmbWaves, _nmbWaves, complexT(1,0));
-  phaseSpaceIntegral[_nmbWaves] = 1;
+	normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
+	accMatrix.set (_nmbWaves, _nmbWaves, complexT(_totAcc,0));
+	phaseSpaceIntegral[_nmbWaves] = 1;
 }
 
 
