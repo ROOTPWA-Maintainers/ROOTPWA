@@ -46,26 +46,13 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	TPDGEntry.cc
-	TPDGDB.cc
 	FSParticle.cc
 	NParticleState.cc
 	NParticleEvent.cc
 	)
 
 
-# ROOT dictionary
-set(ROOTPWATOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaToolsDict.cc)
-set(ROOTPWATOOLS_DICT_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
-root_generate_dictionary(
-	"${ROOTPWATOOLS_DICTIONARY}"
-	"${ROOTPWATOOLS_DICT_INCLUDE_DIRS}"
-	"TPDGEntry.h;TPDGDB.h"
-	"rootPwaToolsLinkDef.h"
-	)
-set(SOURCES ${SOURCES} ${ROOTPWATOOLS_DICTIONARY})
+set(SOURCES ${SOURCES})
 
 
 # library
