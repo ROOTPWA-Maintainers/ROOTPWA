@@ -273,6 +273,39 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Flatte for f_0(980) -> pi pi
+	/// [M. Ablikim et al, Phys. Let. B607, 243] BES II
+	class f0980Flatte : public massDependence {
+
+	public:
+
+		f0980Flatte();
+		virtual ~f0980Flatte()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "f0980Flatte"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	private:
+		double _piChargedMass;
+		double _kaonChargedMass;
+
+	};
+
+
+	typedef boost::shared_ptr<f0980Flatte> f0980FlattePtr;
+
+
+	inline                                                                                                    
+	f0980FlattePtr                                                                                            
+	createF0980Flatte()                                                                                       
+	{                                                                                                         
+		f0980FlattePtr massDep(new f0980Flatte());                                                        
+		return massDep;                                                                                   
+	}                                                                                                         
+
+
+	//////////////////////////////////////////////////////////////////////////////
 	/// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
 	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
 	/// we have introduced a small modification by setting the
