@@ -81,16 +81,6 @@ particleDecayList = (
 			{products = ["pi+", "rho(770)0"];}
 		);
 	},
-	{ name = "pi1(1600)-";
-		decays = (
-			{products = ["pi-", "rho(770)0"];}
-		);
-	},
-	{ name = "pi1(1600)+";
-		decays = (
-			{products = ["pi+", "rho(770)0"];}
-		);
-	},
 	{name = "pi2(1670)-";
 		decays = (
 			{products = ["pi-", "rho(770)0"];},
@@ -199,16 +189,6 @@ particleDecayList = (
 			{products = ["pi(1300)-", "pi+"      ];},
 			{products = ["a2(1320)+", "pi-"      ];},
 			{products = ["a2(1320)-", "pi+"      ];}
-		);
-	},
-	{ name = "eta1(1600)0";
-		decays = (
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["f2(1270)0", "sigma0"   ];},
-			{products = ["a1(1260)+", "pi-"      ]; L = 0;},
-			{products = ["a1(1260)-", "pi+"      ]; L = 0;},
-			{products = ["pi(1300)+", "pi-"      ];},
-			{products = ["pi(1300)-", "pi+"      ];}
 		);
 	},
 	{ name = "eta2(1645)0";
