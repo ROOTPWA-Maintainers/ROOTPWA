@@ -296,13 +296,13 @@ namespace rpwa {
 	typedef boost::shared_ptr<f0980Flatte> f0980FlattePtr;
 
 
-	inline                                                                                                    
-	f0980FlattePtr                                                                                            
-	createF0980Flatte()                                                                                       
-	{                                                                                                         
-		f0980FlattePtr massDep(new f0980Flatte());                                                        
-		return massDep;                                                                                   
-	}                                                                                                         
+	inline
+	f0980FlattePtr
+	createF0980Flatte()
+	{
+		f0980FlattePtr massDep(new f0980Flatte());
+		return massDep;
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////////

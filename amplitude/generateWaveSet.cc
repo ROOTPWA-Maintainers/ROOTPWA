@@ -143,14 +143,14 @@ main(int    argc,
 	bool     doTeX = false;
 	if (texFileName != "") {
 		doTeX = true;
-	  wavelistTeX.open(texFileName.c_str());
-	  wavelistTeX << "\\documentclass[10pt,a4paper]{article}" << endl
-	              << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
-	              << "\\def\\dst{\\displaystyle}"             << endl
-	              << "\\def\\vsp{\\hbox{\\vrule height12.5pt depth3.5pt width0pt}}" << endl
-	              << "\\def\\ells#1#2{\\Big[\\hskip-5pt\\vsp\\begin{array}{c}\\dst#1\\\\[-4pt]\\dst#2\\end{array}\\vsp\\hskip-5pt\\Big]}" << endl
-	              << "\\begin{document}"                      << endl
-	              << "\\begin{align*} \n \\begin{aligned}"    << endl;
+		wavelistTeX.open(texFileName.c_str());
+		wavelistTeX << "\\documentclass[10pt,a4paper]{article}" << endl
+		            << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
+		            << "\\def\\dst{\\displaystyle}"             << endl
+		            << "\\def\\vsp{\\hbox{\\vrule height12.5pt depth3.5pt width0pt}}" << endl
+		            << "\\def\\ells#1#2{\\Big[\\hskip-5pt\\vsp\\begin{array}{c}\\dst#1\\\\[-4pt]\\dst#2\\end{array}\\vsp\\hskip-5pt\\Big]}" << endl
+		            << "\\begin{document}"                      << endl
+		            << "\\begin{align*} \n \\begin{aligned}"    << endl;
 	}
 
 
