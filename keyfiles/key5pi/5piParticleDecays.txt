@@ -49,13 +49,13 @@ particleDecayList = (
 // three-pion decays
 	{ name = "a1(1260)-";
 		decays = (
-			{products = ["pi-", "rho(770)0"];},
+			{products = ["pi-", "rho(770)0"]; L = 0;},
 			{products = ["pi-", "sigma0"   ];}
 		);
 	},
 	{ name = "a1(1260)+";
 		decays = (
-			{products = ["pi+", "rho(770)0"];},
+			{products = ["pi+", "rho(770)0"]; L = 0;},
 			{products = ["pi+", "sigma0"   ];}
 		);
 	},
@@ -146,6 +146,7 @@ particleDecayList = (
 	},
 	{ name = "f1(1285)0";
 		decays = (
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
 			{products = ["a1(1260)+", "pi-"];},
 			{products = ["a1(1260)-", "pi+"];}
 		);
@@ -181,8 +182,8 @@ particleDecayList = (
 	{ name = "f2(1565)0";
 		decays = (
 			{products = ["sigma0",    "sigma0"   ];},
-			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
-			{products = ["f2(1270)0", "sigma0"   ]; L = 0;},
+			{products = ["rho(770)0", "rho(770)0"];},
+			{products = ["f2(1270)0", "sigma0"   ];},
 			{products = ["a1(1260)+", "pi-"      ];},
 			{products = ["a1(1260)-", "pi+"      ];},
 			{products = ["pi(1300)+", "pi-"      ];},
