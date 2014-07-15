@@ -21,7 +21,9 @@ action is taken. If this list is not empty, then only those keyfiles actually
 used in one of those wavesets are kept, and all others are removed, e.g.
               WAVESET_FILES=wavelist.* ./3pinGenerateKeyfiles.sh
 will keep all keyfiles for waves used in at least one waveset in the current
-directory.
+directory. Files in this list will also be copied to the destination directory
+and copies of each file taking into account the different wave names for the
+various mass dependences of the f0(980) will be created.
 
 
 A couple of wavesets are also provided. These are the references
