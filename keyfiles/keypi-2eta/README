@@ -1,0 +1,31 @@
+This directory contains the information required to create the keyfiles for
+the pi- eta eta channel. The keyfiles are created with the programme
+'generateWaveSet' called from the script 'pi-2etaGenerateKeyfiles.sh'. This
+script can be controlled by a number of environment variables.
+
+DESTINATION_DIR
+should be set to the directory that should contain the keyfiles. The default
+is 'keyfiles' as a subdirectory of the current directory. This directory will
+be created if it does not exist. Be careful, files in this directory might be
+deleted by the script.
+
+PARTICLE_DATA_TABLE
+points to the particle data table that should be used for the generation of
+the wavesets. By default the one in ROOTPWA's 'amplitude' directory is used
+(specified by the relative path, so this has to be changed, if this script is
+moved from its original place in the repostitory).
+
+WAVESET_FILES
+is a list of wavesets. By default this list is empty, and then no additional
+action is taken. If this list is not empty, then only those keyfiles actually
+used in one of those wavesets are kept, and all others are removed, e.g.
+            WAVESET_FILES=wavelist.* ./pi-2etaGenerateKeyfiles.sh
+will keep all keyfiles for waves used in at least one waveset in the current
+directory. Files in this list will also be copied to the destination
+directory.
+
+
+A couple of wavesets are also provided. These are the references
+
+wavelist.e852
+P.Eugenio et al. (E852 Collaboration), Physics Letters B, Volume 660, 466-470
