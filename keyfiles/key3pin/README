@@ -22,3 +22,17 @@ used in one of those wavesets are kept, and all others are removed, e.g.
               WAVESET_FILES=wavelist.* ./3pinGenerateKeyfiles.sh
 will keep all keyfiles for waves used in at least one waveset in the current
 directory.
+
+
+A couple of wavesets are also provided. These are the references
+
+wavelist.e852.chung.21waves
+wavelist.e852.chung.27waves
+S.U.Chung et al. (E852 Collaboration), Physical Review D, Volume 65, 072001
+
+wavelist.e852.dzierba.high
+wavelist.e852.dzierba.low
+A.R.Dzierba et al., Physical Review D, Volume 73, 072001
+
+wavelist.compass.2004
+M.G.Alekseev et al. (COMPASS Collaboration), Physical Review Letters, Volume 104, 241803
