@@ -687,7 +687,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const std::string& name)
+rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const std::string& name)
 	: component(name, 2)
 {
 	_parametersName[0] = "mass";
@@ -699,7 +699,7 @@ rpwa::massDepFit::relativisticBreitWigner::relativisticBreitWigner(const std::st
 
 
 bool
-rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                                 const size_t nrBins,
                                                 const std::vector<double>& massBinCenters,
                                                 const std::map<std::string, size_t>& waveIndices,
@@ -708,7 +708,7 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
                                                 const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'relativisticBreitWigner' for component '" << getName() << "'." << std::endl;
+		printDebug << "starting initialization of 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
@@ -786,14 +786,14 @@ rpwa::massDepFit::relativisticBreitWigner::init(const libconfig::Setting* config
 
 	if(debug) {
 		print(printDebug);
-		printDebug << "finished initialization of 'relativisticBreitWigner'." << std::endl;
+		printDebug << "finished initialization of 'dynamicWidthBreitWigner'." << std::endl;
 	}
 	return true;
 }
 
 
 std::complex<double>
-rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
+rpwa::massDepFit::dynamicWidthBreitWigner::val(const size_t idxBin,
                                                const double m) const
 {
 	const double& m0 = _parameters[0];
@@ -820,9 +820,9 @@ rpwa::massDepFit::relativisticBreitWigner::val(const size_t idxBin,
 
 
 std::ostream&
-rpwa::massDepFit::relativisticBreitWigner::print(std::ostream& out) const
+rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (relativisticBreitWigner):" << std::endl;
+	out << "component '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {

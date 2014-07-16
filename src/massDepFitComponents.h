@@ -185,11 +185,11 @@ namespace rpwa {
 
 		};
 
-		class relativisticBreitWigner : public component {
+		class dynamicWidthBreitWigner : public component {
 
 		public:
 
-			relativisticBreitWigner(const std::string& name);
+			dynamicWidthBreitWigner(const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
