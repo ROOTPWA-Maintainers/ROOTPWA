@@ -32,7 +32,7 @@ s/\(^[[:blank:]]*\)name = "sigma0";/\1name = "sigma0";\n\1massDep : { name = "pi
 s/\(^[[:blank:]]*\)name = "rhoPrime0";/\1name = "rhoPrime0";\n\1massDep : { name = "rhoPrime"; };/
 
 # f_0(980)
-s/\(^[[:blank:]]*\)name = "f0(980)0";/\1name = "f0(980)0";\n\1massDep : { name = "f_0(980)"; };/
+s/\(^[[:blank:]]*\)name = "f0(980)0";/\1name = "f0(980)0";\n\1massDep : { name = "f_0(980)Flatte"; };/
 
 EOF
 )" "${1}"
