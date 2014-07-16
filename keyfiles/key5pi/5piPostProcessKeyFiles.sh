@@ -28,7 +28,7 @@ else
 # sigma
 s/\(^[[:blank:]]*\)name = "sigma0";/\1name = "sigma0";\n\1massDep : { name = "piPiSWaveAuMorganPenningtonKachaev"; };/
 
-# rho'
+# rhoPrime
 s/\(^[[:blank:]]*\)name = "rhoPrime0";/\1name = "rhoPrime0";\n\1massDep : { name = "rhoPrime"; };/
 
 # f_0(980)
