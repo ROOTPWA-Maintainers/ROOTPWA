@@ -63,7 +63,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-o outfile -M minimizer -m algorithm -t # -P -R -C -d -q -h] config file" << endl
+	     << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C -d -q -h] config file" << endl
 	     << "    where:" << endl
 	     << "        -o file    path to output file (default: 'mDep.result.root')" << endl
 	     << "        -M name    minimizer (default: Minuit2)" << endl
