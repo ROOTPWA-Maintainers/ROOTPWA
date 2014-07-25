@@ -38,7 +38,7 @@ class amplitudeCalculator(multiprocessing.Process):
 				with pyRootPwa.utils.silencer(self.silence) as silencer:
 					processedEvents = 0
 					outFileName = inTuple[2]
-					pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
+					pyRootPwa.utils.printInfo('Calculating amplitudes with input file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
 					try:
 						with inTuple[0]:
 							if outFileName.endswith('.amp'):
