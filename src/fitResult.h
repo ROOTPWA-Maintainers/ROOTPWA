@@ -99,11 +99,11 @@ namespace rpwa {
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,	         // number of events to normalize to
-		          const double                              massBinCenter,	         // center value of mass bin
-		          const double                              logLikelihood,	         // log(likelihood) at maximum
-		          const int                                 rank,		                 // rank of fit
-		          const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes
-		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
+		          const double                              massBinCenter,           // center value of mass bin
+		          const double                              logLikelihood,           // log(likelihood) at maximum
+		          const int                                 rank,                    // rank of fit
+		          const std::vector<std::complex<double> >& prodAmps,                // production amplitudes
+		          const std::vector<std::string>&           prodAmpNames,            // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
 		          const rpwa::complexMatrix&                normIntegral,            // normalization integral matrix
