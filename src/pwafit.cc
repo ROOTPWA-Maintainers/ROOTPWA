@@ -599,6 +599,7 @@ main(int    argc,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
 				             normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+				             accIntegral,
 				             phaseSpaceIntegral,
 				             converged,
 				             hasHesse);

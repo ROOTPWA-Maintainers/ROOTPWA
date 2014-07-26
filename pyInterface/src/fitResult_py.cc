@@ -21,6 +21,7 @@ namespace {
 	                    PyObject*                                 pyFitParCovMatrix,
 	                    const bp::object&                         pyFitParCovMatrixIndices,
 	                    const rpwa::complexMatrix&                normIntegral,
+	                    const rpwa::complexMatrix&                acceptedNormIntegral,
 	                    const bp::object&                         pyPhaseSpaceIntegral,
 	                    const bool                                converged,
 	                    const bool                                hasHessian)
@@ -52,8 +53,8 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
 			bp::throw_error_already_set();
 		}
-		self.fill(nmbEvents, normNmbEvents, massBinCenter, logLikelihood, rank, prodAmps, prodAmpNames,
-		          *fitParCovMatrix, fitParCovMatrixIndices, normIntegral, phaseSpaceIntegral, converged, hasHessian);
+		self.fill(nmbEvents, normNmbEvents, massBinCenter, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
+		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
 	}
 
 	bp::list fitResult_evidenceComponents(const rpwa::fitResult& self) {

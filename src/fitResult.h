@@ -107,6 +107,7 @@ namespace rpwa {
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
 		          const rpwa::complexMatrix&                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix&                acceptedNormIntegral,    // normalization integral matrix with acceptance
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
@@ -228,6 +229,7 @@ namespace rpwa {
 		TMatrixT<Double_t>                    _fitParCovMatrix;           ///< covariance matrix of fit parameters
 		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;    ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
 		rpwa::complexMatrix                   _normIntegral;         //|| ///< normalization integral over full phase space without acceptance
+		rpwa::complexMatrix                   _acceptedNormIntegral; //|| ///< normalization integral over accepted phase space
 		std::map<Int_t, Int_t>                _normIntIndexMap;           ///< maps production amplitude indices to indices in normalization integral
 		std::vector<double>                   _phaseSpaceIntegral;        ///< diagonals of phase space integrals (without acceptance)
 		bool                                  _converged;                 ///< indicates whether fit has converged (according to minimizer)
@@ -254,7 +256,7 @@ namespace rpwa {
 
 	public:
 
-		ClassDef(fitResult, 5)
+		ClassDef(fitResult, 6)
 
 	};  // class fitResult
 

@@ -79,6 +79,7 @@ fitResult::fitResult(const fitResult& result)
 	  _fitParCovMatrix       (result.fitParCovMatrix()),
 	  _fitParCovMatrixIndices(result.fitParCovIndices()),
 	  _normIntegral          (result.normIntegralMatrix()),
+	  _acceptedNormIntegral  (result._acceptedNormIntegral),
 	  _normIntIndexMap       (result.normIntIndexMap()),
 	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
 	  _converged             (result._converged),
@@ -630,6 +631,7 @@ fitResult::reset()
 	_fitParCovMatrix.ResizeTo(0, 0);
 	_fitParCovMatrixIndices.clear();
 	_normIntegral.resizeTo(0, 0);
+	_acceptedNormIntegral.resizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
 	_converged  = false;
@@ -649,6 +651,7 @@ fitResult::fill
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
  const complexMatrix&            normIntegral,            // normalization integral matrix
+ const complexMatrix&            acceptedNormIntegral,    // normalization integral matrix with acceptance
  const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
  const bool                      converged,
  const bool                      hasHessian)
@@ -673,8 +676,10 @@ fitResult::fill
 	else
 		_covMatrixValid = false;
 	_normIntegral.resizeTo(normIntegral.nRows(), normIntegral.nCols());
-	_normIntegral       = normIntegral;
-	_phaseSpaceIntegral = phaseSpaceIntegral;
+	_normIntegral         = normIntegral;
+	_acceptedNormIntegral.resizeTo(acceptedNormIntegral.nRows(), acceptedNormIntegral.nCols());
+	_acceptedNormIntegral = acceptedNormIntegral;
+	_phaseSpaceIntegral   = phaseSpaceIntegral;
 
 	// get wave list from production amplitudes and fill map for
 	// production-amplitude indices to indices in normalization integral
