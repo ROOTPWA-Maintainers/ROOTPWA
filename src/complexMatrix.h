@@ -25,11 +25,13 @@
 
 #include <complex>
 
-#include "TObject.h"
-#include "TComplex.h"
-#include "TMatrixD.h"
+#ifndef __CINT__
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
+#endif
 
-#include "reportingUtilsRoot.hpp"
+#include "TObject.h"
+
 
 namespace rpwa {
 
@@ -37,24 +39,30 @@ namespace rpwa {
 
 	public:
 
-		complexMatrix() { }
+		complexMatrix()
+			: _matrix(),
+			  _size1(0),
+			  _size2(0),
+			  _nmbDataElements(0),
+			  _data(0) { }
 
-		complexMatrix(TMatrixD re, TMatrixD im) :
-				_re(re), _im(im) { }
-
-		complexMatrix(const int i, const int j) :
-				_re(i, j), _im(i, j) { }
+		complexMatrix(const int i, const int j)
+			: _matrix(i, j),
+			  _size1(0),
+			  _size2(0),
+			  _nmbDataElements(0),
+			  _data(0) { }
 
 		~complexMatrix() { }
 
-		void resizeTo(const int i, const int j) { _re.ResizeTo(i, j); _im.ResizeTo(i, j); }
-		void set(const int i, const int j, const std::complex<double>& c);
-		void set(const int i, const int j, const TComplex& c);
-		TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }
-		TComplex operator()(const int i, const int j) const { return this->get(i, j); }
-		int nRows() const { return _re.GetNrows(); }
-		int nCols() const { return _re.GetNcols(); }
-		virtual void Print(const Option_t* = "") const { _re.Print(); _im.Print(); }
+		void resizeTo(const int i, const int j) { _matrix.resize(i, j); }
+		void set(const int i, const int j, const std::complex<double>& c) { _matrix(i, j) = c; }
+		std::complex<double> get(const int i, const int j) const { return _matrix(i, j); }
+		std::complex<double> operator()(const int i, const int j) const { return this->get(i, j); }
+		unsigned int nRows() const { return _matrix.size1(); }
+		unsigned int nCols() const { return _matrix.size2(); }
+
+		virtual void Print(const Option_t* = "") const { std::cout << _matrix << std::endl; }
 
 		complexMatrix t() const; // return transpose matrix
 		complexMatrix dagger() const; // return adjoint matrix
@@ -62,41 +70,40 @@ namespace rpwa {
 		friend complexMatrix operator*(const complexMatrix& c1, const complexMatrix& c2);
 		friend complexMatrix operator-(const complexMatrix& c1, const complexMatrix& c2);
 		friend complexMatrix operator+(const complexMatrix& c1, const complexMatrix& c2);
+		friend std::ostream& operator<<(std::ostream& out, const complexMatrix& A);
 
 	private:
 
-		TMatrixD _re;
-		TMatrixD _im;
+#ifndef __CINT__
+		complexMatrix(boost::numeric::ublas::matrix<std::complex<double> > matrix)
+			: _matrix(matrix),
+			  _size1(0),
+			  _size2(0),
+			  _nmbDataElements(0),
+			  _data(0) { }
+
+		boost::numeric::ublas::matrix<std::complex<double> > _matrix;
+#endif
+
+		void readMatrix();
+		void storeMatrix();
+
+		unsigned int _size1;
+		unsigned int _size2;
+		unsigned int _nmbDataElements;
+		std::complex<double>* _data; //[_nmbDataElements]
 
 	public:
 
-		ClassDef(complexMatrix, 1);
+		ClassDef(complexMatrix, 2);
 
 	};
 
 	complexMatrix operator*(const complexMatrix& c1, const complexMatrix& c2);
 	complexMatrix operator-(const complexMatrix& c1, const complexMatrix& c2);
 	complexMatrix operator+(const complexMatrix& c1, const complexMatrix& c2);
-
-	inline std::ostream&
-	operator <<(std::ostream& out, const complexMatrix& A) {
-		for(int row = 0; row < A.nRows(); ++row) {
-			out << "row " << row << " = (";
-			for(int col = 0; col < A.nCols(); ++col) {
-				out << A(row, col);
-				if(col < A.nCols() - 1) {
-					out << ", ";
-				}
-			}
-			if(row < A.nRows() - 1) {
-				out << "), " << std::endl;
-			} else {
-				out << ")";
-			}
-		}
-		return out;
-	}
+	std::ostream& operator<<(std::ostream& out, const complexMatrix& A);
 
 }
 
-#endif  // TCMATRIX_HH
+#endif  // COMPLEXMATRIX_HH

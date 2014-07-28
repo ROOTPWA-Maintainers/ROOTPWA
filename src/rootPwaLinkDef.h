@@ -29,10 +29,10 @@
 #pragma link C++ class rpwa::fitResult+;
 #pragma link C++ class rpwa::pwaPlotter+;
 #pragma link C++ class rpwa::TPwaFitGraphErrors+;
-#pragma link C++ class rpwa::complexMatrix+;
+#pragma link C++ class rpwa::complexMatrix-;
 
 
-#pragma read sourceClass="TCMatrix" targetClass="rpwa::complexMatrix" version="[1-]";
+#pragma read sourceClass="TCMatrix" targetClass="rpwa::complexMatrix" version="[1-1]";
 
 
 #endif

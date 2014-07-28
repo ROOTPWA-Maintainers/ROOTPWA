@@ -699,8 +699,8 @@ fitResult::fill
 		cout << "fitResult::fill(): warning: number of production amplitudes "
 		     << "(" << _prodAmps.size() << ") does not match number of "
 		     << "covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (   ((int)_waveNames.size() != _normIntegral.nRows())
-	    or ((int)_waveNames.size() != _normIntegral.nCols()))
+	if (   (_waveNames.size() != _normIntegral.nRows())
+	    or (_waveNames.size() != _normIntegral.nCols()))
 		cout << "fitResult::fill(): warning: number of waves (" << _waveNames.size()
 		     << ") does not match size of normalization integral "
 		     << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;

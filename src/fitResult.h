@@ -216,22 +216,22 @@ namespace rpwa {
 
 	private:
 
-		UInt_t                                _nmbEvents;               ///< number of events in bin
-		UInt_t                                _normNmbEvents;           ///< number of events to normalize to
-		Double_t                              _massBinCenter;           ///< center value of mass bin
-		Double_t                              _logLikelihood;           ///< log(likelihood) at maximum
-		Int_t                                 _rank;                    ///< rank of fit
-		std::vector<TComplex>                 _prodAmps;                ///< production amplitudes
-		std::vector<std::string>              _prodAmpNames;            ///< names of production amplitudes used in fit
-		std::vector<std::string>              _waveNames;               ///< names of waves used in fit
-		Bool_t                                _covMatrixValid;          ///< indicates whether bin has a valid covariance matrix
-		TMatrixT<Double_t>                    _fitParCovMatrix;         ///< covariance matrix of fit parameters
-		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
-		rpwa::complexMatrix                   _normIntegral;            ///< normalization integral over full phase space without acceptance
-		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
-		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
-		bool                                  _converged;               ///< indicates whether fit has converged (according to minimizer)
-		bool                                  _hasHessian;              ///< indicates whether Hessian matrix has been calculated successfully
+		UInt_t                                _nmbEvents;                 ///< number of events in bin
+		UInt_t                                _normNmbEvents;             ///< number of events to normalize to
+		Double_t                              _massBinCenter;             ///< center value of mass bin
+		Double_t                              _logLikelihood;             ///< log(likelihood) at maximum
+		Int_t                                 _rank;                      ///< rank of fit
+		std::vector<TComplex>                 _prodAmps;                  ///< production amplitudes
+		std::vector<std::string>              _prodAmpNames;              ///< names of production amplitudes used in fit
+		std::vector<std::string>              _waveNames;                 ///< names of waves used in fit
+		Bool_t                                _covMatrixValid;            ///< indicates whether bin has a valid covariance matrix
+		TMatrixT<Double_t>                    _fitParCovMatrix;           ///< covariance matrix of fit parameters
+		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;    ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
+		rpwa::complexMatrix                   _normIntegral;         //|| ///< normalization integral over full phase space without acceptance
+		std::map<Int_t, Int_t>                _normIntIndexMap;           ///< maps production amplitude indices to indices in normalization integral
+		std::vector<double>                   _phaseSpaceIntegral;        ///< diagonals of phase space integrals (without acceptance)
+		bool                                  _converged;                 ///< indicates whether fit has converged (according to minimizer)
+		bool                                  _hasHessian;                ///< indicates whether Hessian matrix has been calculated successfully
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
 
 		// helper functions
@@ -322,8 +322,7 @@ namespace rpwa {
 	fitResult::normIntegral(const unsigned int waveIndexA,
 	                        const unsigned int waveIndexB) const
 	{
-		const TComplex norm = _normIntegral(waveIndexA, waveIndexB);
-		return std::complex<double>(norm.Re(), norm.Im());
+		return _normIntegral(waveIndexA, waveIndexB);
 	}
 
 
