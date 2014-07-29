@@ -971,6 +971,13 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 			++iIndex;
 		}
 	}
+	// set unused entries to 0
+	for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
+		normMatrix.set(_nmbWaves, i, complexT(0., 0.));
+		normMatrix.set(i, _nmbWaves, complexT(0., 0.));
+		accMatrix.set(_nmbWaves, i, complexT(0., 0.));
+		accMatrix.set(i, _nmbWaves, complexT(0., 0.));
+	}
 	// add flat
 	normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
 	accMatrix.set (_nmbWaves, _nmbWaves, complexT(_totAcc,0));
