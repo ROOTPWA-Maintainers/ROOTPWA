@@ -224,7 +224,7 @@ fitResult::evidenceComponents() const
 	// parameter volume prior to observing the data
 	// n-Sphere:
 	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
-		- ROOT::Math::lgamma(0.5 * d + 1);
+		- ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
