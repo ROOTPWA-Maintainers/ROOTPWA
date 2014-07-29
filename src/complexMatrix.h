@@ -66,6 +66,7 @@ namespace rpwa {
 
 		complexMatrix t() const; // return transpose matrix
 		complexMatrix dagger() const; // return adjoint matrix
+		std::complex<double> determinant() const;
 
 		friend complexMatrix operator*(const complexMatrix& c1, const complexMatrix& c2);
 		friend complexMatrix operator-(const complexMatrix& c1, const complexMatrix& c2);

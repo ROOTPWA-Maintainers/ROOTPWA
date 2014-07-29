@@ -42,6 +42,35 @@ complexMatrix complexMatrix::dagger() const
 }
 
 
+complex<double> complexMatrix::determinant() const
+{
+	// based on http://programmingexamples.net/wiki/CPP/Boost/Math/uBLAS/determinant
+	if(_matrix.size1() != _matrix.size2()) {
+		printWarn << "cannot calculate determinant for non-symmetric matrix, returning 0." << endl;
+		return 0.;
+	}
+	bnu::matrix<complex<double> > matrixCopy(_matrix); // otherwise _matrix would be changed
+	bnu::permutation_matrix<size_t> permutationMatrix(matrixCopy.size1());
+	complex<double> det = 1.;
+	if(bnu::lu_factorize(matrixCopy, permutationMatrix)) {
+		det = 0.;
+	} else {
+		for(unsigned int i = 0; i < matrixCopy.size1(); ++i) {
+			det *= matrixCopy(i, i); // multiply by elements on diagonal
+		}
+		int determinantSign = 1;
+		size_t size = permutationMatrix.size();
+		for(size_t i = 0; i < size; ++i) {
+			if (i != permutationMatrix(i)) {
+				determinantSign *= -1; // swap_rows would swap a pair of rows here, so we change sign
+			}
+		}
+		det = det * (double)determinantSign;
+	}
+	return det;
+}
+
+
 complexMatrix rpwa::operator*(const complexMatrix& c1, const complexMatrix& c2)
 {
 	return complexMatrix(c1._matrix * c2._matrix);
