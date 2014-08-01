@@ -5,7 +5,7 @@ BOOST_ROOT_DIR=$(readlink --canonicalize ${BOOST_ROOT})
 LOG_FILE=${BOOST_ROOT_DIR}/compileBoostMpi.log
 if [[ -d ${BOOST_ROOT_DIR} ]]
 then
-		echo ">>> compiling Boost.MPI library in '${BOOST_ROOT_DIR}'"
+		echo ">>> compiling Boost libraries in '${BOOST_ROOT_DIR}'"
 		cd ${BOOST_ROOT_DIR}
 else
 		echo "!!! error: '${BOOST_ROOT_DIR}' does not exist"

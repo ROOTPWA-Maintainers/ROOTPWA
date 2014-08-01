@@ -39,7 +39,7 @@ CMake is a cross-platform, open-source build system available from <http://cmake
 *   <http://rachid.koucha.free.fr/tech_corner/cmake_manual.html>
 *   <http://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started>
 
-The minimum required CMake version is 2.8.0. In case your system offers only outdated packages, you can quite easily compile CMake yourself...
+The minimum required CMake version is 2.8.8. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can quite easily compile CMake yourself...
 
 1.  Download the latest CMake release from <http://www.cmake.org/cmake/resources/software.html>
 
@@ -64,13 +64,17 @@ The minimum required CMake version is 2.8.0. In case your system offers only out
 
 ### Boost ###
 
-Part of the code relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.50.00 or higher is required.  Boost is to a large extend a header-only library so that usually nothing has to be build. Just install the respective Boost packages for your platform or, in case you do not have administrator privileges, extract the source archive to a location of your choice.
+Part of the code relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.50.0 or higher is required; it is recommended to use the latest Boots release. Boost is to a large extend a header-only library so that usually nothing has to be build (noteworthy exception are the Python bindings; see below). Just install the respective Boost packages for your platform or, in case you do not have administrator privileges, extract the source archive to a location of your choice.
 
 A more convenient way than downloading and extracting the tarball of a certain Boost version is to clone the Boost git repository by running
 
     > git clone https://github.com/ned14/boost-trunk.git
 
-and then to checkout the wanted release version via
+The list of available versions (tags) is printed by
+
+    > git tag
+
+Checkout the wanted release version via
 
     > cd boost-trunk
     > git checkout release/Boost_1_50_0
@@ -88,10 +92,6 @@ In order to find out the current Boost version (a.k.a. branch tag) run
 
     > git describe --tags
 
-The list of available versions (tags) is printed by
-
-    > git tag
-
 
 ### ROOT ###
 
@@ -99,12 +99,12 @@ ROOT is an open-source data-analysis framework for high-energy and nuclear physi
 
     `./configure --enable-mathmore --enable-minuit2`
 
-If `root-config --features` does _not_ list `mathmore` and `minuit2` you need to re-configure and re-compile ROOT with these options.
+If `root-config --features` does _not_ list `mathmore` _and_ `minuit2` you need to re-configure and re-compile ROOT with these options. See <http://root.cern.ch/drupal/content/installing-root-source> for more information in how to compile ROOT from source.
 
 
 ### libconfig ###
 
-We use the _libconfig_ config file parser written by Mark A. Lindner available from <http://www.hyperrealm.com/libconfig/>. To our knowledge there are unfortunately no pre-compiled packages for common Linux platforms available, but compilation and installation are straightforward. The easiest way is to install the library into the same directory as the source
+We use the _libconfig_ config file parser written by Mark A. Lindner available from <http://www.hyperrealm.com/libconfig/>. Version 1.4 or higher is required. At least for Debian and Ubuntu recent libconfig packages are available, for SLC6 only outdated packages are provided. In case you do not have administrator privileges you can compile libconfig from source which is straightforward. The easiest way is to install the library into the same directory as the source
 
     > ./configure --prefix=/your/folder/to/install/libconfig
     > make && make install
@@ -112,11 +112,9 @@ We use the _libconfig_ config file parser written by Mark A. Lindner available f
 
 ### Python (optional) ###
 
-In order to make scripting more powerful and flexible, it is planned to Python-ify some of the ROOTPWA classes, so that they can be interfaced directly. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
+In order to make scripting more powerful and flexible, some of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
 
-The build system tries to find your Python installation automatically. For this to work you need to have the `python` executable in your path. In addition you also need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script).  If the build system has found your Python installation and the `Boost.Python` library, the Python features are automatically enabled.
-
-ROOTPWA requires Python 2.7. In case you do not have the possibility to install the packages for your operating system, you may install Python from source as outlined below:
+The build system tries to find your Python installation automatically. For this to work you need to have the `python` executable in your path. ROOTPWA requires Python 2.7. In case you do not have the possibility to install the Python 2.7 packages for your operating system, you may install Python from source as outlined below:
 
 1.  Download the source tarball from <http://www.python.org> and extract it to a directory of your choice.
 
@@ -124,7 +122,9 @@ ROOTPWA requires Python 2.7. In case you do not have the possibility to install 
 
     `> ./configure --enable-shared && make && make install && make test`
 
-    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `` --prefix=`pwd` ``). In this case you also have to make sure to adapt the `PATH` and `LD_LIBRARY_PATH` environment variables accordingly.
+    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `` --prefix=`pwd -P` ``). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
+
+In addition you also need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script). If the build system has found your Python installation and the `Boost.Python` library, the Python features are automatically enabled. Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
 ### CUDA (optional) ###
