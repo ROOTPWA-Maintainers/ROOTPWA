@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
 	keyfiles = []
 	if args.keyfiles is not None:
-		keyfiles =  args.keyfiles
+		keyfiles = args.keyfiles
 		for keyfile in keyfiles:
 			if not (os.path.isfile(keyfile) and keyfile.endswith(".key")):
 				pyRootPwa.utils.printErr("Keyfile '" + keyfile + "' not valid. Aborting...")
@@ -141,17 +141,25 @@ if __name__ == "__main__":
 	reflectivities = []
 	prodAmps = []
 	waveNames = []
-	print(len(keyfiles))
-	for keyfile in keyfiles:
-		waveName = keyfile[keyfile.rfind('/')+1:].replace(".key", ".amp")
-		waveNames.append(waveName)
+	waveNames = fitResult.waveNames()
+
+	if(fitResult.nmbProdAmps() != len(waveNames)):
+		pyRootPwa.utils.printErr('Number of production amplitudes (' + str(fitResult.nmbProdAmps()) +
+		                         ') not equal to number of wave names (' + str(len(waveNames)) + '). Aborting...')
+		sys.exit(1)
+
+	waveNames.remove('flat')  # ignore flat wave
+
+	for waveName in waveNames:
+		keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
+		if not os.path.isfile(keyfile):
+			pyRootPwa.utils.printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
+			sys.exit(1)
 		reflectivities.append(1 if waveName[6] == '+' else -1)
 		waveIndex = fitResult.waveIndex(waveName)
+
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
 			printErr("Mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
-		if waveIndex < 0:
-			printErr("Keyfile '" + keyfile + "' not found in fit result file '" + args.fitResult +"'. Aborting...")
-			sys.exit(1)
 		prodAmps.append(fitResult.prodAmp(waveIndex))
 		waveDescription = pyRootPwa.core.waveDescription()
 		waveDescription.parseKeyFile(keyfile)
