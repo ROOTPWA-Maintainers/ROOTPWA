@@ -716,8 +716,6 @@ decayTopology::addKinematicsData(const TClonesArray& prodKinMomenta,
 		_fsDataPartMomCache[i].push_back(*mom);
 	}
 
-	revertMomenta();
-
 	return success;
 }
 

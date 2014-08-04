@@ -294,8 +294,6 @@ diffractiveDissVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 		}
 	}
 
-	revertMomenta();
-
 	return success;
 }
 

@@ -681,6 +681,7 @@ namespace rpwa {
 		                                       : nmbEventsTree);
 		bool              success           = true;
 		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
+		decayTopo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta);
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);
@@ -700,18 +701,17 @@ namespace rpwa {
 				continue;
 			}
 
-			if (decayTopo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-				if (decayTopo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-					decayTopo->revertMomenta();
-					ampValues.push_back((*amplitude)()[0]);
-				} else {
-					printWarn << "problems reading event[" << eventIndex << "]" << endl;
-					success = false;
-				}
-			} else {
+			if (not decayTopo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
 				printWarn << "problems reading event[" << eventIndex << "]" << endl;
 				success = false;
 			}
+		}
+
+		if(success) {
+			cout << "events added: calculate amplitudes ..." << endl;
+			decayTopo->revertMomenta();
+			vector<complex<double> > amps = (*amplitude)();
+			ampValues.insert(ampValues.end(), amps.begin(), amps.end());
 		}
 
 		if (printProgress)
