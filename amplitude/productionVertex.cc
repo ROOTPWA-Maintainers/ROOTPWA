@@ -52,3 +52,11 @@ productionVertex::productionVertex()
 
 productionVertex::~productionVertex()
 { }
+
+// default implementation
+std::vector<std::complex<double> >
+productionVertex::productionAmp() const
+{
+	int numEvents = XParticle()->lzVec().size();
+	return std::vector<std::complex<double> >(numEvents, 1);
+}

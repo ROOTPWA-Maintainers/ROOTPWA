@@ -700,9 +700,15 @@ namespace rpwa {
 				continue;
 			}
 
-			if (decayTopo->readKinematicsData(*prodKinMomenta, *decayKinMomenta))
-				ampValues.push_back((*amplitude)());
-			else {
+			if (decayTopo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+				if (decayTopo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+					decayTopo->revertMomenta();
+					ampValues.push_back((*amplitude)()[0]);
+				} else {
+					printWarn << "problems reading event[" << eventIndex << "]" << endl;
+					success = false;
+				}
+			} else {
 				printWarn << "problems reading event[" << eventIndex << "]" << endl;
 				success = false;
 			}

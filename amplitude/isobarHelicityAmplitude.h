@@ -52,7 +52,7 @@ namespace rpwa {
 		isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarHelicityAmplitude();
 
-		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
+		static std::vector<TLorentzRotation> hfTransform(const std::vector<TLorentzVector>& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
 
 		std::string name() const { return "isobarHelicityAmplitude"; }
     
@@ -64,7 +64,7 @@ namespace rpwa {
 
 		void transformDaughters() const;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
-		std::complex<double> twoBodyDecayAmplitude
+		std::vector<std::complex<double> > twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
     

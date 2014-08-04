@@ -60,9 +60,9 @@ namespace rpwa {
 		massDependence()          { }
 		virtual ~massDependence() { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v) = 0;
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v) = 0;
 
-		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
+		virtual std::vector<std::complex<double> > operator ()(const isobarDecayVertex& v) { return amp(v); }
 
 		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -106,7 +106,7 @@ namespace rpwa {
 		flatMassDependence() : massDependence() { }
 		virtual ~flatMassDependence()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex&);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -134,7 +134,7 @@ namespace rpwa {
 		flatRangeMassDependence() : massDependence() { }
 		virtual ~flatRangeMassDependence()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex&);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "flatRangeMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -162,7 +162,7 @@ namespace rpwa {
 		relativisticBreitWigner() : massDependence() { }
 		virtual ~relativisticBreitWigner()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -190,7 +190,7 @@ namespace rpwa {
 		constWidthBreitWigner() : massDependence() { }
 		virtual ~constWidthBreitWigner()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "constWidthBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -223,7 +223,7 @@ namespace rpwa {
 		rhoBreitWigner() : massDependence() { }
 		virtual ~rhoBreitWigner()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "rhoBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -253,7 +253,7 @@ namespace rpwa {
 		f0980BreitWigner() : massDependence() { }
 		virtual ~f0980BreitWigner()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "f0980BreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -284,7 +284,7 @@ namespace rpwa {
 		piPiSWaveAuMorganPenningtonM();
 		virtual ~piPiSWaveAuMorganPenningtonM() { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -328,7 +328,7 @@ namespace rpwa {
 		piPiSWaveAuMorganPenningtonVes();
 		virtual ~piPiSWaveAuMorganPenningtonVes() { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -395,7 +395,7 @@ namespace rpwa {
 		rhoPrimeMassDep() : massDependence() { }
 		virtual ~rhoPrimeMassDep()           { }
 
-		virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::vector<std::complex<double> > amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "rhoPrimeMassDep"; }  ///< returns label used in graph visualization, reporting, and key file
 

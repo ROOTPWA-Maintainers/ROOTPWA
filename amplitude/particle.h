@@ -36,6 +36,7 @@
 
 
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -63,13 +64,13 @@ namespace rpwa {
 		         const int                 index    = -1,
 		         const int                 spinProj = 0,
 		         const int                 refl     = 0,
-		         const TVector3&           momentum = TVector3());
+		         const std::vector<TVector3>& momentum = std::vector<TVector3>());
 		particle(const std::string&        partName,
 		         const bool                requirePartInTable = true,
 		         const int                 index              = -1,
 		         const int                 spinProj           = 0,
 		         const int                 refl               = 0,
-		         const TVector3&           momentum           = TVector3());
+		         const std::vector<TVector3>& momentum        = std::vector<TVector3>());
 		particle(const std::string&        partName,
 		         const int                 isospin,
 		         const int                 G,
@@ -85,25 +86,21 @@ namespace rpwa {
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
 		int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
-		TVector3              momentum    () const { return _lzVec.Vect();               }  ///< returns three-momentum of particle
-		const TLorentzVector& lzVec       () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
+		const std::vector<TVector3> momentum () const;                                      ///< returns three-momentum of particle
+		const std::vector<TLorentzVector>& lzVec () const { return _lzVec;               }  ///< returns Lorentz vector of particle
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
 
 		void setSpinProj    (const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
-		void setMomentum    (const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
-		void setLzVec       (const TLorentzVector& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+		void setMomentum    (const std::vector<TVector3>& momentum);  ///< sets particle's Lorentz vector
+		void setLzVec       (const std::vector<TLorentzVector>& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
 		void setIndex       (const int             index   ) { _index    = index;                                                             }  ///< sets particle's index label
 		void setReflectivity(const int             refl    ) { _refl     = signum(refl);                                                      }  ///< sets particle's reflectivity
 
 		void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
-		const TLorentzVector& transform(const TLorentzRotation& L)     { return _lzVec.Transform(L); }  ///< applies Lorentz-transformation to particle
-		const TLorentzVector& transform(const TVector3&         boost)  ///< applies Lorentz-boost to particle
-		{
-			_lzVec.Boost(boost);
-			return _lzVec;
-		}
+		const std::vector<TLorentzVector>& transform(const std::vector<TLorentzRotation>& L    ); ///< applies Lorentz-transformation to particle
+		const std::vector<TLorentzVector>& transform(const std::vector<TVector3>&         boost);  ///< applies Lorentz-boost to particle
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)M]
 
@@ -124,7 +121,7 @@ namespace rpwa {
 	private:
 
 		int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
-		TLorentzVector _lzVec;     ///< Lorentz vector [GeV]
+		std::vector<TLorentzVector> _lzVec;     ///< Lorentz vector [GeV]
 		int            _index;     ///< index that can be used to label indistinguishable particles
 		int            _refl;      ///< reflectivity
 
@@ -148,7 +145,7 @@ namespace rpwa {
 	               const int                 index    = -1,
 	               const int                 spinProj = 0,
 	               const int                 refl     = 0,
-	               const TVector3&           momentum = TVector3())
+	               const std::vector<TVector3>& momentum = std::vector<TVector3>())
 	{
 		particlePtr part(new particle(partProp, index, spinProj, refl, momentum));
 		return part;
@@ -162,7 +159,7 @@ namespace rpwa {
 	               const int          index              = -1,
 	               const int          spinProj           = 0,
 	               const int          refl               = 0,
-	               const TVector3&    momentum           = TVector3())
+	               const std::vector<TVector3>& momentum = std::vector<TVector3>())
 	{
 		particlePtr part(new particle(partName, requirePartInTable, index, spinProj, refl, momentum));
 		return part;

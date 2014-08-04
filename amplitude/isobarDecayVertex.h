@@ -36,6 +36,7 @@
 #ifndef ISOBARDECAYVERTEX_H
 #define ISOBARDECAYVERTEX_H
 
+#include <vector>
 
 #include "interactionVertex.h"
 #include "massDependence.h"
@@ -77,7 +78,7 @@ namespace rpwa {
 		inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
 		inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
 
-		const TLorentzVector& calcParentLzVec();  ///< (re)calculates parent Lorentz-vector from daughter Lorentz-vectors
+		const std::vector<TLorentzVector>& calcParentLzVec();  ///< (re)calculates parent Lorentz-vector from daughter Lorentz-vectors
 
 		int calcParentCharge   ();  ///< sets parent charge to sum of daughter charges
 		int calcParentBaryonNmb();  ///< sets parent baryon number to sum of daughter baryon numbers
@@ -88,7 +89,7 @@ namespace rpwa {
 		inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
-		inline std::complex<double>     massDepAmplitude() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
+		inline std::vector<std::complex<double> > massDepAmplitude() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
 		inline const massDependencePtr& massDependence  () const { return _massDep;             }  ///< returns mass-dependence
 		inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }    ///< sets mass dependence
 

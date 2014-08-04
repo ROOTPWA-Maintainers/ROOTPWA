@@ -157,13 +157,28 @@ isobarDecayVertex::addOutParticle(const particlePtr&)
 }
 
 
-const TLorentzVector&
+const std::vector<TLorentzVector>&
 isobarDecayVertex::calcParentLzVec()
 {
 	if (_debug)
 		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
 		           << " before = " << parent()->lzVec() << " GeV, " << flush;
-	parent()->setLzVec(daughter1()->lzVec() + daughter2()->lzVec());
+
+	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVec();
+	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVec();
+
+	if(daughter1Vec.size() != daughter2Vec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<TLorentzVector> result(daughter1Vec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = daughter1Vec[i] + daughter2Vec[i];
+	}
+	parent()->setLzVec(result);
+
 	if (_debug)
 		cout << "after = " << parent()->lzVec() << " GeV" << endl;
 	return parent()->lzVec();

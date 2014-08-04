@@ -231,7 +231,7 @@ decayTopology::reflectionEigenValue() const
 
 
 void
-decayTopology::transformFsParticles(const TLorentzRotation& L)
+decayTopology::transformFsParticles(const std::vector<TLorentzRotation>& L)
 {
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i)
 		fsParticles()[i]->transform(L);
@@ -662,13 +662,28 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 	return success;
 }
 
+bool
+decayTopology::clearKinematicsData(const TClonesArray& prodKinMomenta,
+                                   const TClonesArray& decayKinMomenta)
+{
+	// clear production kinematics
+	bool success = productionVertex()->clearKinematicsData(prodKinMomenta);
+	if (not success)
+		return false;
+
+	_fsDataPartMomCache.clear();
+	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
+
+	return true;
+
+}
 
 bool
-decayTopology::readKinematicsData(const TClonesArray& prodKinMomenta,
-                                  const TClonesArray& decayKinMomenta)
+decayTopology::addKinematicsData(const TClonesArray& prodKinMomenta,
+                                 const TClonesArray& decayKinMomenta)
 {
 	// set production kinematics
-	bool success = productionVertex()->readKinematicsData(prodKinMomenta);
+	bool success = productionVertex()->addKinematicsData(prodKinMomenta);
 
 	// check momentum array
 	const int nmbFsPart = decayKinMomenta.GetEntriesFast();
@@ -697,9 +712,11 @@ decayTopology::readKinematicsData(const TClonesArray& prodKinMomenta,
 			printDebug << "setting momentum of final-state particle '" << part->name() << "' "
 			           << "at index [" << i << "] to " << *mom << " GeV "
 			           << "at input data index [" << partIndex << "]" << endl;
-		part->setMomentum(*mom);
+
+		_fsDataPartMomCache[i].push_back(*mom);
 	}
-	fillKinematicsDataCache();
+
+	revertMomenta();
 
 	return success;
 }
@@ -709,7 +726,7 @@ void
 decayTopology::fillKinematicsDataCache()
 {
 	// adjust cache size
-	_fsDataPartMomCache.resize(nmbFsParticles(), TVector3());
+	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
 	// set decay kinematics
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];

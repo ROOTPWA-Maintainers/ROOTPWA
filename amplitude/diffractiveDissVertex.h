@@ -76,10 +76,10 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual const TLorentzVector& referenceLzVec() const { return beam()->lzVec();   }  ///< returns Lorentz-vector that defines z-axis for angular distributions
+		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return beam()->lzVec();   }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&    XParticle     () const { return outParticles()[0]; }  ///< returns X particle
 
-		virtual std::complex<double> productionAmp() const;  ///< returns production amplitude
+		virtual std::vector<std::complex<double> > productionAmp() const;  ///< returns production amplitude
 
 		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
@@ -89,7 +89,8 @@ namespace rpwa {
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
     
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
+		virtual bool clearKinematicsData(const TClonesArray& prodKinMomenta);    ///< new input data
+		virtual bool addKinematicsData(const TClonesArray& prodKinMomenta);    ///< add input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -112,9 +113,9 @@ namespace rpwa {
 	private:
 
 		int      _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
-		TVector3 _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		TVector3 _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

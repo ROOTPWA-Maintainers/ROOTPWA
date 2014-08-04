@@ -245,7 +245,7 @@ isobarDecayTopology::checkConsistency() const
 }
 
 
-const TLorentzVector&
+const std::vector<TLorentzVector>&
 isobarDecayTopology::calcIsobarLzVec()
 {
 	// loop over isobar decay vertices and propagate Lorentz-vectors from final-state particles up to X-system

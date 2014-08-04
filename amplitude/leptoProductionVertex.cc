@@ -157,176 +157,372 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 }
 
 
-complex<double>
+std::vector<complex<double> >
 leptoProductionVertex::productionAmp() const
 {
-	// calculate azimuthal angle between lepton-scattering and
-	// production plane in (virtual photon, target) CM system since
-	TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
-	                                    // and X particle used to define lepton-scattering and
-	                                    // production plane
-	const TLorentzVector targetLv = target()->lzVec();
-	if (targetLv.Vect() == TVector3(0, 0, 0)) {
-		// fixed target case:
-		// since going from fixed target frame into (virtual photon,
-		// target) CM system involves only a boost along the virtual
-		// photon direction and since the normals of both the
-		// lepton-scattering and the production plane are perpendicular to
-		// the virtual photon, the azimuthal angle can be calculated in
-		// the lab frame as well
-		k1 = beamLepton()->momentum();
-		k2 = scatteredLepton()->momentum();
-		q  = virtPhoton()->momentum();
-		v  = XParticle()->momentum();
-	} else {
-		// general case
-		// boost vectors to (virtual photon, target) CM system
-		TLorentzVector       beamLeptonLv      = beamLepton()->lzVec();
-		TLorentzVector       scatteredLeptonLv = scatteredLepton()->lzVec();
-		TLorentzVector       virtPhotonLv      = virtPhoton()->lzVec();
-		TLorentzVector       XParticleLv       = XParticle()->lzVec();
-		const TLorentzVector photonTargetCM    = virtPhotonLv + targetLv;
-		const TVector3       cmBoost           = photonTargetCM.BoostVector();
-		beamLeptonLv.Boost(cmBoost);
-		scatteredLeptonLv.Boost(cmBoost);
-		virtPhotonLv.Boost(cmBoost);
-		XParticleLv.Boost(cmBoost);
-		k1 = beamLeptonLv.Vect();
-		k2 = scatteredLeptonLv.Vect();  // use scattered lepton, because virtual photon is not directly measured
-		q  = virtPhotonLv.Vect();
-		v  = XParticleLv.Vect();
+
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& beamVec            = beamLepton()->lzVec();
+	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec      = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& XParticleVec       = XParticle()->lzVec();
+
+	const std::vector<TVector3>& beamMomentum            = beamLepton()->momentum();
+	const std::vector<TVector3>& scatteredLeptonMomentum = scatteredLepton()->momentum();
+	const std::vector<TVector3>& virtPhotonMomentum      = virtPhoton()->momentum();
+	const std::vector<TVector3>& XParticleMomentum       = XParticle()->momentum();
+
+	const std::vector<double>& epsilons = this->epsilon();
+	const std::vector<double>& deltas   = this->delta(epsilons);
+
+	if(targetVec.size() != epsilons.size() || targetVec.size() != deltas.size() ||
+			targetVec.size() != beamVec.size() || targetVec.size() != scatteredLeptonVec.size() ||
+			targetVec.size() != virtPhotonVec.size() || targetVec.size() != XParticleVec.size() ||
+			targetVec.size() != beamMomentum.size() || targetVec.size() != scatteredLeptonMomentum.size() ||
+			targetVec.size() != virtPhotonMomentum.size() || targetVec.size() != XParticleMomentum.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
 	}
-	// calculate azimuthal angle in [-pi, +pi]
-	const TVector3 leptonPlaneNormal     = k1.Cross(k2);
-	const TVector3 productionPlaneNormal = q.Cross(v);
-	const double   parProjection         = leptonPlaneNormal.Dot(productionPlaneNormal);
-	const double   perpProjection        = leptonPlaneNormal.Cross(productionPlaneNormal).Mag();
-	const double   phi                   = atan2(perpProjection, parProjection);
 
-	// compute some kinematic variables
-	const double epsilon = this->epsilon();
-	const double delta   = this->delta(epsilon);
-	printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
-	          << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
-	// compute some intermediary terms
-	const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
-	const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
-	const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
-	const complex<double> phase = exp(complex<double>(0, phi));
-	printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
+	std::vector<complex<double> > result(target()->lzVec().size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
 	
-	// define lower triangle of virtual photon spin density matrix
-	// rho_{lambda, lambda'}; lambda = -1, 0, 1 as in Schilling and
-	// Wolf (common factor 1/2 is dropped):
-	//   eq. 44 and 57 with 60, where alpha_2 was set to 0 (long. lepton
-	//   polarization), into eq. 62
-	complex<double> rho[3][3];
-	// column with lambda' = -1
-	rho[0][0] = 1 + term;                                     // lambda = -1
-	rho[1][0] = (_longPol * zeta + xi) * phase;               // lambda =  0
-	rho[2][0] = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
-	// column with lambda' =  0
-	rho[1][1] = 2 * (epsilon + delta);                        // lambda =  0
-	rho[2][1] = (_longPol * zeta - xi) * phase;               // lambda = +1
-	// column with lambda' = +1
-	rho[2][2] = 1 - term;                                     // lambda = +1
-	// conjugated elements
-	rho[0][1] = conj(rho[1][0]);
-	rho[0][2] = conj(rho[2][0]);
-	rho[1][2] = conj(rho[2][1]);
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = 0; i < 3; ++i)
-			printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
-	const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
-		                             + rho[0][1] * rho[1][2] * rho[2][0]
-		                             + rho[1][0] * rho[2][1] * rho[0][2]
-		                             - rho[0][2] * rho[1][1] * rho[2][0]
-		                             - rho[1][2] * rho[0][0] * rho[2][1]
-		                             - rho[0][1] * rho[2][2] * rho[1][0];
-	printInfo << "det[rho] = " << detRho << " vs. "
-	          << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
-	                - (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
-	                + 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
-	          << endl;
-
-	// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
-	// triangle matrix with real diagonal elements
-	complex<double> V[3][3];
-	// first column
-	V[0][0] = sqrt(real(rho[0][0]));
-	V[1][0] = rho[1][0] / real(V[0][0]);
-	V[2][0] = rho[2][0] / real(V[0][0]);
-	// second column
-	V[1][1] = sqrt(real(rho[1][1]) - norm(V[1][0]));
-	V[2][1] = (rho[2][1] - V[2][0] * conj(V[1][0])) / real(V[1][1]);
-	// third column
-	V[2][2] = sqrt(real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]));
-	// zero elements
-	V[0][1] = 0;
-	V[0][2] = 0;
-	V[1][2] = 0;
-	printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
-	          << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = 0; i < 3; ++i)
-			printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
-	complex<double> rhoPrime[3][3];
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = 0; i < 3; ++i) {
-			rhoPrime[i][j] = 0;
-			for (unsigned int r = 0; r < 3; ++r)
-				rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
+		// calculate azimuthal angle between lepton-scattering and
+		// production plane in (virtual photon, target) CM system since
+		TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
+											// and X particle used to define lepton-scattering and
+											// production plane
+		const TLorentzVector targetLv = targetVec[i];
+		if (targetLv.Vect() == TVector3(0, 0, 0)) {
+			// fixed target case:
+			// since going from fixed target frame into (virtual photon,
+			// target) CM system involves only a boost along the virtual
+			// photon direction and since the normals of both the
+			// lepton-scattering and the production plane are perpendicular to
+			// the virtual photon, the azimuthal angle can be calculated in
+			// the lab frame as well
+			k1 = beamMomentum[i];
+			k2 = scatteredLeptonMomentum[i];
+			q  = virtPhotonMomentum[i];
+			v  = XParticleMomentum[i];
+		} else {
+			// general case
+			// boost vectors to (virtual photon, target) CM system
+			TLorentzVector       beamLeptonLv      = beamVec[i];
+			TLorentzVector       scatteredLeptonLv = scatteredLeptonVec[i];
+			TLorentzVector       virtPhotonLv      = virtPhotonVec[i];
+			TLorentzVector       XParticleLv       = XParticleVec[i];
+			const TLorentzVector photonTargetCM    = virtPhotonLv + targetLv;
+			const TVector3       cmBoost           = photonTargetCM.BoostVector();
+			beamLeptonLv.Boost(cmBoost);
+			scatteredLeptonLv.Boost(cmBoost);
+			virtPhotonLv.Boost(cmBoost);
+			XParticleLv.Boost(cmBoost);
+			k1 = beamLeptonLv.Vect();
+			k2 = scatteredLeptonLv.Vect();  // use scattered lepton, because virtual photon is not directly measured
+			q  = virtPhotonLv.Vect();
+			v  = XParticleLv.Vect();
 		}
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = 0; i < 3; ++i)
-			printInfo << "deltaRho[" << i << "][" << j << "] = "
-			          << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
+		// calculate azimuthal angle in [-pi, +pi]
+		const TVector3 leptonPlaneNormal     = k1.Cross(k2);
+		const TVector3 productionPlaneNormal = q.Cross(v);
+		const double   parProjection         = leptonPlaneNormal.Dot(productionPlaneNormal);
+		const double   perpProjection        = leptonPlaneNormal.Cross(productionPlaneNormal).Mag();
+		const double   phi                   = atan2(perpProjection, parProjection);
+
+		// compute some kinematic variables
+		const double epsilon = epsilons[i];
+		const double delta   = deltas[i];
+		printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
+				  << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
+		// compute some intermediary terms
+		const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
+		const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
+		const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
+		const complex<double> phase = exp(complex<double>(0, phi));
+		printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
+
+		// define lower triangle of virtual photon spin density matrix
+		// rho_{lambda, lambda'}; lambda = -1, 0, 1 as in Schilling and
+		// Wolf (common factor 1/2 is dropped):
+		//   eq. 44 and 57 with 60, where alpha_2 was set to 0 (long. lepton
+		//   polarization), into eq. 62
+		complex<double> rho[3][3];
+		// column with lambda' = -1
+		rho[0][0] = 1 + term;                                     // lambda = -1
+		rho[1][0] = (_longPol * zeta + xi) * phase;               // lambda =  0
+		rho[2][0] = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
+		// column with lambda' =  0
+		rho[1][1] = 2 * (epsilon + delta);                        // lambda =  0
+		rho[2][1] = (_longPol * zeta - xi) * phase;               // lambda = +1
+		// column with lambda' = +1
+		rho[2][2] = 1 - term;                                     // lambda = +1
+		// conjugated elements
+		rho[0][1] = conj(rho[1][0]);
+		rho[0][2] = conj(rho[2][0]);
+		rho[1][2] = conj(rho[2][1]);
+		for (unsigned int j = 0; j < 3; ++j)
+			for (unsigned int i = 0; i < 3; ++i)
+				printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
+		const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
+										 + rho[0][1] * rho[1][2] * rho[2][0]
+										 + rho[1][0] * rho[2][1] * rho[0][2]
+										 - rho[0][2] * rho[1][1] * rho[2][0]
+										 - rho[1][2] * rho[0][0] * rho[2][1]
+										 - rho[0][1] * rho[2][2] * rho[1][0];
+		printInfo << "det[rho] = " << detRho << " vs. "
+				  << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
+						- (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
+						+ 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
+				  << endl;
+
+		// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
+		// triangle matrix with real diagonal elements
+		complex<double> V[3][3];
+		// first column
+		V[0][0] = sqrt(real(rho[0][0]));
+		V[1][0] = rho[1][0] / real(V[0][0]);
+		V[2][0] = rho[2][0] / real(V[0][0]);
+		// second column
+		V[1][1] = sqrt(real(rho[1][1]) - norm(V[1][0]));
+		V[2][1] = (rho[2][1] - V[2][0] * conj(V[1][0])) / real(V[1][1]);
+		// third column
+		V[2][2] = sqrt(real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]));
+		// zero elements
+		V[0][1] = 0;
+		V[0][2] = 0;
+		V[1][2] = 0;
+		printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
+				  << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
+		for (unsigned int j = 0; j < 3; ++j)
+			for (unsigned int i = 0; i < 3; ++i)
+				printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
+		complex<double> rhoPrime[3][3];
+		for (unsigned int j = 0; j < 3; ++j)
+			for (unsigned int i = 0; i < 3; ++i) {
+				rhoPrime[i][j] = 0;
+				for (unsigned int r = 0; r < 3; ++r)
+					rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
+			}
+		for (unsigned int j = 0; j < 3; ++j)
+			for (unsigned int i = 0; i < 3; ++i)
+				printInfo << "deltaRho[" << i << "][" << j << "] = "
+						  << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
 
 
-	// compute production amplitude for given photon helicity
-	complex<double> prodAmp = 0;
-	return prodAmp;
+		// compute production amplitude for given photon helicity
+		complex<double> prodAmp = 0;
+		result[i] = prodAmp;
+
+	}
+
+	return result;
 }
 
+std::vector<double>
+leptoProductionVertex::Q2() const
+{
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
 
-double
+	std::vector<double> result(virtPhotonVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = - virtPhotonVec[i].Mag2();
+	}
+	return result;
+}
+
+std::vector<double>
+leptoProductionVertex::nu() const
+{
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const double targetMass = target()->mass();
+
+	if(targetVec.size() != virtPhotonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(targetVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = targetVec[i] * virtPhotonVec[i] / targetMass;
+	}
+	return result;
+}
+
+std::vector<double>
+leptoProductionVertex::y() const
+{
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
+
+	if(targetVec.size() != virtPhotonVec.size() || targetVec.size() != beamVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(targetVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = (targetVec[i] * virtPhotonVec[i]) / (targetVec[i] * beamVec[i]);
+	}
+	return result;
+}
+
+std::vector<double>
 leptoProductionVertex::epsilon() const
 {
-	const double Q2    = this->Q2();
-	const double xBj   = this->xBj();
-	const double xBj2  = xBj * xBj;
-	const double y     = this->y();
-	const double y2    = y * y;
+	const std::vector<double> Q2  = this->Q2();
+	const std::vector<double> xBj = this->xBj();
+	const std::vector<double> y   = this->y();
 
-	// calculate kinematic values based on Lorentz invariants
-	// see COMPASS note 2009-6
-	const double gamma2         = 4 * xBj2 * target()->mass2() / Q2;  // eq. 77d^2
-	const double term1          = beamLepton()->mass2() * y2 * gamma2 / Q2;
-	const double term2          = 1 / ((1 - y) * (1 - y));
-	const double u0             = sqrt(1 - term1 * (1 + term2) + term1 * term1 * term2);  // eq. 81
-	const double E1E2           = Q2 * (1 - y) / (y2 * gamma2);  // eq. 80
-	const double Q2Min          = 2 * (E1E2 * (1 - u0) - beamLepton()->mass2());  // eq. 5c and 82
-	const double k1k2           = E1E2 * u0;  // eq. 82
-	const double sin2ThetaHalf  = (Q2 - Q2Min) / (4 * k1k2);  // from eq. 5b
-	const double tan2ThetaHalf  = sin2ThetaHalf / (1 - sin2ThetaHalf);
-	const double term3          = 1 - Q2Min / Q2;
-	const double oneOverEpsilon = 1 + 2 * (1 + 1 / gamma2) * tan2ThetaHalf / (term3 * term3);  // eq. 31 and 77d
-	return 1 / oneOverEpsilon;
+	const double targetMass2 = target()->mass2();
+	const double beamLeptonMass2 = beamLepton()->mass2();
 
-	// // calculate kinematic values based on Lorentz invariants
-	// // see COMPASS note 2009-6
-	// const double gamma2         = 4 * xBj2 * target()->mass2() / Q2;  // eq. 77d^2
-	// const double term1          = beamLepton()->mass2() * y2 * gamma2 / Q2;
-	// const double term2          = 1 / ((1 - y) * (1 - y));
-	// const double u0             = sqrt(1 - term1 * (1 + term2) + term1 * term1 * term2);  // eq. 81
-	// const double v0             = 1 + 2 * (  beamLepton()->mass2() / Q2
-	//                                          - (1 - y) * (1 - u0) / (y2 * gamma2));  // eq. 85
-	// const double v02            = v0 * v0;
-	// const double term3          = (1 - y) * u0 * v0;
-	// const double term4          = y2 * gamma2 / 4;
-	// return (term3 - term4 * v02) / (term3 + y2 / 2 + term4 * (2 - v02));  // eq. 87
+	if(Q2.size() != xBj.size() || Q2.size() != xBj.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(Q2.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+
+		const double xBj2  = xBj[i] * xBj[i];
+		const double y2    = y[i] * y[i];
+
+		// calculate kinematic values based on Lorentz invariants
+		// see COMPASS note 2009-6
+		const double gamma2         = 4 * xBj2 * targetMass2 / Q2[i];  // eq. 77d^2
+		const double term1          = beamLeptonMass2 * y2 * gamma2 / Q2[i];
+		const double term2          = 1 / ((1 - y[i]) * (1 - y[i]));
+		const double u0             = sqrt(1 - term1 * (1 + term2) + term1 * term1 * term2);  // eq. 81
+		const double E1E2           = Q2[i] * (1 - y[i]) / (y2 * gamma2);  // eq. 80
+		const double Q2Min          = 2 * (E1E2 * (1 - u0) - beamLeptonMass2);  // eq. 5c and 82
+		const double k1k2           = E1E2 * u0;  // eq. 82
+		const double sin2ThetaHalf  = (Q2[i] - Q2Min) / (4 * k1k2);  // from eq. 5b
+		const double tan2ThetaHalf  = sin2ThetaHalf / (1 - sin2ThetaHalf);
+		const double term3          = 1 - Q2Min / Q2[i];
+		const double oneOverEpsilon = 1 + 2 * (1 + 1 / gamma2) * tan2ThetaHalf / (term3 * term3);  // eq. 31 and 77d
+		result[i] = 1 / oneOverEpsilon;
+
+		// // calculate kinematic values based on Lorentz invariants
+		// // see COMPASS note 2009-6
+		// const double gamma2         = 4 * xBj2 * target()->mass2() / Q2;  // eq. 77d^2
+		// const double term1          = beamLepton()->mass2() * y2 * gamma2 / Q2;
+		// const double term2          = 1 / ((1 - y) * (1 - y));
+		// const double u0             = sqrt(1 - term1 * (1 + term2) + term1 * term1 * term2);  // eq. 81
+		// const double v0             = 1 + 2 * (  beamLepton()->mass2() / Q2
+		//                                          - (1 - y) * (1 - u0) / (y2 * gamma2));  // eq. 85
+		// const double v02            = v0 * v0;
+		// const double term3          = (1 - y) * u0 * v0;
+		// const double term4          = y2 * gamma2 / 4;
+		// return (term3 - term4 * v02) / (term3 + y2 / 2 + term4 * (2 - v02));  // eq. 87
+
+	}
+
+	return result;
+
 }
 
+std::vector<double>
+leptoProductionVertex::delta() const
+{
+	const std::vector<double>& q2 = Q2();
+	const std::vector<double>& e = epsilon();
+	const double beamMass2 = beamLepton()->mass2();
+
+	if(q2.size() != e.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(q2.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = (2 * beamMass2 / q2[i]) * (1 - e[i]);
+	}
+	return result;
+
+}
+
+std::vector<double>
+leptoProductionVertex::xBj() const
+{
+
+	const std::vector<double>& q2 = Q2();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+
+	if(q2.size() != targetVec.size() || q2.size() != virtPhotonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(q2.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = q2[i] / (2 * (targetVec[i] * virtPhotonVec[i]));
+	}
+	return result;
+
+}
+
+std::vector<double>
+leptoProductionVertex::s() const
+{
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+
+	if(targetVec.size() != virtPhotonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(targetVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = (targetVec[i] + virtPhotonVec[i]).Mag2();
+	}
+	return result;
+
+}
+
+std::vector<double>
+leptoProductionVertex::W() const
+{
+	const std::vector<double>& ss = s();
+
+	std::vector<double> result(ss.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = sqrt(ss[i]);
+	}
+	return result;
+}
+
+std::vector<double>
+leptoProductionVertex::delta(const std::vector<double>& epsilon) const
+{
+	const double beamMass2 = beamLepton()->mass2();
+	const std::vector<double>& q2 = Q2();
+
+	if(q2.size() != epsilon.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	std::vector<double> result(epsilon.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		result[i] = (2 * beamMass2 / q2[i]) * (1 - epsilon[i]);
+	}
+	return result;
+}
 
 void
 leptoProductionVertex::setXFlavorQN()
@@ -406,14 +602,19 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return success;
 }
 
+bool
+leptoProductionVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
+{
+	_beamLeptonMomCache.clear();
+	_scatteredLeptonMomCache.clear();
+	_recoilMomCache.clear();
+	_targetMomCache.clear();
+	return true;
+}
 
 bool
-leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+leptoProductionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 {
-	_beamLeptonMomCache      = TVector3();
-	_scatteredLeptonMomCache = TVector3();
-	_recoilMomCache          = TVector3();
-	_targetMomCache          = TVector3();
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
@@ -431,8 +632,7 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		if (_debug)
 			printDebug << "setting momentum of beam lepton '" << beamLepton()->name()
 			           << "' to " << *beamLeptonMom << " GeV" << endl;
-		beamLepton()->setMomentum(*beamLeptonMom);
-		_beamLeptonMomCache = beamLepton()->momentum();
+		_beamLeptonMomCache.push_back(*beamLeptonMom);
 	} else {
 		printWarn << "production kinematics data entry [0] is not of type TVector3. "
 		          << "cannot read beam lepton momentum." << endl;
@@ -445,8 +645,7 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		if (_debug)
 			printDebug << "setting momentum of scattered lepton '" << beamLepton()->name()
 			           << "' to " << *beamLeptonMom << " GeV" << endl;
-		scatteredLepton()->setMomentum(*scatteredLeptonMom);
-		_scatteredLeptonMomCache = scatteredLepton()->momentum();
+		_scatteredLeptonMomCache.push_back(*scatteredLeptonMom);
 	} else {
 		printWarn << "production kinematics data entry [1] is not of type TVector3. "
 		          << "cannot read scattered lepton momentum." << endl;
@@ -461,8 +660,7 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			if (_debug)
 				printDebug << "setting momentum of recoil particle '" << recoil()->name()
 				           << "' to " << *recoilMom << " GeV" << endl;
-			recoil()->setMomentum(*recoilMom);
-			_recoilMomCache = recoil()->momentum();
+			_recoilMomCache.push_back(*recoilMom);
 		} else {
 			printWarn << "production kinematics data entry [2] is not of type TVector3. "
 			          << "cannot read recoil particle momentum." << endl;
@@ -477,8 +675,7 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			if (_debug)
 				printDebug << "setting momentum of target particle '" << target()->name()
 				           << "' to " << *targetMom << " GeV" << endl;
-			target()->setMomentum(*targetMom);
-			_targetMomCache = target()->momentum();
+			_targetMomCache.push_back(*targetMom);
 		} else {
 			printWarn << "production kinematics data entry [3] is not of type TVector3. "
 			          << "cannot read target particle momentum." << endl;
@@ -486,8 +683,6 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		}
 	}
 
-	// set virtual photon
-	virtPhoton()->setLzVec(beamLepton()->lzVec() - scatteredLepton()->lzVec());
 	return success;
 }
 
@@ -506,8 +701,21 @@ leptoProductionVertex::revertMomenta()
 	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
 	recoil         ()->setMomentum(_recoilMomCache         );
 	target         ()->setMomentum(_targetMomCache         );
+
 	// set virtual photon
-	virtPhoton()->setLzVec(beamLepton()->lzVec() - scatteredLepton()->lzVec());
+	const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
+	const std::vector<TLorentzVector>& scatteredVec = scatteredLepton()->lzVec();
+	if(beamVec.size() != scatteredVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+	std::vector<TLorentzVector> virtPhotonVec(beamVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < virtPhotonVec.size(); ++i) {
+		virtPhotonVec[i] = beamVec[i] - scatteredVec[i];
+	}
+	virtPhoton()->setLzVec(virtPhotonVec);
+
 	return true;
 }
 

@@ -34,7 +34,7 @@ phaseSpaceIntegral* phaseSpaceIntegral::instance()
 }
 
 
-complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
+std::vector<std::complex<double> > phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
 
 	map<const isobarDecayVertex*, string>::iterator name_it = _vertexToSubwaveName.find(&vertex);
 	if(name_it == _vertexToSubwaveName.end()) {
@@ -50,11 +50,21 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 
 	// get Breit-Wigner parameters
 	const particlePtr& parent = vertex.parent();
-	const double       M      = vertex.parent()->lzVec().M();    // parent mass
-	const double       M0     = parent->mass();                  // resonance peak position
-	const double       Gamma0 = parent->width();                 // resonance peak width
+	const std::vector<TLorentzVector>& parentVec = vertex.parent()->lzVec();
+	const double M0     = parent->mass();                  // resonance peak position
+	const double Gamma0 = parent->width();                 // resonance peak width
 
-	return _subwaveNameToIntegral[waveName](M, M0, Gamma0);
+	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < result.size(); ++i) {
+
+		const double M = parentVec[i].M();    // parent mass
+
+		result[i] = _subwaveNameToIntegral[waveName](M, M0, Gamma0);
+
+	}
+
+	return result;
 
 }
 
@@ -247,6 +257,7 @@ double integralTableContainer::getInt0(const double& M0) {
 
 integralTablePoint integralTableContainer::evalInt(const double& M, const unsigned int& nEvents) const {
 
+	/*
 	printInfo << "calculating integral for " << _subWaveName
 	          << " at mother mass = " << M << "GeV with "
 	          << nEvents << " events." << endl;
@@ -328,6 +339,9 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 
 	printSucc << "calculated integral: " << integral << endl;
 	return integralTablePoint(M, integral, error);
+	*/
+
+	return integralTablePoint();
 }
 
 

@@ -181,7 +181,7 @@ likelihoodInterface<complexT>::closeCudaDevice()
 		checkCudaErrors(cudaFree(_d_decayAmps));
 		_d_decayAmps = 0;
 	}
-	checkCudaErrors(cudaThreadExit());
+	//checkCudaErrors(cudaDeviceReset()); // this causes errors!!!
 	if (_cudaInitialized)
 		printInfo << "closing CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
 		          << availableDeviceMem() << " bytes available memory" << endl;

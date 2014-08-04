@@ -30,6 +30,7 @@
 //
 //-------------------------------------------------------------------------
 
+#include <vector>
 
 #include "TVector3.h"
 #include "TLorentzRotation.h"
@@ -44,6 +45,13 @@
 using namespace std;
 using namespace rpwa;
 
+
+template<typename T>
+static vector<T> make_vector_1(const T& element) {
+	vector<T> vec;
+	vec.push_back(element);
+	return vec;
+}
 
 int
 main(int argc, char** argv)
@@ -79,10 +87,10 @@ main(int argc, char** argv)
 
 	// test construction of particles
 	if (0) {
-		TVector3 mom;
-		mom = TVector3(1, 2, 3);
+		vector<TVector3> mom;
+		mom = make_vector_1(TVector3(1, 2, 3));
 		const particle p1("pi+", true, 0,  0, 0, mom);
-		mom = TVector3(2, 3, 4);
+		mom = make_vector_1(TVector3(2, 3, 4));
 		const particle p2("pi-", true, 1, -1, 0, mom);
 		particle p3 = p2;
 		p3.setName("X+");

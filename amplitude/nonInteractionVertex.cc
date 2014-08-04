@@ -75,11 +75,16 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return true;
 }
 
+bool
+nonInteractionVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
+{
+	_XParticleCache.clear();
+	return true;
+}
 
 bool
-nonInteractionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+nonInteractionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 {
-	_XParticleCache   = TVector3();
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
@@ -96,8 +101,7 @@ nonInteractionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			printDebug << "setting momentum of beam particle '" << XParticle()->name()
 			           << "' to " << *XParticleMom << " GeV" << endl;
 		}
-		XParticle()->setMomentum(*XParticleMom);
-		_XParticleCache = XParticle()->momentum();
+		_XParticleCache.push_back(*XParticleMom);
 	} else {
 		printWarn << "production kinematics data entry [0] is not of type TVector3. "
 		          << "cannot read beam particle momentum." << endl;

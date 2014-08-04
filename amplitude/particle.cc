@@ -63,13 +63,15 @@ particle::particle(const particleProperties& partProp,
                    const int                 index,
                    const int                 spinProj,
                    const int                 refl,
-                   const TVector3&           momentum)
+                   const std::vector<TVector3>& momentum)
 	: particleProperties(partProp),
 	  _spinProj         (spinProj),
-	  _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
+	  //_lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
 	  _index            (index),
 	  _refl             (refl)
-{ }
+{
+	setMomentum(momentum);
+}
 
 	
 particle::particle(const string&   partName,
@@ -77,7 +79,7 @@ particle::particle(const string&   partName,
                    const int       index,
                    const int       spinProj,
                    const int       refl,
-                   const TVector3& momentum)
+                   const std::vector<TVector3>& momentum)
 	: particleProperties(),
 	  _spinProj(spinProj),
 	  _index   (index),
@@ -86,7 +88,8 @@ particle::particle(const string&   partName,
 	if (not fillFromDataTable(partName, requirePartInTable))
 		// set at least name
 		setName(partName);
-	_lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
+	//_lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
+	setMomentum(momentum);
 }
 
 	
@@ -123,6 +126,58 @@ particle::operator =(const particle& part)
 	return *this;
 }
 
+
+const std::vector<TVector3>
+particle::momentum() const
+{
+	std::vector<TVector3> result(_lzVec.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
+		result[i] = _lzVec[i].Vect();
+	}
+	return result;
+}
+
+void
+particle::setMomentum(const std::vector<TVector3>& momentum)
+{
+	_lzVec.clear();
+	_lzVec.resize(momentum.size());
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < momentum.size(); ++i) {
+		const TVector3& m = momentum[i];
+		_lzVec[i] = TLorentzVector(m, sqrt(m.Mag2() + mass() * mass()));
+	}
+}
+
+const std::vector<TLorentzVector>&
+particle::transform(const std::vector<TLorentzRotation>& L)
+{
+	if(_lzVec.size() != L.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
+		_lzVec[i].Transform(L[i]);
+	}
+	return _lzVec;
+}
+
+
+const std::vector<TLorentzVector>&
+particle::transform(const std::vector<TVector3>& boost)
+{
+	if(_lzVec.size() != boost.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+	// !! EVENT PARALLEL LOOP
+	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
+		_lzVec[i].Boost(boost[i]);
+	}
+	return _lzVec;
+}
 
 particle*
 particle::doClone() const
@@ -174,7 +229,7 @@ particle::print(ostream& out) const
 	out << ", "
 	    << "spin proj. = "     << spinQn(_spinProj) << ", "
 	    << "reflectivity = "   << _refl             << ", "
-	    << "Lorentz-vector = " << _lzVec            << " GeV, "
+	//    << "Lorentz-vector = " << _lzVec            << " GeV, "
 	    << "index = "          << _index;
 	return out;
 }

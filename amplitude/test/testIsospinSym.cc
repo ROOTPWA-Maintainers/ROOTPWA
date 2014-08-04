@@ -127,8 +127,14 @@ calcNewAmps(const string&             rootInFileName,
 			continue;
 		}
 
-		if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-			amps.push_back((*amp)());
+		topo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta);
+		if (topo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+			const vector<complex<double> > ampResult = (*amp)();
+			if(ampResult.size() != 1) {
+				cout << "ERROR: wrong vector size. aborting!" << endl;
+				return 0;
+			}
+			amps.push_back(ampResult[0]);
 			if ((amps.back().real() == 0) or (amps.back().imag() == 0))
 				printWarn << "event " << eventIndex << ": " << amps.back() << endl;
 			// topo->productionVertex()->productionAmp();

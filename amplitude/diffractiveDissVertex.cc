@@ -148,10 +148,16 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 }
 
 
-complex<double>
+std::vector<std::complex<double> >
 diffractiveDissVertex::productionAmp() const
 {
-	return 1;
+	unsigned int num = _beamMomCache.size();
+	if(num == 0) {
+		printErr << "size of per-event-data vector is zero. aborting." << endl;
+		throw;
+	}
+	std::vector<std::complex<double> > result(num, 1);
+	return result;
 }
 
 
@@ -222,13 +228,18 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return success;
 }
 
+bool
+diffractiveDissVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
+{
+	_beamMomCache.clear();
+	_recoilMomCache.clear();
+	_targetMomCache.clear();
+	return true;
+}
 
 bool
-diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+diffractiveDissVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 {
-	_beamMomCache   = TVector3();
-	_recoilMomCache = TVector3();
-	_targetMomCache = TVector3();
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
@@ -246,8 +257,7 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		if (_debug)
 			printDebug << "setting momentum of beam particle '" << beam()->name()
 			           << "' to " << *beamMom << " GeV" << endl;
-		beam()->setMomentum(*beamMom);
-		_beamMomCache = beam()->momentum();
+		_beamMomCache.push_back(*beamMom);
 	} else {
 		printWarn << "production kinematics data entry [0] is not of type TVector3. "
 		          << "cannot read beam particle momentum." << endl;
@@ -261,8 +271,7 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			if (_debug)
 				printDebug << "setting momentum of recoil particle '" << recoil()->name()
 				           << "' to " << *recoilMom << " GeV" << endl;
-			recoil()->setMomentum(*recoilMom);
-			_recoilMomCache = recoil()->momentum();
+			_recoilMomCache.push_back(*recoilMom);
 		} else {
 			printWarn << "production kinematics data entry [1] is not of type TVector3. "
 			          << "cannot read recoil particle momentum." << endl;
@@ -277,14 +286,15 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			if (_debug)
 				printDebug << "setting momentum of target particle '" << target()->name()
 				           << "' to " << *targetMom << " GeV" << endl;
-			target()->setMomentum(*targetMom);
-			_targetMomCache = target()->momentum();
+			_targetMomCache.push_back(*targetMom);
 		} else {
 			printWarn << "production kinematics data entry [2] is not of type TVector3. "
 			          << "cannot read target particle momentum." << endl;
 			success = false;
 		}
 	}
+
+	revertMomenta();
 
 	return success;
 }

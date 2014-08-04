@@ -79,7 +79,7 @@ namespace rpwa {
 		virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
 		virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
 
-		void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
+		void transformOutParticles(const std::vector<TLorentzRotation>& L);  ///< applies Lorentz-transformation to outgoing particles
 
 		inline unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
 		inline unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
