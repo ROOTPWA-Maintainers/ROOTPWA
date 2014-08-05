@@ -126,15 +126,11 @@ particle::operator =(const particle& part)
 	return *this;
 }
 
-
-const std::vector<TVector3>
-particle::momentum() const
+std::vector<TVector3>
+particle::momentum () const
 {
 	std::vector<TVector3> result(_lzVec.size());
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
-		result[i] = _lzVec[i].Vect();
-	}
+	parallelLorentzVectorToVector3(_lzVec, result);
 	return result;
 }
 
@@ -144,23 +140,17 @@ particle::setMomentum(const std::vector<TVector3>& momentum)
 	_lzVec.clear();
 	_lzVec.resize(momentum.size());
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: particle::setMomentum" << endl;
 	for(unsigned int i = 0; i < momentum.size(); ++i) {
-		const TVector3& m = momentum[i];
-		_lzVec[i] = TLorentzVector(m, sqrt(m.Mag2() + mass() * mass()));
+		const TVector3& mom = momentum[i];
+		_lzVec[i] = TLorentzVector(mom, sqrt(mom.Mag2() + mass() * mass()));
 	}
 }
 
 const std::vector<TLorentzVector>&
 particle::transform(const std::vector<TLorentzRotation>& L)
 {
-	if(_lzVec.size() != L.size()) {
-		printErr << "size of per-event-data vectors does not match. aborting." << endl;
-		throw;
-	}
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
-		_lzVec[i].Transform(L[i]);
-	}
+	parallelLorentzRotation(_lzVec, L);
 	return _lzVec;
 }
 
@@ -168,14 +158,7 @@ particle::transform(const std::vector<TLorentzRotation>& L)
 const std::vector<TLorentzVector>&
 particle::transform(const std::vector<TVector3>& boost)
 {
-	if(_lzVec.size() != boost.size()) {
-		printErr << "size of per-event-data vectors does not match. aborting." << endl;
-		throw;
-	}
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < _lzVec.size(); ++i) {
-		_lzVec[i].Boost(boost[i]);
-	}
+	parallelLorentzBoost(_lzVec, boost);
 	return _lzVec;
 }
 

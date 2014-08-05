@@ -45,6 +45,7 @@
 #include "TLorentzRotation.h"
 
 #include "conversionUtils.hpp"
+#include "parallelUtils.hpp"
 #include "particleProperties.h"
 
 
@@ -86,7 +87,7 @@ namespace rpwa {
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
 		int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
-		const std::vector<TVector3> momentum () const;                                      ///< returns three-momentum of particle
+		std::vector<TVector3> momentum    () const;                                         ///< returns three-momentum of particle
 		const std::vector<TLorentzVector>& lzVec () const { return _lzVec;               }  ///< returns Lorentz vector of particle
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
@@ -107,6 +108,8 @@ namespace rpwa {
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
 		virtual std::string label() const;  ///< returns particle label
+
+		unsigned int numParallelEvents() { return _lzVec.size(); } ///< the number of events handled in parallel (= size of event data arrays)
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

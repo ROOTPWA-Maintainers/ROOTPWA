@@ -56,6 +56,7 @@ std::vector<std::complex<double> > phaseSpaceIntegral::operator()(const isobarDe
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: phaseSpaceIntegral::operator()" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		const double M = parentVec[i].M();    // parent mass

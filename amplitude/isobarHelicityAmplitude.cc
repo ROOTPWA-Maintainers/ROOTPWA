@@ -69,6 +69,7 @@ isobarHelicityAmplitude::hfTransform(const std::vector<TLorentzVector>& daughter
 	std::vector<TLorentzRotation> result(daughterLv.size());
 
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: isobarHelicityAmplitude::hfTransform" << endl;
 	for(unsigned int i = 0; i < daughterLv.size(); ++i) {
 
 		TLorentzVector daughter = daughterLv[i];
@@ -191,27 +192,23 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int       P      = parent->P();
 	const int       refl   = parent->reflectivity();
 
-	std::vector<double> phi(numEvents, 0);
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < phi.size(); ++i) {
-		phi[i] = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
-	}
+	std::vector<double> phi(numEvents);
+	parallelLorentzVectorPhi(daughter1->lzVec(), phi); // use daughter1 as analyzer
 
 	std::vector<double> theta(numEvents, 0);
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < phi.size(); ++i) {
-		theta[i] = daughter1->lzVec()[i].Theta();
-	}
+	parallelLorentzVectorTheta(daughter1->lzVec(), theta);
 
 	std::vector<std::complex<double> > DFunc(numEvents);
 	if (topVertex and _useReflectivityBasis) {
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 1" << endl;
 		for(unsigned int i = 0; i < phi.size(); ++i) {
 			DFunc[i] = DFunctionReflConj<complex<double> >(J, Lambda, lambda, P, refl, phi[i], theta[i], 0, _debug);
 		}
 
 	} else {
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 2" << endl;
 		for(unsigned int i = 0; i < phi.size(); ++i) {
 			DFunc[i] = DFunctionConj<complex<double> >(J, Lambda, lambda, phi[i], theta[i], 0, _debug);
 		}
@@ -227,6 +224,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	// calculate decay amplitude
 	std::vector<std::complex<double> > amp(numEvents);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3" << endl;
 	for(unsigned int i = 0; i < amp.size(); ++i) {
 
 		// calulate barrier factor

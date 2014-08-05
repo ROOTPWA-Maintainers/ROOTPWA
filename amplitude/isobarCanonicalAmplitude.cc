@@ -106,6 +106,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 		const std::vector<TLorentzVector>& parentVec = vertex->parent()->lzVec();
 		std::vector<TVector3> rfBoost(parentVec.size());
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarCanonicalAmplitude::transformDaughters" << endl;
 		for(unsigned int k = 0; k < rfBoost.size(); ++k) {
 			rfBoost[k] = - parentVec[k].BoostVector();
 		}
@@ -162,17 +163,11 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
 
-	std::vector<double> phi(numEvents, 0);
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < phi.size(); ++i) {
-		phi[i] = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
-	}
+	std::vector<double> phi(numEvents);
+	parallelLorentzVectorPhi(daughter1->lzVec(), phi); // use daughter1 as analyzer
 
-	std::vector<double> theta(numEvents, 0);
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < phi.size(); ++i) {
-		theta[i] = daughter1->lzVec()[i].Theta();
-	}
+	std::vector<double> theta(numEvents);
+	parallelLorentzVectorTheta(daughter1->lzVec(), theta);
 
 	std::vector<std::complex<double> > amp(numEvents, 0);
 
@@ -203,6 +198,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 		// multiply spherical harmonic
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 1" << endl;
 		for(unsigned int i = 0; i < amp.size(); ++i) {
 			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta[i], phi[i], _debug);
 		}
@@ -210,6 +206,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	}
 
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 2" << endl;
 	for(unsigned int i = 0; i < amp.size(); ++i) {
 
 		// calulate barrier factor

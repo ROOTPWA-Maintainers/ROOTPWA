@@ -77,16 +77,20 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: flatRangeMassDependence::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 		if (fabs(parentVec[i].M() - parent->mass()) < parent->width()/2.) {
 			result[i] = 1.;
 		}
+	}
 
-		if (_debug)
+	if(_debug) {
+		for(unsigned int i = 0; i < result.size(); ++i) {
 			printDebug << name() << " M = " << parentVec[i].M()
-			                     << ", M0 = " << parent->mass()
-			                     << ", G0 = " << parent->width()
-			                     << ", amp = " << result[i] << endl;
+								 << ", M0 = " << parent->mass()
+								 << ", G0 = " << parent->width()
+								 << ", amp = " << result[i] << endl;
+		}
 	}
 
 	return result;
@@ -114,6 +118,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 		std::vector<std::complex<double> > result(parentVec.size(), 0);
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: relativisticBreitWigner::amp" << endl;
 		for(unsigned int i = 0; i < result.size(); ++i) {
 
 			// get Breit-Wigner parameters
@@ -129,13 +134,13 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 			const unsigned int L      = v.L();
 
 			complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
+			result[i] = bw;
+
 			if (_debug)
 				printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 						   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
 						   << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
 						   << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
-
-			result[i] = bw;
 
 		}
 
@@ -165,6 +170,7 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: constWidthBreitWigner::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		// get Breit-Wigner parameters
@@ -175,12 +181,12 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 		const double          B  = M0 * M0 - M * M;
 		const complex<double> bw = (A / (B * B + A * A)) * complex<double>(B, A);
 		// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		result[i] = bw;
+
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
 					   << maxPrecisionDouble(bw) << endl;
-
-		result[i] = bw;
 
 	}
 
@@ -205,6 +211,7 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: rhoBreitWigner::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		// get Breit-Wigner parameters
@@ -231,13 +238,13 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 		const double          C  = M0 * Gamma;
 		const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
 		// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
+		result[i] = bw;
+
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
 					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
 					   << "= " << maxPrecisionDouble(bw) << endl;
-
-		result[i] = bw;
 
 	}
 
@@ -263,6 +270,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: f0980BreitWigner::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		// get Breit-Wigner parameters
@@ -282,13 +290,13 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 		const double          B  = M0 * M0 - M * M;
 		const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
 		// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
+		result[i] = bw;
+
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
 					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
 					   << "= " << maxPrecisionDouble(bw) << endl;
-
-		result[i] = bw;
 
 	}
 
@@ -360,6 +368,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: piPiSWaveAuMorganPenningtonM::amp" << endl;
 	for(unsigned int k = 0; k < result.size(); ++k) {
 
 		const complex<double> imag(0, 1);
@@ -407,11 +416,11 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 		invertMatrix<complex<double> >(M - imag * rho, _T);
 		const complex<double> amp = _T(0, 0);
+		result[k] = amp;
+
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
-
-		result[k] = amp;
 
 	}
 
@@ -446,6 +455,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: piPiSWaveAuMorganPenningtonVes::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		const double M = parentVec[i].M();
@@ -463,11 +473,11 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 		}
 
 		const complex<double> amp = ampM[i] - coupling * bw;
+		result[i] = amp;
+
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
-
-		result[i] = amp;
 	}
 
 	return result;
@@ -508,6 +518,7 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: rhoPrimeMassDep::amp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		// get Breit-Wigner parameters
@@ -529,12 +540,11 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 		// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
 
 		const complex<double> bw = (4 * bw1 - 3 * bw2) / 7;
+		result[i] = bw;
 
 		if (_debug)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
 					   << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
-
-		result[i] = bw;
 
 	}
 

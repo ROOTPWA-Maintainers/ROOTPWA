@@ -134,22 +134,8 @@ isobarAmplitude::amplitude() const
 	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
 
 		std::vector<std::complex<double> > permAmp = symTermAmp(_symTermMaps[i].fsPartPermMap);
-
-		if(amp.size() != permAmp.size()) {
-			printErr << "size of per-event-data vectors does not match. aborting." << endl;
-			printErr << "numEvents = " << numEvents << endl;
-			printErr << "amp.size() = " << amp.size() << endl;
-			printErr << "permAmp.size() = " << permAmp.size() << endl;
-			printErr << "aborting." << endl;
-			throw;
-		}
-
-		std::complex<double> symFactor = _symTermMaps[i].factor;
-
-		// !! EVENT PARALLEL LOOP
-		for(unsigned int k = 0; k < amp.size(); ++k) {
-			amp[k] += symFactor * permAmp[k];
-		}
+		parallelMultiply(permAmp, _symTermMaps[i].factor);
+		parallelAdd(amp, permAmp);
 
 	}
 	return amp;
@@ -168,6 +154,7 @@ isobarAmplitude::gjTransform(const std::vector<TLorentzVector>& beamLv,  // beam
 
 	std::vector<TLorentzRotation> result(beamLv.size());
 	// !! EVENT PARALLEL LOOP
+	cout << "EPL: isobarAmplitude::gjTransform" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
 
 		TLorentzVector beam    = beamLv[i];
@@ -212,21 +199,15 @@ isobarAmplitude::spaceInvertDecay() const
 
 	// perform parity transformation on final state particles in X rest frame
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const particlePtr& part     = _decay->fsParticles()[i];
+		const particlePtr& part = _decay->fsParticles()[i];
 		std::vector<TLorentzVector> fsPartLv = part->lzVec();
-		// !! EVENT PARALLEL LOOP
-		for(unsigned int k = 0; k < fsPartLv.size(); ++i) {
-			fsPartLv[k] = TLorentzVector(-fsPartLv[k].Vect(), fsPartLv[k].E());
-		}
+		parallelLorentzVectorNegate3(fsPartLv);
 		part->setLzVec(fsPartLv);
 
 	}
 
 	// transform final state particles back to lab frame
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int k = 0; k < gjTrans.size(); ++k) {
-		gjTrans[k].Invert();
-	}
+	parallelLorentzRotationInvert(gjTrans);
 	_decay->transformFsParticles(gjTrans);
 }
 
@@ -248,6 +229,7 @@ isobarAmplitude::reflectDecay() const
 		const particlePtr& part     = _decay->fsParticles()[i];
 		std::vector<TLorentzVector> fsPartLv = part->lzVec();
 		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarAmplitude::reflectDecay" << endl;
 		for(unsigned int k = 0; k < fsPartLv.size(); ++i) {
 			fsPartLv[k].SetY(- fsPartLv[k].Y());
 		}
@@ -255,10 +237,7 @@ isobarAmplitude::reflectDecay() const
 	}
 
 	// transform final state particles back to lab frame
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int k = 0; k < gjTrans.size(); ++k) {
-		gjTrans[k].Invert();
-	}
+	parallelLorentzRotationInvert(gjTrans);
 	_decay->transformFsParticles(gjTrans);
 }
 
@@ -319,6 +298,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 
 			std::vector<std::complex<double> > amp(numEvents, 0);
 			// !! EVENT PARALLEL LOOP
+			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum" << endl;
 			for(unsigned int i = 0; i < amp.size(); ++i) {
 				amp[i] = parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
 			}
@@ -333,10 +313,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 						   << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
 						   << maxPrecisionDouble(amp) << endl;
 
-			// !! EVENT PARALLEL LOOP
-			for(unsigned int i = 0; i < ampSum.size(); ++i) {
-				ampSum[i] += amp[i];
-			}
+			parallelAdd(ampSum, amp);
 
 		}
 

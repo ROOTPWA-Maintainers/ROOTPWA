@@ -172,15 +172,13 @@ isobarDecayVertex::calcParentLzVec()
 		throw;
 	}
 
-	std::vector<TLorentzVector> result(daughter1Vec.size());
-	// !! EVENT PARALLEL LOOP
-	for(unsigned int i = 0; i < result.size(); ++i) {
-		result[i] = daughter1Vec[i] + daughter2Vec[i];
-	}
+	std::vector<TLorentzVector> result = daughter1Vec;
+	parallelAdd(result, daughter2Vec);
 	parent()->setLzVec(result);
 
 	if (_debug)
 		cout << "after = " << parent()->lzVec() << " GeV" << endl;
+
 	return parent()->lzVec();
 }
 
