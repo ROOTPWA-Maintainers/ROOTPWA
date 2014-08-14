@@ -81,10 +81,17 @@ if __name__ == "__main__":
 
 	config = pyRootPwa.rootPwaConfig(args.configFileName)
 
-	integral = pyRootPwa.core.ampIntegralMatrix()
-	if not integral.readAscii(args.integralFile):
-		printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
-		sys.exit(1)
+	if config.outputFileFormat == "root":
+		# read integral matrix from ROOT file
+		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
+		integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get("integral"))
+		integralFile.Close()
+	else:
+		# read integral matrix from ASCII file
+		integral = pyRootPwa.core.ampIntegralMatrix()
+		if not integral.readAscii(args.integralFile):
+			printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
+			sys.exit(1)
 	nmbNormEvents = integral.nmbEvents()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
