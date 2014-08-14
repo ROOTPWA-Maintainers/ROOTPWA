@@ -117,7 +117,7 @@ if __name__ == "__main__":
 				pyRootPwa.utils.printErr("Keyfile '" + keyfile + "' not valid. Aborting...")
 				sys.exit(1)
 	else:
-		keyfiles = pyRootPwa.utils.getListOfKeyfiles(pyRootPwa.config.keyfilePattern)
+		keyfiles = pyRootPwa.utils.getListOfKeyfiles(config.keyfilePattern)
 		if len(keyfiles) == 0:
 			pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
 			sys.exit(1)
