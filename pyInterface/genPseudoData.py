@@ -151,7 +151,10 @@ if __name__ == "__main__":
 	waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
+		if config.outputFileFormat == "root":
+			keyfile = 'keyfiles/' + waveName + ".key"
+		else:
+			keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
 		if not os.path.isfile(keyfile):
 			pyRootPwa.utils.printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
