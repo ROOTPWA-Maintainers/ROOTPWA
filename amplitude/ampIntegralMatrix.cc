@@ -686,8 +686,8 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	const unsigned int nmbAmpTrees = trees.size();
 
 	// get amplitude leafs
-	_waveNames.resize(waveIndex + nmbAmpTrees + 1);
-	_waveDescriptions.resize(waveIndex + nmbAmpTrees + 1);
+	_waveNames.resize(waveIndex + nmbAmpTrees);
+	_waveDescriptions.resize(waveIndex + nmbAmpTrees);
 	ampTrees.resize(nmbAmpTrees, NULL);
 	ampTreeLeafs.resize(nmbAmpTrees, NULL);
 	for (unsigned int i = 0; i < nmbAmpTrees; ++i) {
