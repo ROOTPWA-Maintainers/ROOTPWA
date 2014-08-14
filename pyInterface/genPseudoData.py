@@ -15,22 +15,22 @@ def norm(c):
 def getBestFitResult(massBinCenter, fitResultTree):
 	fitResult = pyRootPwa.core.fitResult().getAsRootObject()
 	fitResultTree.SetBranchAddress(config.fitResultBranchName, fitResult)
-	massBinCenterBest = 0.
 	bestIndex = 0
+	bestMass = 0.
 	bestLikeli = 0.
 	for i in range(fitResultTree.GetEntries()):
 		fitResultTree.GetEntry(i)
 		mass = fitResult.massBinCenter()
-		logLike = fitResult.logLikelihood()
-		if i == 0 or abs(massBinCenter - mass) < abs(massBinCenter - massBinCenterBest):
+		likeli = fitResult.logLikelihood()
+		if i == 0 or abs(massBinCenter - mass) < abs(massBinCenter - bestMass):
 			bestIndex = i
-			bestLikeli = logLike
-			massBinCenterBest = mass
-		elif abs(massBinCenter - mass) == abs(massBinCenter - massBinCenterBest):
-			if logLike < bestLike:
+			bestMass = mass
+			bestLikeli = likeli
+		elif abs(massBinCenter - mass) == abs(massBinCenter - bestMass):
+			if likeli < bestLikeli:
 				bestIndex = i
-				massBinCenterBest = mass
-				logLikeBest = logLike
+				bestMass = mass
+				bestLikeli = likeli
 	fitResultTree.GetEntry(bestIndex)
 	return pyRootPwa.core.fitResult(fitResult)
 
