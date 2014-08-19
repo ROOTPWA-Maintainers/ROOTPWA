@@ -109,9 +109,9 @@ usage(const string& progName,
 	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-		 << "        -e         set minimizer storage level to 0 (only available for Minuit2, default: off)" << endl
+	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: on)" << endl
 #else
-	     << "        -e         set minimizer storage level to 0 [not supported; ROOT version too low]" << endl
+	     << "        -e         set minimizer storage level to 1 [not supported; ROOT version too low]" << endl
 #endif
 #ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
@@ -200,7 +200,9 @@ main(int    argc,
 	string       minimizerType[2]    = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	int          minimizerStrategy   = 1;                      // minimizer strategy
 	double       minimizerTolerance  = 1e-10;                  // minimizer tolerance
-	bool         saveMinimizerMemory = false;
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
+	bool         saveMinimizerMemory = true;
+#endif
 	bool         cudaEnabled         = false;                  // if true CUDA kernels are activated
 	bool         quiet               = false;
 	extern char* optarg;
@@ -268,7 +270,7 @@ main(int    argc,
 			break;
 		case 'e':
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-			saveMinimizerMemory = true;
+			saveMinimizerMemory = false;
 #endif
 			break;
 		case 'c':
