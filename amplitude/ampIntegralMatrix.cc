@@ -474,7 +474,7 @@ ampIntegralMatrix::readAscii(istream& in)
 	for (unsigned int i = 0; i < nmbRows; ++i)
 		for (unsigned int j = 0; j < nmbCols; ++j) {
 			if (not (in >> _integrals[i][j]) or in.eof()) {
-				printErr << "could not read integral values. stream seems trunkated." << endl;
+				printErr << "could not read integral values. stream seems truncated." << endl;
 				throw;
 			}
 		}
@@ -485,7 +485,7 @@ ampIntegralMatrix::readAscii(istream& in)
 		string       waveName;
 		unsigned int waveIndex;
 		if (not (in >> waveName >> waveIndex)) {
-			printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
+			printErr << "could not read wave name -> index map. stream seems truncated." << endl;
 			return false;
 		}
 		_waveNameToIndexMap[waveName] = waveIndex;

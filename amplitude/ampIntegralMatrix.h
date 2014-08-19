@@ -118,9 +118,9 @@ namespace rpwa {
 #endif
 
 		std::complex<double> element(const unsigned int waveIndexI,
-		                             const unsigned int waveIndexJ) const;  ///< returns integral matrix element devided by number of events defined by index pair
+		                             const unsigned int waveIndexJ) const;  ///< returns integral matrix element divided by number of events defined by index pair
 		std::complex<double> element(const std::string& waveNameI,
-		                             const std::string& waveNameJ)  const  ///< returns integral matrix element devided by number of events defined by pair of wave names
+		                             const std::string& waveNameJ)  const  ///< returns integral matrix element divided by number of events defined by pair of wave names
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
 
