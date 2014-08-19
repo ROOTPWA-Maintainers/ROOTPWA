@@ -38,6 +38,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "spinUtils.hpp"
 #include "isobarDecayVertex.h"
+#include "phaseSpaceIntegral.h"
 
 
 using namespace std;
@@ -90,7 +91,9 @@ isobarDecayVertex::isobarDecayVertex(const isobarDecayVertex& vert)
 
 
 isobarDecayVertex::~isobarDecayVertex()
-{ }
+{
+	phaseSpaceIntegral::instance()->removeVertex(this);
+}
 
 
 isobarDecayVertex&

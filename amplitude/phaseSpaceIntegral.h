@@ -86,6 +86,7 @@ namespace rpwa {
 
 		static phaseSpaceIntegral* instance();
 		std::complex<double> operator()(const isobarDecayVertex& vertex);
+		void removeVertex(const isobarDecayVertex* vertex);
 
 	  private:
 
