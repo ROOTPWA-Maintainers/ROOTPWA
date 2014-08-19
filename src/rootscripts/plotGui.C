@@ -169,7 +169,7 @@ void MyMainFrame::PrintSelected()
    Int_t colour=1;
    double binwidth=0.060;
 
-   TGraphErrors* gph = new TGraphErrors(n*3);
+   TGraphErrors* gph = new TGraphErrors(n);
    stringstream graphName;
    graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
    cout << "creating graph   " << graphName.str() << endl;
@@ -181,7 +181,7 @@ void MyMainFrame::PrintSelected()
    gph->SetLineColor(colour);
 
    TGraphErrors* gphP1 = (TGraphErrors*)gph->Clone("gph+1");
-   TGraphErrors* gphM1 = (TGraphErrors*)gph->Clone("gph+1");
+   TGraphErrors* gphM1 = (TGraphErrors*)gph->Clone("gph-1");
    gphP1->SetMarkerColor(2);
    gphP1->SetLineColor(2);
    gphM1->SetMarkerColor(3);
@@ -271,7 +271,7 @@ void MyMainFrame::PrintSelected()
      if(i>11){
        double mpre;
        double phpre;
-       gph->GetPoint(i-3,mpre,phpre);
+       gph->GetPoint(i-1,mpre,phpre);
        double diff1=fabs(ph-phpre);
        double diff2=fabs(ph+360-phpre);
        double diff3=fabs(ph-360-phpre);
@@ -281,25 +281,25 @@ void MyMainFrame::PrintSelected()
      
      
      
-     gph->SetPoint(i*3,
+     gph->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 ph);
-     gph->SetPointError(i*3,
+     gph->SetPointError(i,
 		      binwidth*0.5,
 		      pherr);
      
      // add point +- 360 degree
-     gphP1->SetPoint(i*3+1,
+     gphP1->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 ph+360);
-     gphP1->SetPointError(i*3+1,
+     gphP1->SetPointError(i,
 		      binwidth*0.5,
 		      pherr);
      
-     gphM1->SetPoint(i*3+2,
+     gphM1->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 ph-360);
-     gphM1->SetPointError(i*3+2,
+     gphM1->SetPointError(i,
 			binwidth*0.5,
 			pherr);
      
