@@ -49,6 +49,7 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "TStopwatch.h"
+#include "Minuit2/Minuit2Minimizer.h"
 
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
@@ -107,6 +108,11 @@ usage(const string& progName,
 	     << "                                         Fumili:      -" << endl
 	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
+		 << "        -e         set minimizer storage level to 0 (only available for Minuit2, default: off)" << endl
+#else
+	     << "        -e         set minimizer storage level to 0 [not supported; ROOT version too low]" << endl
+#endif
 #ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
 #else
@@ -177,29 +183,30 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
-	const string progName           = argv[0];
-	double       massBinMin         = 0;                      // [MeV/c^2]
-	double       massBinMax         = 0;                      // [MeV/c^2]
-	string       waveListFileName   = "";                     // wavelist filename
-	string       ampDirName         = ".";                    // decay amplitude directory name
-	bool         useRootAmps        = false;                  // if true .root amplitude files are read
-	//bool         useRootAmps        = true;                   // if true .root amplitude files are read
-	string       outFileName        = "fitresult.root";       // output filename
-	string       startValFileName   = "";                     // file with start values
-	bool         useNormalizedAmps  = false;                  // if true normalized amplitudes are used
-	string       normIntFileName    = "";                     // file with normalization integrals
-	string       accIntFileName     = "";                     // file with acceptance integrals
-	unsigned int numbAccEvents      = 0;                      // number of events used for acceptance integrals
-	unsigned int rank               = 1;                      // rank of fit
-	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-	int          minimizerStrategy  = 1;                      // minimizer strategy
-	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
-	bool         quiet              = false;
+	const string progName            = argv[0];
+	double       massBinMin          = 0;                      // [MeV/c^2]
+	double       massBinMax          = 0;                      // [MeV/c^2]
+	string       waveListFileName    = "";                     // wavelist filename
+	string       ampDirName          = ".";                    // decay amplitude directory name
+	bool         useRootAmps         = false;                  // if true .root amplitude files are read
+	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
+	string       outFileName         = "fitresult.root";       // output filename
+	string       startValFileName    = "";                     // file with start values
+	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
+	string       normIntFileName     = "";                     // file with normalization integrals
+	string       accIntFileName      = "";                     // file with acceptance integrals
+	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
+	unsigned int rank                = 1;                      // rank of fit
+	string       minimizerType[2]    = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	int          minimizerStrategy   = 1;                      // minimizer strategy
+	double       minimizerTolerance  = 1e-10;                  // minimizer tolerance
+	bool         saveMinimizerMemory = false;
+	bool         cudaEnabled         = false;                  // if true CUDA kernels are activated
+	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:cqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -258,6 +265,11 @@ main(int    argc,
 			break;
 		case 't':
 			minimizerTolerance = atof(optarg);
+			break;
+		case 'e':
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
+			saveMinimizerMemory = true;
+#endif
 			break;
 		case 'c':
 #ifdef USE_CUDA
@@ -332,6 +344,15 @@ main(int    argc,
 		printErr << "could not create minimizer. exiting." << endl;
 		throw;
 	}
+
+	// special for Minuit2
+#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
+	if(saveMinimizerMemory and dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer)) {
+			((ROOT::Minuit2::Minuit2Minimizer*)minimizer)->SetStorageLevel(0);
+			printInfo << "Minuit2 storage level set to 0." << endl;
+	}
+#endif
+
 	minimizer->SetFunction        (L);
 	minimizer->SetStrategy        (minimizerStrategy);
 	minimizer->SetTolerance       (minimizerTolerance);
