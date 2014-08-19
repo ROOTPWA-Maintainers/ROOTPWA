@@ -30,6 +30,7 @@ void rpwa::py::exportPhaseSpaceIntegral() {
 		.def(bp::init<const rpwa::isobarDecayVertex&>())
 
 		.def("__call__", &rpwa::phaseSpaceIntegral::operator())
+		.def("removeVertex", &rpwa::phaseSpaceIntegral::removeVertex)
 
 		.def("getSubWaveNameFromVertex", &integralTableContainer_getSubWaveNameFromVertex)
 		.staticmethod("getSubWaveNameFromVertex");

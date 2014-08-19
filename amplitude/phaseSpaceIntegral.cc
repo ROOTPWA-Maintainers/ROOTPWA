@@ -50,12 +50,21 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 
 	// get Breit-Wigner parameters
 	const particlePtr& parent = vertex.parent();
-	const double       M      = vertex.parent()->lzVec().M();    // parent mass
+	const double       M      = parent->lzVec().M();             // parent mass
 	const double       M0     = parent->mass();                  // resonance peak position
 	const double       Gamma0 = parent->width();                 // resonance peak width
 
 	return _subwaveNameToIntegral[waveName](M, M0, Gamma0);
 
+}
+
+
+void phaseSpaceIntegral::removeVertex(const isobarDecayVertex* vertex) {
+	map<const isobarDecayVertex*, string>::iterator name_it = _vertexToSubwaveName.find(vertex);
+	if(name_it != _vertexToSubwaveName.end()) {
+		_vertexToSubwaveName.erase(name_it);
+		printInfo << "removed vertex from map" << endl;
+	}
 }
 
 
