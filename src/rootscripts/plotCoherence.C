@@ -150,7 +150,7 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
 		                                   &(*(y.begin())),      // coherence
 		                                   &(*(xErr.begin())),   // mass error
 		                                   &(*(yErr.begin())));  // coherence error
-		
+
 		// beautify graph
 		stringstream graphName;
 		graphName << graph->GetName() << "_" << i;
@@ -188,7 +188,7 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
 		}
 		legend->Draw();
 	}
-  
+
 	// create EPS file
 	if (saveEps)
 		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());

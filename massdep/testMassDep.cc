@@ -60,8 +60,8 @@ main(int argc, char** argv)
 
   // double mass=1.0;
   //double q=2.0
-    
-  
+
+
   //  double masses[4] = {gChargedPionMass,gChargedPionMass,
   //	      gChargedPionMass,gChargedPionMass};
   //mcPhaseSpace* ps=new mcPhaseSpace(4,masses,0,4,100,100000);
@@ -78,15 +78,15 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
  //  for(double k=0;k<=1;k+=1){
 //     double res=pow(-1.,k)*TMath::Exp(k-0.5)/TMath::Pi();
 //     p.push_back(realPole(k-0.5,res));
-    
+
 //   }
 
   cout << "ROOT-Integral = " << f->Integral(-2,20) << endl;
   cauchyIntegral cauchy(f,p,-2,20);
   cout << "Calculating hunter: " << setprecision(12);
-  cout << cauchy.eval_Hunter(4) << endl; 
+  cout << cauchy.eval_Hunter(4) << endl;
 
-  
+
 
   //double mr=1.275;
   //double mr=1.7;
@@ -212,16 +212,16 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
    //  TF1* f=new TF1("f",ps,&mcPhaseSpace::Evaluate,0.6,15,0,"mcPhaseSpace","Evaluate");
 //     vector<realPole> p;
 //     p.push_back(realPole(0,1));
-    
+
 //     cauchyIntegral cauchy(f,p,0.6,15);
 //     cout << "Calculating hunter: " << setprecision(12);
-//     cout << cauchy.eval_Hunter(4) << endl; 
+//     cout << cauchy.eval_Hunter(4) << endl;
   }
 
   std::cout << std::endl;
 
-  
-  
+
+
 
 
 
@@ -238,9 +238,9 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   intens->Draw("SAME C");
   ///intens->Print();
   c->cd(2);
- 
+
   argand->SetTitle("Argand plot");
-  
+
   argand_static->Draw("AP");
   argand_nodisp->SetMarkerColor(kBlue);argand_nodisp->Draw("SAME P");
   argand->SetMarkerColor(kRed);
@@ -250,10 +250,10 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   phase_static->Draw("AC");
   phase_nodisp->SetLineColor(kBlue);phase_nodisp->Draw("SAME C");
   phase_bnl->SetLineColor(kMagenta);phase_bnl->Draw("SAME C");
-  phase->SetLineColor(kRed);phase->Draw("SAME C");  
+  phase->SetLineColor(kRed);phase->Draw("SAME C");
 
   c->cd(4);
-  
+
   phase_diff->Draw("APC");
   // ms->Draw("AC");
 
@@ -263,7 +263,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   twopi->SetLineColor(kRed);
   twopi->Draw("SAME C");
   //f2->SetParameter(0,mr*mr);
-  //f2->Draw("same");  
+  //f2->Draw("same");
 
   c->ForceUpdate();
   c->Flush();
@@ -279,7 +279,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
 
   myBW->phasespace()->getGraph(0)->Write("PhaseSpace");
   argand->Write("Argand");
-  
+
 
 
   gApplication->SetReturnFromRun(kFALSE);

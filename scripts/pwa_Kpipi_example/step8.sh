@@ -1,5 +1,5 @@
-# this script filters creates a list of amplitudes available 
-# by using the available keys 
+# this script filters creates a list of amplitudes available
+# by using the available keys
 # should be called by run_X_PWA_analysis.sh script
 # author: P.Jasinski Promme@web.de , jasinski@kph.uni-mainz.de
 
@@ -10,7 +10,7 @@ echo      " *${STEP_NAME[7]}*"
 echo -e   " ******************************************\n"
 
 # put the list with amplitudes to fit in the fit directory
-if [ -e ${KPIPI_FIT_DIR} ]; 
+if [ -e ${KPIPI_FIT_DIR} ];
 then
 	echo -e "\E[37;31m \n The directory "; tput sgr0
 	echo -e "\E[37;34m ${KPIPI_FIT_DIR}"; tput sgr0
@@ -38,7 +38,7 @@ do
 	EXT=${AMP#*.}
 	FNAME=${AMP%.*}
 	if [ ${EXT} == "key" ];
-	then	
+	then
 		# save with the extension to .amp
 		echo "${FNAME}.amp" >> ${KPIPI_WAVE_LIST}
 	fi

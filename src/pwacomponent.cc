@@ -52,7 +52,7 @@ rpwa::pwacomponent::pwacomponent(const string& name,
 }
 
 
- 
+
 
 void
 rpwa::pwacomponent::setCouplings(const double* par){
@@ -76,7 +76,7 @@ rpwa::pwacomponent::getCouplings(double* par){
   }
 }
 
-    
+
 complex<double>
 rpwa::pwacomponent::val(double m) const {
   // calculate dynamic width:
@@ -100,7 +100,7 @@ rpwa::pwacomponent::val(double m) const {
     ps/=n;
   }
   gamma=_gamma*ps;
-  
+
   //std::cerr << m << "   " << gamma/_gamma << std::endl;
   //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
   return _gamma*_m0/complex<double>(_m02-m*m,-gamma*_m0);
@@ -140,7 +140,7 @@ rpwa::pwabkg::val(double m) const {
 }
 
 
-vector<string> 
+vector<string>
 rpwa::pwacompset::wavelist() const {
   vector<string> wl;
   for(unsigned int i=0;i<n();++i){
@@ -178,7 +178,7 @@ rpwa::pwacompset::setPS(TF1* fPS){
 
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
-void 
+void
  rpwa::pwacompset::doMapping(){
   vector<string> wlist=wavelist();
   for(unsigned int i=0; i<wlist.size();++i){
@@ -189,7 +189,7 @@ void
 
 
 
-double 
+double
 rpwa::pwacompset::getFreePSPar(unsigned int i) const {
   if(i<_freePSpar.size())
     return _phasespace->GetParameter(_freePSpar[i]);
@@ -197,7 +197,7 @@ rpwa::pwacompset::getFreePSPar(unsigned int i) const {
 }
 
 
-void 
+void
 rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper) const {
   if(i<_freePSpar.size()){
     _phasespace->GetParLimits(_freePSpar[i],lower,upper);
@@ -223,8 +223,8 @@ rpwa::pwacompset::setPar(const double* par){ // set parameters
 }
 
 
-void 
-rpwa::pwacompset::getPar(double* par){       // return parameters 
+void
+rpwa::pwacompset::getPar(double* par){       // return parameters
   unsigned int parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
@@ -242,10 +242,10 @@ rpwa::pwacompset::getPar(double* par){       // return parameters
   }
 }
 
-double 
+double
 rpwa::pwacompset::ps(double m){return _phasespace->Eval(m);}
 
-double 
+double
 rpwa::pwacompset::intensity(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
@@ -259,7 +259,7 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
   return norm(rho)*_phasespace->Eval(m);
 }
 
-double 
+double
 rpwa::pwacompset::phase(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
@@ -274,7 +274,7 @@ rpwa::pwacompset::phase(const std::string& wave, double m){
 }
 
 
-double 
+double
 rpwa::pwacompset::phase(const std::string& wave1,
 			const std::string& wave2,
 			double m){

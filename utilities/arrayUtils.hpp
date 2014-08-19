@@ -64,7 +64,7 @@ namespace rpwa {
 	// this implementation is, due to the levels of indirection,
 	// potentially less performant than pseudo-arrays, which on the other
 	// hand make element access more cumbersome
-	// 
+	//
 	// array dimensions are passed as unsigned int arrays, where the order
 	// reflects the order of the indices:
 	//
@@ -115,7 +115,7 @@ namespace rpwa {
 	{
 		for (T i = 0; i < dim[0]; ++i)
 			if (array[i])
-				delete2DArray<D, T>(array[i], &dim[1]);      
+				delete2DArray<D, T>(array[i], &dim[1]);
 		delete[] array;
 	}
 
@@ -289,7 +289,7 @@ namespace rpwa {
 		const std::set<std::size_t>&                   _indices;  ///< indices to check against
 
 	};
-	
+
 
 }  // namespace rpwa
 

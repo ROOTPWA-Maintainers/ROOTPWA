@@ -6,7 +6,7 @@
 #!/bin/bash
 
 # test if ${ROOTPWA} is set (set it in .bashrc for example)
-if [ -d ${ROOTPWA} ]; 
+if [ -d ${ROOTPWA} ];
 then
 	echo -e "\n ROOTPWA variable is set to ${ROOTPWA} \n"
 else
@@ -48,9 +48,9 @@ fi
 # step 6: search for at least one .key file
 # we need the number of keyfiles for further tests first
 let KEYFILE_COUNTER=0
-if [ -d ${KPIPI_KEYFILE_DIR} ] 
+if [ -d ${KPIPI_KEYFILE_DIR} ]
 then
-	for KEYFILE in ${KPIPI_KEYFILE_DIR}/* 
+	for KEYFILE in ${KPIPI_KEYFILE_DIR}/*
 	do
 		EXT=${KEYFILE#*.}
 		if [ ${EXT} == "key" ]
@@ -58,7 +58,7 @@ then
 			((KEYFILE_COUNTER++))
 			STEP_DONE[5]=1
 		fi
-	done	
+	done
 fi
 
 # step 2: Is the workspace directory set correctly? Are there some bins?
@@ -80,9 +80,9 @@ then
 	for BIN in ${KPIPI_WORK_DIR}/*
 	do
 		_BIN=$(basename ${BIN}) # get the directory name
-		BINHIGH=${_BIN#*.}		# the number behind the "." is the hight bound 
+		BINHIGH=${_BIN#*.}		# the number behind the "." is the hight bound
 		BINLOW=${_BIN%.*}		# the number in front of the "." is the low bound
-		# not everything in ./* is always a valid folder. Check the name to have numbers	
+		# not everything in ./* is always a valid folder. Check the name to have numbers
 		if echo ${BINLOW} | grep "^[0-9]*$">/tmp/aux
 		then
 			((COUNTBINS++));
@@ -90,7 +90,7 @@ then
 			then
 				STEP_DONE[2]=0 # only one genbod file must be missing to turn the result false
 				FILTERED_MC_EXACT_EVENTS_EXIST=0
-			fi	
+			fi
 			if [ ! -f ${KPIPI_MC_FILE_DIR}/${KPIPI_MC_FILE} ]
 			then
 				STEP_DONE[3]=0 # this check is sensless here since the file is obtained by the web. To be changed.
@@ -117,7 +117,7 @@ then
 			done
 			if [ ! ${AMPFILE_COUNTER} == ${KEYFILE_COUNTER} ]
 			then
-				STEP_DONE[6]=0	
+				STEP_DONE[6]=0
 			fi
 			if [ ! -f ${BIN}/AMPS/norm.int ]
 			then
@@ -135,7 +135,7 @@ then
 			done
 			if [ ! ${AMPFILE_COUNTER} == ${KEYFILE_COUNTER} ]
 			then
-				STEP_DONE[6]=0	
+				STEP_DONE[6]=0
 			fi
 			if [ ! -f ${BIN}/PSPAMPS/norm.int ]
 			then
@@ -153,7 +153,7 @@ then
 			done
 			if [ ! ${AMPFILE_COUNTER} == ${KEYFILE_COUNTER} ]
 			then
-				STEP_DONE[6]=0	
+				STEP_DONE[6]=0
 			fi
 			if [ ! -f ${BIN}/ACCAMPS/norm.int ]
 			then
@@ -170,7 +170,7 @@ then
 		STEP_DONE[3]=0
 		STEP_DONE[4]=0
 		STEP_DONE[6]=0
-	fi	
+	fi
 else
 	# negate also some other steps in this case
 	STEP_DONE[2]=0
@@ -183,7 +183,7 @@ else
 fi
 
 # step 8: search for wavelist
-if [ -f ${KPIPI_WAVE_LIST} ] 
+if [ -f ${KPIPI_WAVE_LIST} ]
 then
 	STEP_DONE[7]=1
 fi

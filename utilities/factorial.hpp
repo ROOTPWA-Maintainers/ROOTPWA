@@ -46,9 +46,9 @@ namespace rpwa {
 
 	template<typename T>
 	class factorialCached {
-	
+
 	public:
-			
+
 		static factorialCached& instance() { return _instance; }  ///< get singleton instance
 		T operator ()(const unsigned int n)                       ///< returns n!
 		{
@@ -68,7 +68,7 @@ namespace rpwa {
 			}
 			return _cache[n];
 		}
-    
+
 
 	private:
 
@@ -78,7 +78,7 @@ namespace rpwa {
 		factorialCached& operator =(const factorialCached&);
 
 		static factorialCached _instance;  ///< singleton instance
- 		static std::vector<T>  _cache;     ///< cache for already calculated values
+		static std::vector<T>  _cache;     ///< cache for already calculated values
 
 	};
 
@@ -92,7 +92,7 @@ namespace rpwa {
 	T
 	factorial(const unsigned int n)  ///< returns factorial of n
 	{ return factorialCached<T>::instance()(n);	}
-	
+
 
 }  // namespace rpwa
 

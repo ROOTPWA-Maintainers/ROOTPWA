@@ -45,9 +45,9 @@ rpwa::mcPhaseSpace::mcPhaseSpace(unsigned int n,
   _gen->setMaxWeight(_wmax);
 
   gRandom->SetSeed(seed);
-  
 
-  
+
+
   // check minimum mass;
   double threshold=0;
   for(unsigned k=0;k<n;++k)threshold+=masses[k];
@@ -55,7 +55,7 @@ rpwa::mcPhaseSpace::mcPhaseSpace(unsigned int n,
     cerr << "Setting minimum mass to threshold "<< threshold << endl;
     _thres=threshold;
   }
-  
+
 
 }
 
@@ -65,9 +65,9 @@ rpwa::mcPhaseSpace::addDecayChannel(absDecayChannel* ch)
 {
   _channels.push_back(ch);
 }
- 
 
-unsigned int 
+
+unsigned int
 rpwa::mcPhaseSpace::nChannels()const{
   unsigned int nchan=_channels.size();
   if(nchan==0)nchan=1;
@@ -77,7 +77,7 @@ rpwa::mcPhaseSpace::nChannels()const{
 void
 rpwa::mcPhaseSpace::doCalc() {
   double step=(_mMax-_thres)/(double)_nsteps;
-  
+
   cout << "Prepcalculating PhaseSpace..." << endl;
   cout << "   nsteps   =  " << _nsteps << endl;
   cout << "   minM     =  " << _thres << endl;
@@ -89,7 +89,7 @@ rpwa::mcPhaseSpace::doCalc() {
     _graph.push_back(new TGraph(_nsteps));
   }
   int tenpercent=(int)(_nsteps*0.1);
- 
+
   for(unsigned int istep=0;istep<_nsteps;++istep){
     // ************ Progress messages ************************
     if(istep%10==0){std::cout<<".";cout.flush();}
@@ -108,14 +108,14 @@ rpwa::mcPhaseSpace::doCalc() {
     for(unsigned int ich=0;ich<nChannels();++ich){
       _graph[ich]->SetPoint(istep,m,rh[ich]);
     }
-    
+
   }
   cout << " ... done " << endl;
 }
 
 
 
-// double 
+// double
 // rpwa::mcPhaseSpace::Evaluate(double *x, double *p) {
 //   if(!hasCached())throw;
 //   return _graph[0]->Eval(x[0]);
@@ -149,7 +149,7 @@ rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
   for(unsigned int i=0;i<_nsamples;++i){
     double w=_gen->generateDecay(mother);
     if(_nparticles==2)w=1;
-    
+
     // get event
     vector<TLorentzVector> p(_nparticles);
     for(unsigned ip=0;ip<_nparticles;++ip){
@@ -159,7 +159,7 @@ rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
 
     if(_channels.size()==0){
 	TLorentzVector Iso1=p[0]+p[1];
-	// go into isobar rest frame 
+	// go into isobar rest frame
 	TVector3 b=-Iso1.BoostVector();
 	p[0].Boost(b);
 	double breakup=p[0].Vect().Mag();
@@ -175,7 +175,7 @@ rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
       }// end loop over decay channels
     }
 
-     
+
   }// end loop over samples
   // loop over decay channels and renormalize
   for(unsigned int ich=0;ich<results.size();++ich){
@@ -186,4 +186,3 @@ rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
     }
   }
 }
-

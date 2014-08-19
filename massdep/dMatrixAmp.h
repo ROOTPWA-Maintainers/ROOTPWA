@@ -22,9 +22,9 @@
 //
 // Description:
 //      Resonance Mixing Amplitude in the D-Matrix Formalism
-//      for References see 
+//      for References see
 //      arXiv:hep-ex/0706.1341v2
-//      arXiv:hep-ph/9702339v1 
+//      arXiv:hep-ph/9702339v1
 //
 // Environment:
 //      Software developed for the COMPASS experiment at CERN
@@ -89,10 +89,10 @@ class dMatrixPole {
   cnum gDec(unsigned int i) const ;   // return decay coupling (real) for channel i
   cnum gamma(unsigned int i)const {return cnum(fgamma(0,i),0);} // return partial width for channel i
   double psp(double m, unsigned int i)const ; // return phase space element normalized to pole position
-  double m() const {return fm;} 
+  double m() const {return fm;}
   double gammaTot() const ; // total width (at resonance)
   double gammaTot(double m) const; // total mass dependent width
-  
+
  private:
   double fm;
   rmatrix fgamma; // partial widths
@@ -107,7 +107,7 @@ class dMatrixAmp {
   dMatrixAmp();
   ~dMatrixAmp();
 
-  
+
   void setNPoles(unsigned int n);
   void setNBkg(unsigned int n);
   void addChannel(TF1*);
@@ -117,16 +117,16 @@ class dMatrixAmp {
 	      const cmatrix& production, // (nPoles+nBkg)column vector of production couplings
 	      const rmatrix& mixing); // (nPoles+nBkg)^2 matrix of mixing
                                       // only off-diagonals of upper triangle count!
-  
+
 
   // processor:
   cnum amp(double m, unsigned int channel); /// amplitude in a channel
-  
+
   // parameter mapping:
   unsigned int getNPar() const;
   void setPar(const double* par);
   void getPar(double* par) const;
-  
+
 
   // helpers:
   unsigned int nPoles()const {return fPoles.size();}

@@ -25,23 +25,23 @@ OVERRIDE_FIT="N"
 for BIN in ${KPIPI_WORK_DIR}/*
 do
 	_BIN=$(basename ${BIN}) # get the directory name
-	BINHIGH=${_BIN#*.}		# the number after the "." is the high bound 
+	BINHIGH=${_BIN#*.}		# the number after the "." is the high bound
 	BINLOW=${_BIN%.*}		# the number in front of the "." is the low bound
-	# not everything in ./* is always a valid folder. Check the name to have numbers	
+	# not everything in ./* is always a valid folder. Check the name to have numbers
 	if echo ${BINLOW} | grep "^[0-9]*$">/tmp/aux
 	then
 		OUTFILE=${KPIPI_FIT_DIR}/${_BIN}.result.root
-		if [ -e ${OUTFILE} ]; 
+		if [ -e ${OUTFILE} ];
 		then
 			if [ ${OVERRIDE_FIT}=="N" ]; # ask once to override if file exists already
 			then
 				echo -e "\E[37;31m \n fit result"
 				echo -e "\E[37;34m ${OUTFILE}"
 				echo -e "\E[37;31m already exists! Override all? (Y/N) "; tput sgr0
-				read OVERRIDE_FIT					
-			fi		
+				read OVERRIDE_FIT
+			fi
 			rm ${OUTFILE}
-		fi 
+		fi
 
 		if [ -e ${OUTFILE} ]; # perform only if the file does not exist or was removed previously
 		then
@@ -49,9 +49,9 @@ do
 			echo -e "\E[37;34m ${OUTFILE}"; tput sgr0
 		else
 			echo -e " \n fitting ${BIN}"
-			echo -e " into ${OUTFILE}"	
-  			echo -e " Starting time: ";
-  			date;
+			echo -e " into ${OUTFILE}"
+			echo -e " Starting time: ";
+			date;
 			cd ${BIN}/AMPS;
 			NORM="../PSPAMPS/norm.int"
 			if [ -e norm.int ];
@@ -59,12 +59,12 @@ do
 				echo -e " Default normalization integral already existent. "
 			else
 				echo -e " using ${NORM} for normalization ->\E[37;31m no acceptance correction! "; tput sgr0
-  				cp ${NORM} ./
+				cp ${NORM} ./
 			fi
-			pwafit -q -w ${KPIPI_WAVE_LIST} -o ${OUTFILE} -r ${RANK} -l ${BINLOW} -N -u ${BINHIGH} -n ${NORM}					
-		fi		
+			pwafit -q -w ${KPIPI_WAVE_LIST} -o ${OUTFILE} -r ${RANK} -l ${BINLOW} -N -u ${BINHIGH} -n ${NORM}
+		fi
 	else
-  		echo -e "\n skipping ${BIN}"
+		echo -e "\n skipping ${BIN}"
 	fi
 	rm /tmp/aux
 done

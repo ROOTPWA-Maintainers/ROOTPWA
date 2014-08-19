@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-/** @brief numerical evaluation of cauchy integrals 
+/** @brief numerical evaluation of cauchy integrals
     following D.B.Hunter, Numer. Math. 19,419-424 (1972)
  */
 
@@ -53,7 +53,7 @@ public:
   double eval_Hunter(unsigned int degree=4); /// degree>0
 
   void setRange(double low, double up){_rlow=low;_rup=up;}
- 
+
 
 
 private:
@@ -67,7 +67,7 @@ private:
   double H(unsigned int r,     /// index of zero of legendre polynomial
 	   unsigned int degree);
 
-  std::vector<std::vector<double> > _roots; ///  roots of the first 5 legendre polys 
+  std::vector<std::vector<double> > _roots; ///  roots of the first 5 legendre polys
 
   double trafo(double t);
   double ofart(double x);

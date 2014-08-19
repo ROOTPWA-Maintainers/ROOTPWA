@@ -82,7 +82,7 @@ class s0wave : public absPhaseshift {
 
   virtual double cotDelta(std::complex<double> s) const;
   virtual double eta(std::complex<double> s) const ;
-  
+
   void setParameters(double z0, double B0, double B1, double B2)
   {_z02=z0*z0;_B0=B0;_B1=B1;_B2=B2;}
 
@@ -91,12 +91,12 @@ class s0wave : public absPhaseshift {
   double _B0,_B1,_B2; /// expansion parameters
 
   /// K-Matrix parameters
-  rmatrix _gamma; // 
+  rmatrix _gamma; //
   double _alpha[2];
   double _beta[2];
   double _mu,_invmu;
   double _M12,_M22;
-  
+
  };
 
 

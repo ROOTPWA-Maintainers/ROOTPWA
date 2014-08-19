@@ -26,9 +26,9 @@ echo "Checking Set $j"
 	echo "$i missing from $j"
       fi
   done
-  if [ $FOUND -gt 0 ]; then echo "+++ Waveset $j incomplete!"; 
-  else echo "Waveset $j fine!"; 
+  if [ $FOUND -gt 0 ]; then echo "+++ Waveset $j incomplete!";
+  else echo "Waveset $j fine!";
   fi
-cd - 
+cd -
 done
 cat $DATA/amplist | wc

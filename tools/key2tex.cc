@@ -38,7 +38,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
   const unsigned int maxNmbWavesPerPage = 1;
-  
+
   // setup isobar dictionary key->tex
   map<TString, TString> isobars;
   isobars["pi+"     ] = "\\pi^+";
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
     l.Remove(l.Length() - 4);
     // extract X quantum numbers
     const TString head = l(0, 7);
-    const TString I    = head(0, 1); 
+    const TString I    = head(0, 1);
     const TString G    = head(1, 1);
     const TString J    = head(2, 1);
     const TString P    = head(3, 1);
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
       }
       l.Remove(0, 1); // remove delimiter
     }
-    //cout << "\\,";    
+    //cout << "\\,";
   }
   cout << "\\)"  << endl
     //<< "\\end{align*}"   << endl

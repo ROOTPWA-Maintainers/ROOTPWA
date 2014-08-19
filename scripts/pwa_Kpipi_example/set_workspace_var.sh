@@ -12,16 +12,16 @@
 	# cern  : run on CERN batch system
 	# gridka: run on Karlsruhe batch system
 	# mainz : run on Mainz blaster
-	export KPIPI_CALC_AMP_FARM="local" # local or mainz are forseen settings for amplitude calculations	
+	export KPIPI_CALC_AMP_FARM="local" # local or mainz are forseen settings for amplitude calculations
 
 	export KPIPI_RAW_FILE_DIR=${KPIPI_WORKSPACE} # the directory where the data file will be copied to (must exist)
 	export KPIPI_RAW_FILE="hist.root"			 # the name of the file
 	export KPIPI_MC_FILE_DIR=${KPIPI_WORKSPACE}  # the directory where the mc-acceptance data file will be copied to (must exist)
-    export KPIPI_MC_FILE="hist_mc_acc.root";     # the name of the file
+	export KPIPI_MC_FILE="hist_mc_acc.root";     # the name of the file
 	export KPIPI_WEB_FILE="http://www.staff.uni-mainz.de/jasinsk/demo-data/hist.root" # where to get the file from
-	export KPIPI_WEB_MC_FILE="http://www.staff.uni-mainz.de/jasinsk/demo-data/hist_mc_acc.root" # where to get the MC acceptance file from		
+	export KPIPI_WEB_MC_FILE="http://www.staff.uni-mainz.de/jasinsk/demo-data/hist_mc_acc.root" # where to get the MC acceptance file from
 	export KPIPI_FILE_TREE="events/tree_events_v2" # path to the tree in the rootfile
-	export KPIPI_NPARTICLES=0 					 # number of particles in the tree per event (since v2 of trees not important anymore)
+	export KPIPI_NPARTICLES=0					 # number of particles in the tree per event (since v2 of trees not important anymore)
 
 	export KPIPI_WORK_DIR="${KPIPI_WORKSPACE}/SET_20MeV/" # work directory containing binned data and calculated amplitudes
 	export KPIPI_BIN_MIN=800  # lowest energy bin of invariant Kpipi mass spectrum to cut
@@ -33,7 +33,7 @@
 
 	export KPIPI_TREE_READER=${ROOTPWA}/keyfiles/keyKpipi/scripts/Tree_to_BNL_event.C # path to the tree converter that fills the bins
 
-	export KPIPI_KEYFILE_DIR=${ROOTPWA}/keyfiles/keyKpipi/SETWA3_full 	# path to keyfile directory
+	export KPIPI_KEYFILE_DIR=${ROOTPWA}/keyfiles/keyKpipi/SETWA3_full	# path to keyfile directory
 	export KPIPI_KEYFILE_GENERATOR=${ROOTPWA}/keygen/genKey_Kpipi_WA3.C # path to keyfile generator
 	export KPIPI_GENERATOR_PATH=${ROOTPWA}/keygen						# currently the path where the generator must be compiled in
 

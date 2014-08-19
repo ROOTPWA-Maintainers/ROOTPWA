@@ -90,5 +90,3 @@ void Fit_Energy_dependence(){
 	outputfile->Write();
 	outputfile->Close();
 }
-
-

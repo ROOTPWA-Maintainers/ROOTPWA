@@ -64,9 +64,9 @@ public:
   int q() const {return _q;}
 
   bool IsEqual(FSParticle* pi) {return (*this)==(*pi);}
-  
+
   void Transform(const TLorentzRotation& L){_p*=L;}
- 
+
 
 private:
 

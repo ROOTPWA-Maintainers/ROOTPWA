@@ -63,4 +63,3 @@ if __name__ == "__main__":
 		print
 		print
 		profile.run('pyRootPwa.calcAmplitudes(configFileName=arguments.configFileName, massBins=arguments.massBins, nJobs=arguments.nJobs, proFile=arguments.proFile)', arguments.proFile)
-

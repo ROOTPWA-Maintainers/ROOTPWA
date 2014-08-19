@@ -18,4 +18,4 @@ cd scripts/
 export KEYDIR=$KEY
 ./buildBin.sh $BIN
 
-cd 
+cd

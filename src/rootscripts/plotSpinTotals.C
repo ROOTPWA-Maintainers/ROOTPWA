@@ -184,7 +184,7 @@ plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult 
 			} else
 				drawOpt = "P SAME";
 		}
-    
+
 		// build multiGraph
 		TMultiGraph* graph = new TMultiGraph();
 		double maxY = 0;
@@ -270,7 +270,7 @@ plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult 
 			}
 			graph->GetListOfFunctions()->Add(legend);
 		}
-    
+
 		// memorize pad
 		wavePads[i].first  = waves[i];
 		wavePads[i].second = gPad;
@@ -287,7 +287,7 @@ plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult 
 
 	if (outFile)
 		outFile->Close();
-  
+
 	return wavePads;
 }
 

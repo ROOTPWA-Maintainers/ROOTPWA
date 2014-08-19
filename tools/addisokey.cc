@@ -24,7 +24,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //    This utility compares two keys and returns an isospin-added key if
 //    possible. Otherwise it exits with an error
-//   
+//
 //    The two keys to compare are the only arguments
 ///////////////////////////////////////////////////////////////////////////
 
@@ -74,11 +74,11 @@ int main(int argc, char** argv) {
     cerr << "Different Number of Tokens" << endl;
     return 3;
   }
-  
+
   TString output(key1head);
   TString rest(key1);
 
-  // loop through tokens, check if everything agrees except pi+ pi- 
+  // loop through tokens, check if everything agrees except pi+ pi-
   for(int i=0;i<l;++i){
     TObjString* objtok1=(TObjString*)key1tokens->At(i);
     TObjString* objtok2=(TObjString*)key2tokens->At(i);
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
     TString tok2=objtok2->GetString();
 
     if(tok1!=tok2){
-      if(tok1=="pi+" && tok2=="pi-"){ 
+      if(tok1=="pi+" && tok2=="pi-"){
 	output.Append("pi+-");
       }
       else if(tok1=="pi-" && tok2=="pi+"){

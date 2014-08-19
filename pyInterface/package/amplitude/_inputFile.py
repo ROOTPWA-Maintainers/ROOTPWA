@@ -59,4 +59,3 @@ class inputFile():
 		retval += str(self.prodKinParticles) + "\n"
 		retval += str(self.decayKinParticles) + "\n\n"
 		return retval
-

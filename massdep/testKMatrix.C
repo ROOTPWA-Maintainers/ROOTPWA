@@ -17,7 +17,7 @@ using namespace std;
  // simple single channel K function with several poles:
 complex<double> K(double s, double f, double s0,
 		  const vector<double>& mu2, const vector<double>& g){
-  
+
   unsigned int npoles=mu2.size();
   double k=0;
  // pipi phasespace:
@@ -37,7 +37,7 @@ complex<double> K(double s, double f, double s0,
  // simple breit Wigner sum amplitude:
 complex<double> BW(double s, double f, double s0,
 		  const vector<double>& mu2, const vector<double>& g){
-  
+
    // pipi phasespace:
   double rho=sqrt((s-0.784)/s);
 
@@ -50,7 +50,7 @@ complex<double> BW(double s, double f, double s0,
     complex<double> denom(mu2[i]-s,-fabs(gamma)*rho/rho0);
     BW+=nom/denom;
   }
- 
+
   return BW;
 }
 
@@ -74,7 +74,7 @@ complexMatrix SMatrix(){
     std::cout << m << std::endl;
 
 
- 
+
   complexMatrix S(2,2);
   complexMatrix SB(2,2); // Background
   complexMatrix SR(2,2); // Resonance
@@ -89,12 +89,12 @@ complexMatrix SMatrix(){
 
   SB.set(0,0,TComplex(1,0));
   SB.set(1,1,TComplex(1,-1));
-  
+
   SB.set(1,0,TComplex(5,2));
   SB.set(0,1,TComplex(-5,2));
 
   complexMatrix SRT=SR.dagger();
-  
+
   return SRT*SB*SR;
 
 }
@@ -112,8 +112,8 @@ void testKMatrix(){
   double mstart=0.9;
   double mstep=0.02;
   unsigned int nsteps=100;
-  
-  vector<double> mu2; 
+
+  vector<double> mu2;
   mu2.push_back(2.43*2.43);
   mu2.push_back(1.77*1.77);
   // mu2.push_back(1.97*1.97);
@@ -124,7 +124,7 @@ void testKMatrix(){
 
   double s0=4;
   double f=0.2;
-  
+
   TGraph* gI=new TGraph(nsteps);
   TGraph* gPhase=new TGraph(nsteps);
   TGraph* gArgand=new TGraph(nsteps);
@@ -151,7 +151,7 @@ void testKMatrix(){
     gPhaseBW->SetPoint(i,m,arg(ampBW));
     gArgandBW->SetPoint(i,ampBW.real(),ampBW.imag());
   }
-	
+
   TCanvas* c=new TCanvas("c","c",10,10,1000,600);
   c->Divide(3,2);
   c->cd(1);
@@ -168,8 +168,3 @@ void testKMatrix(){
   gArgandBW->Draw("AP");
 
 }
-
-
-
-
-

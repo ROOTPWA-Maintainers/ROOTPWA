@@ -113,7 +113,7 @@ namespace rpwa {
 			                                const unsigned int nmbProdAmps,
 			                                const value_type   prodAmpFlat,
 			                                const unsigned int rank);  ///< computes log likelihood for given production amplitudes
-		
+
 			static void logLikelihoodDeriv(const complexT*    prodAmps,
 			                               const unsigned int nmbProdAmps,
 			                               const value_type   prodAmpFlat,
@@ -123,7 +123,7 @@ namespace rpwa {
 
 			static double kernelTime     () { return _kernelTime; }  ///< returns total time spent in CUDA kernels [sec]
 			static void   resetKernelTime() { _kernelTime = 0;    }  ///< resets kernel time counter to 0
-		
+
 			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 
 			static bool debug() { return _debug; }                             ///< returns debug flag

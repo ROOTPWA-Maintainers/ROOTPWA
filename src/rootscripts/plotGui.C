@@ -34,7 +34,7 @@ private:
    TGListBox           *fListBox;
   TGListBox           *fListBox2;
    TGCheckButton       *fCheckMulti;
-   TList               *fSelected;   
+   TList               *fSelected;
   TTree               *fTree;
   std::vector<std::string> fwavenames;
 
@@ -73,24 +73,24 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
     cerr << "Invalid branch ."<<branchname<<endl;
     throw;
    }
-  
+
   tree->SetBranchAddress(branchname.c_str(),&res);
   cout << "Entries: " <<tree->GetEntries() << endl;
   tree->GetEntry(1);
   // get list of waves
- 
-  
+
+
 
    fwavenames=res->waveNames();
-  
+
 
 
    // Create main frame
-   
+
    fListBox = new TGListBox(this, 89);
    fListBox2 = new TGListBox(this, 88);
    fSelected = new TList;
-   
+
    for (int i = 0; i < fwavenames.size(); ++i) {
      cout << fwavenames[i] << endl;
      fListBox->AddEntry(fwavenames[i].c_str(), i);
@@ -98,16 +98,16 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
    }
    fListBox->Resize(400,250);
    fListBox2->Resize(400,250);
-   
-   AddFrame(fListBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
-   AddFrame(fListBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));        
 
-   
-               
+   AddFrame(fListBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+   AddFrame(fListBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
+
+
+
    fCheckMulti = new TGCheckButton(this, "&Mutliple selection", 10);
    AddFrame(fCheckMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft,
                                            5, 5, 5, 5));
-   fCheckMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()"); 
+   fCheckMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()");
    // Create a horizontal frame containing button(s)
    TGHorizontalFrame *hframe = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
    TGTextButton *show = new TGTextButton(hframe, "&Show");
@@ -119,7 +119,7 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
    hframe->AddFrame(exit, new TGLayoutHints(kLHintsExpandX, 5, 5, 3, 4));
    AddFrame(hframe, new TGLayoutHints(kLHintsExpandX, 2, 2, 5, 1));
 
-   // Set a name to the main frame   
+   // Set a name to the main frame
    SetWindowName("List Box");
    MapSubwindows();
 
@@ -151,7 +151,7 @@ void MyMainFrame::HandleButtons()
 
    printf("HandleButton: id = %d\n", id);
 
-   //if (id == 10)  
+   //if (id == 10)
    //   fListBox->SetMultipleSelections(fCheckMulti->GetState());
 }
 
@@ -165,7 +165,7 @@ void MyMainFrame::PrintSelected()
    cout << w2 << endl;
    // Produce plots
    unsigned int n=fTree->GetEntries();
-   
+
    Int_t colour=1;
    double binwidth=0.060;
 
@@ -210,7 +210,7 @@ void MyMainFrame::PrintSelected()
    gIm->SetMarkerSize(0.5);
    gIm->SetMarkerColor(colour);
    gIm->SetLineColor(colour);
-   
+
    TGraphErrors* g1 = new TGraphErrors(n);
    graphName.str("");
    graphName.clear();
@@ -234,14 +234,14 @@ void MyMainFrame::PrintSelected()
    fitResult* result=0;
    fTree->SetBranchAddress("fitResult_v2",&result);
 
-   
+
 
    for(unsigned int i=0;i<n;++i){
      fTree->GetEntry(i);
-     
+
      if(!result->converged())continue;
      if(!result->hasHessian())continue;
- 
+
      double intensity1=result->intensity(w1.c_str());
      if((numeric_limits<double>::has_infinity && intensity1 == numeric_limits<double>::infinity()) || intensity1!=intensity1)continue;
 
@@ -249,20 +249,20 @@ void MyMainFrame::PrintSelected()
 		 result->massBinCenter()*0.001,
 		 intensity1);
      g1->SetPointError(i,
-     		      binwidth*0.5,
-     		      result->intensityErr(w1.c_str()));
-     
+                       binwidth*0.5,
+                       result->intensityErr(w1.c_str()));
+
      double intensity2=result->intensity(w2.c_str());
      if((numeric_limits<double>::has_infinity && intensity2 == numeric_limits<double>::infinity()) || intensity2!=intensity2)continue;
 
      g2->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 intensity2);
-    
+
      g2->SetPointError(i,
-     		      binwidth*0.5,
-     		      result->intensityErr(w2.c_str()));
-      
+                       binwidth*0.5,
+                       result->intensityErr(w2.c_str()));
+
 
      double ph=result->phase(w1.c_str(),w2.c_str());
      double pherr=result->phaseErr(w1.c_str(),w2.c_str());
@@ -278,16 +278,16 @@ void MyMainFrame::PrintSelected()
        if(diff2<diff1 && diff2<diff3)ph+=360;
        else if(diff3<diff1 && diff3<diff2)ph-=360;
      }
-     
-     
-     
+
+
+
      gph->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 ph);
      gph->SetPointError(i,
 		      binwidth*0.5,
 		      pherr);
-     
+
      // add point +- 360 degree
      gphP1->SetPoint(i,
 		 result->massBinCenter()*0.001,
@@ -295,14 +295,14 @@ void MyMainFrame::PrintSelected()
      gphP1->SetPointError(i,
 		      binwidth*0.5,
 		      pherr);
-     
+
      gphM1->SetPoint(i,
 		 result->massBinCenter()*0.001,
 		 ph-360);
      gphM1->SetPointError(i,
 			binwidth*0.5,
 			pherr);
-     
+
      unsigned int wi1=result->waveIndex(w1);
      unsigned int wi2=result->waveIndex(w2);
      complex<double> rho=result->spinDensityMatrixElem(wi1,wi2);
@@ -318,15 +318,15 @@ void MyMainFrame::PrintSelected()
      gIm->SetPoint(i,
 		   result->massBinCenter()*0.001,
 		   rho.imag());
-     
+
       gIm->SetPointError(i,
 			 binwidth*0.5,
 			 sqrt(rhoCov[1][1]));
    }// end loop over bins
-   
-   
+
+
    // plot graphs
-   
+
    TCanvas*c=new TCanvas("c","c",10,10,1200,800);
    c->Divide(2,3);
    c->cd(1);
@@ -346,7 +346,7 @@ void MyMainFrame::PrintSelected()
    g2->Draw("AP");
    g2->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
    g2->GetYaxis()->SetTitle("Intensity");
-   
+
    c->cd(2);
    gRe->Draw("AP");
    gRe->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
@@ -370,9 +370,9 @@ void plotGui(TString infilename)
   TTree* pwa=(TTree*)infile->FindObjectAny("pwa");
   if(pwa==NULL){
     cerr << "Tree not found!"<< endl;
-    return;  
+    return;
   }
-  
+
    // Popup the GUI...
   new MyMainFrame(gClient->GetRoot(), 20, 20, pwa);
 }

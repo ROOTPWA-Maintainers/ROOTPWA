@@ -23,7 +23,7 @@
 //
 // Description:
 //    set of dMatrix amplitudes for mass dependent fit
-//    describes mixing of resonances in several channels  
+//    describes mixing of resonances in several channels
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -43,7 +43,7 @@ class TF1;
 ///////////////////////////////////////////////////////////////////////////////
 // simple class to hold quantum numbers (integer only)
 class qntag {
- public: 
+ public:
   qntag(const TString& tag);
  qntag(unsigned int I, int G, unsigned int J, int P, int C) :
   _I(I),_G(G),_J(J),_P(P),_C(C){};
@@ -57,7 +57,7 @@ class qntag {
  unsigned int J()const {return _J;}
  unsigned int P()const {return _P;}
  unsigned int C()const {return _C;}
-  
+
  private:
   unsigned int _I;
   int _G;
@@ -80,11 +80,11 @@ class dMatrixSet {
 
     unsigned int n() const {return _dMatrix.size();}
     unsigned int numPar() const;
-    
+
     std::vector<std::string> wavelist()const;
 
     void setPar(const double* par); // set parameters
-    void getPar(double* par);       // return parameters 
+    void getPar(double* par);       // return parameters
     unsigned int nFreePSPar() const {return _freePSpar.size();}
     double getFreePSPar(unsigned int i);
     void getFreePSLimits(unsigned int i, double& lower, double& upper);
@@ -93,7 +93,7 @@ class dMatrixSet {
     const dMatrixAmp* operator[](const qntag& tag) {return _dMatrix[tag];}
 
     friend std::ostream& operator<< (std::ostream& o,const dMatrixSet& set);
-    
+
     double ps(double m);
     double intensity(const std::string& wave, double m);
     double phase(const std::string& wave, double m);
@@ -103,7 +103,7 @@ class dMatrixSet {
     std::complex<double> overlap(const std::string& wave1,
 		 const std::string& wave2,
 		 double m);
-    
+
   private:
     std::map<qntag,dMatrixAmp*> _dMatrix;
     unsigned int _numpar;

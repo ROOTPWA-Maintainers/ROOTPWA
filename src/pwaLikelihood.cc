@@ -107,11 +107,11 @@ pwaLikelihood<complexT>::FdF
  double*       gradient) const  // array of derivatives
 {
 	++(_funcCallInfo[FDF].nmbCalls);
-  
+
 	// timer for total time
 	TStopwatch timerTot;
 	timerTot.Start();
-  
+
 	// copy arguments into parameter cache
 	for (unsigned int i = 0; i < _nmbPars; ++i)
 		_parCache[i] = par[i];
@@ -201,18 +201,18 @@ pwaLikelihood<complexT>::FdF
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[FDF].normTime(timer.RealTime());
-	
+
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
 	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
-	
+
 	// set function return value
 	funcVal = sum(logLikelihoodAcc) + nmbEvt * sum(normFactorAcc);
 
 	// log total consumed time
 	timerTot.Stop();
 	_funcCallInfo[FDF].totalTime(timerTot.RealTime());
-	
+
 	if (_debug)
 		printDebug << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
 		           << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
@@ -225,7 +225,7 @@ double
 pwaLikelihood<complexT>::DoEval(const double* par) const
 {
 	++(_funcCallInfo[DOEVAL].nmbCalls);
-	
+
 #ifdef USE_FDF
 
 	// call FdF
@@ -239,7 +239,7 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 	// timer for total time
 	TStopwatch timerTot;
 	timerTot.Start();
-  
+
 	// build complex production amplitudes from function parameters taking into account rank restrictions
 	value_type    prodAmpFlat;
 	ampsArrayType prodAmps;
@@ -285,7 +285,7 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 	// log time needed for likelihood calculation
 	timer.Stop();
 	_funcCallInfo[DOEVAL].funcTime(timer.RealTime());
-	
+
 	// compute normalization term of log likelihood
 	timer.Start();
 	accumulator_set<value_type, stats<tag::sum(compensated)> > normFactorAcc;
@@ -301,7 +301,7 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[DOEVAL].normTime(timer.RealTime());
-  
+
 	// calculate and return log likelihood value
 	const double funcVal = logLikelihood + nmbEvt * sum(normFactorAcc);
 	assert(funcVal==funcVal);
@@ -316,13 +316,13 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 		printDebug << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
 		           << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
 		           << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
-	
+
 	return funcVal;
-	
+
 #endif  // USE_FDF
 }
 
-	
+
 template<typename complexT>
 double
 pwaLikelihood<complexT>::DoDerivative(const double* par,
@@ -354,8 +354,8 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 	FdF(par, logLikelihood, gradient);
 	return gradient[derivativeIndex];
 }
- 
- 
+
+
 // calculate derivatives with respect to parameters
 template<typename complexT>
 void
@@ -364,11 +364,11 @@ pwaLikelihood<complexT>::Gradient
  double*       gradient) const  // array of derivatives
 {
 	++(_funcCallInfo[GRADIENT].nmbCalls);
-  
+
 	// timer for total time
 	TStopwatch timerTot;
 	timerTot.Start();
-	
+
 #ifdef USE_FDF
 
 	// check whether parameter is in cache
@@ -536,7 +536,7 @@ pwaLikelihood<complexT>::cudaEnabled() const
 
 
 template<typename complexT>
-void 
+void
 pwaLikelihood<complexT>::init(const unsigned int rank,
                                const std::string& waveListFileName,
                                const std::string& normIntFileName,
@@ -560,7 +560,7 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
 
 
 template<typename complexT>
-void 
+void
 pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 {
 	printInfo << "reading amplitude names and thresholds from wave list file "
@@ -647,7 +647,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 		_nmbPars += 2 * (nmbProdAmpsPosC + nmbProdAmpsNegC);  // 2 parameters for each complex production amplitude
 		// 1 real production amplitude per rank and reflectivity
 		if (nmbProdAmpsPos > 0)
-			++_nmbPars;  
+			++_nmbPars;
 		if (nmbProdAmpsNeg > 0)
 			++_nmbPars;
 	}
@@ -868,7 +868,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				  if (_useNormalizedAmps) {        // normalize data, if option is switched on
 					        value_type mynorm=normInt.real();
 					        if(mynorm==0)mynorm=1;
- 						amp /= sqrt(mynorm);  // rescale decay amplitude
+						amp /= sqrt(mynorm);  // rescale decay amplitude
 				  }
 				  amps.push_back(amp);
 				}
@@ -882,7 +882,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 					          << " events, previous file had " << _nmbEvents << " events." << endl;
 				nmbEvents = _nmbEvents;
 			}
-				
+
 			// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 			// this index scheme ensures a more linear memory access pattern in the likelihood function
 			_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
@@ -1041,7 +1041,7 @@ pwaLikelihood<complexT>::getReflectivity(const TString& waveName)
 	unsigned int reflIndex = 6;  // position of reflectivity in wave
 	// check whether it is parameter or wave name
 	if (waveName[0] == 'V')
-		reflIndex = 9; 
+		reflIndex = 9;
 	if (waveName[reflIndex] == '-')
 		refl= -1;
 	else if (waveName[reflIndex] == '+')
@@ -1129,7 +1129,7 @@ pwaLikelihood<complexT>::print(ostream& out) const
 	    << "print debug messages .................... " << _debug             << endl
 #ifdef USE_CUDA
 	    << "use CUDA kernels ........................ " << _cudaEnabled       << endl
-#endif	  
+#endif
 	    << "use normalized amplitudes ............... " << _useNormalizedAmps << endl
 	    << "list of waves: " << endl;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1177,9 +1177,9 @@ pwaLikelihood<complexT>::orderedParIndices() const
 			printWarn << "indices are inconsistent. cannot find wave with index " << waveIndex
 			          << " in wave list" << endl;
 			continue;
-      
+
 		found:
-      
+
 			tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
 			int             parIndex   = get<0>(parIndices);
 			if (parIndex >= 0)

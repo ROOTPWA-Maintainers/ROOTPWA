@@ -36,24 +36,24 @@ using namespace std;
     Uses lu_factorize and lu_substitute in uBLAS to invert a matrix */
  template<class T>
  bool InvertMatrix (const ublas::matrix<T>& input, ublas::matrix<T>& inverse) {
- 	using namespace boost::numeric::ublas;
- 	typedef permutation_matrix<std::size_t> pmatrix;
- 	// create a working copy of the input
- 	matrix<T> A(input);
- 	// create a permutation matrix for the LU-factorization
- 	pmatrix pm(A.size1());
+	using namespace boost::numeric::ublas;
+	typedef permutation_matrix<std::size_t> pmatrix;
+	// create a working copy of the input
+	matrix<T> A(input);
+	// create a permutation matrix for the LU-factorization
+	pmatrix pm(A.size1());
 
- 	// perform LU-factorization
- 	int res = lu_factorize(A,pm);
-        if( res != 0 ) return false;
+	// perform LU-factorization
+	int res = lu_factorize(A,pm);
+		if( res != 0 ) return false;
 
- 	// create identity matrix of "inverse"
- 	inverse.assign(ublas::identity_matrix<T>(A.size1()));
+	// create identity matrix of "inverse"
+	inverse.assign(ublas::identity_matrix<T>(A.size1()));
 
- 	// backsubstitute to get the inverse
- 	lu_substitute(A, pm, inverse);
+	// backsubstitute to get the inverse
+	lu_substitute(A, pm, inverse);
 
- 	return true;
+	return true;
  }
 
 
@@ -62,7 +62,7 @@ using namespace std;
  // simple single channel K function with several poles:
 complex<double> K(double s, double f, double s0,
 		  const vector<double>& mu2, const vector<double>& g){
-  
+
   unsigned int npoles=mu2.size();
   double k=0;
  // pipi phasespace:
@@ -82,7 +82,7 @@ complex<double> K(double s, double f, double s0,
  // simple breit Wigner sum amplitude:
 complex<double> BW(double s, double f, double s0,
 		  const vector<double>& mu2, const vector<double>& g){
-  
+
    // pipi phasespace:
   double rho=sqrt((s-0.0784)/s);
 
@@ -95,7 +95,7 @@ complex<double> BW(double s, double f, double s0,
     complex<double> denom(mu2[i]-s,-fabs(gamma)*rho/rho0);
     BW+=nom/denom;
   }
- 
+
   return BW;
 }
 
@@ -132,7 +132,7 @@ cmatrix TMatrix(double s){
   cnum s1(sin(theta),0);
   cmatrix O(2,2);
   O(0,0)=c1;O(0,1)=s1;O(1,0)=s1;O(1,1)=-c1;
-  
+
 
   Kb=alpha * prod(cmatrix(prod(rho,O)),rho);
 
@@ -145,7 +145,7 @@ cmatrix TMatrix(double s){
 
   cnum i(0,-1);
 
-  
+
   //Kb=uni;
   //Kb(0,0)=cnum(0,0);
   //Kb(1,1)=cnum(0,0);
@@ -156,7 +156,7 @@ cmatrix TMatrix(double s){
   InvertMatrix(A,Ai);
   cmatrix B(2,2);
   B=uni+i*Kb;
-  
+
   SB=prod(B,Ai);
 
   std::cout<< "SB=" << SB << std::endl;
@@ -189,7 +189,7 @@ cmatrix TMatrix(double s){
   T1(0,1)=cnum(0.5*eps11*eps12*sqrt(g11*g12),0)/denom1;
   T1(1,0)=cnum(0.5*eps12*eps11*sqrt(g12*g11),0)/denom1;
   T1(1,1)=cnum(0.5*eps12*eps12*sqrt(g12*g12),0)/denom1;
-  
+
 
 
   double x1=2.*(m1-m)/(g11+g12);
@@ -204,7 +204,7 @@ cmatrix TMatrix(double s){
   T2(0,1)=cnum(0.5*eps21*eps22*sqrt(g21*g22),0)/denom2;
   T2(1,0)=cnum(0.5*eps22*eps21*sqrt(g22*g21),0)/denom2;
   T2(1,1)=cnum(0.5*eps22*eps22*sqrt(g22*g22),0)/denom2;
-  
+
   double x2=2.*(m2-m)/(g21+g22);
   cmatrix S2=uni+cnum(sqrt(1+x2*x2)-x2,1)*T2;
 
@@ -213,7 +213,7 @@ cmatrix TMatrix(double s){
   cmatrix SRT=herm(SR);
   std::cout << "SR="<< SR << std::endl;
   std::cout << "SRT="<<SRT << std::endl;
-  
+
   // check unitarity
   std::cout << "SR*SRT=" << prod(SR,SRT) << std::endl;
 
@@ -229,17 +229,17 @@ cmatrix TMatrix(double s){
   std::cout << "S-1="<< Sminus1 << std::endl;
 
   std::cout << "S*ST=" << prod(S,herm(S)) << std::endl;
- 
+
   cmatrix Tp=(-0.5*i)*Sminus1;
   cmatrix T=Tp;
   std::cout << "T="<< T << std::endl;
-  
+
   cmatrix Tt=herm(T);
 
   cmatrix Tdiff=T - Tt;
   cmatrix Tprod=(2.*i)*prod(Tt,T);
 
-  
+
   std::cout << "Tdiff="<< Tdiff << std::endl;
 
   std::cout << "Tprod="<< Tprod << std::endl;
@@ -249,7 +249,7 @@ cmatrix TMatrix(double s){
   std::cout << "(T-T^t) - 2iT^tT = "<< TUnitarity << std::endl;
 
   return T;
-  
+
 }
 
 
@@ -268,8 +268,8 @@ main(int argc, char** argv)
   double mstart=1.1;
   double mstep=0.02;
   unsigned int nsteps=200;
-  
-  vector<double> mu2; 
+
+  vector<double> mu2;
   mu2.push_back(2.43*2.43);
   mu2.push_back(1.77*1.77);
   // mu2.push_back(1.97*1.97);
@@ -280,7 +280,7 @@ main(int argc, char** argv)
 
   double s0=4;
   double f=0.2;
-  
+
   TGraph* gI=new TGraph(nsteps);
   TGraph* gPhase=new TGraph(nsteps);
   TGraph* gArgand=new TGraph(nsteps);
@@ -296,7 +296,7 @@ main(int argc, char** argv)
   for(unsigned int i=0;i<nsteps;++i){
     double m=mstart+(double)i*mstep;
     double s=m*m;
-    
+
     std::cout << "m=" << m << "   ---------------------" <<  std::endl;
 
 
@@ -316,12 +316,12 @@ main(int argc, char** argv)
     gArgandBW->SetPoint(i,ampBW.real(),ampBW.imag());
 
     cnum ampT=(TMatrix(s))(0,0);
-    
+
     gIS->SetPoint(i,m,norm(ampT));
     gPhaseS->SetPoint(i,m,arg(ampT));
     gArgandS->SetPoint(i,ampT.real(),ampT.imag());
   }
-	
+
   TCanvas* c=new TCanvas("c","c",10,10,1000,1000);
   c->Divide(3,3);
   c->cd(1);
@@ -350,8 +350,3 @@ main(int argc, char** argv)
 
   return 0;
 }
-
-
-
-
-

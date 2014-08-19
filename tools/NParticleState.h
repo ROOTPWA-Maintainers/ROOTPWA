@@ -57,7 +57,7 @@ public:
   // Accessors -----------------------
   unsigned int n() const {return _n;}
   int q() const {return _q;} // total charge
-  int qabs() const; // summed abs charge 
+  int qabs() const; // summed abs charge
   TLorentzVector p() const; // Momentum of NParticleState
   TLorentzVector pfs(unsigned int i) const; // Momentum of ith daughter particle;
   FSParticle* getParticle(unsigned int i) const {return _fspart.at(i);}
@@ -70,7 +70,7 @@ public:
   bool Exclusive(double d=10);
 
   // Modifiers -----------------------
-  bool addParticle(FSParticle* part); // returns false if double counting! 
+  bool addParticle(FSParticle* part); // returns false if double counting!
   void setBeam(const TLorentzVector& beam);
 
   // Operations ----------------------
@@ -83,11 +83,11 @@ private:
   unsigned int _n; // number of particles
   int _q; // total charge
   TLorentzVector _p; // total momentum
-  TLorentzVector _beam; 
+  TLorentzVector _beam;
   std::vector<FSParticle*> _fspart; // 4-vectors final state particles
 
   // Private Methods -----------------
-  
+
 };
 
 #endif

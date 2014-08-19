@@ -92,7 +92,7 @@ string translateWaveName(const string& waveName)
 		for (unsigned int i = 0; i < nmbDict; ++i)
 			dimaName.ReplaceAll(dictionary[i][0].c_str(), dictionary[i][1].c_str());
 	}
-  
+
 	// translate L
 	{
 		map<char, char> dictionary;
@@ -108,7 +108,7 @@ string translateWaveName(const string& waveName)
 
 		int  pos = dimaName.First("_");
 		char L   = dimaName(pos + 1);
-    
+
 		// cut off last part
 		dimaName  = dimaName(0, pos);
 		dimaName += " pi ";
@@ -205,7 +205,7 @@ compareIntensitiesWithDima(TTree* tree,  // fitResult tree
 		const string waveName = wavePads[i].first;
 		const string dimaName = translateWaveName(waveName);
 		cout << "    drawing intensity for wave '" << waveName << "' -> '" << dimaName << "'" << endl;
-    
+
 		// draw Dima's plot
 		TLegend *leg = new TLegend(0.82,0.97,0.97,0.82);
 		TVirtualPad* pad = wavePads[i].second;
@@ -228,7 +228,7 @@ compareIntensitiesWithDima(TTree* tree,  // fitResult tree
 		leg->Draw();
 
 		pad->Update();
-    
+
 		// readjust y-axis range
 		TMultiGraph* graph = static_cast<TMultiGraph*>(pad->GetPrimitive(waveName.c_str()));
 		if (graph) {
@@ -302,7 +302,7 @@ compareSpinTotalsWithDima(TTree* tree,  // fitResult tree
 	for (unsigned int i = 0; i < wavePads.size(); ++i) {
 		const string waveName = wavePads[i].first;
 		cout << "    drawing spinTotal for wave '" << waveName << "'" << endl;
-    
+
 		// draw Dima's plot
 		TVirtualPad* pad = wavePads[i].second;
 		pad->cd();
@@ -318,7 +318,7 @@ compareSpinTotalsWithDima(TTree* tree,  // fitResult tree
 		hDima->SetMarkerColor(2);
 		hDima->Draw("SAME");
 		pad->Update();
-    
+
 		// readjust y-axis range
 		TString graphName = "total";
 		if (waveName != "") {
@@ -416,7 +416,7 @@ compareWithDima(TTree*        tree,  // fitResult tree
 		printErr << "cannot open file '" << dimaFileName << "'. exiting." << endl;
 		return;
 	}
-  
+
 	compareIntensityWithDima(tree, dimaFile, wavename);
 	//compareIntensitiesWithDima(tree, dimaFile, createPsFile);
 	//compareSpinTotalsWithDima(tree, dimaFile);

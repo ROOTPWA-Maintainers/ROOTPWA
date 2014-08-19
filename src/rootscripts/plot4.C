@@ -93,7 +93,7 @@ plot4(const unsigned int nmbTrees,             // number of fitResult trees
 		canvas->SetCanvasSize(1000, 800);
 	}
 	canvas->Divide(2, 2);
- 
+
 	// wave A intensity
 	canvas->cd(1);
 	plotIntensity(nmbTrees, trees, waveIndexA, false, graphColors, graphScales, drawLegend,
@@ -110,12 +110,12 @@ plot4(const unsigned int nmbTrees,             // number of fitResult trees
 	canvas->cd(4);
 	plotCoherence(nmbTrees, trees, waveIndexA, waveIndexB, false, graphColors, drawLegend,
 	              graphTitle, drawOption, selectExpr.str(), branchName);
-	
+
 	// create EPS file
 	if (saveEps)
 		gPad->SaveAs(((string)canvas->GetName() + ".eps").c_str());
 }
- 
+
 
 void
 plot4(TTree*        tree,                 // fitResult tree

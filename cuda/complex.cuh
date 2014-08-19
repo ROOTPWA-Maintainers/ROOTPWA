@@ -52,7 +52,7 @@ namespace rpwa {
 
 		// forward declarations
 		template<typename T> class complex;
-		
+
 		template<typename T> HOST_DEVICE T abs (const complex<T>& z);  ///<  returns magnitude of z
 		template<typename T> HOST_DEVICE T arg (const complex<T>& z);  ///<  returns phase angle of z
 		template<typename T> HOST_DEVICE T norm(const complex<T>& z);  ///<  returns z magnitude squared
@@ -97,20 +97,20 @@ namespace rpwa {
 				_real = t;
 				_imag = T();
 				return *this;
-			} 
-			
+			}
+
 			HOST_DEVICE complex<T>& operator +=(const T& t)
 			{
 				_real += t;
 				return *this;
 			}
-    
+
 			HOST_DEVICE complex<T>& operator -=(const T& t)
 			{
 				_real -= t;
 				return *this;
 			}
-    
+
 			HOST_DEVICE complex<T>& operator *=(const T& t)
 			{
 				_real *= t;
@@ -133,8 +133,8 @@ namespace rpwa {
 				_real = z.real();
 				_imag = z.imag();
 				return *this;
-			} 
-		
+			}
+
 			template<typename U>
 			HOST_DEVICE complex<T>& operator +=(const complex<U>& z)
 			{
@@ -142,7 +142,7 @@ namespace rpwa {
 				_imag += z.imag();
 				return *this;
 			}
-    
+
 			template<typename U>
 			HOST_DEVICE complex<T>& operator -=(const complex<U>& z)
 			{
@@ -150,7 +150,7 @@ namespace rpwa {
 				_imag -= z.imag();
 				return *this;
 			}
-    
+
 			template<typename U>
 			HOST_DEVICE complex<T>& operator *=(const complex<U>& z)
 			{
@@ -172,7 +172,7 @@ namespace rpwa {
 
 		};
 
-		
+
 		//////////////////////////////////////////////////////////////////////////
 		// operators with scalars
 		template<typename T>
@@ -322,7 +322,7 @@ namespace rpwa {
 			result += y;
 			return result;
 		}
-  
+
 		template<typename T>
 		inline
 		HOST_DEVICE
@@ -334,7 +334,7 @@ namespace rpwa {
 			result -= y;
 			return result;
 		}
-  
+
 		template<typename T>
 		inline
 		HOST_DEVICE
@@ -384,14 +384,14 @@ namespace rpwa {
 		complex<T>
 		operator +(const complex<T>& z)
 		{ return z; }
-  
+
 		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
 		operator -(const complex<T>& z)
 		{ return complex<T>(-z.real(), -z.imag()); }
-			
+
 
 		//////////////////////////////////////////////////////////////////////////
 		// accessor functions
@@ -414,7 +414,7 @@ namespace rpwa {
 			const T s    = max(std::abs(real), std::abs(imag));
 			if (s == T())
 				return s;
-			real /= s; 
+			real /= s;
 			imag /= s;
 			return s * std::sqrt(real * real + imag * imag);
 		}
@@ -424,7 +424,7 @@ namespace rpwa {
 		HOST_DEVICE
 		T
 		arg(const complex<T>& z)
-		{	return std::atan2(z.imag(), z.real());	}
+		{ return std::atan2(z.imag(), z.real()); }
 
 		template<typename T>
 		inline
@@ -470,7 +470,7 @@ namespace rpwa {
 				in >> real >> ch;
 				if (ch == ',') {
 					in >> imag >> ch;
-					if (ch == ')') 
+					if (ch == ')')
 						z = complex<T>(real, imag);
 					else
 						in.setstate(std::ios_base::failbit);

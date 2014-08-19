@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
 // Description:
-//      Utitlity class providing access to substates of an 
+//      Utitlity class providing access to substates of an
 //      N-particle final state and GJ frames
 //
 // Author List:
@@ -40,24 +40,24 @@ class TVector3;
 
 class NParticleEvent {
 public:
-  NParticleEvent(TClonesArray* fs_momenta, 
+  NParticleEvent(TClonesArray* fs_momenta,
 		 std::vector<int>* fs_charges,
 		 TLorentzVector* beam,
 		 int* beam_charge,
 		 TVector3* vertex);
-  
+
   ~NParticleEvent(){}
 
 
 
   /*** @brief Refresh event
-   * clears all data and builds particles new from 
+   * clears all data and builds particles new from
    * Input arrays (can be used together with a root tree)
    * Calls build() to create substates if needed (doBuild)
    * doBuild=false only refreshes the momenta
    */
   void refresh(bool doBuild=true);
-  
+
 
    /*** @brief Create all possible substates
    */
@@ -70,7 +70,7 @@ public:
   /*** @brief transform into Gottfried Jackson frame
    */
   void toGJ();
-  
+
   /*** @brief get vector of a decay product p1
    *   in the helicity frame of pX
    *   which itself has been produced from pMother
@@ -81,7 +81,7 @@ public:
   void writeGAMP(std::ostream& out); //< dump event to PWA200 input format (txt file)
   unsigned int nStates() const {return _NPStates.size();} //< returns number of states
   unsigned int nParticles() const {return _fsparticles.size();} //< returns number of final state particles
-  
+
 
   /*** @brief returns NParticle(Sub)State
    */
@@ -94,7 +94,7 @@ public:
 private:
   /*** @brief Final state particle momenta
    */
-  TClonesArray* _fsmomenta; 
+  TClonesArray* _fsmomenta;
   std::vector<int>* _fs_charges;
   TLorentzVector* _beam; // original pointer to beam
   TLorentzVector _pbeam; // beam momentum (possibly in a different frame)
@@ -112,7 +112,7 @@ private:
    * this is a magic recursive method!
    */
   void permute(int n, int k, int* permu, int x=-1, int i=1);
-  
+
 };
 
 

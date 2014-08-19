@@ -168,7 +168,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	//L.enableCuda(false);
 	L.enableCuda(true);
-#endif  
+#endif
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
 		cout << L << endl;

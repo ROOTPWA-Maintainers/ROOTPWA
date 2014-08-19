@@ -94,7 +94,7 @@ C	IF ( N.EQ.1 .AND. S.GT.( W_MAX**2) ) RETURN	! HIGH MASS CUT
 	IF (S .EQ. S1) RETURN				! DIVIDE BY ZERO.
 	R(1) = SQRT(1. - 4.*WPI**2/S)		! PI+-
 	RR2  = 0.
-	RI2  = 0. 
+	RI2  = 0.
 	RKC  = SQRT(ABS(1. - 4.*WKC**2/S))	! K+-
 	RK0  = SQRT(ABS(1. - 4.*WK0**2/S))	! K0
 	IF (S.GT.(4.*WKC**2)) THEN

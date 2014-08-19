@@ -2,7 +2,7 @@
 //
 // Description:
 //    (BW) Component of mass dependent fit
-//      
+//
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -44,14 +44,14 @@ namespace rpwa {
       //}
     }
 
-    //~pwachannel(){if(_sqrtps!=NULL)delete _sqrtps;}  
+    //~pwachannel(){if(_sqrtps!=NULL)delete _sqrtps;}
 
     pwachannel(const rpwa::pwachannel& ch); /// cp ctor
-    
+
     // accessors
     std::complex<double> C() const {return _C;}
     std::complex<double> CsqrtPS(double m) const {return _C*sqrt(_ps->Eval(m));}
-    
+
     TGraph* ps() const {return _ps;}
     double ps(double m) const {return _ps->Eval(m);}
 
@@ -71,15 +71,15 @@ namespace rpwa {
     pwacomponent(const std::string& name,
 		 double m0, double gamma,
 		 const std::map<std::string,pwachannel >& channels);
-    
+
     virtual ~pwacomponent(){}
-    
+
     std::string name() const {return _name;}
     virtual std::complex<double> val(double m) const ;
     virtual void setPar(double m0, double gamma){_m0=m0;_m02=m0*m0;_gamma=gamma;}
     unsigned int numChannels() const {return _channels.size();}
     const std::string& getChannelName(unsigned int i) const {return _channelname[i];}
-    const pwachannel& getChannel(unsigned int i) const {return *_vchannels[i];} 
+    const pwachannel& getChannel(unsigned int i) const {return *_vchannels[i];}
     unsigned int numPar() const {return numChannels()*2+2;}
     void setCouplings(const double* par);
     void getCouplings(double* par);
@@ -123,19 +123,19 @@ namespace rpwa {
 	   double m0, double gamma,
 	   const std::map<std::string,pwachannel >& channels)
       : pwacomponent(name,m0,gamma,channels){}
-    
+
     virtual ~pwabkg(){}
-    
+
     virtual std::complex<double> val(double m) const ;
 
     void setIsobars(double m1,double m2){_m1=m1;_m2=m2;}
     void getIsobars(double& m1, double& m2){m1=_m1;m2=_m2;}
-    
+
   private:
     // isobar masses
     double _m1;
     double _m2;
-    
+
   };
 
 
@@ -152,11 +152,11 @@ namespace rpwa {
 
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
-    
+
     std::vector<std::string> wavelist()const;
 
     void setPar(const double* par); // set parameters
-    void getPar(double* par);       // return parameters 
+    void getPar(double* par);       // return parameters
     unsigned int nFreePSPar() const {return _freePSpar.size();}
     double getFreePSPar(unsigned int i) const;
     void getFreePSLimits(unsigned int i, double& lower, double& upper) const;
@@ -188,7 +188,7 @@ namespace rpwa {
     std::vector<unsigned int> _freePSpar; // parameters of phase space to keep floating
     // mapping for wave -> which components with which channel
     // wavelist in same order as given by wavelist
-    std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;    
+    std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;
 
 
   };
@@ -197,7 +197,7 @@ namespace rpwa {
 
 
 } //  end namespace
- 
+
 
 
 #endif

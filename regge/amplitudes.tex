@@ -167,7 +167,7 @@
 
 \long\def\@makefntext#1{% taken from LaTeX Companion
   \vskip0pt\parindent0pt\begin{list}{}%
-  {\labelwidth1.5em\leftmargin=\labelwidth% 
+  {\labelwidth1.5em\leftmargin=\labelwidth%
      \labelsep3pt\itemsep0pt\parsep0pt\topsep-2pt
             \def\baselinestretch{1.0}\footnotesize}%
   \item[\hfill\@makefnmark]#1\end{list}}
@@ -219,15 +219,15 @@
 % \def\eql#1#2{\hbox{(\ref{#1}$#2$)}}
 %
 %
-% \bqx...\eqx is used to put individual labels on equations, 
+% \bqx...\eqx is used to put individual labels on equations,
 %	&\mylbl{a}\cr...&\mylbl{z}\cr are appended at the equations (recommended);
 % 	or, alternatively,
 % 	&\eql{#1}{a}\cr...&\eql{#1}{z}\cr are appended at the equations;
 % 	(If no label is needed for an equation, simply put \cr at the end.)
-% 	they are used both to define and to refer the equation in text. 
+% 	they are used both to define and to refer the equation in text.
 % 	{#1} is the label defined in \bqx...\eqx above.
 %
-% \bqr...\eqr is used to put an arbitrary label, 
+% \bqr...\eqr is used to put an arbitrary label,
 % 	independent of the latex labelling scheme
 % 	(and hence---leaving the counter unaffected).
 %
@@ -242,27 +242,27 @@
 % \def\blgnd#1#2#3\elgnd{% needs to load 'amsmath.'
 %    \begin{equation}\label{#1}\begin{alignedat}{#2}#3\end{alignedat}\end{equation}}%
 % \def\blgh#1#2#3#4\elgh{% needs to load 'amsmath.'
-% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2 
+% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2
 % 	% #2 for label
 % 	% #3 for a centered equation before \{
 %    \begin{equation}\label{#2}
 % 	#3\begin{alignedat}{#1}#4\end{alignedat}\end{equation}}%
 % \def\blgf#1#2#3#4\elgf{% needs to load 'amsmath.'
-% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2 
+% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2
 % 	% #2 for label
 % 	% #3 for a centered equation before \{
 %    \begin{equation}\label{#2}
 % 	#3\left\{\begin{alignedat}{#1}#4\end{alignedat}\right.\end{equation}}%
 % % a better method for multiple columns with/without labels
 % \def\lbl{\label}
-% \def\blgt#1#2\elgt{% #1 for the number of `eq. columns' = [#(&'s)+1]/2 
+% \def\blgt#1#2\elgt{% #1 for the number of `eq. columns' = [#(&'s)+1]/2
 % 	% \\ for labels; use \lbl to assign a name to a label
-% 	% \cr for no label; 
+% 	% \cr for no label;
 % 	% \lbl  for a label or a blank (no assigned label) for the last eq.
 % 	% \notag  for no label for the last eq.
 %    \begin{alignat}{#1}#2\end{alignat}}%
 % \def\blgd#1#2#3\elgd{%
-% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2 
+% 	% #1 for the number of `eq. columns' = [#(&'s)+1]/2
 % 	% #2 for the name assigned to the block (unbreakable) of equations
 % 	% \\ or \cr only but not both; leave the last line blank.
 % \begin{equation}\label{#2}\left\{\begin{alignedat}{#1}#3\end{alignedat}\right.
@@ -273,8 +273,8 @@
 % \def\pmtrx#1{\begin{pmatrix}#1\end{pmatrix}}% needed when 'amsmath' is invoked.
 % %
 %
-\def\mbb#1{\mathbb #1}	
-\def\mbf#1{\mbox{\boldmath $#1$}}	
+\def\mbb#1{\mathbb #1}
+\def\mbf#1{\mbox{\boldmath $#1$}}
 \font\solz=msbm10 scaled\magstep2
 \font\cmb=cmbsy10 scaled\magstep1
 \font\cmi=cmmib10 scaled\magstep1
@@ -325,7 +325,7 @@
 %	                          f           c = 0pt for no divisor
 %	                                      c = empty --- default or 'normal'
 %	                                      d = 0 displaystyle
-%					          1 textstyle 				  
+%					          1 textstyle
 %					          2 scriptstyle
 %					          3 scriptscriptstyle
 %
@@ -357,7 +357,7 @@ Regge Amplitude Parameterizations
 }
 \vskip 24pt
 Sebastian Neubert\\
-{\em Physik Department (E18), 
+{\em Physik Department (E18),
 Technische Universit\"at M\"unchen}\\[12pt]
 \vskip 1cm
 \today
@@ -385,10 +385,10 @@ with the partial wave amplitudes
 f_\ell^{(I)}(s)=\frac{2\sqrt{s}}{\pi k}\hat{f}_\ell^{(I)}
 \end{equation}
 and the breakup momentum $k=\sqrt{s/4-M_\pi^2}$.
- 
+
 The connection between Isopsin $I$ and oribtal angular momentum $\ell$ is given by the fact that the decay is going into two pseudo-scalar particles.
 
-The partial wave amplitudes can be written in terms of phase shifts $\delta_\ell$ and inelasticities $\eta_\ell$. 
+The partial wave amplitudes can be written in terms of phase shifts $\delta_\ell$ and inelasticities $\eta_\ell$.
 \begin{equation}
 \hat{f}_\ell(s)=\frac{\eta_\ell(s) e^{2i\delta_\ell(s)} -1}{2i}
 \end{equation}
@@ -462,7 +462,3 @@ and $s_0$ a scale constant which is usually set to $s_0=1$GeV.
 
 
 \end{document}
-
-
-
-

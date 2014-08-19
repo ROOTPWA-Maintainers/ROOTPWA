@@ -45,5 +45,3 @@ cd $FITDIR
 for i in *plots*.ps; do ps2pdf $i; rm -f $i; done;
 pdftk *plots*.pdf cat output $BOOKY
 for i in *plots*.pdf; do rm -f $i; done;
-
-

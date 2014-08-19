@@ -16,7 +16,7 @@ export FITDIR=$ROOTPWA/testbin/fit
 QUEUE=8nh
 
 # Divert lsf output
-# logs will have name of bin preceded with 
+# logs will have name of bin preceded with
 # o_fit_ for standard output
 # e_fit_ for error log
 if [ ! -r $ROOTPWA/lsf ];
@@ -41,11 +41,11 @@ echo;
 iter=0
 
 for MYBIN in `cat $TEMPLIST` ; do
-   
-    iter=$((iter+1)) 
+
+    iter=$((iter+1))
     export SGE_TASK_ID=$iter
     echo SGE_TASK_ID=$SGE_TASK_ID
-    
+
     echo "Starting fit for bin $BIN"
 
     # set variables
@@ -58,7 +58,7 @@ for MYBIN in `cat $TEMPLIST` ; do
     export NORM=norm.int
     export ACC=accnorm.int
     export ACCEVENTS="-A 50000"
-    
-    # submit job 
+
+    # submit job
     bsub -q $QUEUE -J $MYBIN -o $LOG/o_fit_$MYBIN -e $LOG/e_fit_$MYBIN $ROOTPWA/scripts/rootfitBatch.sh $BINS ;
 done

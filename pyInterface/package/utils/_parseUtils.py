@@ -105,4 +105,3 @@ def getListOfKeyfiles(keyfilePatterns):
 				else:
 					pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
 	return keyfiles
-

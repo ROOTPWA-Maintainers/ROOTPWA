@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 	a[i][j][k] = i * 100 + j * 10 + k;
 
   if (0) {
-  
+
     double***          x      = 0;
     const unsigned int dim[3] = {2, 3, 4};
     allocate3DArray(x, dim);
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	}
 
     delete3DArray(x, dim);
-    
+
   }
 
 
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 	  }
 	  cout << "} vs. {" << i << "  " << j << "  " << k << "}" << endl;
 	}
-    
+
     delete[] x;
   }
 
@@ -120,6 +120,6 @@ int main(int argc, char** argv)
 	}
     cout << endl;
   }
-  
+
   return 0;
 }

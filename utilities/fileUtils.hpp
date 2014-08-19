@@ -48,7 +48,7 @@ int glob(const char *,
          int(*)(const char*, int),
          glob_t*);
 void globfree(glob_t *);
-#endif 
+#endif
 
 
 namespace rpwa {
@@ -131,7 +131,7 @@ namespace rpwa {
 			fileList.push_back(globBuffer.gl_pathv[i]);
 		globfree(&globBuffer);
 		return fileList;
-	} 
+	}
 
 
 }  // namespace rpwa

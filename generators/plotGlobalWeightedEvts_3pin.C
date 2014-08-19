@@ -553,7 +553,7 @@ setupBookies(const std::vector<MassBin>& massBins,
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyDiffVsMass", new DiffVsMass("BookyDiffVsMass", outGlobal, massBins.size(), massBins.front().GetMassBinLower(), massBins.back().GetMassBinUpper())));
 
 	// loop over all mass bins
-	for (std::vector<MassBin>::const_iterator massBin=massBins.begin(); massBin!=massBins.end(); massBin++) { 
+	for (std::vector<MassBin>::const_iterator massBin=massBins.begin(); massBin!=massBins.end(); massBin++) {
 		TIter histiter(massBin->GetDir()->GetListOfKeys());
 		TKey* key;
 		while ((key = dynamic_cast<TKey*>(histiter()))) {

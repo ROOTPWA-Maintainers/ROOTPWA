@@ -65,16 +65,16 @@ namespace rpwa {
 
 			typedef storageT storage_type;
 			typedef T  value_type;
-  
+
 			storageT _complex;
-  
+
 			// accessors for real and imaginary components
 			inline HOST_DEVICE T& real() { return _complex.x; };
 			inline HOST_DEVICE T& imag() { return _complex.y; };
 
 			inline HOST_DEVICE const T& real() const { return _complex.x; };
 			inline HOST_DEVICE const T& imag() const { return _complex.y; };
-  
+
 			// constructors
 			inline
 			HOST_DEVICE
@@ -92,7 +92,7 @@ namespace rpwa {
 				_complex.x = a._complex.x;
 				_complex.y = a._complex.y;
 			}
-  
+
 			// assignment operators
 			inline
 			HOST_DEVICE
@@ -185,7 +185,7 @@ namespace rpwa {
 			return complexTest<storageT, T>(a.value.x + b, a.value.y);
 		}
 
-		
+
 		// unary -
 		template<typename storageT, typename T>
 		inline

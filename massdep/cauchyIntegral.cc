@@ -54,7 +54,7 @@ cauchyIntegral::trafo(double t){
 double
 cauchyIntegral::ofart(double x){
   //if(x>_rup || x<_rlow){
-  //  cout << "cauchyIntergral:: x out of range: " << x 
+  //  cout << "cauchyIntergral:: x out of range: " << x
   //	 << " ("<< _rlow << "," << _rup << ")" << endl;
   //  throw;
   //}
@@ -62,7 +62,7 @@ cauchyIntegral::ofart(double x){
 }
 
 
-double 
+double
 cauchyIntegral::eval_Hunter(unsigned int degree){
   if(degree>4 || degree < 1) throw;
   // do coordinate transformation
@@ -72,7 +72,7 @@ cauchyIntegral::eval_Hunter(unsigned int degree){
   for(unsigned int i=0; i<degree; ++i){
     G+=H(i,degree)*_func->Eval(trafo(_roots[degree-1].at(i)));
   }
-  
+
   //cout << "G = "<< G << endl;
 
   // loop over signularities
@@ -80,7 +80,7 @@ cauchyIntegral::eval_Hunter(unsigned int degree){
   for(unsigned int i=0;i<_poles.size();++i){
     double x=ofart(_poles[i].x);
     double res=2/_diff*_poles[i].residual;
-    //cout << "Pole" << i << ": " << x << "("<<_poles[i].x<<")" 
+    //cout << "Pole" << i << ": " << x << "("<<_poles[i].x<<")"
     //	 << "  Residual="<<  res << "("<<_poles[i].residual<<")"  <<endl;
     double contri=res*gsl_sf_legendre_Ql(degree,x)/gsl_sf_legendre_Pl(degree,x);
     //cout << "R = "<< 2*contri << endl;
@@ -96,20 +96,20 @@ cauchyIntegral::eval_Hunter(unsigned int degree){
 
 
 
-double 
+double
 cauchyIntegral::H(unsigned int r,     /// index of zero of legendre polynomial
 		  unsigned int degree){
   if(degree>4 || degree < 1) throw;
   if(r>degree) throw;
-  
+
   double pl[degree+2];
   double plderiv[degree+2];
-  
+
   gsl_sf_legendre_Pl_deriv_array(degree+1,_roots[degree-1].at(r),pl,plderiv);
-  
-  
+
+
   double denom=(degree+1)*pl[degree+1]*plderiv[degree];
-  
+
 
   return -2./denom;
 }

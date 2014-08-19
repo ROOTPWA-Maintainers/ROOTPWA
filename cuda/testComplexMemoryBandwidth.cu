@@ -65,11 +65,11 @@ printCudaDeviceInfo(const int deviceId)
 		}
 	}
 	printInfo << "CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
-    
+
 	// print info
 	int driverVersion = 0;
 	cutilSafeCall(cudaDriverGetVersion(&driverVersion));
-	int runtimeVersion = 0;     
+	int runtimeVersion = 0;
 	cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
 	cout << "    driver version: .................................. " << driverVersion / 1000 << "." << driverVersion % 100 << endl
 	     << "    runtime version: ................................. " << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
@@ -85,7 +85,7 @@ printCudaDeviceInfo(const int deviceId)
 	     << "    maximum grid dimension ........................... " << deviceProp.maxGridSize[0] << " x " << deviceProp.maxGridSize[1]
 	     << " x " << deviceProp.maxGridSize[2] << endl
 	     << "    total amount of global memory: ................... " << deviceProp.totalGlobalMem / (1024. * 1024. * 1024.) << " GiBytes" << endl
-	     << "    total amount of constant memory: ................. " << deviceProp.totalConstMem << " bytes" << endl 
+	     << "    total amount of constant memory: ................. " << deviceProp.totalConstMem << " bytes" << endl
 	     << "    total amount of shared memory per block: ......... " << deviceProp.sharedMemPerBlock << " bytes" << endl
 	     << "    total number of registers available per block: ... " << deviceProp.regsPerBlock << endl
 	     << "    maximum memory pitch: ............................ " << deviceProp.memPitch << " bytes" << endl
@@ -251,7 +251,7 @@ verifySum2Kernel(const T*            inData,
 
 template<typename T>
 struct sumGlobalMemKernelCaller {
-  
+
 	typedef T value_type;
 
 	static void call(const unsigned int nmbBlocks,
@@ -284,7 +284,7 @@ struct sumGlobalMemKernelCaller {
 
 template<typename T, typename textureReaderT>
 struct sumTextureMemKernelCaller {
-  
+
 	typedef T                                     value_type;
 	typedef typename textureReaderT::texture_type texture_type;
 
@@ -318,7 +318,7 @@ struct sumTextureMemKernelCaller {
 
 template<typename T>
 struct sum2GlobalMemKernelCaller {
-  
+
 	typedef T value_type;
 
 	static void call(const unsigned int nmbBlocks,
@@ -357,7 +357,7 @@ struct sum2GlobalMemKernelCaller {
 
 template<typename T, typename textureReaderT>
 struct sum2TextureMemKernelCaller {
-  
+
 	typedef T                                     value_type;
 	typedef typename textureReaderT::texture_type texture_type;
 
@@ -482,7 +482,7 @@ void runKernel(const unsigned int nmbBlocks,
 
 
 int main(int    argc,
-         char** argv) 
+         char** argv)
 {
 	// get number of CUDA devices in system
 	int deviceCount = 0;
@@ -496,7 +496,7 @@ int main(int    argc,
 	// print info for all CUDA devices in system
 	for (int deviceId = 0; deviceId < deviceCount; ++deviceId)
 		printCudaDeviceInfo(deviceId);
-  
+
 	// use most powerful GPU in system
 	const int deviceId = cutGetMaxGflopsDeviceId();
 	cudaDeviceProp deviceProp;
@@ -511,13 +511,13 @@ int main(int    argc,
 	printInfo << "using grid (" << nmbBlocks << " blocks) x "
 	          << "(" << nmbThreadsPerBlock << " threads per block); "
 	          << "running " << nmbIterations << " kernel iterations" << endl;
-  
+
 	// run kernels
 	printInfo << "testing 1D complexTest<float> global memory read ---------------------------" << endl;
 	runKernel<cuda::complexTest<float2, float>, cuda::floatComplexTextureReader,
 		sumGlobalMemKernelCaller<cuda::complexTest<float2, float> > >
 		(nmbBlocks, nmbThreadsPerBlock, nmbIterations);
-	
+
 	printInfo << "testing 1D complexTest<double> global memory read --------------------------" << endl;
 	runKernel<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader,
 		sumGlobalMemKernelCaller<cuda::complexTest<double2, double> > >
@@ -552,6 +552,6 @@ int main(int    argc,
 	runKernel<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader,
 		sum2TextureMemKernelCaller<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader> >
 		(nmbBlocks, nmbThreadsPerBlock, nmbIterations);
-	
+
 	return 0;
 }

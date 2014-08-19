@@ -36,7 +36,7 @@
 class TGraph;
 
 
-namespace rpwa { 
+namespace rpwa {
 
   class nBodyPhaseSpaceGen;
   class absMassDep;
@@ -54,11 +54,11 @@ public:
 	       int seed=1234567);
 
   ~mcPhaseSpace(){}
- 
+
 
   // Accessors -----------------------
   void rho(double m, std::vector<double>& results) const ; /// standard accessor: explicitely calculate
-  
+
   void doCalc();         /// calculate and store complete phase space
   bool hasCached()const {return _graph.size()!=0;}
   double thres() const {return _thres;}
@@ -70,7 +70,7 @@ public:
 
   // Modifiers -----------------------
   void addDecayChannel(absDecayChannel* ch);
- 
+
 
 
 

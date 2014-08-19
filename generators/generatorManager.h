@@ -68,4 +68,3 @@ namespace rpwa {
 }
 
 #endif
-

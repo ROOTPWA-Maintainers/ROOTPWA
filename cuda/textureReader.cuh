@@ -52,7 +52,7 @@ namespace rpwa {
 			typedef float texture_type;
 
 			static __device__ float fetch(const int index) { return tex1Dfetch(floatTexture, index); }
-			
+
 			static HOST void bindTexture(const void*        deviceInData,
 			                             const unsigned int memSize)
 			{ return cutilSafeCall(cudaBindTexture(0, floatTexture, deviceInData, memSize)); }
@@ -107,7 +107,7 @@ namespace rpwa {
 			static HOST void bindTexture(const void*        deviceInData,
 			                             const unsigned int memSize)
 			{ return cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, memSize)); }
-  
+
 			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float4Texture)); }
 
 		};
@@ -128,7 +128,7 @@ namespace rpwa {
 			static HOST void bindTexture(const void*        deviceInData,
 			                             const unsigned int memSize)
 			{ return cutilSafeCall(cudaBindTexture(0, int4Texture, deviceInData, memSize)); }
-  
+
 			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(int4Texture)); }
 
 		};

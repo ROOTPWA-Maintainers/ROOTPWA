@@ -187,8 +187,8 @@ C--
       Complex	GK		! -I * (K-K channel width)
 C--
       IF ( Inited.ne.0 ) go to 1000
-	SHD2K	= (2.0*WK)**2		! 2K threshold	
-	SHDEP	= (WET+WPI)**2		! ETA-PI threshold	
+	SHD2K	= (2.0*WK)**2		! 2K threshold
+	SHDEP	= (WET+WPI)**2		! ETA-PI threshold
 	EMP	= (WET-WPI)**2		! --"-- pseudo-threshold
 	WR2	= WR**2
 !	CK = CE*RDATA(13)		!(D)

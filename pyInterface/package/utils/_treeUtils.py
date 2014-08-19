@@ -200,4 +200,3 @@ def getTreeFromEvtFile(filename, treename = ""):
 
 	pyRootPwa.utils.printSucc('Successfully created TTree with ' + str(events) + ' events.')
 	return (prodKinPartName, decayKinPartName, outTree)
-

@@ -14,5 +14,3 @@ for ((  i = 0 ;  i < $NG;  i++  )) ; do
 	addisokey ${KEYS[$i]} ${KEYS[$j]};
     done;
 done
-    
- 

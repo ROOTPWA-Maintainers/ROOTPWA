@@ -60,7 +60,7 @@ namespace rpwa {
 			const std::string& branchname="fitResult_v2"):
       mfilename(filename),mtitle(title),mcolour(colour),mtreename(treename),mbranchname(branchname){}
 
-    
+
     std::string mfilename;
     std::string mtitle;
     unsigned int mcolour;
@@ -88,12 +88,12 @@ namespace rpwa {
     unsigned int mNumBins;
     void setNWaves(unsigned int n){nWaves=n;}
     unsigned int nWaves;
-    
+
 
   };
 
 
-  /// \brief Decorator for TGraph to carry index to fit 
+  /// \brief Decorator for TGraph to carry index to fit
   /// this is needed for density calculation
   class TPwaFitGraphErrors : public TGraphErrors {
   public:
@@ -101,12 +101,12 @@ namespace rpwa {
     TPwaFitGraphErrors(unsigned int n, unsigned int i): TGraphErrors(n),fitindex(i){}
     virtual ~TPwaFitGraphErrors(){};
     unsigned int fitindex;
-    
+
     ClassDef(TPwaFitGraphErrors,1);
   };
 
 
-  /// \brief Plot generator Class reads fitResult trees 
+  /// \brief Plot generator Class reads fitResult trees
   ///  and creates graphs even for larger number of fits
 class pwaPlotter {
 public:
@@ -116,8 +116,8 @@ public:
   virtual ~pwaPlotter();
 
   // Accessors -----------------------
-  const std::set<std::string>& wavesNames(){return mWavenames;} 
-  const std::set<std::string>& listJPCME(){return mJPCME;} 
+  const std::set<std::string>& wavesNames(){return mWavenames;}
+  const std::set<std::string>& listJPCME(){return mJPCME;}
 
 
   // Modifiers -----------------------
@@ -130,13 +130,13 @@ public:
 	      const std::string& treename="pwa",
 	      const std::string& branchname="fitResult_v2",
 	      const unsigned int numb_bins=0);
-	      
+
 
 
   /// \brief Create 2D density plots of the intensities
   /// This will produce a wheighted probability density profile
   /// combining the information of all the fits added
-  void produceDensityPlots(); 
+  void produceDensityPlots();
 
   // Operations ----------------------
   void writeAllIntensities(std::string filename);
@@ -144,12 +144,12 @@ public:
 
 //   void writeSpinTotals(std::string filename, std::string opt="");
 //   void writeSpinTotals(TFile* outfile, std::string opt="");
-  
+
   void writeAll(std::string filename);
   void writeAll(TFile* outfile);
 
   void printStats();
-  
+
 
 private:
 
@@ -157,11 +157,11 @@ private:
   std::set<std::string> mWavenames;  ///< list of wave names
   std::set<std::string> mJPCME;    ///< list of available spin totals
   std::vector<fitResultMetaInfo> mResultMetaInfo; ///< list of available fits
-  
+
   ///< 2D-probability distributions (TH2D)
-  std::map<std::string,TH2D*> mIntensityDensityPlots; 
- 
-  
+  std::map<std::string,TH2D*> mIntensityDensityPlots;
+
+
   ///< TMultiGraphs
   std::map<std::string,TMultiGraph*> mIntensities;
   std::map<strpair,TMultiGraph*> mPhases;
@@ -173,12 +173,12 @@ private:
   TMultiGraph* mLogLikelihoodPerEvent;
   TMultiGraph* mEvidence;
   TMultiGraph* mEvidencePerEvent;
-  
+
 
   double mMinEvidence; // minimal evidence for a fit -- used to renormalize weighting
 
   // Private Methods -----------------
-  
+
   bool registerWave(const std::string& wavename); ///< create wave histograms/graphs
 
   ClassDef(pwaPlotter,2);

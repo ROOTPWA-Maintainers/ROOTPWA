@@ -40,19 +40,19 @@ public:
  // Modifiers -----------------------
  // Operations ----------------------
 
-  
+
   /// PionPion scattering amplitude
   /// amp = F^i(s,t)= 2 \sum_l (2l+2)P_l(cosTheta)f^I_l(s)
-  std::complex<double> amp(std::complex<double> s, 
-			   std::complex<double> t, 
+  std::complex<double> amp(std::complex<double> s,
+			   std::complex<double> t,
 			   unsigned int I) const;
 
-  std::complex<double> amp(double s, 
-			   double t, 
+  std::complex<double> amp(double s,
+			   double t,
 			   double cosTheta,
-			   unsigned int I) const 
-    {return amp(std::complex<double>(s,0), 
-		std::complex<double>(t,0), 
+			   unsigned int I) const
+    {return amp(std::complex<double>(s,0),
+		std::complex<double>(t,0),
 		I);}
 
   /// Partial wave amplitudes
@@ -65,7 +65,7 @@ public:
   std::complex<double> f(double s,
 			 unsigned  int l=0,
 			 unsigned int I=0) const {return f(std::complex<double>(s,0),l,I);}
-  
+
   /// Phase shifts
   double cotDelta(std::complex<double> s,
 		unsigned int l=0,

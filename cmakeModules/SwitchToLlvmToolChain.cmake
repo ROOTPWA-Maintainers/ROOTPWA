@@ -62,11 +62,11 @@ set(CMAKE_CXX_COMPILER "${LLVM_BIN_DIR}/clang++")
 # set(CMAKE_NM      "${LLVM_BIN_DIR}/llvm-nm"     CACHE INTERNAL STRING)
 # set(CMAKE_OBJDUMP "${LLVM_BIN_DIR}/llvm-ojdump" CACHE INTERNAL STRING)
 # set(CMAKE_RANLIB  "${LLVM_BIN_DIR}/llvm-ranlib" CACHE INTERNAL STRING)
-# 
-# 
+#
+#
 # set(CMAKE_C_LINK_EXECUTABLE "${LLVM_BIN_DIR}/llvm-ld <OBJECTS> -o  <TARGET> <CMAKE_C_LINK_FLAGS> <LINK_FLAGS> <LINK_LIBRARIES>")
 # set(CMAKE_CXX_LINK_EXECUTABLE "${LLVM_BIN_DIR}/llvm-ld <OBJECTS> -o  <TARGET> <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <LINK_LIBRARIES>")
- 
+
 # set(CMAKE_FIND_ROOT_PATH "${LLVM_BIN_DIR}")
 # set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
@@ -80,42 +80,42 @@ set(CMAKE_CXX_COMPILER "${LLVM_BIN_DIR}/clang++")
 
 # CMake honors the environment variables CC and CXX upon detecting the C
 # and C++ compiler to use:
-# 
+#
 # $ export CC=/usr/bin/clang
 # $ export CXX=/usr/bin/clang++
 # $ cmake ..
 # -- The C compiler identification is Clang
 # -- The CXX compiler identification is Clang
-# 
+#
 # The compiler specific flags can be overridden by putting them into a
 # system wide CMake file an pointing the CMAKE_USER_MAKE_RULES_OVERRIDE
 # variable to it. Create a file ~/ClangOverrides.txt with the following
 # contents:
-# 
+#
 # SET (CMAKE_C_FLAGS_INIT                "-Wall -std=c99")
 # SET (CMAKE_C_FLAGS_DEBUG_INIT          "-g")
 # SET (CMAKE_C_FLAGS_MINSIZEREL_INIT     "-Os -DNDEBUG")
 # SET (CMAKE_C_FLAGS_RELEASE_INIT        "-O4 -DNDEBUG")
 # SET (CMAKE_C_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
-# 
+#
 # SET (CMAKE_CXX_FLAGS_INIT                "-Wall")
 # SET (CMAKE_CXX_FLAGS_DEBUG_INIT          "-g")
 # SET (CMAKE_CXX_FLAGS_MINSIZEREL_INIT     "-Os -DNDEBUG")
 # SET (CMAKE_CXX_FLAGS_RELEASE_INIT        "-O4 -DNDEBUG")
 # SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "-O2 -g")
-# 
+#
 # The suffix _INIT will make CMake initialize the corresponding
 # *_FLAGS_* variable with the given value. Then invoke cmake in the
 # following way:
-# 
+#
 # $ cmake -DCMAKE_USER_MAKE_RULES_OVERRIDE=~/ClangOverrides.txt ..
-# 
+#
 # Finally to force the use of the LLVM binutils, set the internal
 # variable _CMAKE_TOOLCHAIN_PREFIX. This variable is honored by the
 # CMakeFindBinUtils module:
-# 
+#
 # $ cmake -D_CMAKE_TOOLCHAIN_PREFIX=llvm- ..
-# 
+#
 # Putting this all together you can write a shell wrapper which sets up
 # the environment variables CC and CXX and then invokes cmake with the
 # mentioned variable overrides.

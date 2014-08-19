@@ -119,4 +119,3 @@ class rootPwaConfig:
 			pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
 		if self.accCorrPSEventFileExtensionQualifier == "":
 			pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")
-

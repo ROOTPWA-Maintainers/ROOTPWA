@@ -28,7 +28,7 @@ using namespace std;
 
 
 
-vector<string> 
+vector<string>
 dMatrixSet::wavelist() const {
    vector<string> wl;
 //   for(unsigned int i=0;i<n();++i){
@@ -64,7 +64,7 @@ dMatrixSet::setPS(TF1* fPS){
   _numpar+=_freePSpar.size();
 }
 
-double 
+double
 dMatrixSet::getFreePSPar(unsigned int i){
   if(i<_freePSpar.size())
     return _phasespace->GetParameter(_freePSpar[i]);
@@ -73,7 +73,7 @@ dMatrixSet::getFreePSPar(unsigned int i){
 }
 
 
-void 
+void
 dMatrixSet::getFreePSLimits(unsigned int i, double& lower, double& upper){
   if(i<_freePSpar.size()){
     _phasespace->GetParLimits(_freePSpar[i],lower,upper);
@@ -99,8 +99,8 @@ dMatrixSet::setPar(const double* par){ // set parameters
 }
 
 
-void 
-dMatrixSet::getPar(double* par){       // return parameters 
+void
+dMatrixSet::getPar(double* par){       // return parameters
   // unsigned int parcount=0;
 //   // components
 //   for(unsigned int i=0;i<n();++i){
@@ -118,15 +118,15 @@ dMatrixSet::getPar(double* par){       // return parameters
 //   }
 }
 
-unsigned int 
+unsigned int
 dMatrixSet::numPar() const {
   return 0;
 }
 
-double 
+double
 dMatrixSet::ps(double m){return 0;}//_phasespace->Eval(m);}
 
-double 
+double
 dMatrixSet::intensity(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   // complex<double> rho(0,0);
@@ -141,7 +141,7 @@ dMatrixSet::intensity(const std::string& wave, double m){
   return 0;
 }
 
-double 
+double
 dMatrixSet::phase(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
  //  complex<double> rho(0,0);
@@ -157,7 +157,7 @@ dMatrixSet::phase(const std::string& wave, double m){
 }
 
 
-double 
+double
 dMatrixSet::phase(const std::string& wave1,
 			const std::string& wave2,
 			double m){
@@ -186,7 +186,7 @@ dMatrixSet::overlap(const std::string& wave1,
 
 
 std::ostream& operator<< (std::ostream& out,const dMatrixSet& cs){
- 
+
   return out;
 }
 

@@ -35,7 +35,7 @@ namespace rpwa {
   public:
     absDecayChannel(double b,int l=0): _branching(b),_l(l){}
     virtual ~absDecayChannel(){}
-  
+
     virtual void tau(std::vector<TLorentzVector>& particles,
 	     double& evtweight, // returns isobar part of phase space for event
 	     double& breakup) =0 ;   // returns breakup momentum of top vertex
@@ -54,5 +54,5 @@ namespace rpwa {
 
 
 } // end namespace
-  
+
 #endif

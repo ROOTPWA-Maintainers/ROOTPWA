@@ -34,16 +34,16 @@
 
 
 namespace rpwa {
-  
+
   const double gChargedPionMass = 0.13957018;  // charged pion rest mass [GeV/c^2] [PDG08
-  
+
   class dynMassDep : public absMassDep
   {
   public:
-    dynMassDep(double M, double width, 
+    dynMassDep(double M, double width,
 	       unsigned int nparticles, double* masses);
     ~dynMassDep() {if(ps!=NULL)delete ps;ps=NULL;}
-    
+
     cd val(double m){return val(m,_channel);}
     cd val(double m, unsigned int i);
     cd val_static(double m){return val_static(m,_channel);}
@@ -75,10 +75,10 @@ int l(unsigned int i) const {if(_channels.size()==0)return 0; else return _chann
     double rho0;
     std::vector<absDecayChannel*> _channels;
     unsigned int _channel; // selected channel;
-    
+
   };
-  
-  
+
+
 } // end namespace
 
 #endif

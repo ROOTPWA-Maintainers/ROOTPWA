@@ -179,4 +179,3 @@ class amplitudeCalculator(multiprocessing.Process):
 			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 
 		return nEntries
-

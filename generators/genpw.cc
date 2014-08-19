@@ -239,4 +239,3 @@ int main(int argc, char** argv)
 	printInfo << "efficiency: " << setprecision(3) << 100 * ((double)eventsGenerated / attempts) << "%" << endl;
 
 }
-

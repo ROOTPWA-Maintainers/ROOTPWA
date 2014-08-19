@@ -45,10 +45,10 @@ double twoBodyPS(double* x, double* par){
   return sqrt( (s-mup*mup)*(s-mum*mum) ) / (16*TMath::Pi()*s);
 }
 
-int 
+int
 main(int argc, char** argv){
-  
-  
+
+
   TApplication app("", 0, 0);
   gROOT->SetStyle("Plain");
   gStyle->SetGridStyle(1);
@@ -64,20 +64,20 @@ main(int argc, char** argv){
   // double Bre=bre; double Bim=bim;
 
   // setup dMatrix:
-  
+
   TF1* fpipi=new TF1("pipi_ps",twoBodyPS,0,10,2);
   fpipi->SetParameters(mpi,mpi);
 
   TF1* f4pi=new TF1("4pi_ps",twoBodyPS,0,10,2);
   f4pi->SetParameters(2*mpi,2*mpi);
 
- 
+
   dMatrixAmp damp;
- 
+
   damp.setNPoles(2);
   damp.setNBkg(1);
-  damp.addChannel(fpipi); 
-  damp.addChannel(f4pi); 
+  damp.addChannel(fpipi);
+  damp.addChannel(f4pi);
 
   // Parameters of amplitude:
   // bare pole masses
@@ -89,7 +89,7 @@ main(int argc, char** argv){
   gamma(0,0)=0.3;gamma(0,1)=0.2;
   gamma(1,0)=0.38;gamma(1,1)=0.25;
   gamma(2,0)=0.3;gamma(2,1)=0.05;
-  
+
 
   // production amplitudes (1 per pole)
   cmatrix production(damp.nPoles()+damp.nBkg(),1);
@@ -106,7 +106,7 @@ main(int argc, char** argv){
   damp.Setup(mbare,gamma,production, mixing);
 
   cerr << " Setup sucessfull" << endl;
-  
+
   unsigned int nPar=damp.getNPar();
   double par1[nPar];
   double par2[nPar];
@@ -134,7 +134,7 @@ main(int argc, char** argv){
   unsigned int n=200;
   TGraph* gIntens=new TGraph(n);
   TGraph* gPhase=new TGraph(n);
- 
+
 
   double m0=-0.5;
   double mstep=0.01;

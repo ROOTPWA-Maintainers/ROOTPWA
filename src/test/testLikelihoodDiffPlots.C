@@ -123,7 +123,7 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 		Long64_t treeEntries[2] = {inTrees[0]->LoadTree(entry), inTrees[1]->LoadTree(entry)};
 		inTrees[0]->GetEntry(treeEntries[0]);
 		inTrees[1]->GetEntry(treeEntries[1]);
-		
+
 		hLikelihoodDiffAbs->Fill(logLikelihood[0] - logLikelihood[1]);
 		hLikelihoodDiffRel->Fill(1 - logLikelihood[1] / logLikelihood[0]);
 		// cout << "[" << entry << "] = " << logLikelihood[0] << " vs. " << logLikelihood[1] << endl;

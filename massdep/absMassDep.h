@@ -34,13 +34,13 @@
 // Collaborating Class Declarations --
 
 
-namespace rpwa { 
+namespace rpwa {
 
 typedef std::complex<double> cd;
 
 class absMassDep {
 public:
-  
+
   virtual ~absMassDep(){}
 
   // Accessors -----------------------

@@ -33,24 +33,24 @@ public:
   // Constructors/Destructors ---------
  reggeprop(): spi(0.019479835), _a(2.) {
     _alphapiprime = 1.+1./(1.-spi);
-    
+
 }; // m_pi^2
 
 
   // Operators
- 
 
- 
+
+
  std::complex<double> ampHarris(double t, double s, double sin, double tout, double s1, double s2);
  // Nomenclature following Ascoli
   std::complex<double> ampPDK(double t, double s, double sin, double tout, double s1, double s2);
    std::complex<double> ampFULL(double t, double s, double sin, double tout, double s1, double s2);
 std::complex<double> ampSMU(double t, double s, double sin, double tout, double s1, double s2);
-   
+
 
 // merged version of Ascoli full with Bali Chew Pignotti Kinematics (see Harris Paper)
 // this can be used for a general regge exchange (atm: pion trajectory)
-// 
+//
   /* Sketch:
      tin --
            --
@@ -71,7 +71,7 @@ std::complex<double> ampSMU(double t, double s, double sin, double tout, double 
   /// s1,s2 : mass^2 of clusters
 
 std::complex<double> ampBCP(double t, double s, double tin, double tout, double s1, double s2);
-   
+
 
 
 

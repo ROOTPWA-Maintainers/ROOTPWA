@@ -167,7 +167,7 @@ namespace rpwa {
 	{
 		return (qn != 0) ? sign(qn) : "";
 	}
-	
+
 
 }  // namespace rpwa
 

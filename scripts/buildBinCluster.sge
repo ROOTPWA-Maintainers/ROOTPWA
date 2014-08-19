@@ -17,7 +17,7 @@ export MAXKEYPERJOB=1;
 export SET=F21565SET
 export KEY=$WORK/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
 export PDG=$WORK/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/pdgTable.txt
-echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- STARTING AMPLITUDE CALCULATIONS";
 echo "---- WAVESET: $KEY";
 echo;
 
@@ -60,4 +60,4 @@ export KEYDIR=$KEY
 
 
 
-cd 
+cd

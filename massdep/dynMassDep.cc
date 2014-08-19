@@ -29,7 +29,7 @@ using namespace std;
 
 
 rpwa::dynMassDep::dynMassDep(double M, double width,
-			     unsigned int nparticles, double* masses) 
+			     unsigned int nparticles, double* masses)
   : mS(M*M), mM(M), mWidth(width){
   ps=new mcPhaseSpace(nparticles,masses,0,40,400,50000);
 }
@@ -43,27 +43,27 @@ rpwa::dynMassDep::addDecayChannel(absDecayChannel* ch){
 }
 
 
-rpwa::cd 
+rpwa::cd
 rpwa::dynMassDep::val_bnl(double m, unsigned int i){
 
   const double m0     = mM;
   const double Gamma0 = mWidth;
-  
+
   // test rho rho
   const double s1=0.77549*.77549;;
   const double s=m*m;
   const double s0=m0*m0;
-  
+
   const double lam=s*s+2*s1*s1 - 2*(s*s1+s1*s1+s1*s);
   const double lam0=s0*s0+2*s1*s1 - 2*(s0*s1+s1*s1+s1*s0);
-  
+
 
   const double q      = sqrt(fabs(lam)/4/s);
   const double q0     = sqrt(fabs(lam0)/4/s0);
- 
-  cerr << "m ="<<m 
-       << "   q ="<< q 
-       << "   q0="<< q0 << endl; 
+
+  cerr << "m ="<<m
+       << "   q ="<< q
+       << "   q0="<< q0 << endl;
 
   //const int    l      = 0;
 
@@ -172,7 +172,7 @@ rpwa::dynMassDep::calc_ms(double s, unsigned int i) const {
   cauchyIntegral cauchy(f,p,low,cutoffs);
   double I=cauchy.eval_Hunter(4);
   //cout << "I= " << setprecision(12);
-  //cout << I << endl; 
+  //cout << I << endl;
   delete f;
   double br=1;
   if(_channels.size()>0)br=_channels[i]->branching();
@@ -201,7 +201,7 @@ rpwa::dynMassDep::store_ms(double maxM, unsigned int steps){
     }
   }// end loopmover decay channels
 }
-  
+
 double
 rpwa::dynMassDep::get_ms(double s, unsigned int i) const{
   if(_graphms.size()==0)throw;

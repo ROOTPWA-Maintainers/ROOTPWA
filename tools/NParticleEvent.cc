@@ -26,14 +26,14 @@ using namespace std;
 #include "FSParticle.h"
 
 // Class Member definitions -----------
-NParticleEvent::NParticleEvent(TClonesArray* fs_momenta, 
+NParticleEvent::NParticleEvent(TClonesArray* fs_momenta,
 			       std::vector<int>* fs_charges,
 			       TLorentzVector* beam,
 			       int* beam_charge,
 			       TVector3* vertex)
   : _fsmomenta(fs_momenta), _fs_charges(fs_charges),
     _beam(beam),_pbeam(*beam),_qbeam(beam_charge),_vertex(vertex)
-{}  
+{}
 
 
 
@@ -85,11 +85,11 @@ NParticleEvent::tprime(){
 
 TLorentzVector
 NParticleEvent::getHelicityFrame(TLorentzVector pMother, TLorentzVector pX, TLorentzVector p1){
- 
+
   TLorentzVector tempX=pX;
   TLorentzVector p2=pX-p1;
 
- // cerr << "Going to Helicityframe ------------- " << endl; 
+ // cerr << "Going to Helicityframe ------------- " << endl;
  //  pMother.Vect().Print();
  //  pX.Vect().Print();
  //  p1.Vect().Print();
@@ -197,7 +197,7 @@ NParticleEvent::toGJ(){
     getParticle(i).Transform(b);
     getParticle(i).Transform(T);
   }
-  
+
   // check basic things:
   //TLorentzVector p2=p();
   //std::cout<<"In GJ-Frame:  P=("<<p2.Px()
@@ -208,7 +208,7 @@ NParticleEvent::toGJ(){
   //_beamPi.p().Vect().Print();
 
   // we need to rebuild if the event was build before...
- 
+
 }
 
 
@@ -247,7 +247,7 @@ NParticleEvent::permute(int n, int k, int* permu, int x, int i){
       for(int j=0;j<k;++j){
 	//std::cout<<"x["<<j<<"]="<<permu[j]<<"  ";
 	FSParticle* part=&(_fsparticles.at(permu[j]));
-	if(!s.addParticle(part)){// returns false if pion cannot 
+	if(!s.addParticle(part)){// returns false if pion cannot
 	  //be added because doubel counting
 	  ok=false;
 	  break;

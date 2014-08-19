@@ -247,7 +247,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 	if (selectExpr != "")
 		cout << " using selection criterion '" << selectExpr << "'";
 	cout << endl;
-  
+
 	// create multiGraph
 	TMultiGraph* graph = new TMultiGraph();
 	{
@@ -285,7 +285,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 		cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 		     << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
 		trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
-      
+
 		// extract data from TTree::Draw() result and build graph
 		const int nmbBins = trees[i]->GetSelectedRows();
 		vector<double> x(nmbBins), xErr(nmbBins);
@@ -320,7 +320,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 			g->SetLineColor  (graphColors[i]);
 		}
 		graph->Add(g);
-    
+
 		// compute maximum for y-axis
 		for (int j = 0; j < nmbBins; ++j) {
 			const double val = y[j] + yErr[j];
@@ -329,7 +329,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 		}
 	}
 	cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxY << endl;
-    
+
 	if ((yAxisRangeMax > 0) && (maxY > yAxisRangeMax))
 		maxY = yAxisRangeMax;
 	graph->SetMinimum(-maxY * 0.1);
@@ -355,7 +355,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 		}
 		legend->Draw();
 	}
-  
+
 	// create EPS file
 	if (saveEps)
 		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());

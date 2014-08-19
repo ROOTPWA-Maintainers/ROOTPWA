@@ -223,15 +223,15 @@ In order to create a new partial wave you can use the {\tt makekey.C} ROOT-scrip
   // Define Isobar states and their decays
   // each of these objects corresponds to one node
   // in an isobar decay tree
-  
+
   //              name   iso1 iso2 l
   partkey sigma1("sigma",&p1,&p2,0);
   partkey rho1("rho(770)",&p3,&p4,1);
   partkey pi13("pi(1300)",&p5,&rho1,1);
 
-  // define quantum numbers of resonance X 
+  // define quantum numbers of resonance X
   // and its decay into the first isobar pair
-  int l=2;  // angular momentum 
+  int l=2;  // angular momentum
   int s=0;  // spin
 
   int j=2;  // total spin of X
@@ -280,14 +280,14 @@ for i in *; do
       # do something with the content of the current directroy
       ...
 done;
-\end{lstlisting}  
+\end{lstlisting}
 
 \begin{lstlisting}
 cat <file> | while read a; do
       # do something with the entries in the file
       ...
 done;
-\end{lstlisting}  
+\end{lstlisting}
 
 
 

@@ -35,7 +35,7 @@
 {
   gSystem->AddIncludePath("-I$ROOTPWA/tools");
   gSystem->AddIncludePath("-I$ROOTPWA/generators");
-  
+
   gSystem->Load("libGX11TTF.so");
   gSystem->Load("libRootPwa.so");
   gSystem->Load("libRootPwaTools.so");

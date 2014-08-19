@@ -8,7 +8,7 @@ echo -e "\n **************** part 6 ******************"
 echo      " *${STEP_NAME[5]}*"
 echo -e   " ******************************************\n"
 
-if [ -e ${KPIPI_KEYFILE_DIR} ]; 
+if [ -e ${KPIPI_KEYFILE_DIR} ];
 then
 	echo -e "\E[37;31m \n The directory "; tput sgr0
 	echo -e "\E[37;34m ${KPIPI_KEYFILE_DIR}"; tput sgr0
@@ -22,7 +22,7 @@ then
 		echo -e "\E[37;31m \n Please specify a new key file folder! "; tput sgr0
 		echo -e "\n Aborting this script"; tput sgr0
 		return 0
-	fi	
+	fi
 fi
 mkdir ${KPIPI_KEYFILE_DIR}
 
@@ -33,6 +33,5 @@ mv ./*.key ./backup/
 root -l -q -b ${KPIPI_KEYFILE_GENERATOR}+\(true,\"../keyfiles/keyKpipi/testEventsKpipi.evt\",\"./pdgTable.txt\",\"${KPIPI_KEYFILE_DIR}\"\)
 echo " moving key files to destination folder if not done already "
 mv ./*.key ${KPIPI_KEYFILE_DIR}/
-rm -f ./*.key.C	
+rm -f ./*.key.C
 cd -
-

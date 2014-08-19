@@ -34,11 +34,11 @@ using namespace std;
 complex<double> singleMixedBW(double* x, double* par){
   double s=x[0]*x[0];
   double m1=par[0]; // mass of resonance
-  double gamma1=par[1]; // width of resonance 
+  double gamma1=par[1]; // width of resonance
   double m2=par[2];
   double gamma2=par[3];
   complex<double> B(par[4],par[5]); // mixing strength
-  
+
   complex<double> bw1(m1*m1-s,-gamma1*m1);
   complex<double> bw2(m2*m2-s,-gamma2*m2);
 
@@ -50,16 +50,16 @@ complex<double> singleMixedBW(double* x, double* par){
 cmatrix D(double* x, double* par){
   double s=x[0]*x[0];
   double m1=par[0]; // mass of resonance
-  double gamma1=par[1]; // width of resonance 
+  double gamma1=par[1]; // width of resonance
   double m2=par[2];
   double gamma2=par[3];
   complex<double> B(par[4],par[5]); // mixing strength
-  
+
   complex<double> bw1(m1*m1-s,-gamma1*m1);
   complex<double> bw2(m2*m2-s,-gamma2*m2);
-  
+
   cmatrix result(2,2);
-  
+
   cnum denom=bw1*bw2-B*B;
   cnum c=1./denom;
 
@@ -85,7 +85,7 @@ cnum amp(double* x, double* par){
   cmatrix gp=prod(D(x,par),gprod);
   cmatrix gpd=prod(gdecay,gp);
   return gpd(0,0);
-  
+
 }
 
 double Intens(double* x, double* par){
@@ -101,17 +101,17 @@ double Phase(double* x, double* par){
 cnum ampStan(double* x, double* par){
   double s=x[0]*x[0];
   double m1=par[0]; // mass of resonance
-  double gamma1=par[1]; // width of resonance 
+  double gamma1=par[1]; // width of resonance
   double m2=par[2];
   double gamma2=par[3];
   complex<double> B(par[4],par[5]); // mixing strength
-  
+
   complex<double> bw1(m1*m1-s,-gamma1*m1);
   complex<double> bw2(m2*m2-s,-gamma2*m2);
 
   complex<double> c1(par[6],par[7]);
   complex<double> c2(par[8],par[9]);
-    
+
 
   return  1./bw1*c1*par[10]+1./bw2*c2*par[11];
 
@@ -152,10 +152,10 @@ double doubleMixedBWphase(double* x, double* par){
   return arg(doubleMixedBW(x,par));
 }
 
-int 
+int
 main(int argc, char** argv){
-  
-  
+
+
   TApplication app("", 0, 0);
   gROOT->SetStyle("Plain");
   gStyle->SetGridStyle(1);

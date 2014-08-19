@@ -68,7 +68,7 @@ TString parseTitle(TString l, unsigned int level=10){
     l.Remove(l.Length() - 4);
     // extract X quantum numbers
     const TString head = l(0, 7);
-    const TString I    = head(0, 1); 
+    const TString I    = head(0, 1);
     const TString G    = head(1, 1);
     const TString J    = head(2, 1);
     const TString P    = head(3, 1);
@@ -77,7 +77,7 @@ TString parseTitle(TString l, unsigned int level=10){
     const TString refl = head(6, 1);
     l.Remove(0, 7);
     // print X quantum numbers
-    
+
     stringstream res;
     res << I << "^{" << G <<"}(" << J << "^{" << P << C << "}" << M << "^{" << refl << "})";
 
@@ -125,7 +125,7 @@ TString parseTitle(TString l, unsigned int level=10){
       }
       l.Remove(0, 1); // remove delimiter
     }
-    res;    
+    res;
 
     tokens->Delete();
     delete tokens;
@@ -161,8 +161,8 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
      return;
     }
 
-   
-   
+
+
 
     TString title=gr->GetName();
     TH1* hx=NULL;
@@ -177,13 +177,13 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     }
     gdata->SetLineWidth(2);
 
-    
+
     double xmax=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetLast());
     double xmin=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetFirst());
     double max=-1E6;
     double min=1E6;
     TGraphErrors* fitg=(TGraphErrors*)gr->GetListOfGraphs()->At(2);
-    
+
     if(fitg!=NULL){
       fitg->SetLineWidth(2);
       double* yp=fitg->GetY();
@@ -201,7 +201,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     double ymax=0.5*(max+min)+220;
 
     if(title.Contains("dPhi")){
-      cerr << "Ymin: " << ymin << "   Ymax: " << ymax << endl;  
+      cerr << "Ymin: " << ymin << "   Ymax: " << ymax << endl;
       // for phase plots manually cut the systematic errors!
       TGraphErrors* gsys=(TGraphErrors*)gr->GetListOfGraphs()->At(0);
       //gsys->GetYaxis()->SetRangeUser(ymin,ymax);
@@ -211,13 +211,13 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 	gsys->GetPoint(i,x,y);
 	ey=gsys->GetErrorY(i);
 	ex=gsys->GetErrorX(i);
-	
+
 	// check if error band is in limits
 	if(y+ey>ymax){
 	  cerr << "correcting upper" << endl;
 	  double dy=0.5*(y+ey-ymax);
 	  y-=dy;
-	  ey-=dy; 
+	  ey-=dy;
 	}
 	if(y-ey<ymin){
 	  double dy=0.5*(ymin-y+ey);
@@ -234,15 +234,15 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     clone->GetFrame()->Draw();
     clone->SetBorderMode(0);
 
-  
 
-   
+
+
     double xcenter=0.5;
     double ycenter=0.5;
-    
+
     double x=xcenter-0.25;
     double y=xcenter-0.2;
-    
+
     // preliminary
      TLatex* prelim=new TLatex(x,y,"preliminary");
     prelim->SetNDC();
@@ -250,11 +250,11 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     prelim->SetTextSize(0.1);
     prelim->SetTextAngle(20);
     prelim->Draw();
-    
+
     // compass 2004
     //double xc=xcenter+0.05;
     double xc=0.105;//xcenter+0.05;
-    
+
     //if(right)xc=xcenter+0.1;
     //double yc=ycenter+0.35;
     double yc=ycenter+0.45;
@@ -262,18 +262,18 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     com04->SetNDC();
     com04->SetTextSize(0.05);
     com04->Draw();
-    
+
     // 5 pi on pb
     yc=yc-0.04;
     TLatex* react=new TLatex(xc,yc,"#pi^{-} Pb #rightarrow #pi^{-}#pi^{+}#pi^{-}#pi^{+}#pi^{-} Pb");
     react->SetNDC();
     react->SetTextSize(0.039);
     react->Draw();
-    
-    // add waves 
+
+    // add waves
     //cout << "####### Title:" << endl;
 
-  
+
 
     if(ymax > 0 && ymin < 0){
       TLine* zeroline=new TLine(xmin,0,xmax,0);
@@ -286,7 +286,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     gr->GetXaxis()->Draw();
     gr->GetYaxis()->Draw();
 
-  
+
     //cout << title << endl;
     // check if this is intensity or off diagonal
     TString wave;
@@ -301,11 +301,11 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     else {
       // Split
       //cout << title << endl;
-         
+
       unsigned int offset=3;
       wave="#splitline{Interference - ";
       if(title.Contains("Re"))wave+= "real part";
-      else if(title.Contains("Im"))wave+="imaginary part"; 
+      else if(title.Contains("Im"))wave+="imaginary part";
       else {
 	wave+="phase difference";
 	offset=5;
@@ -314,11 +314,11 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
       unsigned int i = title.Index("---");
       TString wave1=title(offset,i-offset);
       TString wave2=title(i+3,title.Length());
-      
+
       //cout << parseTitle(wave1,1) << endl;
       //cout << parseTitle(wave2,1) << endl;
 
-      
+
 
       wave="#splitline{";
       wave+=parseTitle(wave1,1);
@@ -344,7 +344,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 
     xc=xcenter-0.05;
     //xc=xcenter+0.1;
-  
+
     TLatex* waveL=new TLatex(xc,yc,wave);
     waveL->SetNDC();
     if(isIntens)waveL->SetTextSize(0.03);
@@ -385,12 +385,12 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
   TCanvas *c = (TCanvas *) gTQSender;
   //if(selected->IsA()->GetName())
   //printf("Canvas %s: event=%d, x=%d, y=%d, selected=%s\n", c->GetName(),event, x, y, selected->IsA()->GetName());
-  
+
   if(event==1){ // clicked
 
     // figure out which pad we clicked onto
     TVirtualPad* pad=c->GetClickSelectedPad();
-    
+
     plotNice(pad);
   }
 }
@@ -404,7 +404,7 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 // plotlevel:
 // 0 = data + fit + component
 // 1 = data + fit
-// 2 = data only 
+// 2 = data only
 
 void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, unsigned int plotLevel=0 , TString xcheckfile="", bool onlyDiag=false){
   if(fittitle.Length()<=1)fitname=infilename;
@@ -438,8 +438,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	cerr << wave << " ---> " << key << endl;
       }
     }
-    
-     
+
+
 
 
     TList* keylist=infile->GetListOfKeys();
@@ -490,7 +490,7 @@ TString map1=xcheckmap[wavenames[i]];
 
   // TCanvas* cIm=new TCanvas("cIm","Spin Density Matrix - ImagPart",10,10,1000,1000);
   //cIm->Divide(nwaves,nwaves,0,0);
-  
+
   // cRe->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,
   //		      "exec3event(Int_t,Int_t,Int_t,TObject*)");
   //c->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,
@@ -503,12 +503,12 @@ TString map1=xcheckmap[wavenames[i]];
       cerr << " ##### " << ip << "-" << jp << " ###### " << endl;
       if(ip==jp){
 	TMultiGraph* g=(TMultiGraph*)infile->Get(wavenames[ip]);
-      
+
 	// remove components and phase space graphs
 	// plotlevel:
 	// 0 = data + fit + component
 	// 1 = data + fit
-	// 2 = data only 
+	// 2 = data only
 	if(plotLevel>0){
 	  for(unsigned int i=g->GetListOfGraphs()->GetSize()-1;i>2;--i){
 	    g->GetListOfGraphs()->RemoveAt(i);
@@ -516,9 +516,9 @@ TString map1=xcheckmap[wavenames[i]];
 	}
 	// remove only ps
 	else g->GetListOfGraphs()->RemoveAt(3);
-	
 
-	
+
+
 	if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
 	g->Draw("APC");
 
@@ -535,7 +535,7 @@ TString map1=xcheckmap[wavenames[i]];
 	//g->GetYaxis()->SetRangeUser(0 < min ? -0.8*min : 1.2*min,1.2*max);
 	g->GetYaxis()->SetTitle("intensity");
 	g->GetYaxis()->SetTitleOffset(1.3);
-	
+
 	if(mmin!=0 || mmax!=0){
 	  g->GetXaxis()->SetRangeUser(mmin,mmax);
         }
@@ -582,7 +582,7 @@ TString map1=xcheckmap[wavenames[i]];
 	  if(wave1(6)!=wave2(6)) continue;
 
 	  if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
-       	  g->Draw("AN");
+	    g->Draw("AN");
 	  if(mmin!=0 || mmax!=0){
 	    g->GetXaxis()->SetRangeUser(mmin,mmax);
 	  }
@@ -665,7 +665,7 @@ if(xcheck!=NULL){
 	  cerr << "Adding xcheckplot " << xcheckkey << endl;
 	  if(xcheckkey!=""){
 	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
-	    
+
 	    if(xh!=NULL){
 	      xh->Scale(-1);
 	      xh->SetLineColor(kMagenta);
@@ -684,7 +684,7 @@ if(xcheck!=NULL){
 	  //g2->GetYaxis()->SetTitleOffset(1.2);
 	  //c2->SaveAs(TString(plotdir+key+".eps"));
 	  //delete c2;
-	  
+
 	}// end if g!=NULL
       } // end else
     } // end inner loop
@@ -694,6 +694,3 @@ if(xcheck!=NULL){
   cRe->SaveAs(TString(plotdir+"/spindensitymatrixRe.eps"));
   //cIm->SaveAs(TString(plotdir+"/spindensitymatrixIm.eps"));
 }
-
-
-

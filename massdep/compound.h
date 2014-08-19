@@ -36,9 +36,9 @@
 
 class absMassDep;
 
-namespace rpwa { 
+namespace rpwa {
 
-  
+
 class compound {
 public:
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script checks pwa directory structure for consitency
-# Checks: 
+# Checks:
 #         Equal Number of waves in every bin
 #         Equal Number of events in every wave
 
@@ -30,7 +30,7 @@ rm /tmp/zeroAAmps
 
 echo -e "Mass-Bin \t Num \t NumPSP  NumAcc \t FileSize \t PSPFileSize \t AccFileSize \tt NAN"
 
-    
+
 
 
 for i in $1*; do
@@ -78,40 +78,40 @@ for i in $1*; do
     done
 fi
 
-    if [[ $NUMAMP != $NUMPSPAMP ]]; then 
-       
+    if [[ $NUMAMP != $NUMPSPAMP ]]; then
+
 	echo -e "${TXT_RED}$i \t $NUMAMP \t $NUMPSPAMP \t $NUMACCAMP \t\t $MINN..$MAXN \t $MINNMC..$MAXNMC \t $MINNACC..$MAXNACC ${TXT_RESET}\c";
-    elif [[ $MAXNMC != $MINNMC ]]; then 
-       
+    elif [[ $MAXNMC != $MINNMC ]]; then
+
 	echo -e "${TXT_RED}$i${TXT_RESET} \t $NUMAMP \t $NUMPSPAMP \t $NUMACCAMP \t\t $MINN..$MAXN \t ${TXT_RED}$MINNMC..$MAXNMC ${TXT_RESET} \t $MINNACC..$MAXNACC\c";
-    elif [[ $MAXN != $MINN ]]; then 
+    elif [[ $MAXN != $MINN ]]; then
 	echo -e "${TXT_RED}$i${TXT_RESET} \t $NUMAMP \t $NUMPSPAMP \t $NUMACCAMP \t\t ${TXT_RED}$MINN..$MAXN${TXT_RESET} \t $MINNMC..$MAXNMC \c";
     else echo -e "$i \t $NUMAMP \t $NUMPSPAMP \t $NUMACCAMP \t\t $MINN..$MAXN \t $MINNMC..$MAXNMC \t $MINNACC..$MAXNACC \c"
-    fi;	
-    
-   
+    fi;
+
+
 
     if [[ -e $i/AMPS/norm.int ]]; then
 	if grep -q nan $i/AMPS/norm.int ; then echo "${TXT_RED}!!${TXT_RESET}";
-	elif grep -q "(0,0)" $i/AMPS/norm.int ; then echo "${TXT_RED}(0,0)${TXT_RESET}"; 
+	elif grep -q "(0,0)" $i/AMPS/norm.int ; then echo "${TXT_RED}(0,0)${TXT_RESET}";
 	else echo -e "\t ok";
 	fi
     else echo -e "\t no norm";
     fi
 
-    
+
 
 done; # and loop over bins
 
-echo "Unfinshed Files (remove if you want to recalculate them!)" 
+echo "Unfinshed Files (remove if you want to recalculate them!)"
 cat /tmp/unfinAmps
 cat /tmp/unfinPAmps
 cat /tmp/unfinAAmps
-   
-echo "Zero size Files" 
+
+echo "Zero size Files"
 cat /tmp/zeroAmps
 cat /tmp/zeroPAmps
 cat /tmp/zeroAAmps
-   
+
 
 cd -;

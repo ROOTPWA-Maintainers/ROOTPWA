@@ -63,24 +63,24 @@ double const pi=TMath::Pi();
     Uses lu_factorize and lu_substitute in uBLAS to invert a matrix */
  template<class T>
  bool InvertMatrix (const ublas::matrix<T>& input, ublas::matrix<T>& inverse) {
- 	using namespace boost::numeric::ublas;
- 	typedef permutation_matrix<std::size_t> pmatrix;
- 	// create a working copy of the input
- 	matrix<T> A(input);
- 	// create a permutation matrix for the LU-factorization
- 	pmatrix pm(A.size1());
+	using namespace boost::numeric::ublas;
+	typedef permutation_matrix<std::size_t> pmatrix;
+	// create a working copy of the input
+	matrix<T> A(input);
+	// create a permutation matrix for the LU-factorization
+	pmatrix pm(A.size1());
 
- 	// perform LU-factorization
- 	int res = lu_factorize(A,pm);
+	// perform LU-factorization
+	int res = lu_factorize(A,pm);
         if( res != 0 ) return false;
 
- 	// create identity matrix of "inverse"
- 	inverse.assign(ublas::identity_matrix<T>(A.size1()));
+	// create identity matrix of "inverse"
+	inverse.assign(ublas::identity_matrix<T>(A.size1()));
 
- 	// backsubstitute to get the inverse
- 	lu_substitute(A, pm, inverse);
+	// backsubstitute to get the inverse
+	lu_substitute(A, pm, inverse);
 
- 	return true;
+	return true;
  }
 
 
@@ -128,7 +128,7 @@ cnum Delta(cnum t, cnum z, cnum s){
   cnum myR=R(t,z,s);
   cnum rk=(myR-K2*K3)/(myR+K2*K3);
   cnum thetaPhi= phi(t,z,s).real()>0 ? 1 : 0;
-  return 1./K3*(log(fabs(rk.real())) + cnum(0,pi)*thetaPhi); 
+  return 1./K3*(log(fabs(rk.real())) + cnum(0,pi)*thetaPhi);
 }
 
 
@@ -162,16 +162,16 @@ cnum BWa1(cnum s){
 void modPhi(unsigned int i, double m, double phi, TGraph* g){
   if(i==0)g->SetPoint(i,m,phi);
   double oldphi=g->GetY()[i-1];
-  //cout << "OldPhi="<<oldphi << endl; 
+  //cout << "OldPhi="<<oldphi << endl;
   double best=phi;
   for(int k=-4;k<6;++k){
-   
+
     double mphi=phi+(double)k*pi;
     //cout << mphi << endl;
     if(fabs(mphi-oldphi)<fabs(best-oldphi))best=mphi;
-  } 
+  }
   g->SetPoint(i,m,best);
-  //cout << "Best=" << best << endl; 
+  //cout << "Best=" << best << endl;
 }
 
 
@@ -224,12 +224,12 @@ cmatrix Iso(cnum z){
 ////////////// Kernel matrices //////////////////////////////////////
 
 // 1++ Kernel:  rho-epsilon rescattering
-// The kernel is a 2x2 matrix 
+// The kernel is a 2x2 matrix
 // representing the rho-rho rho-eps eps-rho and eps-eps rescattering
 
 
 // See Eqn (44) and (37)
-cnum PhiElem(cnum t, cnum z, cnum s, 
+cnum PhiElem(cnum t, cnum z, cnum s,
 	       unsigned int i, unsigned int j){
    cnum K2=K(z,s); cnum K3=K(t,s);
    if(i==0 && j==0) return (R(t,z,s)*Delta(t,z,s)+2.*K2)/(3.*K3*K3);
@@ -246,12 +246,12 @@ cmatrix Phi(cnum t, cnum z, cnum s){
   result(0,1)=PhiElem(t,z,s,0,1);//(R23(t,z,s)*Delta(t,z,s)+K2*F(t,z,s))/(K3*K3);
   result(1,0)=PhiElem(t,z,s,1,0);//R23(t,z,s)*Delta(t,z,s)/3.;
   result(1,1)=PhiElem(t,z,s,1,1);//0.5*Q(t,z,s)*Delta(t,z,s);
-  return result; 
+  return result;
 }
 
 
 // 0-+ Kernel:  rho-epsilon rescattering
-cnum PsiElem(cnum t, cnum z, cnum s, 
+cnum PsiElem(cnum t, cnum z, cnum s,
 	       unsigned int i, unsigned int j){
    cnum K2=K(z,s); cnum K3=K(t,s);
    if(i==0 && j==0) return 1./3.*Delta(t,z,s);
@@ -268,7 +268,7 @@ cmatrix Psi(cnum t, cnum z, cnum s){
   result(0,1)=PsiElem(t,z,s,0,1);
   result(1,0)=PsiElem(t,z,s,1,0);
   result(1,1)=PsiElem(t,z,s,1,1);
-  return result; 
+  return result;
 }
 
 
@@ -315,7 +315,7 @@ cnum fu(cnum t, cmatrix lambda){
     result += lambda(i,0)*u(i,t);
   }
   return result;
-} 
+}
 
 
 // matrix expansion in u see eqn (49)
@@ -329,7 +329,7 @@ cmatrix fuM(cnum t, cmatrix Lambda){
 	I(i,j)=Lambda(a*2+i,j)*ua;
       }
     }
-    result+=I; 
+    result+=I;
   }
   return result;
 }
@@ -355,7 +355,7 @@ public:
   void setReIm(bool flag){_ReIm=flag;} // 0=re; 1=im
   void setU(unsigned int a){_a=a;}
   void setJ(unsigned int J){_wave=J;} // 0 or 1
-  
+
 private:
   cnum _s;
   cnum _t;
@@ -380,7 +380,7 @@ kernIntegrand::DoEval(double x) const {
 }
 
 
-/// Integral Function 
+/// Integral Function
 cnum kernIntElem(cnum t, cnum s, unsigned int i, unsigned int j, unsigned int wave, unsigned int b=0){
   // Set up Integrator
    ROOT::Math::GSLIntegrator Integrator;
@@ -411,7 +411,7 @@ cmatrix kernInt(cnum t, cnum s, unsigned int wave, unsigned int b=0){
 // returns column vector containing expansion coefficients
 cmatrix match(unsigned int i, unsigned int j, unsigned int wave, // element of kernel
 	      unsigned int b, // basis function
-	      cnum s, 
+	      cnum s,
 	      const vector<double>& tm)  // matching points
 {
   // calulate result vector at points;
@@ -432,7 +432,7 @@ cmatrix match(unsigned int i, unsigned int j, unsigned int wave, // element of k
   // invert basis matrix to obtain mathing coefficients
   cmatrix umInv(4,4);
   InvertMatrix(um,umInv);
-  
+
   cmatrix result=prod(umInv,res);
   return result;
 }
@@ -454,7 +454,7 @@ main(int argc, char** argv)
   double mstart=0.005;
   double mstep=0.005;
   unsigned int nsteps=400;
-  
+
 
   TGraph* gIEps=new TGraph(nsteps);
   TGraph* gPhaseEps=new TGraph(nsteps);
@@ -465,7 +465,7 @@ main(int argc, char** argv)
   TGraph* gJIm=new TGraph(nsteps);
    //double s0=4;
   //double f=0.2;
-  
+
  //  TGraph* gI=new TGraph(nsteps);
 //   TGraph* gPhase=new TGraph(nsteps);
 
@@ -495,9 +495,9 @@ main(int argc, char** argv)
     modPhi(i,m,phiRho,gPhaseRho);
     gJRe->SetPoint(i,m,J(z).real());
     gJIm->SetPoint(i,m,J(z).imag());
- 
+
   }
-	
+
 
   unsigned int nIso=2;  // number of isobars
   unsigned int nBase=4; // number of basis functions
@@ -527,8 +527,8 @@ main(int argc, char** argv)
   TMultiGraph* mgKerIm=new TMultiGraph();
   TMultiGraph* mgKreIm=new TMultiGraph();
   TMultiGraph* mgKrrIm=new TMultiGraph();
-  
-  
+
+
   TMultiGraph* mgIepsepsRe=new TMultiGraph();
   TMultiGraph* mgIepsrhoRe=new TMultiGraph();
   TMultiGraph* mgIrhoepsRe=new TMultiGraph();
@@ -583,9 +583,9 @@ main(int argc, char** argv)
   vector<double> tmatch(4);
   tmatch[0]=0.01;
 
- 
+
   for(unsigned is=0;is<nm;++is){ // loop over three pion masses s
-   
+
     cnum s(masses[is]*masses[is],0);
     double tHat=(masses[is]-mpi)*(masses[is]-mpi);
     unsigned int nt=(unsigned int)floor(tHat/(double)dt);
@@ -627,7 +627,7 @@ main(int argc, char** argv)
     TGraph* gIreIm=new TGraph(nt);mgIrhoepsIm->Add(gIreIm,"C");
     TGraph* gIrrRe=new TGraph(nt);mgIrhorhoRe->Add(gIrrRe,"C");
     TGraph* gIrrIm=new TGraph(nt);mgIrhorhoIm->Add(gIrrIm,"C");
-    
+
     TGraph* gEpsA1Re=new TGraph(nt);mgEpsA1Re->Add(gEpsA1Re,"C");
     TGraph* gEpsA1Im=new TGraph(nt);mgEpsA1Im->Add(gEpsA1Im,"C");
     TGraph* gRhoA1Re=new TGraph(nt);mgRhoA1Re->Add(gRhoA1Re,"C");
@@ -639,8 +639,8 @@ main(int argc, char** argv)
     tmatch[3]=0.9*tHat;
 
     // do matching:
-  
-    
+
+
 
     cmatrix lambda(nBase*nIso,nIso);
     cmatrix R(nBase*nIso,nBase*nIso);
@@ -659,11 +659,11 @@ main(int argc, char** argv)
 	    R(i+a*nIso,j+b*nIso)=LambdaAB(a,0);
 	  }
 	}
-	
-	
+
+
       }
-    }      
-  
+    }
+
     ublas::identity_matrix<cnum> uni(nBase*nIso,nBase*nIso);
     R=uni-R;
     cout << R << endl;
@@ -672,11 +672,11 @@ main(int argc, char** argv)
     ///// The linear system and thereby the system of integral equations ////
     ////////// Invert R to solve  ////
     cmatrix T(nBase*nIso,nBase*nIso);
-    
+
     InvertMatrix(R,T);
 
     cout << T << endl;
-    
+
     /// construct expansion coefficients matrix
     cmatrix IA=prod(T,lambda);
 
@@ -698,7 +698,7 @@ main(int argc, char** argv)
 //     cout << lambda10 << endl;
 //     cout << lambda11 << endl;
 
-    
+
     cmatrix Imid=fuM( tmatch[2],IA);
     gsIeeRe->SetPoint(is,masses[is],Imid(0,0).real());
     gsIeeIm->SetPoint(is,masses[is],Imid(0,0).imag());
@@ -717,11 +717,11 @@ main(int argc, char** argv)
     cmatrix f0(2,1);
     f0(0,0)=fracEpsPi*BWa1(s);
     f0(1,0)=fracRhoPi*BWa1(s);
-    
+
     // famous formula: f=(1+I)f0
     ublas::identity_matrix<cnum> uni22(2,2);
     cmatrix f=prod(uni22+Imid,f0);
-    
+
     // f(0,0) is the final epspi amplitude in the middle of dalitz plot
     // f(1,0) is the final rhopi amplitude
 
@@ -729,7 +729,7 @@ main(int argc, char** argv)
     modPhi(is,masses[is],arg(f(0,0)),gA1EpsPhi);
     gA1RhoI->SetPoint(is,masses[is],norm(f(1,0)));
     modPhi(is,masses[is],arg(f(1,0)),gA1RhoPhi);
-    
+
     gA1EpsI0->SetPoint(is,masses[is],norm(f0(0,0)));
     modPhi(is,masses[is],arg(f0(0,0)),gA1EpsPhi0);
     gA1RhoI0->SetPoint(is,masses[is],norm(f0(1,0)));
@@ -740,13 +740,13 @@ main(int argc, char** argv)
       cnum t(it*dt+tstart,0);
       if(t.real()<tHat){
 	cmatrix k=kernInt(t,s,wave);
-	
+
 
 	//cnum kfit=fu(t,lambda00);
 	cnum kfit=fuM(t,lambda)(0,0);
-	
-	/// Kernel Integrals (inhomogenous term I0) 
-     	gKeeRe->SetPoint(it,t.real(),k(0,0).real());
+
+	/// Kernel Integrals (inhomogenous term I0)
+	gKeeRe->SetPoint(it,t.real(),k(0,0).real());
 	gKeeIm->SetPoint(it,t.real(),k(0,0).imag());
 	gKeeReFit->SetPoint(it,t.real(),kfit.real());
 	gKeeImFit->SetPoint(it,t.real(),kfit.imag());
@@ -776,7 +776,7 @@ main(int argc, char** argv)
 	gKrrIm->SetPoint(it,t.real(),k(1,1).imag());
 	gKrrReFit->SetPoint(it,t.real(),kfit.real());
 	gKrrImFit->SetPoint(it,t.real(),kfit.imag());
-	
+
 	/// Full rescattering
 	cmatrix I=fuM(t,IA);
 	gIeeRe->SetPoint(it,t.real(),I(0,0).real());
@@ -796,7 +796,7 @@ main(int argc, char** argv)
 	cnum frho=f(1,0)*ampRho(t);
 	gRhoA1Re->SetPoint(it,t.real(),norm(frho));
 	modPhi(it,t.real(),arg(frho),gRhoA1Im);
-	
+
 
       }
     } // end loop over t
@@ -815,7 +815,7 @@ main(int argc, char** argv)
       }
     } // end loop over isobars
 
-  
+
 
   } // end loop over s
 
@@ -828,18 +828,18 @@ main(int argc, char** argv)
   TCanvas* c=new TCanvas("c","c",10,10,1000,1000);
   c->Divide(4,2);
   c->cd(1);
-  gIEps->Draw("APC");  
+  gIEps->Draw("APC");
   c->cd(2);
-  gPhaseEps->Draw("APC");  
+  gPhaseEps->Draw("APC");
   c->cd(3);
-  gIRho->Draw("APC");  
+  gIRho->Draw("APC");
   c->cd(4);
-  gPhaseRho->Draw("APC");  
+  gPhaseRho->Draw("APC");
   c->cd(5);
   gJRe->Draw("APC");
   c->cd(6);
   gJIm->Draw("APC");
- 
+
  TCanvas* cK=new TCanvas("cI0","cI0",10,10,1000,1000);
  cK->Divide(4,2);
  cK->cd(1);
@@ -883,16 +883,16 @@ mgIrhorhoRe->Draw("AC");
  cIs->Divide(2,2);
  cIs->cd(1);
  gsIee->Draw("AC");
- 
+
  cIs->cd(2);
  gsIer->Draw("AC");
- 
+
 cIs->cd(3);
  gsIre->Draw("AC");
- 
+
  cIs->cd(4);
  gsIrr->Draw("AC");
- 
+
  TCanvas* ca1=new TCanvas("ca1","ca1",50,50,1000,1000);
  ca1->Divide(4,2);
  ca1->cd(1);
@@ -925,8 +925,3 @@ cIs->cd(3);
 
   return 0;
 }
-
-
-
-
-

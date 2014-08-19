@@ -45,12 +45,12 @@ int main(int argc, char** argv){
    TClonesArray* p=new TClonesArray("TLorentzVector");
    TLorentzVector* beam=NULL;
    int qbeam;
-   std::vector<int>* q=NULL; 
+   std::vector<int>* q=NULL;
    tr->SetBranchAddress("p",&p);
    tr->SetBranchAddress("beam",&beam);
    tr->SetBranchAddress("qbeam",&qbeam);
    tr->SetBranchAddress("q",&q);
- 
+
    TVector3 vertex;
    NParticleEvent event(p,q,beam,&qbeam,&vertex);
 
@@ -62,18 +62,18 @@ int main(int argc, char** argv){
 
   TGraph* kineS=new TGraph(n);kineS->SetName("S");
 
- 
+
 
   reggeprop pionProp;
- 
- 
- 
+
+
+
   // loop over phasespace events
-  
+
   for(unsigned int i=0; i<n; ++i){
     tr->GetEntry(i);
    event.refresh();
-    // get kinematic variables 
+    // get kinematic variables
     // CAREFUL with definitions of momentum transfer t, q2 etc
     // in the regge classes momentum transfer from scattering is always negative
 
@@ -96,7 +96,7 @@ int main(int argc, char** argv){
     double s=pCM.M2();
 
     piontrajectory->SetPoint(i,t,pionProp.alphapi(t));
-    
+
     std::complex<double> amp=pionProp.ampBCP(t,s,tin,tout,s1,s2);
 
     pionpropRe->SetPoint(i,t,amp.real());
@@ -109,7 +109,7 @@ int main(int argc, char** argv){
 
   //// test pipiamp
   n=3000;
-  TGraph* s0wavePhase=new TGraph(n);s0wavePhase->SetName("s0waveDelta"); 
+  TGraph* s0wavePhase=new TGraph(n);s0wavePhase->SetName("s0waveDelta");
   TGraph* s0waveEta=new TGraph(n);s0waveEta->SetName("s0waveEta");
   s0wave* s0w=new s0wave();
   double s=4*0.01947983515;
@@ -122,7 +122,7 @@ int main(int argc, char** argv){
     double e=s0w->eta(s);
     if(d<0 && pre>0)offset+=180;
     pre=d;
-    d+=offset;				  
+    d+=offset;
     s0wavePhase->SetPoint(i,sqrt(s),d);
     s0waveEta->SetPoint(i,sqrt(s),e);
   }

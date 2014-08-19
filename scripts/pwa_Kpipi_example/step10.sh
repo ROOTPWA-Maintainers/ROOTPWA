@@ -10,7 +10,7 @@ echo      " *${STEP_NAME[9]}*"
 echo -e   " ******************************************\n"
 
 # visualization must be performed in the rootscript folder containing all needed (logon) scripts
-cd ${ROOTPWA}/src/rootscripts 
+cd ${ROOTPWA}/src/rootscripts
 # write a macro to load into root
 rm /tmp/rootmacro.C
 echo "void rootmacro(){" >> /tmp/rootmacro.C

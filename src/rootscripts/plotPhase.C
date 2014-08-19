@@ -142,7 +142,7 @@ plotPhase(const unsigned int nmbTrees,                       // number of fitRes
 		                                   trees[i]->GetV1(),   // phase
 		                                   &(*(xErr.begin())),  // mass error
 		                                   trees[i]->GetV2());  // phase error
-		
+
 		// beautify graph
 		stringstream graphName;
 		graphName << graph->GetName() << "_" << i;
@@ -177,7 +177,7 @@ plotPhase(const unsigned int nmbTrees,                       // number of fitRes
 		}
 		legend->Draw();
 	}
-  
+
 	// create EPS file
 	if (saveEps)
 		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());

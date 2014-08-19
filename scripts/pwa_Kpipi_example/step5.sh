@@ -13,22 +13,22 @@ echo -e "\n compiling tree reader "
 g++ `root-config --glibs` `root-config --cflags` -O0 -o /tmp/readtree ${KPIPI_TREE_READER}
 if [ -f /tmp/readtree ]
 then
-	
+
 	echo -e " compilation succeeded"
 	if [ "${FILTERED_RAW_EVENTS_EXIST}" == '1' ]
 	then
 		echo -e "\E[37;31m RAW events seem to exist already. skipping! "; tput sgr0
 	else
-		echo -e " filling RAW events... " 
+		echo -e " filling RAW events... "
 		/tmp/readtree ${KPIPI_RAW_FILE_DIR}/${KPIPI_RAW_FILE} ${KPIPI_FILE_TREE} \
 		${KPIPI_WORK_DIR} ${KPIPI_NBINS} ${KPIPI_BIN_MIN} ${KPIPI_BIN_MAX} ${KPIPI_NPARTICLES}
 	fi
 
-	if [ "${FILTERED_MC_ACC_EVENTS_EXIST}" == '1' ]	
+	if [ "${FILTERED_MC_ACC_EVENTS_EXIST}" == '1' ]
 	then
-		echo -e "\E[37;31m MC acceptance events seem to exist already. skipping! "; tput sgr0	
-	else	
-		echo -e " filling MC acceptance events... " 
+		echo -e "\E[37;31m MC acceptance events seem to exist already. skipping! "; tput sgr0
+	else
+		echo -e " filling MC acceptance events... "
 		/tmp/readtree ${KPIPI_MC_FILE_DIR}/${KPIPI_MC_FILE} ${KPIPI_FILE_TREE} \
 		${KPIPI_WORK_DIR} ${KPIPI_NBINS} ${KPIPI_BIN_MIN} ${KPIPI_BIN_MAX} ${KPIPI_NPARTICLES}
 	fi

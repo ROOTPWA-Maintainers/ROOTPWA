@@ -42,12 +42,12 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 
   class massDepFitLikeli : public ROOT::Math::IBaseFunctionMultiDim {
   public:
-    
+
     // Constructors/Destructors ---------
     massDepFitLikeli(){}
     virtual ~massDepFitLikeli(){}
-    
-    
+
+
     // Accessors -----------------------
     virtual unsigned int NDim() const;
     unsigned int NDataPoints() const; /// number of data points in fit
@@ -58,18 +58,18 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 	      pwacompset* compset,
 	      double mmin=0, double mmax=5000,
 	      bool doCov=true);
-    
+
 
 
     // Operations ----------------------
     virtual double DoEval  (const double* par) const;
-    
+
     virtual IBaseFunctionMultiDim* Clone()const {return new massDepFitLikeli(*this);}
-    
-    
-    
+
+
+
   private:
-    
+
     // Private Data Members ------------
     TTree* _tree;
     TF1* _finalStatePS;
@@ -81,13 +81,13 @@ typedef ublas::matrix<rmatrix> ccmatrix;
     std::vector<double> _mass;
 
     std::vector<std::string> _wlist;
-    std::vector<unsigned int> _index; // wave indices in fitResult 
+    std::vector<unsigned int> _index; // wave indices in fitResult
     double  _mmin, _mmax; // fitrange
     bool    _doCov; // take covariance between Real and Imag into account?
     // Private Methods -----------------
-    
+
   };
-  
+
 } // end namespace
 
 #endif

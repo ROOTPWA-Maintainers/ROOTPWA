@@ -30,7 +30,7 @@
 #include "TLorentzVector.h"
 
 namespace rpwa {
-  
+
   class absMassDep;
 
   // 3body X->(12)3
@@ -38,11 +38,11 @@ namespace rpwa {
   public:
     decay21(absMassDep* iso, int l, double b=1) :
       absDecayChannel(b,l),isobar(iso){}
-    
+
     virtual void tau( std::vector<TLorentzVector>& particles,
 	     double& evtweight, // returns isobar part of phase space for event
 	     double& breakup);   // returns breakup momentum of top vertex
- 
+
   private:
     absMassDep* isobar;
 
@@ -57,15 +57,15 @@ namespace rpwa {
 	    int l,
 	    double b=1) :
       absDecayChannel(b,l),isobar1(iso1),isobar2(iso2){}
-    
+
     virtual void tau( std::vector<TLorentzVector>& particles,
 	     double& evtweight, // returns isobar part of phase space for event
 	     double& breakup);   // returns breakup momentum of top vertex
- 
+
   private:
     absMassDep* isobar1;
     absMassDep* isobar2;
-    
+
 
   };
 
@@ -78,15 +78,15 @@ namespace rpwa {
 	    int l,
 	    double b=1) :
       absDecayChannel(b,l),isobar2(iso2),isobar3(iso3){}
-    
+
     virtual void tau( std::vector<TLorentzVector>& particles,
 	     double& evtweight, // returns isobar part of phase space for event
 	     double& breakup);   // returns breakup momentum of top vertex
- 
+
   private:
     absMassDep* isobar2;
     absMassDep* isobar3;
-    
+
 
   };
 
@@ -94,19 +94,3 @@ namespace rpwa {
 } // end namespace
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -59,11 +59,11 @@ fi
 if [ -n "$DOPSP" ]; then
   echo "--- Doing PSPAMPS ----------------";
   cd $DATADIR/$MYBIN/PSPAMPS;
-  
+
   for i in $WAVESETDIR/*list.dat; do
         echo "Processing $i";
 	ls -l $i;
-  	addamp $i ./; #OLD/;
+	addamp $i ./; #OLD/;
   done;
 
   int $WEIGHTS *.amp > norm.int;
@@ -73,11 +73,11 @@ fi;
 if [ -n "$DOACC" ]; then
   echo "--- Doing ACCAMPS ----------------";
   cd $DATADIR/$MYBIN/ACCAMPS;
-  
+
   for i in $WAVESETDIR/*list.dat; do
       echo "Processing $i";
 	ls -l $i;
-  	addamp $i ./; #OLD/;
+	addamp $i ./; #OLD/;
   done;
 
   int *.amp > accnorm.int;
@@ -88,15 +88,13 @@ fi;
 if [ -n "$DOAMPS" ]; then
   echo "--- Doing AMPS ----------------";
   cd $DATADIR/$MYBIN/AMPS;
-  
+
   for i in $WAVESETDIR/*list.dat; do
       echo "Processing $i";
 	ls -l $i;
-  	addamp $i ./; #OLD/;
+	addamp $i ./; #OLD/;
   done;
- 
+
 fi;
 
 echo "------------------"
-
-

@@ -69,8 +69,8 @@ void NParticleState::setBeam(const TLorentzVector& beam){
 }
 
 
-TLorentzVector 
-NParticleState::p() const 
+TLorentzVector
+NParticleState::p() const
 {
   TLorentzVector result;
   //std::cout<<_fspart.GetEntriesFast()<<"   "<<_n<<std::endl;
@@ -102,15 +102,15 @@ NParticleState::rapidity() const
   return 0.5*TMath::Log((_p.E()+_p.Vect().Z())/(_p.E()-_p.Vect().Z()));
 }
 
-TLorentzVector 
-NParticleState::pfs(unsigned int i) const 
+TLorentzVector
+NParticleState::pfs(unsigned int i) const
 {
   if(i<_n)return _fspart.at(i)->p();
   else return TLorentzVector();
 }
 
 int
-NParticleState::qabs() const 
+NParticleState::qabs() const
 {
   int result=0;
   for(unsigned int i=0;i<_n;++i){
@@ -121,7 +121,7 @@ NParticleState::qabs() const
   return result;
 }
 
-TVector3 
+TVector3
 NParticleState::vertex() const
 {
   TVector3 result;
@@ -141,8 +141,8 @@ NParticleState::Exclusive(double d){
 
 
 
-bool 
-NParticleState::isSubstate(const NParticleState* motherstate)const { 
+bool
+NParticleState::isSubstate(const NParticleState* motherstate)const {
   // check if all fspart in this state are also part of the mother
   for(unsigned int i=0;i<_n;++i){//loop over fspart
     FSParticle* myp=getParticle(i);
@@ -160,13 +160,13 @@ NParticleState::isSubstate(const NParticleState* motherstate)const {
       //std::cout<<"did not find pion number "<<i<<std::endl;
       return false;
     }
-    
+
   } // end loop over my fspart
   // if we survive here we found all fspart in mother
   return true;
 }
 
-bool 
+bool
 NParticleState::isDisjunctFrom(const NParticleState* isobar) const {
   // check if all fspart in this state are not equal from partner
   for(unsigned int i=0;i<_n;++i){//loop over fspart
@@ -181,4 +181,3 @@ NParticleState::isDisjunctFrom(const NParticleState* isobar) const {
   }// end loop over my fspart
   return true;
 }
-  

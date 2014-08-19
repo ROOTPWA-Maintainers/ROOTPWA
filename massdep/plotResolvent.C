@@ -45,7 +45,7 @@ int plotResolvent(char* name){
 
   ifstream infile(name);
   complex<double> s;
-  
+
   vector<complex<double> > IA(nBase);
   vector<TString> IsoNames(nIso*nIso);
 
@@ -54,7 +54,7 @@ int plotResolvent(char* name){
   vector<TMultiGraph*> graphsIm(nIso*nIso);
   for(unsigned int i=0;i<nIso*nIso;++i)graphsIm[i]=new TMultiGraph();
 
- 
+
   double dt=0.05;
   double t0=0.001;
   unsigned int count=0;
@@ -78,19 +78,19 @@ int plotResolvent(char* name){
 	gRe->SetTitle(label);
 	label.ReplaceAll("RE","IM");
 	gIm->SetTitle(label);
-	
+
 
 	for(unsigned int a=0;a<nBase;++a){
 	  infile >> IA[a];
-	}// end reading loop over basis functions 
-	
+	}// end reading loop over basis functions
+
 	// loop over t and draw graphs
 	for(unsigned it=0;it<nt;++it){
 	  double t=t0+it*dt;
 	  complex<double> I=0;
 	  for(unsigned int a=0;a<nBase;++a){
 	    I+=IA[a]*u(a,t);
-	  } // end loop over basis 
+	  } // end loop over basis
 	  // fill graph
 	  gRe->SetPoint(it,t,I.real());
 	  gIm->SetPoint(it,t,I.imag());
@@ -100,7 +100,7 @@ int plotResolvent(char* name){
     } // end loop over isobars
     ++count;
   } // end loop over s
-  
+
   // Draw results
 
   TCanvas* c=new TCanvas("c","c",10,10,1000,1000);
@@ -109,7 +109,7 @@ int plotResolvent(char* name){
    for(unsigned int i=0;i<nIso;++i){
       for(unsigned int j=0;j<nIso;++j){
 	c->cd(1+i*2*nIso+j*2);
-	
+
 	graphsRe[i*nIso+j]->Draw("AC");
 	graphsRe[i*nIso+j]->GetXaxis()->SetTitle("(m_{2#pi})^{2}");
 	graphsRe[i*nIso+j]->GetYaxis()->SetTitle(IsoNames[i*nIso+j]+"-RE");
@@ -124,5 +124,5 @@ int plotResolvent(char* name){
 
 
   return 0;
-  
+
 }

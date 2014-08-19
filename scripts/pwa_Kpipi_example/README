@@ -6,10 +6,10 @@ to your needs.
 You may try to use the steps for them self but
 it is not prooved to work that way.
 
-1. Set $ROOTPWA to your rootpwa directory. 
+1. Set $ROOTPWA to your rootpwa directory.
 	Put it for example in the .bashrc
 2. . run_Kpipi_PWA_analysis.sh
 	pray it works not only on my machine
 3. No warranty for correctness. It worked with SVN version 326 up to step 6.
-	
+
 Enjoy!

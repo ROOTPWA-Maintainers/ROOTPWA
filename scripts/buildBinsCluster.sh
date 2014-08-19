@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export KEYDIR=$HOME/scratch/COMPASS/PWA2000/key5pi/SET5;
-echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- STARTING AMPLITUDE CALCULATIONS";
 echo "---- WAVESET: $KEYDIR";
 echo;
 

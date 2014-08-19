@@ -245,7 +245,7 @@ namespace rpwa {
 
 	};
 
-	
+
 }
 
 #endif  // TPWALIKELIHOOD_H

@@ -202,7 +202,7 @@ namespace rpwa {
 			groupKey = &(parent[groupName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
 			if (mustExist)
-			 	printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
+				printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
 						  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
@@ -306,7 +306,7 @@ namespace rpwa {
 		return true;
 	}
 
-	
+
 } // namespace rpwa
 
 

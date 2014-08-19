@@ -53,7 +53,7 @@
 void plotgenetics(TString resultfile, TString wavepool){
 
   // load list of all possible waves in this run
-  
+
   map<TString,unsigned int> waveindex;
 
   ifstream file(wavepool.Data());
@@ -73,7 +73,7 @@ void plotgenetics(TString resultfile, TString wavepool){
       ++index;
     }
   }
- 
+
   unsigned int d=waveindex.size();
   cout << d << " waves in wavepool." << endl;
 
@@ -96,7 +96,7 @@ void plotgenetics(TString resultfile, TString wavepool){
     double fit=0;
     if(pos<line.length()){
       fit=atof(line.substr(pos,line.length()).c_str());
-    } 
+    }
     if(line.length()>1){
       fitness.push_back(fit);
       set<wsetentry> myset;
@@ -113,23 +113,23 @@ void plotgenetics(TString resultfile, TString wavepool){
       csomes.push_back(ch);
       ch.Print();
       mean+=ch;
-      
+
     }
   }// end loop over results files
-  
 
-    
+
+
 
 
   //pca.Test();
 
-  
+
   // renormalize mean
   mean*=1./(double)csomes.size();
 
 
 
-  
+
 
   // calculate covariances:
   TMatrixD cov(d,d);
@@ -142,7 +142,7 @@ void plotgenetics(TString resultfile, TString wavepool){
    cov*=1./(double)csomes.size();
 
    //cov.Print();
-   
+
    // calculate eigenvectors
 
    TMatrixDSym sym; sym.Use(cov.GetNrows(),cov.GetMatrixArray());
@@ -153,7 +153,7 @@ void plotgenetics(TString resultfile, TString wavepool){
    EigenValues.Print();
 
    // TMatrixD uc=cov.EigenVectors(lamda);
-  
+
    // projections onto first and second component:
    TVectorD u1=TMatrixDColumn(EigenVectors,0);
    TVectorD u2=TMatrixDColumn(EigenVectors,1);
@@ -163,7 +163,7 @@ void plotgenetics(TString resultfile, TString wavepool){
    c->cd(1);
    TH2D* hpca=new TH2D("hpca","PCA",100,-5,5,100,-5,5);
    hpca->Draw();
-   
+
    unsigned int n=csomes.size();
    TMatrixD* dist=new TMatrixD(n,n);
 

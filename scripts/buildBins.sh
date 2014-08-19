@@ -5,11 +5,11 @@
 export KEYDIR=$ROOTPWA/keyfiles/keyKpipi/SETWA3;
 export DATAROOT=$HOME/disk2/analysis/Kp_Kppipi/pwa/WA03_like;
 
-echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- STARTING AMPLITUDE CALCULATIONS";
 echo "---- WAVESET: $KEYDIR";
 echo;
 
-for bin in $DATAROOT/*; 
+for bin in $DATAROOT/*;
 do
   echo "---- PROCESSING MASS BIN: $bin";
   echo "---- Starting time: ";
@@ -35,5 +35,3 @@ do
 
   echo;
 done;
-
-

@@ -35,7 +35,7 @@ do
 	else
 		RUNSCRIPT[${STEP}]="N"
 	fi
-done	
+done
 
 # scripts to run
 RUNSCRIPT_FILE=(\
@@ -52,7 +52,7 @@ RUNSCRIPT_FILE=(\
 )
 
 for (( STEP=0; STEP<10; STEP++ )) # in
-do 
+do
 	# echo "${STEP} is ${RUNSCRIPT[${STEP}]}"
 	if [ ${RUNSCRIPT[${STEP}]} == "Y" ]
 	then

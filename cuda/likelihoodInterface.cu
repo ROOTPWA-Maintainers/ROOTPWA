@@ -373,7 +373,7 @@ likelihoodInterface<complexT>::logLikelihood
 		printErr << "null pointer to production amplitudes. aborting." << endl;
 		throw;
 	}
-	
+
 	const unsigned int initialAvailMem = availableDeviceMem();
 
 	// copy production amplitudes to device
@@ -415,7 +415,7 @@ likelihoodInterface<complexT>::logLikelihood
 	if (availableDeviceMem() != initialAvailMem)
 		printWarn << "potential CUDA device memory leak: memory before function call = "
 		          << initialAvailMem << " bytes, after = " << availableDeviceMem() << " bytes" << endl;
-		
+
 	return logLikelihood;
 }
 
@@ -498,8 +498,8 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 		                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
 		cutilSafeCall(cudaFree(d_derivativeSumsPrev));
 	}
-	
-	// flat wave requires special treatment	
+
+	// flat wave requires special treatment
 	{
 		// first summation stage
 		value_type*  d_derivativeSumsPrev = 0;
@@ -543,96 +543,96 @@ template<typename complexT>
 ostream&
 likelihoodInterface<complexT>::print(ostream& out)
 {
-  const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
+	const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
 
-  if (not _cudaInitialized) {
-	  printWarn << "CUDA device is not initialized." << endl;
-	  return out;
-  }
-  
-  // fields for both major & minor fields are 9999, if no CUDA capable devices are present
-  if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
-	  printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
-	  return out;
-  }
-  out << "CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' properties:" << endl;
-    
-  // print info
-  int driverVersion = 0;
-  cutilSafeCall(cudaDriverGetVersion(&driverVersion));
-  int runtimeVersion = 0;     
-  cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
-  out << "    driver version: ........................................ "
-      << driverVersion / 1000 << "." << driverVersion % 100 << endl
-      << "    runtime version: ....................................... "
-      << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
-      << "    capability major revision number: ...................... "
-      << _cudaDeviceProp.major << endl
-      << "    capability minor revision number: ...................... "
-      << _cudaDeviceProp.minor << endl
-      << "    GPU clock frequency: ................................... "
-      << _cudaDeviceProp.clockRate * 1e-6f << " GHz" << endl
-      << "    number of multiprocessors: ............................. "
-      << _cudaDeviceProp.multiProcessorCount << endl
-      << "    number of cores: ....................................... "
-      << nGpuArchCoresPerSM[_cudaDeviceProp.major] * _cudaDeviceProp.multiProcessorCount << endl
-      << "    warp size: ............................................. "
-      << _cudaDeviceProp.warpSize << endl
-      << "    maximum number of threads per block: ................... "
-      << _cudaDeviceProp.maxThreadsPerBlock << endl
-      << "    maximum block dimensions: .............................. "
-      << _cudaDeviceProp.maxThreadsDim[0] << " x " << _cudaDeviceProp.maxThreadsDim[1]
-      << " x " << _cudaDeviceProp.maxThreadsDim[2] << endl
-      << "    maximum grid dimension ................................. "
-      << _cudaDeviceProp.maxGridSize[0] << " x " << _cudaDeviceProp.maxGridSize[1]
-      << " x " << _cudaDeviceProp.maxGridSize[2] << endl
-      << "    total amount of global memory: ......................... "
-      << _cudaDeviceProp.totalGlobalMem / (1024. * 1024.) << " MiBytes" << endl
-      << "    amount of available global memory: ..................... "
-      << availableDeviceMem() / (1024. * 1024.) << " MiBytes" << endl
-      << "    total amount of constant memory: ....................... "
-      << _cudaDeviceProp.totalConstMem << " bytes" << endl 
-      << "    total amount of shared memory per block: ............... "
-      << _cudaDeviceProp.sharedMemPerBlock << " bytes" << endl
-      << "    total number of registers available per block: ......... "
-      << _cudaDeviceProp.regsPerBlock << endl
-      << "    maximum 1-dim texture size: ............................ "
-      << _cudaDeviceProp.maxTexture1D << " pixels" << endl
-      << "    maximum 2-dim texture size: ............................ "
-      << _cudaDeviceProp.maxTexture2D[0] << " x " << _cudaDeviceProp.maxTexture2D[1]
-      << " pixels" << endl
-      << "    maximum 3-dim texture size: ............................ "
-      << _cudaDeviceProp.maxTexture3D[0] << " x " << _cudaDeviceProp.maxTexture3D[1]
-      << " x " << _cudaDeviceProp.maxTexture3D[2] << " pixels" << endl
-      << "    alignment required for textures: ....................... "
-      << _cudaDeviceProp.textureAlignment << " bytes" << endl
-      << "    alignment required for surfaces: ....................... "
-      << _cudaDeviceProp.surfaceAlignment << " bytes" << endl
-      << "    maximum memory pitch: .................................. "
-      << _cudaDeviceProp.memPitch << " bytes" << endl
-      << "    support for concurrent execution of multiple kernels ... "
-      << yesNo(_cudaDeviceProp.concurrentKernels) << endl
-      << "    support for ECC memory protection: ..................... "
-      << yesNo(_cudaDeviceProp.ECCEnabled) << endl
-      << "    concurrent copy and execution: ......................... "
-      << yesNo(_cudaDeviceProp.deviceOverlap) << endl
-      << "    run time limit on kernels: ............................. "
-      << yesNo(_cudaDeviceProp.kernelExecTimeoutEnabled) << endl
-      << "    device is an integrated component ...................... "
-      << yesNo(_cudaDeviceProp.integrated) << endl
-      << "    support for host page-locked memory mapping: ........... "
-      << yesNo(_cudaDeviceProp.canMapHostMemory) << endl
-      << "    compute mode: .......................................... ";
-  if (_cudaDeviceProp.computeMode == cudaComputeModeDefault)
-	  out << "default (multiple host threads can use this device simultaneously)";
-  else if (_cudaDeviceProp.computeMode == cudaComputeModeExclusive)
-	  out << "exclusive (only one host thread at a time can use this device)";
-  else if (_cudaDeviceProp.computeMode == cudaComputeModeProhibited)
-	  out << "prohibited (no host thread can use this device)";
-  else
-	  out << "unknown";
-  out << endl;
-  return out;
+	if (not _cudaInitialized) {
+		printWarn << "CUDA device is not initialized." << endl;
+		return out;
+	}
+
+	// fields for both major & minor fields are 9999, if no CUDA capable devices are present
+	if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
+		printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
+		return out;
+	}
+	out << "CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' properties:" << endl;
+
+	// print info
+	int driverVersion = 0;
+	cutilSafeCall(cudaDriverGetVersion(&driverVersion));
+	int runtimeVersion = 0;
+	cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
+	out << "    driver version: ........................................ "
+	    << driverVersion / 1000 << "." << driverVersion % 100 << endl
+	    << "    runtime version: ....................................... "
+	    << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
+	    << "    capability major revision number: ...................... "
+	    << _cudaDeviceProp.major << endl
+	    << "    capability minor revision number: ...................... "
+	    << _cudaDeviceProp.minor << endl
+	    << "    GPU clock frequency: ................................... "
+	    << _cudaDeviceProp.clockRate * 1e-6f << " GHz" << endl
+	    << "    number of multiprocessors: ............................. "
+	    << _cudaDeviceProp.multiProcessorCount << endl
+	    << "    number of cores: ....................................... "
+	    << nGpuArchCoresPerSM[_cudaDeviceProp.major] * _cudaDeviceProp.multiProcessorCount << endl
+	    << "    warp size: ............................................. "
+	    << _cudaDeviceProp.warpSize << endl
+	    << "    maximum number of threads per block: ................... "
+	    << _cudaDeviceProp.maxThreadsPerBlock << endl
+	    << "    maximum block dimensions: .............................. "
+	    << _cudaDeviceProp.maxThreadsDim[0] << " x " << _cudaDeviceProp.maxThreadsDim[1]
+	    << " x " << _cudaDeviceProp.maxThreadsDim[2] << endl
+	    << "    maximum grid dimension ................................. "
+	    << _cudaDeviceProp.maxGridSize[0] << " x " << _cudaDeviceProp.maxGridSize[1]
+	    << " x " << _cudaDeviceProp.maxGridSize[2] << endl
+	    << "    total amount of global memory: ......................... "
+	    << _cudaDeviceProp.totalGlobalMem / (1024. * 1024.) << " MiBytes" << endl
+	    << "    amount of available global memory: ..................... "
+	    << availableDeviceMem() / (1024. * 1024.) << " MiBytes" << endl
+	    << "    total amount of constant memory: ....................... "
+	    << _cudaDeviceProp.totalConstMem << " bytes" << endl
+	    << "    total amount of shared memory per block: ............... "
+	    << _cudaDeviceProp.sharedMemPerBlock << " bytes" << endl
+	    << "    total number of registers available per block: ......... "
+	    << _cudaDeviceProp.regsPerBlock << endl
+	    << "    maximum 1-dim texture size: ............................ "
+	    << _cudaDeviceProp.maxTexture1D << " pixels" << endl
+	    << "    maximum 2-dim texture size: ............................ "
+	    << _cudaDeviceProp.maxTexture2D[0] << " x " << _cudaDeviceProp.maxTexture2D[1]
+	    << " pixels" << endl
+	    << "    maximum 3-dim texture size: ............................ "
+	    << _cudaDeviceProp.maxTexture3D[0] << " x " << _cudaDeviceProp.maxTexture3D[1]
+	    << " x " << _cudaDeviceProp.maxTexture3D[2] << " pixels" << endl
+	    << "    alignment required for textures: ....................... "
+	    << _cudaDeviceProp.textureAlignment << " bytes" << endl
+	    << "    alignment required for surfaces: ....................... "
+	    << _cudaDeviceProp.surfaceAlignment << " bytes" << endl
+	    << "    maximum memory pitch: .................................. "
+	    << _cudaDeviceProp.memPitch << " bytes" << endl
+	    << "    support for concurrent execution of multiple kernels ... "
+	    << yesNo(_cudaDeviceProp.concurrentKernels) << endl
+	    << "    support for ECC memory protection: ..................... "
+	    << yesNo(_cudaDeviceProp.ECCEnabled) << endl
+	    << "    concurrent copy and execution: ......................... "
+	    << yesNo(_cudaDeviceProp.deviceOverlap) << endl
+	    << "    run time limit on kernels: ............................. "
+	    << yesNo(_cudaDeviceProp.kernelExecTimeoutEnabled) << endl
+	    << "    device is an integrated component ...................... "
+	    << yesNo(_cudaDeviceProp.integrated) << endl
+	    << "    support for host page-locked memory mapping: ........... "
+	    << yesNo(_cudaDeviceProp.canMapHostMemory) << endl
+	    << "    compute mode: .......................................... ";
+	if (_cudaDeviceProp.computeMode == cudaComputeModeDefault)
+		out << "default (multiple host threads can use this device simultaneously)";
+	else if (_cudaDeviceProp.computeMode == cudaComputeModeExclusive)
+		out << "exclusive (only one host thread at a time can use this device)";
+	else if (_cudaDeviceProp.computeMode == cudaComputeModeProhibited)
+		out << "prohibited (no host thread can use this device)";
+	else
+		out << "unknown";
+	out << endl;
+	return out;
 }
 
 
@@ -644,7 +644,7 @@ likelihoodInterface<complexT>::cascadedKernelSum
  typename kernelCaller::value_type*& d_sumsPrev,
  unsigned int                        nmbSumsPrev,
  const unsigned int                  sumElementSize)
-{ 
+{
 	typename kernelCaller::value_type* d_sumsNext = 0;
 	do {
 		// allocate device array for new sums

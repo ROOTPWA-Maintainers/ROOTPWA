@@ -23,9 +23,9 @@
 //
 // Description:
 //      Resonance Mixing Amplitude in the D-Matrix Formalism
-//      for References see 
+//      for References see
 //      arXiv:hep-ex/0706.1341v2
-//      arXiv:hep-ph/9702339v1 
+//      arXiv:hep-ph/9702339v1
 //
 // Environment:
 //      Software developed for the COMPASS experiment at CERN
@@ -52,8 +52,8 @@ dMatrixPole::gDec(unsigned int i) const {
    return (*fpsp)[i]->Eval(m)/(*fpsp)[i]->Eval(fm);
  }
 
- 
-double 
+
+double
 dMatrixPole::gammaTot() const {
   unsigned int n=fgamma.size2();
   double result=0;
@@ -63,7 +63,7 @@ dMatrixPole::gammaTot() const {
   return result;
 }
 
-double 
+double
 dMatrixPole::gammaTot(double m) const {
   unsigned int n=fgamma.size2();
   double result=0;
@@ -74,7 +74,7 @@ dMatrixPole::gammaTot(double m) const {
 }
 
 
-cnum 
+cnum
 dMatrixPole::M2(double m) const {
    double m2=fm*fm;
    if(fBkg)return cnum(m2,0);
@@ -87,17 +87,17 @@ dMatrixAmp::dMatrixAmp(){};
 
 dMatrixAmp::~dMatrixAmp(){};
 
-void 
+void
 dMatrixAmp::addChannel(TF1* ch){
   fChannels.push_back(ch);
 }
 
-void 
+void
 dMatrixAmp::setNPoles(unsigned int n){
   fPoles.clear();
   fPoles.resize(n);
 }
-void 
+void
 dMatrixAmp::setNBkg(unsigned int n){
   fBkg.clear();
   fBkg.resize(n,dMatrixPole(true));
@@ -105,9 +105,9 @@ dMatrixAmp::setNBkg(unsigned int n){
 
 
 
-void 
-dMatrixAmp::Setup( const rmatrix& mbare, 
-	     const rmatrix& gamma, 
+void
+dMatrixAmp::Setup( const rmatrix& mbare,
+	     const rmatrix& gamma,
 	     const cmatrix& production,
 	     const rmatrix& mixing){
   unsigned int np=nPoles();
@@ -127,7 +127,7 @@ dMatrixAmp::Setup( const rmatrix& mbare,
  }
 
 
-cnum 
+cnum
 dMatrixAmp::amp(double m, unsigned int channel){
   cnum s(m*m,0);
   // build propagator matrix:
@@ -139,16 +139,16 @@ dMatrixAmp::amp(double m, unsigned int channel){
       if(i==j){
 	if(i<nPoles())Dinv(i,j)=getPole(i).M2(m)-s;
 	else Dinv(i,j)=-getBkg(i-nPoles()).M2(m);
-      } // end setting 
-      else Dinv(i,j)=-fmixing(i,j); 
+      } // end setting
+      else Dinv(i,j)=-fmixing(i,j);
     }
-  
+
     // build row-vector of decay amplitudes
     // (real, depend on channel)
-    	if(i<nPoles())ADec(0,i)=getPole(i).gDec(channel);
+	if(i<nPoles())ADec(0,i)=getPole(i).gDec(channel);
 	else ADec(0,i)=getBkg(i-nPoles()).gDec(channel);
   } // end loop over poles
-  
+
   cmatrix D(n,n);
   ///cerr << "Inverting Matrix now" << endl;
   InvertMatrix(Dinv,D);
@@ -162,12 +162,12 @@ dMatrixAmp::amp(double m, unsigned int channel){
 
 
 // parameter mapping:
-unsigned int 
+unsigned int
 dMatrixAmp::getNPar() const {
   unsigned int nbare=fPoles.size()+fBkg.size(); // bare masses
   // widths/decay couplings
   unsigned int ngamma=nbare*fChannels.size();
-  // production constants (complex!) 
+  // production constants (complex!)
   unsigned int nprod = nbare*2;
   // mixing terms
   unsigned int nmix=0.5*nbare*(nbare - 1); // diagonal terms are unphysical!
@@ -221,7 +221,7 @@ dMatrixAmp::setPar(const double* par) {
   unsigned int counter=0;
   // bare masses
   unsigned int nbare=nBkg()+nPoles();
-  rmatrix mbare(1,nbare); 
+  rmatrix mbare(1,nbare);
   // loop over poles&bkg
   for(unsigned int ip=0;ip<nbare;++ip){
     mbare(0,ip)=par[counter++];

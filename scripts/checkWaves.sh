@@ -23,6 +23,5 @@ for i in $1/*; do
     echo "Checking bin $COUNT: "
     let COUNT=$COUNT+1
     diff /tmp/diffamps /tmp/refamps | grep $SELECT
-    
-done;
 
+done;

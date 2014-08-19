@@ -53,10 +53,9 @@ bool operator== (const FSParticle& lhs, const FSParticle& rhs){
 FSParticle::FSParticle()
   : _q(99)
 {}
-  
+
 FSParticle::FSParticle(const TLorentzVector& p,
 		       const TVector3& v,
 		       int q)
 : _p(p), _v(v), _q(q)
 {}
-

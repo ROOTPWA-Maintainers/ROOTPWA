@@ -36,7 +36,7 @@ void mcmcglidingmean(TTree* tree, unsigned int ndim, unsigned int burnin=0, unsi
   vector<TGraph*> graphs(ndim);
   unsigned int nentries=tree->GetEntriesFast();
   TMultiGraph* mgraph=new TMultiGraph();
-  
+
   for(unsigned int ip=0;ip<ndim;++ip){
 	Xsum[ip]=0;
 	Grad[ip]=0;
@@ -56,24 +56,24 @@ void mcmcglidingmean(TTree* tree, unsigned int ndim, unsigned int burnin=0, unsi
 	Xsum[ip]+=X[ip];
     }// end loop over parameters
   }
-  
-  
+
+
   // start sliding:
   for(unsigned int i=win; i<nentries; i+=1){
     // calculate sliding mean
     tree->GetEntry(i-win);
     // remove first point
-    for(unsigned int ip=0;ip<ndim;++ip){  
+    for(unsigned int ip=0;ip<ndim;++ip){
       Xsum[ip]-=X[ip];
     }// end loop over parameters
     tree->GetEntry(i);
     // add new point
-    for(unsigned int ip=0;ip<ndim;++ip){  
+    for(unsigned int ip=0;ip<ndim;++ip){
       Xsum[ip]+=X[ip];
       // Fill Graph
       graphs[ip]->SetPoint(i-win,i,Xsum[ip]/(double)win);
     }// end loop over parameters
-    
+
   }
   mgraph->Draw("AP");
 }

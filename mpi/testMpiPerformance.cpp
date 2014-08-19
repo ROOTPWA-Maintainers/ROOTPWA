@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
       reduce(world, wi_value, wi_result, std::plus<wrapped_int>(), 0);
     }
     double reduce_type_op_total_time = time.elapsed();
-  
+
     // Serialized/MPI_Op case
     time.restart();
     for (int i = 0; i < repeat_count; ++i) {
@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
                 << "\nMPI_INT/MPI_SUM\t\t" << reduce_int_sum_total_time
                 << "\nMPI_INT/MPI_Op\t\t" << reduce_int_op_total_time
                 << "\nMPI_Datatype/MPI_Op\t" << reduce_type_op_total_time
-                << "\nSerialized/MPI_Op\t" << reduce_ser_op_total_time 
+                << "\nSerialized/MPI_Op\t" << reduce_ser_op_total_time
                 << std::endl;
   }
 

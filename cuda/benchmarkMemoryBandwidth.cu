@@ -23,7 +23,7 @@
 // Description:
 //      benchmarks coalesced memory access for global and texture memory
 //      using various data types of up to 16 bytes
-// 
+//
 //      based on MisterAnderson42's post in the nvidia forum
 //      http://forums.nvidia.com/index.php?s=&showtopic=52806&view=findpost&p=292058
 //
@@ -341,7 +341,7 @@ int main()
 	cutilSafeCall(cudaBindTexture(0, cuda::floatTexture,  deviceInData[0], sizeof(float ) * nmbElements));
 	cutilSafeCall(cudaBindTexture(0, cuda::float2Texture, deviceInData[0], sizeof(float2) * nmbElements));
 	cutilSafeCall(cudaBindTexture(0, cuda::float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
-  
+
 	if (1) {
 		printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float,               2);
@@ -406,7 +406,7 @@ int main()
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
 	}
-	
+
 	if (1) {
 		printInfo << "running texture memory read-only benchmarks ------------------------------" << endl;
 		BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);

@@ -21,7 +21,7 @@
 #include "NParticleEvent.h"
 
 
-using namespace std; 
+using namespace std;
 
 
 void plotEvts(TTree* datatr, TString outfilename="kineplots.root", TString mass="000"){
@@ -40,19 +40,19 @@ gROOT->SetStyle("Plain");
    TClonesArray* p=new TClonesArray("TLorentzVector");
    TLorentzVector* beam=NULL;
    int qbeam;
-   std::vector<int>* q=NULL; 
+   std::vector<int>* q=NULL;
    //if (itree==0)tr->SetBranchAddress("weight",&weight);
    //if (itree==0)tr->SetBranchAddress("impweight",&impweight);
    tr->SetBranchAddress("p",&p);
    tr->SetBranchAddress("beam",&beam);
    tr->SetBranchAddress("qbeam",&qbeam);
    tr->SetBranchAddress("q",&q);
- 
+
    TVector3 vertex;
    NParticleEvent event(p,q,beam,&qbeam,&vertex);
 
    TF1* acc=new TF1("acc","1-exp([0]*(1-x))",0,2000); // artificial acceptance function
-   
+
    TH1D* hMass=new TH1D("hmass","Mass",1000,0,20);
 
    TH1D* hGJ=new TH1D("hGJ","Cos GJ-Theta",20,-1,1);
@@ -71,10 +71,10 @@ gROOT->SetStyle("Plain");
 
    acc->SetParameter(0,0.2);
 
-   unsigned int nevt=tr->GetEntries();	
+   unsigned int nevt=tr->GetEntries();
    for(unsigned int i=0;i<nevt;++i){
      tr->GetEntry(i);
-     
+
      event.refresh();
 
      hMass->Fill(event.p().M());
@@ -97,14 +97,14 @@ gROOT->SetStyle("Plain");
        // cut away events with small momentum particles:
        //double w=acc->Eval(mag);
        //accept &= gRandom->Uniform()<w;
-       
+
      } // end loop over particles
 
      hExcl->Fill(xcharged.E());
-     
-     
+
+
      event.toGJ();
-     
+
      // loop over all states that contain n-1 final state particles
      // and plot GJ angles
      unsigned int npart=event.nParticles();
@@ -123,10 +123,10 @@ gROOT->SetStyle("Plain");
        }
 
        if(state.n()==npart){
-	 
-	 
-	 
-	 
+
+
+
+
        }
 
        if(state.n()==npart-1 && state.q()==0){
@@ -134,7 +134,7 @@ gROOT->SetStyle("Plain");
 	 hGJ->Fill(state.p().CosTheta());
 	 //double w=acc->Eval(state.p().CosTheta());
 	 //acc &= gRandom->Uniform()<w;
-	 
+
 
 	 if(accept){
 	   hGJacc->Fill(state.p().CosTheta());
@@ -148,54 +148,54 @@ gROOT->SetStyle("Plain");
 	     hPXYbad->Fill(momenta[ip].Vect().X()/mag,
 			 momenta[ip].Vect().Y()/mag);
 	   } // end loop over particles
-	   
+
 	 }
-	 
+
        }
        else if(state.n()==npart-2 && state.q()==-1){
-	 
+
        }
        else if(state.n()==npart-3 && state.q()==0){
-	 
+
        }
      }
      } // end if(0)
-     
-     
+
+
    }// end loop over events
-   
-   
-   
-   
-   
-   
+
+
+
+
+
+
    TCanvas* c=new TCanvas("KineValidate"+massbin,"Events",10,10,1000,800);
    c->Divide(3,3);
    c->cd(1);
    hExcl->Draw();
    c->cd(3);
    hT->Draw();
-	  
+
    c->cd(2);
    hP->Draw("colz");
-	  
-		
-	  
+
+
+
    c->cd(4);
    hMass->Draw();
-	  
+
    c->cd(5);
 hGJ->Draw();
    hGJ->GetYaxis()->SetRangeUser(0,hGJ->GetMaximum()*1.5);
    hGJacc->SetLineColor(kBlue);
    hGJacc->SetFillColor(kBlue);
-   
+
    hGJacc->Draw("same");
 
    //hPXYbad->Draw("surf2");
 c->cd(6);
    hPXY->Draw("surf2");
-	  
+
    c->cd(7);
  hMombad->Draw();
 c->cd(8);
@@ -205,5 +205,5 @@ c->cd(8);
    hMass->Draw();
    TF1* mparm=new TF1("fm","(x-[0])*exp((x-[0])*([1]+(x-[0])*[2]))",0.9,3.);
    hMass->Fit(mparm,"","",0.9,3);
-   
+
 }

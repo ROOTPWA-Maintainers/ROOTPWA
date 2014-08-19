@@ -28,15 +28,15 @@ using namespace std;
 
 // Class Member definitions -----------
 
-pipiamp::pipiamp() : _lmax(4), 
-		     _mpic2(0.01947983515), 
-		     _mpi02(0.01821868255) 
+pipiamp::pipiamp() : _lmax(4),
+		     _mpic2(0.01947983515),
+		     _mpi02(0.01821868255)
 {;}
 
 
- std::complex<double> 
- pipiamp::amp(std::complex<double> s, 
-	      std::complex<double> t, 
+ std::complex<double>
+ pipiamp::amp(std::complex<double> s,
+	      std::complex<double> t,
 	      unsigned int I) const {
    unsigned int lmin=1;
    if(I%2==0)lmin=0;
@@ -46,7 +46,7 @@ pipiamp::pipiamp() : _lmax(4),
    complex<double> q2=0.25*(s-4.0*_mpic2);
 
    std::complex<double> costheta=1.0 + 0.5*t/q2;
-  
+
    std::complex<double> result(0,0);
    // loop over partial waves
    for(unsigned int l=lmin;lmin<_lmax;lmin+=2){
@@ -61,7 +61,7 @@ pipiamp::pipiamp() : _lmax(4),
 
 // partial wave amplitudes in terms of phase shifts and elasitcity
 
- std::complex<double> 
+ std::complex<double>
  pipiamp::f(std::complex<double> s,
 	    unsigned  int l,
 	    unsigned int I)const
@@ -74,20 +74,20 @@ pipiamp::pipiamp() : _lmax(4),
 }
 
 // phase-shifts
-double 
+double
 pipiamp::cotDelta(std::complex<double> s,
 		  unsigned int l,
 		  unsigned int I) const
  {
    return 0;
  }
- 
+
 
 // elasticities
-double 
+double
 pipiamp::eta(std::complex<double> s,
 		  unsigned int l,
-	       unsigned int I) const 
+	       unsigned int I) const
 {
   return 1;
 }

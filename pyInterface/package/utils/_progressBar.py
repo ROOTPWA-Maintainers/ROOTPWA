@@ -47,4 +47,3 @@ class progressBar:
 				if self.stars == 51:
 					self.fp.write('\n')
 					self.full = True
-

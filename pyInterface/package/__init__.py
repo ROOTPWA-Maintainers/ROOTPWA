@@ -11,4 +11,3 @@ del _config
 del _exception
 
 config = None
-

@@ -42,7 +42,7 @@ std::complex<double> sph_hankel1( unsigned int l, double x){
   return std::complex<double>(sph_bessel(l,x),sph_neumann(l,x));
 }
 
-std::complex<double> tscat(double E, const vector<tchannel>& channels, 
+std::complex<double> tscat(double E, const vector<tchannel>& channels,
 			   unsigned int i){
   const double a=2.90; // 1/GeV
   const double lambda2=1.29*1.29;
@@ -58,19 +58,19 @@ std::complex<double> tscat(double E, const vector<tchannel>& channels,
     double m12=m1*m2;
     double p=sqrt(m12/m22*fabs((E*E-m22)));
     //if((m1+m2)<E)p=sqrt(m12/m22*(E*E-m22));
-    
+
     double m212=(m1*m1-m2*m2);
     double mu=(E-m212*m212/(E*E*E))/4;
     double ladder=ladderSum(E,15);
-    // cout << iCh << "   " 
-    // 	 << m1 << "   " 
-    // 	 << m2 << "   " 
+    // cout << iCh << "   "
+    // 	 << m1 << "   "
+    // 	 << m2 << "   "
     // 	 << E << "   "
-    // 	 << m22 << "   " 
-    // 	 << m12 << "   " 
-    // 	 << p << "   " 
-    // 	 << m212 << "   " 
-    // 	 << mu << "   " 
+    // 	 << m22 << "   "
+    // 	 << m12 << "   "
+    // 	 << p << "   "
+    // 	 << m212 << "   "
+    // 	 << mu << "   "
     // 	 << ladder << "   " << endl;
 
     if(m1+m2<E){
@@ -114,7 +114,7 @@ std::complex<double> tprod(double E,double m1,double m2){
    double m22=m1+m2; m22=m22*m22;
   double m12=m1*m2;
   double p=sqrt(m12/m22*(E*E-m22));
- 
+
 
   double mu=E/4.; //?????
   double a=2.90; // 1/GeV
@@ -162,12 +162,12 @@ void pipi(){
   gReProd->SetTitle("Production");
   gImProd->SetTitle("Production Imag");
   gIntenseProd->SetTitle("Prodcution Intensity");
-  
+
   unsigned int channel=0;
   double step=0.002;
   double M=channels[channel].first+channels[channel].second+step;
   for(unsigned int i=0;i<npoints; ++i){
-    complex<double> amp=tscat(M,channels,0); 
+    complex<double> amp=tscat(M,channels,0);
     complex<double> pamp=tprod(M,mpi,mpi);
     double p=sqrt(M*M/4.-mpi2);
     cout <<  "tscat("<<M<<")= "<< tscat(M,channels,0)  << endl;
@@ -196,7 +196,7 @@ void pipi(){
   gIm->Draw("PL same");
 
   c->cd(1);
- 
+
   gIntenseProd->Draw("APL");
   c->cd(2);
 

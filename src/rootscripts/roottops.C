@@ -65,7 +65,7 @@ TString parseTitle(TString l, unsigned int level=10){
     l.Remove(l.Length() - 4);
     // extract X quantum numbers
     const TString head = l(0, 7);
-    const TString I    = head(0, 1); 
+    const TString I    = head(0, 1);
     const TString G    = head(1, 1);
     const TString J    = head(2, 1);
     const TString P    = head(3, 1);
@@ -74,7 +74,7 @@ TString parseTitle(TString l, unsigned int level=10){
     const TString refl = head(6, 1);
     l.Remove(0, 7);
     // print X quantum numbers
-    
+
     stringstream res;
     res << I << "^{" << G <<"}(" << J << "^{" << P << C << "}" << M << "^{" << refl << "})";
 
@@ -122,7 +122,7 @@ TString parseTitle(TString l, unsigned int level=10){
       }
       l.Remove(0, 1); // remove delimiter
     }
-    //res;    
+    //res;
 
     tokens->Delete();
     delete tokens;
@@ -139,10 +139,10 @@ void annotatePlot(TVirtualPad* pad){
 
     double xcenter=0.5;
     double ycenter=0.5;
-    
+
     double x=xcenter-0.2;
     double y=xcenter-0.2;
-    
+
     // preliminary
     TLatex* prelim=new TLatex(x,y,"preliminary");
     prelim->SetNDC();
@@ -150,7 +150,7 @@ void annotatePlot(TVirtualPad* pad){
     prelim->SetTextSize(0.1);
     prelim->SetTextAngle(20);
     prelim->Draw();
-    
+
     // compass 2004
     double xc=xcenter+0.08;
     //if(right)xc=xcenter+0.1;
@@ -159,7 +159,7 @@ void annotatePlot(TVirtualPad* pad){
     com04->SetNDC();
     com04->SetTextSize(0.05);
     com04->Draw();
-    
+
     // 5 pi on pb
     xc=xcenter+0.08;
     //xc=xcenter+0.1;
@@ -168,8 +168,8 @@ void annotatePlot(TVirtualPad* pad){
     react->SetNDC();
     react->SetTextSize(0.039);
     react->Draw();
-    
-    // add waves 
+
+    // add waves
     cout << "####### Title:" << endl;
     TMultiGraph* gr=dynamic_cast<TMultiGraph*>(pad->GetListOfPrimitives()->At(0));
     TH2D* h2=dynamic_cast<TH2D*>(pad->GetListOfPrimitives()->At(0));
@@ -196,14 +196,14 @@ void annotatePlot(TVirtualPad* pad){
 	unsigned int i = title.Index("---");
 	TString wave1=title(3,i-3);
 	TString wave2=title(i+3,title.Length());
-	
+
 	cout << parseTitle(wave1,0) << endl;
 	cout << parseTitle(wave2,0) << endl;
-	
-	
-	
+
+
+
 	wave="#splitline{Interference - ";
-	wave+= title.Contains("Re") ? "real part" : "imaginary part"; 
+	wave+= title.Contains("Re") ? "real part" : "imaginary part";
 	wave+="}{#splitline{";
 	wave+=parseTitle(wave1,0);
 	wave+="}{";
@@ -231,7 +231,7 @@ void annotatePlot(TVirtualPad* pad){
 
      xc=xcenter+0.08;
     //xc=xcenter+0.1;
-  
+
     TLatex* waveL=new TLatex(xc,yc,wave);
     waveL->SetNDC();
     waveL->SetTextSize(0.03);
@@ -255,7 +255,7 @@ void annotatePlot(TVirtualPad* pad){
        xmax=h2->GetXaxis()->GetXmax();
        xmin=h2->GetXaxis()->GetXmin();
     }
-    
+
 
     TLine* zeroline=new TLine(xmin,0,xmax,0);
     zeroline->SetLineStyle(7);
@@ -285,7 +285,7 @@ void annotatePlot(TVirtualPad* pad){
 void roottops(const TString& infilename, const TString& plotdir="", const TString& normfilename=""){
 
  gStyle->SetFrameFillStyle(4000);
-  
+
   bool savePlots=plotdir.Length()>1;
 
 
@@ -304,7 +304,7 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
     gStyle->SetOptTitle(0);
     gStyle->SetStripDecimals(1);
     TGaxis::SetMaxDigits(4);
-   
+
     gROOT->ForceStyle();
 
 
@@ -321,7 +321,7 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
   const int nmbPadsHor     = (int)floor(sqrt(nmbPadsPerCanvMin));
   const int nmbPadsVert    = (int)ceil((double)nmbPadsPerCanvMin / (double)nmbPadsHor);
   const int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
-  
+
 
   vector<TCanvas*> canvases;
   TCanvas* current=NULL;
@@ -336,15 +336,15 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
       padcounter=1;
     }
     current->cd(padcounter);
-    
+
 
     // TString type("TMultiGraph");
     TString type("TH2D");
-    
+
 
 
     if(TString(((TKey*)keylist->At(i))->GetClassName())==type){
-      cout << "Found " << type << endl; 
+      cout << "Found " << type << endl;
       TString keyname(((TKey*)keylist->At(i))->GetName());
       if(keyname.Contains("PHI"))continue;
       if(type=="TH2D"){
@@ -382,7 +382,7 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
 	  cout << xmin << "   " << xmax << endl;
 	  TString wavename=name(1,name.Length());
 	  TGraph* g=(TGraph*)normfile->Get(wavename);
-	  
+
 	  TPad* p2=new TPad("pad","PS",gPad->GetX1(),gPad->GetY1(),gPad->GetX2(),gPad->GetY2());
 	  //p2->RangeAxis(xmin,0,xmax,1);
 	  p2->SetFillStyle(4000);
@@ -420,7 +420,7 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
       current->cd(1);
       gPad->SetGridy();
       // plot phasegraph
-      
+
       if(g->GetListOfGraphs()->GetSize()==0){}
       else {
 
@@ -428,11 +428,11 @@ void roottops(const TString& infilename, const TString& plotdir="", const TStrin
 	//g->GetYaxis()->Set(8,-720,720);
 	//g->GetYaxis()->SetRangeUser(-720,720);
 	g->GetYaxis()->SetRangeUser(-200,200);
-	
+
 	g->Draw("A");
 	}
       // get waves
-    
+
       current->cd(2);if(g1!=NULL)g1->Draw("APC");
       current->cd(3);if(g2!=NULL)g2->Draw("APC");
     } // endif found PHI hist

@@ -40,7 +40,7 @@ absPhaseshift::w(std::complex<double> s) const
 
 /////////////////////////////////////////////////////////
 s0wave::s0wave(double z02,
-	       double B0, double B1, double B2) 
+	       double B0, double B1, double B2)
   : _z02(z02),_B0(B0),_B1(B1),_B2(B2),
     _alpha({0.843,0.2}),_beta({1.02,1.33}),
     _mu(1.0), _invmu(1./_mu), _M12(0.888*0.888), _M22(1.327*1.327) {
@@ -48,8 +48,8 @@ s0wave::s0wave(double z02,
   _gamma.resize(2,2);
   _gamma(0,0)=3.10;_gamma(0,1)=1.82;
   _gamma(1,0)=1.82;_gamma(1,1)=-7.0;
- 
- 
+
+
 }
 
 double
@@ -75,15 +75,15 @@ s0wave::cotDelta(std::complex<double> s) const
       for(unsigned int j=0;j<2;++j){
 	_K(i,j)=_mu*(_alpha[i]*_alpha[j]/(_M12-s.real()) + _beta[i]*_beta[j]/(_M22-s.real())) +_invmu*_gamma(i,j);
       }
-    
+
     double _detK=_K(0,0)*_K(1,1)-_K(1,0)*_K(0,1);
-    
+
     complex<double> k2=kThr(s,mKc2);
     // intermediate region but still below KKbar threshold = elastic`
     if(s.real()<mKc2){
       result=(1.0+k2*_K(1,1))/(k1*fabs(k2)*_detK + k1*_K(0,0));
     } // end if in intermediate region close but below to KKbar threshold
-    // above KKbar 
+    // above KKbar
     else {
       complex<double> k12=k1*k1;
       complex<double> k22=k2*k2;
@@ -101,7 +101,7 @@ s0wave::cotDelta(std::complex<double> s) const
 
 
 double
-s0wave::eta(std::complex<double> s) const 
+s0wave::eta(std::complex<double> s) const
 {
   //Build K-Matrix
     rmatrix _K(2,2);

@@ -71,7 +71,7 @@ int main(int argc, char** argv)
       flist.getline(f2,200);
       char f3[200];
       flist.getline(f3,200);
-      
+
       file1v.push_back(f1);
       file2v.push_back(f2);
       outfilev.push_back(f3);
@@ -81,10 +81,10 @@ int main(int argc, char** argv)
       flist.getline(ph,60);
       if(string(ph)=="pi")p=3.14159592654;
       else p=atof(ph);
-       
+
       char br[60];
       flist.getline(br,60);
-      
+
       phasev.push_back(p);
       branchv.push_back(atof(br));
     } // read filelist
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
     }
 
     ofstream out(outfilev[i].c_str());
- 
+
     cout << "Phase=" <<phasev[i] << "   Br=" << branchv[i] << endl;
     cout << "---> " << outfilev[i] << endl;
 
@@ -152,9 +152,9 @@ int main(int argc, char** argv)
     complex<double> phase(1,0);
     double phi=phasev[i];
     phase=complex<double>(cos(phi),sin(phi));
-  
-    double R=branchv[i]; // branching ratio 
-  
+
+    double R=branchv[i]; // branching ratio
+
     complex<double> amp;
 
     while (file1.read((char*) &a1,sizeof(complex<double>))){
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
       int ret = system(com.c_str());
       if (ret != 0)
 	cerr << "command '" << com << "' was not successful." << endl;
-      
+
       com=("mv ");
       com.append(file2v[i].c_str());
       com.append(" ");

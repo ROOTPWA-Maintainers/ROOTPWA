@@ -8,7 +8,7 @@ echo -e "\n **************** part 2 ******************"
 echo      " *${STEP_NAME[1]}*"
 echo -e   " ******************************************\n"
 
-if [ -d ${KPIPI_WORK_DIR} ]; 
+if [ -d ${KPIPI_WORK_DIR} ];
 then
 	echo -e "\E[37;31m \n The directory "; tput sgr0
 	echo -e "\E[37;34m ${KPIPI_WORK_DIR}"; tput sgr0
@@ -40,7 +40,7 @@ do
 		mkdir "ACCAMPS"
 		mkdir "AMPS"
 		mkdir "MC"
-		mkdir "PSPAMPS" 
+		mkdir "PSPAMPS"
 		cd -
 	fi
 done

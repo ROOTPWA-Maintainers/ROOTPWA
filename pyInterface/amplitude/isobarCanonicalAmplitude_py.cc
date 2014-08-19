@@ -17,4 +17,3 @@ void rpwa::py::exportIsobarCanonicalAmplitude() {
 	bp::register_ptr_to_python<rpwa::isobarCanonicalAmplitudePtr>();
 
 }
-

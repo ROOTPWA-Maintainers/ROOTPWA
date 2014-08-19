@@ -18,7 +18,7 @@ ROOTDIR=$ROOTPWA/testbin/5PiLTData3
 QUEUE=8nh
 
 # Divert lsf output
-# logs will have name of bin preceded with 
+# logs will have name of bin preceded with
 # o_amp_ for standard output
 # e_amp_ for error log
 if [ ! -r $ROOTPWA/lsf ];
@@ -30,7 +30,7 @@ LOG=$ROOTPWA/lsf/
 export DIARYFILE=$LOG/bindiary.txt
 
 # === START PROGRAMME ===
-echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- STARTING AMPLITUDE CALCULATIONS";
 echo "---- WAVESET: $KEY";
 echo;
 # test if any keyfiles are present and print them
@@ -49,21 +49,21 @@ ls $ROOTDIR > $TEMPLIST
 iter=0
 
 for MYBIN in `cat $TEMPLIST` ; do
-   
-    iter=$((iter+1)) 
+
+    iter=$((iter+1))
     export SGE_TASK_ID=$iter
     echo SGE_TASK_ID=$SGE_TASK_ID
-    
+
     echo "Starting $SET for bin $MYBIN"
-    
+
     # logbook entries:
     echo -e "Start: \c" >> $DIARYFILE
     date >> $DIARYFILE
     echo $ROOTDIR/$MYBIN >> $DIARYFILE
     echo $SET >> $DIARYFILE
     echo "--------------------------------" >> $DIARYFILE
-    
+
     export KEYDIR=$KEY
-    # submit job 
+    # submit job
     bsub -q $QUEUE -J $MYBIN -o $LOG/o_amp_$MYBIN -e $LOG/e_amp_$MYBIN $ROOTPWA/scripts/buildBin.sh $ROOTDIR/$MYBIN ;
 done

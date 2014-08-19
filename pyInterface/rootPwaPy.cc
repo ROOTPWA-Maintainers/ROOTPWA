@@ -68,4 +68,3 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportUtils();
 
 }
-

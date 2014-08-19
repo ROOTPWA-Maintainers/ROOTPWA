@@ -1,4 +1,4 @@
-# this script loads raw data from an (internet) source 
+# this script loads raw data from an (internet) source
 # should be called by run_X_PWA_analysis.sh script
 # author: P.Jasinski Promme@web.de , jasinski@kph.uni-mainz.de
 
@@ -15,10 +15,10 @@ then
 	echo -e " skipping copy procedure! \n"
 else
 	if which wget >/dev/null; then
-    	echo -e "\n wget found"
+		echo -e "\n wget found"
 	else
 		echo -e '\E[37;31m \n wget not found: Please download'
-		echo -e "\E[37;34m ${KPIPI_WEB_FILE}" 
+		echo -e "\E[37;34m ${KPIPI_WEB_FILE}"
 		echo -e "\E[37;31m with a webbrowser to "
 		echo -e "\E[37;34m ${KPIPI_RAW_FILE_DIR}/${KPIPI_RAW_FILE} "
 		echo -e "\n Aborting this script"; tput sgr0
@@ -38,10 +38,10 @@ then
 	echo -e " skipping copy procedure! \n"
 else
 	if which wget >/dev/null; then
-    	echo -e "\n wget found"
+		echo -e "\n wget found"
 	else
 		echo -e '\E[37;31m \n wget not found: Please download'
-		echo -e "\E[37;34m ${KPIPI_WEB_MC_FILE}" 
+		echo -e "\E[37;34m ${KPIPI_WEB_MC_FILE}"
 		echo -e "\E[37;31m with a webbrowser to "
 		echo -e "\E[37;34m ${KPIPI_MC_FILE_DIR}/${KPIPI_MC_FILE} "
 		echo -e "\n Aborting this script"; tput sgr0

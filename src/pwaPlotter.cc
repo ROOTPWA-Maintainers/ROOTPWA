@@ -44,7 +44,7 @@ using namespace std;
 using namespace rpwa;
 
 TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
-  
+
   unsigned int ybins=h->GetNbinsY();
   unsigned int xpoints=g->GetN();
   TAxis* ax=h->GetYaxis();
@@ -53,19 +53,19 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
 
   TF1 gaus("gaus","gausn(0)",ymin,ymax);
   TString tit=g->GetTitle();
-  
+
   for(unsigned int ip=0; ip<xpoints; ++ip){
     double x=g->GetX()[ip];
     double err=g->GetEY()[ip];
     double val=g->GetY()[ip];
-  
+
  //    if(tit.Contains("1-1++0+sigma_01_a11269") && val<100 && x>1.6 && x<2.0){
 //       //cerr << "x="<<x
-//       //	   << "  err="<< err 
+//       //	   << "  err="<< err
 //       //	   << "  val="<< val << endl;
 //       //return h;
 //     }
-      
+
     gaus.SetParameters(1,val,err);
     for(unsigned int ibin=1; ibin<ybins;++ibin){
       double y=ax->GetBinCenter(ibin);
@@ -104,7 +104,7 @@ pwaPlotter::pwaPlotter()
   mEvidencePerEvent=new TMultiGraph();
   mEvidencePerEvent->SetTitle("Evidence/Event");
   mEvidencePerEvent->SetName("EvidencePerEvent");
-  
+
   if(0){
   std::vector<string> waves;
   waves.push_back("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp");
@@ -124,7 +124,7 @@ pwaPlotter::pwaPlotter()
   waves.push_back("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
   waves.push_back("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
   waves.push_back("1-1++0+rho770_01_pi1300=pi-_1_rho770.amp");
- 
+
   waves.push_back("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
   waves.push_back("1-1++0+pi-_01_rho1600=sigma_01_rho770.amp");
   waves.push_back("1-1++0+pi-_10_f01370=rho770_00_rho770.amp");
@@ -154,17 +154,17 @@ pwaPlotter::pwaPlotter()
 
 pwaPlotter::~pwaPlotter(){
   mWavenames.clear();
-  
+
 }
 
-void 
+void
 pwaPlotter::addFit(const std::string& filename,
 		   const std::string& title,
 		   const unsigned int colour,
 		   const std::string& treename,
 		   const std::string& branchname,
 		   const unsigned int numb_bins){
-  
+
   // Open and test file and tree
   TFile* infile = TFile::Open(filename.c_str(),"READ");
   if(infile==NULL || infile->IsZombie()){
@@ -182,10 +182,10 @@ pwaPlotter::addFit(const std::string& filename,
 	 <<filename<<endl;
     return;
   }
-  
+
   unsigned int ifit=mResultMetaInfo.size();
   cerr << "Adding file "<< filename << endl;
-  
+
   intree->SetBranchAddress(branchname.c_str(),&result);
   unsigned int nbins=intree->GetEntries();
   if(numb_bins!=0 && nbins!=numb_bins){
@@ -206,14 +206,14 @@ pwaPlotter::addFit(const std::string& filename,
   double eviperevt=0;
   unsigned int numwaves=0;
   set<string> wavesinthisfit;
-  
+
   for(unsigned int i=0;i<nbins;++i){
     intree->GetEntry(i);
-    
+
     double massBinCenter=result->massBinCenter()*0.001;
     if(massBinCenter>mass_max)mass_max=massBinCenter;
     if(massBinCenter<mass_min)mass_min=massBinCenter;
-    
+
     registerWave(".*"); // Total intensity
     wavesinthisfit.insert(".*");
     registerWave("^.....0"); // Total M=0
@@ -238,7 +238,7 @@ pwaPlotter::addFit(const std::string& filename,
       registerWave(getIGJPCMEps(waveNames[iw]));
       wavesinthisfit.insert(getIGJPCMEps(waveNames[iw]));
     }
-    
+
     // get loglikelihoods
     logli+=result->logLikelihood();
     evi+=result->evidence();
@@ -246,17 +246,17 @@ pwaPlotter::addFit(const std::string& filename,
     eviperevt+=result->evidence()/result->nmbEvents();
   }
   double binwidth=(mass_max-mass_min)/(double)(nbins-1);
-  cerr << "Number of bins: " << nbins 
+  cerr << "Number of bins: " << nbins
        << "   Width: " << binwidth << endl;
-  
-  
+
+
   // create intensity plots ----------------------------------------------
   // We have registered all graphs in the step before...
   // This has to be done in a separate step! Try not to merge the following
   // with the loop above! You will loose generality!!! You have been warned!
-  
+
   //cout << "creating graphs" << endl;
- 
+
 
   // create graphs for this fit
   set<string>::iterator it=wavesinthisfit.begin();
@@ -283,7 +283,7 @@ pwaPlotter::addFit(const std::string& filename,
     mIntensities[*it]->Add(g,"p");
     mWaveEvidence[*it]+=evi;
     ++it;
-   
+
   }
 
   //cout << "building Likelihood graphs" << endl;
@@ -344,7 +344,7 @@ pwaPlotter::addFit(const std::string& filename,
       graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
 
       cout << "creating graph   " << graphName.str() << endl;
-      
+
       g->SetName (graphName.str().c_str());
       g->SetTitle(graphName.str().c_str());
       g->SetMarkerStyle(21);
@@ -354,7 +354,7 @@ pwaPlotter::addFit(const std::string& filename,
       g->GetXaxis()->SetTitle("mass (GeV/c^{2})");
       g->GetYaxis()->SetTitle("#Delta #Phi");
       iph->second->Add(g,"p");
-	
+
     } // endif both waves available
     ++iph;
   } // end create phase graphs
@@ -368,7 +368,7 @@ pwaPlotter::addFit(const std::string& filename,
   //cout << "filling data" << endl;
 
   // loop again over fitResults and extract all info simultaneously
-  
+
   for(unsigned int i=0;i<nbins;++i){
     intree->GetEntry(i);
     // loop through waves
@@ -396,9 +396,9 @@ pwaPlotter::addFit(const std::string& filename,
       g->SetPointError(i,
 		       binwidth*0.5,
 		       result->intensityErr(it->c_str()));
-      
+
       ++it;
-      
+
     }// end loop through waves
 
     // loop through phase plots
@@ -424,7 +424,7 @@ pwaPlotter::addFit(const std::string& filename,
 	  else if(diff3<diff1 && diff3<diff2)ph-=360;
 	}
 
-	
+
 
 	g->SetPoint(i*3,
 		    result->massBinCenter()*0.001,
@@ -449,7 +449,7 @@ pwaPlotter::addFit(const std::string& filename,
 		       result->phaseErr(w1,w2));
 
 
-      
+
       }
       ++iph;
     } // end loop over phase graphs
@@ -468,7 +468,7 @@ pwaPlotter::addFit(const std::string& filename,
 			result->massBinCenter()*0.001,
 			result->evidence()/result->nmbEvents());
   }
-  
+
   //cout << "writing meta" << endl;
   // write MetaInfo
   fitResultMetaInfo meta(filename,
@@ -480,7 +480,7 @@ pwaPlotter::addFit(const std::string& filename,
   meta.setNWaves(numwaves);
   mResultMetaInfo.push_back(meta);
   mMinEvidence=(mMinEvidence*ifit+evi)/(ifit+1);
-    
+
   cout << "Fit Quality Summary: " << endl;
   cout << "  LogLikelihood:   " << logli << endl;
   cout << "  Evidence:        " << evi << endl;
@@ -489,13 +489,13 @@ pwaPlotter::addFit(const std::string& filename,
   // cleanup
   infile->Close();
   cerr << endl;
-  
-  
+
+
 }
 
 
 
-bool 
+bool
 pwaPlotter::registerWave(const std::string& wavename){
   pair<set<string>::iterator,bool> inserted=mWavenames.insert(wavename);
   if(inserted.second){ // we had a true insterion
@@ -504,14 +504,14 @@ pwaPlotter::registerWave(const std::string& wavename){
     mIntensities[wavename]=new TMultiGraph();
     mIntensities[wavename]->SetTitle(wavename.c_str());
     mIntensities[wavename]->SetName(wavename.c_str());
-    
+
     mPhaseSpace[wavename]=new TGraph();
     string psname=wavename;psname.append("PS");
     mPhaseSpace[wavename]->SetTitle(psname.c_str());
     mPhaseSpace[wavename]->SetName(psname.c_str());
     mWaveEvidence[wavename]=0;
   }
-  
+
   return inserted.second;
 }
 
@@ -530,9 +530,9 @@ pwaPlotter::printStats(){
     ++it;
   }
   multimap<unsigned int, string>::iterator it2=m.begin();
-  
+
   while(it2!=m.end()){
-    cout << it2->second << "    used " << it2->first << " times" 
+    cout << it2->second << "    used " << it2->first << " times"
 	 << " with average evidence " << mWaveEvidence[it2->second]/(double)it2->first<< endl;
     ++it2;
   }
@@ -543,14 +543,14 @@ pwaPlotter::printStats(){
   }
   numwave/=(double)mResultMetaInfo.size();
   cout << "Average number of waves: " << numwave << endl;
-  
+
 }
 
 
 
 
 
-void 
+void
 pwaPlotter::produceDensityPlots(){
  map<string,TMultiGraph*>::iterator it=mIntensities.begin();
   while(it!=mIntensities.end()){
@@ -576,14 +576,14 @@ pwaPlotter::produceDensityPlots(){
     double r=fabs(ymax-ymin)*0.1;
     // create 2D Histogram:
     string name="d";name.append(it->first);
-    
+
     //cerr << ymin << " .. " << ymax << endl;
     TH2D* h=new TH2D(name.c_str(),name.c_str(),
 		     nbins,xmin,xmax,
 		     400,ymin-r,ymax+r);
-    
+
     mIntensityDensityPlots[it->first]=h;
-    
+
     // fill histo
     for(unsigned int ig=0;ig<ng;++ig){
       TPwaFitGraphErrors* g=dynamic_cast<TPwaFitGraphErrors*>(graphs->At(ig));
@@ -610,15 +610,15 @@ pwaPlotter::produceDensityPlots(){
 	}
       }
     }
-    
-    
+
+
   }// end loop over waves
 
 }
 
 
 
-void 
+void
 pwaPlotter::writeAll(std::string filename){
   TFile* outfile=TFile::Open(filename.c_str(),"RECREATE");
   if(outfile!=0 && !outfile->IsZombie()){
@@ -630,7 +630,7 @@ pwaPlotter::writeAll(std::string filename){
   }
 }
 
-void 
+void
 pwaPlotter::writeAll(TFile* outfile){
    outfile->cd();
    // write evidence and loglikelihoods
@@ -642,7 +642,7 @@ pwaPlotter::writeAll(TFile* outfile){
 }
 
 
-void 
+void
 pwaPlotter::writeAllIntensities(std::string filename){
   TFile* outfile=TFile::Open(filename.c_str(),"RECREATE");
   if(outfile!=0 && !outfile->IsZombie()){
@@ -656,7 +656,7 @@ pwaPlotter::writeAllIntensities(std::string filename){
 
 
 
-void 
+void
 pwaPlotter::writeAllIntensities(TFile* outfile){
   outfile->cd();
   map<string,TMultiGraph*>::iterator it=mIntensities.begin();
@@ -695,9 +695,9 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
 // 	   << branchName << ".massBinCenter() >> h" << waveName << "_" << i;
 //   cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 //        << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
-  
+
 //   cerr << "Drawing" << endl;
-  
+
 //   try{
 //     trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
 //   }
@@ -705,9 +705,9 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
 //     cerr << "Cought Exception" << endl;
 //     continue;
 //   }
-  
-  
-  
+
+
+
 //   // extract data from TTree::Draw() result and build graph
 //   const int nmbBins = trees[i]->GetSelectedRows();
 //   vector<double> x(nmbBins), xErr(nmbBins);
@@ -718,9 +718,9 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
 //     y   [j] = trees[i]->GetV1()[j] * normalization;  // scale intensities
 //     yErr[j] = trees[i]->GetV2()[j] * normalization;  // scale intensity errors
 //   }
-  
-  
-  
+
+
+
 //   TGraphErrors* g = new TGraphErrors(nmbBins,
 // 				     &(*(x.begin())),      // mass
 // 				     &(*(y.begin())),      // intensity
@@ -739,7 +739,7 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
 //     g->SetLineColor  (graphColors[i]);
 //   }
 //   graph->Add(g);
-  
+
 //   // compute maximum for y-axis
 //   for (int j = 0; j < nmbBins; ++j)
 //     if (maxYVal < (y[j] + yErr[j]))

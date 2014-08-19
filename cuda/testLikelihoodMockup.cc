@@ -315,7 +315,7 @@ logLikelihoodPseudoArray(const complexT*                      decayAmps,
 		likelihoodAcc(prodAmpFlat2);
 		logLikelihoodAcc(-log(sum(likelihoodAcc)));
 	}
-  
+
 	return sum(logLikelihoodAcc);
 }
 
@@ -504,7 +504,7 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 				derivativeFlat -= factor * prodAmpFlat;
 			}  // end loop over events
 		}
-	
+
 		static complex<T> maxDiff = 0;
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -558,14 +558,14 @@ main(int    argc,
 		const unsigned int nmbEvents       = 100000;
 		const unsigned int nmbWavesRefl[2] = {2, 2};
 		const unsigned int rank            = 1;
-		
+
 		printInfo << "running derivative test with parameters:"       << endl
 		          << "    number of repitions ..................... " << nmbRepitions    << endl
 		          << "    number of events ........................ " << nmbEvents       << endl
 		          << "    rank of fit ............................. " << rank            << endl
 		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
 		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
-  
+
 		testLogLikelihoodDerivCuda<double>(nmbRepitions, nmbEvents, rank, nmbWavesRefl);
 	}
 
@@ -584,7 +584,7 @@ main(int    argc,
 		          << "    rank of fit ............................. " << rank            << endl
 		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
 		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
-  
+
 		double elapsedTime   [3];
 		double logLikelihoods[3];
 

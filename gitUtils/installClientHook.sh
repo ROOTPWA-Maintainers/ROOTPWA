@@ -6,4 +6,3 @@ if [ -z $ROOTPWA ]; then
 fi
 
 ln -isv $ROOTPWA/gitUtils/clientHook.py $ROOTPWA/.git/hooks/commit-msg
-
