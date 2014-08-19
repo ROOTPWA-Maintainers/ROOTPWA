@@ -99,14 +99,15 @@ namespace rpwa {
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,	         // number of events to normalize to
-		          const double                              massBinCenter,	         // center value of mass bin
-		          const double                              logLikelihood,	         // log(likelihood) at maximum
-		          const int                                 rank,		                 // rank of fit
-		          const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes
-		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
+		          const double                              massBinCenter,           // center value of mass bin
+		          const double                              logLikelihood,           // log(likelihood) at maximum
+		          const int                                 rank,                    // rank of fit
+		          const std::vector<std::complex<double> >& prodAmps,                // production amplitudes
+		          const std::vector<std::string>&           prodAmpNames,            // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
 		          const rpwa::complexMatrix&                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix&                acceptedNormIntegral,    // normalization integral matrix with acceptance
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
@@ -216,22 +217,23 @@ namespace rpwa {
 
 	private:
 
-		UInt_t                                _nmbEvents;               ///< number of events in bin
-		UInt_t                                _normNmbEvents;           ///< number of events to normalize to
-		Double_t                              _massBinCenter;           ///< center value of mass bin
-		Double_t                              _logLikelihood;           ///< log(likelihood) at maximum
-		Int_t                                 _rank;                    ///< rank of fit
-		std::vector<TComplex>                 _prodAmps;                ///< production amplitudes
-		std::vector<std::string>              _prodAmpNames;            ///< names of production amplitudes used in fit
-		std::vector<std::string>              _waveNames;               ///< names of waves used in fit
-		Bool_t                                _covMatrixValid;          ///< indicates whether bin has a valid covariance matrix
-		TMatrixT<Double_t>                    _fitParCovMatrix;         ///< covariance matrix of fit parameters
-		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
-		rpwa::complexMatrix                   _normIntegral;            ///< normalization integral over full phase space without acceptance
-		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
-		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
-		bool                                  _converged;               ///< indicates whether fit has converged (according to minimizer)
-		bool                                  _hasHessian;              ///< indicates whether Hessian matrix has been calculated successfully
+		UInt_t                                _nmbEvents;                 ///< number of events in bin
+		UInt_t                                _normNmbEvents;             ///< number of events to normalize to
+		Double_t                              _massBinCenter;             ///< center value of mass bin
+		Double_t                              _logLikelihood;             ///< log(likelihood) at maximum
+		Int_t                                 _rank;                      ///< rank of fit
+		std::vector<TComplex>                 _prodAmps;                  ///< production amplitudes
+		std::vector<std::string>              _prodAmpNames;              ///< names of production amplitudes used in fit
+		std::vector<std::string>              _waveNames;                 ///< names of waves used in fit
+		Bool_t                                _covMatrixValid;            ///< indicates whether bin has a valid covariance matrix
+		TMatrixT<Double_t>                    _fitParCovMatrix;           ///< covariance matrix of fit parameters
+		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;    ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
+		rpwa::complexMatrix                   _normIntegral;         //|| ///< normalization integral over full phase space without acceptance
+		rpwa::complexMatrix                   _acceptedNormIntegral; //|| ///< normalization integral over accepted phase space
+		std::map<Int_t, Int_t>                _normIntIndexMap;           ///< maps production amplitude indices to indices in normalization integral
+		std::vector<double>                   _phaseSpaceIntegral;        ///< diagonals of phase space integrals (without acceptance)
+		bool                                  _converged;                 ///< indicates whether fit has converged (according to minimizer)
+		bool                                  _hasHessian;                ///< indicates whether Hessian matrix has been calculated successfully
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
 
 		// helper functions
@@ -254,7 +256,7 @@ namespace rpwa {
 
 	public:
 
-		ClassDef(fitResult, 5)
+		ClassDef(fitResult, 6)
 
 	};  // class fitResult
 
@@ -322,8 +324,7 @@ namespace rpwa {
 	fitResult::normIntegral(const unsigned int waveIndexA,
 	                        const unsigned int waveIndexB) const
 	{
-		const TComplex norm = _normIntegral(waveIndexA, waveIndexB);
-		return std::complex<double>(norm.Re(), norm.Im());
+		return _normIntegral(waveIndexA, waveIndexB);
 	}
 
 

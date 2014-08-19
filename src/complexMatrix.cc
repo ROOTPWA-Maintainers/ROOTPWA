@@ -19,69 +19,123 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
+#include <boost/numeric/ublas/lu.hpp>
+
 #include "complexMatrix.h"
+#include "reportingUtils.hpp"
 
 using namespace std;
 using namespace rpwa;
 
+namespace bnu = boost::numeric::ublas;
+
 ClassImp(complexMatrix)
 
 
-void complexMatrix::set(const int i, const int j, const complex<double>& c) {
-	_re[i][j] = c.real();
-	_im[i][j] = c.imag();
+complexMatrix complexMatrix::t() const
+{
+	return complexMatrix(bnu::trans(_matrix));
+}
+complexMatrix complexMatrix::dagger() const
+{
+	return complexMatrix(bnu::conj(_matrix));
 }
 
 
-void complexMatrix::set(const int i, const int j, const TComplex& c) {
-	_re[i][j] = c.Re();
-	_im[i][j] = c.Im();
-}
-
-
-complexMatrix complexMatrix::t() const {
-	TMatrixD ReT(TMatrixD::kTransposed, _re);
-	TMatrixD ImT(TMatrixD::kTransposed, _im);
-	return complexMatrix(ReT, ImT);
-}
-
-
-complexMatrix complexMatrix::dagger() const {
-	TMatrixD ReT(TMatrixD::kTransposed, _re);
-	TMatrixD ImT(_im.GetNcols(), _im.GetNrows());
-	for(int i = 0; i < _im.GetNrows(); ++i) {
-		for(int j = 0; j < _im.GetNcols(); ++j) {
-			ImT[j][i] = -(_im[i][j]);
-		}
+complex<double> complexMatrix::determinant() const
+{
+	// based on http://programmingexamples.net/wiki/CPP/Boost/Math/uBLAS/determinant
+	if(_matrix.size1() != _matrix.size2()) {
+		printWarn << "cannot calculate determinant for non-symmetric matrix, returning 0." << endl;
+		return 0.;
 	}
-	return complexMatrix(ReT, ImT);
-}
-
-
-complexMatrix rpwa::operator*(const complexMatrix& c1, const complexMatrix& c2) {
-	complexMatrix result(c1.nRows(), c2.nCols());
-	for(int i = 0; i < result.nRows(); ++i) {
-		for(int j = 0; j < result.nCols(); ++j) {
-			TComplex elem(0, 0);
-			for(int k = 0; k < c1.nCols(); ++k) {
-				elem += (c1(i, k)) * (c2(k, j));
+	bnu::matrix<complex<double> > matrixCopy(_matrix); // otherwise _matrix would be changed
+	bnu::permutation_matrix<size_t> permutationMatrix(matrixCopy.size1());
+	complex<double> det = 1.;
+	if(bnu::lu_factorize(matrixCopy, permutationMatrix)) {
+		det = 0.;
+	} else {
+		for(unsigned int i = 0; i < matrixCopy.size1(); ++i) {
+			det *= matrixCopy(i, i); // multiply by elements on diagonal
+		}
+		int determinantSign = 1;
+		size_t size = permutationMatrix.size();
+		for(size_t i = 0; i < size; ++i) {
+			if (i != permutationMatrix(i)) {
+				determinantSign *= -1; // swap_rows would swap a pair of rows here, so we change sign
 			}
-			result.set(i, j, elem);
+		}
+		det = det * (double)determinantSign;
+	}
+	return det;
+}
+
+
+complexMatrix rpwa::operator*(const complexMatrix& c1, const complexMatrix& c2)
+{
+	return complexMatrix(c1._matrix * c2._matrix);
+}
+
+
+complexMatrix rpwa::operator-(const complexMatrix& c1, const complexMatrix& c2)
+{
+	return complexMatrix(c1._matrix - c2._matrix);
+}
+
+
+complexMatrix rpwa::operator+(const complexMatrix& c1, const complexMatrix& c2)
+{
+	return complexMatrix(c1._matrix + c2._matrix);
+}
+
+
+ostream& rpwa::operator<<(ostream& out, const complexMatrix& A)
+{
+	out << A._matrix << endl;
+	return out;
+}
+
+
+void complexMatrix::readMatrix()
+{
+	if(_size1 > 0 and _size2 > 0) {
+		_matrix.resize(_size1, _size2);
+		unsigned int dataIndex = 0;
+		for(unsigned int i = 0; i < _size1; ++i) {
+			for(unsigned int j = 0; j < _size2; ++j) {
+				_matrix(i, j) = _data[dataIndex++];
+			}
 		}
 	}
-	return result;
+	delete [] _data;
+	_data = 0;
 }
 
 
-complexMatrix rpwa::operator-(const complexMatrix& c1, const complexMatrix& c2) {
-	TMatrixD Re(c1._re - c2._re);
-	TMatrixD Im(c1._im - c2._im);
-	return complexMatrix(Re, Im);
+void complexMatrix::storeMatrix()
+{
+	_size1 = _matrix.size1();
+	_size2 = _matrix.size2();
+	_nmbDataElements = _size1 * _size2;
+	_data = new std::complex<double>[_nmbDataElements];
+	unsigned int dataIndex = 0;
+	for(unsigned int i = 0; i < _size1; ++i) {
+		for(unsigned int j = 0; j < _size2; ++j) {
+			_data[dataIndex++] = _matrix(i, j);
+		}
+	}
 }
 
 
-complexMatrix rpwa::operator+(const complexMatrix& c1, const complexMatrix& c2) {
-	TMatrixD Re(c1._re + c2._re);
-	TMatrixD Im(c1._im + c2._im);
-	return complexMatrix(Re, Im);
+// copied from ampIntegralMatrix.cc
+void
+complexMatrix::Streamer(TBuffer& R__b)
+{
+	if (R__b.IsReading()) {
+		R__b.ReadClassBuffer(rpwa::complexMatrix::Class(), this);
+		readMatrix();
+	} else {
+		storeMatrix();
+		R__b.WriteClassBuffer(rpwa::complexMatrix::Class(), this);
+	}
 }

@@ -29,10 +29,51 @@
 #pragma link C++ class rpwa::fitResult+;
 #pragma link C++ class rpwa::pwaPlotter+;
 #pragma link C++ class rpwa::TPwaFitGraphErrors+;
-#pragma link C++ class rpwa::complexMatrix+;
+#pragma link C++ class rpwa::complexMatrix-;
 
 
-#pragma read sourceClass="TCMatrix" targetClass="rpwa::complexMatrix" version="[1-]";
+#pragma read                                                                                        \
+        sourceClass="TCMatrix"                                                                      \
+        source="TMatrixD _re; TMatrixD _im"                                                         \
+        version="[1-]"                                                                              \
+        targetClass="rpwa::complexMatrix"                                                           \
+        target="_size1, _size2, _nmbDataElements, _data"                                            \
+        include="TMatrixD.h"                                                                        \
+        code="{                                                                                     \
+{                                                                                                   \
+    _size1 = onfile._re.GetNrows();                                                                 \
+    _size2 = onfile._re.GetNcols();                                                                 \
+    _nmbDataElements = _size1 * _size2;                                                             \
+    _data = new std::complex<double>[_nmbDataElements];                                             \
+    unsigned int dataIndex = 0;                                                                     \
+    for (unsigned int row = 0; row < _size1; ++row) {                                               \
+        for (unsigned int col = 0; col < _size2; ++col) {                                           \
+            _data[dataIndex++] = std::complex<double>(onfile._re(row, col), onfile._im(row, col));  \
+        }                                                                                           \
+    }                                                                                               \
+    newObj->readMatrix();                                                                           \
+}                                                                                                   \
+              }";
+#pragma read                                                                                        \
+        sourceClass="rpwa::complexMatrix"                                                           \
+        source="TMatrixD _re; TMatrixD _im"                                                         \
+        version="[1]"                                                                               \
+        targetClass="rpwa::complexMatrix"                                                           \
+        target="_size1, _size2, _nmbDataElements, _data"                                            \
+        include="TMatrixD.h"                                                                        \
+        code="{                                                                                     \
+{                                                                                                   \
+    _size1 = onfile._re.GetNrows();                                                                 \
+    _size2 = onfile._re.GetNcols();                                                                 \
+    _nmbDataElements = _size1 * _size2;                                                             \
+    _data = new std::complex<double>[_nmbDataElements];                                             \
+    unsigned int dataIndex = 0;                                                                     \
+    for (unsigned int row = 0; row < _size1; ++row)                                                 \
+        for (unsigned int col = 0; col < _size2; ++col)                                             \
+            _data[dataIndex++] = std::complex<double>(onfile._re(row, col), onfile._im(row, col));  \
+    newObj->readMatrix();                                                                           \
+}                                                                                                   \
+              }";
 
 
 #endif

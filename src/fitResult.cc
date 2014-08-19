@@ -79,6 +79,7 @@ fitResult::fitResult(const fitResult& result)
 	  _fitParCovMatrix       (result.fitParCovMatrix()),
 	  _fitParCovMatrixIndices(result.fitParCovIndices()),
 	  _normIntegral          (result.normIntegralMatrix()),
+	  _acceptedNormIntegral  (result._acceptedNormIntegral),
 	  _normIntIndexMap       (result.normIntIndexMap()),
 	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
 	  _converged             (result._converged),
@@ -223,7 +224,7 @@ fitResult::evidenceComponents() const
 	// parameter volume prior to observing the data
 	// n-Sphere:
 	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
-		- ROOT::Math::lgamma(0.5 * d + 1);
+		- ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
@@ -630,6 +631,7 @@ fitResult::reset()
 	_fitParCovMatrix.ResizeTo(0, 0);
 	_fitParCovMatrixIndices.clear();
 	_normIntegral.resizeTo(0, 0);
+	_acceptedNormIntegral.resizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
 	_converged  = false;
@@ -649,6 +651,7 @@ fitResult::fill
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
  const complexMatrix&            normIntegral,            // normalization integral matrix
+ const complexMatrix&            acceptedNormIntegral,    // normalization integral matrix with acceptance
  const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
  const bool                      converged,
  const bool                      hasHessian)
@@ -673,8 +676,10 @@ fitResult::fill
 	else
 		_covMatrixValid = false;
 	_normIntegral.resizeTo(normIntegral.nRows(), normIntegral.nCols());
-	_normIntegral       = normIntegral;
-	_phaseSpaceIntegral = phaseSpaceIntegral;
+	_normIntegral         = normIntegral;
+	_acceptedNormIntegral.resizeTo(acceptedNormIntegral.nRows(), acceptedNormIntegral.nCols());
+	_acceptedNormIntegral = acceptedNormIntegral;
+	_phaseSpaceIntegral   = phaseSpaceIntegral;
 
 	// get wave list from production amplitudes and fill map for
 	// production-amplitude indices to indices in normalization integral
@@ -699,8 +704,8 @@ fitResult::fill
 		cout << "fitResult::fill(): warning: number of production amplitudes "
 		     << "(" << _prodAmps.size() << ") does not match number of "
 		     << "covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (   ((int)_waveNames.size() != _normIntegral.nRows())
-	    or ((int)_waveNames.size() != _normIntegral.nCols()))
+	if (   (_waveNames.size() != _normIntegral.nRows())
+	    or (_waveNames.size() != _normIntegral.nCols()))
 		cout << "fitResult::fill(): warning: number of waves (" << _waveNames.size()
 		     << ") does not match size of normalization integral "
 		     << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;

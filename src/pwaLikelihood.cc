@@ -949,8 +949,8 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 template<typename complexT>
 void
 pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
-                                              complexMatrix&  accMatrix,
-                                              vector<double>& phaseSpaceIntegral) const
+                                             complexMatrix&  accMatrix,
+                                             vector<double>& phaseSpaceIntegral) const
 {
 	phaseSpaceIntegral.clear();
 	phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
@@ -970,6 +970,13 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 			}
 			++iIndex;
 		}
+	}
+	// set unused entries to 0
+	for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
+		normMatrix.set(_nmbWaves, i, complexT(0., 0.));
+		normMatrix.set(i, _nmbWaves, complexT(0., 0.));
+		accMatrix.set(_nmbWaves, i, complexT(0., 0.));
+		accMatrix.set(i, _nmbWaves, complexT(0., 0.));
 	}
 	// add flat
 	normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
