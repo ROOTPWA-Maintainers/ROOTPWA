@@ -140,7 +140,7 @@ namespace rpwa {
 				break;
 			inTree.GetEntry(eventIndex);
 			assert(ampTreeLeaf);
-			
+
 			if (ampTreeLeaf->nmbIncohSubAmps() == 0) {
 				printWarn << "amplitude leaf for event " << eventIndex << " is empty. skipping." << endl;
 				success = false;

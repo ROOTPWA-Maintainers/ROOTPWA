@@ -53,7 +53,7 @@ echo
 
 # prepare command line
 case ${VALGRIND_TOOL} in
-    "memcheck")  # run memcheck tool 
+    "memcheck")  # run memcheck tool
 	VALGRIND_OPT="--leak-check=full --suppressions=${ROOTSYS}/etc/valgrind-root.supp --show-reachable=yes --track-origins=yes --freelist-vol=100000000 --verbose"
 	;;
     "callgrind")  # run callgrind tool

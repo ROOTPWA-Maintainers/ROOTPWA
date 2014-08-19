@@ -51,7 +51,7 @@ namespace rpwa {
 	class isobarDecayVertex : public interactionVertex {
 
 	public:
-  
+
 		isobarDecayVertex(const particlePtr&       parent,
 		                  const particlePtr&       daughter1,
 		                  const particlePtr&       daughter2,
@@ -60,7 +60,7 @@ namespace rpwa {
 		                  const massDependencePtr& massDep = massDependencePtr());  ///< force vertex to have exactly one incoming (parent) and two outgoing particles (daughters)
 		isobarDecayVertex(const isobarDecayVertex& vert);
 		virtual ~isobarDecayVertex();
-		
+
 		isobarDecayVertex& operator =(const isobarDecayVertex& vert);
 		isobarDecayVertexPtr clone(const bool cloneInParticles  = false,
 		                           const bool cloneOutParticles = false) const  ///< creates copy of isobar decay vertex; must not be virtual
@@ -81,7 +81,7 @@ namespace rpwa {
 
 		int calcParentCharge   ();  ///< sets parent charge to sum of daughter charges
 		int calcParentBaryonNmb();  ///< sets parent baryon number to sum of daughter baryon numbers
-    
+
 		inline unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
@@ -121,7 +121,7 @@ namespace rpwa {
 		                           const int          daughter1Qn,
 		                           const int          daughter2Qn,
 		                           const std::string& qnName = "");  ///< checks consistency of an additive quantum number
-    
+
 		unsigned int _L;  ///< relative orbital angular momentum between the two daughters * 2 (!!!)
 		unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
 

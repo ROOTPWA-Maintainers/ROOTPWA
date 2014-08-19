@@ -37,7 +37,7 @@
 #include "isobarAmplitude.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 
 	class isobarHelicityAmplitude;
@@ -45,9 +45,9 @@ namespace rpwa {
 
 
 	class isobarHelicityAmplitude : public isobarAmplitude {
-  
+
 	public:
-      
+
 		isobarHelicityAmplitude();
 		isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarHelicityAmplitude();
@@ -55,10 +55,10 @@ namespace rpwa {
 		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
 
 		std::string name() const { return "isobarHelicityAmplitude"; }
-    
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
+
 
 	private:
 
@@ -67,12 +67,12 @@ namespace rpwa {
 		std::complex<double> twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
-    
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
-  
+
+
 	inline
 	isobarHelicityAmplitudePtr
 	createIsobarHelicityAmplitude(const isobarDecayTopologyPtr& decay)
@@ -80,8 +80,8 @@ namespace rpwa {
 		isobarHelicityAmplitudePtr amp(new isobarHelicityAmplitude(decay));
 		return amp;
 	}
-  
-  
+
+
 } // namespace rpwa
 
 

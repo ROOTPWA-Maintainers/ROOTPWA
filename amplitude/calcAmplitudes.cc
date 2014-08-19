@@ -316,7 +316,7 @@ main(int    argc,
 		cout << " in " << ((asciiOutput) ? "ASCII" : "binary")
 		     << " mode";
 	cout << endl;
-  
+
 	// clean up
 	for (unsigned int i = 0; i < inTrees.size(); ++i)
 		delete inTrees[i];

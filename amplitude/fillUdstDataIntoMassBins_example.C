@@ -171,7 +171,7 @@ writeEvent(vector<TTree*>&       pwaTrees,
 		          << "skipping." << endl;
 		return false;
 	}
-	
+
 	// clear arrays
 	prodKinMomenta->Clear ();
 	decayKinMomenta->Clear();
@@ -201,7 +201,7 @@ fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "fillUds
                                  const unsigned int nmbMassBins       = 50,
                                  const double       massBinWidth      = 40,   // [MeV/c^2]
                                  const double       massRangeMin      = 500,  // [MeV/c^2]
-                                 const string&      uDstTreeName      = "pwaDataTree", 
+                                 const string&      uDstTreeName      = "pwaDataTree",
                                  const string&      pwaTreeName       = "rootPwaEvtTree",
                                  const long int     treeCacheSize     = 25000000,  // 25 MByte ROOT tree read cache
                                  const bool         debug             = false)
@@ -277,7 +277,7 @@ fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "fillUds
 		for (unsigned int i = 0; i < pwaDataFiles.size(); ++i) {
 			pwaDataFiles[i]->cd();
 			prodKinPartNames.Write (prodKinPartNamesObjName.c_str (), TObject::kSingleKey);
-			decayKinPartNames.Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);			
+			decayKinPartNames.Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
 		}
 		printSucc << "wrote particle name arrays to all files. "
 		          << "beam = 'pi-', decay = {'pi0', 'pi0', 'pi-'}." << endl;

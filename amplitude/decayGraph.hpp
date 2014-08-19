@@ -64,23 +64,23 @@ namespace boost {
 
 	// disabled code from graphviz.hpp
 	typedef std::map<std::string, std::string> GraphvizAttrList;
-  
+
 	typedef property<vertex_attribute_t, GraphvizAttrList> GraphvizVertexProperty;
-  
+
 	typedef property<edge_attribute_t, GraphvizAttrList,
 	                 property<edge_index_t, int> > GraphvizEdgeProperty;
-  
+
 	typedef property<graph_graph_attribute_t, GraphvizAttrList,
 	                 property<graph_vertex_attribute_t, GraphvizAttrList,
 	                          property<graph_edge_attribute_t, GraphvizAttrList,
 	                                   property<graph_name_t, std::string> > > > GraphvizGraphProperty;
-  
+
 	typedef subgraph<adjacency_list<vecS,
 	                                vecS, directedS,
 	                                GraphvizVertexProperty,
 	                                GraphvizEdgeProperty,
 	                                GraphvizGraphProperty> > GraphvizDigraph;
-  
+
 	typedef subgraph<adjacency_list<vecS,
 	                                vecS, undirectedS,
 	                                GraphvizVertexProperty,
@@ -90,7 +90,7 @@ namespace boost {
 }  // namespace boost
 
 
-namespace rpwa {	
+namespace rpwa {
 
 
 	template<class V,
@@ -105,7 +105,7 @@ namespace rpwa {
 
 
 	private:
-    
+
 		// node and edge properties
 		typedef typename boost::default_color_type color_t;
 		typedef typename boost::property<boost::vertex_VPtr_t,                        VPtr,
@@ -126,7 +126,7 @@ namespace rpwa {
 
 
 	public:
-			
+
 		// graph properties
 		typedef typename boost::graph_property<graph, boost::graph_graph_attribute_t >::type graphAttributeType;      ///< type of graphViz graph attributes
 		typedef typename boost::graph_property<graph, boost::graph_vertex_attribute_t>::type graphNodeAttributeType;  ///< type of graphViz node attributes
@@ -313,8 +313,8 @@ namespace rpwa {
 		{
 			return boost::shared_ptr<decayGraph>(doClone(cloneParticles));
 		}
-    
-    
+
+
 		virtual
 		void
 		clear()  ///< deletes all information
@@ -416,7 +416,7 @@ namespace rpwa {
 		// iterators for nodes and edges
 		inline unsigned int nmbNodes() const { return boost::num_vertices(_graph); }  ///< returns number of nodes in graph
 		inline unsigned int nmbEdges() const { return boost::num_edges   (_graph); }  ///< returns number of edges in graph
-    
+
 		inline std::pair<nodeIterator, nodeIterator> nodes() const { return boost::vertices(_graph); }  ///< returns begin and end iterators for list of nodes
 		inline std::pair<edgeIterator, edgeIterator> edges() const { return boost::edges   (_graph); }  ///< returns begin and end iterators for list of edges
 
@@ -450,11 +450,11 @@ namespace rpwa {
 		inline VPtr& operator [](const nodeDesc& nd) { return vertex(nd);                                 }  ///< returns vertex associated to node
 		inline PPtr& particle   (const edgeDesc& ed) { return boost::get(boost::edge_PPtr,   _graph)[ed]; }  ///< returns particle associated to edge
 		inline PPtr& operator [](const edgeDesc& ed) { return particle(ed);                               }  ///< returns particle associated to edge
-    
+
 		inline bool isNode(const VPtr& v) const { return (_vertexNodeMap.find  (v) != _vertexNodeMap.end());   }  ///< returns whether vertex is associated to a node in the graph
-    
+
 		inline bool isEdge(const PPtr& p) const { return (_particleEdgeMap.find(p) != _particleEdgeMap.end()); }  ///< returns whether particle is associated to an edge in the graph
-    
+
 
 		inline
 		nodeDesc
@@ -473,7 +473,7 @@ namespace rpwa {
 			return entry->second;
 		}
 		inline nodeDesc operator [](const VPtr& v) const { return node(v); }  ///< gives node descriptor associated to vertex
-    
+
 		inline
 		edgeDesc
 		edge(const PPtr& p) const  ///< gives edge descriptor associated to particle
@@ -545,7 +545,7 @@ namespace rpwa {
 			std::pair<edgeDesc, bool> edFound = boost::edge(fromNd, toNd, _graph);
 			if ((edFound.second) and (edFound.first == ed))
 				return true;
-			return false;	
+			return false;
 		}
 		inline bool particleConnects(const PPtr& p,
 		                             const VPtr& fromV,
@@ -612,7 +612,7 @@ namespace rpwa {
 		inline const boost::GraphvizAttrList& nodeAttribute(const VPtr&     v ) const { return nodeAttribute(node(v));                          }  ///< returns graphViz attribute property for given vertex
 		inline const boost::GraphvizAttrList& edgeAttribute(const edgeDesc& ed) const { return boost::get(boost::edge_attribute,  _graph)[ed];  }  ///< returns graphViz attribute property for given edge
 		inline const boost::GraphvizAttrList& edgeAttribute(const PPtr&     p ) const { return edgeAttribute(edge(p));                          }  ///< returns graphViz attribute property for given particle
-    
+
 		inline std::string& name ()                   { return boost::get_property(_graph, boost::graph_name);   }  ///< returns graph name property
 		inline std::string& name (const nodeDesc& nd) { return boost::get(boost::vertex_name,     _graph)[nd];   }  ///< returns name property for given node
 		inline std::string& name (const VPtr&     v ) { return name(node(v));                                    }  ///< returns name property for given vertex
@@ -631,7 +631,7 @@ namespace rpwa {
 		inline boost::GraphvizAttrList& nodeAttribute(const VPtr&     v ) { return nodeAttribute(node(v));                          }  ///< returns graphViz attribute property for given vertex
 		inline boost::GraphvizAttrList& edgeAttribute(const edgeDesc& ed) { return boost::get(boost::edge_attribute,  _graph)[ed];  }  ///< returns graphViz attribute property for given edge
 		inline boost::GraphvizAttrList& edgeAttribute(const PPtr&     p ) { return edgeAttribute(edge(p));                          }  ///< returns graphViz attribute property for given particle
-    
+
 
 		// node and edge sorting routines
 		std::vector<nodeDesc>
@@ -644,7 +644,7 @@ namespace rpwa {
 			                         boost::make_iterator_property_map(colors.begin(),
 			                                                           nodeIndexMap(), colors[0]));
 			if (_debug) {
-				printDebug << "depth-first node order of graph '" << name() 
+				printDebug << "depth-first node order of graph '" << name()
 				           << "' starting at node[" << startNd << "]: ";
 				for (unsigned int i = 0; i < sortedNds.size(); ++i)
 					std::cout << sortedNds[i] << ((i < sortedNds.size() - 1) ? ", " : "");
@@ -804,7 +804,7 @@ namespace rpwa {
 		std::ostream&
 		print(std::ostream& out) const  ///< prints decay graph in human-readable form using node and edge indices
 		{ return print(out, nodeIndexMap(), edgeIndexMap()); }
-    
+
 		inline
 		std::ostream&
 		printPointers(std::ostream& out) const  ///< prints particle and vertex pointers stored in graph
@@ -909,14 +909,14 @@ namespace rpwa {
 		private:
 			nodeOutIterator _nodeIt;
 		};
-    
+
 		// object generator function
 		template<class nodeOutIterator>
 		inline
 		dfsRecorder<nodeOutIterator>
 		makeDfsRecorder(const nodeOutIterator& nodeIt) const
 		{ return dfsRecorder<nodeOutIterator>(nodeIt); }
-    
+
 
 		graph _graph;  ///< graph that represents particle decay
 
@@ -924,9 +924,9 @@ namespace rpwa {
 		particleEdgeMapType _particleEdgeMap;  ///< maps particle pointers to graph edges
 
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
+
 
 	template<class V, class P> bool decayGraph<V, P>::_debug = false;
 

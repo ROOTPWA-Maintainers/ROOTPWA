@@ -81,7 +81,7 @@ main(int    argc,
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	//gROOT->ProcessLine("#include <complex>");
-	
+
 	// parse command line options
 	const string progName        = argv[0];
 	string       outFileName     = "./norm.int";
@@ -117,10 +117,10 @@ main(int    argc,
 		default:
 			usage(progName);
 		}
-	
+
 	// switch debug output
 	ampIntegralMatrix::setDebug(debug);
-	
+
 	// get input file names
 	if (optind >= argc) {
 		printErr << "you need to specify at least one amplitude file to process. aborting." << endl;;
@@ -185,6 +185,6 @@ main(int    argc,
 		         << "aborting.";
 		exit(1);
 	}
-	
+
 	return 0;
 }

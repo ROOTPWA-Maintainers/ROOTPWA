@@ -61,7 +61,7 @@ ClassImp(ampIntegralMatrix);
 
 bool ampIntegralMatrix::_debug = false;
 
-    
+
 ampIntegralMatrix::ampIntegralMatrix()
 	: TObject               (),
 	  _nmbWaves             (0),
@@ -310,7 +310,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 		if (_debug)
 			printDebug << "opening importance sampling weight file '" << weightFileName << "'" << endl;
 		weightFile.open(weightFileName.c_str());
-		if (not weightFile) { 
+		if (not weightFile) {
 			printWarn << "cannot open importance sampling weight file '" << weightFileName << "' "
 			          << "cannot calculate integral." << endl;
 			return false;
@@ -328,7 +328,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	bool             success = true;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
-	  
+
 		// sum up importance sampling weight
 		double w = 1;
 		if (useWeight)

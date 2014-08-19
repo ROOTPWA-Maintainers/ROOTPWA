@@ -69,7 +69,7 @@ namespace rpwa {
 
 
 	public:
-        
+
 
 #ifndef __CINT__
 		typedef boost::multi_array<std::complex<double>, 2> integralMatrixType;
@@ -95,14 +95,14 @@ namespace rpwa {
 		ampIntegralMatrix& operator -=(const ampIntegralMatrix& integral);
 		ampIntegralMatrix& operator *=(const double             factor);
 		ampIntegralMatrix& operator /=(const double             factor);
-		
+
 		// accessors
 		unsigned int  nmbWaves () const { return _nmbWaves;  }  ///< returns number of waves in integral
 		unsigned long nmbEvents() const { return _nmbEvents; }  ///< returns number of events in integral
 
 		void setNmbWaves (const unsigned int  nmbWaves)  { _nmbWaves  = nmbWaves;  }  ///< sets number of waves in integral
 		void setNmbEvents(const unsigned long nmbEvents) { _nmbEvents = nmbEvents; }  ///< sets number of events in integral
-		
+
 		bool               containsWave(const std::string& waveName ) const;  ///< returns whether wave is in integral matrix
 		unsigned int       waveIndex   (const std::string& waveName ) const;  ///< returns wave index for a wave name
 		const std::string& waveName    (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
@@ -148,7 +148,7 @@ namespace rpwa {
 		unsigned long openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
 		                              const std::vector<std::string>& ampFileNames,
 		                              const unsigned int              waveIndexOffset = 0);  ///< opens array of .amp files, performs some scrunity checks and adds waves to name <-> index maps
-		
+
 		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
 		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
 		                               const std::vector<std::string>&        ampFileNames,

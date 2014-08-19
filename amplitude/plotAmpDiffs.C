@@ -116,7 +116,7 @@ plotAmpDiffs(const string&  inFileNamePattern,
 	progress_display progressIndicator(nmbEvents, cout, "");
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		++progressIndicator;
-  
+
 		if (inTree.LoadTree(eventIndex) < 0)
 			break;
 		inTree.GetEntry(eventIndex);

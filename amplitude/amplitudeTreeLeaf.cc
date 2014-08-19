@@ -39,7 +39,7 @@
 #include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 

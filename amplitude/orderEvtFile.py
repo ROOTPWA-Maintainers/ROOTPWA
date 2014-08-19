@@ -88,8 +88,8 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
 	                                  description="Order particles in .evt files.",
-									  epilog="BE AWARE: If the output parameter is not given, "
-									         "the original file will be overwritten with the ordered version!"
+	                                  epilog="BE AWARE: If the output parameter is not given, "
+	                                         "the original file will be overwritten with the ordered version!"
 	                                )
 	parser.add_argument("infile", help="The .evt file to be read")
 	parser.add_argument("-o", "--output", help="The .evt file to be written")
@@ -119,4 +119,3 @@ if __name__ == "__main__":
 	if change_evt_file:
 		print("Moving " + output_file + " to " + input_file)
 		os.system('mv -f ' + output_file + ' ' + input_file)
-			

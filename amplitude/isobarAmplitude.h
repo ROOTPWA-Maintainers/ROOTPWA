@@ -42,7 +42,7 @@
 #include "isobarDecayTopology.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 
 	class isobarAmplitude;
@@ -50,9 +50,9 @@ namespace rpwa {
 
 
 	class isobarAmplitude {
-  
+
 	public:
-      
+
 		isobarAmplitude();
 		isobarAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarAmplitude();
@@ -76,17 +76,17 @@ namespace rpwa {
 
 		static TLorentzRotation gjTransform(const TLorentzVector& beamLv,
 		                                    const TLorentzVector& XLv);  ///< constructs Lorentz-transformation to X Gottfried-Jackson frame
-    
+
 		std::complex<double> amplitude()   const;                         ///< computes amplitude
 		std::complex<double> operator ()() const { return amplitude(); }  ///< computes amplitude
 
 		virtual std::string   name           ()                  const { return "isobarAmplitude"; }
 		virtual std::ostream& printParameters(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
 		virtual std::ostream& print          (std::ostream& out) const;  ///< prints amplitude in human-readable form
-    
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
+
 
 	protected:
 
@@ -98,7 +98,7 @@ namespace rpwa {
 		virtual std::complex<double> twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const = 0;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
-    
+
 		virtual std::complex<double> twoBodyDecayAmplitudeSum
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex = false) const;  ///< recursive function that sums up decay amplitudes for all allowed helicitities for all vertices below the given vertex
@@ -114,11 +114,11 @@ namespace rpwa {
 		bool                    _doSpaceInversion;      ///< is set, all three-momenta of the decay particles are parity transformed (for test purposes)
 		bool                    _doReflection;          ///< is set, all three-momenta of the decay particles are reflected through production plane (for test purposes)
 		std::vector<symTermMap> _symTermMaps;           ///< array of factors and permutation maps for symmetrization terms
-    
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
+
 
 	inline
 	std::ostream&
@@ -127,8 +127,8 @@ namespace rpwa {
 	{
 		return amp.print(out);
 	}
-  
-  
+
+
 } // namespace rpwa
 
 

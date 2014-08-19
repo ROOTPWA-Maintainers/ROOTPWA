@@ -52,7 +52,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "leptoProductionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -214,7 +214,7 @@ leptoProductionVertex::productionAmp() const
 	const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
 	const complex<double> phase = exp(complex<double>(0, phi));
 	printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
-	
+
 	// define lower triangle of virtual photon spin density matrix
 	// rho_{lambda, lambda'}; lambda = -1, 0, 1 as in Schilling and
 	// Wolf (common factor 1/2 is dropped):

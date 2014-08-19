@@ -70,9 +70,9 @@ namespace rpwa {
 
 
 	class decayTopology : public decayTopologyGraphType {
-	
+
 	public:
-			
+
 		decayTopology();
 		decayTopology(const productionVertexPtr&               productionVertex,
 		              const std::vector<interactionVertexPtr>& decayVertices,
@@ -89,7 +89,7 @@ namespace rpwa {
 		{ return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
 
 		virtual void clear();  ///< deletes all information
-    
+
 		unsigned int nmbDecayVertices() const { return _decayVertices.size(); }  ///< returns number of decay vertices
 		unsigned int nmbFsParticles  () const { return _fsParticles.size();   }  ///< returns number of final-state particles
 		std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final-state particles
@@ -176,11 +176,11 @@ namespace rpwa {
 
 		std::map<unsigned int, unsigned int> _fsDataPartIndexMap;  ///< final-state particle indices in input data array
 		std::vector<TVector3>                _fsDataPartMomCache;  ///< caches final-state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-    
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
+
 
 	inline
 	decayTopologyPtr

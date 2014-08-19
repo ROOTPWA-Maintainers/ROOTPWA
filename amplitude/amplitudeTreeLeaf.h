@@ -74,11 +74,11 @@ namespace rpwa {
 		amplitudeTreeLeaf& operator *=(const T& factor);  ///< muliplies all subamps with factor
 		template<typename T>
 		amplitudeTreeLeaf& operator /=(const T& factor);  ///< divides all subamps by factor
-		
+
 		// accessors
 		unsigned int nmbIncohSubAmps() const { return _incohSubAmps.size(); }  ///< returns number of incoherent subamps
 
-		bool               containsIncohSubAmp(const std::string& subAmpLabel) const; 
+		bool               containsIncohSubAmp(const std::string& subAmpLabel) const;
 		unsigned int       incohSubAmpIndex   (const std::string& subAmpLabel) const;
 		const std::string& incohSubAmpName    (const unsigned int subAmpIndex) const;
 

@@ -161,7 +161,7 @@ main(int    argc,
 			          << "skipping." << endl;
 			continue;
 		}
-    
+
 		// convert file to output format
 		const string outFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4)
 			+ "." + outFormat;
@@ -189,6 +189,6 @@ main(int    argc,
 
 	printSucc << "created " << countSuccess << " out of " << keyFileNames.size()
 	          << " diagram files" << endl;
-  
+
 	return 0;
 }

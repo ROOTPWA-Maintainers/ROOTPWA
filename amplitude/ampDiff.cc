@@ -156,7 +156,7 @@ main(int    argc,
 		complex<double> amp;
 		while (ampFiles[i].read((char*) &amp, sizeof(complex<double>)))
 			amps[i].push_back(amp);
-	}  
+	}
 	if (amps[0].size() != amps[1].size())
 		printWarn << "the two amplitude files have different number of amplitudes "
 		          << "(" << amps[0].size() << " vs. " << amps[1].size() << ")." << endl;
@@ -191,7 +191,7 @@ main(int    argc,
 		printWarn << "cannot determine mass bin boundaries from file paths" << endl;
 	else
 		printInfo << "extracted mass bin boundaries [" << massBinMin << ", " << massBinMax << "] from file paths" << endl;
-  
+
 	// connect leaf variables to tree branches
 	const int split   = 0;
 	const int bufSize = 256000;

@@ -34,7 +34,7 @@
 #include "reportingUtils.hpp"
 #include "productionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 

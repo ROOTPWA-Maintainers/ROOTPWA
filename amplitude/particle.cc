@@ -36,7 +36,7 @@
 #include "conversionUtils.hpp"
 #include "particle.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -71,7 +71,7 @@ particle::particle(const particleProperties& partProp,
 	  _refl             (refl)
 { }
 
-	
+
 particle::particle(const string&   partName,
                    const bool      requirePartInTable,
                    const int       index,
@@ -89,7 +89,7 @@ particle::particle(const string&   partName,
 	_lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
 }
 
-	
+
 particle::particle(const string& partName,
                    const int     isospin,
                    const int     G,

@@ -512,7 +512,7 @@ waveSetGenerator::print(ostream& out) const
 	    << "    S range .................... [" << spinQn(get<0>(_SRange))        << ", "
 	    << spinQn(get<1>(_SRange))        << "]" << endl
 	    << "    require min. isobar mass ... " << yesNo(_requireMinIsobarMass) << endl
- 	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl
+	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl
 	    << "    force decay checks ......... " << yesNo(_forceDecayCheck) << endl;
 	out << "    isobar black list:";
 	if (_isobarBlackList.size() == 0)

@@ -57,7 +57,7 @@ namespace rpwa {
 	class productionVertex : public interactionVertex {
 
 	public:
-  
+
 		productionVertex();
 		virtual ~productionVertex();
 
@@ -66,7 +66,7 @@ namespace rpwa {
 		virtual const particlePtr&    XParticle     () const = 0;  ///< returns X particle
 
 		virtual std::complex<double> productionAmp() const { return 1; }  ///< returns production amplitude
-    
+
 		virtual void setXFlavorQN() = 0;  ///< general interface to set flavor quantum numbers of X (baryon nmb., S, C, B) based on production mechanism
 
 		virtual bool initKinematicsData(const TClonesArray& names)   = 0;  ///< general interface to initialize input data format

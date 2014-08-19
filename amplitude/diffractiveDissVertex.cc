@@ -46,7 +46,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "diffractiveDissVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 

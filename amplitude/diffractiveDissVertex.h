@@ -59,14 +59,14 @@ namespace rpwa {
 	class diffractiveDissVertex : public productionVertex {
 
 	public:
-  
+
 		diffractiveDissVertex(const particlePtr& beam,
 		                      const particlePtr& target,
 		                      const particlePtr& XParticle,
 		                      const particlePtr& recoil = particlePtr());  ///< force vertex to have two incoming (beam + target) and two outgoing particles (X + recoil); recoil is optional
 		diffractiveDissVertex(const diffractiveDissVertex& vert);
 		virtual ~diffractiveDissVertex();
-		
+
 		diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
 		diffractiveDissVertexPtr clone(const bool cloneInParticles  = false,
 		                               const bool cloneOutParticles = false) const  ///< creates deep copy of diffractive dissociation vertex; must not be virtual
@@ -87,7 +87,7 @@ namespace rpwa {
 		inline const particlePtr& beam  () const { return inParticles ()[0]; }  ///< returns beam particle
 		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
-    
+
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
 		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
 

@@ -41,7 +41,7 @@
 #include "factorial.hpp"
 #include "isobarAmplitude.h"
 
-  
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;

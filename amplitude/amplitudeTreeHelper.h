@@ -48,7 +48,7 @@ namespace rpwa {
 	                     const std::string& ampLeafName   = "amplitude",
 	                     const long int     treeCacheSize = 1000000,  // 1 MByte ROOT tree read cache
 	                     const bool         debug         = false);
-  
+
 
 	bool writeAmpFromTree(TChain&            inTree,
 	                      const std::string& outFileName,

@@ -72,7 +72,7 @@ fillDiffLeafs(const TClonesArray& partNames,
 		diff.SetZ((momenta[0]->Z() - momenta[1]->Z()) / momenta[0]->Z());
 	}
 	new((*(partMomenta[2]))[index]) TVector3(diff);
-  
+
 	if (debug) {
 		const TObjString name = *((TObjString*)partNames[index]);
 		printDebug << "particle[" << index << "]: '" << name.GetString().Data() << "', "
@@ -192,7 +192,7 @@ createDiffTree(const string&  inFileNamePatternA       = "testEvents.root",
 		prodKinMomenta[2]->Clear();
 		for (int i = 0; i < nmbProdKinPart[0]; ++i)
 			fillDiffLeafs(*(prodKinPartNames[0]), prodKinMomenta, i, absoluteDiff, debug);
-    
+
 		assert(    (decayKinMomenta[0]->GetEntriesFast() == nmbDecayKinPart[0])
 		       and (decayKinMomenta[1]->GetEntriesFast() == nmbDecayKinPart[0]));
 		if (debug)

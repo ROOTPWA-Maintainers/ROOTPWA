@@ -51,11 +51,11 @@ namespace rpwa {
 	class fsVertex : public interactionVertex {
 
 	public:
-  
+
 		fsVertex(const particlePtr& fsParticle);  ///< force vertex to have exactly one incoming and no outgoing particles
 		fsVertex(const fsVertex& vert);
 		virtual ~fsVertex();
-		
+
 		fsVertexPtr clone(const bool cloneInParticles  = false,
 		                  const bool                   = false) const  ///< creates deep copy of final state vertex; must not be virtual
 		{ return fsVertexPtr(doClone(cloneInParticles, false)); }
