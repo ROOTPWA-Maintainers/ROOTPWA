@@ -156,6 +156,9 @@ namespace rpwa {
 		/// returns normalization integral for pair of waves at index A and B
 		inline std::complex<double> normIntegral(const unsigned int waveIndexA,
 		                                         const unsigned int waveIndexB) const;
+		/// returns accepted normalization integral for pair of waves at index A and B
+		inline std::complex<double> acceptedNormIntegral(const unsigned int waveIndexA,
+		                                                 const unsigned int waveIndexB) const;
 		/// returns the sqrt(!) of the phase space integral for given wave
 		double phaseSpaceIntegral(const unsigned int waveIndex) const { return _phaseSpaceIntegral[waveIndex];           }
 		double phaseSpaceIntegral(const std::string& waveName ) const { return _phaseSpaceIntegral[waveIndex(waveName)]; }
@@ -197,13 +200,14 @@ namespace rpwa {
 		                    const unsigned int waveIndexB) const;  ///< returns error of overlap of two waves at index A and B
 
 		// low level interface to make copying easier
-		const std::vector<TComplex>&                 prodAmps          () const { return _prodAmps;               }
-		const std::vector<std::string>&              prodAmpNames      () const { return _prodAmpNames;           }
-		const std::vector<std::string>&              waveNames         () const { return _waveNames;              }
-		const TMatrixT<Double_t>&                    fitParCovMatrix   () const { return _fitParCovMatrix;        }
-		const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices  () const { return _fitParCovMatrixIndices; }
-		const rpwa::complexMatrix&                   normIntegralMatrix() const { return _normIntegral;           }
-		const std::map<Int_t, Int_t>&                normIntIndexMap   () const { return _normIntIndexMap;        }
+		const std::vector<TComplex>&                 prodAmps                  () const { return _prodAmps;               }
+		const std::vector<std::string>&              prodAmpNames              () const { return _prodAmpNames;           }
+		const std::vector<std::string>&              waveNames                 () const { return _waveNames;              }
+		const TMatrixT<Double_t>&                    fitParCovMatrix           () const { return _fitParCovMatrix;        }
+		const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices          () const { return _fitParCovMatrixIndices; }
+		const rpwa::complexMatrix&                   normIntegralMatrix        () const { return _normIntegral;           }
+		const rpwa::complexMatrix&                   acceptedNormIntegralMatrix() const { return _acceptedNormIntegral;   }
+		const std::map<Int_t, Int_t>&                normIntIndexMap           () const { return _normIntIndexMap;        }
 
 		inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
 		inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
@@ -328,6 +332,16 @@ namespace rpwa {
 	}
 
 
+	// returns accepted normalization integral for pair of waves at index A and B
+	inline
+	std::complex<double>
+	fitResult::acceptedNormIntegral(const unsigned int waveIndexA,
+	                                const unsigned int waveIndexB) const
+	{
+		return _acceptedNormIntegral(waveIndexA, waveIndexB);
+	}
+
+
 	// prints all production amplitude names
 	inline
 	std::ostream&
@@ -414,6 +428,7 @@ namespace rpwa {
 			out << "        index " << std::setw(3) << i << " = (" << std::setw(3) << _fitParCovMatrixIndices[i].first
 			    << ", " << std::setw(3) << _fitParCovMatrixIndices[i].second << ")" << std::endl;
 		out << "    normalization integral (w/o acceptance):" << std::endl << _normIntegral << std::endl;
+		out << "    normalization integral (with acceptance):" << std::endl << _acceptedNormIntegral << std::endl;
 		out << "    map of production amplitude indices to indices in normalization integral:" << std::endl;
 		for (std::map<Int_t, Int_t>::const_iterator i = _normIntIndexMap.begin(); i != _normIntIndexMap.end(); ++i)
 			out << "        prod. amp [" << std::setw(3) << i->first << "] "

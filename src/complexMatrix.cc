@@ -32,10 +32,20 @@ namespace bnu = boost::numeric::ublas;
 ClassImp(complexMatrix)
 
 
+complexMatrix::~complexMatrix() {
+	if(_data) {
+		delete [] _data;
+		_data = 0;
+	}
+}
+
+
 complexMatrix complexMatrix::t() const
 {
 	return complexMatrix(bnu::trans(_matrix));
 }
+
+
 complexMatrix complexMatrix::dagger() const
 {
 	return complexMatrix(bnu::conj(_matrix));
@@ -117,6 +127,10 @@ void complexMatrix::storeMatrix()
 	_size1 = _matrix.size1();
 	_size2 = _matrix.size2();
 	_nmbDataElements = _size1 * _size2;
+	if(_data) {
+		delete [] _data;
+		_data = 0;
+	}
 	_data = new std::complex<double>[_nmbDataElements];
 	unsigned int dataIndex = 0;
 	for(unsigned int i = 0; i < _size1; ++i) {

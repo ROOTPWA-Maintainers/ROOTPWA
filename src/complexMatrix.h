@@ -39,6 +39,10 @@ namespace rpwa {
 
 	public:
 
+		// BEWARE: the matrix constructor does not set the matrix elements
+		//         to zero, neither does resize. So if you initialize the
+		//         complexMatrix, make sure to set all the entries to zero.
+
 		complexMatrix()
 			: _matrix(),
 			  _size1(0),
@@ -53,7 +57,7 @@ namespace rpwa {
 			  _nmbDataElements(0),
 			  _data(0) { }
 
-		~complexMatrix() { }
+		~complexMatrix();
 
 		void resizeTo(const int i, const int j) { _matrix.resize(i, j); }
 		void set(const int i, const int j, const std::complex<double>& c) { _matrix(i, j) = c; }

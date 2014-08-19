@@ -79,7 +79,7 @@ fitResult::fitResult(const fitResult& result)
 	  _fitParCovMatrix       (result.fitParCovMatrix()),
 	  _fitParCovMatrixIndices(result.fitParCovIndices()),
 	  _normIntegral          (result.normIntegralMatrix()),
-	  _acceptedNormIntegral  (result._acceptedNormIntegral),
+	  _acceptedNormIntegral  (result.acceptedNormIntegralMatrix()),
 	  _normIntIndexMap       (result.normIntIndexMap()),
 	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
 	  _converged             (result._converged),

@@ -325,6 +325,7 @@ void rpwa::py::exportFitResult() {
 		.def("prodAmpCov", &fitResult_prodAmpCov_4)
 		.def("covMatrixValid", &rpwa::fitResult::covMatrixValid)
 		.def("normIntegral", &rpwa::fitResult::normIntegral)
+		.def("acceptedNormIntegral", &rpwa::fitResult::acceptedNormIntegral)
 		.def("phaseSpaceIntegral", &fitResult_phaseSpaceIntegral_1)
 		.def("phaseSpaceIntegral", &fitResult_phaseSpaceIntegral_2)
 		.def("spinDensityMatrixElem", &rpwa::fitResult::spinDensityMatrixElem)
@@ -351,6 +352,11 @@ void rpwa::py::exportFitResult() {
 		.def(
 			"normIntegralMatrix"
 			, &rpwa::fitResult::normIntegralMatrix
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
+		.def(
+			"acceptedNormIntegralMatrix"
+			, &rpwa::fitResult::acceptedNormIntegralMatrix
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def("normIntIndexMap", &fitResult_normIntIndexMap)
