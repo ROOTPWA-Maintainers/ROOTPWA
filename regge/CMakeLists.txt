@@ -38,7 +38,6 @@ message(STATUS ">>> Setting up 'regge' directory.")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
-	${PWA2000_INCLUDE_DIR}
 	${TOOLS_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
@@ -69,7 +68,6 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
-	"${PWA2000_LIBS}"
 	"${ROOTPWATOOLS_LIBS}"
 	)
 

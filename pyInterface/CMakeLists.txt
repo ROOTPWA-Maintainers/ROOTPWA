@@ -107,7 +107,6 @@ make_shared_library(
 	"${Boost_PYTHON_LIBRARY}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
-	"${PWA2000_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	"${ROOTPWAGEN_LIBS}"
 	)
