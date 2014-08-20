@@ -193,7 +193,7 @@ main(int argc, char** argv)
 		isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
 		// topo->checkTopology();
 		// topo->checkConsistency();
-		topo->fillKinematicsDataCache();
+		//topo->fillKinematicsDataCache();
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
 		vector<complex<double> > decayAmp = amp.amplitude();

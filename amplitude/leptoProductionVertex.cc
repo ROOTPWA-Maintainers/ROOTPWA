@@ -167,11 +167,6 @@ leptoProductionVertex::productionAmp() const
 	const std::vector<TLorentzVector>& virtPhotonVec      = virtPhoton()->lzVec();
 	const std::vector<TLorentzVector>& XParticleVec       = XParticle()->lzVec();
 
-	const std::vector<TVector3>& beamMomentum            = beamLepton()->momentum();
-	const std::vector<TVector3>& scatteredLeptonMomentum = scatteredLepton()->momentum();
-	const std::vector<TVector3>& virtPhotonMomentum      = virtPhoton()->momentum();
-	const std::vector<TVector3>& XParticleMomentum       = XParticle()->momentum();
-
 	std::vector<double> epsilons(targetVec.size());
 	this->epsilon(epsilons);
 
@@ -179,14 +174,12 @@ leptoProductionVertex::productionAmp() const
 	this->delta(epsilons, deltas);
 
 	if(targetVec.size() != beamVec.size() || targetVec.size() != scatteredLeptonVec.size() ||
-			targetVec.size() != virtPhotonVec.size() || targetVec.size() != XParticleVec.size() ||
-			targetVec.size() != beamMomentum.size() || targetVec.size() != scatteredLeptonMomentum.size() ||
-			targetVec.size() != virtPhotonMomentum.size() || targetVec.size() != XParticleMomentum.size()) {
+			targetVec.size() != virtPhotonVec.size() || targetVec.size() != XParticleVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<complex<double> > result(target()->lzVec().size());
+	std::vector<complex<double> > result(target()->numParallelEvents());
 	// !! EVENT PARALLEL LOOP
 	cout << "EPL: leptoProductionVertex::productionAmp" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
@@ -205,10 +198,10 @@ leptoProductionVertex::productionAmp() const
 			// lepton-scattering and the production plane are perpendicular to
 			// the virtual photon, the azimuthal angle can be calculated in
 			// the lab frame as well
-			k1 = beamMomentum[i];
-			k2 = scatteredLeptonMomentum[i];
-			q  = virtPhotonMomentum[i];
-			v  = XParticleMomentum[i];
+			k1 = beamVec[i].Vect();
+			k2 = scatteredLeptonVec[i].Vect();
+			q  = virtPhotonVec[i].Vect();
+			v  = XParticleVec[i].Vect();
 		} else {
 			// general case
 			// boost vectors to (virtual photon, target) CM system
@@ -326,17 +319,49 @@ leptoProductionVertex::productionAmp() const
 void
 leptoProductionVertex::Q2(std::vector<double>& result) const
 {
-	//const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
-	parallelLorentzVectorMag2(virtPhoton()->lzVec(), result);
-	parallelMultiply(result, -1.0);
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+
+	if(result.size() != virtPhotonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	// !! EVENT PARALLEL LOOP
+	cout << "EPL: leptoProductionVertex::Q2" << endl;
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = virtPhotonVec.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		result[i] = - virtPhotonVec[i].Mag2();
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "    timediff = " << timeDiff << endl;
 }
 
 void
 leptoProductionVertex::nu(std::vector<double>& result) const
 {
-	//const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	parallelLorentzVectorScalarProduct(target()->lzVec(), virtPhoton()->lzVec(), result);
-	parallelDivide(result, target()->mass());
+	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	double targetMass = target()->mass();
+
+	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	// !! EVENT PARALLEL LOOP
+	cout << "EPL: leptoProductionVertex::nu" << endl;
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		result[i] = (targetVec[i] * virtPhotonVec[i]) / targetMass;
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "    timediff = " << timeDiff << endl;
 }
 
 void

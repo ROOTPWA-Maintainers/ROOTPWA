@@ -119,7 +119,10 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 		std::vector<std::complex<double> > result(parentVec.size(), 0);
 		// !! EVENT PARALLEL LOOP
 		cout << "EPL: relativisticBreitWigner::amp" << endl;
-		for(unsigned int i = 0; i < result.size(); ++i) {
+		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		const unsigned int size = result.size();
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < size; ++i) {
 
 			// get Breit-Wigner parameters
 			const double       M      = parentVec[i].M();     // parent mass
@@ -136,13 +139,18 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 			complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 			result[i] = bw;
 
-			if (_debug)
+			if (_debug) {
+				#pragma omp critical
 				printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 						   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
 						   << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
 						   << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+			}
 
 		}
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+		cout << "    timediff = " << timeDiff << endl;
 
 		return result;
 

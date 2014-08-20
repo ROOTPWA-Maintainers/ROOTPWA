@@ -134,8 +134,22 @@ isobarAmplitude::amplitude() const
 	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
 
 		std::vector<std::complex<double> > permAmp = symTermAmp(_symTermMaps[i].fsPartPermMap);
-		parallelMultiply(permAmp, _symTermMaps[i].factor);
-		parallelAdd(amp, permAmp);
+
+		if(amp.size() != permAmp.size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+
+		// !! EVENT PARALLEL LOOP
+		cout << "EPL: isobarAmplitude::amplitude" << endl;
+		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		const unsigned int size = amp.size();
+		for(unsigned int k = 0; k < size; ++k) {
+			amp[k] += permAmp[k] * _symTermMaps[i].factor;
+		}
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+		cout << "    timediff = " << timeDiff << endl;
 
 	}
 	return amp;
@@ -155,7 +169,11 @@ isobarAmplitude::gjTransform(const std::vector<TLorentzVector>& beamLv,  // beam
 	std::vector<TLorentzRotation> result(beamLv.size());
 	// !! EVENT PARALLEL LOOP
 	cout << "EPL: isobarAmplitude::gjTransform" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		TLorentzVector beam    = beamLv[i];
 		TLorentzVector X       = XLv[i];
@@ -180,6 +198,9 @@ isobarAmplitude::gjTransform(const std::vector<TLorentzVector>& beamLv,  // beam
 		result[i] = gjTransform;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "    timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -199,11 +220,7 @@ isobarAmplitude::spaceInvertDecay() const
 
 	// perform parity transformation on final state particles in X rest frame
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const particlePtr& part = _decay->fsParticles()[i];
-		std::vector<TLorentzVector> fsPartLv = part->lzVec();
-		parallelLorentzVectorNegate3(fsPartLv);
-		part->setLzVec(fsPartLv);
-
+		_decay->fsParticles()[i]->scaleLzVec(-1, -1, -1, 1);
 	}
 
 	// transform final state particles back to lab frame
@@ -226,14 +243,7 @@ isobarAmplitude::reflectDecay() const
 
 	// reflect final state particles through production plane
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const particlePtr& part     = _decay->fsParticles()[i];
-		std::vector<TLorentzVector> fsPartLv = part->lzVec();
-		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarAmplitude::reflectDecay" << endl;
-		for(unsigned int k = 0; k < fsPartLv.size(); ++i) {
-			fsPartLv[k].SetY(- fsPartLv[k].Y());
-		}
-		part->setLzVec(fsPartLv);
+		_decay->fsParticles()[i]->scaleLzVec(1, -1, 1, 1);
 	}
 
 	// transform final state particles back to lab frame
@@ -296,25 +306,31 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 				throw;
 			}
 
-			std::vector<std::complex<double> > amp(numEvents, 0);
 			// !! EVENT PARALLEL LOOP
 			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum" << endl;
-			for(unsigned int i = 0; i < amp.size(); ++i) {
-				amp[i] = parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
+			boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+			const unsigned int size = ampSum.size();
+			for(unsigned int i = 0; i < size; ++i) {
+
+				complex<double> amp = parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
+				ampSum[i] += amp;
+
+				if (_debug) {
+					//#pragma omp critical
+					printDebug << "amplitude term for : "
+							   << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
+							   << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "
+							   << daughter2->name() << " [lambda = " << spinQn(lambda2           ) << "] = "
+							   << "parent amp. = " << maxPrecisionDouble(parentAmp[i])
+							   << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp[i])
+							   << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp[i]) << " = "
+							   << maxPrecisionDouble(amp) << endl;
+				}
+
 			}
-
-			if (_debug)
-				printDebug << "amplitude term for : "
-						   << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
-						   << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "
-						   << daughter2->name() << " [lambda = " << spinQn(lambda2           ) << "] = "
-						   << "parent amp. = " << maxPrecisionDouble(parentAmp)
-						   << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp)
-						   << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
-						   << maxPrecisionDouble(amp) << endl;
-
-			parallelAdd(ampSum, amp);
-
+			boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+			uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+			cout << "    timediff = " << timeDiff << endl;
 		}
 
 

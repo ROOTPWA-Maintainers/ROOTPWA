@@ -163,12 +163,6 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
 
-	std::vector<double> phi(numEvents);
-	parallelLorentzVectorPhi(daughter1->lzVec(), phi); // use daughter1 as analyzer
-
-	std::vector<double> theta(numEvents);
-	parallelLorentzVectorTheta(daughter1->lzVec(), theta);
-
 	std::vector<std::complex<double> > amp(numEvents, 0);
 
 	// sum over all possible spin projections of L
@@ -200,7 +194,9 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		// !! EVENT PARALLEL LOOP
 		cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 1" << endl;
 		for(unsigned int i = 0; i < amp.size(); ++i) {
-			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta[i], phi[i], _debug);
+			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVec()[i].Theta();
+			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
 		}
 
 	}

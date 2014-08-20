@@ -720,17 +720,19 @@ decayTopology::addKinematicsData(const TClonesArray& prodKinMomenta,
 }
 
 
-void
+/*void
 decayTopology::fillKinematicsDataCache()
 {
 	// adjust cache size
-	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
+	_fsDataPartMomCache.clear();
+	_fsDataPartMomCache.resize(nmbFsParticles());
 	// set decay kinematics
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
-		_fsDataPartMomCache[i] = part->momentum();
+		_fsDataPartMomCache[i].resize(part->numParallelEvents());
+		part->momentum(_fsDataPartMomCache[i]);
 	}
-}
+}*/
 
 
 bool

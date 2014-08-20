@@ -43,6 +43,7 @@
 #include <boost/progress.hpp>
 #include <boost/bimap.hpp>
 #include <boost/assign/list_inserter.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -682,6 +683,8 @@ namespace rpwa {
 		bool              success           = true;
 		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
 		decayTopo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta);
+		cout << "add events ..." << endl;
+		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);
@@ -700,18 +703,26 @@ namespace rpwa {
 				success = false;
 				continue;
 			}
-
-			if (not decayTopo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-				printWarn << "problems reading event[" << eventIndex << "]" << endl;
-				success = false;
-			}
+			//for(int i = 0; i < 20; ++i) {
+				if (not decayTopo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+					printWarn << "problems reading event[" << eventIndex << "]" << endl;
+					success = false;
+				}
+			//}
 		}
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+		cout << "total event add timediff = " << timeDiff << endl;
 
 		if(success) {
 			cout << "events added: calculate amplitudes ..." << endl;
+			boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 			decayTopo->revertMomenta();
 			vector<complex<double> > amps = (*amplitude)();
 			ampValues.insert(ampValues.end(), amps.begin(), amps.end());
+			boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+			uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+			cout << "total amplitude calculation timediff = " << timeDiff << endl;
 		}
 
 		if (printProgress)

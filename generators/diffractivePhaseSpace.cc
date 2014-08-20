@@ -213,7 +213,7 @@ diffractivePhaseSpace::event()
 		                                           xMomLab * xCosThetaLab,
 		                                           xEnergyLab);
 		// rotate according to beam tilt
-		TVector3 beamDir = _beam.particle.momentum()[0].Unit();
+		TVector3 beamDir = beamLorentzVector.Vect().Unit();
 		xSystemLab.RotateUz(beamDir);
 		// calculate the recoil proton properties
 		_target.recoilParticle.setLzVec(make_vector_1((beamLorentzVector + targetLab) - xSystemLab)); // targetLab

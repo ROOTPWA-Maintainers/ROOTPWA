@@ -87,8 +87,9 @@ namespace rpwa {
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
 		int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
-		std::vector<TVector3> momentum    () const;                                         ///< returns three-momentum of particle
+		//void                  momentum    (std::vector<TVector3>& result) const;            ///< returns three-momentum of particle
 		const std::vector<TLorentzVector>& lzVec () const { return _lzVec;               }  ///< returns Lorentz vector of particle
+		std::vector<TLorentzVector>& mutableLzVec () { return _lzVec;               }  ///< returns Lorentz vector of particle in a non-const version. use with care
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
 
@@ -101,7 +102,8 @@ namespace rpwa {
 		void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
 		const std::vector<TLorentzVector>& transform(const std::vector<TLorentzRotation>& L    ); ///< applies Lorentz-transformation to particle
-		const std::vector<TLorentzVector>& transform(const std::vector<TVector3>&         boost);  ///< applies Lorentz-boost to particle
+		const std::vector<TLorentzVector>& transform(const std::vector<TVector3>&         boost); ///< applies Lorentz-boost to particle
+		void scaleLzVec(double scaleX, double scaleY, double scaleZ, double scaleE); ///< multiplies the components of the Lorentz-vector by scaling values
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)M]
 

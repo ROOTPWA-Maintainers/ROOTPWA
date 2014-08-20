@@ -126,13 +126,11 @@ particle::operator =(const particle& part)
 	return *this;
 }
 
-std::vector<TVector3>
-particle::momentum () const
+/*void
+particle::momentum (std::vector<TVector3>& result) const
 {
-	std::vector<TVector3> result(_lzVec.size());
 	parallelLorentzVectorToVector3(_lzVec, result);
-	return result;
-}
+}*/
 
 void
 particle::setMomentum(const std::vector<TVector3>& momentum)
@@ -141,10 +139,16 @@ particle::setMomentum(const std::vector<TVector3>& momentum)
 	_lzVec.resize(momentum.size());
 	// !! EVENT PARALLEL LOOP
 	cout << "EPL: particle::setMomentum" << endl;
-	for(unsigned int i = 0; i < momentum.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = momentum.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		const TVector3& mom = momentum[i];
 		_lzVec[i] = TLorentzVector(mom, sqrt(mom.Mag2() + mass() * mass()));
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "    timediff = " << timeDiff << endl;
 }
 
 const std::vector<TLorentzVector>&
@@ -160,6 +164,23 @@ particle::transform(const std::vector<TVector3>& boost)
 {
 	parallelLorentzBoost(_lzVec, boost);
 	return _lzVec;
+}
+
+void
+particle::scaleLzVec(double scaleX, double scaleY, double scaleZ, double scaleE)
+{
+	// !! EVENT PARALLEL LOOP
+	cout << "EPL: particle::scaleLzVec" << endl;
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = _lzVec.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		TLorentzVector& v = _lzVec[i];
+		v.SetXYZT(v.X() * scaleX, v.Y() * scaleY, v.Z() * scaleZ, v.E() * scaleE);
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "    timediff = " << timeDiff << endl;
 }
 
 particle*

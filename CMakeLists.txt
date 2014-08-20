@@ -93,7 +93,7 @@ endif()
 
 # set common compiler flags
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -Wall -Woverloaded-virtual -Werror")
 # set additional flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 # -march=native switch was removed, because is caused trouble in heterogeneous environments
