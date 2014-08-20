@@ -15,22 +15,22 @@ def norm(c):
 def getBestFitResult(massBinCenter, fitResultTree):
 	fitResult = pyRootPwa.core.fitResult().getAsRootObject()
 	fitResultTree.SetBranchAddress(config.fitResultBranchName, fitResult)
-	massBinCenterBest = 0.
 	bestIndex = 0
+	bestMass = 0.
 	bestLikeli = 0.
 	for i in range(fitResultTree.GetEntries()):
 		fitResultTree.GetEntry(i)
 		mass = fitResult.massBinCenter()
-		logLike = fitResult.logLikelihood()
-		if i == 0 or abs(massBinCenter - mass) < abs(massBinCenter - massBinCenterBest):
+		likeli = fitResult.logLikelihood()
+		if i == 0 or abs(massBinCenter - mass) < abs(massBinCenter - bestMass):
 			bestIndex = i
-			bestLikeli = logLike
-			massBinCenterBest = mass
-		elif abs(massBinCenter - mass) == abs(massBinCenter - massBinCenterBest):
-			if logLike < bestLike:
+			bestMass = mass
+			bestLikeli = likeli
+		elif abs(massBinCenter - mass) == abs(massBinCenter - bestMass):
+			if likeli < bestLikeli:
 				bestIndex = i
-				massBinCenterBest = mass
-				logLikeBest = logLike
+				bestMass = mass
+				bestLikeli = likeli
 	fitResultTree.GetEntry(bestIndex)
 	return pyRootPwa.core.fitResult(fitResult)
 
@@ -81,10 +81,17 @@ if __name__ == "__main__":
 
 	config = pyRootPwa.rootPwaConfig(args.configFileName)
 
-	integral = pyRootPwa.core.ampIntegralMatrix()
-	if not integral.readAscii(args.integralFile):
-		printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
-		sys.exit(1)
+	if config.outputFileFormat == "root":
+		# read integral matrix from ROOT file
+		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
+		integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get("integral"))
+		integralFile.Close()
+	else:
+		# read integral matrix from ASCII file
+		integral = pyRootPwa.core.ampIntegralMatrix()
+		if not integral.readAscii(args.integralFile):
+			printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
+			sys.exit(1)
 	nmbNormEvents = integral.nmbEvents()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
@@ -117,7 +124,7 @@ if __name__ == "__main__":
 				pyRootPwa.utils.printErr("Keyfile '" + keyfile + "' not valid. Aborting...")
 				sys.exit(1)
 	else:
-		keyfiles = pyRootPwa.utils.getListOfKeyfiles(pyRootPwa.config.keyfilePattern)
+		keyfiles = pyRootPwa.utils.getListOfKeyfiles(config.keyfilePattern)
 		if len(keyfiles) == 0:
 			pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
 			sys.exit(1)
@@ -131,9 +138,9 @@ if __name__ == "__main__":
 		printErr("Could not find fit result tree '" + config.fitResultTreeName +
 		         "' in file '" + args.fitResult + "'. Aborting...")
 		sys.exit(1)
-	massBinCenterBest = 0
 	massRange = generatorManager.getGenerator().getTPrimeAndMassPicker().massRange()
-	massBinCenter = (massRange[0] + massRange[1]) / 2.
+	# unit of mass is GeV in generator, and MeV in the fit result
+	massBinCenter = 1000. * (massRange[0] + massRange[1]) / 2.
 	fitResult = getBestFitResult(massBinCenter, fitResultTree)
 
 	waveDescriptions = []
@@ -151,7 +158,10 @@ if __name__ == "__main__":
 	waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
+		if config.outputFileFormat == "root":
+			keyfile = 'keyfiles/' + waveName + ".key"
+		else:
+			keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
 		if not os.path.isfile(keyfile):
 			pyRootPwa.utils.printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
