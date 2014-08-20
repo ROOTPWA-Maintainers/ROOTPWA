@@ -47,6 +47,7 @@
 
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
+#include "reportingUtilsEnvironment.h"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"

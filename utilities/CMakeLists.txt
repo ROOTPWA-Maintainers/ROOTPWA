@@ -35,5 +35,27 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'utilities' directory.")
 
 
+# set include directories
+set(INCLUDE_DIRECTORIES
+	${ROOT_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
+include_directories(${INCLUDE_DIRECTORIES})
+
+
+# source files that are compiled into library
+set(SOURCES
+	reportingUtilsEnvironment.cc
+	)
+
+
+# library
+set(THIS_LIB "RootPwaUtil")
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	)
+
+
 # build tests
 add_subdirectory(test)

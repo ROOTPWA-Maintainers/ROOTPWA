@@ -39,6 +39,7 @@
 #include "TRandom3.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 #include "amplitudeTreeLeaf.h"
 
 

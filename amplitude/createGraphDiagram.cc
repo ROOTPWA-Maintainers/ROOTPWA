@@ -42,6 +42,7 @@
 
 #include "TSystem.h"
 
+#include "reportingUtilsEnvironment.h"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 

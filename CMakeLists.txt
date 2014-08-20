@@ -492,8 +492,8 @@ set(UTILITIES_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/utilities
 	)
 set(UTILITIES_LIBS
-#  RootPwaUtil
-  )
+	RootPwaUtil
+	)
 
 set(TOOLS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/tools

@@ -31,10 +31,6 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'utilities' directory.")
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}

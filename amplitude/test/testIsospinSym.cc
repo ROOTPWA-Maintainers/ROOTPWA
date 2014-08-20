@@ -45,6 +45,7 @@
 
 #include "mathUtils.hpp"
 #include "fileUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 #include "isobarHelicityAmplitude.h"

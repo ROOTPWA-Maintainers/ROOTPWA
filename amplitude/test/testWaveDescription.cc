@@ -36,6 +36,7 @@
 
 #include "particleDataTable.h"
 #include "waveDescription.h"
+#include "reportingUtilsEnvironment.h"
 
 
 using namespace std;

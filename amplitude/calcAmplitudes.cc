@@ -47,6 +47,7 @@
 #include "TClonesArray.h"
 #include "TStopwatch.h"
 
+#include "reportingUtilsEnvironment.h"
 #include "fileUtils.hpp"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"

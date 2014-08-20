@@ -46,6 +46,7 @@
 #include "isobarDecayTopology.h"
 #include "waveDescription.h"
 #include "isobarHelicityAmplitude.h"
+#include "reportingUtilsEnvironment.h"
 
 
 using namespace std;

@@ -3,7 +3,7 @@
 
 #include<boost/python.hpp>
 
-#include<reportingUtils.hpp>
+#include<reportingUtilsEnvironment.h>
 
 namespace rpwa {
 	namespace py {

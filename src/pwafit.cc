@@ -51,6 +51,7 @@
 #include "TStopwatch.h"
 #include "Minuit2/Minuit2Minimizer.h"
 
+#include "reportingUtilsEnvironment.h"
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"

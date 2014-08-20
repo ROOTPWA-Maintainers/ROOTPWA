@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <fstream>
 
+#include "reportingUtilsEnvironment.h"
 #include "particleDataTable.h"
 #include "waveSetGenerator.h"
 #include "waveDescription.h"

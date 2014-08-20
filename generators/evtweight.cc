@@ -57,6 +57,7 @@
 #include "amplitudeTreeLeaf.h"
 #include "fitResult.h"
 #include "fileUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 
 
 using namespace std;

@@ -109,6 +109,7 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	"${ROOTPWAGEN_LIBS}"
+	"${UTILITIES_LIBS}"
 	)
 
 # link the shared library with the python bindings

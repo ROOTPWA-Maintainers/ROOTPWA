@@ -44,6 +44,7 @@
 #include "TSystem.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 
 
 using namespace std;

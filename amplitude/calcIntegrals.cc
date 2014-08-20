@@ -38,6 +38,7 @@
 #include "TFile.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 #include "fileUtils.hpp"
 #include "ampIntegralMatrix.h"
 
