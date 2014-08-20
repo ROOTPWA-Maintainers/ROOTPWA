@@ -48,6 +48,31 @@ set(SOURCES
 	reportingUtilsEnvironment.cc
 	)
 
+# produce new version of environment printing variables
+ADD_CUSTOM_TARGET(
+	environment
+	${CMAKE_COMMAND} -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/environment.h.in
+	                 -D DST=${CMAKE_CURRENT_SOURCE_DIR}/environment.h
+	                 -D CMAKE_HOST_SYSTEM_NAME=${CMAKE_HOST_SYSTEM_NAME}
+	                 -D CMAKE_HOST_SYSTEM_PROCESSOR=${CMAKE_HOST_SYSTEM_PROCESSOR}
+	                 -D CMAKE_HOST_SYSTEM_VERSION=${CMAKE_HOST_SYSTEM_VERSION}
+	                 -D NMB_CPU_CORES=${NMB_CPU_CORES}
+	                 -D HOSTNAME=${HOSTNAME}
+	                 -D USER=${USER}
+	                 -D CMAKE_SOURCE_DIR_=${CMAKE_SOURCE_DIR}
+	                 -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+	                 -D Boost_LIBRARY_VERSION=${Boost_LIBRARY_VERSION}
+	                 -D Boost_INCLUDE_DIRS=${Boost_INCLUDE_DIRS}
+	                 -D Libconfig_VERSION=${Libconfig_VERSION}
+	                 -D Libconfig_DIR=${Libconfig_DIR}
+	                 -D ROOTSYS=${ROOTSYS}
+	                 -D CUDA_VERSION=${CUDA_VERSION}
+	                 -D CUDA_LIB_DIRS=${CUDA_LIB_DIRS}
+	                 -D PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}
+	                 -D PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}
+	                 -P ${CMAKE_CURRENT_SOURCE_DIR}/environment.cmake
+)
+
 
 # library
 set(THIS_LIB "RootPwaUtil")
@@ -55,7 +80,7 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	)
-
+add_dependencies(${THIS_LIB} environment)
 
 # build tests
 add_subdirectory(test)

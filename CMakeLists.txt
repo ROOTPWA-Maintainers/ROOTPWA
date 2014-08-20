@@ -57,7 +57,6 @@ message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 # load cmake macros
 include(CommonMacros)
 include(FeatureSummary)
-include(AddEnvCompilerDefs)
 include(ProcessorCount)
 include(CheckCXXSourceCompiles)
 
@@ -446,11 +445,6 @@ if(GIT_FOUND)
 		message(STATUS "Error running 'git'. Repository hash unknown.")
 	endif()
 endif()
-if(GIT_HASH)
-	add_definitions(-D'GIT_HASH=${GIT_HASH}')
-else()
-	add_definitions(-D'GIT_HASH=\"\"')
-endif()
 
 
 # setup doxygen
@@ -478,10 +472,6 @@ else()
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		)
 endif()
-
-
-# make some environment variables accessible via predefined macro variables
-add_env_compiler_defs()
 
 
 enable_testing()

@@ -1,6 +1,7 @@
 
 #include <iostream>
 
+#include "environment.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
 
@@ -10,63 +11,6 @@ using namespace rpwa;
 
 	//////////////////////////////////////////////////////////////////////////////
 	// functions to print version and compilation info
-
-	// check macro variables set by Makefile
-#ifndef CMAKE_HOST_SYSTEM_NAME
-#define CMAKE_HOST_SYSTEM_NAME "undefined"
-#endif
-#ifndef CMAKE_HOST_SYSTEM_PROCESSOR
-#define CMAKE_HOST_SYSTEM_PROCESSOR "undefined"
-#endif
-#ifndef CMAKE_HOST_SYSTEM_VERSION
-#define CMAKE_HOST_SYSTEM_VERSION "undefined"
-#endif
-#ifndef NMB_CPU_CORES
-#define NMB_CPU_CORES "undefined"
-#endif
-#ifndef HOSTNAME
-#define HOSTNAME "undefined"
-#endif
-#ifndef USER
-#define USER "undefined"
-#endif
-#ifndef CMAKE_SOURCE_DIR
-#define CMAKE_SOURCE_DIR "undefined"
-#endif
-#ifndef CMAKE_BUILD_TYPE
-#define CMAKE_BUILD_TYPE "undefined"
-#endif
-#ifndef GIT_HASH
-#define GIT_HASH "undefined"
-#endif
-#ifndef Boost_LIBRARY_VERSION
-#define Boost_LIBRARY_VERSION "undefined"
-#endif
-#ifndef Boost_INCLUDE_DIRS
-#define Boost_INCLUDE_DIRS "undefined"
-#endif
-#ifndef Libconfig_VERSION
-#define Libconfig_VERSION "undefined"
-#endif
-#ifndef Libconfig_DIR
-#define Libconfig_DIR "undefined"
-#endif
-#ifndef ROOTSYS
-#define ROOTSYS "undefined"
-#endif
-#ifndef CUDA_VERSION
-#define CUDA_VERSION "undefined"
-#endif
-#ifndef CUDA_LIB_DIRS
-#define CUDA_LIB_DIRS "undefined"
-#endif
-#ifndef PYTHONLIBS_VERSION_STRING
-#define PYTHONLIBS_VERSION_STRING "undefined"
-#endif
-#ifndef PYTHON_INCLUDE_DIRS
-#define PYTHON_INCLUDE_DIRS "undefined"
-#endif
-
 
 void rpwa::printGitHash()
 {
