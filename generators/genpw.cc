@@ -37,6 +37,7 @@
 #include<particleDataTable.h>
 #include<randomNumberGenerator.h>
 #include<reportingUtils.hpp>
+#include<reportingUtilsEnvironment.h>
 
 
 using namespace rpwa;
@@ -68,6 +69,10 @@ void printUsage(char* prog, int errCode = 0)
 
 int main(int argc, char** argv)
 {
+	printCompilerInfo();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
 
 	unsigned int nEvents = 100;
 	unsigned int maxAttempts = 0;
