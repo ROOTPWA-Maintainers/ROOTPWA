@@ -138,9 +138,9 @@ if __name__ == "__main__":
 		printErr("Could not find fit result tree '" + config.fitResultTreeName +
 		         "' in file '" + args.fitResult + "'. Aborting...")
 		sys.exit(1)
-	massBinCenterBest = 0
 	massRange = generatorManager.getGenerator().getTPrimeAndMassPicker().massRange()
-	massBinCenter = (massRange[0] + massRange[1]) / 2.
+	# unit of mass is GeV in generator, and MeV in the fit result
+	massBinCenter = 1000. * (massRange[0] + massRange[1]) / 2.
 	fitResult = getBestFitResult(massBinCenter, fitResultTree)
 
 	waveDescriptions = []
