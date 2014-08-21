@@ -71,9 +71,6 @@ namespace rpwa {
 
 		void buildDaughterList();
 
-		// calculate the t' by using the information of the incoming and outgoing particle in the vertex
-		double calcTPrime(const TLorentzVector& inputParticle, const TLorentzVector& outputParticle);
-
 		rpwa::nBodyPhaseSpaceGen _phaseSpace;
 
 		std::vector<double> _maxXMassSlices;

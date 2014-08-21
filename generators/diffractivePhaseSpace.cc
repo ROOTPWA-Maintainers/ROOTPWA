@@ -248,14 +248,3 @@ diffractivePhaseSpace::event()
 
 	return attempts;
 }
-
-
-double
-diffractivePhaseSpace::calcTPrime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out) {
-	double result = 0.;
-	result = (particle_Out.M2()-particle_In.M2());
-	result = pow(result,2);
-	result /= 4*pow(particle_In.P(),2);
-	result = fabs((particle_In-particle_Out).M2())-fabs(result);
-	return result;
-}
