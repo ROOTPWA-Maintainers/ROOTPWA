@@ -132,11 +132,10 @@ namespace rpwa {
 		bool initKinematicsData(const TClonesArray& prodKinParticles,
 		                        const TClonesArray& decayKinParticles);  ///< initializes input data
 
-		bool clearKinematicsData(const TClonesArray& prodKinMomenta,
-		                         const TClonesArray& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool clearKinematicsData();    ///< reads production and decay kinematics data and sets respective 4-momenta
 
-		bool addKinematicsData(const TClonesArray& prodKinMomenta,
-		                       const TClonesArray& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool addKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta,
+							   const std::vector<std::vector<TVector3> >& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
 
 		//void fillKinematicsDataCache();  ///< copies kinematics data into cache; needed for Bose symmetrization
 

@@ -663,11 +663,10 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 }
 
 bool
-decayTopology::clearKinematicsData(const TClonesArray& prodKinMomenta,
-                                   const TClonesArray& decayKinMomenta)
+decayTopology::clearKinematicsData()
 {
 	// clear production kinematics
-	bool success = productionVertex()->clearKinematicsData(prodKinMomenta);
+	bool success = productionVertex()->clearKinematicsData();
 	if (not success)
 		return false;
 
@@ -679,18 +678,18 @@ decayTopology::clearKinematicsData(const TClonesArray& prodKinMomenta,
 }
 
 bool
-decayTopology::addKinematicsData(const TClonesArray& prodKinMomenta,
-                                 const TClonesArray& decayKinMomenta)
+decayTopology::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta,
+								 const vector<vector<TVector3> >& decayKinMomenta)
 {
 	// set production kinematics
 	bool success = productionVertex()->addKinematicsData(prodKinMomenta);
 
 	// check momentum array
-	const int nmbFsPart = decayKinMomenta.GetEntriesFast();
+	const int nmbFsPart = decayKinMomenta.size();
 	if ((nmbFsPart < 0) or ((unsigned int)nmbFsPart != nmbFsParticles())) {
 		printWarn << "array of decay kinematics particle momenta has wrong size: "
-		          << nmbFsPart << " (expected " << nmbFsParticles() << "). "
-		          << "cannot read decay kinematics." << endl;
+				  << nmbFsPart << " (expected " << nmbFsParticles() << "). "
+				  << "cannot read decay kinematics." << endl;
 		success = false;
 	}
 	if (not success)
@@ -700,20 +699,15 @@ decayTopology::addKinematicsData(const TClonesArray& prodKinMomenta,
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part      = fsParticles()[i];
 		const unsigned int partIndex = _fsDataPartIndexMap[i];
-		const TVector3*    mom       = dynamic_cast<TVector3*>(decayKinMomenta[partIndex]);
-		if (not mom) {
-			printWarn << "decay kinematics data entry [" << partIndex << "] is not of type TVector3. "
-			          << "cannot read decay kinematics momentum for particle '" << part->name() << "'. "
-			          << "skipping." << endl;
-			success = false;
-			continue;
+		const vector<TVector3>& momenta = decayKinMomenta[partIndex];
+		for(unsigned int k = 0; k < momenta.size(); ++k) {
+			const TVector3& mom = momenta[k];
+			if (_debug)
+				printDebug << "setting momentum of final-state particle '" << part->name() << "' "
+						   << "at index [" << i << "] to " << mom << " GeV "
+						   << "at input data index [" << partIndex << "]" << endl;
+			_fsDataPartMomCache[i].push_back(mom);
 		}
-		if (_debug)
-			printDebug << "setting momentum of final-state particle '" << part->name() << "' "
-			           << "at index [" << i << "] to " << *mom << " GeV "
-			           << "at input data index [" << partIndex << "]" << endl;
-
-		_fsDataPartMomCache[i].push_back(*mom);
 	}
 
 	return success;

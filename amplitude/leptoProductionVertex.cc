@@ -614,7 +614,7 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 }
 
 bool
-leptoProductionVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
+leptoProductionVertex::clearKinematicsData()
 {
 	_beamLeptonMomCache.clear();
 	_scatteredLeptonMomCache.clear();
@@ -624,11 +624,11 @@ leptoProductionVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
 }
 
 bool
-leptoProductionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
+leptoProductionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
+	const int nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != _nmbProdKinPart) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
@@ -637,60 +637,40 @@ leptoProductionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 	}
 
 	// set beam lepton
-	bool      success       = true;
-	TVector3* beamLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
-	if (beamLeptonMom) {
+	bool success = true;
+
+	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
+
+		const TVector3& beamLeptonMom = prodKinMomenta[0][i];
 		if (_debug)
 			printDebug << "setting momentum of beam lepton '" << beamLepton()->name()
-			           << "' to " << *beamLeptonMom << " GeV" << endl;
-		_beamLeptonMomCache.push_back(*beamLeptonMom);
-	} else {
-		printWarn << "production kinematics data entry [0] is not of type TVector3. "
-		          << "cannot read beam lepton momentum." << endl;
-		success = false;
-	}
+					   << "' to " << beamLeptonMom << " GeV" << endl;
+		_beamLeptonMomCache.push_back(beamLeptonMom);
 
-	// set scattered lepton
-	TVector3* scatteredLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
-	if (scatteredLeptonMom) {
+		// set scattered lepton
+		const TVector3& scatteredLeptonMom = prodKinMomenta[1][i];
 		if (_debug)
 			printDebug << "setting momentum of scattered lepton '" << beamLepton()->name()
-			           << "' to " << *beamLeptonMom << " GeV" << endl;
-		_scatteredLeptonMomCache.push_back(*scatteredLeptonMom);
-	} else {
-		printWarn << "production kinematics data entry [1] is not of type TVector3. "
-		          << "cannot read scattered lepton momentum." << endl;
-		success = false;
-	}
+					   << "' to " << beamLeptonMom << " GeV" << endl;
+		_scatteredLeptonMomCache.push_back(scatteredLeptonMom);
 
 
-	// set recoil (optional)
-	if (_nmbProdKinPart >= 3) {
-		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
-		if (recoilMom) {
+		// set recoil (optional)
+		if (_nmbProdKinPart >= 3) {
+			const TVector3& recoilMom = prodKinMomenta[2][i];
 			if (_debug)
 				printDebug << "setting momentum of recoil particle '" << recoil()->name()
-				           << "' to " << *recoilMom << " GeV" << endl;
-			_recoilMomCache.push_back(*recoilMom);
-		} else {
-			printWarn << "production kinematics data entry [2] is not of type TVector3. "
-			          << "cannot read recoil particle momentum." << endl;
-			success = false;
+						   << "' to " << recoilMom << " GeV" << endl;
+			_recoilMomCache.push_back(recoilMom);
 		}
-	}
 
-	// set target (optional); if not defined fixed target is assumed
-	if (_nmbProdKinPart >= 4) {
-		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[3]);
-		if (targetMom) {
+		// set target (optional); if not defined fixed target is assumed
+		if (_nmbProdKinPart >= 4) {
+			const TVector3& targetMom = prodKinMomenta[3][i];
 			if (_debug)
 				printDebug << "setting momentum of target particle '" << target()->name()
-				           << "' to " << *targetMom << " GeV" << endl;
-			_targetMomCache.push_back(*targetMom);
-		} else {
-			printWarn << "production kinematics data entry [3] is not of type TVector3. "
-			          << "cannot read target particle momentum." << endl;
-			success = false;
+						   << "' to " << targetMom << " GeV" << endl;
+			_targetMomCache.push_back(targetMom);
 		}
 	}
 

@@ -76,18 +76,18 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 }
 
 bool
-nonInteractionVertex::clearKinematicsData(const TClonesArray& prodKinMomenta)
+nonInteractionVertex::clearKinematicsData()
 {
 	_XParticleCache.clear();
 	return true;
 }
 
 bool
-nonInteractionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
+nonInteractionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
+	const int nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != 1) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected 1). "
@@ -95,17 +95,13 @@ nonInteractionVertex::addKinematicsData(const TClonesArray& prodKinMomenta)
 		return false;
 	}
 
-	TVector3* XParticleMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
-	if (XParticleMom) {
+	for(unsigned int k = 0; k < prodKinMomenta[0].size(); ++k) {
+		const TVector3& XParticleMom = prodKinMomenta[0][k];
 		if (_debug) {
 			printDebug << "setting momentum of beam particle '" << XParticle()->name()
-			           << "' to " << *XParticleMom << " GeV" << endl;
+					   << "' to " << XParticleMom << " GeV" << endl;
 		}
-		_XParticleCache.push_back(*XParticleMom);
-	} else {
-		printWarn << "production kinematics data entry [0] is not of type TVector3. "
-		          << "cannot read beam particle momentum." << endl;
-		return false;
+		_XParticleCache.push_back(XParticleMom);
 	}
 
 	return true;

@@ -373,6 +373,7 @@ main(int argc, char** argv)
 
 				if (inTrees[0]->LoadTree(eventIndex) < 0)
 					break;
+
 				// read only required branches
 				prodKinMomentaBr->GetEntry (eventIndex);
 				decayKinMomentaBr->GetEntry(eventIndex);
@@ -385,9 +386,44 @@ main(int argc, char** argv)
 					continue;
 				}
 
+				const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
+				const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
+
+				vector<vector<TVector3> > prodMomenta(numProdMomenta, vector<TVector3>(1));
+				vector<vector<TVector3> > decayMomenta(numDecayMomenta, vector<TVector3>(1));
+
+				bool success = true;
+
+				for (unsigned int i = 0; i < numProdMomenta; ++i) {
+					const TVector3* mom = dynamic_cast<TVector3*>((*prodKinMomenta)[i]);
+					if (not mom) {
+						printWarn << "production kinematics data entry [" << i << "] is not of type TVector3. "
+								  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+								  << "skipping." << endl;
+						success = false;
+						continue;
+					}
+					prodMomenta[i][0] = *mom;
+				}
+				for (unsigned int i = 0; i < numDecayMomenta; ++i) {
+					const TVector3* mom = dynamic_cast<TVector3*>((*decayKinMomenta)[i]);
+					if (not mom) {
+						printWarn << "decay kinematics data entry [" << i << "] is not of type TVector3. "
+								  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+								  << "skipping." << endl;
+						success = false;
+						continue;
+					}
+					decayMomenta[i][0] = *mom;
+				}
+
+				if(!success) {
+					continue;
+				}
+
 				// test single events
-				topo->clearKinematicsData(*prodKinMomenta, *decayKinMomenta);
-				if (topo->addKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+				topo->clearKinematicsData();
+				if (topo->addKinematicsData(prodMomenta, decayMomenta)) {
 					const vector<complex<double> > ampResult = (*amp)();
 					if(ampResult.size() != 1) {
 						cout << "ERROR: wrong vector size. aborting!" << endl;

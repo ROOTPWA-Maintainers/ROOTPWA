@@ -70,8 +70,8 @@ namespace rpwa {
 		virtual void setXFlavorQN() = 0;  ///< general interface to set flavor quantum numbers of X (baryon nmb., S, C, B) based on production mechanism
 
 		virtual bool initKinematicsData(const TClonesArray& names)   = 0;  ///< general interface to initialize input data format
-		virtual bool clearKinematicsData(const TClonesArray& momenta) = 0;  ///< read new input data
-		virtual bool addKinematicsData(const TClonesArray& momenta) = 0;  ///< add input data event
+		virtual bool clearKinematicsData() = 0;  ///< read new input data
+		virtual bool addKinematicsData(const std::vector<std::vector<TVector3> >& momenta) = 0;  ///< add input data event
 
 		virtual bool revertMomenta() = 0;  ///< general interface to reset momenta to the values of last event read
 
