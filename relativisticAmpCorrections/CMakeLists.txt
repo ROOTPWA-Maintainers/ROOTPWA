@@ -32,7 +32,7 @@
 
 
 message(STATUS "")
-message(STATUS ">>> Setting up 'relampl' directory.")
+message(STATUS ">>> Setting up 'relativisticAmpCorrections' directory.")
 
 
 # set include directories

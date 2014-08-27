@@ -561,7 +561,7 @@ add_subdirectory(generators)
 #add_subdirectory(fortran)
 
 # Relativic Amplitudes
-add_subdirectory(relampl)
+add_subdirectory(relativisticAmpCorrections)
 
 # massdep
 #add_subdirectory(massdep)
