@@ -102,8 +102,8 @@ make_shared_library(
 
 
 # executables
-make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
-make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
+make_executable(generatePhaseSpace       generatePhaseSpace.cc           ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
+make_executable(weightEvents             weightEvents.cc                 ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
 
 # build tests
 add_subdirectory(test)
