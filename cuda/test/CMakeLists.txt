@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for CUDA code
+#//      build file for CUDA tests
 #//
 #//
 #// Author List:
@@ -31,39 +31,23 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-get_filename_component(_THIS_DIR ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-message(STATUS ">>> Setting up '${_THIS_DIR}' directory.")
-unset(_THIS_DIR)
-
-
-# -Wall reports warnings in system libraries; so we cannot use -Werror
-set(CMAKE_CXX_FLAGS "-Wall")
-message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")
-message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
         SYSTEM ${Boost_INCLUDE_DIRS}
         SYSTEM ${CUDA_SAMPLES_INC_DIR}
         ${ROOT_INCLUDE_DIR}
         ${UTILITIES_INCLUDE_DIR}
+        ${CUDACODE_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
         )
 include_directories(${INCLUDE_DIRECTORIES})
 
 
-# source files that are compiled into library
-set(SOURCES
-	likelihoodInterface.cu
-	)
+# compile HOST executables
+make_executable(testLikelihoodMockup testLikelihoodMockup.cc ${CUDA_CUTIL_LIBRARY} "${CUDACODE_LIBS}" "${ROOT_LIBS}")
 
+cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 
-# compile CUDA library
-set(_THIS_LIB "RootPwaCuda")
-cuda_add_library(${_THIS_LIB} ${SOURCES} SHARED)
-
-
-# build tests
-add_subdirectory(test)
+cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
+target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
