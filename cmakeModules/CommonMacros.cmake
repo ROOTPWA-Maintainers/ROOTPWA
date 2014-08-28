@@ -88,6 +88,7 @@ function(make_executable EXE_NAME SOURCES)
 endfunction(make_executable)
 
 
+# protects against building project in source directory
 macro(enforce_out_of_source_build)
 	if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 		message(FATAL_ERROR "Building this project in the source directory is not allowed. "
@@ -99,23 +100,10 @@ macro(enforce_out_of_source_build)
 endmacro(enforce_out_of_source_build)
 
 
-# removes item from property list of enabled features and adds it to the list of disabled ones
-function(disable_feature FEATURE_NAME)
-	if(DEBUG_OUTPUT)
-		message(STATUS "disable_feature was called with the following arguments:
-        FEATURE_NAME = '${FEATURE_NAME}'")
-	endif()
-	set(${FEATURE_NAME}_FOUND FALSE)
-	get_property(_FEATURES GLOBAL PROPERTY ENABLED_FEATURES)
-	if(DEBUG_OUTPUT)
-		message(STATUS "Removing feature '${FEATURE_NAME}' from ENABLED_FEATURES = '${_FEATURES}'")
-	endif()
-	list(LENGTH _FEATURES _FEATURES_SIZE)
-	if(_FEATURES_SIZE GREATER 0)
-		list(REMOVE_ITEM _FEATURES ${FEATURE_NAME})
-		set_property(GLOBAL PROPERTY ENABLED_FEATURES ${_FEATURES})
-		set_property(GLOBAL APPEND PROPERTY DISABLED_FEATURES ${FEATURE_NAME})
-	endif()
-	unset(_FEATURES)
-	unset(_FEATURES_SIZE)
-endfunction(disable_feature)
+# little helper function that is used to print log message when entering subdirectories
+macro(message_setup_this_dir)
+	message(STATUS "")
+	get_filename_component(_THIS_DIR ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+	message(STATUS ">>> Setting up '${_THIS_DIR}' directory.")
+	unset(_THIS_DIR)
+endmacro(message_setup_this_dir)

@@ -31,10 +31,7 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-get_filename_component(_THIS_DIR ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-message(STATUS ">>> Setting up '${_THIS_DIR}' directory.")
-unset(_THIS_DIR)
+message_setup_this_dir()
 
 
 # -Wall reports warnings in system libraries; so we cannot use -Werror

@@ -42,8 +42,7 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'fortran' directory.")
+message_setup_this_dir()
 
 
 # enable Fortran support
