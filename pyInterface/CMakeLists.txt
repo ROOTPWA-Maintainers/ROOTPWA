@@ -31,15 +31,14 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'pyInterface' directory.")
+message_setup_this_dir()
+
 
 set(AMPLITUDE_SUBDIR amplitude)
 set(GENERATORS_SUBDIR generators)
 set(PYUTILS_SUBDIR pyUtils)
 set(SRC_SUBDIR src)
 set(UTILITIES_SUBDIR utilities)
-
 
 
 # set include directories

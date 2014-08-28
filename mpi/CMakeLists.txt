@@ -31,8 +31,7 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'mpi' directory.")
+message_setup_this_dir()
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")

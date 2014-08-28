@@ -31,8 +31,7 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'src' directory.")
+message_setup_this_dir()
 
 
 # set include directories
