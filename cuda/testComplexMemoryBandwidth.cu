@@ -38,7 +38,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 #include "reportingUtils.hpp"
 #include "arrayUtils.hpp"
@@ -53,27 +53,27 @@ using namespace rpwa;
 bool
 printCudaDeviceInfo(const int deviceId)
 {
-	const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
+        const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
 
-	cudaDeviceProp deviceProp;
-	cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-	if (deviceId == 0) {
-		// fields for both major & minor fields are 9999, if no CUDA capable devices are present
-		if ((deviceProp.major == 9999) and (deviceProp.minor == 9999)) {
+        cudaDeviceProp deviceProp;
+        checkCudaErrors(cudaGetDeviceProperties(&deviceProp, deviceId));
+        if (deviceId == 0) {
+                // fields for both major & minor fields are 9999, if no CUDA capable devices are present
+                if ((deviceProp.major == 9999) and (deviceProp.minor == 9999)) {
 			printWarn << "there is no CUDA device" << endl;
 			return false;
 		}
 	}
 	printInfo << "CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
-
-	// print info
-	int driverVersion = 0;
-	cutilSafeCall(cudaDriverGetVersion(&driverVersion));
-	int runtimeVersion = 0;
-	cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
-	cout << "    driver version: .................................. " << driverVersion / 1000 << "." << driverVersion % 100 << endl
-	     << "    runtime version: ................................. " << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
-	     << "    capability major revision number: ................ " << deviceProp.major << endl
+    
+        // print info
+        int driverVersion = 0;
+        checkCudaErrors(cudaDriverGetVersion(&driverVersion));
+        int runtimeVersion = 0;     
+        checkCudaErrors(cudaRuntimeGetVersion(&runtimeVersion));
+        cout << "    driver version: .................................. " << driverVersion / 1000 << "." << driverVersion % 100 << endl
+             << "    runtime version: ................................. " << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
+             << "    capability major revision number: ................ " << deviceProp.major << endl
 	     << "    capability minor revision number: ................ " << deviceProp.minor << endl
 	     << "    GPU clock frequency: ............................. " << deviceProp.clockRate * 1e-6f << " GHz" << endl
 	     << "    number of multiprocessors: ....................... " << deviceProp.multiProcessorCount << endl
@@ -85,7 +85,7 @@ printCudaDeviceInfo(const int deviceId)
 	     << "    maximum grid dimension ........................... " << deviceProp.maxGridSize[0] << " x " << deviceProp.maxGridSize[1]
 	     << " x " << deviceProp.maxGridSize[2] << endl
 	     << "    total amount of global memory: ................... " << deviceProp.totalGlobalMem / (1024. * 1024. * 1024.) << " GiBytes" << endl
-	     << "    total amount of constant memory: ................. " << deviceProp.totalConstMem << " bytes" << endl
+	     << "    total amount of constant memory: ................. " << deviceProp.totalConstMem << " bytes" << endl 
 	     << "    total amount of shared memory per block: ......... " << deviceProp.sharedMemPerBlock << " bytes" << endl
 	     << "    total number of registers available per block: ... " << deviceProp.regsPerBlock << endl
 	     << "    maximum memory pitch: ............................ " << deviceProp.memPitch << " bytes" << endl
@@ -251,7 +251,7 @@ verifySum2Kernel(const T*            inData,
 
 template<typename T>
 struct sumGlobalMemKernelCaller {
-
+  
 	typedef T value_type;
 
 	static void call(const unsigned int nmbBlocks,
@@ -284,7 +284,7 @@ struct sumGlobalMemKernelCaller {
 
 template<typename T, typename textureReaderT>
 struct sumTextureMemKernelCaller {
-
+  
 	typedef T                                     value_type;
 	typedef typename textureReaderT::texture_type texture_type;
 
@@ -318,7 +318,7 @@ struct sumTextureMemKernelCaller {
 
 template<typename T>
 struct sum2GlobalMemKernelCaller {
-
+  
 	typedef T value_type;
 
 	static void call(const unsigned int nmbBlocks,
@@ -357,7 +357,7 @@ struct sum2GlobalMemKernelCaller {
 
 template<typename T, typename textureReaderT>
 struct sum2TextureMemKernelCaller {
-
+  
 	typedef T                                     value_type;
 	typedef typename textureReaderT::texture_type texture_type;
 
@@ -417,53 +417,53 @@ void runKernel(const unsigned int nmbBlocks,
 	for (unsigned int i = 0; i < nmbElements; ++i)
 		hostInData[i] = (T)rand();
 
-	// create device arrays and copy host data to device
-	T* deviceInData;
-	T* deviceOutData;
-	cutilSafeCall(cudaMalloc((void**) &deviceInData,  dataSizeIn ));
-	cutilSafeCall(cudaMalloc((void**) &deviceOutData, dataSizeOut));
-	cutilSafeCall(cudaMemcpy(deviceInData, hostInData, dataSizeIn, cudaMemcpyHostToDevice));
+        // create device arrays and copy host data to device
+        T* deviceInData;
+        T* deviceOutData;
+        checkCudaErrors(cudaMalloc((void**) &deviceInData,  dataSizeIn ));
+        checkCudaErrors(cudaMalloc((void**) &deviceOutData, dataSizeOut));
+        checkCudaErrors(cudaMemcpy(deviceInData, hostInData, dataSizeIn, cudaMemcpyHostToDevice));
 
-	// bind texture
-	textureReaderT::bindTexture(deviceInData, dataSizeIn);
+        // bind texture
+        textureReaderT::bindTexture(deviceInData, dataSizeIn);
 
 	// dry-run kernel first to avoid any setup and caching effects
 	kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
 	                    deviceOutData, nmbElementsPerThread);
 
-	// setup and start timer
-	cudaEvent_t start, end;
-	cutilSafeCall(cudaEventCreate(&start));
-	cutilSafeCall(cudaEventCreate(&end  ));
-	cutilSafeCall(cudaEventRecord(start, 0));
+        // setup and start timer
+        cudaEvent_t start, end;
+        checkCudaErrors(cudaEventCreate(&start));
+        checkCudaErrors(cudaEventCreate(&end  ));
+        checkCudaErrors(cudaEventRecord(start, 0));
 
-	// run kernel
-	for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration)
+        // run kernel
+        for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration)
 		kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
-		                    deviceOutData, nmbElementsPerThread);
+                                    deviceOutData, nmbElementsPerThread);
 
-	// stop timer
-	cutilSafeCall(cudaEventRecord(end, 0));
-	cutilSafeCall(cudaEventSynchronize(end));
+        // stop timer
+        checkCudaErrors(cudaEventRecord(end, 0));
+        checkCudaErrors(cudaEventSynchronize(end));
 
-	// calculate and report bandwidth
-	float elapsedTime;
-	cutilSafeCall(cudaEventElapsedTime(&elapsedTime, start, end));
-	elapsedTime /= nmbIterations * 1000;  // [sec] per iteration
-	const unsigned long dataSize  = kernelCallerT::dataSize(nmbBlocks, nmbThreadsPerBlock,
-	                                                        nmbElementsPerThread);
+        // calculate and report bandwidth
+        float elapsedTime;
+        checkCudaErrors(cudaEventElapsedTime(&elapsedTime, start, end));
+        elapsedTime /= nmbIterations * 1000;  // [sec] per iteration
+        const unsigned long dataSize  = kernelCallerT::dataSize(nmbBlocks, nmbThreadsPerBlock,
+                                                                nmbElementsPerThread);
 	const float         bandwidth = dataSize / elapsedTime;
-	printInfo << "processed " << dataSize / (1024. * 1024.) << " MiBytes in "
-	          << elapsedTime * 1000 << " msec; "
-	          << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
-	cutilSafeCall(cudaEventDestroy(start));
-	cutilSafeCall(cudaEventDestroy(end  ));
+        printInfo << "processed " << dataSize / (1024. * 1024.) << " MiBytes in "
+                  << elapsedTime * 1000 << " msec; "
+                  << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
+        checkCudaErrors(cudaEventDestroy(start));
+        checkCudaErrors(cudaEventDestroy(end  ));
 
-	// copy kernel output data to host
-	cutilSafeCall(cudaMemcpy(hostOutData, deviceOutData, dataSizeOut, cudaMemcpyDeviceToHost));
+        // copy kernel output data to host
+        checkCudaErrors(cudaMemcpy(hostOutData, deviceOutData, dataSizeOut, cudaMemcpyDeviceToHost));
 
-	// test data
-	if (kernelCallerT::verify(hostInData, hostOutData, nmbBlocks,
+        // test data
+        if (kernelCallerT::verify(hostInData, hostOutData, nmbBlocks,
 	                          nmbThreadsPerBlock, nmbElementsPerThread))
 		printInfo << "verification successful" << endl;
 	else
@@ -472,52 +472,52 @@ void runKernel(const unsigned int nmbBlocks,
 	// unbind texture
 	textureReaderT::unbindTexture();
 
-	// cleanup memory
-	free(hostInData );
-	free(hostOutData);
-	cutilSafeCall(cudaFree(deviceInData ));
-	cutilSafeCall(cudaFree(deviceOutData));
-	cudaThreadExit();
+        // cleanup memory
+        free(hostInData );
+        free(hostOutData);
+        checkCudaErrors(cudaFree(deviceInData ));
+        checkCudaErrors(cudaFree(deviceOutData));
+        cudaThreadExit();
 }
 
 
 int main(int    argc,
-         char** argv)
+         char** argv) 
 {
-	// get number of CUDA devices in system
-	int deviceCount = 0;
-	cutilSafeCall(cudaGetDeviceCount(&deviceCount));
-	if (deviceCount == 0) {
-		printWarn << "there is no CUDA device" << endl;
-		return 0;
+        // get number of CUDA devices in system
+        int deviceCount = 0;
+        checkCudaErrors(cudaGetDeviceCount(&deviceCount));
+        if (deviceCount == 0) {
+                printWarn << "there is no CUDA device" << endl;
+                return 0;
 	}
 	printInfo << "found " << deviceCount << " CUDA device(s)" << endl;
 
 	// print info for all CUDA devices in system
 	for (int deviceId = 0; deviceId < deviceCount; ++deviceId)
-		printCudaDeviceInfo(deviceId);
+                printCudaDeviceInfo(deviceId);
+  
+        // use most powerful GPU in system
+        const int deviceId = gpuGetMaxGflopsDeviceId();
+        cudaDeviceProp deviceProp;
+        checkCudaErrors(cudaGetDeviceProperties(&deviceProp, deviceId));
+        printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
+        checkCudaErrors(cudaSetDevice(deviceId));
 
-	// use most powerful GPU in system
-	const int deviceId = cutGetMaxGflopsDeviceId();
-	cudaDeviceProp deviceProp;
-	cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-	printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
-	cutilSafeCall(cudaSetDevice(deviceId));
-
-	// create maximum number of threads for all blocks
-	const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
+        // create maximum number of threads for all blocks
+        const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
 	const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
 	const unsigned int nmbIterations      = 100;
 	printInfo << "using grid (" << nmbBlocks << " blocks) x "
 	          << "(" << nmbThreadsPerBlock << " threads per block); "
 	          << "running " << nmbIterations << " kernel iterations" << endl;
-
+  
 	// run kernels
 	printInfo << "testing 1D complexTest<float> global memory read ---------------------------" << endl;
 	runKernel<cuda::complexTest<float2, float>, cuda::floatComplexTextureReader,
 		sumGlobalMemKernelCaller<cuda::complexTest<float2, float> > >
 		(nmbBlocks, nmbThreadsPerBlock, nmbIterations);
-
+	
 	printInfo << "testing 1D complexTest<double> global memory read --------------------------" << endl;
 	runKernel<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader,
 		sumGlobalMemKernelCaller<cuda::complexTest<double2, double> > >
@@ -552,6 +552,6 @@ int main(int    argc,
 	runKernel<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader,
 		sum2TextureMemKernelCaller<cuda::complexTest<double2, double>, cuda::doubleComplexTextureReader> >
 		(nmbBlocks, nmbThreadsPerBlock, nmbIterations);
-
+	
 	return 0;
 }

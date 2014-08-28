@@ -48,6 +48,7 @@ set(SOURCES
 	reportingUtilsEnvironment.cc
 	)
 
+
 # produce new version of environment printing variables
 ADD_CUSTOM_TARGET(
 	environment
@@ -81,6 +82,7 @@ make_shared_library(
 	"${SOURCES}"
 	)
 add_dependencies(${THIS_LIB} environment)
+
 
 # build tests
 add_subdirectory(test)

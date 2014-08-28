@@ -129,7 +129,17 @@ In addition you also need to compile the `Boost.Python` library (e.g. by running
 
 ### CUDA (optional) ###
 
-If you have access to a CUDA capable nvidia Graphics Card (Shader Model 1.3 or higher) you may want to install the CUDA framework (version 3.0 or higher). The build system tries to find your CUDA installation based on the `NVSDKCUDA_ROOT` environment variable. This should point to `<your NVIDIA_GPU_Computing_SDK directory>/C`. If `NVSDKCUDA_ROOT` is not set the build system assumes that the SDK is located in `${HOME}/NVIDIA_GPU_Computing_SDK/C`. If a CUDA installation is found, the CUDA features are enabled automatically.
+If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 5.5 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
+
+    `export PATH=/usr/local/cuda-5.5/bin:${PATH}`
+    `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:${LD_LIBRARY_PATH}`
+    (for 32-bit systems: `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib:${LD_LIBRARY_PATH}`)
+
+to your `.bashrc`. You have to copy the CUDA samples to a directory of your choice by running
+
+    `cuda-install-samples-5.5.sh <dir>`
+
+Point the environment variable `CUDA_SAMPLES_ROOT_DIR` to the location of the directory with the CUDA samples. If this variable is not set, the build system assumes that the directory is located in `${HOME}/NVIDIA_CUDA-5.5_Samples`.
 
 
 ### MPI (optional, experimental) ###

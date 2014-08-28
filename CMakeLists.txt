@@ -250,15 +250,11 @@ add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
-set(CUDA_SHADER_MODELS "13" "20")
-if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
-	# use default SDK path, if not defined by user
-	set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
-endif()
-find_package(CUDA 4.0)
+set(CUDA_SHADER_MODELS "20")
+find_package(CUDA 5.5)
 set_package_properties(CUDA
-	PROPERTIES
-	DESCRIPTION "nvidia GPGPU framework"
+        PROPERTIES
+        DESCRIPTION "nvidia GPGPU framework"
 	URL "http://developer.nvidia.com/category/zone/cuda-zone"
 	PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
 	TYPE OPTIONAL
@@ -268,36 +264,29 @@ if(NOT CUDA_FOUND)
 	message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
 else()
 	message(STATUS "Found CUDA version ${CUDA_VERSION}")
-	message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
-	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
-	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
-	if(NOT CUDA_SDK_ROOT_DIR)
-		set(USE_CUDA OFF)
-		message(STATUS "Found CUDA intallation, but could not find CUDA SDK in '$ENV{NVSDKCUDA_ROOT}'. "
-			"Check that $NVSDKCUDA_ROOT is set correctly. No CUDA components will be generated.")
-	else()
-		# find cuda utility library
-		set(CUDA_CUTIL_LIB_SUFFIX "i386")
-		if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-			set(CUDA_CUTIL_LIB_SUFFIX ${CMAKE_SYSTEM_PROCESSOR})
-		endif()
-		find_library(CUDA_CUTIL_LIBRARY
-			NAMES cutil_${CUDA_CUTIL_LIB_SUFFIX}
-			PATHS ${CUDA_SDK_ROOT_DIR}/lib
-			NO_DEFAULT_PATH
-			)
-		if(NOT CUDA_CUTIL_LIBRARY)
-			set(USE_CUDA OFF)
-			message(STATUS "Found CUDA intallation, but could not find CUDA utility library "
-				"'cutil_${CUDA_CUTIL_LIB_SUFFIX}' in '${CUDA_SDK_ROOT_DIR}/lib'. "
-				"No CUDA components will be generated.")
-		else()
-			set(USE_CUDA ON)
-			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'.")
-			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'.")
-			message(STATUS "Enabling compilation of CUDA components.")
-			# define for which shader models code is generated
-			message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+        message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
+        message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
+        message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
+
+        if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
+                # use default path for CUDA samples, if not defined by user
+                set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
+                endif()
+        # find include directory
+        find_file(CUDA_SAMPLES_INC_DIR
+                        NAMES inc
+            PATHS $ENV{CUDA_SAMPLES_ROOT_DIR}/common
+            NO_DEFAULT_PATH)
+        if(NOT CUDA_SAMPLES_INC_DIR)
+                        set(USE_CUDA OFF)
+                message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
+                        "Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
+                else()
+                        set(USE_CUDA ON)
+                message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
+                        message(STATUS "Enabling compilation of CUDA components.")
+                        # define for which shader models code is generated
+                        message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
 			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
 				list(APPEND CUDA_NVCC_FLAGS
 					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
@@ -307,12 +296,10 @@ else()
 			# set some global switches
 			set(CUDA_BUILD_CUBIN     OFF)
 			set(CUDA_BUILD_EMULATION OFF)
-			set(CUDA_VERBOSE_BUILD   OFF)
-			# enable CUDA code in other parts of the project
-			add_definitions(-DUSE_CUDA)
-			set(CUDA_LIB_DIRS "${CUDA_TOOLKIT_ROOT_DIR}, ${CUDA_SDK_ROOT_DIR}")
-		endif()
-	endif()
+                        set(CUDA_VERBOSE_BUILD   OFF)
+                        # enable CUDA code in other parts of the project
+                        add_definitions(-DUSE_CUDA)
+        endif()
 endif()
 add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 
@@ -523,15 +510,15 @@ if(USE_PYTHON)
 endif()
 
 if(USE_CUDA)
-	set(CUDA_INCLUDE_DIR
-		${CMAKE_SOURCE_DIR}/cuda
-		)
-	set(CUDA_LIBS
-		cuda
-		)
+        set(CUDACODE_INCLUDE_DIR
+                ${CMAKE_SOURCE_DIR}/cuda
+                )
+        set(CUDACODE_LIBS
+                RootPwaCuda
+                )
 else()
-	set(CUDA_INCLUDE_DIR)
-	set(CUDA_LIBS)
+        set(CUDACODE_INCLUDE_DIR)
+        set(CUDACODE_LIBS)
 endif()
 
 

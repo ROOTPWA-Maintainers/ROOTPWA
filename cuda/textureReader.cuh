@@ -52,14 +52,14 @@ namespace rpwa {
 			typedef float texture_type;
 
 			static __device__ float fetch(const int index) { return tex1Dfetch(floatTexture, index); }
+                        
+                        static HOST void bindTexture(const void*        deviceInData,
+                                                     const unsigned int memSize)
+                        { return checkCudaErrors(cudaBindTexture(0, floatTexture, deviceInData, memSize)); }
 
-			static HOST void bindTexture(const void*        deviceInData,
-			                             const unsigned int memSize)
-			{ return cutilSafeCall(cudaBindTexture(0, floatTexture, deviceInData, memSize)); }
+                        static HOST void unbindTexture() { return checkCudaErrors(cudaUnbindTexture(floatTexture)); }
 
-			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(floatTexture)); }
-
-		};
+                };
 
 
 		texture<float2, 1, cudaReadModeElementType> float2Texture;
@@ -69,13 +69,13 @@ namespace rpwa {
 
 			static __device__ float2 fetch(const int index) { return tex1Dfetch(float2Texture, index); }
 
-			static HOST void bindTexture(const void*        deviceInData,
-			                             const unsigned int memSize)
-			{ return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
+                        static HOST void bindTexture(const void*        deviceInData,
+                                                     const unsigned int memSize)
+                        { return checkCudaErrors(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
 
-			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
+                        static HOST void unbindTexture() { return checkCudaErrors(cudaUnbindTexture(float2Texture)); }
 
-		};
+                };
 
 
 		struct floatComplexTextureReader {
@@ -88,13 +88,13 @@ namespace rpwa {
 				return complexTest<float2, float>(val.x, val.y);
 			}
 
-			static HOST void bindTexture(const void*        deviceInData,
-			                             const unsigned int memSize)
-			{ return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
+                        static HOST void bindTexture(const void*        deviceInData,
+                                                     const unsigned int memSize)
+                        { return checkCudaErrors(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
 
-			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
+                        static HOST void unbindTexture() { return checkCudaErrors(cudaUnbindTexture(float2Texture)); }
 
-		};
+                };
 
 
 		texture<float4, 1, cudaReadModeElementType> float4Texture;
@@ -104,13 +104,13 @@ namespace rpwa {
 
 			static __device__ float4 fetch(const int index) { return tex1Dfetch(float4Texture, index); }
 
-			static HOST void bindTexture(const void*        deviceInData,
-			                             const unsigned int memSize)
-			{ return cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, memSize)); }
+                        static HOST void bindTexture(const void*        deviceInData,
+                                                     const unsigned int memSize)
+                        { return checkCudaErrors(cudaBindTexture(0, float4Texture, deviceInData, memSize)); }
+  
+                        static HOST void unbindTexture() { return checkCudaErrors(cudaUnbindTexture(float4Texture)); }
 
-			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float4Texture)); }
-
-		};
+                };
 
 
 		texture<int4, 1, cudaReadModeElementType> int4Texture;
@@ -125,13 +125,13 @@ namespace rpwa {
 				                                    __hiloint2double(val.w, val.z));
 			}
 
-			static HOST void bindTexture(const void*        deviceInData,
-			                             const unsigned int memSize)
-			{ return cutilSafeCall(cudaBindTexture(0, int4Texture, deviceInData, memSize)); }
+                        static HOST void bindTexture(const void*        deviceInData,
+                                                     const unsigned int memSize)
+                        { return checkCudaErrors(cudaBindTexture(0, int4Texture, deviceInData, memSize)); }
+  
+                        static HOST void unbindTexture() { return checkCudaErrors(cudaUnbindTexture(int4Texture)); }
 
-			static HOST void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(int4Texture)); }
-
-		};
+                };
 
 
 	}  // namespace cuda

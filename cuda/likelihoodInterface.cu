@@ -31,7 +31,7 @@
 //-------------------------------------------------------------------------
 
 
-#include <cutil_inline.h>
+#include <helper_cuda.h>
 
 #include "arrayUtils.hpp"
 #include "reportingUtils.hpp"
@@ -141,10 +141,10 @@ template<typename complexT>
 bool
 likelihoodInterface<complexT>::initCudaDevice()
 {
-	_cudaInitialized = false;
+        _cudaInitialized = false;
 
   // get number of CUDA devices in system
-  cutilSafeCall(cudaGetDeviceCount(&_nmbOfCudaDevices));
+  checkCudaErrors(cudaGetDeviceCount(&_nmbOfCudaDevices));
   if (_nmbOfCudaDevices == 0) {
     printWarn << "there are no CUDA devices in the system" << endl;
     return false;
@@ -152,15 +152,15 @@ likelihoodInterface<complexT>::initCudaDevice()
   printInfo << "found " << _nmbOfCudaDevices << " CUDA device(s)" << endl;
 
   // use most powerful GPU in system
-  _cudaDeviceId = cutGetMaxGflopsDeviceId();
-  cutilSafeCall(cudaGetDeviceProperties(&_cudaDeviceProp, _cudaDeviceId));
+  _cudaDeviceId = gpuGetMaxGflopsDeviceId();
+  checkCudaErrors(cudaGetDeviceProperties(&_cudaDeviceProp, _cudaDeviceId));
   // fields for both major & minor fields are 9999, if device is not present
   if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
-	  printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
-	  return false;
+          printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
+          return false;
   }
-  cutilSafeCall(cudaSetDevice(_cudaDeviceId));
-	_cudaInitialized = true;
+  checkCudaErrors(cudaSetDevice(_cudaDeviceId));
+        _cudaInitialized = true;
   printInfo << "using CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
             << availableDeviceMem() << " bytes available memory" << endl;
 	return true;
@@ -177,14 +177,14 @@ likelihoodInterface<complexT>::closeCudaDevice()
   _nmbWavesRefl[1]  = 0;
   _nmbWavesMax      = 0;
   _rank             = 0;
-	if (_d_decayAmps) {
-		cutilSafeCall(cudaFree(_d_decayAmps));
-		_d_decayAmps = 0;
-	}
-	cutilSafeCall(cudaThreadExit());
-	if (_cudaInitialized)
-		printInfo << "closing CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
-		          << availableDeviceMem() << " bytes available memory" << endl;
+        if (_d_decayAmps) {
+                checkCudaErrors(cudaFree(_d_decayAmps));
+                _d_decayAmps = 0;
+        }
+        checkCudaErrors(cudaThreadExit());
+        if (_cudaInitialized)
+                printInfo << "closing CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
+                          << availableDeviceMem() << " bytes available memory" << endl;
 	_cudaInitialized = false;
   _cudaDeviceId    = -1;
 }
@@ -233,13 +233,13 @@ likelihoodInterface<complexT>::loadDecayAmps
 				}
 	}
 
-	// copy decay amps to device memory
-	const unsigned int size = nmbDecayAmps * sizeof(complexT);
-	cutilSafeCall(cudaMalloc((void**)&_d_decayAmps, size));
-	cutilSafeCall(cudaMemcpy(_d_decayAmps, (reshuffleArray) ? h_decayAmps : decayAmps,
-	                         size, cudaMemcpyHostToDevice));
-	printInfo << availableDeviceMem() / (1024. * 1024.) << " MiBytes left on CUDA device after loading "
-	          << "decay amplitudes" << endl;
+        // copy decay amps to device memory
+        const unsigned int size = nmbDecayAmps * sizeof(complexT);
+        checkCudaErrors(cudaMalloc((void**)&_d_decayAmps, size));
+        checkCudaErrors(cudaMemcpy(_d_decayAmps, (reshuffleArray) ? h_decayAmps : decayAmps,
+                                 size, cudaMemcpyHostToDevice));
+        printInfo << availableDeviceMem() / (1024. * 1024.) << " MiBytes left on CUDA device after loading "
+                  << "decay amplitudes" << endl;
 	return true;
 }
 
@@ -262,11 +262,11 @@ likelihoodInterface<complexT>::availableDeviceMem()
 {
 	if (not _cudaInitialized) {
 		printWarn << "cannot estimate available device memory. CUDA device not initialized." << endl;
-		return 0;
-	}
-	size_t free, total;
-	cutilSafeCall(cudaMemGetInfo(&free, &total));
-	return free;
+                return 0;
+        }
+        size_t free, total;
+        checkCudaErrors(cudaMemGetInfo(&free, &total));
+        return free;
 }
 
 
@@ -286,13 +286,13 @@ ostream&
 likelihoodInterface<complexT>::printKernelAttributes(ostream& out,
                                                      kernelT* kernel)
 {
-	if (not kernel)
-		out << "null pointer to kernel" << endl;
-	struct cudaFuncAttributes	kernelAttr;
-	cutilSafeCall(cudaFuncGetAttributes(&kernelAttr, kernel));
-	out << "kernel attributes:" << endl
-	    << "    compiled for architecture ........ " << kernelAttr.binaryVersion / 10. << endl
-	    << "    PTX virtual architecture ......... " << kernelAttr.binaryVersion / 10. << endl
+        if (not kernel)
+                out << "null pointer to kernel" << endl;
+        struct cudaFuncAttributes       kernelAttr;
+        checkCudaErrors(cudaFuncGetAttributes(&kernelAttr, kernel));
+        out << "kernel attributes:" << endl
+            << "    compiled for architecture ........ " << kernelAttr.binaryVersion / 10. << endl
+            << "    PTX virtual architecture ......... " << kernelAttr.binaryVersion / 10. << endl
 	    << "    amount of constant memory ........ " << kernelAttr.constSizeBytes  << " bytes" << endl
 	    << "    amount of local memory ........... " << kernelAttr.localSizeBytes  << " bytes" << endl
 	    << "    amount of shared memory .......... " << kernelAttr.sharedSizeBytes << " bytes" << endl
@@ -311,13 +311,13 @@ likelihoodInterface<complexT>::estimateOptimumKernelGrid(kernelT*           kern
                                                          const unsigned int minNmbThreads)
 {
 	nmbBlocks = nmbThreadsPerBlock = 0;
-	if (not kernel)
-		printWarn << "null pointer to kernel" << endl;
-	struct cudaFuncAttributes	kernelAttr;
-	cutilSafeCall(cudaFuncGetAttributes(&kernelAttr, kernel));
-	unsigned int       maxNmbThreadsPerBlock = kernelAttr.maxThreadsPerBlock;
-	const unsigned int warpSize              = _cudaDeviceProp.warpSize;
-	// make sure maxNmbThreadsPerBlock is multiple of warp size
+        if (not kernel)
+                printWarn << "null pointer to kernel" << endl;
+        struct cudaFuncAttributes       kernelAttr;
+        checkCudaErrors(cudaFuncGetAttributes(&kernelAttr, kernel));
+        unsigned int       maxNmbThreadsPerBlock = kernelAttr.maxThreadsPerBlock;
+        const unsigned int warpSize              = _cudaDeviceProp.warpSize;
+        // make sure maxNmbThreadsPerBlock is multiple of warp size
 	if (maxNmbThreadsPerBlock > warpSize)
 		maxNmbThreadsPerBlock = (maxNmbThreadsPerBlock / warpSize) * warpSize;
 	const unsigned int maxNmbBlocks = _cudaDeviceProp.multiProcessorCount;
@@ -373,49 +373,49 @@ likelihoodInterface<complexT>::logLikelihood
 		printErr << "null pointer to production amplitudes. aborting." << endl;
 		throw;
 	}
-
+	
 	const unsigned int initialAvailMem = availableDeviceMem();
 
 	// copy production amplitudes to device
-	complexT* d_prodAmps = 0;
-	{
-		const unsigned int size = nmbProdAmps * sizeof(complexT);
-		cutilSafeCall(cudaMalloc((void**)&d_prodAmps, size));
-		cutilSafeCall(cudaMemcpy(d_prodAmps, prodAmps, size, cudaMemcpyHostToDevice));
-	}
+        complexT* d_prodAmps = 0;
+        {
+                const unsigned int size = nmbProdAmps * sizeof(complexT);
+                checkCudaErrors(cudaMalloc((void**)&d_prodAmps, size));
+                checkCudaErrors(cudaMemcpy(d_prodAmps, prodAmps, size, cudaMemcpyHostToDevice));
+        }
 
-	// first summation stage
+        // first summation stage
 	value_type*  d_logLikelihoodSumsPrev = 0;
 	unsigned int nmbSumsPrev             = 0;
 	{
 		// run kernel with maximum occupancy grid
 		unsigned int nmbBlocks, nmbThreadsPerBlock;
 		if (_debug)
-			printInfo << "running logLikelihoodKernel<complexT>" << endl;
-		estimateOptimumKernelGrid(logLikelihoodKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
-		nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
-		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSumsPrev, sizeof(value_type) * nmbSumsPrev));
-		startKernelTimer();
-		logLikelihoodKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
-			 _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_logLikelihoodSumsPrev);
-		stopKernelTimer();
-		cutilSafeCall(cudaFree(d_prodAmps));
-	}
-	// cascaded summation of log likelihoods
-	cascadedKernelSum<sumKernelCaller<complexT, value_type> >
-		(6, d_logLikelihoodSumsPrev, nmbSumsPrev);
-	// copy result to host and cleanup
-	value_type logLikelihood;
-	cutilSafeCall(cudaMemcpy(&logLikelihood, d_logLikelihoodSumsPrev,
-	                         sizeof(value_type), cudaMemcpyDeviceToHost));
-	cutilSafeCall(cudaFree(d_logLikelihoodSumsPrev));
+                        printInfo << "running logLikelihoodKernel<complexT>" << endl;
+                estimateOptimumKernelGrid(logLikelihoodKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
+                nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+                checkCudaErrors(cudaMalloc((void**)&d_logLikelihoodSumsPrev, sizeof(value_type) * nmbSumsPrev));
+                startKernelTimer();
+                logLikelihoodKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+                        (d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
+                         _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_logLikelihoodSumsPrev);
+                stopKernelTimer();
+                checkCudaErrors(cudaFree(d_prodAmps));
+        }
+        // cascaded summation of log likelihoods
+        cascadedKernelSum<sumKernelCaller<complexT, value_type> >
+                (6, d_logLikelihoodSumsPrev, nmbSumsPrev);
+        // copy result to host and cleanup
+        value_type logLikelihood;
+        checkCudaErrors(cudaMemcpy(&logLikelihood, d_logLikelihoodSumsPrev,
+                                 sizeof(value_type), cudaMemcpyDeviceToHost));
+        checkCudaErrors(cudaFree(d_logLikelihoodSumsPrev));
 
-	// check for memory leaks
-	if (availableDeviceMem() != initialAvailMem)
+        // check for memory leaks
+        if (availableDeviceMem() != initialAvailMem)
 		printWarn << "potential CUDA device memory leak: memory before function call = "
 		          << initialAvailMem << " bytes, after = " << availableDeviceMem() << " bytes" << endl;
-
+		
 	return logLikelihood;
 }
 
@@ -442,33 +442,33 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	const unsigned int initialAvailMem = availableDeviceMem();
 
 	// copy production amplitudes to device
-	complexT* d_prodAmps = 0;
-	{
-		const unsigned int size = nmbProdAmps * sizeof(complexT);
-		cutilSafeCall(cudaMalloc((void**)&d_prodAmps, size));
-		cutilSafeCall(cudaMemcpy(d_prodAmps, prodAmps, size, cudaMemcpyHostToDevice));
-	}
+        complexT* d_prodAmps = 0;
+        {
+                const unsigned int size = nmbProdAmps * sizeof(complexT);
+                checkCudaErrors(cudaMalloc((void**)&d_prodAmps, size));
+                checkCudaErrors(cudaMemcpy(d_prodAmps, prodAmps, size, cudaMemcpyHostToDevice));
+        }
 
-	// first stage: precalculate derivative term and likelihoods for each event
-	complexT*   d_derivTerms  = 0;
-	value_type* d_likelihoods = 0;
-	{
-		cutilSafeCall(cudaMalloc((void**)&d_derivTerms,  sizeof(complexT) * rank * 2 * _nmbEvents));
-		cutilSafeCall(cudaMalloc((void**)&d_likelihoods, sizeof(value_type) * _nmbEvents));
-		unsigned int nmbBlocks, nmbThreadsPerBlock;
-		if (_debug)
-			printInfo << "running logLikelihoodDerivFirstTermKernel<complexT>" << endl;
+        // first stage: precalculate derivative term and likelihoods for each event
+        complexT*   d_derivTerms  = 0;
+        value_type* d_likelihoods = 0;
+        {
+                checkCudaErrors(cudaMalloc((void**)&d_derivTerms,  sizeof(complexT) * rank * 2 * _nmbEvents));
+                checkCudaErrors(cudaMalloc((void**)&d_likelihoods, sizeof(value_type) * _nmbEvents));
+                unsigned int nmbBlocks, nmbThreadsPerBlock;
+                if (_debug)
+                        printInfo << "running logLikelihoodDerivFirstTermKernel<complexT>" << endl;
 		estimateOptimumKernelGrid(logLikelihoodDerivFirstTermKernel<complexT>, nmbBlocks,
 		                          nmbThreadsPerBlock, _nmbEvents);
 		startKernelTimer();
 		logLikelihoodDerivFirstTermKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
-			 _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_derivTerms, d_likelihoods);
-		stopKernelTimer();
-		cutilSafeCall(cudaFree(d_prodAmps));
-	}
+                        (d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
+                         _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_derivTerms, d_likelihoods);
+                stopKernelTimer();
+                checkCudaErrors(cudaFree(d_prodAmps));
+        }
 
-	// second stage: sum derivatives
+        // second stage: sum derivatives
 	{
 		// first summation stage
 		complexT*          d_derivativeSumsPrev = 0;
@@ -478,28 +478,28 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 			// run kernel with maximum occupancy grid
 			unsigned int nmbBlocks, nmbThreadsPerBlock;
 			if (_debug)
-				printInfo << "running logLikelihoodDerivKernel<complexT>" << endl;
-			estimateOptimumKernelGrid(logLikelihoodDerivKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
-			nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
-			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsPrev,
-			                         sizeof(complexT) * nmbDerivElements * nmbSumsPrev));
-			startKernelTimer();
-			logLikelihoodDerivKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+                                printInfo << "running logLikelihoodDerivKernel<complexT>" << endl;
+                        estimateOptimumKernelGrid(logLikelihoodDerivKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
+                        nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+                        checkCudaErrors(cudaMalloc((void**)&d_derivativeSumsPrev,
+                                                 sizeof(complexT) * nmbDerivElements * nmbSumsPrev));
+                        startKernelTimer();
+                        logLikelihoodDerivKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 				(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank, _nmbWavesRefl[0],
 				 _nmbWavesRefl[1], _nmbWavesMax, d_derivativeSumsPrev);
 			stopKernelTimer();
 		}
 		// cascaded summation of derivatives
 		_rank = rank;  // needed for kernel caller
-		cascadedKernelSum<sumDerivativesKernelCaller<complexT, complexT> >
-			(6, d_derivativeSumsPrev, nmbSumsPrev, nmbDerivElements);
-		// copy result to host and cleanup
-		cutilSafeCall(cudaMemcpy(derivatives, d_derivativeSumsPrev,
-		                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
-		cutilSafeCall(cudaFree(d_derivativeSumsPrev));
-	}
-
-	// flat wave requires special treatment
+                cascadedKernelSum<sumDerivativesKernelCaller<complexT, complexT> >
+                        (6, d_derivativeSumsPrev, nmbSumsPrev, nmbDerivElements);
+                // copy result to host and cleanup
+                checkCudaErrors(cudaMemcpy(derivatives, d_derivativeSumsPrev,
+                                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
+                checkCudaErrors(cudaFree(d_derivativeSumsPrev));
+        }
+        
+        // flat wave requires special treatment 
 	{
 		// first summation stage
 		value_type*  d_derivativeSumsPrev = 0;
@@ -510,30 +510,30 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 			unsigned int nmbBlocks, nmbThreadsPerBlock;
 			if (_debug)
 				printInfo << "running logLikelihoodDerivFlatKernel<complexT>" << endl;
-			estimateOptimumKernelGrid(logLikelihoodDerivFlatKernel<complexT>, nmbBlocks,
-			                          nmbThreadsPerBlock);
-			nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
-			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsPrev, sizeof(value_type) * nmbSumsPrev));
-			startKernelTimer();
-			logLikelihoodDerivFlatKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-				(prodAmpFlat, d_likelihoods, _nmbEvents, d_derivativeSumsPrev);
+                        estimateOptimumKernelGrid(logLikelihoodDerivFlatKernel<complexT>, nmbBlocks,
+                                                  nmbThreadsPerBlock);
+                        nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+                        checkCudaErrors(cudaMalloc((void**)&d_derivativeSumsPrev, sizeof(value_type) * nmbSumsPrev));
+                        startKernelTimer();
+                        logLikelihoodDerivFlatKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+                                (prodAmpFlat, d_likelihoods, _nmbEvents, d_derivativeSumsPrev);
 			stopKernelTimer();
 		}
 		// cascaded summation of flat derivatives
-		cascadedKernelSum<sumKernelCaller<complexT, value_type> >
-			(6, d_derivativeSumsPrev, nmbSumsPrev);
-		// copy result to host and cleanup
-		cutilSafeCall(cudaMemcpy(&derivativeFlat, d_derivativeSumsPrev,
-		                         sizeof(value_type), cudaMemcpyDeviceToHost));
-		cutilSafeCall(cudaFree(d_derivativeSumsPrev));
-	}
+                cascadedKernelSum<sumKernelCaller<complexT, value_type> >
+                        (6, d_derivativeSumsPrev, nmbSumsPrev);
+                // copy result to host and cleanup
+                checkCudaErrors(cudaMemcpy(&derivativeFlat, d_derivativeSumsPrev,
+                                         sizeof(value_type), cudaMemcpyDeviceToHost));
+                checkCudaErrors(cudaFree(d_derivativeSumsPrev));
+        }
 
-	// cleanup
-	cutilSafeCall(cudaFree(d_derivTerms ));
-	cutilSafeCall(cudaFree(d_likelihoods));
+        // cleanup
+        checkCudaErrors(cudaFree(d_derivTerms ));
+        checkCudaErrors(cudaFree(d_likelihoods));
 
-	// check for memory leaks
-	if (availableDeviceMem() != initialAvailMem)
+        // check for memory leaks
+        if (availableDeviceMem() != initialAvailMem)
 		printWarn << "potential CUDA device memory leak: memory before function call = "
 		          << initialAvailMem << " bytes, after = " << availableDeviceMem() << " bytes" << endl;
 }
@@ -543,96 +543,96 @@ template<typename complexT>
 ostream&
 likelihoodInterface<complexT>::print(ostream& out)
 {
-	const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
+  const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
 
-	if (not _cudaInitialized) {
-		printWarn << "CUDA device is not initialized." << endl;
-		return out;
-	}
-
-	// fields for both major & minor fields are 9999, if no CUDA capable devices are present
-	if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
-		printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
-		return out;
-	}
-	out << "CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' properties:" << endl;
-
-	// print info
-	int driverVersion = 0;
-	cutilSafeCall(cudaDriverGetVersion(&driverVersion));
-	int runtimeVersion = 0;
-	cutilSafeCall(cudaRuntimeGetVersion(&runtimeVersion));
-	out << "    driver version: ........................................ "
-	    << driverVersion / 1000 << "." << driverVersion % 100 << endl
-	    << "    runtime version: ....................................... "
-	    << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
-	    << "    capability major revision number: ...................... "
-	    << _cudaDeviceProp.major << endl
-	    << "    capability minor revision number: ...................... "
-	    << _cudaDeviceProp.minor << endl
-	    << "    GPU clock frequency: ................................... "
-	    << _cudaDeviceProp.clockRate * 1e-6f << " GHz" << endl
-	    << "    number of multiprocessors: ............................. "
-	    << _cudaDeviceProp.multiProcessorCount << endl
-	    << "    number of cores: ....................................... "
-	    << nGpuArchCoresPerSM[_cudaDeviceProp.major] * _cudaDeviceProp.multiProcessorCount << endl
-	    << "    warp size: ............................................. "
-	    << _cudaDeviceProp.warpSize << endl
-	    << "    maximum number of threads per block: ................... "
-	    << _cudaDeviceProp.maxThreadsPerBlock << endl
-	    << "    maximum block dimensions: .............................. "
-	    << _cudaDeviceProp.maxThreadsDim[0] << " x " << _cudaDeviceProp.maxThreadsDim[1]
-	    << " x " << _cudaDeviceProp.maxThreadsDim[2] << endl
-	    << "    maximum grid dimension ................................. "
-	    << _cudaDeviceProp.maxGridSize[0] << " x " << _cudaDeviceProp.maxGridSize[1]
-	    << " x " << _cudaDeviceProp.maxGridSize[2] << endl
-	    << "    total amount of global memory: ......................... "
-	    << _cudaDeviceProp.totalGlobalMem / (1024. * 1024.) << " MiBytes" << endl
-	    << "    amount of available global memory: ..................... "
-	    << availableDeviceMem() / (1024. * 1024.) << " MiBytes" << endl
-	    << "    total amount of constant memory: ....................... "
-	    << _cudaDeviceProp.totalConstMem << " bytes" << endl
-	    << "    total amount of shared memory per block: ............... "
-	    << _cudaDeviceProp.sharedMemPerBlock << " bytes" << endl
-	    << "    total number of registers available per block: ......... "
-	    << _cudaDeviceProp.regsPerBlock << endl
-	    << "    maximum 1-dim texture size: ............................ "
-	    << _cudaDeviceProp.maxTexture1D << " pixels" << endl
-	    << "    maximum 2-dim texture size: ............................ "
-	    << _cudaDeviceProp.maxTexture2D[0] << " x " << _cudaDeviceProp.maxTexture2D[1]
-	    << " pixels" << endl
-	    << "    maximum 3-dim texture size: ............................ "
-	    << _cudaDeviceProp.maxTexture3D[0] << " x " << _cudaDeviceProp.maxTexture3D[1]
-	    << " x " << _cudaDeviceProp.maxTexture3D[2] << " pixels" << endl
-	    << "    alignment required for textures: ....................... "
-	    << _cudaDeviceProp.textureAlignment << " bytes" << endl
-	    << "    alignment required for surfaces: ....................... "
-	    << _cudaDeviceProp.surfaceAlignment << " bytes" << endl
-	    << "    maximum memory pitch: .................................. "
-	    << _cudaDeviceProp.memPitch << " bytes" << endl
-	    << "    support for concurrent execution of multiple kernels ... "
-	    << yesNo(_cudaDeviceProp.concurrentKernels) << endl
-	    << "    support for ECC memory protection: ..................... "
-	    << yesNo(_cudaDeviceProp.ECCEnabled) << endl
-	    << "    concurrent copy and execution: ......................... "
-	    << yesNo(_cudaDeviceProp.deviceOverlap) << endl
-	    << "    run time limit on kernels: ............................. "
-	    << yesNo(_cudaDeviceProp.kernelExecTimeoutEnabled) << endl
-	    << "    device is an integrated component ...................... "
-	    << yesNo(_cudaDeviceProp.integrated) << endl
-	    << "    support for host page-locked memory mapping: ........... "
-	    << yesNo(_cudaDeviceProp.canMapHostMemory) << endl
-	    << "    compute mode: .......................................... ";
-	if (_cudaDeviceProp.computeMode == cudaComputeModeDefault)
-		out << "default (multiple host threads can use this device simultaneously)";
-	else if (_cudaDeviceProp.computeMode == cudaComputeModeExclusive)
-		out << "exclusive (only one host thread at a time can use this device)";
-	else if (_cudaDeviceProp.computeMode == cudaComputeModeProhibited)
-		out << "prohibited (no host thread can use this device)";
-	else
-		out << "unknown";
-	out << endl;
-	return out;
+  if (not _cudaInitialized) {
+	  printWarn << "CUDA device is not initialized." << endl;
+	  return out;
+  }
+  
+  // fields for both major & minor fields are 9999, if no CUDA capable devices are present
+  if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
+	  printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
+	  return out;
+  }
+  out << "CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' properties:" << endl;
+    
+  // print info
+  int driverVersion = 0;
+  checkCudaErrors(cudaDriverGetVersion(&driverVersion));
+  int runtimeVersion = 0;     
+  checkCudaErrors(cudaRuntimeGetVersion(&runtimeVersion));
+  out << "    driver version: ........................................ "
+      << driverVersion / 1000 << "." << driverVersion % 100 << endl
+      << "    runtime version: ....................................... "
+      << runtimeVersion / 1000 << "." << runtimeVersion % 100 << endl
+      << "    capability major revision number: ...................... "
+      << _cudaDeviceProp.major << endl
+      << "    capability minor revision number: ...................... "
+      << _cudaDeviceProp.minor << endl
+      << "    GPU clock frequency: ................................... "
+      << _cudaDeviceProp.clockRate * 1e-6f << " GHz" << endl
+      << "    number of multiprocessors: ............................. "
+      << _cudaDeviceProp.multiProcessorCount << endl
+      << "    number of cores: ....................................... "
+      << nGpuArchCoresPerSM[_cudaDeviceProp.major] * _cudaDeviceProp.multiProcessorCount << endl
+      << "    warp size: ............................................. "
+      << _cudaDeviceProp.warpSize << endl
+      << "    maximum number of threads per block: ................... "
+      << _cudaDeviceProp.maxThreadsPerBlock << endl
+      << "    maximum block dimensions: .............................. "
+      << _cudaDeviceProp.maxThreadsDim[0] << " x " << _cudaDeviceProp.maxThreadsDim[1]
+      << " x " << _cudaDeviceProp.maxThreadsDim[2] << endl
+      << "    maximum grid dimension ................................. "
+      << _cudaDeviceProp.maxGridSize[0] << " x " << _cudaDeviceProp.maxGridSize[1]
+      << " x " << _cudaDeviceProp.maxGridSize[2] << endl
+      << "    total amount of global memory: ......................... "
+      << _cudaDeviceProp.totalGlobalMem / (1024. * 1024.) << " MiBytes" << endl
+      << "    amount of available global memory: ..................... "
+      << availableDeviceMem() / (1024. * 1024.) << " MiBytes" << endl
+      << "    total amount of constant memory: ....................... "
+      << _cudaDeviceProp.totalConstMem << " bytes" << endl 
+      << "    total amount of shared memory per block: ............... "
+      << _cudaDeviceProp.sharedMemPerBlock << " bytes" << endl
+      << "    total number of registers available per block: ......... "
+      << _cudaDeviceProp.regsPerBlock << endl
+      << "    maximum 1-dim texture size: ............................ "
+      << _cudaDeviceProp.maxTexture1D << " pixels" << endl
+      << "    maximum 2-dim texture size: ............................ "
+      << _cudaDeviceProp.maxTexture2D[0] << " x " << _cudaDeviceProp.maxTexture2D[1]
+      << " pixels" << endl
+      << "    maximum 3-dim texture size: ............................ "
+      << _cudaDeviceProp.maxTexture3D[0] << " x " << _cudaDeviceProp.maxTexture3D[1]
+      << " x " << _cudaDeviceProp.maxTexture3D[2] << " pixels" << endl
+      << "    alignment required for textures: ....................... "
+      << _cudaDeviceProp.textureAlignment << " bytes" << endl
+      << "    alignment required for surfaces: ....................... "
+      << _cudaDeviceProp.surfaceAlignment << " bytes" << endl
+      << "    maximum memory pitch: .................................. "
+      << _cudaDeviceProp.memPitch << " bytes" << endl
+      << "    support for concurrent execution of multiple kernels ... "
+      << yesNo(_cudaDeviceProp.concurrentKernels) << endl
+      << "    support for ECC memory protection: ..................... "
+      << yesNo(_cudaDeviceProp.ECCEnabled) << endl
+      << "    concurrent copy and execution: ......................... "
+      << yesNo(_cudaDeviceProp.deviceOverlap) << endl
+      << "    run time limit on kernels: ............................. "
+      << yesNo(_cudaDeviceProp.kernelExecTimeoutEnabled) << endl
+      << "    device is an integrated component ...................... "
+      << yesNo(_cudaDeviceProp.integrated) << endl
+      << "    support for host page-locked memory mapping: ........... "
+      << yesNo(_cudaDeviceProp.canMapHostMemory) << endl
+      << "    compute mode: .......................................... ";
+  if (_cudaDeviceProp.computeMode == cudaComputeModeDefault)
+	  out << "default (multiple host threads can use this device simultaneously)";
+  else if (_cudaDeviceProp.computeMode == cudaComputeModeExclusive)
+	  out << "exclusive (only one host thread at a time can use this device)";
+  else if (_cudaDeviceProp.computeMode == cudaComputeModeProhibited)
+	  out << "prohibited (no host thread can use this device)";
+  else
+	  out << "unknown";
+  out << endl;
+  return out;
 }
 
 
@@ -644,23 +644,23 @@ likelihoodInterface<complexT>::cascadedKernelSum
  typename kernelCaller::value_type*& d_sumsPrev,
  unsigned int                        nmbSumsPrev,
  const unsigned int                  sumElementSize)
-{
+{ 
 	typename kernelCaller::value_type* d_sumsNext = 0;
 	do {
 		// allocate device array for new sums
-		unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
-		if (nmbSumsNext <= nmbOfSumsAtEachStage)
-			nmbSumsNext = 1;
-		cutilSafeCall
-			(cudaMalloc((void**)&d_sumsNext,
-			            sizeof(typename kernelCaller::value_type) * sumElementSize * nmbSumsNext));
-		// run kernel
-		kernelCaller::call(d_sumsPrev, nmbSumsPrev, d_sumsNext, nmbSumsNext, _debug);
-		// cleanup
-		cutilSafeCall(cudaFree(d_sumsPrev));
-		// prepare for next iteration
-		d_sumsPrev  = d_sumsNext;
-		nmbSumsPrev = nmbSumsNext;
+                unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
+                if (nmbSumsNext <= nmbOfSumsAtEachStage)
+                        nmbSumsNext = 1;
+                checkCudaErrors
+                        (cudaMalloc((void**)&d_sumsNext,
+                                    sizeof(typename kernelCaller::value_type) * sumElementSize * nmbSumsNext));
+                // run kernel
+                kernelCaller::call(d_sumsPrev, nmbSumsPrev, d_sumsNext, nmbSumsNext, _debug);
+                // cleanup
+                checkCudaErrors(cudaFree(d_sumsPrev));
+                // prepare for next iteration
+                d_sumsPrev  = d_sumsNext;
+                nmbSumsPrev = nmbSumsNext;
 	} while (nmbSumsPrev > nmbOfSumsAtEachStage);
 }
 
@@ -669,8 +669,8 @@ template<typename complexT>
 void
 likelihoodInterface<complexT>::stopKernelTimer()
 {
-	cutilSafeCall(cudaThreadSynchronize());
-	_kernelTime += _timer.elapsed();
+        checkCudaErrors(cudaThreadSynchronize());
+        _kernelTime += _timer.elapsed();
 }
 
 

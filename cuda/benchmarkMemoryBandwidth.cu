@@ -23,7 +23,7 @@
 // Description:
 //      benchmarks coalesced memory access for global and texture memory
 //      using various data types of up to 16 bytes
-//
+// 
 //      based on MisterAnderson42's post in the nvidia forum
 //      http://forums.nvidia.com/index.php?s=&showtopic=52806&view=findpost&p=292058
 //
@@ -39,8 +39,8 @@
 #include <algorithm>
 
 #include <cuda_runtime.h>
-#include <cutil_inline.h>
-#include <cutil_math.h>  // operators for float2 and float4
+#include <helper_cuda.h>
+#include <helper_math.h>  // operators for float2 and float4
 
 #include "reportingUtils.hpp"
 #include "complexTest.cuh"
@@ -68,7 +68,7 @@ typedef cuda::complexTest<cuda::complexStruct<float >, float > floatStructComple
 typedef cuda::complexTest<cuda::complexStruct<double>, double> doubleStructComplex;
 
 
-// cutil_math.h does not define any operators for double2
+// helper_math.h does not define any operators for double2
 inline
 HOST_DEVICE
 void
@@ -272,45 +272,45 @@ readOnlyTextureMemKernel(T*,
 #define BENCHMARK(memoryType, kernel, elementType, nmbTransfersPerElement) \
 	{ \
 		/* dry-run kernel first to avoid any setup and caching effects*/ \
-		memoryType ## _KERNEL(kernel, elementType); \
-		/* setup and start timer */ \
-		cudaEvent_t start, end; \
-		cutilSafeCall(cudaEventCreate(&start)); \
-		cutilSafeCall(cudaEventCreate(&end)); \
-		cutilSafeCall(cudaEventRecord(start, 0)); \
-		/* run kernel */ \
-		for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration) \
-			memoryType ## _KERNEL(kernel, elementType); \
-		/* stop timer */ \
-		cutilSafeCall(cudaEventRecord(end, 0)); \
-		cutilSafeCall(cudaEventSynchronize(end)); \
-		/* calculate and report bandwidth */ \
-		float runTime; \
-		cutilSafeCall(cudaEventElapsedTime(&runTime, start, end)); \
-		runTime /= nmbIterations * 1000;  /* [sec] per iteration */ \
-		const float dataSize  = nmbTransfersPerElement * nmbElements * sizeof(elementType); \
-		const float bandwidth = dataSize / runTime; \
+                memoryType ## _KERNEL(kernel, elementType); \
+                /* setup and start timer */ \
+                cudaEvent_t start, end; \
+                checkCudaErrors(cudaEventCreate(&start)); \
+                checkCudaErrors(cudaEventCreate(&end)); \
+                checkCudaErrors(cudaEventRecord(start, 0)); \
+                /* run kernel */ \
+                for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration) \
+                        memoryType ## _KERNEL(kernel, elementType); \
+                /* stop timer */ \
+                checkCudaErrors(cudaEventRecord(end, 0)); \
+                checkCudaErrors(cudaEventSynchronize(end)); \
+                /* calculate and report bandwidth */ \
+                float runTime; \
+                checkCudaErrors(cudaEventElapsedTime(&runTime, start, end)); \
+                runTime /= nmbIterations * 1000;  /* [sec] per iteration */ \
+                const float dataSize  = nmbTransfersPerElement * nmbElements * sizeof(elementType); \
+                const float bandwidth = dataSize / runTime; \
 		printInfo << #kernel << "<" << #elementType << "> processed " \
-		          << dataSize / (1024 * 1024) << " MiBytes in " \
-		          << runTime * 1000 << " msec; total throughput: " \
-		          << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
-		cutilSafeCall(cudaEventDestroy(start)); \
-		cutilSafeCall(cudaEventDestroy(end)); \
-	}
+                          << dataSize / (1024 * 1024) << " MiBytes in " \
+                          << runTime * 1000 << " msec; total throughput: " \
+                          << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
+                checkCudaErrors(cudaEventDestroy(start)); \
+                checkCudaErrors(cudaEventDestroy(end)); \
+        }
 
 
 int main()
 {
 
-	// use most powerful GPU in sytem
-	const int deviceId = cutGetMaxGflopsDeviceId();
-	cudaDeviceProp deviceProp;
-	cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-	printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
-	cutilSafeCall(cudaSetDevice(deviceId));
+        // use most powerful GPU in sytem
+        const int deviceId = gpuGetMaxGflopsDeviceId();
+        cudaDeviceProp deviceProp;
+        checkCudaErrors(cudaGetDeviceProperties(&deviceProp, deviceId));
+        printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
+        checkCudaErrors(cudaSetDevice(deviceId));
 
-	// create maximum number of threads for all blocks
-	const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
+        // create maximum number of threads for all blocks
+        const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
 	const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
 	const unsigned int nmbIterations      = 1000;
 	printInfo << "using grid (" << nmbBlocks << " blocks) x "
@@ -330,20 +330,20 @@ int main()
 	nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
 	float4* deviceInData [2];
 	float4* deviceOutData[2];
-	printInfo << "allocating 4 * " << sizeof(float4) * nmbElements / (1024. * 1024.)
-	          << " MiBytes in global memory "
-	          << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
-	cutilSafeCall(cudaMalloc((void**) &deviceInData [0], sizeof(float4) * nmbElements));
-	cutilSafeCall(cudaMalloc((void**) &deviceInData [1], sizeof(float4) * nmbElements));
-	cutilSafeCall(cudaMalloc((void**) &deviceOutData[0], sizeof(float4) * nmbElements));
-	cutilSafeCall(cudaMalloc((void**) &deviceOutData[1], sizeof(float4) * nmbElements));
-	// bind textures
-	cutilSafeCall(cudaBindTexture(0, cuda::floatTexture,  deviceInData[0], sizeof(float ) * nmbElements));
-	cutilSafeCall(cudaBindTexture(0, cuda::float2Texture, deviceInData[0], sizeof(float2) * nmbElements));
-	cutilSafeCall(cudaBindTexture(0, cuda::float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
-
-	if (1) {
-		printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
+        printInfo << "allocating 4 * " << sizeof(float4) * nmbElements / (1024. * 1024.)
+                  << " MiBytes in global memory "
+                  << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
+        checkCudaErrors(cudaMalloc((void**) &deviceInData [0], sizeof(float4) * nmbElements));
+        checkCudaErrors(cudaMalloc((void**) &deviceInData [1], sizeof(float4) * nmbElements));
+        checkCudaErrors(cudaMalloc((void**) &deviceOutData[0], sizeof(float4) * nmbElements));
+        checkCudaErrors(cudaMalloc((void**) &deviceOutData[1], sizeof(float4) * nmbElements));
+        // bind textures
+        checkCudaErrors(cudaBindTexture(0, cuda::floatTexture,  deviceInData[0], sizeof(float ) * nmbElements));
+        checkCudaErrors(cudaBindTexture(0, cuda::float2Texture, deviceInData[0], sizeof(float2) * nmbElements));
+        checkCudaErrors(cudaBindTexture(0, cuda::float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
+  
+        if (1) {
+                printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float,               2);
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float2,              2);
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float4,              2);
@@ -406,7 +406,7 @@ int main()
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
 	}
-
+	
 	if (1) {
 		printInfo << "running texture memory read-only benchmarks ------------------------------" << endl;
 		BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);
