@@ -46,6 +46,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	dataMetadata.cc
+	dataFileWriter.cc
 	)
 
 # ROOT dictionary

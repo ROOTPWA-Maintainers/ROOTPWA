@@ -1,4 +1,7 @@
 
+#ifndef DATAMETADATA_H
+#define DATAMETADATA_H
+
 #include <map>
 
 #include <TObject.h>
@@ -60,3 +63,5 @@ namespace rpwa {
 	}
 
 } // namespace rpwa
+
+#endif
