@@ -11,12 +11,12 @@ class TTree;
 
 namespace rpwa {
 
-	class rootpwaDataFileWriter {
+	class dataFileWriter {
 
 	  public:
 
-		rootpwaDataFileWriter();
-		~rootpwaDataFileWriter();
+		dataFileWriter();
+		~dataFileWriter();
 
 		bool initialize(TFile&                                                   outputFile,                // output file to write the data to (user keeps ownership!)
 		                const std::string&                                       userString,                // some arbitrary string to identify this data file

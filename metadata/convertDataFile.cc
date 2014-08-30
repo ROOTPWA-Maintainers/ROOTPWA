@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 	}
 	const unsigned int nmbInitialStateParticles = initialStateParticleNames.size();
 	const unsigned int nmbFinalStateParticles = finalStateParticleNames.size();
-	rootpwaDataFileWriter fileWriter;
+	dataFileWriter fileWriter;
 	{
 		bool success = fileWriter.initialize(*outputFile,
 											 userString,

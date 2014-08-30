@@ -16,7 +16,7 @@ using namespace std;
 using namespace rpwa;
 
 
-rpwa::rootpwaDataFileWriter::rootpwaDataFileWriter()
+rpwa::dataFileWriter::dataFileWriter()
 	: _initialized(false),
 	  _outfile(0),
 	  _eventTree(0),
@@ -28,13 +28,13 @@ rpwa::rootpwaDataFileWriter::rootpwaDataFileWriter()
 	  _nmbFinalStateParticles(0) { }
 
 
-rpwa::rootpwaDataFileWriter::~rootpwaDataFileWriter()
+rpwa::dataFileWriter::~dataFileWriter()
 {
 	reset();
 }
 
 
-bool rpwa::rootpwaDataFileWriter::initialize(TFile&                                     outputFile,
+bool rpwa::dataFileWriter::initialize(TFile&                                     outputFile,
                                              const string&                              userString,
                                              const vector<string>&                      initialStateParticleNames,
                                              const vector<string>&                      finalStateParticleNames,
@@ -80,7 +80,7 @@ bool rpwa::rootpwaDataFileWriter::initialize(TFile&                             
 }
 
 
-void rpwa::rootpwaDataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
+void rpwa::dataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
                                            const vector<TVector3>& finalStateMomenta,
                                            const vector<double>&   additionalVariablesToSave)
 {
@@ -116,7 +116,7 @@ void rpwa::rootpwaDataFileWriter::addEvent(const vector<TVector3>& initialStateM
 }
 
 
-bool rpwa::rootpwaDataFileWriter::finalize() {
+bool rpwa::dataFileWriter::finalize() {
 	if(not _initialized) {
 		printWarn << "trying to finalize when not initialized" << endl;
 		return false;
@@ -131,7 +131,7 @@ bool rpwa::rootpwaDataFileWriter::finalize() {
 }
 
 
-void rpwa::rootpwaDataFileWriter::reset() {
+void rpwa::dataFileWriter::reset() {
 	if(_eventTree) {
 		delete _eventTree;
 		_eventTree = 0;

@@ -10,7 +10,7 @@
 namespace rpwa {
 
 	class dataMetadata : public TObject {
-		friend class rootpwaDataFileWriter;
+		friend class dataFileWriter;
 
 	  private:
 		typedef std::pair<double, double> rangePairType;
