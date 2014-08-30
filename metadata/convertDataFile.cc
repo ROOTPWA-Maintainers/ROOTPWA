@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 											 std::vector<string>(),
 											 inTreeName,
 											 prodKinMomentaLeafName,
-	                                     decayKinMomentaLeafName);
+		                                     decayKinMomentaLeafName);
 		if(not success) {
 			printErr << "could not initialize rootpwaDataFileWriter. Aborting..." << endl;
 			return 1;

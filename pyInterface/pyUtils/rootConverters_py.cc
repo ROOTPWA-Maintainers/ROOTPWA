@@ -1,6 +1,7 @@
 #include "rootConverters_py.h"
 
 #include<TClonesArray.h>
+#include<TFile.h>
 #include<TLorentzRotation.h>
 #include<TPython.h>
 #include<TRandom3.h>
@@ -62,6 +63,11 @@ void rpwa::py::exportRootConverters() {
 	bp::def("__RootConverters_convertToPy_TMatrixD", &rpwa::py::convertToPy<TMatrixT<double> >);
 	bp::def(
 		"__RootConverters_convertFromPy_TMatrixD", &rpwa::py::convertFromPy<TMatrixT<double>*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_TFile", &rpwa::py::convertFromPy<TFile*>
 		, bp::return_internal_reference<1>()
 	);
 

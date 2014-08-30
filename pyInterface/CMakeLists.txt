@@ -36,9 +36,11 @@ message_setup_this_dir()
 
 set(AMPLITUDE_SUBDIR amplitude)
 set(GENERATORS_SUBDIR generators)
+set(METADATA_SUBDIR metadata)
 set(PYUTILS_SUBDIR pyUtils)
 set(SRC_SUBDIR src)
 set(UTILITIES_SUBDIR utilities)
+
 
 
 # set include directories
@@ -50,10 +52,12 @@ set(INCLUDE_DIRECTORIES
 	${ROOTPWA_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${GEN_INCLUDE_DIR}
+	${METADATA_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_SUBDIR}
 	${GENERATORS_SUBDIR}
+	${METADATA_SUBDIR}
 	${PYUTILS_SUBDIR}
 	${SRC_SUBDIR}
 	${UTILITIES_SUBDIR}
@@ -91,6 +95,7 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
+	${METADATA_SUBDIR}/dataFileWriter_py.cc
 	${SRC_SUBDIR}/complexMatrix_py.cc
 	${SRC_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
@@ -109,6 +114,7 @@ make_shared_library(
 	"${AMPLITUDE_LIBS}"
 	"${ROOTPWAGEN_LIBS}"
 	"${UTILITIES_LIBS}"
+	"${METADATA_LIBS}"
 	)
 
 # link the shared library with the python bindings

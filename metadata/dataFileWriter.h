@@ -6,6 +6,7 @@
 
 #include "dataMetadata.h"
 
+class TFile;
 class TVector3;
 class TTree;
 
