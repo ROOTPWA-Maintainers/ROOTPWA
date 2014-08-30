@@ -10,81 +10,11 @@
 #include <TTree.h>
 #include <TVector3.h>
 
+#include "dataMetadata.h"
 #include "reportingUtils.hpp"
 
 
 namespace rpwa {
-
-	class dataMetadata : public TObject {
-		friend class rootpwaDataFileWriter;
-
-
-	  public:
-
-		const std::string& userString() const { return _userString; }
-		const std::string& contentHash() const { return _contentHash; }
-		const std::map<std::string, std::pair<double, double> >& getBinningMap() const { return _binningMap; }
-		const std::vector<std::string>& initalStateParticleNames() const { return _initialStateParticleNames; }
-		const std::vector<std::string>& finalStateParticleNames() const { return _finalStateParticleNames; }
-
-		std::ostream& print(std::ostream& out) const
-		{
-			out << "dataMetadata: " << std::endl
-			    << "    userString ...................... '" << _userString << "'"         << std::endl
-			    << "    contentHash ..................... '" << _contentHash << "'"        << std::endl
-			    << "    initial state particle names: ... "  << _initialStateParticleNames << std::endl
-		        << "    final state particle names: ..... "  << _finalStateParticleNames   << std::endl
-			    << "    binning map: "                       << std::endl;
-			    for(std::map<std::string, std::pair<double, double> >::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
-					out << "        variable '" << it->first << "' range " << it->second << std::endl;
-			    }
-			return out;
-		}
-
-
-	  private:
-
-		void setUserString(const std::string& userString) { _userString = userString; }
-		void setContentHash(const std::string& contentHash) { _contentHash = contentHash; }
-		void setInitialStateParticleNames(std::vector<std::string> initialStateParticleNames) { _initialStateParticleNames = initialStateParticleNames; }
-		void setFinalStateParticleNames(std::vector<std::string> finalStateParticleNames) { _finalStateParticleNames = finalStateParticleNames; }
-
-		void setBinningVariableLabels(std::vector<std::string> labels)
-		{
-			for(unsigned int i = 0; i < labels.size(); ++i) {
-				_binningMap[labels[i]] = std::pair<double, double>(0., 0.);
-			}
-		}
-
-		void setBinningVariableRange(const std::string& label, const std::pair<double, double>& range)
-		{
-			_binningMap[label] = range;
-		}
-
-		void setBinningMap(const std::map<std::string, std::pair<double, double> > binningMap)
-		{
-			_binningMap = binningMap;
-		}
-
-		std::string _userString;
-		std::string _contentHash;
-
-		std::vector<std::string> _initialStateParticleNames;
-		std::vector<std::string> _finalStateParticleNames;
-
-		std::map<std::string, std::pair<double, double> > _binningMap;
-
-	}; // class dataMetadata
-
-
-	inline
-	std::ostream&
-	operator <<(std::ostream&          out,
-	            const dataMetadata&    metadata)
-	{
-		return metadata.print(out);
-	}
-
 
 	class rootpwaDataFileWriter {
 
@@ -115,6 +45,7 @@ namespace rpwa {
 		                const std::string&              eventTreeName = "rootPwaEvtTree", // name for the event tree in the output file
 		                const std::string&              initialStateMomentaBranchName = "prodKinMomenta",  // branch name where the initial state particles are stored
 		                const std::string&              finalStateMomentaBranchName   = "decayKinMomenta", // branch name where the final state particles are stored
+		                const std::string&              metadataName = "dataMetadata",                     // name under which the metadata object is saved
 		                const int&                      splitlevel = 99,
 		                const int&                      buffsize = 256000)
 		{
@@ -152,7 +83,7 @@ namespace rpwa {
 
 		void addEvent(const std::vector<TVector3>& initialStateMomenta,
 		              const std::vector<TVector3>& finalStateMomenta,
-		              const std::vector<double>& additionalVariablesToSave)
+		              const std::vector<double>& additionalVariablesToSave = std::vector<double>())
 		{
 			// TODO: calculate hash
 			if(initialStateMomenta.size() != _nmbInitialStateParticles) {
@@ -191,9 +122,10 @@ namespace rpwa {
 				return false;
 			}
 			_outfile->cd();
-			_metadata.Write();
+			_metadata.Write("dataMetadata");
 			_outfile->Write();
 			_outfile->Close();
+			_eventTree = 0;
 			reset();
 			return true;
 		}
