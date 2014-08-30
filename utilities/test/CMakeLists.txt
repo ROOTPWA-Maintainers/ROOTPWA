@@ -43,7 +43,8 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testSumAccumulators testSumAccumulators.cc "${UTILITIES_LIBS}")
-make_executable(testSpinUtils       testSpinUtils.cc       "${UTILITIES_LIBS}")
-make_executable(testFileUtils       testFileUtils.cc       "${UTILITIES_LIBS}")
-make_executable(testArray           testArray.cc           "${UTILITIES_LIBS}")
+make_executable(testSumAccumulators    testSumAccumulators.cc)
+make_executable(testSpinUtils          testSpinUtils.cc)
+make_executable(testFileUtils          testFileUtils.cc)
+make_executable(testArray              testArray.cc)
+make_executable(testDataConverterUtils testDataConverterUtils.cc ${ROOT_LIBS})
