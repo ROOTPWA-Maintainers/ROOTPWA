@@ -70,22 +70,8 @@ ADD_CUSTOM_TARGET(
 
 # source files that are compiled into library
 set(SOURCES
-	dataMetadata.cc
 	reportingUtilsEnvironment.cc
 	)
-
-# ROOT dictionary
-set(ROOTPWAUTILS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaUtilsDict.cc)
-set(ROOTPWAUTILS_DICT_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-)
-root_generate_dictionary(
-	"${ROOTPWAUTILS_DICTIONARY}"
-	"${ROOTPWAUTILS_DICT_INCLUDE_DIRS}"
-	"dataMetadata.h"
-	"rootPwaUtilsLinkDef.h"
-)
-set(SOURCES ${SOURCES} ${ROOTPWAUTILS_DICTIONARY})
 
 
 # library
@@ -97,8 +83,6 @@ make_shared_library(
 	)
 add_dependencies(${THIS_LIB} environment)
 
-make_executable(convertDataFile convertDataFile.cc ${THIS_LIB})
-make_executable(printMetadata   printMetadata.cc   ${THIS_LIB})
 
 # build tests
 add_subdirectory(test)

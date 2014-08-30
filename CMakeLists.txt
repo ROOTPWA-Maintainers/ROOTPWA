@@ -472,6 +472,13 @@ set(UTILITIES_LIBS
 	RootPwaUtil
 	)
 
+set(METADATA_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/metadata
+	)
+set(METADATA_LIBS
+	RootPwaMeta
+	)
+
 set(TOOLS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/tools
 	)
@@ -526,6 +533,9 @@ endif()
 
 # Utilities
 add_subdirectory(utilities)
+
+# Metadata
+add_subdirectory(metadata)
 
 # CUDA stuff
 if(USE_CUDA)

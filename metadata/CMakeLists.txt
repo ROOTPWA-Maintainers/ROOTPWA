@@ -31,19 +31,45 @@
 #//-------------------------------------------------------------------------
 
 
+message_setup_this_dir()
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-	SYSTEM ${Boost_INCLUDE_DIRS}
-	${Libconfig_INCLUDE_DIR}
-	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
-# executables
-make_executable(testSumAccumulators    testSumAccumulators.cc)
-make_executable(testSpinUtils          testSpinUtils.cc)
-make_executable(testFileUtils          testFileUtils.cc)
-make_executable(testArray              testArray.cc)
+# source files that are compiled into library
+set(SOURCES
+	dataMetadata.cc
+	)
+
+# ROOT dictionary
+set(ROOTPWAMETA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaUtilsDict.cc)
+set(ROOTPWAMETA_DICT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
+root_generate_dictionary(
+	"${ROOTPWAMETA_DICTIONARY}"
+	"${ROOTPWAMETA_DICT_INCLUDE_DIRS}"
+	"dataMetadata.h"
+	"rootPwaMetaLinkDef.h"
+)
+set(SOURCES ${SOURCES} ${ROOTPWAMETA_DICTIONARY})
+
+
+# library
+set(THIS_LIB "RootPwaMeta")
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	)
+add_dependencies(${THIS_LIB} environment)
+
+make_executable(convertDataFile convertDataFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
+make_executable(printMetadata   printMetadata.cc   ${THIS_LIB} ${UTILITIES_LIBS})
