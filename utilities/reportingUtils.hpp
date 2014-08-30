@@ -348,6 +348,9 @@ namespace rpwa {
 	operator << (std::ostream&         out,
 	             const std::vector<T>& vec)
 	{
+		if(vec.size() == 0) {
+			return out << "{}";
+		}
 		out << "{";
 		for (unsigned int i = 0; i < (vec.size() - 1); ++i)
 			out << "[" << i << "] = " << vec[i] << ", ";
