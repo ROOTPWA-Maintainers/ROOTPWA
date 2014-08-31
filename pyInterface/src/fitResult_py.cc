@@ -1,6 +1,8 @@
 
 #include "fitResult_py.h"
 
+#include <TTree.h>
+
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
@@ -44,9 +46,13 @@ namespace {
 		bp::list pyListFitParCovMatrixIndices = bp::extract<bp::list>(pyFitParCovMatrixIndices);
 		std::vector<std::pair<int, int> > fitParCovMatrixIndices(bp::len(pyListFitParCovMatrixIndices));
 		for(int i = 0; i < bp::len(pyListFitParCovMatrixIndices); ++i) {
-			bp::tuple tuple = bp::extract<bp::tuple>(pyListFitParCovMatrixIndices[i]);
-			fitParCovMatrixIndices[i].first  = bp::extract<int>(tuple[0]);
-			fitParCovMatrixIndices[i].second = bp::extract<int>(tuple[1]);
+			if(not rpwa::py::convertBPObjectToPair<int, int>(pyListFitParCovMatrixIndices[i], fitParCovMatrixIndices[i]))
+			{
+				std::stringstream strStr;
+				strStr<<"Could not convert element "<<i<<" when executing rpwa::fitResult::fill()";
+				PyErr_SetString(PyExc_TypeError, strStr.str().c_str());
+				bp::throw_error_already_set();
+			}
 		}
 		std::vector<double> phaseSpaceIntegral;
 		if(not rpwa::py::convertBPObjectToVector<double>(pyPhaseSpaceIntegral, phaseSpaceIntegral)) {

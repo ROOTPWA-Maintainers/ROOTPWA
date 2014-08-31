@@ -5,6 +5,7 @@
 #include<TVector3.h>
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -95,12 +96,11 @@ namespace {
 		if(get_partProp.check()) {
 			return (self == get_partProp());
 		}
-		bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
-		rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
-		std::string rhsString = bp::extract<std::string>(rhs[1]);
 		std::pair<rpwa::particleProperties, std::string> rhsPair;
-		rhsPair.first = rhsProp;
-		rhsPair.second = rhsString;
+		if(not rpwa::py::convertBPObjectToPair<rpwa::particleProperties, std::string>(rhsObj, rhsPair)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input when executing rpwa::particle::operator==()");
+			bp::throw_error_already_set();
+		}
 		return (self == rhsPair);
 	}
 
