@@ -26,6 +26,7 @@ namespace rpwa {
 		const binningMapType& getBinningMap() const { return _binningMap; }
 		const std::vector<std::string>& initalStateParticleNames() const { return _initialStateParticleNames; }
 		const std::vector<std::string>& finalStateParticleNames() const { return _finalStateParticleNames; }
+		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
 
 		std::ostream& print(std::ostream& out) const;
 
@@ -36,6 +37,7 @@ namespace rpwa {
 		void setContentHash(const std::string& contentHash) { _contentHash = contentHash; }
 		void setInitialStateParticleNames(const std::vector<std::string>& initialStateParticleNames);
 		void setFinalStateParticleNames(const std::vector<std::string>& finalStateParticleNames);
+		void setAdditionalSavedVariableLables(std::vector<std::string> labels) { _additionalSavedVariableLabels = labels; }
 
 		void setBinningVariableLabels(const std::vector<std::string>& labels);
 		void setBinningVariableRange(const std::string& label, const rangePairType& range);
@@ -48,6 +50,8 @@ namespace rpwa {
 		std::vector<std::string> _finalStateParticleNames;
 
 		std::map<std::string, std::pair<double, double> > _binningMap;
+
+		std::vector<std::string> _additionalSavedVariableLabels;
 
 		ClassDef(dataMetadata, 1);
 

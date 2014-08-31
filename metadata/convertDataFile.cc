@@ -1,4 +1,6 @@
 
+#include <boost/progress.hpp>
+
 #include <TClonesArray.h>
 #include <TFile.h>
 #include <TObject.h>
@@ -145,15 +147,19 @@ int main(int argc, char** argv)
 	TTree* inputTree = (TTree*)inputFile->Get(inTreeName.c_str());
 	inputTree->SetBranchAddress(prodKinMomentaLeafName.c_str(), &initialStateParticles);
 	inputTree->SetBranchAddress(decayKinMomentaLeafName.c_str(), &finalStateParticles);
+	boost::progress_display progressIndicator(inputTree->GetEntries(), cout, "");
 	for(long eventNumber = 0; eventNumber < inputTree->GetEntries(); ++eventNumber) {
+		++progressIndicator;
 		inputTree->GetEntry(eventNumber);
 		if(initialStateParticles->GetEntries() != (int)nmbInitialStateParticles) {
+			cout << endl;
 			printErr << "received unexpected number of initial state particles (got "
 			         << initialStateParticles->GetEntries() << ", expected "
 			         << nmbInitialStateParticles << "). Aborting..." << endl;
 			return 1;
 		}
 		if(finalStateParticles->GetEntries() != (int)nmbFinalStateParticles) {
+			cout << endl;
 			printErr << "received unexpected number of final state particles (got "
 			         << finalStateParticles->GetEntries() << ", expected "
 			         << nmbFinalStateParticles << "). Aborting..." << endl;

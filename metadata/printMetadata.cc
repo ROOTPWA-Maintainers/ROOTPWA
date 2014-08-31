@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include <TFile.h>
 #include <TROOT.h>
 #include <TTree.h>
@@ -21,9 +23,10 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -i inputFile" << endl
+	     << " -i inputFile [-r]" << endl
 	     << "    where:" << endl
 	     << "        -i file    input file in ROOTPWA format (default: ./input.root)" << endl
+	     << "        -r         recalculate hash and compare it with the stored one (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -31,20 +34,20 @@ usage(const string& progName,
 
 int main(int argc, char** argv)
 {
-	// TODO: Add option to recalculate and thereby verify the contentHash
 
 	printCompilerInfo();
 	printLibraryInfo();
 	printGitHash();
 	cout << endl;
 
-	string metadataName = "dataMetadata";
+	string dataMetadataName = "dataMetadata";
 	string inTreeName = "rootPwaEvtTree";
 	string prodKinMomentaLeafName = "prodKinMomenta";
 	string decayKinMomentaLeafName = "decayKinMomenta";
 
 	const string progName = argv[0];
 	string inputFileName  = "input.root";
+	bool recalculateHash = false;
 
 	// if the following line is missing, there are error messages of the sort
 	// "Warning in <TClass::TClass>: no dictionary for class TVector3 is available",
@@ -54,11 +57,14 @@ int main(int argc, char** argv)
 
 	extern char* optarg;
 	int c;
-	while((c = getopt(argc, argv, "i:h")) != -1)
+	while((c = getopt(argc, argv, "i:rh")) != -1)
 	{
 		switch(c) {
 		case 'i':
 			inputFileName = optarg;
+			break;
+		case 'r':
+			recalculateHash = true;
 			break;
 		case 'h':
 			usage(progName);
@@ -70,7 +76,7 @@ int main(int argc, char** argv)
 		printErr << "could not open input file. Aborting..." << endl;
 		return 1;
 	}
-	dataMetadata* metadata = (dataMetadata*)inputFile->Get(metadataName.c_str());
+	dataMetadata* metadata = (dataMetadata*)inputFile->Get(dataMetadataName.c_str());
 	if(metadata) {
 		// we are reading a datafile
 		TTree* inputTree = (TTree*)inputFile->Get(inTreeName.c_str());
@@ -79,21 +85,38 @@ int main(int argc, char** argv)
 			         << "with name '" << inTreeName << "'. Aborting..." << endl;
 			return 1;
 		}
-		std::vector<string> additionalBranches;
-		TObjArray* branchList = inputTree->GetListOfBranches();
-		for(int i = 0; i < branchList->GetEntries(); ++i) {
-			TBranch* branch = (TBranch*)(*branchList)[i];
-			string branchName = branch->GetName();
-			if((branchName == prodKinMomentaLeafName) or (branchName == decayKinMomentaLeafName))
-			{
-				continue;
+		const vector<string>& additionalVariableNames = metadata->additionalSavedVariableLables();
+		{
+			TObjArray* branchList = inputTree->GetListOfBranches();
+			for(int i = 0; i < branchList->GetEntries(); ++i) {
+				TBranch* branch = (TBranch*)(*branchList)[i];
+				const string branchName = branch->GetName();
+				if((branchName == prodKinMomentaLeafName) or (branchName == decayKinMomentaLeafName))
+				{
+					continue;
+				}
+				if(find(additionalVariableNames.begin(), additionalVariableNames.end(), branchName) == additionalVariableNames.end()) {
+					printErr << "additional branch '" << branchName << "' present in metadata, but not found in tree. Aborting..." << endl;
+					return 1;
+				}
 			}
-			additionalBranches.push_back(branch->GetName());
+		}
+		if(recalculateHash) {
+			printInfo << "recalculating hash..." << endl;
+			const string calculatedHash = dataFileWriter::calculateHash(inputTree, additionalVariableNames, true);
+			if(calculatedHash != metadata->contentHash()) {
+				printErr << "hash verification failed, hash from metadata '" << metadata->contentHash() << "' does "
+				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;
+			} else {
+				cout << endl;
+				printSucc << "recalculated hash matches with hash from metadata." << endl;
+				cout << endl;
+			}
 		}
 		printInfo << *metadata << endl;
 		printInfo << "additional information:" << endl
 		          << "    number of events in file ... " << inputTree->GetEntries() << endl
-		          << "    additional branches ........ " << additionalBranches << endl;
+		          << "    additional branches ........ " << additionalVariableNames << endl;
 		cout << endl;
 		return 0;
 	}

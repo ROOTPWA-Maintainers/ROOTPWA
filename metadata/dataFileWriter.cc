@@ -1,8 +1,11 @@
 
 #include <map>
 
+#include <boost/progress.hpp>
+
 #include <TClonesArray.h>
 #include <TFile.h>
+#include <TMD5.h>
 #include <TObject.h>
 #include <TTree.h>
 #include <TVector3.h>
@@ -16,6 +19,17 @@ using namespace std;
 using namespace rpwa;
 
 
+void rpwa::md5Wrapper::Update(const double& value) {
+	TMD5::Update((UChar_t*)&value, 8);
+}
+
+void rpwa::md5Wrapper::Update(const TVector3& vector) {
+	Update(vector.X());
+	Update(vector.Y());
+	Update(vector.Z());
+}
+
+
 rpwa::dataFileWriter::dataFileWriter()
 	: _initialized(false),
 	  _outfile(0),
@@ -25,7 +39,8 @@ rpwa::dataFileWriter::dataFileWriter()
 	  _additionalVariablesToSave(),
 	  _metadata(),
 	  _nmbInitialStateParticles(0),
-	  _nmbFinalStateParticles(0) { }
+	  _nmbFinalStateParticles(0),
+	  _md5Calculator() { }
 
 
 rpwa::dataFileWriter::~dataFileWriter()
@@ -68,6 +83,7 @@ bool rpwa::dataFileWriter::initialize(TFile&                                    
 	_eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
 	_eventTree->Branch(initialStateMomentaBranchName.c_str(), "TClonesArray", &_initialStateMomenta, buffsize, splitlevel);
 	_eventTree->Branch(finalStateMomentaBranchName.c_str(),   "TClonesArray", &_finalStateMomenta,   buffsize, splitlevel);
+	_metadata.setAdditionalSavedVariableLables(additionalVariableLabels);
 	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {
 		stringstream strStr;
@@ -84,7 +100,6 @@ void rpwa::dataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
                                            const vector<TVector3>& finalStateMomenta,
                                            const vector<double>&   additionalVariablesToSave)
 {
-	// TODO: calculate hash
 	if(initialStateMomenta.size() != _nmbInitialStateParticles) {
 		printErr << "received unexpected number of initial state particles (got "
 		         << initialStateMomenta.size() << ", expected "
@@ -104,12 +119,17 @@ void rpwa::dataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
 		throw;
 	}
 	for(unsigned int i = 0; i < initialStateMomenta.size(); ++i) {
-		new ((*_initialStateMomenta)[i]) TVector3(initialStateMomenta[i]);
+		const TVector3& initialStateMomentum = initialStateMomenta[i];
+		_md5Calculator.Update(initialStateMomentum);
+		new ((*_initialStateMomenta)[i]) TVector3(initialStateMomentum);
 	}
 	for(unsigned int i = 0; i < finalStateMomenta.size(); ++i) {
-		new ((*_finalStateMomenta)[i]) TVector3(finalStateMomenta[i]);
+		const TVector3& finalStateMomentum = finalStateMomenta[i];
+		_md5Calculator.Update(finalStateMomentum);
+		new ((*_finalStateMomenta)[i]) TVector3(finalStateMomentum);
 	}
 	for(unsigned int i = 0; i < additionalVariablesToSave.size(); ++i) {
+		_md5Calculator.Update(additionalVariablesToSave[i]);
 		_additionalVariablesToSave[i] = additionalVariablesToSave[i];
 	}
 	_eventTree->Fill();
@@ -122,6 +142,7 @@ bool rpwa::dataFileWriter::finalize() {
 		return false;
 	}
 	_outfile->cd();
+	_metadata.setContentHash(_md5Calculator.hash());
 	_metadata.Write("dataMetadata");
 	_outfile->Write();
 	_outfile->Close();
@@ -132,10 +153,6 @@ bool rpwa::dataFileWriter::finalize() {
 
 
 void rpwa::dataFileWriter::reset() {
-	if(_eventTree) {
-		delete _eventTree;
-		_eventTree = 0;
-	}
 	if(_initialStateMomenta) {
 		delete _initialStateMomenta;
 		_initialStateMomenta = 0;
@@ -144,7 +161,43 @@ void rpwa::dataFileWriter::reset() {
 		delete _finalStateMomenta;
 		_finalStateMomenta = 0;
 	}
+	_eventTree = 0;
 	_outfile = 0;
 	_initialized = false;
 	_metadata = dataMetadata();
+}
+
+
+std::string rpwa::dataFileWriter::calculateHash(TTree* eventTree,
+                                                const vector<string> additionalVariableLabels,
+                                                const bool&          printProgress,
+                                                const string&        initialStateMomentaBranchName,
+                                                const string&        finalStateMomentaBranchName)
+{
+	TClonesArray* initialStateMomenta = 0;
+	TClonesArray* finalStateMomenta = 0;
+	eventTree->SetBranchAddress(initialStateMomentaBranchName.c_str(), &initialStateMomenta);
+	eventTree->SetBranchAddress(finalStateMomentaBranchName.c_str(),   &finalStateMomenta);
+	vector<double> additionalVariables(additionalVariableLabels.size(), 0.);
+	for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
+		eventTree->SetBranchAddress(additionalVariableLabels[i].c_str(), &additionalVariables[i]);
+	}
+	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(eventTree->GetEntries(), cout, "") : 0;
+	md5Wrapper md5Calculator;
+	for(long eventNumber = 0; eventNumber < eventTree->GetEntries(); ++eventNumber) {
+		eventTree->GetEntry(eventNumber);
+		if(progressIndicator) {
+			++(*progressIndicator);
+		}
+		for(int i = 0; i < initialStateMomenta->GetEntries(); ++i) {
+			md5Calculator.Update(*((TVector3*)(*initialStateMomenta)[i]));
+		}
+		for(int i = 0; i < finalStateMomenta->GetEntries(); ++i) {
+			md5Calculator.Update(*((TVector3*)(*finalStateMomenta)[i]));
+		}
+		for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
+			md5Calculator.Update(additionalVariables[i]);
+		}
+	}
+	return md5Calculator.hash();
 }
