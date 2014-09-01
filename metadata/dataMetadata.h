@@ -49,7 +49,7 @@ namespace rpwa {
 		std::vector<std::string> _initialStateParticleNames;
 		std::vector<std::string> _finalStateParticleNames;
 
-		std::map<std::string, std::pair<double, double> > _binningMap;
+		binningMapType _binningMap;
 
 		std::vector<std::string> _additionalSavedVariableLabels;
 
