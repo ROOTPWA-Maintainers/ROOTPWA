@@ -200,9 +200,9 @@ namespace rpwa {
 	                 const vt100EscapeCodesEnum& vt100Code)
 	{
 		bool isVt100 = false;
-		if (out == std::cout)
+		if (out.rdbuf() == std::cout.rdbuf())
 			isVt100 = stdoutIsColorTerminal();
-		else if (out == std::cerr)
+		else if (out.rdbuf() == std::cerr.rdbuf())
 			isVt100 = stderrIsColorTerminal();
 		if (isVt100)
 			out << "\33[" << vt100Code << "m";
