@@ -38,7 +38,7 @@
 
 using namespace std;
 using namespace rpwa;
-using namespace boost::tuples;
+namespace bt = boost::tuples;
 
 
 int
@@ -46,28 +46,28 @@ main(int    argc,
      char** argv)
 {
 	// test spin range
-	tuple<int, int> demandedRange = make_tuple(0, 10);
-	printInfo << "demanded range: [" << spinQn(get<0>(demandedRange)) << ", "
-	          << spinQn(get<1>(demandedRange)) << "]" << endl;
+	bt::tuple<int, int> demandedRange = bt::make_tuple(0, 10);
+	printInfo << "demanded range: [" << spinQn(bt::get<0>(demandedRange)) << ", "
+	          << spinQn(bt::get<1>(demandedRange)) << "]" << endl;
 	for (int s1 = 0; s1 < 5; ++s1)
 		for (int s2 = 0; s2 < 5; ++s2) {
 			bool valid;
-			const tuple<int, int> allowedRange = getSpinRange(s1, s2, demandedRange, &valid);
+			const bt::tuple<int, int> allowedRange = getSpinRange(s1, s2, demandedRange, &valid);
 			printInfo << "s1 = " << spinQn(s1) << ", s2 = " << spinQn(s2) << ": "
-			          << "[" << spinQn(get<0>(allowedRange)) << ", " << spinQn(get<1>(allowedRange)) << "] "
+			          << "[" << spinQn(bt::get<0>(allowedRange)) << ", " << spinQn(bt::get<1>(allowedRange)) << "] "
 			          << "valid = " << trueFalse(valid) << endl;
 		}
 	cout << endl;
 
-	demandedRange = make_tuple(1, 2);
-	printInfo << "demanded range: [" << spinQn(get<0>(demandedRange)) << ", "
-	          << spinQn(get<1>(demandedRange)) << "]" << endl;
+	demandedRange = bt::make_tuple(1, 2);
+	printInfo << "demanded range: [" << spinQn(bt::get<0>(demandedRange)) << ", "
+	          << spinQn(bt::get<1>(demandedRange)) << "]" << endl;
 	for (int s1 = 0; s1 < 5; ++s1)
 		for (int s2 = 0; s2 < 5; ++s2) {
 			bool valid;
-			const tuple<int, int> allowedRange = getSpinRange(s1, s2, demandedRange, &valid);
+			const bt::tuple<int, int> allowedRange = getSpinRange(s1, s2, demandedRange, &valid);
 			printInfo << "s1 = " << spinQn(s1) << ", s2 = " << spinQn(s2) << ": "
-			          << "[" << spinQn(get<0>(allowedRange)) << ", " << spinQn(get<1>(allowedRange)) << "] "
+			          << "[" << spinQn(bt::get<0>(allowedRange)) << ", " << spinQn(bt::get<1>(allowedRange)) << "] "
 			          << "valid = " << trueFalse(valid) << endl;
 		}
 }

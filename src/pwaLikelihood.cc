@@ -63,6 +63,7 @@ using namespace std;
 using namespace rpwa;
 using namespace boost;
 using namespace boost::accumulators;
+namespace bt = boost::tuples;
 
 
 template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
@@ -665,12 +666,12 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				ostringstream parName;
 				if (iWave < iRank)  // production amplitude is zero
-					_prodAmpToFuncParMap[iRank][iRefl][iWave] = make_tuple(-1, -1);
+					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(-1, -1);
 				else if (iWave == iRank) {  // production amplitude is real
 					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave] << "_RE";
 					_parNames     [parIndex]                  = parName.str();
 					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
-					_prodAmpToFuncParMap[iRank][iRefl][iWave] = make_tuple(parIndex, -1);
+					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(parIndex, -1);
 					++parIndex;
 				} else {  // production amplitude is complex
 					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave];
@@ -678,7 +679,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
 					_parNames     [parIndex + 1]              = parName.str() + "_IM";
 					_parThresholds[parIndex + 1]              = _waveThresholds[iRefl][iWave];
-					_prodAmpToFuncParMap[iRank][iRefl][iWave] = make_tuple(parIndex, parIndex + 1);
+					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(parIndex, parIndex + 1);
 					parIndex += 2;
 				}
 			}
@@ -1112,11 +1113,11 @@ pwaLikelihood<complexT>::copyToParArray
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
-				if (get<0>(parIndices) >= 0)  // real part
-					outPar[get<0>(parIndices)] = inVal[iRank][iRefl][iWave].real();
-				if (get<1>(parIndices) >= 0)  // imaginary part
-					outPar[get<1>(parIndices)] = inVal[iRank][iRefl][iWave].imag();
+				bt::tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
+				if (bt::get<0>(parIndices) >= 0)  // real part
+					outPar[bt::get<0>(parIndices)] = inVal[iRank][iRefl][iWave].real();
+				if (bt::get<1>(parIndices) >= 0)  // imaginary part
+					outPar[bt::get<1>(parIndices)] = inVal[iRank][iRefl][iWave].imag();
 			}
 	outPar[_nmbPars - 1] = inFlatVal;
 }
@@ -1187,11 +1188,11 @@ pwaLikelihood<complexT>::orderedParIndices() const
 
 		found:
 
-			tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
-			int             parIndex   = get<0>(parIndices);
+			bt::tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
+			int                 parIndex   = bt::get<0>(parIndices);
 			if (parIndex >= 0)
 				orderedIndices.push_back(parIndex);
-			parIndex = get<1>(parIndices);
+			parIndex = bt::get<1>(parIndices);
 			if (parIndex >= 0)
 				orderedIndices.push_back(parIndex);
 		}
