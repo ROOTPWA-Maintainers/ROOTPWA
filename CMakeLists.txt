@@ -473,7 +473,7 @@ set(UTILITIES_LIBS
 	)
 
 set(METADATA_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/metadata
+	${CMAKE_SOURCE_DIR}/storageFormats
 	)
 set(METADATA_LIBS
 	RootPwaMeta
@@ -535,7 +535,7 @@ endif()
 add_subdirectory(utilities)
 
 # Metadata
-add_subdirectory(metadata)
+add_subdirectory(storageFormats)
 
 # CUDA stuff
 if(USE_CUDA)
