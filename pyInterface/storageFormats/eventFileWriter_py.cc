@@ -14,8 +14,8 @@ namespace {
 	bool eventFileWriter_initialize(rpwa::eventFileWriter& self,
 	                                PyObject* pyOutputFile,
 	                                std::string userString,
-	                                bp::object pyInitialStateParticleNames,
-	                                bp::object pyFinalStateParticleNames,
+	                                bp::object pyProductionKinematicsParticleNames,
+	                                bp::object pyDecayKinematicsParticleNames,
 	                                bp::dict pyBinningMap,
 	                                bp::object pyAdditionalVariableLabels,
 	                                const std::string& eventTreeName = "rootPwaEvtTree",
@@ -26,14 +26,14 @@ namespace {
 	                                const int& buffsize = 256000)
 	{
 		TFile* outputFile = rpwa::py::convertFromPy<TFile*>(pyOutputFile);
-		std::vector<std::string> initialStateParticleNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyInitialStateParticleNames, initialStateParticleNames))
+		std::vector<std::string> productionKinematicsParticleNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProductionKinematicsParticleNames, productionKinematicsParticleNames))
 		{
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for initialStateParticleNames when executing rpwa::dataFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
-		std::vector<std::string> finalStateParticleNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyFinalStateParticleNames, finalStateParticleNames))
+		std::vector<std::string> decayKinematicsParticleNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyDecayKinematicsParticleNames, decayKinematicsParticleNames))
 		{
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::dataFileWriter::initialize()");
 			bp::throw_error_already_set();
@@ -63,8 +63,8 @@ namespace {
 		}
 		return self.initialize(*outputFile,
 		                       userString,
-		                       initialStateParticleNames,
-		                       finalStateParticleNames,
+		                       productionKinematicsParticleNames,
+		                       decayKinematicsParticleNames,
 		                       binningMap,
 		                       additionalVariableLabels,
                                eventTreeName,
@@ -76,19 +76,19 @@ namespace {
 	}
 
 	void eventFileWriter_addEvent(rpwa::eventFileWriter& self,
-	                              bp::list pyInitialStateMomenta,
-	                              bp::list pyFinalStateMomenta,
+	                              bp::list pyProductionKinematicsMomenta,
+	                              bp::list pyDecayKinematicsMomenta,
 	                              bp::list pyAdditionalVariablesToSave)
 	{
-		std::vector<TVector3> initialStateMomenta(len(pyInitialStateMomenta));
-		for(unsigned int i = 0; i < len(pyInitialStateMomenta); ++i) {
-			bp::object item = bp::extract<bp::object>(pyInitialStateMomenta[i]);
-			initialStateMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
+		std::vector<TVector3> productionKinematicsMomenta(len(pyProductionKinematicsMomenta));
+		for(unsigned int i = 0; i < len(pyProductionKinematicsMomenta); ++i) {
+			bp::object item = bp::extract<bp::object>(pyProductionKinematicsMomenta[i]);
+			productionKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
 		}
-		std::vector<TVector3> finalStateMomenta(len(pyFinalStateMomenta));
-		for(unsigned int i = 0; i < len(pyFinalStateMomenta); ++i) {
-			bp::object item = bp::extract<bp::object>(pyFinalStateMomenta[i]);
-			finalStateMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
+		std::vector<TVector3> decayKinematicsMomenta(len(pyDecayKinematicsMomenta));
+		for(unsigned int i = 0; i < len(pyDecayKinematicsMomenta); ++i) {
+			bp::object item = bp::extract<bp::object>(pyDecayKinematicsMomenta[i]);
+			decayKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
 		}
 		std::vector<double> additionalVariablesToSave;
 		if(not rpwa::py::convertBPObjectToVector<double>(pyAdditionalVariablesToSave, additionalVariablesToSave))
@@ -96,7 +96,7 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariablesToSave when executing rpwa::dataFileWriter::addEvent()");
 			bp::throw_error_already_set();
 		}
-		self.addEvent(initialStateMomenta, finalStateMomenta, additionalVariablesToSave);
+		self.addEvent(productionKinematicsMomenta, decayKinematicsMomenta, additionalVariablesToSave);
 	}
 
 }
@@ -110,8 +110,8 @@ void rpwa::py::exportEventFileWriter() {
 			, &eventFileWriter_initialize
 			, (bp::arg("outputFile"),
 			   bp::arg("userString"),
-			   bp::arg("initialStateParticleNames"),
-			   bp::arg("finalStateParticleNames"),
+			   bp::arg("productionKinematicsParticleNames"),
+			   bp::arg("decayKinematicsParticleNames"),
 			   bp::arg("binningMap"),
 			   bp::arg("additionalVariableLabels"),
 			   bp::arg("eventTreeName")="rootPwaEvtTree",
@@ -124,8 +124,8 @@ void rpwa::py::exportEventFileWriter() {
 		.def(
 			"addEvent"
 			, &eventFileWriter_addEvent
-			, (bp::arg("initialStateMomenta"),
-			   bp::arg("finalStateMomenta"),
+			, (bp::arg("productionKinematicsMomenta"),
+			   bp::arg("decayKinematicsMomenta"),
 			   bp::arg("additionalVariablesToSave")=bp::list())
 		)
 		.def("finalize", &rpwa::eventFileWriter::finalize)

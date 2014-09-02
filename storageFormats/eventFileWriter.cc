@@ -23,12 +23,12 @@ rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
 	  _outfile(0),
 	  _eventTree(0),
-	  _initialStateMomenta(0),
-	  _finalStateMomenta(0),
+	  _productionKinematicsMomenta(0),
+	  _decayKinematicsMomenta(0),
 	  _additionalVariablesToSave(),
 	  _metadata(),
-	  _nmbInitialStateParticles(0),
-	  _nmbFinalStateParticles(0),
+	  _nmbProductionKinematicsParticles(0),
+	  _nmbDecayKinematicsParticles(0),
 	  _hashCalculator() { }
 
 
@@ -39,17 +39,17 @@ rpwa::eventFileWriter::~eventFileWriter()
 
 
 bool rpwa::eventFileWriter::initialize(TFile&                                     outputFile,
-                                             const string&                              userString,
-                                             const vector<string>&                      initialStateParticleNames,
-                                             const vector<string>&                      finalStateParticleNames,
-                                             const map<string, pair<double, double> >&  binningMap,
-                                             const vector<string>&                      additionalVariableLabels,
-                                             const string&                              eventTreeName,
-                                             const string&                              initialStateMomentaBranchName,
-                                             const string&                              finalStateMomentaBranchName,
-                                             const string&                              metadataName,
-                                             const int&                                 splitlevel,
-                                             const int&                                 buffsize)
+                                       const string&                              userString,
+                                       const vector<string>&                      productionKinematicsParticleNames,
+                                       const vector<string>&                      decayKinematicsParticleNames,
+                                       const map<string, pair<double, double> >&  binningMap,
+                                       const vector<string>&                      additionalVariableLabels,
+                                       const string&                              eventTreeName,
+                                       const string&                              initialStateMomentaBranchName,
+                                       const string&                              finalStateMomentaBranchName,
+                                       const string&                              metadataName,
+                                       const int&                                 splitlevel,
+                                       const int&                                 buffsize)
 {
 	if(_initialized) {
 		printWarn << "trying to initialize when already initialized" << endl;
@@ -60,18 +60,18 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 
 	// prepare metadata
 	_metadata.setUserString(userString);
-	_metadata.setInitialStateParticleNames(initialStateParticleNames);
-	_nmbInitialStateParticles = initialStateParticleNames.size();
-	_metadata.setFinalStateParticleNames(finalStateParticleNames);
-	_nmbFinalStateParticles = finalStateParticleNames.size();
+	_metadata.setProductionKinematicsParticleNames(productionKinematicsParticleNames);
+	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
+	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);
+	_nmbDecayKinematicsParticles = decayKinematicsParticleNames.size();
 	_metadata.setBinningMap(binningMap);
 
 	// prepare event tree
-	_initialStateMomenta = new TClonesArray("TVector3", _nmbInitialStateParticles);
-	_finalStateMomenta   = new TClonesArray("TVector3", _nmbFinalStateParticles);
+	_productionKinematicsMomenta = new TClonesArray("TVector3", _nmbProductionKinematicsParticles);
+	_decayKinematicsMomenta   = new TClonesArray("TVector3", _nmbDecayKinematicsParticles);
 	_eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
-	_eventTree->Branch(initialStateMomentaBranchName.c_str(), "TClonesArray", &_initialStateMomenta, buffsize, splitlevel);
-	_eventTree->Branch(finalStateMomentaBranchName.c_str(),   "TClonesArray", &_finalStateMomenta,   buffsize, splitlevel);
+	_eventTree->Branch(initialStateMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
+	_eventTree->Branch(finalStateMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
 	_metadata.setAdditionalSavedVariableLables(additionalVariableLabels);
 	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {
@@ -85,20 +85,20 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 }
 
 
-void rpwa::eventFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
-                                           const vector<TVector3>& finalStateMomenta,
+void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKinematicsMomenta,
+                                           const vector<TVector3>& decayKinematicsMomenta,
                                            const vector<double>&   additionalVariablesToSave)
 {
-	if(initialStateMomenta.size() != _nmbInitialStateParticles) {
+	if(productionKinematicsMomenta.size() != _nmbProductionKinematicsParticles) {
 		printErr << "received unexpected number of initial state particles (got "
-		         << initialStateMomenta.size() << ", expected "
-		         << _nmbInitialStateParticles << "). Aborting..." << endl;
+		         << productionKinematicsMomenta.size() << ", expected "
+		         << _nmbProductionKinematicsParticles << "). Aborting..." << endl;
 		throw;
 	}
-	if(finalStateMomenta.size() != _nmbFinalStateParticles) {
+	if(decayKinematicsMomenta.size() != _nmbDecayKinematicsParticles) {
 		printErr << "received unexpected number of final state particles (got "
-		         << finalStateMomenta.size() << ", expected "
-		         << _nmbFinalStateParticles << "). Aborting..." << endl;
+		         << decayKinematicsMomenta.size() << ", expected "
+		         << _nmbDecayKinematicsParticles << "). Aborting..." << endl;
 		throw;
 	}
 	if(additionalVariablesToSave.size() != _additionalVariablesToSave.size()) {
@@ -107,15 +107,15 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>& initialStateMomenta
 		         << _additionalVariablesToSave.size() << "). Aborting..." << endl;
 		throw;
 	}
-	for(unsigned int i = 0; i < initialStateMomenta.size(); ++i) {
-		const TVector3& initialStateMomentum = initialStateMomenta[i];
-		_hashCalculator.Update(initialStateMomentum);
-		new ((*_initialStateMomenta)[i]) TVector3(initialStateMomentum);
+	for(unsigned int i = 0; i < productionKinematicsMomenta.size(); ++i) {
+		const TVector3& productionKinematicsMomentum = productionKinematicsMomenta[i];
+		_hashCalculator.Update(productionKinematicsMomentum);
+		new ((*_productionKinematicsMomenta)[i]) TVector3(productionKinematicsMomentum);
 	}
-	for(unsigned int i = 0; i < finalStateMomenta.size(); ++i) {
-		const TVector3& finalStateMomentum = finalStateMomenta[i];
-		_hashCalculator.Update(finalStateMomentum);
-		new ((*_finalStateMomenta)[i]) TVector3(finalStateMomentum);
+	for(unsigned int i = 0; i < decayKinematicsMomenta.size(); ++i) {
+		const TVector3& decayKinematicsMomentum = decayKinematicsMomenta[i];
+		_hashCalculator.Update(decayKinematicsMomentum);
+		new ((*_decayKinematicsMomenta)[i]) TVector3(decayKinematicsMomentum);
 	}
 	for(unsigned int i = 0; i < additionalVariablesToSave.size(); ++i) {
 		_hashCalculator.Update(additionalVariablesToSave[i]);
@@ -142,13 +142,13 @@ bool rpwa::eventFileWriter::finalize() {
 
 
 void rpwa::eventFileWriter::reset() {
-	if(_initialStateMomenta) {
-		delete _initialStateMomenta;
-		_initialStateMomenta = 0;
+	if(_productionKinematicsMomenta) {
+		delete _productionKinematicsMomenta;
+		_productionKinematicsMomenta = 0;
 	}
-	if(_finalStateMomenta) {
-		delete _finalStateMomenta;
-		_finalStateMomenta = 0;
+	if(_decayKinematicsMomenta) {
+		delete _decayKinematicsMomenta;
+		_decayKinematicsMomenta = 0;
 	}
 	_eventTree = 0;
 	_outfile = 0;
@@ -163,10 +163,10 @@ std::string rpwa::eventFileWriter::calculateHash(TTree* eventTree,
                                                 const string&        initialStateMomentaBranchName,
                                                 const string&        finalStateMomentaBranchName)
 {
-	TClonesArray* initialStateMomenta = 0;
-	TClonesArray* finalStateMomenta = 0;
-	eventTree->SetBranchAddress(initialStateMomentaBranchName.c_str(), &initialStateMomenta);
-	eventTree->SetBranchAddress(finalStateMomentaBranchName.c_str(),   &finalStateMomenta);
+	TClonesArray* productionKinameticsMomenta = 0;
+	TClonesArray* decayKinematicsMomenta = 0;
+	eventTree->SetBranchAddress(initialStateMomentaBranchName.c_str(), &productionKinameticsMomenta);
+	eventTree->SetBranchAddress(finalStateMomentaBranchName.c_str(),   &decayKinematicsMomenta);
 	vector<double> additionalVariables(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
 		eventTree->SetBranchAddress(additionalVariableLabels[i].c_str(), &additionalVariables[i]);
@@ -178,11 +178,11 @@ std::string rpwa::eventFileWriter::calculateHash(TTree* eventTree,
 		if(progressIndicator) {
 			++(*progressIndicator);
 		}
-		for(int i = 0; i < initialStateMomenta->GetEntries(); ++i) {
-			hashor.Update(*((TVector3*)(*initialStateMomenta)[i]));
+		for(int i = 0; i < productionKinameticsMomenta->GetEntries(); ++i) {
+			hashor.Update(*((TVector3*)(*productionKinameticsMomenta)[i]));
 		}
-		for(int i = 0; i < finalStateMomenta->GetEntries(); ++i) {
-			hashor.Update(*((TVector3*)(*finalStateMomenta)[i]));
+		for(int i = 0; i < decayKinematicsMomenta->GetEntries(); ++i) {
+			hashor.Update(*((TVector3*)(*decayKinematicsMomenta)[i]));
 		}
 		for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
 			hashor.Update(additionalVariables[i]);

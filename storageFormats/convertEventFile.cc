@@ -98,40 +98,40 @@ int main(int argc, char** argv)
 		printErr << "could not open output file. Aborting..." << endl;
 		return 1;
 	}
-	vector<string> initialStateParticleNames;
-	vector<string> finalStateParticleNames;
+	vector<string> productionKinematicsParticleNames;
+	vector<string> decayKinematicsParticleNames;
 	{
-		TClonesArray* initialStateParticleNames_ = (TClonesArray*)inputFile->Get(prodKinPartNamesObjName.c_str());
-		if(not initialStateParticleNames_) {
+		TClonesArray* productionKinematicsParticleNames_ = (TClonesArray*)inputFile->Get(prodKinPartNamesObjName.c_str());
+		if(not productionKinematicsParticleNames_) {
 			printErr << "could not read initial state particle names. Aborting..." << endl;
 			return 1;
 		}
-		TClonesArray* finalStateParticleNames_ = (TClonesArray*)inputFile->Get(decayKinPartNamesObjName.c_str());
-		if(not finalStateParticleNames_) {
+		TClonesArray* decayKinematicsParticleNames_ = (TClonesArray*)inputFile->Get(decayKinPartNamesObjName.c_str());
+		if(not decayKinematicsParticleNames_) {
 			printErr << "could not read final state particle names. Aborting..." << endl;
 			return 1;
 		}
-		for(int i = 0; i < initialStateParticleNames_->GetEntries(); ++i) {
-			initialStateParticleNames.push_back(string(((TObjString*)(*initialStateParticleNames_)[i])->GetString()));
+		for(int i = 0; i < productionKinematicsParticleNames_->GetEntries(); ++i) {
+			productionKinematicsParticleNames.push_back(string(((TObjString*)(*productionKinematicsParticleNames_)[i])->GetString()));
 		}
 		if(debug) {
-			printDebug << "got initial state particle names " << initialStateParticleNames << endl;
+			printDebug << "got initial state particle names " << productionKinematicsParticleNames << endl;
 		}
-		for(int i = 0; i < finalStateParticleNames_->GetEntries(); ++i) {
-			finalStateParticleNames.push_back(string(((TObjString*)(*finalStateParticleNames_)[i])->GetString()));
+		for(int i = 0; i < decayKinematicsParticleNames_->GetEntries(); ++i) {
+			decayKinematicsParticleNames.push_back(string(((TObjString*)(*decayKinematicsParticleNames_)[i])->GetString()));
 		}
 		if(debug) {
-			printDebug << "got final state particle names " << finalStateParticleNames << endl;
+			printDebug << "got final state particle names " << decayKinematicsParticleNames << endl;
 		}
 	}
-	const unsigned int nmbInitialStateParticles = initialStateParticleNames.size();
-	const unsigned int nmbFinalStateParticles = finalStateParticleNames.size();
+	const unsigned int nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
+	const unsigned int nmbDecayKinematicsParticles = decayKinematicsParticleNames.size();
 	eventFileWriter fileWriter;
 	{
 		bool success = fileWriter.initialize(*outputFile,
 											 userString,
-											 initialStateParticleNames,
-											 finalStateParticleNames,
+											 productionKinematicsParticleNames,
+											 decayKinematicsParticleNames,
 											 map<string, pair<double, double> >(),
 											 std::vector<string>(),
 											 inTreeName,
@@ -142,38 +142,38 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	TClonesArray* initialStateParticles = 0;
-	TClonesArray* finalStateParticles = 0;
+	TClonesArray* productionKinematicsParticles = 0;
+	TClonesArray* decayKinematicsParticles = 0;
 	TTree* inputTree = (TTree*)inputFile->Get(inTreeName.c_str());
-	inputTree->SetBranchAddress(prodKinMomentaLeafName.c_str(), &initialStateParticles);
-	inputTree->SetBranchAddress(decayKinMomentaLeafName.c_str(), &finalStateParticles);
+	inputTree->SetBranchAddress(prodKinMomentaLeafName.c_str(), &productionKinematicsParticles);
+	inputTree->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinematicsParticles);
 	boost::progress_display progressIndicator(inputTree->GetEntries(), cout, "");
 	for(long eventNumber = 0; eventNumber < inputTree->GetEntries(); ++eventNumber) {
 		++progressIndicator;
 		inputTree->GetEntry(eventNumber);
-		if(initialStateParticles->GetEntries() != (int)nmbInitialStateParticles) {
+		if(productionKinematicsParticles->GetEntries() != (int)nmbProductionKinematicsParticles) {
 			cout << endl;
 			printErr << "received unexpected number of initial state particles (got "
-			         << initialStateParticles->GetEntries() << ", expected "
-			         << nmbInitialStateParticles << "). Aborting..." << endl;
+			         << productionKinematicsParticles->GetEntries() << ", expected "
+			         << nmbProductionKinematicsParticles << "). Aborting..." << endl;
 			return 1;
 		}
-		if(finalStateParticles->GetEntries() != (int)nmbFinalStateParticles) {
+		if(decayKinematicsParticles->GetEntries() != (int)nmbDecayKinematicsParticles) {
 			cout << endl;
 			printErr << "received unexpected number of final state particles (got "
-			         << finalStateParticles->GetEntries() << ", expected "
-			         << nmbFinalStateParticles << "). Aborting..." << endl;
+			         << decayKinematicsParticles->GetEntries() << ", expected "
+			         << nmbDecayKinematicsParticles << "). Aborting..." << endl;
 			return 1;
 		}
-		vector<TVector3> initialStateMomenta(nmbInitialStateParticles);
-		vector<TVector3> finalStateMomenta(nmbFinalStateParticles);
-		for(int i = 0; i < initialStateParticles->GetEntries(); ++i) {
-			initialStateMomenta[i] = *(TVector3*)(*initialStateParticles)[i];
+		vector<TVector3> productionKinematicsMomenta(nmbProductionKinematicsParticles);
+		vector<TVector3> decayKinematicsMomenta(nmbDecayKinematicsParticles);
+		for(int i = 0; i < productionKinematicsParticles->GetEntries(); ++i) {
+			productionKinematicsMomenta[i] = *(TVector3*)(*productionKinematicsParticles)[i];
 		}
-		for(int i = 0; i < finalStateParticles->GetEntries(); ++i) {
-			finalStateMomenta[i] = *(TVector3*)(*finalStateParticles)[i];
+		for(int i = 0; i < decayKinematicsParticles->GetEntries(); ++i) {
+			decayKinematicsMomenta[i] = *(TVector3*)(*decayKinematicsParticles)[i];
 		}
-		fileWriter.addEvent(initialStateMomenta, finalStateMomenta);
+		fileWriter.addEvent(productionKinematicsMomenta, decayKinematicsMomenta);
 	}
 	if(not fileWriter.finalize()) {
 		printErr << "finalizing the output file failed." << endl;

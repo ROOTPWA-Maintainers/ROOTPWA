@@ -10,8 +10,8 @@ using namespace rpwa;
 rpwa::eventMetadata::eventMetadata()
 	: _userString(""),
 	  _contentHash(""),
-	  _initialStateParticleNames(),
-	  _finalStateParticleNames(),
+	  _productionKinematicsParticleNames(),
+	  _decayKinematicsParticleNames(),
 	  _binningMap()
 { }
 
@@ -24,8 +24,8 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 	out << "dataMetadata: " << endl
 	    << "    userString ...................... '" << _userString << "'"         << endl
 	    << "    contentHash ..................... '" << _contentHash << "'"        << endl
-	    << "    initial state particle names: ... "  << _initialStateParticleNames << endl
-        << "    final state particle names: ..... "  << _finalStateParticleNames   << endl
+	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames << endl
+        << "    final state particle names: ..... "  << _decayKinematicsParticleNames   << endl
 	    << "    binning map";
 	if(_binningMap.empty()) {
 		out << " ..................... " << "<empty>" << endl;
@@ -39,15 +39,15 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 }
 
 
-void rpwa::eventMetadata::setInitialStateParticleNames(const vector<string>& initialStateParticleNames)
+void rpwa::eventMetadata::setProductionKinematicsParticleNames(const vector<string>& productionKinematicsNames)
 {
-	_initialStateParticleNames = initialStateParticleNames;
+	_productionKinematicsParticleNames = productionKinematicsNames;
 }
 
 
-void rpwa::eventMetadata::setFinalStateParticleNames(const vector<string>& finalStateParticleNames)
+void rpwa::eventMetadata::setDecayKinematicsParticleNames(const vector<string>& decayKinematicsParticleNames)
 {
-	_finalStateParticleNames = finalStateParticleNames;
+	_decayKinematicsParticleNames = decayKinematicsParticleNames;
 }
 
 

@@ -20,12 +20,12 @@ namespace rpwa {
 		eventFileWriter();
 		~eventFileWriter();
 
-		bool initialize(TFile&                                                   outputFile,                // output file to write the data to (user keeps ownership!)
-		                const std::string&                                       userString,                // some arbitrary string to identify this data file
-		                const std::vector<std::string>&                          initialStateParticleNames, // particle names of initial state particles (has to be the same order as the particles appear in the data!)
-		                const std::vector<std::string>&                          finalStateParticleNames,   // particle names of final state particles (has to be the same order as the particles appear in the data!)
-		                const std::map<std::string, std::pair<double, double> >& binningMap,                // binning variable map with content "label" -> (lowerBound, upperBound) describing which bin these data belong to
-		                const std::vector<std::string>&                          additionalVariableLabels,  // Labels for any additional information which is stored (as double) and can later be used for binning
+		bool initialize(TFile&                                                   outputFile,                        // output file to write the data to (user keeps ownership!)
+		                const std::string&                                       userString,                        // some arbitrary string to identify this data file
+		                const std::vector<std::string>&                          productionKinematicsParticleNames, // particle names of initial state particles (has to be the same order as the particles appear in the data!)
+		                const std::vector<std::string>&                          decayKinematicsParticleNames,      // particle names of final state particles (has to be the same order as the particles appear in the data!)
+		                const std::map<std::string, std::pair<double, double> >& binningMap,                        // binning variable map with content "label" -> (lowerBound, upperBound) describing which bin these data belong to
+		                const std::vector<std::string>&                          additionalVariableLabels,          // Labels for any additional information which is stored (as double) and can later be used for binning
 		                const std::string&              eventTreeName = "rootPwaEvtTree", // name for the event tree in the output file
 		                const std::string&              initialStateMomentaBranchName = "prodKinMomenta",  // branch name where the initial state particles are stored
 		                const std::string&              finalStateMomentaBranchName   = "decayKinMomenta", // branch name where the final state particles are stored
@@ -33,8 +33,8 @@ namespace rpwa {
 		                const int&                      splitlevel = 99,
 		                const int&                      buffsize = 256000);
 
-		void addEvent(const std::vector<TVector3>& initialStateMomenta,
-		              const std::vector<TVector3>& finalStateMomenta,
+		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
+		              const std::vector<TVector3>& decayKinematicsMomenta,
 		              const std::vector<double>& additionalVariablesToSave = std::vector<double>());
 
 
@@ -55,12 +55,12 @@ namespace rpwa {
 		bool _initialized;
 		TFile* _outfile;
 		TTree* _eventTree;
-		TClonesArray* _initialStateMomenta;
-		TClonesArray* _finalStateMomenta;
+		TClonesArray* _productionKinematicsMomenta;
+		TClonesArray* _decayKinematicsMomenta;
 		std::vector<double> _additionalVariablesToSave;
 		eventMetadata _metadata;
-		unsigned int _nmbInitialStateParticles;
-		unsigned int _nmbFinalStateParticles;
+		unsigned int _nmbProductionKinematicsParticles;
+		unsigned int _nmbDecayKinematicsParticles;
 		hashCalculator _hashCalculator;
 
 	}; // rootpwaDataFileWriter
