@@ -32,7 +32,7 @@
 #include "complexMatrix_py.h"
 #include "fitResult_py.h"
 #include "utils_py.h"
-#include "dataFileWriter_py.h"
+#include "eventFileWriter_py.h"
 
 namespace bp = boost::python;
 
