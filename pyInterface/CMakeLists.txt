@@ -36,7 +36,7 @@ message_setup_this_dir()
 
 set(AMPLITUDE_SUBDIR amplitude)
 set(GENERATORS_SUBDIR generators)
-set(METADATA_SUBDIR metadata)
+set(STORAGEFORMATS_SUBDIR storageFormats)
 set(PYUTILS_SUBDIR pyUtils)
 set(SRC_SUBDIR src)
 set(UTILITIES_SUBDIR utilities)
@@ -57,7 +57,7 @@ set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_SUBDIR}
 	${GENERATORS_SUBDIR}
-	${METADATA_SUBDIR}
+	${STORAGEFORMATS_SUBDIR}
 	${PYUTILS_SUBDIR}
 	${SRC_SUBDIR}
 	${UTILITIES_SUBDIR}
@@ -95,7 +95,7 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
-	${METADATA_SUBDIR}/dataFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${SRC_SUBDIR}/complexMatrix_py.cc
 	${SRC_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
