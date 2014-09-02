@@ -50,7 +50,7 @@
 
 #include "fitResult.h"
 
-#include "plotIntensity.C"
+#include "plotIntensity.h"
 
 using namespace std;
 using namespace rpwa;

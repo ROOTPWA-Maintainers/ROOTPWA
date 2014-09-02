@@ -48,7 +48,7 @@ using namespace rpwa;
 
 TChain*
 loadFitResult(const string& fileNamePattern,
-              TChain*&      chain,
+              TChain*       chain    = 0,
               const string& treeName = "pwa")
 {
 	// use TFileCollection to expand file name pattern into file list,
