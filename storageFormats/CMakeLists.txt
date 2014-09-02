@@ -49,6 +49,7 @@ set(SOURCES
 	eventStorage.cc
 	eventMetadata.cc
 	eventFileWriter.cc
+	hashCalculator.cc
 	)
 
 # ROOT dictionary

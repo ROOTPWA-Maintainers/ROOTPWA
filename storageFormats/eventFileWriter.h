@@ -4,32 +4,14 @@
 
 #include <map>
 
-#include <TMD5.h>
-
 #include "eventMetadata.h"
+#include "hashCalculator.h"
 
 class TFile;
 class TVector3;
 class TTree;
 
 namespace rpwa {
-
-	class md5Wrapper : public TMD5 {
-
-	  public:
-
-		md5Wrapper()
-			: TMD5() { }
-
-		void Update(const double& value);
-		void Update(const TVector3& vector);
-
-		std::string hash() {
-			TMD5::Final();
-			return TMD5::AsString();
-		}
-
-	};
 
 	class eventFileWriter {
 
@@ -79,7 +61,7 @@ namespace rpwa {
 		eventMetadata _metadata;
 		unsigned int _nmbInitialStateParticles;
 		unsigned int _nmbFinalStateParticles;
-		md5Wrapper _md5Calculator;
+		hashCalculator _hashCalculator;
 
 	}; // rootpwaDataFileWriter
 

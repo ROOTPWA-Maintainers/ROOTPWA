@@ -19,17 +19,6 @@ using namespace std;
 using namespace rpwa;
 
 
-void rpwa::md5Wrapper::Update(const double& value) {
-	TMD5::Update((UChar_t*)&value, 8);
-}
-
-void rpwa::md5Wrapper::Update(const TVector3& vector) {
-	Update(vector.X());
-	Update(vector.Y());
-	Update(vector.Z());
-}
-
-
 rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
 	  _outfile(0),
@@ -40,7 +29,7 @@ rpwa::eventFileWriter::eventFileWriter()
 	  _metadata(),
 	  _nmbInitialStateParticles(0),
 	  _nmbFinalStateParticles(0),
-	  _md5Calculator() { }
+	  _hashCalculator() { }
 
 
 rpwa::eventFileWriter::~eventFileWriter()
@@ -120,16 +109,16 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>& initialStateMomenta
 	}
 	for(unsigned int i = 0; i < initialStateMomenta.size(); ++i) {
 		const TVector3& initialStateMomentum = initialStateMomenta[i];
-		_md5Calculator.Update(initialStateMomentum);
+		_hashCalculator.Update(initialStateMomentum);
 		new ((*_initialStateMomenta)[i]) TVector3(initialStateMomentum);
 	}
 	for(unsigned int i = 0; i < finalStateMomenta.size(); ++i) {
 		const TVector3& finalStateMomentum = finalStateMomenta[i];
-		_md5Calculator.Update(finalStateMomentum);
+		_hashCalculator.Update(finalStateMomentum);
 		new ((*_finalStateMomenta)[i]) TVector3(finalStateMomentum);
 	}
 	for(unsigned int i = 0; i < additionalVariablesToSave.size(); ++i) {
-		_md5Calculator.Update(additionalVariablesToSave[i]);
+		_hashCalculator.Update(additionalVariablesToSave[i]);
 		_additionalVariablesToSave[i] = additionalVariablesToSave[i];
 	}
 	_eventTree->Fill();
@@ -142,7 +131,7 @@ bool rpwa::eventFileWriter::finalize() {
 		return false;
 	}
 	_outfile->cd();
-	_metadata.setContentHash(_md5Calculator.hash());
+	_metadata.setContentHash(_hashCalculator.hash());
 	_metadata.Write("dataMetadata");
 	_outfile->Write();
 	_outfile->Close();
@@ -183,21 +172,21 @@ std::string rpwa::eventFileWriter::calculateHash(TTree* eventTree,
 		eventTree->SetBranchAddress(additionalVariableLabels[i].c_str(), &additionalVariables[i]);
 	}
 	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(eventTree->GetEntries(), cout, "") : 0;
-	md5Wrapper md5Calculator;
+	hashCalculator hashor;
 	for(long eventNumber = 0; eventNumber < eventTree->GetEntries(); ++eventNumber) {
 		eventTree->GetEntry(eventNumber);
 		if(progressIndicator) {
 			++(*progressIndicator);
 		}
 		for(int i = 0; i < initialStateMomenta->GetEntries(); ++i) {
-			md5Calculator.Update(*((TVector3*)(*initialStateMomenta)[i]));
+			hashor.Update(*((TVector3*)(*initialStateMomenta)[i]));
 		}
 		for(int i = 0; i < finalStateMomenta->GetEntries(); ++i) {
-			md5Calculator.Update(*((TVector3*)(*finalStateMomenta)[i]));
+			hashor.Update(*((TVector3*)(*finalStateMomenta)[i]));
 		}
 		for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
-			md5Calculator.Update(additionalVariables[i]);
+			hashor.Update(additionalVariables[i]);
 		}
 	}
-	return md5Calculator.hash();
+	return hashor.hash();
 }
