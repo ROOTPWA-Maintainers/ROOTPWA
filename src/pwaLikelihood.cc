@@ -1233,5 +1233,5 @@ pwaLikelihood<complexT>::resetFuncCallInfo() const
 
 
 // explicit specializations
-template class pwaLikelihood<complex<float > >;
-template class pwaLikelihood<complex<double> >;
+template class rpwa::pwaLikelihood<complex<float > >;
+template class rpwa::pwaLikelihood<complex<double> >;
