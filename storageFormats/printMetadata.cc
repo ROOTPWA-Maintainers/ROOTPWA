@@ -76,16 +76,17 @@ int main(int argc, char** argv)
 		printErr << "could not open input file. Aborting..." << endl;
 		return 1;
 	}
-	eventMetadata* metadata = (eventMetadata*)inputFile->Get(dataMetadataName.c_str());
-	if(metadata) {
+	eventStorage* eventsStor = (eventStorage*)inputFile->Get(eventStorage::objectNameInFile.c_str());
+	const eventMetadata& metadata = eventsStor->metadata();
+	if(eventsStor) {
 		// we are reading a datafile
-		TTree* inputTree = (TTree*)inputFile->Get(inTreeName.c_str());
+		TTree* inputTree = eventsStor->data();
 		if(not inputTree) {
 			printErr << "reading a datafile but did not find event tree "
 			         << "with name '" << inTreeName << "'. Aborting..." << endl;
 			return 1;
 		}
-		const vector<string>& additionalVariableNames = metadata->additionalSavedVariableLables();
+		const vector<string>& additionalVariableNames = metadata.additionalSavedVariableLables();
 		{
 			TObjArray* branchList = inputTree->GetListOfBranches();
 			for(int i = 0; i < branchList->GetEntries(); ++i) {
@@ -103,9 +104,9 @@ int main(int argc, char** argv)
 		}
 		if(recalculateHash) {
 			printInfo << "recalculating hash..." << endl;
-			const string calculatedHash = eventFileWriter::calculateHash(inputTree, additionalVariableNames, true);
-			if(calculatedHash != metadata->contentHash()) {
-				printErr << "hash verification failed, hash from metadata '" << metadata->contentHash() << "' does "
+			const string calculatedHash = eventsStor->hash(true);
+			if(calculatedHash != metadata.contentHash()) {
+				printErr << "hash verification failed, hash from metadata '" << metadata.contentHash() << "' does "
 				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;
 			} else {
 				cout << endl;
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
 				cout << endl;
 			}
 		}
-		printInfo << *metadata << endl;
+		printInfo << metadata << endl;
 		printInfo << "additional information:" << endl
 		          << "    number of events in file ... " << inputTree->GetEntries() << endl
 		          << "    additional branches ........ " << additionalVariableNames << endl;

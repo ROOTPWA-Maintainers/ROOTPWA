@@ -24,7 +24,7 @@ namespace rpwa {
 
 		const std::string& userString() const { return _userString; }
 		const std::string& contentHash() const { return _contentHash; }
-		const binningMapType& getBinningMap() const { return _binningMap; }
+		const binningMapType& binningMap() const { return _binningMap; }
 		const std::vector<std::string>& productionKinematicsParticleNames() const { return _productionKinematicsParticleNames; }
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
 		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
@@ -35,6 +35,9 @@ namespace rpwa {
 	  private:
 
 		void setUserString(const std::string& userString) { _userString = userString; }
+		void appendToUserString(const std::string& userString,
+		                        const std::string& delimiter = ", ");
+
 		void setContentHash(const std::string& contentHash) { _contentHash = contentHash; }
 		void setProductionKinematicsParticleNames(const std::vector<std::string>& productionKinematicsParticleNames);
 		void setDecayKinematicsParticleNames(const std::vector<std::string>& decayKinematicsParticleNames);

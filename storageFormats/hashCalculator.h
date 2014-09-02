@@ -24,6 +24,13 @@ namespace rpwa {
 			return TMD5::AsString();
 		}
 
+		const bool& debug() { return _debug; }
+		void setDebug(const bool& debug = true) { _debug = debug; }
+
+	  private:
+
+		static bool _debug;
+
 	}; // class hashCalculator
 
 } // namespace rpwa

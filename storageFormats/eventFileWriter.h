@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "eventMetadata.h"
+#include "eventStorage.h"
 #include "hashCalculator.h"
 
 class TFile;
@@ -44,21 +44,14 @@ namespace rpwa {
 
 		const bool& initialized() { return _initialized; }
 
-		static std::string calculateHash(TTree* eventTree,
-		                                 const std::vector<std::string> additionalVariableLabels      = std::vector<std::string>(),
-		                                 const bool&                    printProgress                 = false,
-		                                 const std::string&             initialStateMomentaBranchName = "prodKinMomenta",
-		                                 const std::string&             finalStateMomentaBranchName   = "decayKinMomenta");
-
 	  private:
 
 		bool _initialized;
 		TFile* _outfile;
-		TTree* _eventTree;
+		eventStorage _eventStorage;
 		TClonesArray* _productionKinematicsMomenta;
 		TClonesArray* _decayKinematicsMomenta;
 		std::vector<double> _additionalVariablesToSave;
-		eventMetadata _metadata;
 		unsigned int _nmbProductionKinematicsParticles;
 		unsigned int _nmbDecayKinematicsParticles;
 		hashCalculator _hashCalculator;

@@ -104,7 +104,7 @@ namespace {
 
 void rpwa::py::exportEventFileWriter() {
 
-	bp::class_<rpwa::eventFileWriter>("dataFileWriter")
+	bp::class_<rpwa::eventFileWriter, boost::noncopyable>("dataFileWriter")
 		.def(
 			"initialize"
 			, &eventFileWriter_initialize

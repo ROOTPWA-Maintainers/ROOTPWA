@@ -39,6 +39,19 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 }
 
 
+void rpwa::eventMetadata::appendToUserString(const string& userString,
+                                             const string& delimiter)
+{
+	if(_userString == "") {
+		_userString = userString;
+	} else {
+		stringstream strStr;
+		strStr << _userString << delimiter << userString;
+		_userString = strStr.str();
+	}
+}
+
+
 void rpwa::eventMetadata::setProductionKinematicsParticleNames(const vector<string>& productionKinematicsNames)
 {
 	_productionKinematicsParticleNames = productionKinematicsNames;

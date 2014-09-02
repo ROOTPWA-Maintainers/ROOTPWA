@@ -50,17 +50,18 @@ set(SOURCES
 	eventMetadata.cc
 	eventFileWriter.cc
 	hashCalculator.cc
+	storage.cc
 	)
 
 # ROOT dictionary
-set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaUtilsDict.cc)
+set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
 set(ROOTPWASTORAGE_DICT_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 root_generate_dictionary(
 	"${ROOTPWASTORAGE_DICTIONARY}"
 	"${ROOTPWASTORAGE_DICT_INCLUDE_DIRS}"
-	"eventMetadata.h"
+	"storage.h;eventStorage.h;eventMetadata.h"
 	"rootPwaStorageLinkDef.h"
 )
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
