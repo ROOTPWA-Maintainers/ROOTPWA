@@ -67,6 +67,6 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportComplexMatrix();
 	rpwa::py::exportFitResult();
 	rpwa::py::exportUtils();
-	rpwa::py::exportDataFileWriter();
+	rpwa::py::exportEventFileWriter();
 
 }

@@ -39,7 +39,7 @@
 #pragma link off all functions;
 
 
-#pragma link C++ class rpwa::dataMetadata+;
+#pragma link C++ class rpwa::eventMetadata+;
 
 
 #endif

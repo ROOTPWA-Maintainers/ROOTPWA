@@ -11,19 +11,19 @@ namespace bp = boost::python;
 
 namespace {
 
-	bool dataFileWriter_initialize(rpwa::dataFileWriter& self,
-	                               PyObject* pyOutputFile,
-	                               std::string userString,
-	                               bp::object pyInitialStateParticleNames,
-	                               bp::object pyFinalStateParticleNames,
-	                               bp::dict pyBinningMap,
-	                               bp::object pyAdditionalVariableLabels,
-	                               const std::string& eventTreeName = "rootPwaEvtTree",
-	                               const std::string& initialStateMomentaBranchName = "prodKinMomenta",
-	                               const std::string& finalStateMomentaBranchName   = "decayKinMomenta",
-	                               const std::string& metadataName = "dataMetadata",
-	                               const int& splitlevel = 99,
-	                               const int& buffsize = 256000)
+	bool eventFileWriter_initialize(rpwa::eventFileWriter& self,
+	                                PyObject* pyOutputFile,
+	                                std::string userString,
+	                                bp::object pyInitialStateParticleNames,
+	                                bp::object pyFinalStateParticleNames,
+	                                bp::dict pyBinningMap,
+	                                bp::object pyAdditionalVariableLabels,
+	                                const std::string& eventTreeName = "rootPwaEvtTree",
+	                                const std::string& initialStateMomentaBranchName = "prodKinMomenta",
+	                                const std::string& finalStateMomentaBranchName   = "decayKinMomenta",
+	                                const std::string& metadataName = "dataMetadata",
+	                                const int& splitlevel = 99,
+	                                const int& buffsize = 256000)
 	{
 		TFile* outputFile = rpwa::py::convertFromPy<TFile*>(pyOutputFile);
 		std::vector<std::string> initialStateParticleNames;
@@ -75,10 +75,10 @@ namespace {
                                buffsize);
 	}
 
-	void dataFileWriter_addEvent(rpwa::dataFileWriter& self,
-	                             bp::list pyInitialStateMomenta,
-	                             bp::list pyFinalStateMomenta,
-	                             bp::list pyAdditionalVariablesToSave)
+	void eventFileWriter_addEvent(rpwa::eventFileWriter& self,
+	                              bp::list pyInitialStateMomenta,
+	                              bp::list pyFinalStateMomenta,
+	                              bp::list pyAdditionalVariablesToSave)
 	{
 		std::vector<TVector3> initialStateMomenta(len(pyInitialStateMomenta));
 		for(unsigned int i = 0; i < len(pyInitialStateMomenta); ++i) {
@@ -102,12 +102,12 @@ namespace {
 }
 
 
-void rpwa::py::exportDataFileWriter() {
+void rpwa::py::exportEventFileWriter() {
 
-	bp::class_<rpwa::dataFileWriter>("dataFileWriter")
+	bp::class_<rpwa::eventFileWriter>("dataFileWriter")
 		.def(
 			"initialize"
-			, &dataFileWriter_initialize
+			, &eventFileWriter_initialize
 			, (bp::arg("outputFile"),
 			   bp::arg("userString"),
 			   bp::arg("initialStateParticleNames"),
@@ -123,16 +123,16 @@ void rpwa::py::exportDataFileWriter() {
 		)
 		.def(
 			"addEvent"
-			, &dataFileWriter_addEvent
+			, &eventFileWriter_addEvent
 			, (bp::arg("initialStateMomenta"),
 			   bp::arg("finalStateMomenta"),
 			   bp::arg("additionalVariablesToSave")=bp::list())
 		)
-		.def("finalize", &rpwa::dataFileWriter::finalize)
-		.def("reset", &rpwa::dataFileWriter::reset)
+		.def("finalize", &rpwa::eventFileWriter::finalize)
+		.def("reset", &rpwa::eventFileWriter::reset)
 		.def(
 			"initialized"
-			, &rpwa::dataFileWriter::initialized
+			, &rpwa::eventFileWriter::initialized
 			, bp::return_value_policy<bp::copy_const_reference>()
 		);
 

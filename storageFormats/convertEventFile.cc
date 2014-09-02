@@ -11,7 +11,7 @@
 
 #include "reportingUtilsEnvironment.h"
 #include "reportingUtils.hpp"
-#include "dataFileWriter.h"
+#include "eventFileWriter.h"
 
 
 using namespace std;
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 	}
 	const unsigned int nmbInitialStateParticles = initialStateParticleNames.size();
 	const unsigned int nmbFinalStateParticles = finalStateParticleNames.size();
-	dataFileWriter fileWriter;
+	eventFileWriter fileWriter;
 	{
 		bool success = fileWriter.initialize(*outputFile,
 											 userString,

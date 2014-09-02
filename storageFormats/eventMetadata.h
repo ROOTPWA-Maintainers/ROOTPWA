@@ -1,6 +1,6 @@
 
-#ifndef DATAMETADATA_H
-#define DATAMETADATA_H
+#ifndef EVENTMETADATA_H
+#define EVENTMETADATA_H
 
 #include <map>
 
@@ -9,8 +9,8 @@
 
 namespace rpwa {
 
-	class dataMetadata : public TObject {
-		friend class dataFileWriter;
+	class eventMetadata : public TObject {
+		friend class eventFileWriter;
 
 	  private:
 		typedef std::pair<double, double> rangePairType;
@@ -18,8 +18,8 @@ namespace rpwa {
 
 	  public:
 
-		dataMetadata();
-		~dataMetadata();
+		eventMetadata();
+		~eventMetadata();
 
 		const std::string& userString() const { return _userString; }
 		const std::string& contentHash() const { return _contentHash; }
@@ -53,15 +53,15 @@ namespace rpwa {
 
 		std::vector<std::string> _additionalSavedVariableLabels;
 
-		ClassDef(dataMetadata, 1);
+		ClassDef(eventMetadata, 1);
 
-	}; // class dataMetadata
+	}; // class eventMetadata
 
 
 	inline
 	std::ostream&
 	operator <<(std::ostream&          out,
-	            const dataMetadata&    metadata)
+	            const eventMetadata&    metadata)
 	{
 		return metadata.print(out);
 	}

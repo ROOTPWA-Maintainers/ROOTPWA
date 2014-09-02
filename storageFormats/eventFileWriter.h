@@ -6,7 +6,7 @@
 
 #include <TMD5.h>
 
-#include "dataMetadata.h"
+#include "eventMetadata.h"
 
 class TFile;
 class TVector3;
@@ -31,12 +31,12 @@ namespace rpwa {
 
 	};
 
-	class dataFileWriter {
+	class eventFileWriter {
 
 	  public:
 
-		dataFileWriter();
-		~dataFileWriter();
+		eventFileWriter();
+		~eventFileWriter();
 
 		bool initialize(TFile&                                                   outputFile,                // output file to write the data to (user keeps ownership!)
 		                const std::string&                                       userString,                // some arbitrary string to identify this data file
@@ -76,7 +76,7 @@ namespace rpwa {
 		TClonesArray* _initialStateMomenta;
 		TClonesArray* _finalStateMomenta;
 		std::vector<double> _additionalVariablesToSave;
-		dataMetadata _metadata;
+		eventMetadata _metadata;
 		unsigned int _nmbInitialStateParticles;
 		unsigned int _nmbFinalStateParticles;
 		md5Wrapper _md5Calculator;

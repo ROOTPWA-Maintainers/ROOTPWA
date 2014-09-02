@@ -7,7 +7,7 @@
 
 #include "reportingUtilsEnvironment.h"
 #include "reportingUtils.hpp"
-#include "dataFileWriter.h"
+#include "eventFileWriter.h"
 
 
 using namespace std;
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 		printErr << "could not open input file. Aborting..." << endl;
 		return 1;
 	}
-	dataMetadata* metadata = (dataMetadata*)inputFile->Get(dataMetadataName.c_str());
+	eventMetadata* metadata = (eventMetadata*)inputFile->Get(dataMetadataName.c_str());
 	if(metadata) {
 		// we are reading a datafile
 		TTree* inputTree = (TTree*)inputFile->Get(inTreeName.c_str());
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 		}
 		if(recalculateHash) {
 			printInfo << "recalculating hash..." << endl;
-			const string calculatedHash = dataFileWriter::calculateHash(inputTree, additionalVariableNames, true);
+			const string calculatedHash = eventFileWriter::calculateHash(inputTree, additionalVariableNames, true);
 			if(calculatedHash != metadata->contentHash()) {
 				printErr << "hash verification failed, hash from metadata '" << metadata->contentHash() << "' does "
 				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;

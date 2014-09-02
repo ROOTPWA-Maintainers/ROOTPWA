@@ -10,8 +10,8 @@
 #include <TTree.h>
 #include <TVector3.h>
 
-#include "dataFileWriter.h"
-#include "dataMetadata.h"
+#include "eventFileWriter.h"
+#include "eventMetadata.h"
 #include "reportingUtils.hpp"
 
 
@@ -30,7 +30,7 @@ void rpwa::md5Wrapper::Update(const TVector3& vector) {
 }
 
 
-rpwa::dataFileWriter::dataFileWriter()
+rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
 	  _outfile(0),
 	  _eventTree(0),
@@ -43,13 +43,13 @@ rpwa::dataFileWriter::dataFileWriter()
 	  _md5Calculator() { }
 
 
-rpwa::dataFileWriter::~dataFileWriter()
+rpwa::eventFileWriter::~eventFileWriter()
 {
 	reset();
 }
 
 
-bool rpwa::dataFileWriter::initialize(TFile&                                     outputFile,
+bool rpwa::eventFileWriter::initialize(TFile&                                     outputFile,
                                              const string&                              userString,
                                              const vector<string>&                      initialStateParticleNames,
                                              const vector<string>&                      finalStateParticleNames,
@@ -96,7 +96,7 @@ bool rpwa::dataFileWriter::initialize(TFile&                                    
 }
 
 
-void rpwa::dataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
+void rpwa::eventFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
                                            const vector<TVector3>& finalStateMomenta,
                                            const vector<double>&   additionalVariablesToSave)
 {
@@ -136,7 +136,7 @@ void rpwa::dataFileWriter::addEvent(const vector<TVector3>& initialStateMomenta,
 }
 
 
-bool rpwa::dataFileWriter::finalize() {
+bool rpwa::eventFileWriter::finalize() {
 	if(not _initialized) {
 		printWarn << "trying to finalize when not initialized" << endl;
 		return false;
@@ -152,7 +152,7 @@ bool rpwa::dataFileWriter::finalize() {
 }
 
 
-void rpwa::dataFileWriter::reset() {
+void rpwa::eventFileWriter::reset() {
 	if(_initialStateMomenta) {
 		delete _initialStateMomenta;
 		_initialStateMomenta = 0;
@@ -164,11 +164,11 @@ void rpwa::dataFileWriter::reset() {
 	_eventTree = 0;
 	_outfile = 0;
 	_initialized = false;
-	_metadata = dataMetadata();
+	_metadata = eventMetadata();
 }
 
 
-std::string rpwa::dataFileWriter::calculateHash(TTree* eventTree,
+std::string rpwa::eventFileWriter::calculateHash(TTree* eventTree,
                                                 const vector<string> additionalVariableLabels,
                                                 const bool&          printProgress,
                                                 const string&        initialStateMomentaBranchName,

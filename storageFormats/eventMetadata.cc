@@ -1,5 +1,5 @@
 
-#include "dataMetadata.h"
+#include "eventMetadata.h"
 #include "reportingUtils.hpp"
 
 
@@ -7,7 +7,7 @@ using namespace std;
 using namespace rpwa;
 
 
-rpwa::dataMetadata::dataMetadata()
+rpwa::eventMetadata::eventMetadata()
 	: _userString(""),
 	  _contentHash(""),
 	  _initialStateParticleNames(),
@@ -16,10 +16,10 @@ rpwa::dataMetadata::dataMetadata()
 { }
 
 
-rpwa::dataMetadata::~dataMetadata() { };
+rpwa::eventMetadata::~eventMetadata() { };
 
 
-ostream& rpwa::dataMetadata::print(ostream& out) const
+ostream& rpwa::eventMetadata::print(ostream& out) const
 {
 	out << "dataMetadata: " << endl
 	    << "    userString ...................... '" << _userString << "'"         << endl
@@ -39,19 +39,19 @@ ostream& rpwa::dataMetadata::print(ostream& out) const
 }
 
 
-void rpwa::dataMetadata::setInitialStateParticleNames(const vector<string>& initialStateParticleNames)
+void rpwa::eventMetadata::setInitialStateParticleNames(const vector<string>& initialStateParticleNames)
 {
 	_initialStateParticleNames = initialStateParticleNames;
 }
 
 
-void rpwa::dataMetadata::setFinalStateParticleNames(const vector<string>& finalStateParticleNames)
+void rpwa::eventMetadata::setFinalStateParticleNames(const vector<string>& finalStateParticleNames)
 {
 	_finalStateParticleNames = finalStateParticleNames;
 }
 
 
-void rpwa::dataMetadata::setBinningVariableLabels(const vector<string>& labels)
+void rpwa::eventMetadata::setBinningVariableLabels(const vector<string>& labels)
 {
 	for(unsigned int i = 0; i < labels.size(); ++i) {
 		_binningMap[labels[i]] = rangePairType(0., 0.);
@@ -59,13 +59,13 @@ void rpwa::dataMetadata::setBinningVariableLabels(const vector<string>& labels)
 }
 
 
-void rpwa::dataMetadata::setBinningVariableRange(const string& label, const rangePairType& range)
+void rpwa::eventMetadata::setBinningVariableRange(const string& label, const rangePairType& range)
 {
 	_binningMap[label] = range;
 }
 
 
-void rpwa::dataMetadata::setBinningMap(const binningMapType& binningMap)
+void rpwa::eventMetadata::setBinningMap(const binningMapType& binningMap)
 {
 	_binningMap = binningMap;
 }
