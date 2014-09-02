@@ -46,22 +46,23 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	dataMetadata.cc
-	dataFileWriter.cc
+	storage.cc
+	eventMetadata.cc
+	eventFileWriter.cc
 	)
 
 # ROOT dictionary
-set(ROOTPWAMETA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaUtilsDict.cc)
-set(ROOTPWAMETA_DICT_INCLUDE_DIRS
+set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaUtilsDict.cc)
+set(ROOTPWASTORAGE_DICT_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 root_generate_dictionary(
-	"${ROOTPWAMETA_DICTIONARY}"
-	"${ROOTPWAMETA_DICT_INCLUDE_DIRS}"
-	"dataMetadata.h"
-	"rootPwaMetaLinkDef.h"
+	"${ROOTPWASTORAGE_DICTIONARY}"
+	"${ROOTPWASTORAGE_DICT_INCLUDE_DIRS}"
+	"eventMetadata.h"
+	"rootPwaStorageLinkDef.h"
 )
-set(SOURCES ${SOURCES} ${ROOTPWAMETA_DICTIONARY})
+set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
 
 
 # library
@@ -73,5 +74,5 @@ make_shared_library(
 	)
 add_dependencies(${THIS_LIB} environment)
 
-make_executable(convertDataFile convertDataFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
-make_executable(printMetadata   printMetadata.cc   ${THIS_LIB} ${UTILITIES_LIBS})
+make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
+make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${UTILITIES_LIBS})
