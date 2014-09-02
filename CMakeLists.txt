@@ -58,6 +58,7 @@ message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 include(CommonMacros)
 include(FeatureSummary)
 include(ProcessorCount)
+include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
 
 
@@ -91,6 +92,12 @@ endif()
 
 
 # set common compiler flags
+# test whether -std=c++11 is supported by the C++ compiler
+check_cxx_compiler_flag("-std=c++11" HAVE_CXX11)
+if(HAVE_CXX11)
+	message(STATUS "C++11 compatible compiler found, enable it.")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif(HAVE_CXX11)
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
 # set additional flags for specific build types

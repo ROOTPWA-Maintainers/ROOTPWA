@@ -48,7 +48,7 @@
 
 using namespace std;
 using namespace boost;
-using namespace boost::tuples;
+namespace bt = boost::tuples;
 using namespace libconfig;
 using namespace rpwa;
 
@@ -91,22 +91,22 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 	if (waveSetParKey) {
 		const Setting* isoSpinRangeKey = findLibConfigArray(*waveSetParKey, "isospinRange", false);
 		if (isoSpinRangeKey)
-			_isospinRange = make_tuple<int, int>((*isoSpinRangeKey)[0], (*isoSpinRangeKey)[1]);
+			_isospinRange = bt::make_tuple<int, int>((*isoSpinRangeKey)[0], (*isoSpinRangeKey)[1]);
 		const Setting* JRangeKey = findLibConfigArray(*waveSetParKey, "JRange", false);
 		if (JRangeKey)
-			_JRange = make_tuple<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
+			_JRange = bt::make_tuple<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
 		const Setting* MRangeKey = findLibConfigArray(*waveSetParKey, "MRange", false);
 		waveSetParKey->lookupValue("reflectivity",     _reflectivity    );
 		waveSetParKey->lookupValue("useReflectivity",  _useReflectivity );
 		waveSetParKey->lookupValue("allowSpinExotics", _allowSpinExotics);
 		if (MRangeKey)
-			_spinProjRange = make_tuple<int, int>((*MRangeKey)[0], (*MRangeKey)[1]);
+			_spinProjRange = bt::make_tuple<int, int>((*MRangeKey)[0], (*MRangeKey)[1]);
 		const Setting* LRangeKey = findLibConfigArray(*waveSetParKey, "LRange", false);
 		if (LRangeKey)
-			_LRange = make_tuple<int, int>((*LRangeKey)[0], (*LRangeKey)[1]);
+			_LRange = bt::make_tuple<int, int>((*LRangeKey)[0], (*LRangeKey)[1]);
 		const Setting* SRangeKey = findLibConfigArray(*waveSetParKey, "SRange", false);
 		if (SRangeKey)
-			_SRange = make_tuple<int, int>((*SRangeKey)[0], (*SRangeKey)[1]);
+			_SRange = bt::make_tuple<int, int>((*SRangeKey)[0], (*SRangeKey)[1]);
 		const Setting* isobarBlackListKey = findLibConfigArray(*waveSetParKey,
 		                                                       "isobarBlackList", false);
 		if (isobarBlackListKey) {
@@ -172,7 +172,7 @@ waveSetGenerator::generateWaveSet()
 		// get daughter decay topologies
 		vector<vector<isobarDecayTopology>* > daughterDecays;
 		adjIterator iNd, iNdEnd;
-		for (tie(iNd, iNdEnd) = _templateTopo->adjacentVertices(startNds[iStart]); iNd != iNdEnd; ++iNd)
+		for (bt::tie(iNd, iNdEnd) = _templateTopo->adjacentVertices(startNds[iStart]); iNd != iNdEnd; ++iNd)
 			daughterDecays.push_back(&decayPossibilities[*iNd]);
 
 		// loop over all combinations of daughter decays
@@ -224,21 +224,21 @@ waveSetGenerator::generateWaveSet()
 				// loop over all allowed combinations of daughter quantum numbers
 				// loop over allowed total spins
 				int S, SMax;
-				for (tie(S, SMax) = getSpinRange(daughterJ[0], daughterJ[1], _SRange); S <= SMax; S += 2) {
+				for (bt::tie(S, SMax) = getSpinRange(daughterJ[0], daughterJ[1], _SRange); S <= SMax; S += 2) {
 					if (_debug)
 						printDebug << "setting total spin = " << spinQn(S) << " "
 						           << "(max spin = " << spinQn(SMax) << ")" << endl;
 
 					// loop over allowed relative orbital angular momenta
-					for (int L = max(0, get<0>(_LRange)); L <= get<1>(_LRange); L += 2) {
+					for (int L = max(0, bt::get<0>(_LRange)); L <= bt::get<1>(_LRange); L += 2) {
 						if (_debug)
 							printDebug << "setting relative orbital angular momentum = " << spinQn(L) << " "
-							           << "(max L = " << spinQn(get<1>(_LRange)) << ")" << endl;
+							           << "(max L = " << spinQn(bt::get<1>(_LRange)) << ")" << endl;
 						const int parentP = daughters[0]->P() * daughters[1]->P() * powMinusOne(L / 2);
 
 						// loop over allowed total angular momenta
 						int parentJ, parentJMax;
-						for (tie(parentJ, parentJMax) = getSpinRange(L, S, _JRange);
+						for (bt::tie(parentJ, parentJMax) = getSpinRange(L, S, _JRange);
 						     parentJ <= parentJMax; parentJ += 2) {
 							if (_debug)
 								printDebug << "setting parent spin = " << spinQn(parentJ) << " "
@@ -246,7 +246,7 @@ waveSetGenerator::generateWaveSet()
 
 							// loop over allowed isospins
 							int parentI, parentIMax;
-							for (tie(parentI, parentIMax) = getSpinRange(daughterI[0], daughterI[1], _isospinRange);
+							for (bt::tie(parentI, parentIMax) = getSpinRange(daughterI[0], daughterI[1], _isospinRange);
 							     parentI <= parentIMax; parentI += 2) {
 								if (_debug)
 									printDebug << "setting parent isospin = " << spinQn(parentI) << " "
@@ -337,26 +337,26 @@ waveSetGenerator::generateWaveSet()
 								// create all allowed decay topologies
 								if (parent->isXParticle()) {
 									// for X loop over allowed M and reflectivity states
-									tuple<int, int> parentMRange =
-										make_tuple(spinQnLargerEqual((_useReflectivity) ?
-										                             spinQnSmallerEqual(parentJ, 0) : -parentJ,
-										                             get<0>(_spinProjRange)),
-										           spinQnSmallerEqual(parentJ, get<1>(_spinProjRange)));
-									tuple<int, int> parentReflRange(0, 0);
+									bt::tuple<int, int> parentMRange =
+										bt::make_tuple(spinQnLargerEqual((_useReflectivity) ?
+										                                 spinQnSmallerEqual(parentJ, 0) : -parentJ,
+										                                 bt::get<0>(_spinProjRange)),
+										               spinQnSmallerEqual(parentJ, bt::get<1>(_spinProjRange)));
+									bt::tuple<int, int> parentReflRange(0, 0);
 									if (_useReflectivity) {
 										if (_reflectivity == 0)
-											parentReflRange = make_tuple(-1, +1);
+											parentReflRange = bt::make_tuple(-1, +1);
 										else
-											parentReflRange = make_tuple(signum(_reflectivity), signum(_reflectivity));
+											parentReflRange = bt::make_tuple(signum(_reflectivity), signum(_reflectivity));
 									}
-									for (int parentM = get<0>(parentMRange); parentM <= get<1>(parentMRange);
+									for (int parentM = bt::get<0>(parentMRange); parentM <= bt::get<1>(parentMRange);
 									     parentM += 2) {
 										if (_debug)
 											printDebug << "setting X spin projection to " << spinQn(parentM) << " "
-											           << "(max spin projection = " << spinQn(get<1>(parentMRange))
+											           << "(max spin projection = " << spinQn(bt::get<1>(parentMRange))
 											           << ")" << endl;
-										for (int parentRefl = get<0>(parentReflRange);
-										     parentRefl <= get<1>(parentReflRange); parentRefl += 2) {
+										for (int parentRefl = bt::get<0>(parentReflRange);
+										     parentRefl <= bt::get<1>(parentReflRange); parentRefl += 2) {
 											if (_debug and (parentRefl != 0))
 												printDebug << "setting X reflectivity to "
 												           << parityQn(parentRefl) << endl;
@@ -475,14 +475,14 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 void
 waveSetGenerator::reset()
 {
-	_isospinRange          = make_tuple(0, 2);
-	_JRange                = make_tuple(0, 0);
-	_spinProjRange         = make_tuple(0, 0);
+	_isospinRange          = bt::make_tuple(0, 2);
+	_JRange                = bt::make_tuple(0, 0);
+	_spinProjRange         = bt::make_tuple(0, 0);
 	_reflectivity          = 0;
 	_useReflectivity       = false;
 	_allowSpinExotics      = false;
-	_LRange                = make_tuple(0, 0);
-	_SRange                = make_tuple(0, 0);
+	_LRange                = bt::make_tuple(0, 0);
+	_SRange                = bt::make_tuple(0, 0);
 	_requireMinIsobarMass  = false;
 	_forceDecayCheck       = false;
 	_isobarMassWindowSigma = 0;
@@ -497,20 +497,20 @@ ostream&
 waveSetGenerator::print(ostream& out) const
 {
 	out << "wave set generator:" << endl
-	    << "    isospin range .............. [" << spinQn(get<0>(_isospinRange))  << ", "
-	    << spinQn(get<1>(_isospinRange))  << "]" << endl
-	    << "    J range .................... [" << spinQn(get<0>(_JRange))        << ", "
-	    << spinQn(get<1>(_JRange))        << "]" << endl
-	    << "    M range .................... [" << spinQn(get<0>(_spinProjRange)) << ", "
-	    << spinQn(get<1>(_spinProjRange)) << "]" << endl
+	    << "    isospin range .............. [" << spinQn(bt::get<0>(_isospinRange))  << ", "
+	    << spinQn(bt::get<1>(_isospinRange))  << "]" << endl
+	    << "    J range .................... [" << spinQn(bt::get<0>(_JRange))        << ", "
+	    << spinQn(bt::get<1>(_JRange))        << "]" << endl
+	    << "    M range .................... [" << spinQn(bt::get<0>(_spinProjRange)) << ", "
+	    << spinQn(bt::get<1>(_spinProjRange)) << "]" << endl
 	    << "    allow spin-exotics ......... " << yesNo(_allowSpinExotics) << endl;
 	if (_useReflectivity)
 		out << "    generate reflectivity ...... " << ((_reflectivity == 0) ? "both"
 		                                               : sign(_reflectivity)) << endl;
-	out << "    L range .................... [" << spinQn(get<0>(_LRange))        << ", "
-	    << spinQn(get<1>(_LRange))        << "]" << endl
-	    << "    S range .................... [" << spinQn(get<0>(_SRange))        << ", "
-	    << spinQn(get<1>(_SRange))        << "]" << endl
+	out << "    L range .................... [" << spinQn(bt::get<0>(_LRange))        << ", "
+	    << spinQn(bt::get<1>(_LRange))        << "]" << endl
+	    << "    S range .................... [" << spinQn(bt::get<0>(_SRange))        << ", "
+	    << spinQn(bt::get<1>(_SRange))        << "]" << endl
 	    << "    require min. isobar mass ... " << yesNo(_requireMinIsobarMass) << endl
 	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl
 	    << "    force decay checks ......... " << yesNo(_forceDecayCheck) << endl;

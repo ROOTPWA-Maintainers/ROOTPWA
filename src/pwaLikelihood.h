@@ -68,14 +68,14 @@ namespace rpwa {
 		typedef typename complexT::value_type value_type;
 
 		// define array types
-		typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
-		typedef boost::multi_array<double,                 2> waveThrArrayType;     // array for wave thresholds
-		typedef boost::multi_array<unsigned int,           2> waveToIntMapType;     // array for mapping of waves to integral indices
-		typedef boost::multi_array<unsigned int,           2> waveToListMapType;    // array for mapping of waves to position in wave list
-		typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
-		typedef boost::multi_array<complexT,               3> ampsArrayType;        // array for production and decay amplitudes
-		typedef boost::multi_array<complexT,               4> normMatrixArrayType;  // array for normalization matrices
-		typedef boost::multi_array<value_type,             2> phaseSpaceIntType;    // array for phase space integrals
+		typedef boost::multi_array<std::string,                    2> waveNameArrayType;    // array for wave names
+		typedef boost::multi_array<double,                         2> waveThrArrayType;     // array for wave thresholds
+		typedef boost::multi_array<unsigned int,                   2> waveToIntMapType;     // array for mapping of waves to integral indices
+		typedef boost::multi_array<unsigned int,                   2> waveToListMapType;    // array for mapping of waves to position in wave list
+		typedef boost::multi_array<boost::tuples::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
+		typedef boost::multi_array<complexT,                       3> ampsArrayType;        // array for production and decay amplitudes
+		typedef boost::multi_array<complexT,                       4> normMatrixArrayType;  // array for normalization matrices
+		typedef boost::multi_array<value_type,                     2> phaseSpaceIntType;    // array for phase space integrals
 
 
 	public:

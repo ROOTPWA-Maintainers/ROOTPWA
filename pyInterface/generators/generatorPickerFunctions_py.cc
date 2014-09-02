@@ -26,13 +26,13 @@ namespace {
 		}
 
 		bp::tuple massRange__() {
-			std::pair<double, double> retval;
 			if(bp::override massRange = this->get_override("massRange")) {
-				retval = massRange();
+				const std::pair<double, double>& retval = massRange();
+				return bp::make_tuple(retval.first, retval.second);
 			} else {
-				retval = rpwa::massAndTPrimePicker::massRange();
+				const std::pair<double, double>& retval = rpwa::massAndTPrimePicker::massRange();
+				return bp::make_tuple(retval.first, retval.second);
 			}
-			return bp::make_tuple(retval.first, retval.second);
 		}
 
 		bp::tuple default_massRange__() {
