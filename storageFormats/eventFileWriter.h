@@ -26,12 +26,8 @@ namespace rpwa {
 		                const std::vector<std::string>&                          decayKinematicsParticleNames,      // particle names of final state particles (has to be the same order as the particles appear in the data!)
 		                const std::map<std::string, std::pair<double, double> >& binningMap,                        // binning variable map with content "label" -> (lowerBound, upperBound) describing which bin these data belong to
 		                const std::vector<std::string>&                          additionalVariableLabels,          // Labels for any additional information which is stored (as double) and can later be used for binning
-		                const std::string&              eventTreeName = "rootPwaEvtTree", // name for the event tree in the output file
-		                const std::string&              initialStateMomentaBranchName = "prodKinMomenta",  // branch name where the initial state particles are stored
-		                const std::string&              finalStateMomentaBranchName   = "decayKinMomenta", // branch name where the final state particles are stored
-		                const std::string&              metadataName = "dataMetadata",                     // name under which the metadata object is saved
-		                const int&                      splitlevel = 99,
-		                const int&                      buffsize = 256000);
+		                const int&                                               splitlevel = 99,
+		                const int&                                               buffsize = 256000);
 
 		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
 		              const std::vector<TVector3>& decayKinematicsMomenta,

@@ -41,10 +41,6 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
                                        const vector<string>&                      decayKinematicsParticleNames,
                                        const map<string, pair<double, double> >&  binningMap,
                                        const vector<string>&                      additionalVariableLabels,
-                                       const string&                              eventTreeName,
-                                       const string&                              initialStateMomentaBranchName,
-                                       const string&                              finalStateMomentaBranchName,
-                                       const string&                              metadataName,
                                        const int&                                 splitlevel,
                                        const int&                                 buffsize)
 {
@@ -66,8 +62,8 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	// prepare event tree
 	_productionKinematicsMomenta = new TClonesArray("TVector3", _nmbProductionKinematicsParticles);
 	_decayKinematicsMomenta   = new TClonesArray("TVector3", _nmbDecayKinematicsParticles);
-	_eventStorage.data()->Branch(initialStateMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
-	_eventStorage.data()->Branch(finalStateMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
+	_eventStorage.data()->Branch(eventStorage::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
+	_eventStorage.data()->Branch(eventStorage::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
 	_eventStorage.metadata().setAdditionalSavedVariableLables(additionalVariableLabels);
 	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {

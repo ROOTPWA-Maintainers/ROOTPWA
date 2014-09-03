@@ -40,11 +40,6 @@ int main(int argc, char** argv)
 	printGitHash();
 	cout << endl;
 
-	string dataMetadataName = "dataMetadata";
-	string inTreeName = "rootPwaEvtTree";
-	string prodKinMomentaLeafName = "prodKinMomenta";
-	string decayKinMomentaLeafName = "decayKinMomenta";
-
 	const string progName = argv[0];
 	string inputFileName  = "input.root";
 	bool recalculateHash = false;
@@ -82,8 +77,7 @@ int main(int argc, char** argv)
 		// we are reading a datafile
 		TTree* inputTree = eventsStor->data();
 		if(not inputTree) {
-			printErr << "reading a datafile but did not find event tree "
-			         << "with name '" << inTreeName << "'. Aborting..." << endl;
+			printErr << "reading a datafile but did not find event tree. Aborting..." << endl;
 			return 1;
 		}
 		const vector<string>& additionalVariableNames = metadata.additionalSavedVariableLables();
@@ -92,7 +86,7 @@ int main(int argc, char** argv)
 			for(int i = 0; i < branchList->GetEntries(); ++i) {
 				TBranch* branch = (TBranch*)(*branchList)[i];
 				const string branchName = branch->GetName();
-				if((branchName == prodKinMomentaLeafName) or (branchName == decayKinMomentaLeafName))
+				if((branchName == eventStorage::productionKinematicsMomentaBranchName) or (branchName == eventStorage::decayKinematicsMomentaBranchName))
 				{
 					continue;
 				}

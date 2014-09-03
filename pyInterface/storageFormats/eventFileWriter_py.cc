@@ -18,10 +18,6 @@ namespace {
 	                                bp::object pyDecayKinematicsParticleNames,
 	                                bp::dict pyBinningMap,
 	                                bp::object pyAdditionalVariableLabels,
-	                                const std::string& eventTreeName = "rootPwaEvtTree",
-	                                const std::string& initialStateMomentaBranchName = "prodKinMomenta",
-	                                const std::string& finalStateMomentaBranchName   = "decayKinMomenta",
-	                                const std::string& metadataName = "dataMetadata",
 	                                const int& splitlevel = 99,
 	                                const int& buffsize = 256000)
 	{
@@ -67,12 +63,8 @@ namespace {
 		                       decayKinematicsParticleNames,
 		                       binningMap,
 		                       additionalVariableLabels,
-                               eventTreeName,
-                               initialStateMomentaBranchName,
-                               finalStateMomentaBranchName,
-                               metadataName,
-                               splitlevel,
-                               buffsize);
+		                       splitlevel,
+		                       buffsize);
 	}
 
 	void eventFileWriter_addEvent(rpwa::eventFileWriter& self,
@@ -114,10 +106,6 @@ void rpwa::py::exportEventFileWriter() {
 			   bp::arg("decayKinematicsParticleNames"),
 			   bp::arg("binningMap"),
 			   bp::arg("additionalVariableLabels"),
-			   bp::arg("eventTreeName")="rootPwaEvtTree",
-			   bp::arg("initialStateMomentaBranchName")="prodKinMomenta",
-			   bp::arg("finalStateMomentaBranchName")="decayKinMomenta",
-			   bp::arg("metadataName")="dataMetadata",
 			   bp::arg("splitlevel")=99,
 			   bp::arg("buffsize")=256000)
 		)

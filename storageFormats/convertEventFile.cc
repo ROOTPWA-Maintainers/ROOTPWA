@@ -133,10 +133,7 @@ int main(int argc, char** argv)
 											 productionKinematicsParticleNames,
 											 decayKinematicsParticleNames,
 											 map<string, pair<double, double> >(),
-											 std::vector<string>(),
-											 inTreeName,
-											 prodKinMomentaLeafName,
-		                                     decayKinMomentaLeafName);
+											 std::vector<string>());
 		if(not success) {
 			printErr << "could not initialize rootpwaDataFileWriter. Aborting..." << endl;
 			return 1;
