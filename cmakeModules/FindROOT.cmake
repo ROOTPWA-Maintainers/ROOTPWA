@@ -38,6 +38,8 @@
 #//      ROOT_MINOR_VERSION     - ROOT minor version e.g. 34
 #//      ROOT_PATCH_VERSION     - ROOT patch version e.g. 0
 #//      ROOT_SVN_REVISION      - ROOT subversion revision
+#//      ROOT_GIT_REVISION      - ROOT GIT revision
+#//          only one of the two above is defined
 #//      ROOT_BIN_DIR           - ROOT executable directory
 #//      ROOT_INCLUDE_DIR       - ROOT header directory
 #//      ROOT_LIBRARY_DIR       - ROOT library directory
@@ -107,9 +109,20 @@ else()
 		OUTPUT_VARIABLE ROOT_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --svn-revision
-		OUTPUT_VARIABLE ROOT_SVN_REVISION
+	# either get the SVN revision or the GIT revision
+	# only one of the options is known to 'root-config', however some version
+	# of 'root-config' do not know either
+	# first check for GIT as this is for more recent ROOT versions
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --git-revision
+		OUTPUT_VARIABLE ROOT_GIT_REVISION
+		ERROR_QUIET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if(NOT ROOT_GIT_REVISION)
+		execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --svn-revision
+			OUTPUT_VARIABLE ROOT_SVN_REVISION
+			ERROR_QUIET
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+	endif()
 
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --bindir
 		OUTPUT_VARIABLE ROOT_BIN_DIR
@@ -140,8 +153,8 @@ else()
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	# is this really needed? could one not handle this via the components?
-  # in any case the EVE libs can be handled like the other ROOT libs
-  # so this list should be merged with ROOT_LIBRARIES and duplicates removed
+	# in any case the EVE libs can be handled like the other ROOT libs
+	# so this list should be merged with ROOT_LIBRARIES and duplicates removed
 	# the extra loop over the EVE libs is superfluous
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --noauxlibs --evelibs
 		OUTPUT_VARIABLE ROOT_EVE_LIBRARIES
@@ -297,7 +310,13 @@ mark_as_advanced(
 
 # report result
 if(ROOT_FOUND)
-	message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in '${ROOTSYS}'.")
+	if(ROOT_GIT_REVISION)
+		message(STATUS "Found ROOT version ${ROOT_VERSION} (${ROOT_GIT_REVISION}) in '${ROOTSYS}'.")
+	elseif(ROOT_SVN_REVISION)
+		message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in '${ROOTSYS}'.")
+	else()
+		message(STATUS "Found ROOT version ${ROOT_VERSION} in '${ROOTSYS}'.")
+	endif()
 	message(STATUS "Using ROOT include directory '${ROOT_INCLUDE_DIR}'.")
 	message(STATUS "Using ROOT library directory '${ROOT_LIBRARY_DIR}'.")
 	message(STATUS "Using ROOT libraries ${ROOT_LIBRARIES}.")
