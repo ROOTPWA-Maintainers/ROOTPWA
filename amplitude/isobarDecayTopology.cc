@@ -538,7 +538,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 		isospinProjs.push_back(fsParts.at(j)->isospinProj());
 	}
 
-	// A vector of tuples to save the found permutations and their Clebsch-Gordans
+	// A vector to save the found permutations and their Clebsch-Gordans
 	vector<symTermMap> symAmplitudes;
 
 	// Permutating all the particles and checking if the permutation makes sense

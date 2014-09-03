@@ -35,8 +35,6 @@
 #ifndef ISOBARDECAYTOPOLOGY_H
 #define ISOBARDECAYTOPOLOGY_H
 
-#include <boost/tuple/tuple.hpp>
-
 #include "isobarDecayVertex.h"
 #include "decayTopology.h"
 
