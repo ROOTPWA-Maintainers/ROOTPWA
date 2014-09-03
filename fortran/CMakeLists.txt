@@ -23,17 +23,19 @@
 #// Description:
 #//      build file for Fortran library
 #//
+#// If CMake does not find your fortran compiler you may have to set
+#// the FC environment variable to your gfortran executable
+#//
 #// !!! important !!!
 #//
 #// Beware that ccmake seems to have problems parsing comment lines in
 #// fixed-format sources, so it may pick up 'use' or 'module' keywords
 #// from the comments that generate stray dependencies and leading to
-#// make errors. One (ugly) workaround is to edit comments in the
+#// make errors. One (ugly) workaround is to edit the comments in the
 #// Fortran sources.
 #//
-#// As far as I can tell the problem is not yet solved. See
+#// As far as I can tell, the problem is not yet solved. See
 #// http://public.kitware.com/Bug/view.php?id=8785
-#//
 #//
 #// Author List:
 #//      Boris Grube          TUM            (original author)
@@ -59,16 +61,12 @@ message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
 
 # source files that are compiled into library
 set(SOURCES
-	bw.f
-	eps_k1.f
-	eps_k1p.f
-	eps_m.f
-	eps_mx.f
+	bw_example.f  # example file; not used in any other place
 	)
 
 
 # library
-set(THIS_LIB "Fortran")
+set(THIS_LIB "RootPwaFortran")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

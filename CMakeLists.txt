@@ -524,6 +524,13 @@ set(ROOTPWAGEN_LIBS
 	RootPwaGen
 	)
 
+set(FORTRAN_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/fortran
+	)
+set(FORTRAN_LIBS
+	RootPwaFortran
+	)
+
 if(USE_PYTHON)
 	set(PYINTERFACE_LIBS
 		RootPwaPy
@@ -571,14 +578,14 @@ add_subdirectory(tools)
 # RootPwaGen
 add_subdirectory(generators)
 
-# Fortran
-#add_subdirectory(fortran)
-
 # Relativic Amplitudes
 add_subdirectory(relativisticAmpCorrections)
 
 # massdep
 #add_subdirectory(massdep)
+
+# Fortran
+add_subdirectory(fortran)
 
 # MPI
 if(USE_MPI)
