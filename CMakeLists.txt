@@ -500,11 +500,11 @@ set(AMPLITUDE_LIBS
 	RootPwaAmp
 	)
 
-set(ROOTPWA_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src
+set(PARTIALWAVEFIT_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/partialWaveFit
 	)
-set(ROOTPWA_LIBS
-	RootPwa
+set(PARTIALWAVEFIT_LIBS
+	RootPwaPartialWaveFit
 	)
 
 set(RESONANCEFIT_INCLUDE_DIR
@@ -559,8 +559,8 @@ endif()
 # RootPwaAmp
 add_subdirectory(amplitude)
 
-# RootPwa
-add_subdirectory(src)
+# spin-parity decomposition in bins
+add_subdirectory(partialWaveFit)
 
 # resonance fit
 add_subdirectory(resonanceFit)

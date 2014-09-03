@@ -40,7 +40,7 @@ set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-	${ROOTPWA_INCLUDE_DIR}
+	${PARTIALWAVEFIT_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${TOOLS_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -57,7 +57,7 @@ set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
 set(ROOTPWAGEN_DICT_INCLUDE_DIRS
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-	${ROOTPWA_INCLUDE_DIR}
+	${PARTIALWAVEFIT_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${TOOLS_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -94,15 +94,15 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
-	"${ROOTPWA_LIBS}"
+	"${PARTIALWAVEFIT_LIBS}"
 	"${ROOTPWATOOLS_LIBS}"
 	"${NBPSG_LIB}"
 	)
 
 
 # executables
-make_executable(generatePhaseSpace       generatePhaseSpace.cc           ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
-make_executable(weightEvents             weightEvents.cc                 ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
+make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
+make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
 
 # build tests
 add_subdirectory(test)

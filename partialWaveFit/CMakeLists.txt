@@ -21,21 +21,25 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for src library tests
+#//      build file for RootPwa library
 #//
 #//
 #// Author List:
-#//      Boris Grube          TUM            (original author)
+#//      Sebastian Neubert    TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
 
 
+message_setup_this_dir()
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-SYSTEM ${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
+	${CUDACODE_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -43,6 +47,48 @@ SYSTEM ${Boost_INCLUDE_DIRS}
 include_directories(${INCLUDE_DIRECTORIES})
 
 
+# source files that are compiled into library
+set(SOURCES
+	fitResult.cc
+	complexMatrix.cc
+	pwaLikelihood.cc
+	pwaPlotter.cc
+	parameterSpace.cc
+	)
+
+
+# ROOT dictionary
+set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
+set(ROOTPWA_DICT_INCLUDE_DIRS
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
+root_generate_dictionary(
+	"${ROOTPWA_DICTIONARY}"
+	"${ROOTPWA_DICT_INCLUDE_DIRS}"
+	"fitResult.h;pwaPlotter.h;complexMatrix.h"
+	"rootPwaLinkDef.h"
+	)
+set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
+
+
+# library
+set(THIS_LIB "RootPwaPartialWaveFit")
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${CUDACODE_LIBS}"
+	"${AMPLITUDE_LIBS}"
+	)
+
+
 # executables
-make_executable(testParameterSpace          testParameterSpace.cc       "${ROOTPWA_LIBS}")
-make_executable(testLikelihood              testLikelihood.cc           "${ROOTPWA_LIBS}")
+make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${UTILITIES_LIBS}")
+make_executable(pwaplot pwaplots.cc ${THIS_LIB})
+
+
+# build tests
+add_subdirectory(test)
