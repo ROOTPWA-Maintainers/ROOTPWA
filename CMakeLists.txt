@@ -549,7 +549,6 @@ else()
         set(CUDACODE_LIBS)
 endif()
 
-
 # build subprojects
 
 # Utilities
@@ -596,6 +595,13 @@ endif()
 if(USE_PYTHON)
 	add_subdirectory(pyInterface)
 endif()
+
+# compilation of sandBox is optional
+option(COMPILE_SANDBOX "en/disable compilation of code in sandBox directory" OFF)
+if(COMPILE_SANDBOX)
+	add_subdirectory(sandBox)
+endif()
+add_feature_info(sandBox COMPILE_SANDBOX "The sandBox feature provides untested code that is under development.")
 
 
 # print package and feature summary
