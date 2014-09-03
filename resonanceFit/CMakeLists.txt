@@ -39,8 +39,9 @@ set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-	${CUDACODE_INCLUDE_DIR}
+	#${CUDACODE_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
@@ -49,46 +50,25 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	fitResult.cc
-	complexMatrix.cc
-	pwaLikelihood.cc
-	pwaPlotter.cc
-	parameterSpace.cc
+	massDepFit.cc
+	massDepFitComponents.cc
+	massDepFitLikeli.cc
+	massDepFitModel.cc
 	)
-
-
-# ROOT dictionary
-set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
-set(ROOTPWA_DICT_INCLUDE_DIRS
-	${ROOT_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
-root_generate_dictionary(
-	"${ROOTPWA_DICTIONARY}"
-	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"fitResult.h;pwaPlotter.h;complexMatrix.h"
-	"rootPwaLinkDef.h"
-	)
-set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwa")
+set(THIS_LIB "RootPwaResonanceFit")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
+	"${Libconfig_LIBS}"
+	#"${CUDACODE_LIBS}"
 	"${ROOT_LIBS}"
-	"${CUDACODE_LIBS}"
+	"${UTILITIES_LIBS}"
+	"${ROOTPWA_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	)
 
 
-# executables
-make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(pwaplot pwaplots.cc ${THIS_LIB})
-
-
-# build tests
-add_subdirectory(test)
+make_executable(pwaMassFit pwaMassFit.cc ${THIS_LIB})

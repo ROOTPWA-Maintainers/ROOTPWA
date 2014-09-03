@@ -507,6 +507,13 @@ set(ROOTPWA_LIBS
 	RootPwa
 	)
 
+set(RESONANCEFIT_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/resonanceFit
+	)
+set(RESONANCEFIT_LIBS
+	RootPwaResonanceFit
+	)
+
 set(GEN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/generators
 	)
@@ -554,6 +561,9 @@ add_subdirectory(amplitude)
 
 # RootPwa
 add_subdirectory(src)
+
+# resonance fit
+add_subdirectory(resonanceFit)
 
 # RootPwaTools
 add_subdirectory(tools)
