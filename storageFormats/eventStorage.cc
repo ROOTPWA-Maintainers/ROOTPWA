@@ -19,7 +19,7 @@ const std::string rpwa::eventStorage::decayKinematicsMomentaBranchName = "decayK
 
 
 rpwa::eventStorage::eventStorage()
-	: storage()
+	: storage<rpwa::eventMetadata>()
 {
 
 }
