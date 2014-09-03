@@ -22,13 +22,13 @@
 #include <TH2D.h>
 #include <THStack.h>
 #include <TKey.h>
+#include <TLorentzRotation.h>
 #include <TLorentzVector.h>
 #include <TMath.h>
 #include <TROOT.h>
 #include <TStopwatch.h>
 #include <TTree.h>
 
-#include <NParticleEvent.h>
 #ifndef __CINT__
 #include <particleDataTable.h>
 #endif // __CINT__
@@ -367,7 +367,7 @@ void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, doubl
 	hBunch.phi_costheta_GJF[tree_index]->Fill(isobar.Phi(), isobar.CosTheta(), weight);
 }
 
-HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVector *beam = NULL, bool first = true) {
+HelicityAngles calculateHelicityAngles(const TLorentzVector& isobar, TLorentzVector particle, TLorentzVector *beam = NULL, bool first = true) {
 	HelicityAngles temp;
 
 	TVector3 zaxis_gjf;
@@ -378,17 +378,12 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 		zaxis_gjf = TVector3(0,0,1);
 	}
 	// create helicity frame coordinate system
-	TVector3 zaxis = isobar.p().Vect().Unit();
+	TVector3 zaxis = isobar.Vect().Unit();
 	TVector3 yaxis = zaxis_gjf.Cross(zaxis).Unit();
 	TVector3 xaxis = yaxis.Cross(zaxis);
 
 	// boost NParticleState into isobar rest frame
-	TLorentzVector particle;
-	if(isobar.getParticle(0)->q() == 0 && first)
-		particle = isobar.getParticle(0)->p();
-	else
-		particle = isobar.getParticle(1)->p();
-	const TVector3 boost_vec = isobar.p().BoostVector();
+	const TVector3 boost_vec = isobar.BoostVector();
 	particle.Boost(-boost_vec);
 	// theta
 	double theta = zaxis.Angle(particle.Vect());
@@ -831,14 +826,13 @@ createWeightedPlots(const std::string& dataFileName,
 		tree->AddBranchToCache(decayKinMomentaName.c_str(), true);
 		tree->StopCacheLearningPhase();
 
-		TLorentzVector* beam = new TLorentzVector;
-		int qbeam;
-		TClonesArray* p = new TClonesArray("TLorentzVector");
-		std::vector<int>* q = new std::vector<int>;
+		TLorentzVector lvBeam;
+		int qBeam;
 
-		TVector3 vertex;
+		TLorentzVector lvPart[3];
+		int qPart[3];
 
-		NParticleEvent event(p, q, beam, &qbeam, &vertex);
+		TLorentzVector lvOut;
 
 		// loop over tree entries
 		const long int nmbEvents = tree->GetEntries();
@@ -846,8 +840,6 @@ createWeightedPlots(const std::string& dataFileName,
 		for (long int i = 0; i < nmbEvents; ++i) {
 			++progressIndicator;
 			tree->GetEntry(i);
-			p->Delete();
-			q->clear();
 
 			assert(prodKinMomenta->GetEntries() == 1);
 			for (Int_t j=0; j<prodKinMomenta->GetEntries(); j++) {
@@ -856,9 +848,11 @@ createWeightedPlots(const std::string& dataFileName,
 					printErr << "Unknown particle '" << ((TObjString*)(prodKinPartNames->At(i)))->String() << "' found in input tree." << std::endl;
 					return;
 				}
-				beam->SetVectM(*((TVector3*)(prodKinMomenta->At(j))), pp->mass());
-				qbeam = pp->charge();
+				lvBeam.SetVectM(*((TVector3*)(prodKinMomenta->At(j))), pp->mass());
+				qBeam = pp->charge();
 			}
+
+			lvOut.SetXYZM(0., 0., 0., 0.);
 			assert(decayKinMomenta->GetEntries() == 3);
 			for (Int_t j=0; j<decayKinMomenta->GetEntries(); j++) {
 				const rpwa::particleProperties* pp = rpwa::particleDataTable::entry(((TObjString*)(decayKinPartNames->At(j)))->String().Data());
@@ -867,9 +861,11 @@ createWeightedPlots(const std::string& dataFileName,
 					return;
 				}
 
-				new((*p)[j]) TLorentzVector;
-				((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), pp->mass());
-				q->push_back(pp->charge());
+				lvPart[j].SetVectM(*((TVector3*)(decayKinMomenta->At(j))), pp->mass());
+				qPart[j] = pp->charge();
+
+
+				lvOut += lvPart[j];
 			}
 			// in case its data tree (itree=0) put weights to 1
 			if (itree == 0) {
@@ -879,9 +875,6 @@ createWeightedPlots(const std::string& dataFileName,
 			if (weight == 0)
 				continue;
 
-			// this builds all subsystems
-			event.refresh();
-
 			if (impweight != 0)
 				weight /= impweight;
 
@@ -890,18 +883,27 @@ createWeightedPlots(const std::string& dataFileName,
 			if (itree != 0)
 				avweight += weight;
 
-			double tprime = event.tprime();
-			//cout << tprime << endl;
-			unsigned int npart = event.nParticles();
+			double tprime;
+			{
+				TVector3 dir=lvBeam.Vect();
+				double const mpi=lvBeam.M();
+				double k=sqrt(lvOut.E()*lvOut.E()-mpi*mpi)/dir.Mag();
+				dir*=k;
+				TLorentzVector beam;
+				beam.SetVectM(dir,mpi);
+				tprime = -(beam-lvOut).M2();
+			}
+
+			unsigned int npart = 3;
 
 			// ----dalitz plots
 			// make all combinations
 			std::vector<std::pair<std::pair<int, int>, double> > comb;
 			for(unsigned int i=0; i < npart; i++) {
 				for(unsigned int j=0; j < i; j++) {
-					TLorentzVector lv = event.getParticle(i).p() + event.getParticle(j).p();
+					TLorentzVector lv = lvPart[i] + lvPart[j];
 					double mass2 = lv.M2();
-					std::pair<int, int> charge(event.getParticle(i).q(), event.getParticle(j).q());
+					std::pair<int, int> charge(qPart[i], qPart[j]);
 					std::pair<std::pair<int, int>, double> temp;
 					temp = make_pair(charge, mass2);
 					comb.push_back(temp);
@@ -928,30 +930,71 @@ createWeightedPlots(const std::string& dataFileName,
 			//dalitz_charged[itree]->Fill(comb[1].second, comb[2].second, weight);
 
 			// transform into GJ
-			event.toGJ();
-			// build again to get particles in GJF
-			event.build();
+			{
+				TLorentzVector tempX=lvOut;
+				// rotate event into scattering plane
+				// get normal vector
+				TVector3 y(0,1,0);
+				TVector3 N=lvBeam.Vect().Cross(tempX.Vect());
+				TVector3 rot=N.Cross(y);
+				TRotation t;
+				double a=N.Angle(y);
+				t.Rotate(a,rot);
 
-			// loop over all states that contain n-1 final state particles
+				TLorentzRotation T(t);
+				TLorentzRotation L1(T);
+				tempX*=T;
+				lvBeam.Transform(T);
+
+				// boost to X rest frame
+				TVector3 boost=-tempX.BoostVector();
+				TLorentzRotation b;
+				b.Boost(boost);
+				tempX*=b;
+				lvBeam.Transform(b);
+
+				// put beam along z-axis
+				TVector3 beamdir=lvBeam.Vect();
+				a=beamdir.Angle(TVector3(0,0,1));
+				TRotation t2;
+				t2.Rotate(a,TVector3(0,1,0));
+				T=TLorentzRotation(t2);
+				lvBeam.Transform(T);
+
+				// transform pions
+				lvOut.SetXYZM(0., 0., 0., 0.);
+				for(unsigned int i=0; i<npart; ++i){
+					lvPart[i].Transform(L1);
+					lvPart[i].Transform(b);
+					lvPart[i].Transform(T);
+
+					lvOut += lvPart[i];
+				}
+			}
+
+			hM[itree]->Fill(lvOut.M(), weight);
+
+			// loop over all states that contain 2 final state particles
 			// and plot angles
-			unsigned int nstates = event.nStates();
+			unsigned int nstates = 3;
+			const unsigned int mapstates[3][2] = { {0, 1}, {0, 2}, {1, 2} };
 			//cout<<"number of substates: "<<event.nStates()<<endl;
 			for (unsigned int is = 0; is < nstates; ++is) {
+				const TLorentzVector lvIsobar = lvPart[mapstates[is][0]] + lvPart[mapstates[is][1]];
 
-				const NParticleState& state = event.getState(is);
-				if (state.n() == npart) {
-					hM[itree]->Fill(state.p().M(), weight);
+				if ((qPart[mapstates[is][0]] + qPart[mapstates[is][1]]) == 0) {
+					// this is a neutral isobar state with 2 final state particles
+					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_neutral_isobar);
+					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][0]], NULL,  true), weight, itree, HHB_neutral_isobar);
+					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][1]], NULL, false), weight, itree, HHB_neutral_isobar);
 				}
-				if (state.n() == npart - 1 && state.q() == 0) {
-					// this is a neutral isobar state with n-1 (here 2) final state particles
-					fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_neutral_isobar);
-					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state, NULL,  true), weight, itree, HHB_neutral_isobar);
-					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state, NULL, false), weight, itree, HHB_neutral_isobar);
-				}
-				else if (state.n() == npart - 1 && state.q() == -1) {
-					// this is a negativly charged isobar state with n-1 (here 2) final state particles
-					fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_charged_isobar);
-					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_charged_isobar);
+				else if ((qPart[mapstates[is][0]] + qPart[mapstates[is][1]]) == -1) {
+					int neutralidx = 0;
+					if (qPart[mapstates[is][1]] == 0) neutralidx = 1;
+
+					// this is a negativly charged isobar state with 2 final state particles
+					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_charged_isobar);
+					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][neutralidx]]), weight, itree, HHB_charged_isobar);
 
 					// fill the angles only if the isobar mass is close the the rho mass
 					const rpwa::particleProperties* pp = rpwa::particleDataTable::entry("rho(770)-");
@@ -960,9 +1003,9 @@ createWeightedPlots(const std::string& dataFileName,
 						return;
 					}
 
-					if (std::abs(state.p().M() - pp->mass()) < pp->width()/2.) {
-						fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_rho);
-						fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_rho);
+					if (std::abs(lvIsobar.M() - pp->mass()) < pp->width()/2.) {
+						fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_rho);
+						fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][neutralidx]]), weight, itree, HHB_rho);
 					}
 				}
 			}
