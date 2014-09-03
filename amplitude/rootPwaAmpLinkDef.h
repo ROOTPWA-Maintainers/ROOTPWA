@@ -47,7 +47,8 @@
 #pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
-	code="{ newObj->parseKeyFileLocalCopy(); }"
+	code="{ newObj->parseKeyFileContent(newObj->keyFileContent()); }"
+
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;

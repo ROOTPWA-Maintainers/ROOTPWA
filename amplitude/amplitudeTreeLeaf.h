@@ -101,10 +101,10 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
+		void rebuildSubAmpLabelMap();  ///< rebuilds label-to-index map for subamps
+
 
 	private:
-
-		void rebuildSubAmpLabelMap();  ///< rebuilds label-to-index map for subamps
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

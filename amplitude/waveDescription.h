@@ -112,8 +112,6 @@ namespace rpwa {
 
 		bool readKeyFileIntoLocalCopy(const std::string& keyFileName);  ///< reads key file content into _keyFileLocalCopy string
 
-		bool parseKeyFileLocalCopy() { return parseKeyFileContent(_keyFileLocalCopy); }  ///< parses _keyFileLocalCopy string
-
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,
 		                               particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key

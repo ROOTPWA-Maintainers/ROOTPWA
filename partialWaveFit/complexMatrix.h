@@ -90,8 +90,12 @@ namespace rpwa {
 		boost::numeric::ublas::matrix<std::complex<double> > _matrix;
 #endif
 
+	public:
+
 		void readMatrix();
 		void storeMatrix();
+
+	private:
 
 		unsigned int _size1;
 		unsigned int _size2;
