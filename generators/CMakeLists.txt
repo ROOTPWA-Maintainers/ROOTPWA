@@ -47,31 +47,29 @@ set(INCLUDE_DIRECTORIES
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
+
 set(SOURCES_NBPSG
 	nBodyPhaseSpaceGen.cc
 	randomNumberGenerator.cc
 	)
 
+
+# library name
+set(NBPSG_LIB "RootPwaNBPSGen")
+
+
 # ROOT dictionary
 set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
-set(ROOTPWAGEN_DICT_INCLUDE_DIRS
-	${ROOT_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${PARTIALWAVEFIT_INCLUDE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
-	${TOOLS_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
 root_generate_dictionary(
-	"${ROOTPWAGEN_DICTIONARY}"
-	"${ROOTPWAGEN_DICT_INCLUDE_DIRS}"
-	"nBodyPhaseSpaceGen.h"
-	"rootPwaGenLinkDef.h"
+	${ROOTPWAGEN_DICTIONARY}
+	nBodyPhaseSpaceGen.h
+	MODULE ${NBPSG_LIB}
+	LINKDEF rootPwaGenLinkDef.h
 	)
 set(SOURCES_NBPSG ${SOURCES_NBPSG} ${ROOTPWAGEN_DICTIONARY})
 
+
 # library
-set(NBPSG_LIB "RootPwaNBPSGen")
 make_shared_library(
 	"${NBPSG_LIB}"
 	"${SOURCES_NBPSG}"
@@ -87,6 +85,7 @@ set(SOURCES
 	beamAndVertexGenerator.cc
 	generatorPickerFunctions.cc
 	)
+
 
 # library
 set(THIS_LIB "RootPwaGen")

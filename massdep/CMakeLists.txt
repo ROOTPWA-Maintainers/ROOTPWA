@@ -60,19 +60,21 @@ set(SOURCES
 	)
 
 
+# library name
+set(THIS_LIB "RootPwaMassDep")
+
+
 # ROOT dictionary
 #set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaMassDepDict.cc)
 #root_generate_dictionary(
-#  "${GEN_DICTIONARY}"
-#  "${CMAKE_CURRENT_SOURCE_DIR};${PARTIALWAVEFIT_INCLUDE_DIR}"
-#  ""
-#  "rootPwaMassDepLinkDef.h"
+#	${GEN_DICTIONARY}
+#	MODULE ${THIS_LIB}
+#	LINKDEF rootPwaMassDepLinkDef.h
 #)
 #set(SOURCES ${SOURCES} ${GEN_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaMassDep")
 set(GSL_LIBS
 	libgsl.so
 	libgslcblas.so

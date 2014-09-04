@@ -164,12 +164,6 @@ else()
 		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	find_program(ROOTCINT_EXECUTABLE rootcint)
-	if(NOT ROOTCINT_EXECUTABLE)
-		set(ROOT_FOUND FALSE)
-		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint. Make sure ROOT is setup correctly.")
-	endif()
-
 	# parse version string
 	string(REGEX REPLACE "^([0-9]+)\\.[0-9][0-9]+\\/[0-9][0-9]+.*" "\\1"
 		ROOT_MAJOR_VERSION "${ROOT_VERSION}")
@@ -188,6 +182,26 @@ else()
 		if(ROOT_VERSION VERSION_LESS ROOT_FIND_VERSION)
 			set(ROOT_FOUND FALSE)
 			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION}.")
+		endif()
+	endif()
+
+	if(ROOT_VERSION VERSION_LESS 5.99)
+		find_program(ROOTCINT_EXECUTABLE rootcint)
+		if(NOT ROOTCINT_EXECUTABLE)
+			set(ROOT_FOUND FALSE)
+			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint. Make sure ROOT is setup correctly.")
+		endif()
+
+		find_program(RLIBMAP_EXECUTABLE rlibmap)
+		if(NOT RLIBMAP_EXECUTABLE)
+			set(ROOT_FOUND FALSE)
+			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rlibmap. Make sure ROOT is setup correctly.")
+		endif()
+	else()
+		find_program(ROOTCLING_EXECUTABLE rootcling)
+		if(NOT ROOTCLING_EXECUTABLE)
+			set(ROOT_FOUND FALSE)
+			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcling. Make sure ROOT is setup correctly.")
 		endif()
 	endif()
 
@@ -333,14 +347,32 @@ endif()
 
 
 # function that generates ROOT dictionary
-function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
+# call as 'root_generate_dictionary(<dict file> <headers>... MODULE <library name> LINKDEF <linkdef file>)
+function(root_generate_dictionary DICT_FILE)
+	cmake_parse_arguments(ARG "" "MODULE;LINKDEF" "" ${ARGN})
+
+	if(NOT ARG_LINKDEF)
+		message(FATAL_ERROR "Impossible to generate dictionary '${DICT_FILE}', "
+			"because the 'LINKDEF' parameter is missing.")
+	endif()
+	if(NOT ARG_MODULE)
+		message(FATAL_ERROR "Impossible to generate dictionary '${DICT_FILE}', "
+			"because the 'MODULE' parameter is missing.")
+	endif()
+
+	set(HEADER_FILES)
+	foreach(_HEADER_FILE ${ARG_UNPARSED_ARGUMENTS})
+		set(HEADER_FILES ${HEADER_FILES} ${_HEADER_FILE})
+	endforeach()
+	unset(_HEADER_FILE)
 
 	if(DEBUG_OUTPUT)
 		message(STATUS "root_generate_dictionary was called with the following arguments:
         DICT_FILE    = '${DICT_FILE}'
-        INCLUDE_DIRS = '${INCLUDE_DIRS}'
+        ARGN         = '${ARGN}'
         HEADER_FILES = '${HEADER_FILES}'
-        LINKDEF_FILE = '${LINKDEF_FILE}'")
+        ARG_MODULE   = '${ARG_MODULE}'
+        ARG_LINKDEF  = '${ARG_LINKDEF}'")
 	endif()
 
 	if(NOT ROOT_FOUND)
@@ -352,17 +384,24 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
 	set(_DEFINITIONS)
 	get_property(_DEFS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
 	foreach(_DEF ${_DEFS})
-		set(_DEFINITIONS "${_DEFINITIONS} -D${_DEF}")
+		set(_DEFINITIONS ${_DEFINITIONS} -D${_DEF})
 	endforeach()
 	unset(_DEF)
-	separate_arguments(_DEFINITIONS)
 
-	# prepare command line argument for include directories (put -I in front)
+	# prepare command line argument for include directories (put -I in
+	# front) and filter those system paths that Cmake alse filters on
+	# the compiler command-line
+	get_directory_property(_INCLUDE_DIRS INCLUDE_DIRECTORIES)
 	set(_INCLUDES)
-	foreach(_FILE ${INCLUDE_DIRS})
-		set(_INCLUDES ${_INCLUDES} -I${_FILE})
+	foreach(_INCLUDE_DIR ${_INCLUDE_DIRS})
+		list(FIND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES ${_INCLUDE_DIR} _INCLUDE_DIR_INDEX)
+		if(_INCLUDE_DIR_INDEX EQUAL -1)
+			set(_INCLUDES ${_INCLUDES} -I${_INCLUDE_DIR})
+		endif()
 	endforeach()
-	unset(_FILE)
+	unset(_INCLUDE_DIR)
+	unset(_INCLUDE_DIR_INDEX)
+	unset(_INCLUDE_DIRS)
 
 	# strip paths from header file names
 	set(_HEADERS)
@@ -372,24 +411,73 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
 	endforeach()
 	unset(_FILE)
 
-	# add dictionary header file to output files
-	string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1.h" _DICT_HEADER "${DICT_FILE}")
-	set(OUTPUT_FILES ${DICT_FILE} ${_DICT_HEADER})
-	if(DEBUG_OUTPUT)
-		message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+	# build name of ROOT map
+	set(_LIB_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${ARG_MODULE}${CMAKE_SHARED_LIBRARY_SUFFIX})
+	set(_MAP_FILE ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${ARG_MODULE}.rootmap)
+
+	if(ROOT_VERSION VERSION_LESS 5.99)
+		# add dictionary header file to output files
+		string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1.h" _DICT_HEADER "${DICT_FILE}")
+		set(OUTPUT_FILES ${DICT_FILE} ${_DICT_HEADER})
+		unset(_DICT_HEADER)
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+		endif()
+
+		add_custom_command(OUTPUT ${OUTPUT_FILES}
+			COMMAND ${ROOTCINT_EXECUTABLE}
+			ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}
+			DEPENDS ${HEADER_FILES} ${ARG_LINKDEF}
+			)
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will execute "
+				"'${ROOTCINT_EXECUTABLE} -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}'")
+		endif()
+
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will create output files '${_MAP_FILE}'")
+		endif()
+
+		add_custom_command(OUTPUT ${_MAP_FILE}
+			COMMAND ${RLIBMAP_EXECUTABLE}
+			ARGS -o ${_MAP_FILE} -l ${_LIB_NAME} -c ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_LINKDEF}
+			DEPENDS ${ARG_LINKDEF}
+			)
+		add_custom_target(${CMAKE_SHARED_LIBRARY_PREFIX}${ARG_MODULE}.rootmap ALL DEPENDS ${_MAP_FILE})
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will execute "
+				"'${RLIBMAP_EXECUTABLE} -o ${_MAP_FILE} -l ${_LIB_NAME} -c ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_LINKDEF}'")
+		endif()
+	else()
+		string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1_rdict.pcm" _DICT_PCM "${_MAP_FILE}")
+		set(OUTPUT_FILES ${DICT_FILE} ${_DICT_PCM} ${_MAP_FILE})
+		unset(_DICT_PCM)
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+		endif()
+
+		add_custom_command(OUTPUT ${OUTPUT_FILES}
+			COMMAND ${ROOTCLING_EXECUTABLE}
+			ARGS -f ${DICT_FILE} -s  ${LIBRARY_OUTPUT_PATH}/${_LIB_NAME} -rml ${_LIB_NAME} -rmf ${_MAP_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}
+			DEPENDS ${HEADER_FILES} ${ARG_LINKDEF}
+			)
+		if(DEBUG_OUTPUT)
+			message(STATUS "root_generate_dictionary will execute "
+				"'${ROOTCLING_EXECUTABLE} -f ${DICT_FILE} "
+				"-s ${LIBRARY_OUTPUT_PATH}/${_LIB_NAME} "
+				"-rml ${_LIB_NAME} "
+				"-rmf ${_MAP_FILE} "
+				"-c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}'")
+		endif()
 	endif()
 
-	add_custom_command(OUTPUT ${OUTPUT_FILES}
-		COMMAND ${ROOTCINT_EXECUTABLE}
-		ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}
-		DEPENDS ${HEADER_FILES} ${LINKDEF_FILE}
-		)
-	if(DEBUG_OUTPUT)
-		message(STATUS "root_generate_dictionary will execute
-        '${ROOTCINT_EXECUTABLE} -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}'")
-	endif()
 	unset(_DEFINITIONS)
 	unset(_INCLUDES)
 	unset(_HEADERS)
+	unset(_LIB_NAME)
+	unset(_MAP_FILE)
 
+	unset(HEADER_FILES)
+	unset(ARG_LINKDEF)
+	unset(ARG_MODULE)
 endfunction(root_generate_dictionary)

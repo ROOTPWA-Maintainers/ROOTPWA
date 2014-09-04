@@ -57,25 +57,22 @@ set(SOURCES
 	)
 
 
+# library name
+set(THIS_LIB "RootPwaPartialWaveFit")
+
+
 # ROOT dictionary
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
-set(ROOTPWA_DICT_INCLUDE_DIRS
-	${ROOT_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
 root_generate_dictionary(
-	"${ROOTPWA_DICTIONARY}"
-	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"fitResult.h;pwaPlotter.h;complexMatrix.h"
-	"rootPwaLinkDef.h"
+	${ROOTPWA_DICTIONARY}
+	fitResult.h pwaPlotter.h complexMatrix.h
+	MODULE ${THIS_LIB}
+	LINKDEF rootPwaLinkDef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaPartialWaveFit")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
