@@ -87,7 +87,7 @@ namespace rpwa {
 			  _nmbDataElements(0),
 			  _data(0) { }
 
-		boost::numeric::ublas::matrix<std::complex<double> > _matrix;
+		boost::numeric::ublas::matrix<std::complex<double> > _matrix; //!
 #endif
 
 	public:
