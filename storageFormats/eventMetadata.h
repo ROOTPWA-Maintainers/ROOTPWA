@@ -6,6 +6,8 @@
 
 #include <TObject.h>
 
+class TTree;
+
 
 namespace rpwa {
 
@@ -29,8 +31,19 @@ namespace rpwa {
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
 		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
 
+		std::string hash(TTree* eventTree, const bool& printProgress = false) const;
+
 		std::ostream& print(std::ostream& out) const;
 
+		Long64_t Merge(TCollection* list, Option_t* option = "");     // throws an exception
+		TTree* merge(const std::vector<std::pair<const rpwa::eventMetadata*, TTree*> >& inputData,
+		             const int& splitlevel = 99,
+		             const int& buffsize = 256000);                     // actually works
+
+		static const std::string objectNameInFile;
+		static const std::string eventTreeName;
+		static const std::string productionKinematicsMomentaBranchName;
+		static const std::string decayKinematicsMomentaBranchName;
 
 	  private:
 

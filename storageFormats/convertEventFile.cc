@@ -176,5 +176,6 @@ int main(int argc, char** argv)
 		printErr << "finalizing the output file failed." << endl;
 		return 1;
 	}
+	inputFile->Close();
 	return 0;
 }

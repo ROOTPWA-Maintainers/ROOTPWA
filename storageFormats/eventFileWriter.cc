@@ -20,7 +20,8 @@ using namespace rpwa;
 rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
 	  _outfile(0),
-	  _eventStorage(),
+	  _eventTree(0),
+	  _metadata(),
 	  _productionKinematicsMomenta(0),
 	  _decayKinematicsMomenta(0),
 	  _additionalVariablesToSave(),
@@ -52,24 +53,25 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	_outfile->cd();
 
 	// prepare metadata
-	_eventStorage.metadata().setUserString(userString);
-	_eventStorage.metadata().setProductionKinematicsParticleNames(productionKinematicsParticleNames);
+	_metadata.setUserString(userString);
+	_metadata.setProductionKinematicsParticleNames(productionKinematicsParticleNames);
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
-	_eventStorage.metadata().setDecayKinematicsParticleNames(decayKinematicsParticleNames);
+	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);
 	_nmbDecayKinematicsParticles = decayKinematicsParticleNames.size();
-	_eventStorage.metadata().setBinningMap(binningMap);
+	_metadata.setBinningMap(binningMap);
 
 	// prepare event tree
 	_productionKinematicsMomenta = new TClonesArray("TVector3", _nmbProductionKinematicsParticles);
 	_decayKinematicsMomenta   = new TClonesArray("TVector3", _nmbDecayKinematicsParticles);
-	_eventStorage.data()->Branch(eventStorage::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
-	_eventStorage.data()->Branch(eventStorage::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
-	_eventStorage.metadata().setAdditionalSavedVariableLables(additionalVariableLabels);
+	_eventTree = new TTree(eventMetadata::eventTreeName.c_str(), eventMetadata::eventTreeName.c_str());
+	_eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
+	_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
+	_metadata.setAdditionalSavedVariableLables(additionalVariableLabels);
 	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {
 		stringstream strStr;
 		strStr << additionalVariableLabels[i] << "/D";
-		_eventStorage.data()->Branch(additionalVariableLabels[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
+		_eventTree->Branch(additionalVariableLabels[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
 	}
 
 	_initialized = true;
@@ -113,7 +115,7 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 		_hashCalculator.Update(additionalVariablesToSave[i]);
 		_additionalVariablesToSave[i] = additionalVariablesToSave[i];
 	}
-	_eventStorage.data()->Fill();
+	_eventTree->Fill();
 }
 
 
@@ -122,10 +124,12 @@ bool rpwa::eventFileWriter::finalize() {
 		printWarn << "trying to finalize when not initialized" << endl;
 		return false;
 	}
+	_metadata.setContentHash(_hashCalculator.hash());
 	_outfile->cd();
-	_eventStorage.metadata().setContentHash(_hashCalculator.hash());
-	_eventStorage.Write(eventStorage::objectNameInFile.c_str());
+	_metadata.Write(eventMetadata::objectNameInFile.c_str());
+	_eventTree->Write();
 	_outfile->Close();
+	_eventTree = 0;
 	reset();
 	return true;
 }
@@ -140,6 +144,10 @@ void rpwa::eventFileWriter::reset() {
 		delete _decayKinematicsMomenta;
 		_decayKinematicsMomenta = 0;
 	}
+	if(_eventTree) {
+		delete _eventTree;
+	}
 	_outfile = 0;
+	_eventTree = 0;
 	_initialized = false;
 }

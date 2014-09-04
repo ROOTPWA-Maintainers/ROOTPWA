@@ -71,22 +71,21 @@ int main(int argc, char** argv)
 		printErr << "could not open input file. Aborting..." << endl;
 		return 1;
 	}
-	eventStorage* eventsStor = (eventStorage*)inputFile->Get(eventStorage::objectNameInFile.c_str());
-	const eventMetadata& metadata = eventsStor->metadata();
-	if(eventsStor) {
+	const eventMetadata* eventMeta = (eventMetadata*)inputFile->Get(eventMetadata::objectNameInFile.c_str());
+	if(eventMeta) {
 		// we are reading a datafile
-		TTree* inputTree = eventsStor->data();
+		TTree* inputTree = (TTree*)inputFile->Get(eventMetadata::eventTreeName.c_str());
 		if(not inputTree) {
 			printErr << "reading a datafile but did not find event tree. Aborting..." << endl;
 			return 1;
 		}
-		const vector<string>& additionalVariableNames = metadata.additionalSavedVariableLables();
+		const vector<string>& additionalVariableNames = eventMeta->additionalSavedVariableLables();
 		{
 			TObjArray* branchList = inputTree->GetListOfBranches();
 			for(int i = 0; i < branchList->GetEntries(); ++i) {
 				TBranch* branch = (TBranch*)(*branchList)[i];
 				const string branchName = branch->GetName();
-				if((branchName == eventStorage::productionKinematicsMomentaBranchName) or (branchName == eventStorage::decayKinematicsMomentaBranchName))
+				if((branchName == eventMetadata::productionKinematicsMomentaBranchName) or (branchName == eventMetadata::decayKinematicsMomentaBranchName))
 				{
 					continue;
 				}
@@ -98,9 +97,9 @@ int main(int argc, char** argv)
 		}
 		if(recalculateHash) {
 			printInfo << "recalculating hash..." << endl;
-			const string calculatedHash = eventsStor->hash(true);
-			if(calculatedHash != metadata.contentHash()) {
-				printErr << "hash verification failed, hash from metadata '" << metadata.contentHash() << "' does "
+			const string calculatedHash = eventMeta->hash(inputTree, true);
+			if(calculatedHash != eventMeta->contentHash()) {
+				printErr << "hash verification failed, hash from metadata '" << eventMeta->contentHash() << "' does "
 				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;
 			} else {
 				cout << endl;
@@ -108,7 +107,7 @@ int main(int argc, char** argv)
 				cout << endl;
 			}
 		}
-		printInfo << metadata << endl;
+		printInfo << *eventMeta << endl;
 		printInfo << "additional information:" << endl
 		          << "    number of events in file ... " << inputTree->GetEntries() << endl
 		          << "    additional branches ........ " << additionalVariableNames << endl;

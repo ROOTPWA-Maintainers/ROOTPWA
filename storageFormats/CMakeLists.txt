@@ -46,11 +46,9 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	eventStorage.cc
 	eventMetadata.cc
 	eventFileWriter.cc
 	hashCalculator.cc
-	storage.cc
 	)
 
 # ROOT dictionary
@@ -61,7 +59,7 @@ set(ROOTPWASTORAGE_DICT_INCLUDE_DIRS
 root_generate_dictionary(
 	"${ROOTPWASTORAGE_DICTIONARY}"
 	"${ROOTPWASTORAGE_DICT_INCLUDE_DIRS}"
-	"storage.h;eventStorage.h;eventMetadata.h"
+	"eventMetadata.h"
 	"rootPwaStorageLinkDef.h"
 )
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
@@ -78,3 +76,4 @@ add_dependencies(${THIS_LIB} environment)
 
 make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
 make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${UTILITIES_LIBS})
+make_executable(mergeDatafiles   mergeDatafiles.cc   ${THIS_LIB} ${UTILITIES_LIBS})

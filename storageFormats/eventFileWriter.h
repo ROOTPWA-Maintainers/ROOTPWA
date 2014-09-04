@@ -4,7 +4,7 @@
 
 #include <map>
 
-#include "eventStorage.h"
+#include "eventMetadata.h"
 #include "hashCalculator.h"
 
 class TFile;
@@ -44,7 +44,8 @@ namespace rpwa {
 
 		bool _initialized;
 		TFile* _outfile;
-		eventStorage _eventStorage;
+		TTree* _eventTree;
+		eventMetadata _metadata;
 		TClonesArray* _productionKinematicsMomenta;
 		TClonesArray* _decayKinematicsMomenta;
 		std::vector<double> _additionalVariablesToSave;

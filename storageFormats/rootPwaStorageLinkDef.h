@@ -39,8 +39,6 @@
 #pragma link off all functions;
 
 
-#pragma link C++ class rpwa::storage<rpwa::eventMetadata>;
-#pragma link C++ class rpwa::eventStorage+;
 #pragma link C++ class rpwa::eventMetadata+;
 
 
