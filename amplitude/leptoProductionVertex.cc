@@ -750,7 +750,7 @@ leptoProductionVertex::revertMomenta()
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: parallelSub (2) timediff = " << timeDiff << std::endl;
+	std::cout << "EPL: leptoProductionVertex::revertMomenta timediff = " << timeDiff << std::endl;
 
 	return true;
 }

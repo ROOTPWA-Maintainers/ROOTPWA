@@ -166,7 +166,7 @@ particle::transform(const std::vector<TLorentzRotation>& L)
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: parallelLorentzRotation timediff = " << timeDiff << std::endl;
+	std::cout << "EPL: particle::transform (rotation) timediff = " << timeDiff << std::endl;
 
 	return _lzVec;
 }
@@ -190,7 +190,7 @@ particle::transform(const std::vector<TVector3>& boost)
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: particle::transform timediff = " << timeDiff << std::endl;
+	std::cout << "EPL: particle::transform (boost) timediff = " << timeDiff << std::endl;
 
 	return _lzVec;
 }
