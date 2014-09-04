@@ -52,11 +52,14 @@ enable_language(Fortran)
 
 
 # add compiler options
-#set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none -finit-local-zero")
-#set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none")
-set(CMAKE_Fortran_FLAGS "-O2 -fno-automatic -ffixed-line-length-none")
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-automatic -ffixed-line-length-none")
+set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g")
+set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
+set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELEASE} -g")
 message(STATUS "Using Fortran compiler '${CMAKE_Fortran_COMPILER}'")
 message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
+message(STATUS "Using additional Fortran compiler flags '${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}' "
+	"for build type ${CMAKE_BUILD_TYPE}.")
 
 
 # source files that are compiled into library
