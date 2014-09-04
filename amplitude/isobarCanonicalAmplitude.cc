@@ -106,10 +106,15 @@ isobarCanonicalAmplitude::transformDaughters() const
 		const std::vector<TLorentzVector>& parentVec = vertex->parent()->lzVec();
 		std::vector<TVector3> rfBoost(parentVec.size());
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarCanonicalAmplitude::transformDaughters" << endl;
-		for(unsigned int k = 0; k < rfBoost.size(); ++k) {
+		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		const unsigned int size = rfBoost.size();
+		#pragma omp parallel for
+		for(unsigned int k = 0; k < size; ++k) {
 			rfBoost[k] = - parentVec[k].BoostVector();
 		}
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+		cout << "EPL: isobarCanonicalAmplitude::transformDaughters timediff = " << timeDiff << endl;
 
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -192,18 +197,25 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 		// multiply spherical harmonic
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 1" << endl;
-		for(unsigned int i = 0; i < amp.size(); ++i) {
+		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		const unsigned int size = amp.size();
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < size; ++i) {
 			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVec()[i].Theta();
 			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
 		}
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+		cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude timediff = " << timeDiff << endl;
 
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 2" << endl;
-	for(unsigned int i = 0; i < amp.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = amp.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// calulate barrier factor
 		const int    L  = vertex->L();
@@ -214,6 +226,9 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		amp[i] *= norm * ssClebsch * bf * bw[i];
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 2 timediff = " << timeDiff << endl;
 
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;

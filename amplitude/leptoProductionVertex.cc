@@ -181,8 +181,10 @@ leptoProductionVertex::productionAmp() const
 
 	std::vector<complex<double> > result(target()->numParallelEvents());
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::productionAmp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 	
 		// calculate azimuthal angle between lepton-scattering and
 		// production plane in (virtual photon, target) CM system since
@@ -312,6 +314,9 @@ leptoProductionVertex::productionAmp() const
 		result[i] = prodAmp;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::productionAmp timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -327,7 +332,6 @@ leptoProductionVertex::Q2(std::vector<double>& result) const
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::Q2" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = virtPhotonVec.size();
 	#pragma omp parallel for
@@ -336,7 +340,7 @@ leptoProductionVertex::Q2(std::vector<double>& result) const
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: leptoProductionVertex::Q2 timediff = " << timeDiff << endl;
 }
 
 void
@@ -352,7 +356,6 @@ leptoProductionVertex::nu(std::vector<double>& result) const
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::nu" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
 	#pragma omp parallel for
@@ -361,7 +364,7 @@ leptoProductionVertex::nu(std::vector<double>& result) const
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: leptoProductionVertex::nu timediff = " << timeDiff << endl;
 }
 
 void
@@ -379,10 +382,15 @@ leptoProductionVertex::y(std::vector<double>& result) const
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::y" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = (targetVec[i] * virtPhotonVec[i]) / (targetVec[i] * beamVec[i]);
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::y timediff = " << timeDiff << endl;
 }
 
 void
@@ -402,8 +410,10 @@ leptoProductionVertex::epsilon(std::vector<double>& result) const
 	const double beamLeptonMass2 = beamLepton()->mass2();
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::epsilon" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		const double xBj2  = xBj[i] * xBj[i];
 		const double y2    = y[i] * y[i];
@@ -437,6 +447,9 @@ leptoProductionVertex::epsilon(std::vector<double>& result) const
 		// return (term3 - term4 * v02) / (term3 + y2 / 2 + term4 * (2 - v02));  // eq. 87
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::epsilon timediff = " << timeDiff << endl;
 
 }
 
@@ -453,10 +466,15 @@ leptoProductionVertex::delta(std::vector<double>& result) const
 	const double beamMass2 = beamLepton()->mass2();
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::delta" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = (2 * beamMass2 / Q2[i]) * (1 - epsilon[i]);
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::delta timediff = " << timeDiff << endl;
 
 }
 
@@ -476,10 +494,15 @@ leptoProductionVertex::xBj(std::vector<double>& result) const
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::xBj" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = Q2[i] / (2 * (targetVec[i] * virtPhotonVec[i]));
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::xBj timediff = " << timeDiff << endl;
 
 }
 
@@ -495,10 +518,15 @@ leptoProductionVertex::s(std::vector<double>& result) const
 	}
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::s" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = (targetVec[i] + virtPhotonVec[i]).Mag2();
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::s timediff = " << timeDiff << endl;
 
 }
 
@@ -509,10 +537,15 @@ leptoProductionVertex::W(std::vector<double>& result) const
 	this->s(s);
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::W" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = sqrt(s[i]);
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::W timediff = " << timeDiff << endl;
 }
 
 void
@@ -529,10 +562,15 @@ leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<dou
 	this->Q2(Q2);
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: leptoProductionVertex::delta" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		result[i] = (2 * beamMass2 / Q2[i]) * (1 - epsilon[i]);
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: leptoProductionVertex::delta timediff = " << timeDiff << endl;
 }
 
 void
@@ -694,9 +732,25 @@ leptoProductionVertex::revertMomenta()
 	target         ()->setMomentum(_targetMomCache         );
 
 	// set virtual photon
-	std::vector<TLorentzVector> virtPhotonVec = beamLepton()->lzVec();
-	parallelSub(virtPhotonVec, scatteredLepton()->lzVec());
-	virtPhoton()->setLzVec(virtPhotonVec);
+
+	std::vector<TLorentzVector>& beamLeptonVec = beamLepton()->mutableLzVec(); // mutable !!!
+	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->mutableLzVec(); // mutable !!!
+
+	if(beamLeptonVec.size() != scatteredLeptonVec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+		throw;
+	}
+
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = beamLeptonVec.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		beamLeptonVec[i] -= scatteredLeptonVec[i];
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	std::cout << "EPL: parallelSub (2) timediff = " << timeDiff << std::endl;
 
 	return true;
 }

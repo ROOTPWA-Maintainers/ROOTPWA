@@ -127,12 +127,12 @@ bool testAmplitude(TTree*              inTree,
 	// construct amplitude
 	isobarAmplitudePtr amplitude;
 	waveDesc.constructAmplitude(amplitude, decayTopo);
-
+	vector<isobarAmplitudePtr> amplitudeWrapper(1, amplitude);
 
 	// read data from tree and calculate amplitudes
-	vector<complex<double> > ampValues;
+	vector<vector<complex<double> > > ampValues(1);
 	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampValues, maxNmbEvents,
+						amplitudeWrapper, ampValues, maxNmbEvents, 50000,
 	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
@@ -143,32 +143,32 @@ bool testAmplitude(TTree*              inTree,
 	}
 
 	// calculate amplitudes for parity transformed decay daughters
-	vector<complex<double> > ampSpaceInvValues;
+	vector<vector<complex<double> > > ampSpaceInvValues(1);
 	amplitude->enableSpaceInversion(true);
 	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampSpaceInvValues, maxNmbEvents,
+						amplitudeWrapper, ampSpaceInvValues, maxNmbEvents, 50000,
 	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
 
 	// calculate amplitudes for decay daughters reflected through production plane
-	vector<complex<double> > ampReflValues;
+	vector<vector<complex<double> > > ampReflValues(1);
 	amplitude->enableSpaceInversion(false);
 	amplitude->enableReflection    (true);
 	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampReflValues, maxNmbEvents,
+						amplitudeWrapper, ampReflValues, maxNmbEvents, 50000,
 	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
 
-	if (   (ampValues.size() != ampSpaceInvValues.size())
-	    or (ampValues.size() != ampReflValues.size    ())) {
+	if (   (ampValues[0].size() != ampSpaceInvValues[0].size())
+	    or (ampValues[0].size() != ampReflValues[0].size    ())) {
 		printWarn << "different number of amplitudes for space inverted "
-		          << "(" << ampSpaceInvValues.size() << "), reflected "
-		          << "(" << ampReflValues.size() << "), and unmodified data "
-		          << "(" << ampValues.size() << ")." << endl;
+		          << "(" << ampSpaceInvValues[0].size() << "), reflected "
+		          << "(" << ampReflValues[0].size() << "), and unmodified data "
+		          << "(" << ampValues[0].size() << ")." << endl;
 		return false;
 	}
 
@@ -177,10 +177,10 @@ bool testAmplitude(TTree*              inTree,
 	unsigned int countAmpRatioNotOk         = 0;
 	unsigned int countSpaceInvEigenValNotOk = 0;
 	unsigned int countReflEigenValNotOk     = 0;
-	for (unsigned int i = 0; i < ampValues.size(); ++i) {
+	for (unsigned int i = 0; i < ampValues[0].size(); ++i) {
 		// check that amplitude is non-zero
 		bool ampZero = false;
-		if (ampValues[i] == complex<double>(0, 0)) {
+		if (ampValues[0][i] == complex<double>(0, 0)) {
 			ampZero = true;
 			++countAmpZero;
 		}
@@ -190,21 +190,21 @@ bool testAmplitude(TTree*              inTree,
 		s.setf(ios_base::scientific, ios_base::floatfield);
 		if (debug) {
 			printDebug << "amplitude [" << i << "]: " << endl;
-			s << "        ampl.            = " << ampValues[i];
+			s << "        ampl.            = " << ampValues[0][i];
 			if (ampZero)
 				s << " <! zero amplitude";
 			s << endl
-			  << "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
-			  << "        ampl. refl.      = " << ampReflValues    [i] << endl;
+			  << "        ampl. space inv. = " << ampSpaceInvValues[0][i] << endl
+			  << "        ampl. refl.      = " << ampReflValues    [0][i] << endl;
 			cout << s.str();
 		}
 
 		// check space inversion symmetry
 		const complex<double> spaceInvRatio
-			= complex<double>((ampSpaceInvValues[i].real() != 0) ?
-			                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
-			                  (ampSpaceInvValues[i].imag() != 0) ?
-			                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
+			= complex<double>((ampSpaceInvValues[0][i].real() != 0) ?
+			                  ampValues[0][i].real() / ampSpaceInvValues[0][i].real() : 0,
+			                  (ampSpaceInvValues[0][i].imag() != 0) ?
+			                  ampValues[0][i].imag() / ampSpaceInvValues[0][i].imag() : 0);
 		bool spaceInvAmpRatioOk = true;
 		if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
 		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
@@ -234,10 +234,10 @@ bool testAmplitude(TTree*              inTree,
 
 		// check reflection symmetry through production plane
 		const complex<double> reflRatio
-			= complex<double>((ampReflValues[i].real() != 0) ?
-			                  ampValues[i].real() / ampReflValues[i].real() : 0,
-			                  (ampReflValues[i].imag() != 0) ?
-			                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
+			= complex<double>((ampReflValues[0][i].real() != 0) ?
+			                  ampValues[0][i].real() / ampReflValues[0][i].real() : 0,
+			                  (ampReflValues[0][i].imag() != 0) ?
+			                  ampValues[0][i].imag() / ampReflValues[0][i].imag() : 0);
 		bool reflAmpRatioOk = true;
 		if (   (fabs(reflRatio.real()) - 1 > maxDelta)
 	      or (fabs(reflRatio.imag()) - 1 > maxDelta)) {

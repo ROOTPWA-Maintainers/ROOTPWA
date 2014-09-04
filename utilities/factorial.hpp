@@ -50,21 +50,30 @@ namespace rpwa {
 	public:
 			
 		static factorialCached& instance() { return _instance; }  ///< get singleton instance
+		
+		static void initCache()
+		{
+			if(_cache.size() > 0) return;
+			_cache.clear();
+			_cache.push_back(1);
+			unsigned int i = 1;
+			while((std::numeric_limits<T>::max() / (T)i) > _cache[i - 1]) {
+				T newValue = ((T)i) * _cache[i - 1];
+				//printDebug << "add " << i << "! = " << newValue << " to factorial cache" << std::endl;
+				_cache.push_back(newValue);
+				++i;
+			}
+		}
+		
 		T operator ()(const unsigned int n)                       ///< returns n!
 		{
-			const unsigned int cacheSize = _cache.size();
-			if (n >= cacheSize) {
-				_cache.resize(n + 1);
-				for (unsigned int i = cacheSize; i <= n; ++i) {
-					// check for overflow
-					if ((std::numeric_limits<T>::max() / (T)i) < _cache[i - 1]) {
-						printErr << "target data type too small to hold " << i << "! "
-						         << "(" << i - 1 << "! = " << _cache[i - 1] << " * " << i << " > "
-						         << std::numeric_limits<T>::max() << "). aborting." << std::endl;
-						throw;
-					}
-					_cache[i] = ((T)i) * _cache[i - 1];
-				}
+			if(_cache.size() == 0) {
+				printErr << "factorial cache has not been initialized by calling initFactorial()" << std::endl;
+				throw;
+			}
+			if(n < 0 || n >= _cache.size()) {
+				printErr << "cannot calculate factorial(" << n << "): value out of range" << std::endl;
+				throw;
 			}
 			return _cache[n];
 		}
@@ -84,9 +93,14 @@ namespace rpwa {
 
 
 	template<typename T> factorialCached<T> factorialCached<T>::_instance;
-	template<typename T> std::vector<T>     factorialCached<T>::_cache(1, 1);
-
-
+	template<typename T> std::vector<T>     factorialCached<T>::_cache;
+	
+	template<typename T>
+	inline
+	void
+	initFactorial()  ///< Initializes the cache containing all needed factorial values
+	{ return factorialCached<T>::initCache();	}
+	
 	template<typename T>
 	inline
 	T

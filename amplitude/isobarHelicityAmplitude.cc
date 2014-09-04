@@ -70,7 +70,6 @@ isobarHelicityAmplitude::hfTransform(const std::vector<TLorentzVector>& daughter
 	std::vector<TLorentzRotation> result(daughterLv.size());
 
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: isobarHelicityAmplitude::hfTransform" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = daughterLv.size();
 	#pragma omp parallel for
@@ -97,7 +96,7 @@ isobarHelicityAmplitude::hfTransform(const std::vector<TLorentzVector>& daughter
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: isobarHelicityAmplitude::hfTransform timediff = " << timeDiff << endl;
 
 	return result;
 
@@ -203,8 +202,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	if (topVertex and _useReflectivityBasis) {
 
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 1" << endl;
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVec()[i].Theta();
@@ -212,13 +211,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "    timediff = " << timeDiff << endl;
+		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 1 timediff = " << timeDiff << endl;
 
 	} else {
 
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 2" << endl;
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVec()[i].Theta();
@@ -226,7 +225,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "    timediff = " << timeDiff << endl;
+		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 2 timediff = " << timeDiff << endl;
 
 	}
 
@@ -239,10 +238,10 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	// calculate decay amplitude
 	std::vector<std::complex<double> > amp(numEvents);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = amp.size();
 	#pragma omp parallel for
-	for(unsigned int i = 0; i < amp.size(); ++i) {
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// calulate barrier factor
 		const double q  = daughter1->lzVec()[i].Vect().Mag();
@@ -253,7 +252,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3 timediff = " << timeDiff << endl;
 	
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;

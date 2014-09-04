@@ -55,18 +55,23 @@ namespace rpwa {
 	template<typename T>
 	class dFunctionCached {
 
+		static const unsigned int _maxJ = 41; ///< maximum allowed angular momentum * 2 + 1
+
 	public:
 
 		struct cacheEntryType {
 
 			cacheEntryType()
-				: constTerm(0)
+				: constTerm(0), numSumTerms(0)
 			{ }
 
-			T                constTerm;
-			std::vector<int> kmn1;
-			std::vector<int> jmnk;
-			std::vector<T>   factor;
+			T   constTerm;
+			
+			int numSumTerms; // The number of valid entries in the following 3 arrays. (has to be <= _maxJ + 1)
+			
+			int kmn1  [_maxJ + 1];
+			int jmnk  [_maxJ + 1];
+			T   factor[_maxJ + 1];
 
 		};
 
@@ -80,6 +85,12 @@ namespace rpwa {
 		              const int n,
 		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
+		  
+			if(_useCache && ! isInitialized) {
+				printErr << "dFunction cache has not been initialized by calling initDFunction()" << std::endl;
+				throw;
+			}
+		  
 			// check input parameters
 			if (j >= (int)_maxJ) {
 				printErr << "J = " << 0.5 * j << " is too large. maximum allowed J is "
@@ -110,19 +121,24 @@ namespace rpwa {
 			const T sinThetaHalf = sin(thetaHalf);
 
 			T                dFuncVal   = 0;
-			cacheEntryType*& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
-			if (_useCache and cacheEntry) {
+			cacheEntryType& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
+			//cacheEntryType*& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
+			if (_useCache) {
+				/*if(not cacheEntry) {
+					printErr << "dFunction cache has not been initialized by calling initDFunction()" << std::endl;
+					throw;
+				}*/
 				// calculate function value using cache
 				T sumTerm = 0;
-				for (unsigned int i = 0; i < cacheEntry->factor.size(); ++i) {
-					sumTerm +=   rpwa::pow(cosThetaHalf, cacheEntry->kmn1[i])
-						         * rpwa::pow(sinThetaHalf, cacheEntry->jmnk[i]) / cacheEntry->factor[i];
+				for (unsigned int i = 0; i < cacheEntry.numSumTerms; ++i) {
+					sumTerm +=   rpwa::pow(cosThetaHalf, cacheEntry.kmn1[i])
+						         * rpwa::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
 				}
-				dFuncVal = cacheEntry->constTerm * sumTerm;
+				dFuncVal = cacheEntry.constTerm * sumTerm;
 			} else {
 				// calculate function value and put intermediate values into cache
-				if (_useCache)
-					cacheEntry = new cacheEntryType();
+				//if (_useCache)
+				//	cacheEntry = new cacheEntryType();
 				const int jpm       = (j + _m) / 2;
 				const int jpn       = (j + _n) / 2;
 				const int jmm       = (j - _m) / 2;
@@ -132,8 +148,8 @@ namespace rpwa {
 					                    * rpwa::factorial<T>(jpn)
 					                    * rpwa::factorial<T>(jmn);
 				const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
-				if (cacheEntry)
-					cacheEntry->constTerm = constTerm;
+				//if (cacheEntry)
+				//	cacheEntry->constTerm = constTerm;
 
 				T         sumTerm = 0;
 				const int mpn     = (_m + _n) / 2;
@@ -149,11 +165,11 @@ namespace rpwa {
 						                  * rpwa::factorial<T>(jmk )
 						                  * rpwa::factorial<T>(jnk )
 					                    * rpwa::factorial<T>(kmn2)) / powMinusOne(k);
-					if (cacheEntry) {
-						cacheEntry->kmn1.push_back  (kmn1);
-						cacheEntry->jmnk.push_back  (jmnk);
-						cacheEntry->factor.push_back(factor);
-					}
+					//if (cacheEntry) {
+					//	cacheEntry->kmn1.push_back  (kmn1);
+					//	cacheEntry->jmnk.push_back  (jmnk);
+					//	cacheEntry->factor.push_back(factor);
+					//}
 					// using the 1 / factor here so that function value is the same as in PWA2000
 					sumTerm += rpwa::pow(cosThetaHalf, kmn1) * rpwa::pow(sinThetaHalf, jmnk) / factor;
 				}
@@ -167,50 +183,119 @@ namespace rpwa {
 		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
 		static unsigned int cacheSize()  ///< returns cache size in bytes
 		{
-			unsigned int size = _maxJ * (_maxJ + 1) * (_maxJ + 1) * sizeof(_cache[0][0][0]);
+			/*unsigned int size = _maxJ * (_maxJ + 1) * (_maxJ + 1) * sizeof(_cache[0][0][0]);
 			for (int j = 0; j < (int)_maxJ; ++j)
 				for (int m = -j; m <= j; m += 2)
 					for (int n = -j; n <= j; n += 2) {
 						cacheEntryType*& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
 						if (cacheEntry) {
 							size += sizeof(*cacheEntry);
-							size += cacheEntry->kmn1.capacity  () * sizeof(int);
-							size += cacheEntry->jmnk.capacity  () * sizeof(int);
-							size += cacheEntry->factor.capacity() * sizeof(T);
+							//size += cacheEntry->kmn1.capacity  () * sizeof(int);
+							//size += cacheEntry->jmnk.capacity  () * sizeof(int);
+							//size += cacheEntry->factor.capacity() * sizeof(T);
 						}
 					}
-			return size;
+			return size;*/
+			return sizeof(_cache);
 		}
-
+		
+		static void initCache()
+		{
+			if(isInitialized) return;
+			
+			//unsigned int size = _maxJ * (_maxJ + 1) * (_maxJ + 1) * sizeof(_cache[0][0][0]);
+			for (int j = 0; j < (int)_maxJ; ++j) {
+				//printDebug << "Fill dFunction cache for j = " << j << std::endl;
+				for (int m = -j; m <= j; m += 2) {
+					for (int n = -j; n <= j; n += 2) {
+						cacheEntryType& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
+						//cacheEntryType*& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
+						//if (! cacheEntry) {
+						  
+							//cacheEntry = new cacheEntryType();
+							
+							const int jpm       = (j + m) / 2;
+							const int jpn       = (j + n) / 2;
+							const int jmm       = (j - m) / 2;
+							const int jmn       = (j - n) / 2;
+							const T   kk        =   rpwa::factorial<T>(jpm)
+									      * rpwa::factorial<T>(jmm)
+									      * rpwa::factorial<T>(jpn)
+									      * rpwa::factorial<T>(jmn);
+							const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
+							cacheEntry.constTerm = constTerm;
+							
+							T         sumTerm = 0;
+							const int mpn     = (m + n) / 2;
+							const int kMin    = std::max(0,   mpn);
+							const int kMax    = std::min(jpm, jpn);
+							
+							cacheEntry.numSumTerms = kMax - kMin + 1;
+							for (int k = kMin; k <= kMax; ++k) {
+							  
+								const int kmn1   = 2 * k - (m + n) / 2;
+								const int jmnk   = j + (m + n) / 2 - 2 * k;
+								const int jmk    = (j + m) / 2 - k;
+								const int jnk    = (j + n) / 2 - k;
+								const int kmn2   = k - (m + n) / 2;
+								const T   factor = (  rpwa::factorial<T>(k   )
+										    * rpwa::factorial<T>(jmk )
+										    * rpwa::factorial<T>(jnk )
+										    * rpwa::factorial<T>(kmn2)) / powMinusOne(k);
+								
+								int kRel = k - kMin;
+								if(kRel >= j + 1) {
+									printErr << "there are more than (j + 1) possible values for k, "
+										 << "this should be impossible" << std::endl;
+									throw;
+								}
+							
+								cacheEntry.kmn1[kRel] = kmn1;
+								cacheEntry.jmnk[kRel] = jmnk;
+								cacheEntry.factor[kRel] = factor;
+							}
+						//}
+					}
+				}
+			}
+			isInitialized = true;
+		}
 
 	private:
 
 		dFunctionCached () { }
 		~dFunctionCached()
 		{
-			for (int j = 0; j < (int)_maxJ; ++j)
-				for (int m = -j; m <= j; m += 2)
-					for (int n = -j; n <= j; n += 2)
-						delete _cache[j][(j + m) / 2][(j + n) / 2];
+			//for (int j = 0; j < (int)_maxJ; ++j)
+			//	for (int m = -j; m <= j; m += 2)
+			//		for (int n = -j; n <= j; n += 2)
+			//			delete _cache[j][(j + m) / 2][(j + n) / 2];
 		}
 		dFunctionCached (const dFunctionCached&);
 		dFunctionCached& operator =(const dFunctionCached&);
 
 		static dFunctionCached _instance;  ///< singleton instance
 		static bool            _useCache;  ///< if set to true, cache is used
-
-		static const unsigned int _maxJ = 41;                           ///< maximum allowed angular momentum * 2 + 1
-		static cacheEntryType*    _cache[_maxJ][_maxJ + 1][_maxJ + 1];  ///< cache for intermediate terms [j][m][n]
+		
+		static bool isInitialized;
+		
+		static cacheEntryType _cache[_maxJ][_maxJ + 1][_maxJ + 1];  ///< cache for intermediate terms [j][m][n]
 	};
 
 
 	template<typename T> dFunctionCached<T> dFunctionCached<T>::_instance;
 	template<typename T> bool               dFunctionCached<T>::_useCache = true;
+	template<typename T> bool               dFunctionCached<T>::isInitialized = false;
 
-	template<typename T> typename dFunctionCached<T>::cacheEntryType*
+	template<typename T> typename dFunctionCached<T>::cacheEntryType
 	  dFunctionCached<T>::_cache[_maxJ][_maxJ + 1][_maxJ + 1];
 
-
+	template<typename T>
+	inline
+	void
+	initDFunction() ///< Initializes the cache used for dFunction calculation
+	{ dFunctionCached<T>::initCache();	}
+	
 	template<typename T>
 	inline
 	T

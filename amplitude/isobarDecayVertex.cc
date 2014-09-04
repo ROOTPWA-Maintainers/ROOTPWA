@@ -164,6 +164,7 @@ isobarDecayVertex::calcParentLzVec()
 		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
 		           << " before = " << parent()->lzVec() << " GeV, " << flush;
 
+	std::vector<TLorentzVector>& parentVec = parent()->mutableLzVec(); // mutable!!!
 	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVec();
 	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVec();
 
@@ -172,9 +173,19 @@ isobarDecayVertex::calcParentLzVec()
 		throw;
 	}
 
-	std::vector<TLorentzVector> result = daughter1Vec;
-	parallelAdd(result, daughter2Vec);
-	parent()->setLzVec(result);
+	// parentVec does not have correct size
+	const unsigned int size = daughter1Vec.size();
+	parentVec.resize(size);
+
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		parentVec[i] = daughter1Vec[i] + daughter2Vec[i];
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	std::cout << "EPL: parallelAdd (3) timediff = " << timeDiff << std::endl;
 
 	if (_debug)
 		cout << "after = " << parent()->lzVec() << " GeV" << endl;

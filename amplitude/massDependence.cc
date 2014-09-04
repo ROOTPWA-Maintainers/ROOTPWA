@@ -77,12 +77,17 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: flatRangeMassDependence::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 		if (fabs(parentVec[i].M() - parent->mass()) < parent->width()/2.) {
 			result[i] = 1.;
 		}
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: flatRangeMassDependence::amp timediff = " << timeDiff << endl;
 
 	if(_debug) {
 		for(unsigned int i = 0; i < result.size(); ++i) {
@@ -118,7 +123,6 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 		std::vector<std::complex<double> > result(parentVec.size(), 0);
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: relativisticBreitWigner::amp" << endl;
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = result.size();
 		#pragma omp parallel for
@@ -150,7 +154,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "    timediff = " << timeDiff << endl;
+		cout << "EPL: relativisticBreitWigner::amp timediff = " << timeDiff << endl;
 
 		return result;
 
@@ -178,8 +182,10 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: constWidthBreitWigner::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// get Breit-Wigner parameters
 		const double M = parentVec[i].M();  // parent mass
@@ -197,6 +203,9 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 					   << maxPrecisionDouble(bw) << endl;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: constWidthBreitWigner::amp timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -219,8 +228,10 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: rhoBreitWigner::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// get Breit-Wigner parameters
 		const double M      = parentVec[i].M();         // parent mass
@@ -255,6 +266,9 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 					   << "= " << maxPrecisionDouble(bw) << endl;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: rhoBreitWigner::amp timediff = " << timeDiff << endl;
 
 	return result;
 
@@ -278,8 +292,10 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: f0980BreitWigner::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// get Breit-Wigner parameters
 		const double M      = parentVec[i].M();         // parent mass
@@ -307,6 +323,9 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 					   << "= " << maxPrecisionDouble(bw) << endl;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: f0980BreitWigner::amp timediff = " << timeDiff << endl;
 
 	return result;
 
@@ -376,8 +395,10 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: piPiSWaveAuMorganPenningtonM::amp" << endl;
-	for(unsigned int k = 0; k < result.size(); ++k) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int k = 0; k < size; ++k) {
 
 		const complex<double> imag(0, 1);
 
@@ -431,6 +452,9 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 					   << maxPrecisionDouble(amp) << endl;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: piPiSWaveAuMorganPenningtonM::amp timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -463,8 +487,10 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: piPiSWaveAuMorganPenningtonVes::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		const double M = parentVec[i].M();
 
@@ -487,6 +513,9 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: piPiSWaveAuMorganPenningtonVes::amp timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -526,8 +555,10 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: rhoPrimeMassDep::amp" << endl;
-	for(unsigned int i = 0; i < result.size(); ++i) {
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
 		// get Breit-Wigner parameters
 		const double M  = parentVec[i].M();                 // parent mass
@@ -555,6 +586,10 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 					   << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
 
 	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	cout << "EPL: rhoPrimeMassDep::amp timediff = " << timeDiff << endl;
+
 
 	return result;
 

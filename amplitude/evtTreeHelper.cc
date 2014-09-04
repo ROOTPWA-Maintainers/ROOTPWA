@@ -638,22 +638,23 @@ namespace rpwa {
 	processTree(TTree&                    tree,
 	            const TClonesArray&       prodKinPartNames,
 	            const TClonesArray&       decayKinPartNames,
-	            const isobarAmplitudePtr& amplitude,
-	            vector<complex<double> >& ampValues,
+	            const vector<isobarAmplitudePtr>& amplitude,  // one amplitude for each keyfile
+	            vector<vector<complex<double> > >& ampValues, // [keyfile][event]
 	            const long int            maxNmbEvents,
+	            const long int            numParallelEvents,
 	            const string&             prodKinMomentaLeafName,
 	            const string&             decayKinMomentaLeafName,
 	            const bool                printProgress,
 	            const string&             treePerfStatOutFileName,
 	            const long int            treeCacheSize)
 	{
-		if (not amplitude) {
-			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
-			return false;
+
+		for(unsigned int i = 0; i < amplitude.size(); ++i) {
+			if (not amplitude[i]) {
+				printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
+				return false;
+			}
 		}
-		// initialize amplitude
-		amplitude->init();
-		const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 
 		// create branch pointers and leaf variables
 		TBranch*      prodKinMomentaBr  = 0;
@@ -672,114 +673,146 @@ namespace rpwa {
 		if (treePerfStatOutFileName != "")
 			treePerfStats = new TTreePerfStats("ioPerf", &tree);
 
-		// init decay topologies with particle names
-		if (not decayTopo->initKinematicsData(prodKinPartNames, decayKinPartNames)) {
-			printWarn << "problems initializing input data. cannot read input data." << endl;
-			return false;
-		}
-
-		const long int    nmbEventsTree     = tree.GetEntries();
-		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree) : nmbEventsTree);
+		const long int nmbEventsTree     = tree.GetEntries();
+		const long int nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree) : nmbEventsTree);
 
 		const unsigned int numProdMomenta = prodKinPartNames.GetEntriesFast();
 		const unsigned int numDecayMomenta = decayKinPartNames.GetEntriesFast();
 
-		vector<vector<TVector3> > prodMomenta(numProdMomenta, vector<TVector3>(nmbEvents));
-		vector<vector<TVector3> > decayMomenta(numDecayMomenta, vector<TVector3>(nmbEvents));
+		// momenta from event file are stored here to avoid reading them multiple times for
+		// different topologies
+		vector<vector<TVector3> > prodMomenta(numProdMomenta); // [particle][event]
+		vector<vector<TVector3> > decayMomenta(numDecayMomenta); // [particle][event]
 
-		// loop over events
-		bool              success           = true;
-		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
-		decayTopo->clearKinematicsData();
-		cout << "add events ..." << endl;
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+		bool success = true;
 
-			if (progressIndicator)
-				++(*progressIndicator);
+		// initialize amplitudes
+		for(unsigned int i = 0; i < amplitude.size(); ++i) {
 
-			if (tree.LoadTree(eventIndex) < 0)
+			amplitude[i]->init();
+
+			// init decay topologies with particle names
+			if (not amplitude[i]->decayTopology()->initKinematicsData(prodKinPartNames, decayKinPartNames)) {
+				printWarn << "problems initializing input data. cannot read input data." << endl;
 				break;
-
-			// read only required branches
-			prodKinMomentaBr->GetEntry (eventIndex);
-			decayKinMomentaBr->GetEntry(eventIndex);
-
-			// test if all branches can be read
-			if (not prodKinMomenta or not decayKinMomenta) {
-				printWarn << "at least one of the input data arrays is a null pointer: "
-				          << "        production kinematics: " << "momenta = " << prodKinMomenta  << endl
-				          << "        decay kinematics:      " << "momenta = " << decayKinMomenta << endl
-				          << "skipping event." << endl;
-				success = false;
-				continue;
-			}
-
-			// check sizes of branches
-			const unsigned int prodKinMomentaEntries = prodKinMomenta->GetEntriesFast();
-			if (prodKinMomentaEntries < 0 || prodKinMomentaEntries != numProdMomenta) {
-				printWarn << "array of production kinematics particle momenta has wrong size: "
-						  << "cannot read decay kinematics." << endl;
-				success = false;
-				continue;
-			}
-			const unsigned int decayKinMomentaEntries = decayKinMomenta->GetEntriesFast();
-			if (decayKinMomentaEntries < 0 || decayKinMomentaEntries != numDecayMomenta) {
-				printWarn << "array of decay kinematics particle momenta has wrong size: "
-						  << "cannot read decay kinematics." << endl;
-				success = false;
-				continue;
-			}
-
-			// load production momenta
-			for (unsigned int i = 0; i < numProdMomenta; ++i) {
-				const TVector3* mom = dynamic_cast<TVector3*>((*prodKinMomenta)[i]);
-				if (not mom) {
-					printWarn << "production kinematics data entry [" << i << "] is not of type TVector3. "
-							  << "cannot read decay kinematics momentum for particle '" << i << "'. "
-							  << "skipping." << endl;
-					success = false;
-					continue;
-				}
-				prodMomenta[i][eventIndex] = *mom;
-			}
-
-			// load decay momenta
-			for (unsigned int i = 0; i < numDecayMomenta; ++i) {
-				const TVector3* mom = dynamic_cast<TVector3*>((*decayKinMomenta)[i]);
-				if (not mom) {
-					printWarn << "decay kinematics data entry [" << i << "] is not of type TVector3. "
-							  << "cannot read decay kinematics momentum for particle '" << i << "'. "
-							  << "skipping." << endl;
-					success = false;
-					continue;
-				}
-				decayMomenta[i][eventIndex] = *mom;
 			}
 
 		}
-		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "total event add timediff = " << timeDiff << endl;
 
-		if(success) {
-			// set data in topology
-			if (not decayTopo->addKinematicsData(prodMomenta, decayMomenta)) {
-				printWarn << "problems setting events in decay topology" << endl;
-				success = false;
+		// events are read in slices of NUM_PARALLEL_EVENTS events per iteration
+		for(long int eventOffset = 0; eventOffset < nmbEvents; eventOffset += numParallelEvents) {
+
+			const long int numEventsInThisIteration = min(numParallelEvents, nmbEvents - eventOffset);
+
+			cout << endl;
+			cout << "Starting iteration " << eventOffset << " to " << (eventOffset + numEventsInThisIteration - 1) << endl;
+
+			// the event number is not the same in each iteration, resize vectors accordingly
+			for(unsigned int i = 0; i < numProdMomenta; ++i) {
+				prodMomenta[i].resize(numEventsInThisIteration);
 			}
-		}
+			for(unsigned int i = 0; i < numDecayMomenta; ++i) {
+				decayMomenta[i].resize(numEventsInThisIteration);
+			}
 
-		if(success) {
-			// calculate amplitudes
-			cout << "events added: calculate amplitudes ..." << endl;
+			// read events from file
+			progress_display* progressIndicator = (printProgress) ? new progress_display(numEventsInThisIteration, cout, "") : 0;
+			cout << "add events " << numEventsInThisIteration << ") ..." << endl;
 			boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-			decayTopo->revertMomenta();
-			vector<complex<double> > amps = (*amplitude)();
-			ampValues.insert(ampValues.end(), amps.begin(), amps.end());
+			for (long int eventIndex = 0; eventIndex < numEventsInThisIteration; ++eventIndex) {
+
+				if (progressIndicator)
+					++(*progressIndicator);
+
+				if (tree.LoadTree(eventIndex) < 0)
+					break;
+
+				// read only required branches
+				prodKinMomentaBr->GetEntry (eventOffset + eventIndex);
+				decayKinMomentaBr->GetEntry(eventOffset + eventIndex);
+
+				// test if all branches can be read
+				if (not prodKinMomenta or not decayKinMomenta) {
+					printWarn << "at least one of the input data arrays is a null pointer: "
+							  << "        production kinematics: " << "momenta = " << prodKinMomenta  << endl
+							  << "        decay kinematics:      " << "momenta = " << decayKinMomenta << endl
+							  << "skipping event." << endl;
+					success = false;
+					continue;
+				}
+
+				// check sizes of branches
+				const unsigned int prodKinMomentaEntries = prodKinMomenta->GetEntriesFast();
+				if (prodKinMomentaEntries < 0 || prodKinMomentaEntries != numProdMomenta) {
+					printWarn << "array of production kinematics particle momenta has wrong size: "
+							  << "cannot read decay kinematics." << endl;
+					success = false;
+					continue;
+				}
+				const unsigned int decayKinMomentaEntries = decayKinMomenta->GetEntriesFast();
+				if (decayKinMomentaEntries < 0 || decayKinMomentaEntries != numDecayMomenta) {
+					printWarn << "array of decay kinematics particle momenta has wrong size: "
+							  << "cannot read decay kinematics." << endl;
+					success = false;
+					continue;
+				}
+
+				// load production momenta
+				for (unsigned int i = 0; i < numProdMomenta; ++i) {
+					const TVector3* mom = dynamic_cast<TVector3*>((*prodKinMomenta)[i]);
+					if (not mom) {
+						printWarn << "production kinematics data entry [" << i << "] is not of type TVector3. "
+								  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+								  << "skipping." << endl;
+						success = false;
+						continue;
+					}
+					prodMomenta[i][eventIndex] = *mom;
+				}
+
+				// load decay momenta
+				for (unsigned int i = 0; i < numDecayMomenta; ++i) {
+					const TVector3* mom = dynamic_cast<TVector3*>((*decayKinMomenta)[i]);
+					if (not mom) {
+						printWarn << "decay kinematics data entry [" << i << "] is not of type TVector3. "
+								  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+								  << "skipping." << endl;
+						success = false;
+						continue;
+					}
+					decayMomenta[i][eventIndex] = *mom;
+				}
+
+			}
 			boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 			uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-			cout << "total amplitude calculation timediff = " << timeDiff << endl;
+			cout << "total event add timediff = " << timeDiff << endl;
+
+			if(success) {
+				for(unsigned int i = 0; i < amplitude.size(); ++i) {
+
+					// set data in topology
+					amplitude[i]->decayTopology()->clearKinematicsData();
+					if (not amplitude[i]->decayTopology()->addKinematicsData(prodMomenta, decayMomenta)) {
+						printWarn << "problems setting events in decay topology " << i << endl;
+						break;
+					}
+
+					// calculate amplitudes
+					cout << "events added: calculate amplitudes for topology " << i << " ..." << endl;
+					boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
+					amplitude[i]->decayTopology()->revertMomenta();
+					vector<complex<double> > amps = (*(amplitude[i]))();
+					ampValues[i].insert(ampValues[i].end(), amps.begin(), amps.end());
+
+					boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+					uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+					cout << "total amplitude calculation timediff = " << timeDiff << endl;
+
+				}
+			}
+
 		}
 
 		if (printProgress)

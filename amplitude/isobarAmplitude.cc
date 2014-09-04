@@ -141,15 +141,15 @@ isobarAmplitude::amplitude() const
 		}
 
 		// !! EVENT PARALLEL LOOP
-		cout << "EPL: isobarAmplitude::amplitude" << endl;
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = amp.size();
+		#pragma omp parallel for
 		for(unsigned int k = 0; k < size; ++k) {
 			amp[k] += permAmp[k] * _symTermMaps[i].factor;
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "    timediff = " << timeDiff << endl;
+		cout << "EPL: isobarAmplitude::amplitude timediff = " << timeDiff << endl;
 
 	}
 	return amp;
@@ -168,9 +168,7 @@ isobarAmplitude::gjTransform(const std::vector<TLorentzVector>& beamLv,  // beam
 
 	std::vector<TLorentzRotation> result(beamLv.size());
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: isobarAmplitude::gjTransform" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -200,7 +198,7 @@ isobarAmplitude::gjTransform(const std::vector<TLorentzVector>& beamLv,  // beam
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: isobarAmplitude::gjTransform timediff = " << timeDiff << endl;
 
 	return result;
 }
@@ -307,9 +305,9 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			}
 
 			// !! EVENT PARALLEL LOOP
-			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum" << endl;
 			boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 			const unsigned int size = ampSum.size();
+			#pragma omp parallel for
 			for(unsigned int i = 0; i < size; ++i) {
 
 				complex<double> amp = parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
@@ -330,7 +328,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			}
 			boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 			uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-			cout << "    timediff = " << timeDiff << endl;
+			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum timediff = " << timeDiff << endl;
 		}
 
 

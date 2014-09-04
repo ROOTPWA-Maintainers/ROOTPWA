@@ -238,7 +238,7 @@ main(int argc, char** argv)
 		TChain chain("rootPwaEvtTree");
 		chain.Add("../../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
 		chain.GetListOfFiles()->ls();
-		vector<complex<double> > ampValues[2];
+		vector<vector<complex<double> > > ampValues[2] = { vector<vector<complex<double> > >(1), vector<vector<complex<double> > >(1) };
 
 		TClonesArray* prodKinPartNames  = 0;
 		TClonesArray* decayKinPartNames = 0;
@@ -246,11 +246,13 @@ main(int argc, char** argv)
 		                                     "rootPwaEvtTree"))
 			cout << "cannot find production and/or decay kinematics particle names "
 			     << "in input file '" << chain.GetFile()->GetName() << "'." << endl;
-		for (unsigned int i = 0; i < 2; ++i)
-			processTree(chain, *prodKinPartNames, *decayKinPartNames, amp[i], ampValues[i], 2);
-		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
-			cout << "amplitude[" << i << "] = " << ampValues[0][i] << " vs. " << ampValues[1][i] << "; "
-			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
+		for (unsigned int i = 0; i < 2; ++i) {
+			vector<isobarAmplitudePtr> ampWrapper(1, amp[i]);
+			processTree(chain, *prodKinPartNames, *decayKinPartNames, ampWrapper, ampValues[i], 2);
+		}
+		for (unsigned int i = 0; i < ampValues[0][0].size(); ++i)
+			cout << "amplitude[" << i << "] = " << ampValues[0][0][i] << " vs. " << ampValues[1][0][i] << "; "
+			     << "ratio = " << ampValues[0][0][i] / ampValues[1][0][i] << endl;
 	}
 
 	if (1) {

@@ -138,7 +138,6 @@ particle::setMomentum(const std::vector<TVector3>& momentum)
 	_lzVec.clear();
 	_lzVec.resize(momentum.size());
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: particle::setMomentum" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = momentum.size();
 	#pragma omp parallel for
@@ -148,13 +147,27 @@ particle::setMomentum(const std::vector<TVector3>& momentum)
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: particle::setMomentum timediff = " << timeDiff << endl;
 }
 
 const std::vector<TLorentzVector>&
 particle::transform(const std::vector<TLorentzRotation>& L)
 {
-	parallelLorentzRotation(_lzVec, L);
+	if(_lzVec.size() != L.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+		throw;
+	}
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = _lzVec.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		_lzVec[i].Transform(L[i]);
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	std::cout << "EPL: parallelLorentzRotation timediff = " << timeDiff << std::endl;
+
 	return _lzVec;
 }
 
@@ -162,7 +175,23 @@ particle::transform(const std::vector<TLorentzRotation>& L)
 const std::vector<TLorentzVector>&
 particle::transform(const std::vector<TVector3>& boost)
 {
-	parallelLorentzBoost(_lzVec, boost);
+
+	if(_lzVec.size() != boost.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+		throw;
+	}
+
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = _lzVec.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		_lzVec[i].Boost(boost[i]);
+	}
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	std::cout << "EPL: particle::transform timediff = " << timeDiff << std::endl;
+
 	return _lzVec;
 }
 
@@ -170,7 +199,6 @@ void
 particle::scaleLzVec(double scaleX, double scaleY, double scaleZ, double scaleE)
 {
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: particle::scaleLzVec" << endl;
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = _lzVec.size();
 	#pragma omp parallel for
@@ -180,7 +208,7 @@ particle::scaleLzVec(double scaleX, double scaleY, double scaleZ, double scaleE)
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "    timediff = " << timeDiff << endl;
+	cout << "EPL: particle::scaleLzVec timediff = " << timeDiff << endl;
 }
 
 particle*
