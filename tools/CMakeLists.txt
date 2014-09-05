@@ -37,8 +37,9 @@ message(STATUS ">>> Setting up 'tools' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${ROOT_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	SYSTEM
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 

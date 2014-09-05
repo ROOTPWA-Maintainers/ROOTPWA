@@ -37,13 +37,14 @@ message(STATUS ">>> Setting up 'amplitude' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${PYTHON_INCLUDE_DIRS}
-	SYSTEM ${Boost_INCLUDE_DIRS}
-	${Libconfig_INCLUDE_DIR}
-	${ROOT_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${GEN_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${GEN_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${PYTHON_INCLUDE_DIRS}
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 

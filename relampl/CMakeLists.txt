@@ -37,12 +37,13 @@ message(STATUS ">>> Setting up 'relampl' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	SYSTEM ${Boost_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	${Libconfig_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 

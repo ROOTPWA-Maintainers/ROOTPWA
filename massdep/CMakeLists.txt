@@ -37,15 +37,14 @@ message(STATUS ">>> Setting up 'massdep' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${ROOT_INCLUDE_DIR}
-	${Libconfig_INCLUDE_DIR}
-	${ROOTPWATOOLS_INCLUDE_DIR}
-	${GEN_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
-	${MASSDEP_INCLUDE_DIR}
-	${ROOTPWA_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
-	/home/sneubert/Projects/boost_1_45_0/boost/numeric/ublas/
+	${GEN_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${ROOTPWATOOLS_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
