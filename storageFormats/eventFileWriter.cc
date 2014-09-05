@@ -20,7 +20,6 @@ using namespace rpwa;
 rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
 	  _outfile(0),
-	  _eventTree(0),
 	  _metadata(),
 	  _productionKinematicsMomenta(0),
 	  _decayKinematicsMomenta(0),
@@ -63,15 +62,15 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	// prepare event tree
 	_productionKinematicsMomenta = new TClonesArray("TVector3", _nmbProductionKinematicsParticles);
 	_decayKinematicsMomenta   = new TClonesArray("TVector3", _nmbDecayKinematicsParticles);
-	_eventTree = new TTree(eventMetadata::eventTreeName.c_str(), eventMetadata::eventTreeName.c_str());
-	_eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
-	_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
+	_metadata._eventTree = new TTree(eventMetadata::eventTreeName.c_str(), eventMetadata::eventTreeName.c_str());
+	_metadata._eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
+	_metadata._eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
 	_metadata.setAdditionalSavedVariableLables(additionalVariableLabels);
 	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
 	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {
 		stringstream strStr;
 		strStr << additionalVariableLabels[i] << "/D";
-		_eventTree->Branch(additionalVariableLabels[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
+		_metadata._eventTree->Branch(additionalVariableLabels[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
 	}
 
 	_initialized = true;
@@ -115,7 +114,7 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 		_hashCalculator.Update(additionalVariablesToSave[i]);
 		_additionalVariablesToSave[i] = additionalVariablesToSave[i];
 	}
-	_eventTree->Fill();
+	_metadata._eventTree->Fill();
 }
 
 
@@ -127,9 +126,7 @@ bool rpwa::eventFileWriter::finalize() {
 	_metadata.setContentHash(_hashCalculator.hash());
 	_outfile->cd();
 	_metadata.Write(eventMetadata::objectNameInFile.c_str());
-	_eventTree->Write();
 	_outfile->Close();
-	_eventTree = 0;
 	reset();
 	return true;
 }
@@ -144,10 +141,6 @@ void rpwa::eventFileWriter::reset() {
 		delete _decayKinematicsMomenta;
 		_decayKinematicsMomenta = 0;
 	}
-	if(_eventTree) {
-		delete _eventTree;
-	}
 	_outfile = 0;
-	_eventTree = 0;
 	_initialized = false;
 }

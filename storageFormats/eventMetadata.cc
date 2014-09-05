@@ -4,6 +4,7 @@
 #include <boost/progress.hpp>
 
 #include <TClonesArray.h>
+#include <TFile.h>
 #include <TTree.h>
 
 #include "hashCalculator.h"
@@ -25,7 +26,8 @@ rpwa::eventMetadata::eventMetadata()
 	  _contentHash(""),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
-	  _binningMap()
+	  _binningMap(),
+	  _eventTree(0)
 { }
 
 
@@ -97,30 +99,34 @@ void rpwa::eventMetadata::setBinningMap(const binningMapType& binningMap)
 }
 
 
-string rpwa::eventMetadata::hash(TTree* eventTree, const bool& printProgress) const
+string rpwa::eventMetadata::recalculateHash(const bool& printProgress) const
 {
 	TClonesArray* productionKinematicsMomenta = 0;
 	TClonesArray* decayKinematicsMomenta = 0;
 	hashCalculator hashor;
-	if(eventTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0)
+	if(not _eventTree) {
+		printWarn << "input tree not found in metadata." << endl;
+		return "";
+	}
+	if(_eventTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0)
 	{
 		printWarn << "could not set address for branch '" << productionKinematicsMomentaBranchName << "'." << endl;
 		return "";
 	}
-	if(eventTree->SetBranchAddress(decayKinematicsMomentaBranchName.c_str(), &decayKinematicsMomenta)) {
+	if(_eventTree->SetBranchAddress(decayKinematicsMomentaBranchName.c_str(), &decayKinematicsMomenta)) {
 		printWarn << "could not set address for branch '" << decayKinematicsMomentaBranchName << "'." << endl;
 		return "";
 	}
 	vector<double> additionalVariables(additionalSavedVariableLables().size(), 0.);
 	for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
-		if(eventTree->SetBranchAddress(additionalSavedVariableLables()[i].c_str(), &additionalVariables[i]) < 0) {
+		if(_eventTree->SetBranchAddress(additionalSavedVariableLables()[i].c_str(), &additionalVariables[i]) < 0) {
 			printWarn << "could not set address for branch '" << additionalSavedVariableLables()[i].c_str() << "'." << endl;
 			return "";
 		}
 	}
-	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(eventTree->GetEntries(), cout, "") : 0;
-	for(long eventNumber = 0; eventNumber < eventTree->GetEntries(); ++eventNumber) {
-		eventTree->GetEntry(eventNumber);
+	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_eventTree->GetEntries(), cout, "") : 0;
+	for(long eventNumber = 0; eventNumber < _eventTree->GetEntries(); ++eventNumber) {
+		_eventTree->GetEntry(eventNumber);
 		if(progressIndicator) {
 			++(*progressIndicator);
 		}
@@ -144,17 +150,17 @@ Long64_t rpwa::eventMetadata::Merge(TCollection* list, Option_t* option) {
 }
 
 
-TTree* rpwa::eventMetadata::merge(const vector<pair<const eventMetadata*, TTree*> >& inputData,
+TTree* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
                                   const int& splitlevel,
                                   const int& buffsize)
 {
 	if(inputData.empty()) {
 		printWarn << "trying to merge without input data." << endl;
-		return false;
+		return 0;
 	}
 	hashCalculator hashor;
-	const unsigned int nmbProductionKinematicsParticles = inputData[0].first->productionKinematicsParticleNames().size();
-	const unsigned int nmbDecayKinematicsParticles = inputData[0].first->decayKinematicsParticleNames().size();
+	const unsigned int nmbProductionKinematicsParticles = inputData[0]->productionKinematicsParticleNames().size();
+	const unsigned int nmbDecayKinematicsParticles = inputData[0]->decayKinematicsParticleNames().size();
 	TClonesArray* productionKinematicsMomenta = new TClonesArray("TVector3", nmbProductionKinematicsParticles);
 	TClonesArray* decayKinematicsMomenta   = new TClonesArray("TVector3", nmbDecayKinematicsParticles);
 	TTree* outputTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
@@ -163,8 +169,8 @@ TTree* rpwa::eventMetadata::merge(const vector<pair<const eventMetadata*, TTree*
 	vector<double> additionalSavedVariables;
 	bool first = true;
 	for(unsigned int inputDataNumber = 0; inputDataNumber < inputData.size(); ++inputDataNumber) {
-		const eventMetadata* metadata = inputData[inputDataNumber].first;
-		TTree* inputTree = inputData[inputDataNumber].second;
+		const eventMetadata* metadata = inputData[inputDataNumber];
+		TTree* inputTree = metadata->eventTree();
 		if(not inputTree) {
 			printWarn << "got NULL-pointer to inputTree when merging." << endl;
 			delete outputTree;
@@ -250,4 +256,34 @@ TTree* rpwa::eventMetadata::merge(const vector<pair<const eventMetadata*, TTree*
 	}
 	setContentHash(hashor.hash());
 	return outputTree;
+}
+
+
+const eventMetadata* rpwa::eventMetadata::readEventFile(TFile* inputFile, const bool& quiet)
+{
+	eventMetadata* eventMeta = (eventMetadata*)inputFile->Get(objectNameInFile.c_str());
+	if(not eventMeta) {
+		if(not quiet) {
+			printWarn << "could not find event metadata." << endl;
+		}
+		return 0;
+	}
+	eventMeta->_eventTree = (TTree*)inputFile->Get(eventTreeName.c_str());
+	if(not eventMeta->_eventTree) {
+		if(not quiet) {
+			printWarn << "could not find event tree." << endl;
+		}
+		return 0;
+	}
+	return eventMeta;
+}
+
+
+Int_t rpwa::eventMetadata::Write(const char* name, Int_t option, Int_t bufsize) const
+{
+	Int_t retval = 0;
+	if(_eventTree) {
+		retval = _eventTree->Write();
+	}
+	return retval + TObject::Write(name, option, bufsize);
 }

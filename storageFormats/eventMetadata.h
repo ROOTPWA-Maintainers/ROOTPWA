@@ -7,6 +7,7 @@
 #include <TObject.h>
 
 class TTree;
+class TFile;
 
 
 namespace rpwa {
@@ -31,14 +32,21 @@ namespace rpwa {
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
 		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
 
-		std::string hash(TTree* eventTree, const bool& printProgress = false) const;
+		std::string recalculateHash(const bool& printProgress = false) const;
 
 		std::ostream& print(std::ostream& out) const;
 
 		Long64_t Merge(TCollection* list, Option_t* option = "");     // throws an exception
-		TTree* merge(const std::vector<std::pair<const rpwa::eventMetadata*, TTree*> >& inputData,
+		TTree* merge(const std::vector<const rpwa::eventMetadata*>& inputData,
 		             const int& splitlevel = 99,
 		             const int& buffsize = 256000);                     // actually works
+
+		TTree* eventTree() const { return _eventTree; } // changing this tree is not allowed (it should be const, but then you can't read it...)
+
+		static const eventMetadata* readEventFile(TFile* inputFile, const bool& quiet = false);
+
+		Int_t Write(const char* name = 0, Int_t option = 0, Int_t bufsize = 0) { return ((const eventMetadata*)this)->Write(name, option, bufsize); }
+		Int_t Write(const char* name = 0, Int_t option = 0, Int_t bufsize = 0) const;
 
 		static const std::string objectNameInFile;
 		static const std::string eventTreeName;
@@ -69,6 +77,8 @@ namespace rpwa {
 		binningMapType _binningMap;
 
 		std::vector<std::string> _additionalSavedVariableLabels;
+
+		mutable TTree* _eventTree; //!
 
 		ClassDef(eventMetadata, 1);
 

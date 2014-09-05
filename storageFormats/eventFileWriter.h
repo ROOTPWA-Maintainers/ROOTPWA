@@ -44,7 +44,6 @@ namespace rpwa {
 
 		bool _initialized;
 		TFile* _outfile;
-		TTree* _eventTree;
 		eventMetadata _metadata;
 		TClonesArray* _productionKinematicsMomenta;
 		TClonesArray* _decayKinematicsMomenta;

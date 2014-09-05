@@ -71,17 +71,18 @@ int main(int argc, char** argv)
 		printErr << "could not open input file. Aborting..." << endl;
 		return 1;
 	}
-	const eventMetadata* eventMeta = (eventMetadata*)inputFile->Get(eventMetadata::objectNameInFile.c_str());
+
+	const eventMetadata* eventMeta = eventMetadata::readEventFile(inputFile, true);
 	if(eventMeta) {
 		// we are reading a datafile
-		TTree* inputTree = (TTree*)inputFile->Get(eventMetadata::eventTreeName.c_str());
-		if(not inputTree) {
+		TTree* eventTree = eventMeta->eventTree();
+		if(not eventTree) {
 			printErr << "reading a datafile but did not find event tree. Aborting..." << endl;
 			return 1;
 		}
 		const vector<string>& additionalVariableNames = eventMeta->additionalSavedVariableLables();
 		{
-			TObjArray* branchList = inputTree->GetListOfBranches();
+			TObjArray* branchList = eventTree->GetListOfBranches();
 			for(int i = 0; i < branchList->GetEntries(); ++i) {
 				TBranch* branch = (TBranch*)(*branchList)[i];
 				const string branchName = branch->GetName();
@@ -97,7 +98,7 @@ int main(int argc, char** argv)
 		}
 		if(recalculateHash) {
 			printInfo << "recalculating hash..." << endl;
-			const string calculatedHash = eventMeta->hash(inputTree, true);
+			const string calculatedHash = eventMeta->recalculateHash(true);
 			if(calculatedHash != eventMeta->contentHash()) {
 				printErr << "hash verification failed, hash from metadata '" << eventMeta->contentHash() << "' does "
 				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;
@@ -109,7 +110,7 @@ int main(int argc, char** argv)
 		}
 		printInfo << *eventMeta << endl;
 		printInfo << "additional information:" << endl
-		          << "    number of events in file ... " << inputTree->GetEntries() << endl
+		          << "    number of events in file ... " << eventTree->GetEntries() << endl
 		          << "    additional branches ........ " << additionalVariableNames << endl;
 		cout << endl;
 		return 0;

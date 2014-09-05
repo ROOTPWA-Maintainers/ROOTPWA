@@ -93,14 +93,16 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	vector<pair<const eventMetadata*, TTree*> > inputData(inputFiles.size(), pair<const eventMetadata*, TTree*>(0, 0));
+	vector<const eventMetadata*> inputData(inputFiles.size(), 0);
 	outputFile->cd();
-	eventMetadata metadata;
 	for(unsigned int i = 0; i < inputFiles.size(); ++i) {
-		eventMetadata* inputMetadata = (eventMetadata*)inputFiles[i]->Get(eventMetadata::objectNameInFile.c_str());
-		TTree* inputTree = (TTree*)inputFiles[i]->Get(eventMetadata::eventTreeName.c_str());
-		inputData[i] = pair<const eventMetadata*, TTree* >(inputMetadata, inputTree);
+		inputData[i] = eventMetadata::readEventFile(inputFiles[i]);
+		if(not inputData[i]) {
+			printErr << "could not read input data from file '" << inputFileNames[i] << "'. Aborting..." << endl;
+			return 1;
+		}
 	}
+	eventMetadata metadata;
 	TTree* outputTree = metadata.merge(inputData);
 	if(not outputTree) {
 		printErr << "merge failed. Aborting..." << endl;
