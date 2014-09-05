@@ -63,7 +63,7 @@ root_generate_dictionary(
 	eventMetadata.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaStorageLinkDef.h
-)
+	)
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
 
 
@@ -74,6 +74,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	)
 add_dependencies(${THIS_LIB} environment)
+
 
 make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
 make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${UTILITIES_LIBS})
