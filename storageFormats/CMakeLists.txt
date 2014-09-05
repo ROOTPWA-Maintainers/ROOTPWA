@@ -36,10 +36,11 @@ message_setup_this_dir()
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${UTILITIES_INCLUDE_DIR}
-	${ROOT_INCLUDE_DIR}
-	SYSTEM ${Boost_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Boost_INCLUDE_DIRS}
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
