@@ -50,9 +50,6 @@ set(SOURCES
 	)
 
 
-set(SOURCES ${SOURCES})
-
-
 # library
 set(THIS_LIB "RootPwaTools")
 make_shared_library(
