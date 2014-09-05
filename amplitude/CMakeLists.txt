@@ -75,22 +75,22 @@ set(SOURCES
 	)
 
 
+# library name
+set(THIS_LIB "RootPwaAmp")
+
+
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
-set(ROOTPWAAMP_DICT_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
 root_generate_dictionary(
-	"${ROOTPWAAMP_DICTIONARY}"
-	"${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
-	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
-	"rootPwaAmpLinkDef.h"
+	${ROOTPWAAMP_DICTIONARY}
+	waveDescription.h amplitudeTreeLeaf.h ampIntegralMatrix.h
+	MODULE ${THIS_LIB}
+	LINKDEF rootPwaAmpLinkDef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaAmp")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

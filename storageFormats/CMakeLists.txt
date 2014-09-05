@@ -51,22 +51,23 @@ set(SOURCES
 	hashCalculator.cc
 	)
 
+
+# library name
+set(THIS_LIB "RootPwaMeta")
+
+
 # ROOT dictionary
 set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
-set(ROOTPWASTORAGE_DICT_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}
-)
 root_generate_dictionary(
-	"${ROOTPWASTORAGE_DICTIONARY}"
-	"${ROOTPWASTORAGE_DICT_INCLUDE_DIRS}"
-	"eventMetadata.h"
-	"rootPwaStorageLinkDef.h"
+	${ROOTPWASTORAGE_DICTIONARY}
+	eventMetadata.h
+	MODULE ${THIS_LIB}
+	LINKDEF rootPwaStorageLinkDef.h
 )
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaMeta")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

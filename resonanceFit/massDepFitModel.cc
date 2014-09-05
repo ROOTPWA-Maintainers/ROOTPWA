@@ -395,8 +395,8 @@ rpwa::massDepFit::model::phase(const size_t idxWave,
 }
 
 
-ostream&
-rpwa::massDepFit::model::print(ostream& out) const
+std::ostream&
+rpwa::massDepFit::model::print(std::ostream& out) const
 {
 	for(unsigned int i=0;i<_components.size();++i){
 		const rpwa::massDepFit::component& c = *_components[i];
