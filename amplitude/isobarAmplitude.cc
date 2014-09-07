@@ -209,18 +209,15 @@ isobarAmplitude::spaceInvertDecay() const
 {
 	if (_debug)
 		printDebug << "space inverting final state momenta." << endl;
-
 	// transform final state particles into X rest frame
 	const std::vector<TLorentzVector>& beamLv  = _decay->productionVertex()->referenceLzVec();
 	const std::vector<TLorentzVector>& XLv     = _decay->XParticle()->lzVec();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
-
 	// perform parity transformation on final state particles in X rest frame
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
 		_decay->fsParticles()[i]->scaleLzVec(-1, -1, -1, 1);
 	}
-
 	// transform final state particles back to lab frame
 	parallelLorentzRotationInvert(gjTrans);
 	_decay->transformFsParticles(gjTrans);
@@ -232,18 +229,15 @@ isobarAmplitude::reflectDecay() const
 {
 	if (_debug)
 		printDebug << "reflecting final state momenta through production plane." << endl;
-
 	// transform final state particles into X rest frame
 	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
 	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVec();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
-
 	// reflect final state particles through production plane
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
 		_decay->fsParticles()[i]->scaleLzVec(1, -1, 1, 1);
 	}
-
 	// transform final state particles back to lab frame
 	parallelLorentzRotationInvert(gjTrans);
 	_decay->transformFsParticles(gjTrans);
@@ -262,7 +256,6 @@ std::vector<std::complex<double> >
 isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,           // current vertex
                                           const bool                  topVertex) const  // switches special treatment of X decay vertex; needed for reflectivity basis
 {
-
 	const particlePtr& parent    = vertex->parent();
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
@@ -330,10 +323,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum timediff = " << timeDiff << endl;
 		}
-
-
 	}
-
 	if (_debug)
 		printDebug << "decay amplitude for " << *vertex << " = " << maxPrecisionDouble(ampSum) << endl;
 	return ampSum;

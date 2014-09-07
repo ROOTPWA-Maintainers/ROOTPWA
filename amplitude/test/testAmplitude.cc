@@ -375,7 +375,6 @@ main(int argc, char** argv)
 
 				if (inTrees[0]->LoadTree(eventIndex) < 0)
 					break;
-
 				// read only required branches
 				prodKinMomentaBr->GetEntry (eventIndex);
 				decayKinMomentaBr->GetEntry(eventIndex);
@@ -424,8 +423,7 @@ main(int argc, char** argv)
 				}
 
 				// test single events
-				topo->clearKinematicsData();
-				if (topo->addKinematicsData(prodMomenta, decayMomenta)) {
+				if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
 					const vector<complex<double> > ampResult = (*amp)();
 					if(ampResult.size() != 1) {
 						cout << "ERROR: wrong vector size. aborting!" << endl;

@@ -92,9 +92,19 @@ namespace rpwa {
 		inline double beamPol() const { return _longPol; }  ///< returns (longitudinal) beam polarization
 		inline void   setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
 
+		// leptoproduction kinematic variables
+		void Q2     (std::vector<double>& result) const; ///< returns Q^2 of virtual photon
+		void nu     (std::vector<double>& result) const; ///< returns energy of virtual photon
+		void y      (std::vector<double>& result) const; ///< returns relative energy loss of virtual photon
+		void epsilon(std::vector<double>& result) const; ///< returns photon's polarization parameter
+		void delta  (std::vector<double>& result) const; ///< returns photon's mass correction parameter
+		void xBj    (std::vector<double>& result) const; ///< returns Bjorken x
+		void s      (std::vector<double>& result) const; ///< returns total energy squared in (virtual photon, target) CM system
+		void W      (std::vector<double>& result) const; ///< returns total energy in (virtual photon, target) CM system
+		void delta  (const std::vector<double>& epsilon, std::vector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
+
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool clearKinematicsData();    ///< new input data
-		virtual bool addKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
+		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -107,18 +117,6 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-
-	private:
-		// leptoproduction kinematic variables
-		void Q2     (std::vector<double>& result) const; ///< returns Q^2 of virtual photon
-		void nu     (std::vector<double>& result) const; ///< returns energy of virtual photon
-		void y      (std::vector<double>& result) const; ///< returns relative energy loss of virtual photon
-		void epsilon(std::vector<double>& result) const; ///< returns photon's polarization parameter
-		void delta  (std::vector<double>& result) const; ///< returns photon's mass correction parameter
-		void xBj    (std::vector<double>& result) const; ///< returns Bjorken x
-		void s      (std::vector<double>& result) const; ///< returns total energy squared in (virtual photon, target) CM system
-		void W      (std::vector<double>& result) const; ///< returns total energy in (virtual photon, target) CM system
-		void delta  (const std::vector<double>& epsilon, std::vector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
 
 	protected:
 

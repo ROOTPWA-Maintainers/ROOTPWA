@@ -651,19 +651,15 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return success;
 }
 
+
 bool
-leptoProductionVertex::clearKinematicsData()
+leptoProductionVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
 	_beamLeptonMomCache.clear();
 	_scatteredLeptonMomCache.clear();
 	_recoilMomCache.clear();
 	_targetMomCache.clear();
-	return true;
-}
 
-bool
-leptoProductionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
-{
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.size();
@@ -676,7 +672,6 @@ leptoProductionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKi
 
 	// set beam lepton
 	bool success = true;
-
 	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
 
 		const TVector3& beamLeptonMom = prodKinMomenta[0][i];

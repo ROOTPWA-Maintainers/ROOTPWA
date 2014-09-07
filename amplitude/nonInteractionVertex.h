@@ -19,8 +19,7 @@ namespace rpwa {
 		inline const particlePtr& XParticle() const { return outParticles()[0]; }
 
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool clearKinematicsData();    ///< new input data
-		virtual bool addKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
+		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 

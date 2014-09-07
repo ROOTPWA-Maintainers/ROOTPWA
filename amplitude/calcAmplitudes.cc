@@ -161,9 +161,9 @@ main(int    argc,
 			usage(progName);
 		}
 
+	// caches are initialized here to allow multi-threaded access
 	cout << "Init factiorial cache ..." << std::endl;
 	initFactorial<double>();
-
 	cout << "Init dFunction cache ..." << std::endl;
 	initDFunction<double>();
 

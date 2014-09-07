@@ -162,8 +162,7 @@ calcNewAmps(const string&             rootInFileName,
 			continue;
 		}
 
-		topo->clearKinematicsData();
-		if (topo->addKinematicsData(prodMomenta, decayMomenta)) {
+		if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
 			const vector<complex<double> > ampResult = (*amp)();
 			if(ampResult.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;

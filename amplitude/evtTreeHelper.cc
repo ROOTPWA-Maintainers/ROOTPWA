@@ -792,8 +792,7 @@ namespace rpwa {
 				for(unsigned int i = 0; i < amplitude.size(); ++i) {
 
 					// set data in topology
-					amplitude[i]->decayTopology()->clearKinematicsData();
-					if (not amplitude[i]->decayTopology()->addKinematicsData(prodMomenta, decayMomenta)) {
+					if (not amplitude[i]->decayTopology()->readKinematicsData(prodMomenta, decayMomenta)) {
 						printWarn << "problems setting events in decay topology " << i << endl;
 						break;
 					}

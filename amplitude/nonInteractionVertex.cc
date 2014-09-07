@@ -75,17 +75,10 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return true;
 }
 
-bool
-nonInteractionVertex::clearKinematicsData()
-{
-	_XParticleCache.clear();
-	return true;
-}
 
 bool
-nonInteractionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
+nonInteractionVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
-
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != 1) {
@@ -95,6 +88,7 @@ nonInteractionVertex::addKinematicsData(const vector<vector<TVector3> >& prodKin
 		return false;
 	}
 
+	_XParticleCache.clear();
 	for(unsigned int k = 0; k < prodKinMomenta[0].size(); ++k) {
 		const TVector3& XParticleMom = prodKinMomenta[0][k];
 		if (_debug) {

@@ -115,8 +115,6 @@ ostream& generator::convertEventToComgeant(ostream& out,
 				floatval = (float)hadron.Py(); out.write((char*)&floatval,4);
 			}
 		}
-	
 	}
-	
 	return out;
 }

@@ -228,18 +228,13 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 	return success;
 }
 
+
 bool
-diffractiveDissVertex::clearKinematicsData()
+diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
 	_beamMomCache.clear();
 	_recoilMomCache.clear();
 	_targetMomCache.clear();
-	return true;
-}
-
-bool
-diffractiveDissVertex::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
-{
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.size();
@@ -252,7 +247,6 @@ diffractiveDissVertex::addKinematicsData(const vector<vector<TVector3> >& prodKi
 
 	// set beam
 	bool success = true;
-
 	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
 
 		const TVector3& beamMom = prodKinMomenta[0][i];
@@ -278,7 +272,6 @@ diffractiveDissVertex::addKinematicsData(const vector<vector<TVector3> >& prodKi
 						   << "' to " << targetMom << " GeV" << endl;
 			_targetMomCache.push_back(targetMom);
 		}
-
 	}
 
 	return success;

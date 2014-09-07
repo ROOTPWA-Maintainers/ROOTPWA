@@ -119,10 +119,8 @@ isobarHelicityAmplitude::transformDaughters() const
 		// recalculate Lorentz-vectors of all isobars
 		_decay->calcIsobarLzVec();
 	}
-
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
-
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
 	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
 	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVec();
@@ -134,10 +132,8 @@ isobarHelicityAmplitude::transformDaughters() const
 			           << " into " << vertex->parent()->name() << " Gottfried-Jackson RF" << endl;
 		vertex->transformOutParticles(gjTrans);
 	}
-
 	// 2) transform daughters of isobar decay vertices to the respective helicity frames
 	for (unsigned int i = 1; i < _decay->nmbDecayVertices(); ++i) {  // exclude X-decay vertex
-
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
 			printDebug << "transforming all child particles of vertex " << *vertex
@@ -156,7 +152,6 @@ isobarHelicityAmplitude::transformDaughters() const
 			part->transform(hfTrans);
 		}
 	}
-
 }
 
 
@@ -256,7 +251,5 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
-
 	return amp;
-
 }

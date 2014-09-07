@@ -189,7 +189,6 @@ isobarDecayVertex::calcParentLzVec()
 
 	if (_debug)
 		cout << "after = " << parent()->lzVec() << " GeV" << endl;
-
 	return parent()->lzVec();
 }
 

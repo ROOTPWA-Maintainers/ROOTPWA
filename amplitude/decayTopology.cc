@@ -662,27 +662,13 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 	return success;
 }
 
-bool
-decayTopology::clearKinematicsData()
-{
-	// clear production kinematics
-	bool success = productionVertex()->clearKinematicsData();
-	if (not success)
-		return false;
-
-	_fsDataPartMomCache.clear();
-	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
-
-	return true;
-
-}
 
 bool
-decayTopology::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta,
+decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta,
 								 const vector<vector<TVector3> >& decayKinMomenta)
 {
 	// set production kinematics
-	bool success = productionVertex()->addKinematicsData(prodKinMomenta);
+	bool success = productionVertex()->readKinematicsData(prodKinMomenta);
 
 	// check momentum array
 	const int nmbFsPart = decayKinMomenta.size();
@@ -696,6 +682,8 @@ decayTopology::addKinematicsData(const vector<vector<TVector3> >& prodKinMomenta
 		return false;
 
 	// set decay kinematics
+	_fsDataPartMomCache.clear();
+	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part      = fsParticles()[i];
 		const unsigned int partIndex = _fsDataPartIndexMap[i];

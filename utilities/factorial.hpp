@@ -68,8 +68,7 @@ namespace rpwa {
 		T operator ()(const unsigned int n)                       ///< returns n!
 		{
 			if(_cache.size() == 0) {
-				printErr << "factorial cache has not been initialized by calling initFactorial()" << std::endl;
-				throw;
+				initCache();
 			}
 			if(n < 0 || n >= _cache.size()) {
 				printErr << "cannot calculate factorial(" << n << "): value out of range" << std::endl;
