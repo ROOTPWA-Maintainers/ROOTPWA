@@ -307,7 +307,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 				ampSum[i] += amp;
 
 				if (_debug) {
-					//#pragma omp critical
+					#pragma omp critical
 					printDebug << "amplitude term for : "
 							   << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
 							   << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "

@@ -198,6 +198,7 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 		result[i] = bw;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
 					   << maxPrecisionDouble(bw) << endl;
@@ -260,6 +261,7 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 		result[i] = bw;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
 					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
@@ -317,6 +319,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 		result[i] = bw;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
 					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
@@ -448,6 +451,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		result[k] = amp;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 
@@ -510,6 +514,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 		result[i] = amp;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 	}
@@ -582,6 +587,7 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 		result[i] = bw;
 
 		if (_debug)
+			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
 					   << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
 

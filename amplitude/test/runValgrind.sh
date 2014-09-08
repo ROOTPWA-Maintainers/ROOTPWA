@@ -39,7 +39,8 @@ echo ">>> info: called ${0} ${*}"
 VALGRIND_TOOL="callgrind"
 
 PROGRAM="../../build/bin/calcAmplitudes"
-PROGRAM_OPT="-n 200000 -k 1-4++1+f21270_32_pi-.key -p ./particleDataTable.txt -o 1-4++1+f21270_32_pi-.amp /dev/shm/allBins.ps.noTarget.root"
+#PROGRAM_OPT="-n 200000 -k 1-4++1+f21270_32_pi-.key -p ./particleDataTable.txt -o 1-4++1+f21270_32_pi-.amp /dev/shm/allBins.ps.noTarget.root"
+PROGRAM_OPT="-n 20000 -k ../../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key -p ./particleDataTable.txt -o testamp.amp /nfs/hicran/project/compass/analysis/agensler/rootpwa/merged.root"
 #PROGRAM="../debugBuild/bin/testLibppFunctions"
 #PROGRAM_OPT=""
 

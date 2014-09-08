@@ -232,14 +232,14 @@ leptoProductionVertex::productionAmp() const
 		// compute some kinematic variables
 		const double epsilon = epsilons[i];
 		const double delta   = deltas[i];
-		printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
-				  << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
+		//printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
+		//		  << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
 		// compute some intermediary terms
 		const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
 		const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
 		const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
 		const complex<double> phase = exp(complex<double>(0, phi));
-		printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
+		//printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
 
 		// define lower triangle of virtual photon spin density matrix
 		// rho_{lambda, lambda'}; lambda = -1, 0, 1 as in Schilling and
@@ -260,20 +260,20 @@ leptoProductionVertex::productionAmp() const
 		rho[0][1] = conj(rho[1][0]);
 		rho[0][2] = conj(rho[2][0]);
 		rho[1][2] = conj(rho[2][1]);
-		for (unsigned int j = 0; j < 3; ++j)
-			for (unsigned int i = 0; i < 3; ++i)
-				printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
+		//for (unsigned int j = 0; j < 3; ++j)
+		//	for (unsigned int i = 0; i < 3; ++i)
+		//		printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
 		const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
 										 + rho[0][1] * rho[1][2] * rho[2][0]
 										 + rho[1][0] * rho[2][1] * rho[0][2]
 										 - rho[0][2] * rho[1][1] * rho[2][0]
 										 - rho[1][2] * rho[0][0] * rho[2][1]
 										 - rho[0][1] * rho[2][2] * rho[1][0];
-		printInfo << "det[rho] = " << detRho << " vs. "
-				  << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
-						- (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
-						+ 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
-				  << endl;
+		//printInfo << "det[rho] = " << detRho << " vs. "
+		//		  << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
+		//				- (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
+		//				+ 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
+		//		  << endl;
 
 		// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
 		// triangle matrix with real diagonal elements
@@ -291,11 +291,11 @@ leptoProductionVertex::productionAmp() const
 		V[0][1] = 0;
 		V[0][2] = 0;
 		V[1][2] = 0;
-		printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
-				  << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
-		for (unsigned int j = 0; j < 3; ++j)
-			for (unsigned int i = 0; i < 3; ++i)
-				printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
+		//printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
+		//		  << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
+		//for (unsigned int j = 0; j < 3; ++j)
+		//	for (unsigned int i = 0; i < 3; ++i)
+		//		printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
 		complex<double> rhoPrime[3][3];
 		for (unsigned int j = 0; j < 3; ++j)
 			for (unsigned int i = 0; i < 3; ++i) {
@@ -303,10 +303,10 @@ leptoProductionVertex::productionAmp() const
 				for (unsigned int r = 0; r < 3; ++r)
 					rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
 			}
-		for (unsigned int j = 0; j < 3; ++j)
-			for (unsigned int i = 0; i < 3; ++i)
-				printInfo << "deltaRho[" << i << "][" << j << "] = "
-						  << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
+		//for (unsigned int j = 0; j < 3; ++j)
+		//	for (unsigned int i = 0; i < 3; ++i)
+		//		printInfo << "deltaRho[" << i << "][" << j << "] = "
+		//				  << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
 
 
 		// compute production amplitude for given photon helicity

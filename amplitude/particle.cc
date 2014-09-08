@@ -135,7 +135,6 @@ particle::momentum (std::vector<TVector3>& result) const
 void
 particle::setMomentum(const std::vector<TVector3>& momentum)
 {
-	_lzVec.clear();
 	_lzVec.resize(momentum.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
