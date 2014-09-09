@@ -97,7 +97,7 @@ check_cxx_compiler_flag("-std=c++11" HAVE_CXX11)
 if(HAVE_CXX11)
 	message(STATUS "C++11 compatible compiler found, enable it.")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif(HAVE_CXX11)
+endif()
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
 # set additional flags for specific build types
@@ -260,8 +260,8 @@ option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
 set(CUDA_SHADER_MODELS "20")
 find_package(CUDA 5.5)
 set_package_properties(CUDA
-        PROPERTIES
-        DESCRIPTION "nvidia GPGPU framework"
+	PROPERTIES
+	DESCRIPTION "nvidia GPGPU framework"
 	URL "http://developer.nvidia.com/category/zone/cuda-zone"
 	PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
 	TYPE OPTIONAL
@@ -271,42 +271,42 @@ if(NOT CUDA_FOUND)
 	message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
 else()
 	message(STATUS "Found CUDA version ${CUDA_VERSION}")
-        message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
-        message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
-        message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
+	message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
+	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
+	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
 
-        if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
-                # use default path for CUDA samples, if not defined by user
-                set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
-                endif()
-        # find include directory
-        find_file(CUDA_SAMPLES_INC_DIR
-                        NAMES inc
-            PATHS $ENV{CUDA_SAMPLES_ROOT_DIR}/common
-            NO_DEFAULT_PATH)
-        if(NOT CUDA_SAMPLES_INC_DIR)
-                        set(USE_CUDA OFF)
-                message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
-                        "Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
-                else()
-                        set(USE_CUDA ON)
-                message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
-                        message(STATUS "Enabling compilation of CUDA components.")
-                        # define for which shader models code is generated
-                        message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
-			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
-				list(APPEND CUDA_NVCC_FLAGS
-					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
-			endforeach()
-			unset(_SHADER_MODEL)
-			#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
-			# set some global switches
-			set(CUDA_BUILD_CUBIN     OFF)
-			set(CUDA_BUILD_EMULATION OFF)
-                        set(CUDA_VERBOSE_BUILD   OFF)
-                        # enable CUDA code in other parts of the project
-                        add_definitions(-DUSE_CUDA)
-        endif()
+	if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
+		# use default path for CUDA samples, if not defined by user
+		set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
+	endif()
+	# find include directory
+	find_file(CUDA_SAMPLES_INC_DIR
+		NAMES inc
+		PATHS $ENV{CUDA_SAMPLES_ROOT_DIR}/common
+		NO_DEFAULT_PATH)
+	if(NOT CUDA_SAMPLES_INC_DIR)
+		set(USE_CUDA OFF)
+		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
+			"Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
+	else()
+		set(USE_CUDA ON)
+		message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
+		message(STATUS "Enabling compilation of CUDA components.")
+		# define for which shader models code is generated
+		message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+		foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
+			list(APPEND CUDA_NVCC_FLAGS
+				"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+		endforeach()
+		unset(_SHADER_MODEL)
+		#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+		# set some global switches
+		set(CUDA_BUILD_CUBIN     OFF)
+		set(CUDA_BUILD_EMULATION OFF)
+		set(CUDA_VERBOSE_BUILD   OFF)
+		# enable CUDA code in other parts of the project
+		add_definitions(-DUSE_CUDA)
+	endif()
 endif()
 add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 
@@ -449,7 +449,7 @@ set_package_properties(Doxygen
 	PROPERTIES
 	DESCRIPTION "Documentation generator"
 	URL "http://www.doxygen.org/"
-  PURPOSE "Generates HTML source-code documentation"
+	PURPOSE "Generates HTML source-code documentation"
 	TYPE RECOMMENDED
 	)
 if(NOT DOXYGEN_FOUND)
@@ -538,15 +538,15 @@ if(USE_PYTHON)
 endif()
 
 if(USE_CUDA)
-        set(CUDACODE_INCLUDE_DIR
-                ${CMAKE_SOURCE_DIR}/cuda
-                )
-        set(CUDACODE_LIBS
-                RootPwaCuda
-                )
+	set(CUDACODE_INCLUDE_DIR
+		${CMAKE_SOURCE_DIR}/cuda
+		)
+	set(CUDACODE_LIBS
+		RootPwaCuda
+		)
 else()
-        set(CUDACODE_INCLUDE_DIR)
-        set(CUDACODE_LIBS)
+	set(CUDACODE_INCLUDE_DIR)
+	set(CUDACODE_LIBS)
 endif()
 
 # build subprojects

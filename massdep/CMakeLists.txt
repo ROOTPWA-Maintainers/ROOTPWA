@@ -36,15 +36,16 @@ message_setup_this_dir()
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${ROOT_INCLUDE_DIR}
-	${Libconfig_INCLUDE_DIR}
-	${ROOTPWATOOLS_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${GEN_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
 	${MASSDEP_INCLUDE_DIR}
 	${PARTIALWAVEFIT_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
+	${ROOTPWATOOLS_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
 	/home/sneubert/Projects/boost_1_45_0/boost/numeric/ublas/
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -85,7 +86,6 @@ make_shared_library(
 	"${ROOTPWAGEN_LIBS}"
 	"${GSL_LIBS}"
 	)
-
 
 
 # executables

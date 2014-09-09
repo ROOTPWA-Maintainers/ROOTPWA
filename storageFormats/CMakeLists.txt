@@ -36,10 +36,11 @@ message_setup_this_dir()
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${UTILITIES_INCLUDE_DIR}
-	${ROOT_INCLUDE_DIR}
-	SYSTEM ${Boost_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Boost_INCLUDE_DIRS}
+	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -63,7 +64,7 @@ root_generate_dictionary(
 	eventMetadata.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaStorageLinkDef.h
-)
+	)
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
 
 
@@ -74,6 +75,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	)
 add_dependencies(${THIS_LIB} environment)
+
 
 make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
 make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${UTILITIES_LIBS})
