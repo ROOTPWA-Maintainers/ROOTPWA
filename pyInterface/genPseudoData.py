@@ -44,6 +44,7 @@ if __name__ == "__main__":
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
 	parser.add_argument("integralFile", type=str, metavar="integralFile", help="integral file")
+	parser.add_argument("keyfileDirectory", type=str, metavar="keyfileDir", help="directory with all keyfiles which appear in the fitResult")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
@@ -51,7 +52,6 @@ if __name__ == "__main__":
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
-	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
 
 	args = parser.parse_args()
 
@@ -116,26 +116,18 @@ if __name__ == "__main__":
 		printErr("could not initialize generator. Aborting...")
 		sys.exit(1)
 
-	keyfiles = []
-	if args.keyfiles is not None:
-		keyfiles = args.keyfiles
-		for keyfile in keyfiles:
-			if not (os.path.isfile(keyfile) and keyfile.endswith(".key")):
-				pyRootPwa.utils.printErr("Keyfile '" + keyfile + "' not valid. Aborting...")
-				sys.exit(1)
-	else:
-		keyfiles = pyRootPwa.utils.getListOfKeyfiles(config.keyfilePattern)
-		if len(keyfiles) == 0:
-			pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
-			sys.exit(1)
+	keyfileDirectory = os.path.abspath(args.keyfileDirectory)
+	if not os.path.isdir(keyfileDirectory):
+		printErr("keyfile directory '" + keyfileDirectory + "' does not exist. Aborting...")
+		sys.exit(1)
 
 	fitResultFile = pyRootPwa.ROOT.TFile.Open(args.fitResult, "READ")
 	if not fitResultFile:
-		printErr("Could not open fit result file. Aborting...")
+		printErr("could not open fit result file. Aborting...")
 		sys.exit(1)
 	fitResultTree = fitResultFile.Get(config.fitResultTreeName)
 	if not fitResultTree:
-		printErr("Could not find fit result tree '" + config.fitResultTreeName +
+		printErr("could not find fit result tree '" + config.fitResultTreeName +
 		         "' in file '" + args.fitResult + "'. Aborting...")
 		sys.exit(1)
 	massRange = generatorManager.getGenerator().getTPrimeAndMassPicker().massRange()
@@ -159,23 +151,23 @@ if __name__ == "__main__":
 
 	for waveName in waveNames:
 		if config.outputFileFormat == "root":
-			keyfile = 'keyfiles/' + waveName + ".key"
+			keyfile = keyfileDirectory + "/" + waveName + ".key"
 		else:
-			keyfile = 'keyfiles/' + waveName.replace(".amp", ".key")
+			keyfile = keyfileDirectory + "/" + waveName.replace(".amp", ".key")
 		if not os.path.isfile(keyfile):
-			pyRootPwa.utils.printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
+			printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
 		reflectivities.append(1 if waveName[6] == '+' else -1)
 		waveIndex = fitResult.waveIndex(waveName)
 
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
-			printErr("Mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
+			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		prodAmps.append(fitResult.prodAmp(waveIndex))
 		waveDescription = pyRootPwa.core.waveDescription()
 		waveDescription.parseKeyFile(keyfile)
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
-			pyRootPwa.utils.printErr('Could not construct amplitude for keyfile "' + keyfile + '".')
+			printErr('could not construct amplitude for keyfile "' + keyfile + '".')
 			sys.exit(1)
 		amplitude.init()
 		print(amplitude)
@@ -216,7 +208,7 @@ if __name__ == "__main__":
 					for amplitude in amplitudes:
 						topo = amplitude.decayTopology()
 						if not topo.initKinematicsData(prodKinNames, decayKinNames):
-							pyRootPwa.utils.printErr('Could not initialize kinematics Data. Aborting...')
+							printErr('could not initialize kinematics Data. Aborting...')
 							sys.exit(1)
 					decayKin = pyRootPwa.ROOT.TClonesArray("TVector3", len(finalState))
 					prodKin = pyRootPwa.ROOT.TClonesArray("TVector3", 1)
@@ -240,7 +232,7 @@ if __name__ == "__main__":
 					topo = amplitude.decayTopology()
 					if not topo.readKinematicsData(prodKin, decayKin):
 						progressBar.cancel()
-						pyRootPwa.utils.printErr('Could not read kinematics data. Aborting...')
+						printErr('could not read kinematics data. Aborting...')
 						sys.exit(1)
 
 					amp = (amplitude() * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
