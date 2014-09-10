@@ -147,7 +147,8 @@ if __name__ == "__main__":
 		                         ') not equal to number of wave names (' + str(len(waveNames)) + '). Aborting...')
 		sys.exit(1)
 
-	waveNames.remove('flat')  # ignore flat wave
+	if 'flat' in waveNames:
+		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
 		if config.outputFileFormat == "root":
@@ -155,7 +156,7 @@ if __name__ == "__main__":
 		else:
 			keyfile = keyfileDirectory + "/" + waveName.replace(".amp", ".key")
 		if not os.path.isfile(keyfile):
-			printErr('Keyfile "' + keyfile + '" does not exist. Aborting...')
+			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
 		reflectivities.append(1 if waveName[6] == '+' else -1)
 		waveIndex = fitResult.waveIndex(waveName)
@@ -173,6 +174,8 @@ if __name__ == "__main__":
 		print(amplitude)
 		waveDescriptions.append(waveDescription)
 		amplitudes.append(amplitude)
+
+	printSucc("read and constructed amplitudes for " + str(len(waveDescriptions)) + " keyfiles.")
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
 	if not outputFile:
