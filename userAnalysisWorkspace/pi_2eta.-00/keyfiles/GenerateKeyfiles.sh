@@ -1,10 +1,10 @@
 #!/bin/bash
 
 [[ -z ${DESTINATION_DIR} ]] && DESTINATION_DIR="keyfiles"
-[[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../amplitude/particleDataTable.txt"
+[[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../../amplitude/particleDataTable.txt"
 [[ -z ${WAVESET_FILES} ]] && WAVESET_FILES=""
 
-TEMPLATE_KEY_FILES="pi-2eta.etaeta.template.key pi-2eta.pi-eta.template.key"
+TEMPLATE_KEY_FILES="etaeta.template.key pi-eta.template.key"
 
 # if WAVESET_FILES is not empty, only keep those keyfiles actually used in one
 # of the wavesets.
