@@ -4,7 +4,7 @@
 [[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../amplitude/particleDataTable.txt"
 [[ -z ${WAVESET_FILES} ]] && WAVESET_FILES=""
 
-TEMPLATE_KEY_FILES="3pin.pi0pi0.template.key 3pin.pi-pi0.template.key"
+TEMPLATE_KEY_FILES="pi0pi0.template.key pi-pi0.template.key"
 
 # if WAVESET_FILES is not empty, only keep those keyfiles actually used in one
 # of the wavesets.

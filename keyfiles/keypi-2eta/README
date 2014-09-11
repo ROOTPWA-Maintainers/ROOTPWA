@@ -1,7 +1,7 @@
 This directory contains the information required to create the keyfiles for
 the pi- eta eta channel. The keyfiles are created with the programme
-'generateWaveSet' called from the script 'pi-2etaGenerateKeyfiles.sh'. This
-script can be controlled by a number of environment variables.
+'generateWaveSet' called from the script 'GenerateKeyfiles.sh'. This script
+can be controlled by a number of environment variables.
 
 DESTINATION_DIR
 should be set to the directory that should contain the keyfiles. The default
@@ -19,7 +19,7 @@ WAVESET_FILES
 is a list of wavesets. By default this list is empty, and then no additional
 action is taken. If this list is not empty, then only those keyfiles actually
 used in one of those wavesets are kept, and all others are removed, e.g.
-            WAVESET_FILES=wavelist.* ./pi-2etaGenerateKeyfiles.sh
+            WAVESET_FILES=wavelist.* ./GenerateKeyfiles.sh
 will keep all keyfiles for waves used in at least one waveset in the current
 directory. Files in this list will also be copied to the destination
 directory.
