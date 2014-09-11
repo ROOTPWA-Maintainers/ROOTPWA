@@ -78,7 +78,7 @@ if __name__ == "__main__":
 	if args.noRandomBeam:
 		generatorManager.readBeamfileSequentially()
 	if args.randomBlockBeam:
-		generatorManager.readBeamfileSequentially
+		generatorManager.readBeamfileSequentially()
 		generatorManager.randomizeBeamfileStartingPosition()
 
 	if not generatorManager.initializeGenerator():
