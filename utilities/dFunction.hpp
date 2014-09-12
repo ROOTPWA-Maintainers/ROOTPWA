@@ -223,6 +223,8 @@ namespace rpwa {
 			_cacheIsInitialized = true;
 		}
 
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
 
 	private:
 
