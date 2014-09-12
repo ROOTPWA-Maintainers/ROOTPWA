@@ -1,11 +1,10 @@
-
-#include "nonInteractionVertex.h"
-
-#include<TClass.h>
-#include<TClonesArray.h>
+#include "TClass.h"
+#include "TClonesArray.h"
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
+#include "nonInteractionVertex.h"
+
 
 using namespace rpwa;
 using namespace std;
@@ -80,7 +79,7 @@ bool
 nonInteractionVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.size();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != 1) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected 1). "

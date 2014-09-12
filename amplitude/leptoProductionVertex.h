@@ -128,7 +128,7 @@ namespace rpwa {
 
 		double _longPol;  ///< longitudinal beam polarization
 
-		int                   _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
+		size_t                _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
 		std::vector<TVector3> _beamLeptonMomCache;       ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 		std::vector<TVector3> _scatteredLeptonMomCache;  ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 		std::vector<TVector3> _recoilMomCache;           ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data

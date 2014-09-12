@@ -111,7 +111,7 @@ namespace rpwa {
 
 	private:
 
-		int                   _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
+		size_t                _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
 		std::vector<TVector3> _beamMomCache;    ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 		std::vector<TVector3> _recoilMomCache;  ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 		std::vector<TVector3> _targetMomCache;  ///< caches target momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data

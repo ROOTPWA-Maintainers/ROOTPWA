@@ -153,7 +153,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		return std::vector<std::complex<double> >(numEvents, 0);
 
 	// calculate Breit-Wigner
-	const std::vector<complex<double> > bw = vertex->massDepAmplitude();
+	const std::vector<complex<double> > bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)

@@ -37,6 +37,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -49,6 +51,8 @@
 
 using namespace std;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool diffractiveDissVertex::_debug = false;
@@ -184,15 +188,15 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		          << "' and not TObjString." << endl;
 		return false;
 	}
-	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
-	if (_nmbProdKinPart < 1) {
+	_nmbProdKinPart = numeric_cast<size_t>(prodKinPartNames.GetEntriesFast());
+	if (_nmbProdKinPart > 3) {
 		printWarn << "array of production kinematics particle names has wrong size: "
 		          << _nmbProdKinPart << ". need at least beam (index 0); recoil (index 1) and "
 		          << "target (index 2) are optional." << endl;
 		return false;
 	}
 
-	// beam at index 0
+	// beam at index 0 (mandatory)
 	bool success = true;
 	const string beamName = ((TObjString*)prodKinPartNames[0])->GetString().Data();
 	if (beamName != beam()->name()) {

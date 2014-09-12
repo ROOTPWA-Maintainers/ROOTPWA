@@ -225,7 +225,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	}
 
 	// calculate Breit-Wigner
-	const std::vector<std::complex<double> > bw = vertex->massDepAmplitude();
+	const std::vector<std::complex<double> > bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = angMomNormFactor(L, _debug);

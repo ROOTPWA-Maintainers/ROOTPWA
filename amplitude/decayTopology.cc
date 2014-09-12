@@ -45,6 +45,8 @@
 #include <map>
 #include <algorithm>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -58,6 +60,8 @@
 using namespace std;
 using namespace boost;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool decayTopology::_debug = false;
@@ -607,8 +611,8 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 		          << "' and not TObjString. cannot read decay kinematics." << endl;
 		success = false;
 	}
-	const int nmbFsPart = decayKinPartNames.GetEntriesFast();
-	if ((nmbFsPart < 0) or ((unsigned int)nmbFsPart != nmbFsParticles())) {
+	const size_t nmbFsPart = numeric_cast<size_t>(decayKinPartNames.GetEntriesFast());
+	if (nmbFsPart != nmbFsParticles()) {
 		printWarn << "array of decay kinematics particle names has wrong size: "
 		          << nmbFsPart << " (expected " << nmbFsParticles() << ")" << endl;
 		success = false;

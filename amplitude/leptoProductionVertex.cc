@@ -43,6 +43,8 @@
 
 #include <cmath>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -55,6 +57,8 @@
 
 using namespace std;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool leptoProductionVertex::_debug = false;
@@ -609,7 +613,7 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		          << "' and not TObjString." << endl;
 		return false;
 	}
-	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
+	_nmbProdKinPart = numeric_cast<size_t>(prodKinPartNames.GetEntriesFast());
 	if (_nmbProdKinPart < 2) {
 		printWarn << "array of production kinematics particle names has wrong size: "
 		          << _nmbProdKinPart << ". need at least beam lepton (index 0) and "
