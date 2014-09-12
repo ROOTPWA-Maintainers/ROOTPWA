@@ -52,7 +52,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "leptoProductionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -185,7 +185,7 @@ leptoProductionVertex::productionAmp() const
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
-	
+
 		// calculate azimuthal angle between lepton-scattering and
 		// production plane in (virtual photon, target) CM system since
 		TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
@@ -263,12 +263,13 @@ leptoProductionVertex::productionAmp() const
 		//for (unsigned int j = 0; j < 3; ++j)
 		//	for (unsigned int i = 0; i < 3; ++i)
 		//		printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
-		const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
-										 + rho[0][1] * rho[1][2] * rho[2][0]
-										 + rho[1][0] * rho[2][1] * rho[0][2]
-										 - rho[0][2] * rho[1][1] * rho[2][0]
-										 - rho[1][2] * rho[0][0] * rho[2][1]
-										 - rho[0][1] * rho[2][2] * rho[1][0];
+		// const complex<double> detRho
+		// 	=   rho[0][0] * rho[1][1] * rho[2][2]
+		// 	  + rho[0][1] * rho[1][2] * rho[2][0]
+		// 	  + rho[1][0] * rho[2][1] * rho[0][2]
+		// 	  - rho[0][2] * rho[1][1] * rho[2][0]
+		// 	  - rho[1][2] * rho[0][0] * rho[2][1]
+		// 	  - rho[0][1] * rho[2][2] * rho[1][0];
 		//printInfo << "det[rho] = " << detRho << " vs. "
 		//		  << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
 		//				- (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
@@ -321,6 +322,7 @@ leptoProductionVertex::productionAmp() const
 	return result;
 }
 
+
 void
 leptoProductionVertex::Q2(std::vector<double>& result) const
 {
@@ -342,6 +344,7 @@ leptoProductionVertex::Q2(std::vector<double>& result) const
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::Q2 timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::nu(std::vector<double>& result) const
@@ -366,6 +369,7 @@ leptoProductionVertex::nu(std::vector<double>& result) const
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::nu timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::y(std::vector<double>& result) const
@@ -392,6 +396,7 @@ leptoProductionVertex::y(std::vector<double>& result) const
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::y timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::epsilon(std::vector<double>& result) const
@@ -453,6 +458,7 @@ leptoProductionVertex::epsilon(std::vector<double>& result) const
 
 }
 
+
 void
 leptoProductionVertex::delta(std::vector<double>& result) const
 {
@@ -477,6 +483,7 @@ leptoProductionVertex::delta(std::vector<double>& result) const
 	cout << "EPL: leptoProductionVertex::delta timediff = " << timeDiff << endl;
 
 }
+
 
 void
 leptoProductionVertex::xBj(std::vector<double>& result) const
@@ -506,6 +513,7 @@ leptoProductionVertex::xBj(std::vector<double>& result) const
 
 }
 
+
 void
 leptoProductionVertex::s(std::vector<double>& result) const
 {
@@ -530,6 +538,7 @@ leptoProductionVertex::s(std::vector<double>& result) const
 
 }
 
+
 void
 leptoProductionVertex::W(std::vector<double>& result) const
 {
@@ -547,6 +556,7 @@ leptoProductionVertex::W(std::vector<double>& result) const
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::W timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<double>& result) const
@@ -572,6 +582,7 @@ leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<dou
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::delta timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::setXFlavorQN()
