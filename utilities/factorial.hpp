@@ -63,12 +63,12 @@ namespace rpwa {
 			while((std::numeric_limits<T>::max() / (T)i) > _cache[i - 1]) {
 				T newValue = ((T)i) * _cache[i - 1];
 				if (_debug)
-					cout << i << "! = " << newValue << "  ";
+					std::cout << i << "! = " << newValue << "  ";
 				_cache.push_back(newValue);
 				++i;
 			}
 			if (_debug)
-				cout << " to factorial cache" << std::endl;
+				std::cout << " to factorial cache" << std::endl;
 		}
 
 		T operator ()(const unsigned int n)  ///< returns n!
