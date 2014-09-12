@@ -89,12 +89,12 @@ namespace rpwa {
 		particle& operator =(const particle& part);
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
-		int                                spinProj    () const { return _spinProj; }  ///< returns particle's spin projection quantum number
-		//const std::vector<TVector3>&       momenta     () const;                       ///< returns particle's three-momenta
-		const std::vector<TLorentzVector>& lzVecs      () const { return _lzVecs;   }  ///< returns particle's Lorentz vectors
-		std::vector<TLorentzVector>&       mutableLzVec()       { return _lzVecs;   }  ///< returns particle's Lorentz vectors as modifiable refrence; use with care
-		int                                index       () const { return _index;    }  ///< returns index label assigned to particle; -1 means undefined
-		int                                reflectivity() const { return _refl;     }  ///< returns particle's reflectivity; 0 means undefined
+		int                                spinProj     () const { return _spinProj; }  ///< returns particle's spin projection quantum number
+		//const std::vector<TVector3>&       momenta      () const;                       ///< returns particle's three-momenta
+		const std::vector<TLorentzVector>& lzVecs       () const { return _lzVecs;   }  ///< returns particle's Lorentz vectors
+		std::vector<TLorentzVector>&       mutableLzVecs()       { return _lzVecs;   }  ///< returns particle's Lorentz vectors as modifiable refrence; use with care
+		int                                index        () const { return _index;    }  ///< returns index label assigned to particle; -1 means undefined
+		int                                reflectivity () const { return _refl;     }  ///< returns particle's reflectivity; 0 means undefined
 
 		void setSpinProj    (const int                          spinProj) { _spinProj = spinProj;     }  ///< sets particle's spin projection quantum number
 		void setMomenta     (const std::vector<TVector3>&       momenta );                               ///< sets particle's Lorentz vectors

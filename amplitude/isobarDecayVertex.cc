@@ -164,7 +164,7 @@ isobarDecayVertex::calcParentLzVec()
 		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
 		           << " before = " << parent()->lzVecs() << " GeV, " << flush;
 
-	std::vector<TLorentzVector>& parentVec = parent()->mutableLzVec(); // mutable!!!
+	std::vector<TLorentzVector>& parentVec = parent()->mutableLzVecs(); // mutable!!!
 	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVecs();
 	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVecs();
 

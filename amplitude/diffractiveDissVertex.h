@@ -77,9 +77,9 @@ namespace rpwa {
 
 		// production specific accessors
 		virtual const std::vector<TLorentzVector>& referenceLzVecs() const { return beam()->lzVecs();  }  ///< returns Lorentz-vector that defines z-axis for angular distributions
-		virtual const particlePtr&                 XParticle     () const { return outParticles()[0]; }  ///< returns X particle
+		virtual const particlePtr&                 XParticle      () const { return outParticles()[0]; }  ///< returns X particle
 
-		virtual std::vector<std::complex<double> > productionAmps() const;  ///< returns production amplitude
+		virtual std::vector<std::complex<double> > productionAmps() const;  ///< returns production amplitudes all events stored in particles
 
 		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
@@ -88,14 +88,14 @@ namespace rpwa {
 		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
 
-		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                     );  ///< initializes input data
+		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);  ///< reads multiple input data event
 
-		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
+		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 
 		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
-		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
+		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers stored in vertex
 
 		virtual std::string name() const { return "diffractiveDissVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -111,10 +111,10 @@ namespace rpwa {
 
 	private:
 
-		int      _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
-		std::vector<TVector3> _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<TVector3> _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<TVector3> _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		int                   _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
+		std::vector<TVector3> _beamMomCache;    ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _recoilMomCache;  ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _targetMomCache;  ///< caches target momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

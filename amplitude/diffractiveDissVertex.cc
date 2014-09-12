@@ -151,13 +151,12 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 std::vector<std::complex<double> >
 diffractiveDissVertex::productionAmps() const
 {
-	unsigned int num = _beamMomCache.size();
-	if(num == 0) {
-		printErr << "size of per-event-data vector is zero. aborting." << endl;
+	size_t numEvents = _beamMomCache.size();
+	if (numEvents == 0) {
+		printErr << "no data to calculate production amplitude. aborting." << endl;
 		throw;
 	}
-	std::vector<std::complex<double> > result(num, 1);
-	return result;
+	return vector<complex<double> >(numEvents, 1);
 }
 
 
@@ -232,12 +231,12 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 bool
 diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
-	_beamMomCache.clear();
+	_beamMomCache.clear  ();
 	_recoilMomCache.clear();
 	_targetMomCache.clear();
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.size();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != _nmbProdKinPart) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
@@ -245,10 +244,10 @@ diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodK
 		return false;
 	}
 
-	// set beam
 	bool success = true;
-	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
+	for (size_t i = 0; i < prodKinMomenta[0].size(); ++i) {
 
+		// set beam
 		const TVector3& beamMom = prodKinMomenta[0][i];
 		if (_debug)
 			printDebug << "setting momentum of beam particle '" << beam()->name()
