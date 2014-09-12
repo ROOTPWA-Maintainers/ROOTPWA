@@ -141,10 +141,10 @@ interactionVertex::addOutParticle(const particlePtr& part)
 
 
 void
-interactionVertex::transformOutParticles(const std::vector<TLorentzRotation>& L)
+interactionVertex::transformOutParticles(const std::vector<TLorentzRotation>& lorentzTransforms)
 {
 	for (unsigned int i = 0; i < nmbOutParticles(); ++i)
-		_outParticles[i]->transform(L);
+		_outParticles[i]->transform(lorentzTransforms);
 }
 
 

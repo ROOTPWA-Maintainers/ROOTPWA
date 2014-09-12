@@ -210,7 +210,7 @@ isobarAmplitude::spaceInvertDecay() const
 	if (_debug)
 		printDebug << "space inverting final state momenta." << endl;
 	// transform final state particles into X rest frame
-	const std::vector<TLorentzVector>& beamLv  = _decay->productionVertex()->referenceLzVec();
+	const std::vector<TLorentzVector>& beamLv  = _decay->productionVertex()->referenceLzVecs();
 	const std::vector<TLorentzVector>& XLv     = _decay->XParticle()->lzVecs();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
@@ -230,7 +230,7 @@ isobarAmplitude::reflectDecay() const
 	if (_debug)
 		printDebug << "reflecting final state momenta through production plane." << endl;
 	// transform final state particles into X rest frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
+	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
 	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);

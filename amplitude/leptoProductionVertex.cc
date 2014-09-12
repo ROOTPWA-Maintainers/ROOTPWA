@@ -158,7 +158,7 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 
 
 std::vector<complex<double> >
-leptoProductionVertex::productionAmp() const
+leptoProductionVertex::productionAmps() const
 {
 
 	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();

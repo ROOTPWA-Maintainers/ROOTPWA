@@ -434,7 +434,7 @@ main(int argc, char** argv)
 					myAmps.push_back(ampResult[0]);
 					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 						printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
-					topo->productionVertex()->productionAmp();
+					topo->productionVertex()->productionAmps();
 				}
 			} // event loop
 

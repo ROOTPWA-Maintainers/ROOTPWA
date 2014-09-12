@@ -105,7 +105,7 @@ namespace rpwa {
 		const productionVertexPtr&  productionVertex() const { return _prodVertex;                     }  ///< returns production vertex
 		const interactionVertexPtr& XDecayVertex    () const { return _decayVertices[0];               }  ///< returns X-decay vertex
 
-		void transformFsParticles(const std::vector<TLorentzRotation>& lorentzTransforms);  ///< applies Lorentz-transformations to Lorentz vectors stored in all final-state particles
+		void transformFsParticles(const std::vector<TLorentzRotation>& lorentzTransforms);  ///< applies Lorentz transformations to Lorentz vectors stored in all final-state particles
 
 		bool isVertex          (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is a vertex in this topology
 		bool isParticle        (const particlePtr&          part) const;  ///< returns whether given particle is a particle in this topology

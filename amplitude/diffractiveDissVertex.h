@@ -76,10 +76,10 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return beam()->lzVecs();  }  ///< returns Lorentz-vector that defines z-axis for angular distributions
+		virtual const std::vector<TLorentzVector>& referenceLzVecs() const { return beam()->lzVecs();  }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&                 XParticle     () const { return outParticles()[0]; }  ///< returns X particle
 
-		virtual std::vector<std::complex<double> > productionAmp() const;  ///< returns production amplitude
+		virtual std::vector<std::complex<double> > productionAmps() const;  ///< returns production amplitude
 
 		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 

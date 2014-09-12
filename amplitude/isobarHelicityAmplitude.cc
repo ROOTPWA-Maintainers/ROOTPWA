@@ -122,7 +122,7 @@ isobarHelicityAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
+	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
 	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
 	const std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {

@@ -149,7 +149,7 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 
 
 std::vector<std::complex<double> >
-diffractiveDissVertex::productionAmp() const
+diffractiveDissVertex::productionAmps() const
 {
 	unsigned int num = _beamMomCache.size();
 	if(num == 0) {
