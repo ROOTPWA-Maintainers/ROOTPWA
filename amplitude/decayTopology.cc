@@ -231,10 +231,10 @@ decayTopology::reflectionEigenValue() const
 
 
 void
-decayTopology::transformFsParticles(const std::vector<TLorentzRotation>& L)
+decayTopology::transformFsParticles(const std::vector<TLorentzRotation>& lorentzTransforms)
 {
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i)
-		fsParticles()[i]->transform(L);
+		fsParticles()[i]->transform(lorentzTransforms);
 }
 
 
@@ -665,17 +665,17 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 
 bool
 decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta,
-								 const vector<vector<TVector3> >& decayKinMomenta)
+                                  const vector<vector<TVector3> >& decayKinMomenta)
 {
 	// set production kinematics
 	bool success = productionVertex()->readKinematicsData(prodKinMomenta);
 
 	// check momentum array
-	const int nmbFsPart = decayKinMomenta.size();
+	const size_t nmbFsPart = decayKinMomenta.size();
 	if ((nmbFsPart < 0) or ((unsigned int)nmbFsPart != nmbFsParticles())) {
 		printWarn << "array of decay kinematics particle momenta has wrong size: "
-				  << nmbFsPart << " (expected " << nmbFsParticles() << "). "
-				  << "cannot read decay kinematics." << endl;
+		          << nmbFsPart << " (expected " << nmbFsParticles() << "). "
+		          << "cannot read decay kinematics." << endl;
 		success = false;
 	}
 	if (not success)
@@ -684,11 +684,11 @@ decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMoment
 	// set decay kinematics
 	_fsDataPartMomCache.clear();
 	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
-	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr& part      = fsParticles()[i];
-		const unsigned int partIndex = _fsDataPartIndexMap[i];
-		const vector<TVector3>& momenta = decayKinMomenta[partIndex];
-		for(unsigned int k = 0; k < momenta.size(); ++k) {
+	for (size_t i = 0; i < nmbFsParticles(); ++i) {
+		const particlePtr&      part      = fsParticles()[i];
+		const unsigned int      partIndex = _fsDataPartIndexMap[i];
+		const vector<TVector3>& momenta   = decayKinMomenta[partIndex];
+		for(size_t k = 0; k < momenta.size(); ++k) {
 			const TVector3& mom = momenta[k];
 			if (_debug)
 				printDebug << "setting momentum of final-state particle '" << part->name() << "' "
@@ -700,21 +700,6 @@ decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMoment
 
 	return success;
 }
-
-
-/*void
-decayTopology::fillKinematicsDataCache()
-{
-	// adjust cache size
-	_fsDataPartMomCache.clear();
-	_fsDataPartMomCache.resize(nmbFsParticles());
-	// set decay kinematics
-	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr& part = fsParticles()[i];
-		_fsDataPartMomCache[i].resize(part->numParallelEvents());
-		part->momentum(_fsDataPartMomCache[i]);
-	}
-}*/
 
 
 bool
@@ -734,7 +719,7 @@ decayTopology::revertMomenta()
 		const particlePtr& part = fsParticles()[i];
 		part->setMomenta(_fsDataPartMomCache[i]);
 		if (_debug)
-			printDebug << "resetting momentum of final-state particle '" << part->name() << "'"
+			printDebug << "resetting momenta of final-state particle '" << part->name() << "'"
 			           << "[" << i << "] to " << _fsDataPartMomCache[i] << " GeV" << endl;
 	}
 	return success;
@@ -761,7 +746,7 @@ decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // fina
 		const particlePtr& part     = fsParticles()[i];
 		part->setMomenta(_fsDataPartMomCache[newIndex]);
 		if (_debug)
-			printDebug << "(re)setting momentum of final-state particle "
+			printDebug << "(re)setting momenta of final-state particle "
 			           << "'" << part->name() << "'[" << i << "] "
 			           << "to that of '" << fsParticles()[newIndex]->name()
 			           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
