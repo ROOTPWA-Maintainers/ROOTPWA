@@ -86,7 +86,7 @@ main(int argc, char** argv)
 		vector<TVector3> mom;
 		mom = make_vector_1(TVector3(1, 2, 3));
 		particlePtr beam = createParticle("pi-");
-		beam->setMomentum(mom);
+		beam->setMomenta(mom);
 		particlePtr target = createParticle("p+");
 		particlePtr X      = createParticle("X-");
 		printInfo << "created particles: " << endl
@@ -102,10 +102,10 @@ main(int argc, char** argv)
 
 		mom = make_vector_1(TVector3(3, 4, 5));
 		particlePtr daughter1 = createParticle("pi-");
-		daughter1->setMomentum(mom);
+		daughter1->setMomenta(mom);
 		mom = make_vector_1(TVector3(4, 5, 6));
 		particlePtr daughter2 = createParticle("pi0");
-		daughter2->setMomentum(mom);
+		daughter2->setMomenta(mom);
 		isobarDecayVertexPtr vert3 = createIsobarDecayVertex(X, daughter1, daughter2, 1, 2);
 		printInfo << "created vertex: " << endl
 		          << *vert3 << endl;

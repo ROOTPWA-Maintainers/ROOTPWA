@@ -20,12 +20,12 @@ ostream& generator::convertEventToAscii(ostream&  out,
 		throw;
 	}
 	out.setf(ios_base::scientific, ios_base::floatfield);
-	
-	int numEvents = beam.lzVec().size();
-	for(int k = 0; k < numEvents; ++k) {
-	
+
+	const size_t numEvents = beam.numParallelEvents();
+	for(size_t k = 0; k < numEvents; ++k) {
+
 		unsigned int nmbDaughters = finalState.size();
-		const TLorentzVector& beamLorentzVector = beam.lzVec()[k];
+		const TLorentzVector& beamLorentzVector = beam.lzVecs()[k];
 		out << nmbDaughters + 1 << endl;
 		// beam particle: geant ID, charge, p_x, p_y, p_z, E
 		out << beam.geantId() << " " << beam.charge()
@@ -33,16 +33,16 @@ ostream& generator::convertEventToAscii(ostream&  out,
 		    << " " << beamLorentzVector.Px() << " " << beamLorentzVector.Py() << " " << beamLorentzVector.Pz()
 		    << " " << beamLorentzVector.E() << endl;
 		for(unsigned int i = 0; i < nmbDaughters; ++i) {
-			const TLorentzVector& hadron = finalState[i].lzVec()[k];
+			const TLorentzVector& hadron = finalState[i].lzVecs()[k];
 			// hadron: geant ID, charge, p_x, p_y, p_z, E
 			out << finalState[i].geantId() << " " << finalState[i].charge()
 			    << setprecision(numeric_limits<double>::digits10 + 1)
 			    << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz()
 			    << " " << hadron.E() << endl;
 		}
-	
+
 	}
-	
+
 	out.unsetf(ios_base::scientific);
 	return out;
 }
@@ -58,13 +58,13 @@ ostream& generator::convertEventToComgeant(ostream& out,
 		cerr << "Output stream is not writable." << endl;
 		throw;
 	}
-	
-	int numEvents = beam.lzVec().size();
-	for(int k = 0; k < numEvents; ++k) {
+
+	const size_t numEvents = beam.numParallelEvents();
+	for(size_t k = 0; k < numEvents; ++k) {
 
 		unsigned int nmbDaughters = finalState.size();
-		const TLorentzVector& beamLorentzVector = beam.lzVec()[k];
-		const TLorentzVector& recoilLorentzVector = recoil.lzVec()[k];
+		const TLorentzVector& beamLorentzVector = beam.lzVecs()[k];
+		const TLorentzVector& recoilLorentzVector = recoil.lzVecs()[k];
 
 		if(not writeBinary) { // Write text file.
 			// total number of particles including recoil proton and beam particle
@@ -79,7 +79,7 @@ ostream& generator::convertEventToComgeant(ostream& out,
 			out << setprecision(numeric_limits<double>::digits10 + 1)
 			    << "14 " << recoilLorentzVector.Pz() << " " << recoilLorentzVector.Px() << " " << recoilLorentzVector.Py() << endl;
 			for (unsigned int i = 0; i < nmbDaughters; ++i) {
-				const TLorentzVector& hadron = finalState[i].lzVec()[k];
+				const TLorentzVector& hadron = finalState[i].lzVecs()[k];
 				// hadron: geant ID, p_z, p_x, p_y
 				out << setprecision(numeric_limits<double>::digits10 + 1)
 				    << finalState[i].geantId() << " "
@@ -107,7 +107,7 @@ ostream& generator::convertEventToComgeant(ostream& out,
 			floatval = (float)recoilLorentzVector.Px(); out.write((char*)&floatval,4);
 			floatval = (float)recoilLorentzVector.Py(); out.write((char*)&floatval,4);
 			for (unsigned int i = 0; i < nmbDaughters; ++i) {
-				const TLorentzVector& hadron = finalState[i].lzVec()[k];
+				const TLorentzVector& hadron = finalState[i].lzVecs()[k];
 				// hadron: geant ID, p_z, p_x, p_y
 				intval = (int)finalState[i].geantId(); out.write((char*)&intval,4);
 				floatval = (float)hadron.Pz(); out.write((char*)&floatval,4);

@@ -256,7 +256,7 @@ isobarDecayTopology::calcIsobarLzVec()
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		_isobarVertices[i]->calcParentLzVec();
 	}
-	return XIsobarDecayVertex()->parent()->lzVec();
+	return XIsobarDecayVertex()->parent()->lzVecs();
 }
 
 

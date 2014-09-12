@@ -161,11 +161,11 @@ std::vector<complex<double> >
 leptoProductionVertex::productionAmp() const
 {
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& beamVec            = beamLepton()->lzVec();
-	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec      = virtPhoton()->lzVec();
-	const std::vector<TLorentzVector>& XParticleVec       = XParticle()->lzVec();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const std::vector<TLorentzVector>& beamVec            = beamLepton()->lzVecs();
+	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	const std::vector<TLorentzVector>& virtPhotonVec      = virtPhoton()->lzVecs();
+	const std::vector<TLorentzVector>& XParticleVec       = XParticle()->lzVecs();
 
 	std::vector<double> epsilons(targetVec.size());
 	this->epsilon(epsilons);
@@ -326,7 +326,7 @@ leptoProductionVertex::productionAmp() const
 void
 leptoProductionVertex::Q2(std::vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -349,8 +349,8 @@ leptoProductionVertex::Q2(std::vector<double>& result) const
 void
 leptoProductionVertex::nu(std::vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 	double targetMass = target()->mass();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
@@ -374,11 +374,11 @@ leptoProductionVertex::nu(std::vector<double>& result) const
 void
 leptoProductionVertex::y(std::vector<double>& result) const
 {
-	//const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
+	//const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVecs();
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
-	const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size() || result.size() != beamVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -492,8 +492,8 @@ leptoProductionVertex::xBj(std::vector<double>& result) const
 	std::vector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -517,8 +517,8 @@ leptoProductionVertex::xBj(std::vector<double>& result) const
 void
 leptoProductionVertex::s(std::vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const std::vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -732,10 +732,10 @@ leptoProductionVertex::revertMomenta()
 		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
 		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
 	}
-	beamLepton     ()->setMomentum(_beamLeptonMomCache     );
-	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
-	recoil         ()->setMomentum(_recoilMomCache         );
-	target         ()->setMomentum(_targetMomCache         );
+	beamLepton     ()->setMomenta(_beamLeptonMomCache     );
+	scatteredLepton()->setMomenta(_scatteredLeptonMomCache);
+	recoil         ()->setMomenta(_recoilMomCache         );
+	target         ()->setMomenta(_targetMomCache         );
 
 	// set virtual photon
 

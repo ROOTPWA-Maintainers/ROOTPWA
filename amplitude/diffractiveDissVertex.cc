@@ -46,7 +46,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "diffractiveDissVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -286,9 +286,9 @@ diffractiveDissVertex::revertMomenta()
 		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
 		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
 	}
-	beam  ()->setMomentum(_beamMomCache  );
-	recoil()->setMomentum(_recoilMomCache);
-	target()->setMomentum(_targetMomCache);
+	beam  ()->setMomenta(_beamMomCache  );
+	recoil()->setMomenta(_recoilMomCache);
+	target()->setMomenta(_targetMomCache);
 	return true;
 }
 

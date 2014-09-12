@@ -63,12 +63,14 @@ using namespace std;
 using namespace boost;
 using namespace rpwa;
 
+
 template<typename T>
 static vector<T> make_vector_1(const T& element) {
 	vector<T> vec;
 	vec.push_back(element);
 	return vec;
 }
+
 
 int
 main(int argc, char** argv)
@@ -124,9 +126,9 @@ main(int argc, char** argv)
 		{
 			particlePtr X = createParticle("X");
 			const vector<TLorentzVector> p = make_vector_1(TLorentzVector(0.5, 0.75, 1, 2));
-			X->setLzVec(p);
+			X->setLzVecs(p);
 			isobarHelicityAmplitude amp;
-			vector<TLorentzRotation> L = amp.hfTransform(X->lzVec());
+			vector<TLorentzRotation> L = amp.hfTransform(X->lzVecs());
 			if(L.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;
 				return 0;
@@ -172,12 +174,12 @@ main(int argc, char** argv)
 		isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
 		isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
 		// set Lorentz vectors
-		beam->setLzVec(make_vector_1(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058)));
-		pi0->setLzVec(make_vector_1(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947)));
-		pi1->setLzVec(make_vector_1(TLorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973)));
-		pi2->setLzVec(make_vector_1(TLorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114)));
-		pi3->setLzVec(make_vector_1(TLorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277)));
-		pi4->setLzVec(make_vector_1(TLorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995)));
+		beam->setLzVecs(make_vector_1(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058)));
+		pi0->setLzVecs(make_vector_1(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947)));
+		pi1->setLzVecs(make_vector_1(TLorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973)));
+		pi2->setLzVecs(make_vector_1(TLorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114)));
+		pi3->setLzVecs(make_vector_1(TLorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277)));
+		pi4->setLzVecs(make_vector_1(TLorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995)));
 		// build graph
 		vector<isobarDecayVertexPtr> decayVertices;
 		decayVertices.push_back(vert3);

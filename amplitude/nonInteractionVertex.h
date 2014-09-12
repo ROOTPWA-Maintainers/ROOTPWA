@@ -15,8 +15,8 @@ namespace rpwa {
 		nonInteractionVertex(const particlePtr& XParticle);
 		virtual ~nonInteractionVertex() { }
 
-		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return XParticle()->lzVec(); }
-		inline const particlePtr& XParticle() const { return outParticles()[0]; }
+		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return XParticle()->lzVecs(); }
+		inline const particlePtr&                  XParticle     () const { return outParticles()[0];     }
 
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
 		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event

@@ -41,7 +41,7 @@
 #include "factorial.hpp"
 #include "isobarAmplitude.h"
 
-  
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -118,8 +118,8 @@ isobarAmplitude::init()
 std::vector<std::complex<double> >
 isobarAmplitude::amplitude() const
 {
-	//int numEvents = _decay->XIsobarDecayVertex()->parent()->lzVec().size();
-	int numEvents = _decay->fsParticles().at(0)->lzVec().size();
+	//int numEvents = _decay->XIsobarDecayVertex()->parent()->numParallelEvents();
+	int numEvents = _decay->fsParticles().at(0)->numParallelEvents();
 
 	const unsigned int nmbSymTerms = _symTermMaps.size();
 	if (nmbSymTerms < 1) {
@@ -211,12 +211,12 @@ isobarAmplitude::spaceInvertDecay() const
 		printDebug << "space inverting final state momenta." << endl;
 	// transform final state particles into X rest frame
 	const std::vector<TLorentzVector>& beamLv  = _decay->productionVertex()->referenceLzVec();
-	const std::vector<TLorentzVector>& XLv     = _decay->XParticle()->lzVec();
+	const std::vector<TLorentzVector>& XLv     = _decay->XParticle()->lzVecs();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
 	// perform parity transformation on final state particles in X rest frame
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		_decay->fsParticles()[i]->scaleLzVec(-1, -1, -1, 1);
+		_decay->fsParticles()[i]->scaleLzVecs(-1, -1, -1, 1);
 	}
 	// transform final state particles back to lab frame
 	parallelLorentzRotationInvert(gjTrans);
@@ -231,12 +231,12 @@ isobarAmplitude::reflectDecay() const
 		printDebug << "reflecting final state momenta through production plane." << endl;
 	// transform final state particles into X rest frame
 	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVec();
+	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
 	std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
 	// reflect final state particles through production plane
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		_decay->fsParticles()[i]->scaleLzVec(1, -1, 1, 1);
+		_decay->fsParticles()[i]->scaleLzVecs(1, -1, 1, 1);
 	}
 	// transform final state particles back to lab frame
 	parallelLorentzRotationInvert(gjTrans);
@@ -260,7 +260,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	int numEvents = parent->lzVec().size();
+	int numEvents = parent->numParallelEvents();
 
 	std::vector<std::complex<double> > ampSum(numEvents, 0);
 
@@ -337,7 +337,7 @@ isobarAmplitude::symTermAmp(const vector<unsigned int>& fsPartPermMap) const
 	if (not _decay->revertMomenta(fsPartPermMap)) {
 		printErr << "problems reverting momenta in decay topology. cannot calculate amplitude. "
 		         << "returning 0." << endl;
-		int numEvents = _decay->fsParticles().at(0)->lzVec().size();
+		int numEvents = _decay->fsParticles().at(0)->numParallelEvents();
 		return std::vector<std::complex<double> >(numEvents, 0);
 	}
 	// transform daughters into their respective RFs

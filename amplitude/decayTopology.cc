@@ -732,7 +732,7 @@ decayTopology::revertMomenta()
 	}
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
-		part->setMomentum(_fsDataPartMomCache[i]);
+		part->setMomenta(_fsDataPartMomCache[i]);
 		if (_debug)
 			printDebug << "resetting momentum of final-state particle '" << part->name() << "'"
 			           << "[" << i << "] to " << _fsDataPartMomCache[i] << " GeV" << endl;
@@ -759,7 +759,7 @@ decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // fina
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const unsigned int newIndex = fsPartPermMap[i];
 		const particlePtr& part     = fsParticles()[i];
-		part->setMomentum(_fsDataPartMomCache[newIndex]);
+		part->setMomenta(_fsDataPartMomCache[newIndex]);
 		if (_debug)
 			printDebug << "(re)setting momentum of final-state particle "
 			           << "'" << part->name() << "'[" << i << "] "
@@ -821,12 +821,12 @@ decayTopology::printProdKinParticles(ostream& out) const
 	for (unsigned int i = 0; i < productionVertex()->nmbInParticles(); ++i) {
 		const particlePtr& part = productionVertex()->inParticles()[i];
 		out << "    incoming particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
 	}
 	for (unsigned int i = 0; i < productionVertex()->nmbOutParticles(); ++i) {
 		const particlePtr& part = productionVertex()->outParticles()[i];
 		out << "    outgoing particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
 	}
 	return out;
 }
@@ -839,7 +839,7 @@ decayTopology::printDecayKinParticles(ostream& out) const
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
 		out << "    particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
 	}
 	return out;
 }

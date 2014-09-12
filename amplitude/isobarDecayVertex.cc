@@ -162,11 +162,11 @@ isobarDecayVertex::calcParentLzVec()
 {
 	if (_debug)
 		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
-		           << " before = " << parent()->lzVec() << " GeV, " << flush;
+		           << " before = " << parent()->lzVecs() << " GeV, " << flush;
 
 	std::vector<TLorentzVector>& parentVec = parent()->mutableLzVec(); // mutable!!!
-	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVec();
-	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVec();
+	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVecs();
+	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVecs();
 
 	if(daughter1Vec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -188,8 +188,8 @@ isobarDecayVertex::calcParentLzVec()
 	std::cout << "EPL: isobarDecayVertex::calcParentLzVec timediff = " << timeDiff << std::endl;
 
 	if (_debug)
-		cout << "after = " << parent()->lzVec() << " GeV" << endl;
-	return parent()->lzVec();
+		cout << "after = " << parent()->lzVecs() << " GeV" << endl;
+	return parent()->lzVecs();
 }
 
 

@@ -58,14 +58,14 @@ namespace rpwa {
 	class leptoProductionVertex : public productionVertex {
 
 	public:
-  
+
 		leptoProductionVertex(const particlePtr& beamLepton,
 		                      const particlePtr& target,
 		                      const particlePtr& XParticle,
 		                      const particlePtr& recoil = particlePtr());  ///< force vertex to have two incoming (beam lepton + target) and three outgoing particles (X + recoil + scattered lepton); recoil is optional
 		leptoProductionVertex(const leptoProductionVertex& vert);
 		virtual ~leptoProductionVertex();
-		
+
 		leptoProductionVertex& operator =(const leptoProductionVertex& vert);
 		leptoProductionVertexPtr clone(const bool cloneInParticles  = false,
 		                               const bool cloneOutParticles = false) const  ///< creates deep copy of leptoproduction vertex; must not be virtual
@@ -75,8 +75,8 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return virtPhoton()->lzVec(); }  ///< returns Lorentz-vector that defines z-axis for angular distributions
-		virtual const particlePtr&    XParticle     () const { return outParticles()[0];     }  ///< returns X particle
+		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return virtPhoton()->lzVecs(); }  ///< returns Lorentz-vector that defines z-axis for angular distributions
+		virtual const particlePtr&                 XParticle     () const { return outParticles()[0];      }  ///< returns X particle
 
 		virtual std::vector<std::complex<double> > productionAmp() const;  ///< returns production amplitude
 

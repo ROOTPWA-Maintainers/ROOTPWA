@@ -108,7 +108,7 @@ nonInteractionVertex::revertMomenta()
 	if (_debug) {
 		printDebug << "resetting XParticle momentum to " << _XParticleCache << " GeV" << endl;
 	}
-	XParticle()->setMomentum(_XParticleCache);
+	XParticle()->setMomenta(_XParticleCache);
 	return true;
 }
 
