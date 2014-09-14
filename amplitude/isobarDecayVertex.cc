@@ -157,39 +157,36 @@ isobarDecayVertex::addOutParticle(const particlePtr&)
 }
 
 
-const std::vector<TLorentzVector>&
-isobarDecayVertex::calcParentLzVec()
+const vector<TLorentzVector>&
+isobarDecayVertex::calcParentLzVecs()
 {
 	if (_debug)
-		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
-		           << " before = " << parent()->lzVec() << " GeV, " << flush;
+		printDebug << "calculating Lorentz vectors of parent particle " << parent()->name()
+		           << " before = " << parent()->lzVecs() << " GeV, " << flush;
 
-	std::vector<TLorentzVector>& parentVec = parent()->mutableLzVec(); // mutable!!!
-	const std::vector<TLorentzVector>& daughter1Vec = daughter1()->lzVec();
-	const std::vector<TLorentzVector>& daughter2Vec = daughter2()->lzVec();
+	vector<TLorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
+	const vector<TLorentzVector>& daughter1Vec = daughter1()->lzVecs();
+	const vector<TLorentzVector>& daughter2Vec = daughter2()->lzVecs();
 
-	if(daughter1Vec.size() != daughter2Vec.size()) {
+	const size_t numEvents = daughter1Vec.size();  // parentVec does not have correct size
+	if (daughter2Vec.size() != numEvents) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	// parentVec does not have correct size
-	const unsigned int size = daughter1Vec.size();
-	parentVec.resize(size);
-
+	parentVec.resize(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	#pragma omp parallel for
-	for(unsigned int i = 0; i < size; ++i) {
+	for(size_t i = 0; i < numEvents; ++i)
 		parentVec[i] = daughter1Vec[i] + daughter2Vec[i];
-	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: isobarDecayVertex::calcParentLzVec timediff = " << timeDiff << std::endl;
+	cout << "EPL: isobarDecayVertex::calcParentLzVec timediff = " << timeDiff << endl;
 
 	if (_debug)
-		cout << "after = " << parent()->lzVec() << " GeV" << endl;
-	return parent()->lzVec();
+		cout << "after = " << parent()->lzVecs() << " GeV" << endl;
+	return parent()->lzVecs();
 }
 
 

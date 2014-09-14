@@ -254,9 +254,9 @@ isobarDecayTopology::calcIsobarLzVec()
 			printDebug << "calculating Lorentz-vector of parent isobar '"
 			           << _isobarVertices[i]->parent()->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
-		_isobarVertices[i]->calcParentLzVec();
+		_isobarVertices[i]->calcParentLzVecs();
 	}
-	return XIsobarDecayVertex()->parent()->lzVec();
+	return XIsobarDecayVertex()->parent()->lzVecs();
 }
 
 

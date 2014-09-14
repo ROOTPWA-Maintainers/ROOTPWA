@@ -1,7 +1,9 @@
 #ifndef NONINTERACTIONVERTEX_H
 #define NONINTERACTIONVERTEX_H
 
+
 #include "productionVertex.h"
+
 
 namespace rpwa {
 
@@ -15,13 +17,13 @@ namespace rpwa {
 		nonInteractionVertex(const particlePtr& XParticle);
 		virtual ~nonInteractionVertex() { }
 
-		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return XParticle()->lzVec(); }
-		inline const particlePtr& XParticle() const { return outParticles()[0]; }
+		virtual const std::vector<TLorentzVector>& referenceLzVecs() const { return XParticle()->lzVecs(); }
+		inline const particlePtr&                  XParticle      () const { return outParticles()[0];     }
 
-		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                     );  ///< initializes input data
+		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);  ///< reads multiple input data event
 
-		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
+		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 
 		virtual void setXFlavorQN() { }  ///< does not do anything, as incoming and outgoing particles are the same
 
@@ -40,7 +42,7 @@ namespace rpwa {
 
 	private:
 
-		std::vector<TVector3> _XParticleCache;
+		std::vector<TVector3> _XParticleCache;  ///< caches X momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;
 

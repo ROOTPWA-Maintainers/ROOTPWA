@@ -46,37 +46,45 @@ namespace rpwa {
 
 	template<typename T>
 	class factorialCached {
-	
+
 	public:
-			
+
 		static factorialCached& instance() { return _instance; }  ///< get singleton instance
-		
+
 		static void initCache()
 		{
-			if(_cache.size() > 0) return;
+			if (_debug)
+				printDebug << "adding ";
+			if (_cache.size() > 0)
+				return;
 			_cache.clear();
 			_cache.push_back(1);
 			unsigned int i = 1;
 			while((std::numeric_limits<T>::max() / (T)i) > _cache[i - 1]) {
 				T newValue = ((T)i) * _cache[i - 1];
-				//printDebug << "add " << i << "! = " << newValue << " to factorial cache" << std::endl;
+				if (_debug)
+					std::cout << i << "! = " << newValue << "  ";
 				_cache.push_back(newValue);
 				++i;
 			}
+			if (_debug)
+				std::cout << " to factorial cache" << std::endl;
 		}
-		
-		T operator ()(const unsigned int n)                       ///< returns n!
+
+		T operator ()(const unsigned int n)  ///< returns n!
 		{
-			if(_cache.size() == 0) {
+			if (_cache.size() == 0)
 				initCache();
-			}
-			if(n < 0 || n >= _cache.size()) {
-				printErr << "cannot calculate factorial(" << n << "): value out of range" << std::endl;
+			if ((n < 0) or (n >= _cache.size())) {
+				printErr << "cannot calculate factorial of " << n << ": value out of range" << std::endl;
 				throw;
 			}
 			return _cache[n];
 		}
-    
+
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
 
 	private:
 
@@ -87,25 +95,29 @@ namespace rpwa {
 
 		static factorialCached _instance;  ///< singleton instance
  		static std::vector<T>  _cache;     ///< cache for already calculated values
+		static bool            _debug;     ///< if set to true, debug messages are printed
 
 	};
 
 
 	template<typename T> factorialCached<T> factorialCached<T>::_instance;
 	template<typename T> std::vector<T>     factorialCached<T>::_cache;
-	
+	template<typename T> bool               factorialCached<T>::_debug = false;
+
+
 	template<typename T>
 	inline
 	void
 	initFactorial()  ///< Initializes the cache containing all needed factorial values
 	{ return factorialCached<T>::initCache();	}
-	
+
+
 	template<typename T>
 	inline
 	T
 	factorial(const unsigned int n)  ///< returns factorial of n
 	{ return factorialCached<T>::instance()(n);	}
-	
+
 
 }  // namespace rpwa
 

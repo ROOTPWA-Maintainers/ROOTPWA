@@ -53,7 +53,7 @@ namespace rpwa {
 
 	class decayTopology;
 	typedef boost::shared_ptr<decayTopology> decayTopologyPtr;
-  
+
 	class interactionVertex;
 	typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
 
@@ -61,11 +61,11 @@ namespace rpwa {
 	class interactionVertex {
 
 	public:
-  
+
 		interactionVertex();
 		interactionVertex(const interactionVertex& vert);
 		virtual ~interactionVertex();
-		
+
 		interactionVertex& operator =(const interactionVertex& vert);
 		interactionVertexPtr clone(const bool cloneInParticles  = false,
 		                           const bool cloneOutParticles = false) const  ///< creates deep copy of interaction vertex; must not be virtual
@@ -79,7 +79,7 @@ namespace rpwa {
 		virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
 		virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
 
-		void transformOutParticles(const std::vector<TLorentzRotation>& L);  ///< applies Lorentz-transformation to outgoing particles
+		void transformOutParticles(const std::vector<TLorentzRotation>& lorentzTransforms);  ///< applies Lorentz transformations to Lorentz vectors stored in outgoing particles
 
 		inline unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
 		inline unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles

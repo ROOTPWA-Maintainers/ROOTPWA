@@ -82,8 +82,8 @@ isobarCanonicalAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVec();
+	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
+	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
 	const std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
@@ -99,7 +99,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " daughter RF" << endl;
 
-		const std::vector<TLorentzVector>& parentVec = vertex->parent()->lzVec();
+		const std::vector<TLorentzVector>& parentVec = vertex->parent()->lzVecs();
 		std::vector<TVector3> rfBoost(parentVec.size());
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
@@ -139,7 +139,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	int numEvents = parent->lzVec().size();
+	int numEvents = parent->numParallelEvents();
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
@@ -153,7 +153,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		return std::vector<std::complex<double> >(numEvents, 0);
 
 	// calculate Breit-Wigner
-	const std::vector<complex<double> > bw = vertex->massDepAmplitude();
+	const std::vector<complex<double> > bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)
@@ -197,8 +197,8 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		const unsigned int size = amp.size();
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < size; ++i) {
-			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
-			double theta = daughter1->lzVec()[i].Theta();
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
 			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
@@ -215,7 +215,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 		// calulate barrier factor
 		const int    L  = vertex->L();
-		const double q  = daughter1->lzVec()[i].Vect().Mag();
+		const double q  = daughter1->lzVecs()[i].Vect().Mag();
 		const double bf = barrierFactor(L, q, _debug);
 
 		// calculate decay amplitude

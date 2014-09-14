@@ -58,14 +58,14 @@ namespace rpwa {
 	class leptoProductionVertex : public productionVertex {
 
 	public:
-  
+
 		leptoProductionVertex(const particlePtr& beamLepton,
 		                      const particlePtr& target,
 		                      const particlePtr& XParticle,
 		                      const particlePtr& recoil = particlePtr());  ///< force vertex to have two incoming (beam lepton + target) and three outgoing particles (X + recoil + scattered lepton); recoil is optional
 		leptoProductionVertex(const leptoProductionVertex& vert);
 		virtual ~leptoProductionVertex();
-		
+
 		leptoProductionVertex& operator =(const leptoProductionVertex& vert);
 		leptoProductionVertexPtr clone(const bool cloneInParticles  = false,
 		                               const bool cloneOutParticles = false) const  ///< creates deep copy of leptoproduction vertex; must not be virtual
@@ -75,10 +75,10 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual const std::vector<TLorentzVector>& referenceLzVec() const { return virtPhoton()->lzVec(); }  ///< returns Lorentz-vector that defines z-axis for angular distributions
-		virtual const particlePtr&    XParticle     () const { return outParticles()[0];     }  ///< returns X particle
+		virtual const std::vector<TLorentzVector>& referenceLzVecs() const { return virtPhoton()->lzVecs(); }  ///< returns Lorentz-vectors for a number of events that defines z-axis for angular distributions
+		virtual const particlePtr&                 XParticle      () const { return outParticles()[0];      }  ///< returns X particle
 
-		virtual std::vector<std::complex<double> > productionAmp() const;  ///< returns production amplitude
+		virtual std::vector<std::complex<double> > productionAmps() const;  ///< returns production amplitudes all events stored in particles
 
 		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
@@ -103,14 +103,14 @@ namespace rpwa {
 		void W      (std::vector<double>& result) const; ///< returns total energy in (virtual photon, target) CM system
 		void delta  (const std::vector<double>& epsilon, std::vector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
 
-		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);    ///< add input data event
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                     );  ///< initializes input data
+		virtual bool readKinematicsData(const std::vector<std::vector<TVector3> >& prodKinMomenta);  ///< reads multiple input data event
 
-		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
+		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 
 		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
-		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
+		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers stored in vertex
 
 		virtual std::string name() const { return "leptoProductionVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -128,11 +128,11 @@ namespace rpwa {
 
 		double _longPol;  ///< longitudinal beam polarization
 
-		int _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
-		std::vector<TVector3> _beamLeptonMomCache;       ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<TVector3> _scatteredLeptonMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<TVector3> _recoilMomCache;           ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<TVector3> _targetMomCache;           ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		size_t                _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
+		std::vector<TVector3> _beamLeptonMomCache;       ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _scatteredLeptonMomCache;  ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _recoilMomCache;           ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		std::vector<TVector3> _targetMomCache;           ///< caches target momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

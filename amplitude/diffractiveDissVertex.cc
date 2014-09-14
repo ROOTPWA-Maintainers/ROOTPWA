@@ -37,6 +37,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -46,9 +48,11 @@
 #include "reportingUtilsRoot.hpp"
 #include "diffractiveDissVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool diffractiveDissVertex::_debug = false;
@@ -149,15 +153,14 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 
 
 std::vector<std::complex<double> >
-diffractiveDissVertex::productionAmp() const
+diffractiveDissVertex::productionAmps() const
 {
-	unsigned int num = _beamMomCache.size();
-	if(num == 0) {
-		printErr << "size of per-event-data vector is zero. aborting." << endl;
+	size_t numEvents = _beamMomCache.size();
+	if (numEvents == 0) {
+		printErr << "no data to calculate production amplitude. aborting." << endl;
 		throw;
 	}
-	std::vector<std::complex<double> > result(num, 1);
-	return result;
+	return vector<complex<double> >(numEvents, 1);
 }
 
 
@@ -185,15 +188,15 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		          << "' and not TObjString." << endl;
 		return false;
 	}
-	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
-	if (_nmbProdKinPart < 1) {
+	_nmbProdKinPart = numeric_cast<size_t>(prodKinPartNames.GetEntriesFast());
+	if (_nmbProdKinPart > 3) {
 		printWarn << "array of production kinematics particle names has wrong size: "
 		          << _nmbProdKinPart << ". need at least beam (index 0); recoil (index 1) and "
 		          << "target (index 2) are optional." << endl;
 		return false;
 	}
 
-	// beam at index 0
+	// beam at index 0 (mandatory)
 	bool success = true;
 	const string beamName = ((TObjString*)prodKinPartNames[0])->GetString().Data();
 	if (beamName != beam()->name()) {
@@ -232,12 +235,12 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 bool
 diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
-	_beamMomCache.clear();
+	_beamMomCache.clear  ();
 	_recoilMomCache.clear();
 	_targetMomCache.clear();
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.size();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != _nmbProdKinPart) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
@@ -245,10 +248,10 @@ diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodK
 		return false;
 	}
 
-	// set beam
 	bool success = true;
-	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
+	for (size_t i = 0; i < prodKinMomenta[0].size(); ++i) {
 
+		// set beam
 		const TVector3& beamMom = prodKinMomenta[0][i];
 		if (_debug)
 			printDebug << "setting momentum of beam particle '" << beam()->name()
@@ -286,9 +289,9 @@ diffractiveDissVertex::revertMomenta()
 		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
 		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
 	}
-	beam  ()->setMomentum(_beamMomCache  );
-	recoil()->setMomentum(_recoilMomCache);
-	target()->setMomentum(_targetMomCache);
+	beam  ()->setMomenta(_beamMomCache  );
+	recoil()->setMomenta(_recoilMomCache);
+	target()->setMomenta(_targetMomCache);
 	return true;
 }
 

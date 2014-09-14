@@ -43,6 +43,8 @@
 
 #include <cmath>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -52,9 +54,11 @@
 #include "reportingUtilsRoot.hpp"
 #include "leptoProductionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool leptoProductionVertex::_debug = false;
@@ -134,7 +138,7 @@ leptoProductionVertex::doClone(const bool cloneInParticles,
 	if (_debug)
 		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
 		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << endl;
 	return vertexClone;
 }
 
@@ -157,35 +161,37 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 }
 
 
-std::vector<complex<double> >
-leptoProductionVertex::productionAmp() const
+vector<complex<double> >
+leptoProductionVertex::productionAmps() const
 {
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& beamVec            = beamLepton()->lzVec();
-	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec      = virtPhoton()->lzVec();
-	const std::vector<TLorentzVector>& XParticleVec       = XParticle()->lzVec();
+	const vector<TLorentzVector>& targetVec          = target         ()->lzVecs();
+	const vector<TLorentzVector>& beamVec            = beamLepton     ()->lzVecs();
+	const vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	const vector<TLorentzVector>& virtPhotonVec      = virtPhoton     ()->lzVecs();
+	const vector<TLorentzVector>& XParticleVec       = XParticle      ()->lzVecs();
 
-	std::vector<double> epsilons(targetVec.size());
+	vector<double> epsilons(targetVec.size());
 	this->epsilon(epsilons);
 
-	std::vector<double> deltas(targetVec.size());
+	vector<double> deltas(targetVec.size());
 	this->delta(epsilons, deltas);
 
-	if(targetVec.size() != beamVec.size() || targetVec.size() != scatteredLeptonVec.size() ||
-			targetVec.size() != virtPhotonVec.size() || targetVec.size() != XParticleVec.size()) {
+	size_t numEvents = targetVec.size();
+	if (   (beamVec.size()            != numEvents)
+		or (scatteredLeptonVec.size() != numEvents)
+		or (virtPhotonVec.size()      != numEvents)
+		or (XParticleVec.size()       != numEvents)) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<complex<double> > result(target()->numParallelEvents());
+	vector<complex<double> > result(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-	const unsigned int size = result.size();
 	#pragma omp parallel for
-	for(unsigned int i = 0; i < size; ++i) {
-	
+	for (size_t i = 0; i < numEvents; ++i) {
+
 		// calculate azimuthal angle between lepton-scattering and
 		// production plane in (virtual photon, target) CM system since
 		TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
@@ -200,27 +206,27 @@ leptoProductionVertex::productionAmp() const
 			// lepton-scattering and the production plane are perpendicular to
 			// the virtual photon, the azimuthal angle can be calculated in
 			// the lab frame as well
-			k1 = beamVec[i].Vect();
+			k1 = beamVec           [i].Vect();
 			k2 = scatteredLeptonVec[i].Vect();
-			q  = virtPhotonVec[i].Vect();
-			v  = XParticleVec[i].Vect();
+			q  = virtPhotonVec     [i].Vect();
+			v  = XParticleVec      [i].Vect();
 		} else {
 			// general case
 			// boost vectors to (virtual photon, target) CM system
-			TLorentzVector       beamLeptonLv      = beamVec[i];
+			TLorentzVector       beamLeptonLv      = beamVec           [i];
 			TLorentzVector       scatteredLeptonLv = scatteredLeptonVec[i];
-			TLorentzVector       virtPhotonLv      = virtPhotonVec[i];
-			TLorentzVector       XParticleLv       = XParticleVec[i];
+			TLorentzVector       virtPhotonLv      = virtPhotonVec     [i];
+			TLorentzVector       XParticleLv       = XParticleVec      [i];
 			const TLorentzVector photonTargetCM    = virtPhotonLv + targetLv;
 			const TVector3       cmBoost           = photonTargetCM.BoostVector();
-			beamLeptonLv.Boost(cmBoost);
+			beamLeptonLv.Boost     (cmBoost);
 			scatteredLeptonLv.Boost(cmBoost);
-			virtPhotonLv.Boost(cmBoost);
-			XParticleLv.Boost(cmBoost);
-			k1 = beamLeptonLv.Vect();
+			virtPhotonLv.Boost     (cmBoost);
+			XParticleLv.Boost      (cmBoost);
+			k1 = beamLeptonLv.Vect     ();
 			k2 = scatteredLeptonLv.Vect();  // use scattered lepton, because virtual photon is not directly measured
-			q  = virtPhotonLv.Vect();
-			v  = XParticleLv.Vect();
+			q  = virtPhotonLv.Vect     ();
+			v  = XParticleLv.Vect      ();
 		}
 		// calculate azimuthal angle in [-pi, +pi]
 		const TVector3 leptonPlaneNormal     = k1.Cross(k2);
@@ -231,7 +237,7 @@ leptoProductionVertex::productionAmp() const
 
 		// compute some kinematic variables
 		const double epsilon = epsilons[i];
-		const double delta   = deltas[i];
+		const double delta   = deltas  [i];
 		//printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
 		//		  << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
 		// compute some intermediary terms
@@ -263,12 +269,13 @@ leptoProductionVertex::productionAmp() const
 		//for (unsigned int j = 0; j < 3; ++j)
 		//	for (unsigned int i = 0; i < 3; ++i)
 		//		printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
-		const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
-										 + rho[0][1] * rho[1][2] * rho[2][0]
-										 + rho[1][0] * rho[2][1] * rho[0][2]
-										 - rho[0][2] * rho[1][1] * rho[2][0]
-										 - rho[1][2] * rho[0][0] * rho[2][1]
-										 - rho[0][1] * rho[2][2] * rho[1][0];
+		// const complex<double> detRho
+		// 	=   rho[0][0] * rho[1][1] * rho[2][2]
+		// 	  + rho[0][1] * rho[1][2] * rho[2][0]
+		// 	  + rho[1][0] * rho[2][1] * rho[0][2]
+		// 	  - rho[0][2] * rho[1][1] * rho[2][0]
+		// 	  - rho[1][2] * rho[0][0] * rho[2][1]
+		// 	  - rho[0][1] * rho[2][2] * rho[1][0];
 		//printInfo << "det[rho] = " << detRho << " vs. "
 		//		  << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
 		//				- (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
@@ -321,10 +328,11 @@ leptoProductionVertex::productionAmp() const
 	return result;
 }
 
+
 void
-leptoProductionVertex::Q2(std::vector<double>& result) const
+leptoProductionVertex::Q2(vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -343,11 +351,12 @@ leptoProductionVertex::Q2(std::vector<double>& result) const
 	cout << "EPL: leptoProductionVertex::Q2 timediff = " << timeDiff << endl;
 }
 
+
 void
-leptoProductionVertex::nu(std::vector<double>& result) const
+leptoProductionVertex::nu(vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 	double targetMass = target()->mass();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
@@ -367,14 +376,13 @@ leptoProductionVertex::nu(std::vector<double>& result) const
 	cout << "EPL: leptoProductionVertex::nu timediff = " << timeDiff << endl;
 }
 
-void
-leptoProductionVertex::y(std::vector<double>& result) const
-{
-	//const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
-	const std::vector<TLorentzVector>& beamVec = beamLepton()->lzVec();
+void
+leptoProductionVertex::y(vector<double>& result) const
+{
+	const vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<TLorentzVector>& beamVec = beamLepton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size() || result.size() != beamVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -393,17 +401,18 @@ leptoProductionVertex::y(std::vector<double>& result) const
 	cout << "EPL: leptoProductionVertex::y timediff = " << timeDiff << endl;
 }
 
+
 void
-leptoProductionVertex::epsilon(std::vector<double>& result) const
+leptoProductionVertex::epsilon(vector<double>& result) const
 {
 
-	std::vector<double> Q2(result.size());
+	vector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	std::vector<double> xBj(result.size());
+	vector<double> xBj(result.size());
 	this->xBj(xBj);
 
-	std::vector<double> y(result.size());
+	vector<double> y(result.size());
 	this->y(y);
 
 	const double targetMass2 = target()->mass2();
@@ -453,14 +462,15 @@ leptoProductionVertex::epsilon(std::vector<double>& result) const
 
 }
 
+
 void
-leptoProductionVertex::delta(std::vector<double>& result) const
+leptoProductionVertex::delta(vector<double>& result) const
 {
 
-	std::vector<double> Q2(result.size());
+	vector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	std::vector<double> epsilon(result.size());
+	vector<double> epsilon(result.size());
 	this->epsilon(epsilon);
 
 	const double beamMass2 = beamLepton()->mass2();
@@ -478,15 +488,16 @@ leptoProductionVertex::delta(std::vector<double>& result) const
 
 }
 
+
 void
-leptoProductionVertex::xBj(std::vector<double>& result) const
+leptoProductionVertex::xBj(vector<double>& result) const
 {
 
-	std::vector<double> Q2(result.size());
+	vector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -506,11 +517,12 @@ leptoProductionVertex::xBj(std::vector<double>& result) const
 
 }
 
+
 void
-leptoProductionVertex::s(std::vector<double>& result) const
+leptoProductionVertex::s(vector<double>& result) const
 {
-	const std::vector<TLorentzVector>& targetVec = target()->lzVec();
-	const std::vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVec();
+	const vector<TLorentzVector>& targetVec = target()->lzVecs();
+	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -530,10 +542,11 @@ leptoProductionVertex::s(std::vector<double>& result) const
 
 }
 
+
 void
-leptoProductionVertex::W(std::vector<double>& result) const
+leptoProductionVertex::W(vector<double>& result) const
 {
-	std::vector<double> s(result.size());
+	vector<double> s(result.size());
 	this->s(s);
 
 	// !! EVENT PARALLEL LOOP
@@ -548,8 +561,9 @@ leptoProductionVertex::W(std::vector<double>& result) const
 	cout << "EPL: leptoProductionVertex::W timediff = " << timeDiff << endl;
 }
 
+
 void
-leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<double>& result) const
+leptoProductionVertex::delta(const vector<double>& epsilon, vector<double>& result) const
 {
 	if(epsilon.size() != epsilon.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -558,7 +572,7 @@ leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<dou
 
 	const double beamMass2 = beamLepton()->mass2();
 
-	std::vector<double> Q2(result.size());
+	vector<double> Q2(result.size());
 	this->Q2(Q2);
 
 	// !! EVENT PARALLEL LOOP
@@ -572,6 +586,7 @@ leptoProductionVertex::delta(const std::vector<double>& epsilon, std::vector<dou
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: leptoProductionVertex::delta timediff = " << timeDiff << endl;
 }
+
 
 void
 leptoProductionVertex::setXFlavorQN()
@@ -598,7 +613,7 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		          << "' and not TObjString." << endl;
 		return false;
 	}
-	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
+	_nmbProdKinPart = numeric_cast<size_t>(prodKinPartNames.GetEntriesFast());
 	if (_nmbProdKinPart < 2) {
 		printWarn << "array of production kinematics particle names has wrong size: "
 		          << _nmbProdKinPart << ". need at least beam lepton (index 0) and "
@@ -655,14 +670,13 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 bool
 leptoProductionVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
 {
-	_beamLeptonMomCache.clear();
+	_beamLeptonMomCache.clear     ();
 	_scatteredLeptonMomCache.clear();
-	_recoilMomCache.clear();
-	_targetMomCache.clear();
-
+	_recoilMomCache.clear         ();
+	_targetMomCache.clear         ();
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.size();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != _nmbProdKinPart) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
@@ -672,7 +686,7 @@ leptoProductionVertex::readKinematicsData(const vector<vector<TVector3> >& prodK
 
 	// set beam lepton
 	bool success = true;
-	for(unsigned int i = 0; i < prodKinMomenta[0].size(); ++i) {
+	for(size_t i = 0; i < prodKinMomenta[0].size(); ++i) {
 
 		const TVector3& beamLeptonMom = prodKinMomenta[0][i];
 		if (_debug)
@@ -721,31 +735,29 @@ leptoProductionVertex::revertMomenta()
 		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
 		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
 	}
-	beamLepton     ()->setMomentum(_beamLeptonMomCache     );
-	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
-	recoil         ()->setMomentum(_recoilMomCache         );
-	target         ()->setMomentum(_targetMomCache         );
+	beamLepton     ()->setMomenta(_beamLeptonMomCache     );
+	scatteredLepton()->setMomenta(_scatteredLeptonMomCache);
+	recoil         ()->setMomenta(_recoilMomCache         );
+	target         ()->setMomenta(_targetMomCache         );
 
 	// set virtual photon
+	vector<TLorentzVector>&       beamLeptonVec      = beamLepton()->mutableLzVecs();  // mutable !!!
+	const vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
 
-	std::vector<TLorentzVector>& beamLeptonVec = beamLepton()->mutableLzVec(); // mutable !!!
-	const std::vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->mutableLzVec(); // mutable !!!
-
-	if(beamLeptonVec.size() != scatteredLeptonVec.size()) {
-		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+	const size_t numEvents = beamLeptonVec.size();
+	if (scatteredLeptonVec.size() != numEvents) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-	const unsigned int size = beamLeptonVec.size();
 	#pragma omp parallel for
-	for(unsigned int i = 0; i < size; ++i) {
+	for(size_t i = 0; i < numEvents; ++i)
 		beamLeptonVec[i] -= scatteredLeptonVec[i];
-	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: leptoProductionVertex::revertMomenta timediff = " << timeDiff << std::endl;
+	cout << "EPL: leptoProductionVertex::revertMomenta timediff = " << timeDiff << endl;
 
 	return true;
 }

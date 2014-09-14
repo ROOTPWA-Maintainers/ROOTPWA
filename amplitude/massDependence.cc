@@ -63,7 +63,7 @@ flatMassDependence::amp(const isobarDecayVertex& v)
 {
 	if (_debug)
 		printDebug << name() << " = 1" << endl;
-	std::vector<std::complex<double> > result(v.parent()->lzVec().size(), 1);
+	std::vector<std::complex<double> > result(v.parent()->numParallelEvents(), 1);
 	return result;
 }
 
@@ -73,7 +73,7 @@ std::vector<std::complex<double> >
 flatRangeMassDependence::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
-	const std::vector<TLorentzVector>& parentVec = parent->lzVec();
+	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
@@ -112,9 +112,9 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 //	if(daughter1->isStable() and daughter2->isStable()) {
 
-		const std::vector<TLorentzVector>& parentVec = parent->lzVec();
-		const std::vector<TLorentzVector>& daughter1Vec = daughter1->lzVec();
-		const std::vector<TLorentzVector>& daughter2Vec = daughter2->lzVec();
+		const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
+		const std::vector<TLorentzVector>& daughter1Vec = daughter1->lzVecs();
+		const std::vector<TLorentzVector>& daughter2Vec = daughter2->lzVecs();
 
 		if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 			printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -178,7 +178,7 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 	const double M0     = parent->mass();  // resonance peak position
 	const double Gamma0 = parent->width(); // resonance peak width
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVec();
+	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
@@ -218,9 +218,9 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVec();
-	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVec();
-	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVec();
+	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -283,9 +283,9 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVec();
-	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVec();
-	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVec();
+	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -394,7 +394,7 @@ std::vector<std::complex<double> >
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVec();
+	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
 
 	std::vector<std::complex<double> > result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
@@ -482,7 +482,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	const std::vector<std::complex<double> > ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVec();
+	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
 
 	if(parentVec.size() != ampM.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -550,7 +550,7 @@ std::vector<std::complex<double> >
 rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVec();
+	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
 
 	// rho' parameters
 	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]

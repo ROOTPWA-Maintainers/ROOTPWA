@@ -34,7 +34,7 @@
 #include "reportingUtils.hpp"
 #include "productionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -53,10 +53,11 @@ productionVertex::productionVertex()
 productionVertex::~productionVertex()
 { }
 
+
 // default implementation
-std::vector<std::complex<double> >
-productionVertex::productionAmp() const
+vector<complex<double> >
+productionVertex::productionAmps() const
 {
-	int numEvents = XParticle()->lzVec().size();
-	return std::vector<std::complex<double> >(numEvents, 1);
+	size_t numEvents = XParticle()->numParallelEvents();
+	return vector<complex<double> >(numEvents, 1);
 }

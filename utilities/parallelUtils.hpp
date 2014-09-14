@@ -46,17 +46,18 @@
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 
+
 namespace rpwa {
-	
-	inline void parallelLorentzRotationInvert(std::vector<TLorentzRotation>& lzRot)
+
+	inline
+	void
+	parallelLorentzRotationInvert(std::vector<TLorentzRotation>& lzRot)
 	{
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-		const unsigned int size = lzRot.size();
 		#pragma omp parallel for
-		for(unsigned int i = 0; i < size; ++i) {
+		for(unsigned int i = 0; i < lzRot.size(); ++i)
 			lzRot[i].Invert();
-		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 		std::cout << "EPL: parallelLorentzRotationInvert timediff = " << timeDiff << std::endl;

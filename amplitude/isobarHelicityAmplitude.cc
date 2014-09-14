@@ -122,8 +122,8 @@ isobarHelicityAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVec();
+	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
+	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
 	const std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
@@ -139,7 +139,7 @@ isobarHelicityAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " helicity RF" << endl;
 
-		const std::vector<TLorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVec());
+		const std::vector<TLorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
 
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -168,7 +168,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	unsigned int numEvents = parent->lzVec().size();
+	unsigned int numEvents = parent->numParallelEvents();
 
 	// calculate Clebsch-Gordan coefficient for L-S coupling
 	const int    L         = vertex->L();
@@ -200,8 +200,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
-			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
-			double theta = daughter1->lzVec()[i].Theta();
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
 			DFunc[i] = DFunctionReflConj<complex<double> >(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
@@ -214,8 +214,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
-			double phi = daughter1->lzVec()[i].Phi(); // use daughter1 as analyzer
-			double theta = daughter1->lzVec()[i].Theta();
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
 			DFunc[i] = DFunctionConj<complex<double> >(J, Lambda, lambda, phi, theta, 0, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
@@ -225,7 +225,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	}
 
 	// calculate Breit-Wigner
-	const std::vector<std::complex<double> > bw = vertex->massDepAmplitude();
+	const std::vector<std::complex<double> > bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = angMomNormFactor(L, _debug);
@@ -239,7 +239,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	for(unsigned int i = 0; i < size; ++i) {
 
 		// calulate barrier factor
-		const double q  = daughter1->lzVec()[i].Vect().Mag();
+		const double q  = daughter1->lzVecs()[i].Vect().Mag();
 		const double bf = barrierFactor(L, q, _debug);
 
 		amp[i] = norm * DFunc[i] * lsClebsch * ssClebsch * bf * bw[i];
@@ -248,8 +248,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3 timediff = " << timeDiff << endl;
-	
+
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+
 	return amp;
 }

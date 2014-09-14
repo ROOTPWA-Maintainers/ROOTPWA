@@ -37,13 +37,16 @@
 #include "stdint.h"
 #include "time.h"
 
+
 namespace rpwa {
-	
-	inline uint64_t getTimeMilliseconds()
+
+	inline
+	uint64_t
+	getTimeMilliseconds()
 	{
 		const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-		
 	}
+
 
 }  // namespace rpwa
 
