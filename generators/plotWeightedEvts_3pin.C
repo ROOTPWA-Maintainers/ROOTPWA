@@ -750,8 +750,6 @@ createWeightedPlots(const std::string& dataFileName,
 	// Helicity Histogram Bunch
 	HelicityHistBunch HHB_rho = HelicityHistBunchFactory("ChargedRho", mcAccFile!=NULL);
 
-	double avweight = 1;
-
 	//Loop both over data and mc tree
 	// itree = 0: data tree
 	// itree = 1: mc tree
@@ -778,7 +776,6 @@ createWeightedPlots(const std::string& dataFileName,
 		double weightNegRef = 1.;
 		double weightFlat = 1.;
 		double impweight = 1;
-		double maxweight = 0;
 		if (itree != 0) {
 			tree->SetBranchAddress("weight", &weight);
 			tree->SetBranchAddress("weightPosRef", &weightPosRef);
@@ -836,6 +833,8 @@ createWeightedPlots(const std::string& dataFileName,
 
 		// loop over tree entries
 		const long int nmbEvents = tree->GetEntries();
+		double maxweight = 0;
+		double avweight = 0;
 		boost::progress_display progressIndicator(nmbEvents, cout, "");
 		for (long int i = 0; i < nmbEvents; ++i) {
 			++progressIndicator;
@@ -845,7 +844,7 @@ createWeightedPlots(const std::string& dataFileName,
 			for (Int_t j=0; j<prodKinMomenta->GetEntries(); j++) {
 				const rpwa::particleProperties* pp = rpwa::particleDataTable::entry(((TObjString*)(prodKinPartNames->At(j)))->String().Data());
 				if (pp == NULL) {
-					printErr << "Unknown particle '" << ((TObjString*)(prodKinPartNames->At(i)))->String() << "' found in input tree." << std::endl;
+					printErr << "Unknown particle '" << ((TObjString*)(prodKinPartNames->At(j)))->String() << "' found in input tree." << std::endl;
 					return;
 				}
 				lvBeam.SetVectM(*((TVector3*)(prodKinMomenta->At(j))), pp->mass());
@@ -857,13 +856,12 @@ createWeightedPlots(const std::string& dataFileName,
 			for (Int_t j=0; j<decayKinMomenta->GetEntries(); j++) {
 				const rpwa::particleProperties* pp = rpwa::particleDataTable::entry(((TObjString*)(decayKinPartNames->At(j)))->String().Data());
 				if (pp == NULL) {
-					printErr << "Unknown particle '" << ((TObjString*)(decayKinPartNames->At(i)))->String() << "' found in input tree." << std::endl;
+					printErr << "Unknown particle '" << ((TObjString*)(decayKinPartNames->At(j)))->String() << "' found in input tree." << std::endl;
 					return;
 				}
 
 				lvPart[j].SetVectM(*((TVector3*)(decayKinMomenta->At(j))), pp->mass());
 				qPart[j] = pp->charge();
-
 
 				lvOut += lvPart[j];
 			}
@@ -880,8 +878,7 @@ createWeightedPlots(const std::string& dataFileName,
 
 			if (weight > maxweight)
 				maxweight = weight;
-			if (itree != 0)
-				avweight += weight;
+			avweight += weight;
 
 			double tprime;
 			{
