@@ -102,6 +102,7 @@ if __name__ == "__main__":
 	if args.comgeantOutput:
 		outputComgeantFile = open(args.outputFileName.replace(".evt", ".fort.26"), 'w')
 		printInfo("opened output comgeant file: " + args.outputFileName)
+
 	try:
 		print(generatorManager)
 		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents-1, sys.stdout)
@@ -111,21 +112,22 @@ if __name__ == "__main__":
 
 		while eventsGenerated < args.nEvents:
 
-				attempts += generatorManager.event()
-				generator = generatorManager.getGenerator()
-				beam = generator.getGeneratedBeam()
-				finalState = generator.getGeneratedFinalState()
-				outputEvtFile.write(generator.convertEventToAscii(beam, finalState))
-				if args.comgeantOutput:
-					recoil = generator.getGeneratedRecoil()
-					vertex = generator.getGeneratedVertex()
-					outputComgeantFile.write(generator.convertEventToComgeant(beam, recoil, vertex, finalState, False))
-				if args.maxAttempts and attempts > args.maxAttempts:
-					printWarn("reached maximum attempts. Aborting...")
-					break
-				eventsGenerated += 1
-				progressBar.update(eventsGenerated)
+			attempts += generatorManager.event()
+			if args.maxAttempts and attempts > args.maxAttempts:
+				printWarn("reached maximum attempts. Aborting...")
+				break
 
+			generator = generatorManager.getGenerator()
+			beam = generator.getGeneratedBeam()
+			finalState = generator.getGeneratedFinalState()
+			outputEvtFile.write(generator.convertEventToAscii(beam, finalState))
+			if args.comgeantOutput:
+				recoil = generator.getGeneratedRecoil()
+				vertex = generator.getGeneratedVertex()
+				outputComgeantFile.write(generator.convertEventToComgeant(beam, recoil, vertex, finalState, False))
+
+			eventsGenerated += 1
+			progressBar.update(eventsGenerated)
 	finally:
 		outputEvtFile.close()
 		if outputComgeantFile is not None:
@@ -133,6 +135,6 @@ if __name__ == "__main__":
 
 	printSucc("generated " + str(eventsGenerated) + " events.")
 	printInfo("attempts: " + str(attempts))
-	printInfo("efficiency: " + str(100. * (float(eventsGenerated) / float(attempts))))
+	printInfo("efficiency: {0:.2%}".format(float(eventsGenerated) / float(attempts)))
 
 	pyRootPwa.utils.printPrintingSummary(printingCounter)
