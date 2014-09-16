@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for src library tests
+#//      build file for partialWaveFit library tests
 #//
 #//
 #// Author List:

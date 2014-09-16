@@ -38,7 +38,7 @@ set(AMPLITUDE_SUBDIR amplitude)
 set(GENERATORS_SUBDIR generators)
 set(STORAGEFORMATS_SUBDIR storageFormats)
 set(PYUTILS_SUBDIR pyUtils)
-set(SRC_SUBDIR src)
+set(PARTIALWAVEFIT_SUBDIR partialWaveFit)
 set(UTILITIES_SUBDIR utilities)
 
 
@@ -53,7 +53,7 @@ set(INCLUDE_DIRECTORIES
 	${PYUTILS_SUBDIR}
 	${STORAGEFORMATS_INCLUDE_DIR}
 	${STORAGEFORMATS_SUBDIR}
-	${SRC_SUBDIR}
+	${PARTIALWAVEFIT_SUBDIR}
 	${UTILITIES_INCLUDE_DIR}
 	${UTILITIES_SUBDIR}
 	SYSTEM
@@ -96,8 +96,8 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
-	${SRC_SUBDIR}/complexMatrix_py.cc
-	${SRC_SUBDIR}/fitResult_py.cc
+	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
+	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 

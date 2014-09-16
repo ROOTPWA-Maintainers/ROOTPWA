@@ -37,7 +37,7 @@
 	gSystem->AddIncludePath("-I$ROOTPWA/amplitude");
 	gSystem->AddIncludePath("-I$ROOTPWA/tools");
 	gSystem->AddIncludePath("-I$ROOTPWA/generators");
-	gSystem->AddIncludePath("-I$ROOTPWA/src");
+	gSystem->AddIncludePath("-I$ROOTPWA/partialWaveFit");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 	gSystem->AddIncludePath("-I$BOOST_ROOT");
 	gSystem->AddIncludePath("-I$LIBCONFIG/include");
@@ -54,7 +54,7 @@
 
 	// load shared libraries
 	// gSystem->Load("libGX11TTF");  // doesn't exist on Mac; for what is this needed?
-	gSystem->Load("libRootPwa");
+	gSystem->Load("libRootPwaPartialWaveFit");
 	gSystem->Load("libRootPwaAmp");
 	gSystem->Load("libRootPwaTools");
 	gSystem->Load("libRootPwaGen");
