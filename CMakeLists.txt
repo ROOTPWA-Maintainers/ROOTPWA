@@ -486,13 +486,6 @@ set(STORAGEFORMATS_LIBS
 	RootPwaMeta
 	)
 
-set(TOOLS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/tools
-	)
-set(ROOTPWATOOLS_LIBS
-	RootPwaTools
-	)
-
 set(AMPLITUDE_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/amplitude
 	)
@@ -571,17 +564,11 @@ add_subdirectory(partialWaveFit)
 # resonance fit
 add_subdirectory(resonanceFit)
 
-# RootPwaTools
-add_subdirectory(tools)
-
 # RootPwaGen
 add_subdirectory(generators)
 
 # Relativic Amplitudes
 add_subdirectory(relativisticAmpCorrections)
-
-# massdep
-#add_subdirectory(massdep)
 
 # Fortran
 add_subdirectory(fortran)
