@@ -2,7 +2,7 @@
 #define GENERATORPARAMETERS_HH_
 
 
-#include "../amplitude/particle.h"
+#include "particle.h"
 
 
 namespace rpwa {

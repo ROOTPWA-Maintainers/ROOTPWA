@@ -479,6 +479,13 @@ set(UTILITIES_LIBS
 	RootPwaUtil
 	)
 
+set(PARTICLEDATA_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/particleData
+	)
+set(PARTICLEDATA_LIBS
+	RootPwaParticleData
+	)
+
 set(STORAGEFORMATS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/storageFormats
 	)
@@ -546,6 +553,9 @@ endif()
 
 # Utilities
 add_subdirectory(utilities)
+
+# Particle data
+add_subdirectory(particleData)
 
 # Metadata
 add_subdirectory(storageFormats)

@@ -39,6 +39,7 @@ set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${PARTICLEDATA_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
@@ -68,4 +69,4 @@ make_shared_library(
 
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
-make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${AMPLITUDE_LIBS})
+make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${AMPLITUDE_LIBS} ${PARTICLEDATA_LIBS})

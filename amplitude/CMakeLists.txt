@@ -39,6 +39,7 @@ set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${GEN_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${PARTICLEDATA_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -50,9 +51,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	particleProperties.cc
-	particleDataTable.cc
-	particle.cc
 	interactionVertex.cc
 	fsVertex.cc
 	decayTopology.cc
@@ -97,6 +95,7 @@ make_shared_library(
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
+	"${PARTICLEDATA_LIBS}"
 	"${ROOTPWA_NBPSGEN_LIBS}"
 	)
 

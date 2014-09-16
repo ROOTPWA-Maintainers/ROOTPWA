@@ -37,8 +37,8 @@
 #include "TVector3.h"
 #include "TSystem.h"
 
-#include "../particleDataTable.h"
-#include "../particle.h"
+#include "particleDataTable.h"
+#include "particle.h"
 #include "decayGraph.hpp"
 #include "decayTopology.h"
 #include "diffractiveDissVertex.h"

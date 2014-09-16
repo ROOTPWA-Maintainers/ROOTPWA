@@ -35,6 +35,7 @@ message_setup_this_dir()
 
 
 set(AMPLITUDE_SUBDIR amplitude)
+set(PARTICLEDATA_SUBDIR particleData)
 set(GENERATORS_SUBDIR generators)
 set(STORAGEFORMATS_SUBDIR storageFormats)
 set(PYUTILS_SUBDIR pyUtils)
@@ -47,6 +48,8 @@ set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${AMPLITUDE_SUBDIR}
+	${PARTICLEDATA_INCLUDE_DIR}
+	${PARTICLEDATA_SUBDIR}
 	${GEN_INCLUDE_DIR}
 	${GENERATORS_SUBDIR}
 	${PARTIALWAVEFIT_INCLUDE_DIR}
@@ -70,9 +73,6 @@ set(SOURCES
 	rootPwaPy.cc
 	${PYUTILS_SUBDIR}/stlContainers_py.cc
 	${PYUTILS_SUBDIR}/rootConverters_py.cc
-	${AMPLITUDE_SUBDIR}/particleProperties_py.cc
-	${AMPLITUDE_SUBDIR}/particleDataTable_py.cc
-	${AMPLITUDE_SUBDIR}/particle_py.cc
 	${AMPLITUDE_SUBDIR}/interactionVertex_py.cc
 	${AMPLITUDE_SUBDIR}/fsVertex_py.cc
 	${AMPLITUDE_SUBDIR}/massDependence_py.cc
@@ -88,6 +88,9 @@ set(SOURCES
 	${AMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${AMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
 	${AMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
+	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
+	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
+	${PARTICLEDATA_SUBDIR}/particle_py.cc
 	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${GENERATORS_SUBDIR}/randomNumberGenerator_py.cc
 	${GENERATORS_SUBDIR}/generatorManager_py.cc
@@ -113,6 +116,7 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	"${ROOTPWAGEN_LIBS}"
+	"${PARTICLEDATA_LIBS}"
 	"${UTILITIES_LIBS}"
 	"${STORAGEFORMATS_LIBS}"
 	)

@@ -21,11 +21,11 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for RootPwaGen
+#//      build file for amplitude library
 #//
 #//
 #// Author List:
-#//      Sebastian Neubert    TUM            (original author)
+#//      Boris Grube          TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
@@ -37,72 +37,32 @@ message_setup_this_dir()
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
-	${PARTIALWAVEFIT_INCLUDE_DIR}
-	${PARTICLEDATA_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
+	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
-set(SOURCES_NBPSG
-	nBodyPhaseSpaceGen.cc
-	randomNumberGenerator.cc
+# source files that are compiled into library
+set(SOURCES
+	particleProperties.cc
+	particleDataTable.cc
+	particle.cc
 	)
 
 
 # library name
-set(NBPSG_LIB "RootPwaNBPSGen")
-
-
-# ROOT dictionary
-set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
-root_generate_dictionary(
-	${ROOTPWAGEN_DICTIONARY}
-	nBodyPhaseSpaceGen.h
-	MODULE ${NBPSG_LIB}
-	LINKDEF rootPwaGenLinkDef.h
-	)
-set(SOURCES_NBPSG ${SOURCES_NBPSG} ${ROOTPWAGEN_DICTIONARY})
+set(THIS_LIB "RootPwaParticleData")
 
 
 # library
-make_shared_library(
-	"${NBPSG_LIB}"
-	"${SOURCES_NBPSG}"
-	"${ROOT_LIBS}"
-	)
-
-
-# source files that are compiled into library
-set(SOURCES
-	generator.cc
-	generatorManager.cc
-	diffractivePhaseSpace.cc
-	beamAndVertexGenerator.cc
-	generatorPickerFunctions.cc
-	)
-
-
-# library
-set(THIS_LIB "RootPwaGen")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
-	"${PARTICLEDATA_LIBS}"
-	"${PARTIALWAVEFIT_LIBS}"
-	"${NBPSG_LIB}"
+	"${Libconfig_LIBS}"
 	)
-
-
-# executables
-make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
-make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
-
-# build tests
-add_subdirectory(test)
