@@ -150,10 +150,11 @@ Long64_t rpwa::eventMetadata::Merge(TCollection* list, Option_t* option) {
 }
 
 
-TTree* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
-                                  const int& splitlevel,
-                                  const int& buffsize)
+eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
+                                          const int& splitlevel,
+                                          const int& buffsize)
 {
+	eventMetadata* mergee = new eventMetadata();
 	if(inputData.empty()) {
 		printWarn << "trying to merge without input data." << endl;
 		return 0;
@@ -163,9 +164,9 @@ TTree* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
 	const unsigned int nmbDecayKinematicsParticles = inputData[0]->decayKinematicsParticleNames().size();
 	TClonesArray* productionKinematicsMomenta = new TClonesArray("TVector3", nmbProductionKinematicsParticles);
 	TClonesArray* decayKinematicsMomenta   = new TClonesArray("TVector3", nmbDecayKinematicsParticles);
-	TTree* outputTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
-	outputTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &productionKinematicsMomenta, buffsize, splitlevel);
-	outputTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &decayKinematicsMomenta,   buffsize, splitlevel);
+	mergee->_eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
+	mergee->_eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &productionKinematicsMomenta, buffsize, splitlevel);
+	mergee->_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &decayKinematicsMomenta,   buffsize, splitlevel);
 	vector<double> additionalSavedVariables;
 	bool first = true;
 	for(unsigned int inputDataNumber = 0; inputDataNumber < inputData.size(); ++inputDataNumber) {
@@ -173,69 +174,71 @@ TTree* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
 		TTree* inputTree = metadata->eventTree();
 		if(not inputTree) {
 			printWarn << "got NULL-pointer to inputTree when merging." << endl;
-			delete outputTree;
-			return 0;
-		}
-		if(metadata == this) {
-			printWarn << "cannot merge metadata with itself" << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
 		if(first) {
 			first = false;
-			if((productionKinematicsParticleNames().empty()) and
-			   (decayKinematicsParticleNames().empty()))
+			if((mergee->productionKinematicsParticleNames().empty()) and
+			   (mergee->decayKinematicsParticleNames().empty()))
 			{
-				setProductionKinematicsParticleNames(metadata->productionKinematicsParticleNames());
-				setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
+				mergee->setProductionKinematicsParticleNames(metadata->productionKinematicsParticleNames());
+				mergee->setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
 			}
-			if(binningMap().empty()) {
-				setBinningMap(metadata->binningMap());
+			if(mergee->binningMap().empty()) {
+				mergee->setBinningMap(metadata->binningMap());
 			}
-			if(additionalSavedVariableLables().empty()) {
-				setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
-				additionalSavedVariables.resize(additionalSavedVariableLables().size(), 0.);
+			if(mergee->additionalSavedVariableLables().empty()) {
+				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
+				additionalSavedVariables.resize(mergee->additionalSavedVariableLables().size(), 0.);
 				for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-					if(inputTree->SetBranchAddress(additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
+					if(inputTree->SetBranchAddress(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
 					{
-						printWarn << "could not set address for branch '" << additionalSavedVariableLables()[i] << "'." << endl;
-						delete outputTree;
+						printWarn << "could not set address for branch '" << mergee->additionalSavedVariableLables()[i] << "'." << endl;
+						delete mergee->_eventTree;
 						return 0;
 					}
 				}
 			}
 		}
-		appendToUserString(metadata->userString());
-		if(productionKinematicsParticleNames() != metadata->productionKinematicsParticleNames()) {
+		mergee->appendToUserString(metadata->userString());
+		if(mergee->productionKinematicsParticleNames() != metadata->productionKinematicsParticleNames()) {
 			printWarn << "particle names of production kinematics differ." << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
-		if(decayKinematicsParticleNames() != metadata->decayKinematicsParticleNames()) {
+		if(mergee->decayKinematicsParticleNames() != metadata->decayKinematicsParticleNames()) {
 			printWarn << "particle names of decay kinematics differ." << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
-		if(binningMap() != metadata->binningMap()) {
+		if(mergee->binningMap() != metadata->binningMap()) {
 			printWarn << "binning maps differ." << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
 		if(inputTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0) {
 			printWarn << "could not set branch address for branch '" << productionKinematicsMomentaBranchName << "'." << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
 		if(inputTree->SetBranchAddress(decayKinematicsMomentaBranchName.c_str(), &decayKinematicsMomenta) < 0) {
 			printWarn << "could not set branch address for branch '" << decayKinematicsMomentaBranchName << "'." << endl;
-			delete outputTree;
+			delete mergee->_eventTree;
+			delete mergee;
 			return 0;
 		}
 		for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-			if(inputTree->SetBranchAddress(additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
+			if(inputTree->SetBranchAddress(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
 			{
-				printWarn << "could not set address for branch '" << additionalSavedVariableLables()[i] << "'." << endl;
-				delete outputTree;
+				printWarn << "could not set address for branch '" << mergee->additionalSavedVariableLables()[i] << "'." << endl;
+				delete mergee->_eventTree;
+				delete mergee;
 				return 0;
 			}
 		}
@@ -250,12 +253,12 @@ TTree* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
 			for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
 				hashor.Update(additionalSavedVariables[i]);
 			}
-			outputTree->Fill();
+			mergee->_eventTree->Fill();
 		}
 
 	}
-	setContentHash(hashor.hash());
-	return outputTree;
+	mergee->setContentHash(hashor.hash());
+	return mergee;
 }
 
 

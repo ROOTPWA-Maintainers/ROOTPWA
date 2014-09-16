@@ -22,7 +22,6 @@ namespace rpwa {
 
 	  public:
 
-		eventMetadata();
 		~eventMetadata();
 
 		const std::string& userString() const { return _userString; }
@@ -37,9 +36,9 @@ namespace rpwa {
 		std::ostream& print(std::ostream& out) const;
 
 		Long64_t Merge(TCollection* list, Option_t* option = "");     // throws an exception
-		TTree* merge(const std::vector<const rpwa::eventMetadata*>& inputData,
-		             const int& splitlevel = 99,
-		             const int& buffsize = 256000);                     // actually works
+		static eventMetadata* merge(const std::vector<const rpwa::eventMetadata*>& inputData,
+		                            const int& splitlevel = 99,
+		                            const int& buffsize = 256000);                     // actually works
 
 		TTree* eventTree() const { return _eventTree; } // changing this tree is not allowed (it should be const, but then you can't read it...)
 
@@ -53,7 +52,19 @@ namespace rpwa {
 		static const std::string productionKinematicsMomentaBranchName;
 		static const std::string decayKinematicsMomentaBranchName;
 
+#if defined(__CINT__) || defined(G__DICTIONARY)
+	// root needs a public default constructor
+	  public:
+
+		eventMetadata();
+
 	  private:
+#else
+
+	  private:
+
+		eventMetadata();
+#endif
 
 		void setUserString(const std::string& userString) { _userString = userString; }
 		void appendToUserString(const std::string& userString,

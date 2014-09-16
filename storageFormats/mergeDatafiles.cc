@@ -102,15 +102,13 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	eventMetadata metadata;
-	TTree* outputTree = metadata.merge(inputData);
-	if(not outputTree) {
+	eventMetadata* metadata = eventMetadata::merge(inputData);
+	if(not metadata) {
 		printErr << "merge failed. Aborting..." << endl;
 		return 1;
 	}
 	outputFile->cd();
-	metadata.Write(eventMetadata::objectNameInFile.c_str());
-	outputTree->Write();
+	metadata->Write(eventMetadata::objectNameInFile.c_str());
 	outputFile->Close();
 	for(unsigned int i = 0; i < inputFiles.size(); ++i) {
 		inputFiles[i]->Close();
