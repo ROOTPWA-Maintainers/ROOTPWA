@@ -52,19 +52,16 @@ namespace rpwa {
 		static const std::string productionKinematicsMomentaBranchName;
 		static const std::string decayKinematicsMomentaBranchName;
 
-#if defined(__CINT__) || defined(G__DICTIONARY)
+#if defined(__CINT__) || defined(__CLING__) || defined(G__DICTIONARY)
 	// root needs a public default constructor
 	  public:
-
-		eventMetadata();
-
-	  private:
 #else
-
 	  private:
+#endif
 
 		eventMetadata();
-#endif
+
+	  private:
 
 		void setUserString(const std::string& userString) { _userString = userString; }
 		void appendToUserString(const std::string& userString,
