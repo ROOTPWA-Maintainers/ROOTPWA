@@ -6,8 +6,6 @@
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
-#include <TPython.h>
-
 namespace bp = boost::python;
 
 namespace {
@@ -277,30 +275,12 @@ namespace {
 		return self.Write(name);
 	}
 
-	PyObject* fitResult_getAsRootObject(rpwa::fitResult& self)
-	{
-		rpwa::fitResult* newCxxObj = new rpwa::fitResult(self);
-		return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName(), false);
-	}
-
-	rpwa::fitResult* fitResult_copyConstructor(PyObject* pyFitResult)
-	{
-		TObject* TObj = (TObject*)(TPython::ObjectProxy_AsVoidPtr(pyFitResult));
-		rpwa::fitResult* fitResult = dynamic_cast<rpwa::fitResult*>(TObj);
-		if(not fitResult) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input when executing rpwa::fitResult copy constructor");
-			bp::throw_error_already_set();
-		}
-		return fitResult;
-	}
-
 }
 
 void rpwa::py::exportFitResult() {
 
 	bp::class_<rpwa::fitResult>("fitResult")
 		.def(bp::init<const rpwa::fitResult&>())
-		.def("__init__", bp::make_constructor(&fitResult_copyConstructor))
 		.def(bp::self_ns::str(bp::self))
 		.def("reset", &rpwa::fitResult::reset)
 		.def("fill", &fitResult_fill)
@@ -371,8 +351,8 @@ void rpwa::py::exportFitResult() {
 		.def("printProdAmps", &fitResult_printProdAmps)
 		.def("printWaves", &fitResult_printWaves)
 		.def("printAmpsGenPW", &fitResult_printAmpsGenPW)
-		.def("Write", &fitResult_Write)
 
-		.def("getAsRootObject", &fitResult_getAsRootObject);
+		.def("Write", &fitResult_Write, bp::arg("name")=0)
+		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>);
 
 }

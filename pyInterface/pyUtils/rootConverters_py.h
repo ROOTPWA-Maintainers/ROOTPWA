@@ -16,6 +16,9 @@ namespace rpwa {
 		template<typename T>
 		T convertFromPy(PyObject* pyObj);
 
+		template<typename T>
+		int setBranchAddress(T objectPtr, PyObject* pyTree, const std::string& name);
+
 		void exportRootConverters();
 
 	}

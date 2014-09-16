@@ -1,8 +1,7 @@
 #include "ampIntegralMatrix_py.h"
 
+#include "rootConverters_py.h"
 #include "stlContainers_py.h"
-
-#include <TPython.h>
 
 namespace bp = boost::python;
 
@@ -69,17 +68,6 @@ namespace {
 		return self.Write(name);
 	}
 
-	rpwa::ampIntegralMatrix* ampIntegralMatrix_copyConstructor(PyObject* pyAmpIntegralMatrix)
-	{
-		TObject* TObj = (TObject*)(TPython::ObjectProxy_AsVoidPtr(pyAmpIntegralMatrix));
-		rpwa::ampIntegralMatrix* ampIntegralMatrix = dynamic_cast<rpwa::ampIntegralMatrix*>(TObj);
-		if(not ampIntegralMatrix) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input when executing rpwa::ampIntegralMatrix copy constructor");
-			bp::throw_error_already_set();
-		}
-		return ampIntegralMatrix;
-	}
-
 }
 
 void rpwa::py::exportAmpIntegralMatrix() {
@@ -87,7 +75,6 @@ void rpwa::py::exportAmpIntegralMatrix() {
 	bp::class_<rpwa::ampIntegralMatrix>("ampIntegralMatrix")
 
 		.def(bp::init<const rpwa::ampIntegralMatrix&>())
-		.def("__init__", bp::make_constructor(&ampIntegralMatrix_copyConstructor))
 
 		.def(bp::self_ns::str(bp::self))
 		.def(bp::self == bp::self)
@@ -147,6 +134,7 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def("readAscii", &ampIntegralMatrix_readAscii)
 
 		.def("Write", &ampIntegralMatrix_Write, bp::arg("name")=0)
+		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>)
 
 		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
 
