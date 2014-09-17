@@ -33,6 +33,7 @@
 #include "fitResult_py.h"
 #include "utils_py.h"
 #include "eventFileWriter_py.h"
+#include "eventMetadata_py.h"
 
 namespace bp = boost::python;
 
@@ -68,5 +69,6 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportFitResult();
 	rpwa::py::exportUtils();
 	rpwa::py::exportEventFileWriter();
+	rpwa::py::exportEventMetadata();
 
 }
