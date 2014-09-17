@@ -14,7 +14,6 @@ namespace rpwa {
 
 	class eventMetadata : public TObject {
 		friend class eventFileWriter;
-		friend class eventStorage;
 
 	  private:
 		typedef std::pair<double, double> rangePairType;

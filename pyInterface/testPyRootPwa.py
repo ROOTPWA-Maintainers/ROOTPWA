@@ -90,7 +90,7 @@ particleTable = do_test( getpDTinstance, "Testing particleDataTable.instance")
 
 def tPDTreadFile():
 	print("\n")
-	pyRootPwa.core.particleDataTable.readFile(os.environ['ROOTPWA'] + "/amplitude/particleDataTable.txt")
+	pyRootPwa.core.particleDataTable.readFile(os.environ['ROOTPWA'] + "/particleData/particleDataTable.txt")
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
 
