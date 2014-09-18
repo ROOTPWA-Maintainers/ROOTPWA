@@ -61,7 +61,6 @@ set(SOURCES
 	isobarDecayTopology.cc
 	massDependence.cc
 	waveDescription.cc
-	evtTreeHelper.cc
 	isobarAmplitude.cc
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
@@ -100,9 +99,7 @@ make_shared_library(
 
 
 # executables
-make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(ampDiff            ampDiff.cc            ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
