@@ -584,6 +584,22 @@ void decayTopology::setProductionVertex(const productionVertexPtr& productionVer
 
 
 bool
+decayTopology::initKinematicsData(const vector<string>& prodKinPartNamesVec,
+                                  const vector<string>& decayKinPartNamesVec)
+{
+	TClonesArray prodKinPartNames("TObjString", prodKinPartNamesVec.size());
+	TClonesArray decayKinPartNames("TObjString", decayKinPartNamesVec.size());
+	for(unsigned int i = 0; i < prodKinPartNamesVec.size(); ++i) {
+		new (prodKinPartNames[i]) TObjString(prodKinPartNamesVec[i].c_str());
+	}
+	for(unsigned int i = 0; i < decayKinPartNamesVec.size(); ++i) {
+		new (decayKinPartNames[i]) TObjString(decayKinPartNamesVec[i].c_str());
+	}
+	return initKinematicsData(prodKinPartNames, decayKinPartNames);
+}
+
+
+bool
 decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
                                   const TClonesArray& decayKinPartNames)
 {

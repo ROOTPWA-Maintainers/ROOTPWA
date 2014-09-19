@@ -129,6 +129,9 @@ namespace rpwa {
 
 		void setProductionVertex(const productionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
+		bool initKinematicsData(const std::vector<std::string>& prodKinParticles,
+		                        const std::vector<std::string>& decayKinParticles);  ///< initializes input data
+
 		bool initKinematicsData(const TClonesArray& prodKinParticles,
 		                        const TClonesArray& decayKinParticles);  ///< initializes input data
 
