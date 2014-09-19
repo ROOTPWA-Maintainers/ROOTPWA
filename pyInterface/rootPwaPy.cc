@@ -36,6 +36,7 @@
 #include "eventMetadata_py.h"
 #include "amplitudeFileWriter_py.h"
 #include "amplitudeMetadata_py.h"
+#include "calcAmplitude_py.h"
 
 namespace bp = boost::python;
 
@@ -74,5 +75,6 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportEventMetadata();
 	rpwa::py::exportAmplitudeFileWriter();
 	rpwa::py::exportAmplitudeMetadata();
+	rpwa::py::exportCalcAmplitude();
 
 }

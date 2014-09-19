@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
+	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -51,24 +51,7 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
-	interactionVertex.cc
-	fsVertex.cc
-	decayTopology.cc
-	productionVertex.cc
-	diffractiveDissVertex.cc
-	leptoProductionVertex.cc
-	nonInteractionVertex.cc
-	isobarDecayVertex.cc
-	isobarDecayTopology.cc
-	massDependence.cc
-	waveDescription.cc
-	evtTreeHelper.cc
-	isobarAmplitude.cc
-	isobarHelicityAmplitude.cc
-	isobarCanonicalAmplitude.cc
-	ampIntegralMatrix.cc
-	waveSetGenerator.cc
-	phaseSpaceIntegral.cc
+	calcAmplitude.cc
 	)
 
 
@@ -76,35 +59,12 @@ set(SOURCES
 lib_name_for_current_dir(THIS_LIB)
 
 
-# ROOT dictionary
-set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
-root_generate_dictionary(
-	${ROOTPWAAMP_DICTIONARY}
-	waveDescription.h ampIntegralMatrix.h
-	MODULE ${THIS_LIB}
-	LINKDEF rootPwaAmpLinkDef.h
-	)
-set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
-
-
 # library
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
-	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
-	"${RPWA_NBODYPHASESPACE_LIB}"
+	"${ROOT_LIBS}"
+	"${RPWA_DECAYAMPLITUDE_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
-	"${RPWA_STORAGEFORMATS_LIB}"
 	)
-
-
-# executables
-make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-
-
-# build tests
-add_subdirectory(test)

@@ -513,6 +513,8 @@ set(_SRC_DIRS
 	decayAmplitude
 	fortran
 	generators
+	highLevelInterface
+	legacy
 #	mpi
 	nBodyPhaseSpace
 	partialWaveFit
