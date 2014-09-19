@@ -523,6 +523,7 @@ set(_SRC_DIRS
 #	sandBox
 	storageFormats
 	utilities
+	highLevelInterface
 	)
 foreach(_SRC_DIR ${_SRC_DIRS})
 	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
