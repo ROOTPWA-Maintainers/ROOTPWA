@@ -40,6 +40,7 @@ include_directories(
 	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
+	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -64,8 +65,6 @@ set(SOURCES
 	isobarAmplitude.cc
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
-	amplitudeTreeLeaf.cc
-	amplitudeTreeHelper.cc
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
@@ -80,7 +79,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
 	${ROOTPWAAMP_DICTIONARY}
-	waveDescription.h amplitudeTreeLeaf.h ampIntegralMatrix.h
+	waveDescription.h ampIntegralMatrix.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaAmpLinkDef.h
 	)
@@ -95,6 +94,7 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_NBODYPHASESPACE_LIB}"
+	"${RPWA_STORAGEFORMATS_LIB}"
 	)
 
 
