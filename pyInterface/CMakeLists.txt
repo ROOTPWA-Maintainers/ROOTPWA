@@ -88,7 +88,6 @@ set(SOURCES
 	${DECAYAMPLITUDE_SUBDIR}/isobarCanonicalAmplitude_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/isobarHelicityAmplitude_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/waveDescription_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
 	${GENERATORS_SUBDIR}/generatorManager_py.cc
@@ -103,6 +102,7 @@ set(SOURCES
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
 	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc

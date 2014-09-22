@@ -52,11 +52,6 @@
 
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
-#pragma link C++ class rpwa::amplitudeTreeLeaf+;
-#pragma read sourceClass="rpwa::amplitudeTreeLeaf" version="[1-]"	  \
-	targetClass="rpwa::amplitudeTreeLeaf" \
-	source="" target="" \
-	code="{ newObj->rebuildSubAmpLabelMap(); }"
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
 
