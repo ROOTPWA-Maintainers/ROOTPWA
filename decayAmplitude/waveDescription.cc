@@ -43,6 +43,7 @@
 
 #include "TClass.h"
 
+#include "amplitudeMetadata.h"
 #include "libConfigUtils.hpp"
 #include "conversionUtils.hpp"
 #include "diffractiveDissVertex.h"
@@ -119,6 +120,16 @@ waveDescription::waveDescription(const waveDescription& waveDesc)
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 	parseKeyFileContent(_keyFileLocalCopy);
+}
+
+waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
+	: TObject          (),
+	  _key             (0),
+	  _keyFileParsed   (false),
+	  _keyFileLocalCopy(amplitudeMeta->keyfileContent())
+{
+	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	parseKeyFileContent(amplitudeMeta->keyfileContent());
 }
 
 
