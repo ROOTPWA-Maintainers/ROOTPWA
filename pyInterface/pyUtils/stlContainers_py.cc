@@ -3,6 +3,7 @@
 #include "boost/python/suite/indexing/vector_indexing_suite.hpp"
 #include "boost/python/suite/indexing/map_indexing_suite.hpp"
 
+#include<amplitudeMetadata.h>
 #include<particle.h>
 #include<particleProperties.h>
 #include<interactionVertex.h>
@@ -47,11 +48,15 @@ void rpwa::py::exportStlContainers() {
 		.def(bp::vector_indexing_suite<std::vector<unsigned int> >());
 
 	// std::vector<double>
-		bp::class_<std::vector<double> >("__vector_double")
-			.def(bp::vector_indexing_suite<std::vector<double> >());
+	bp::class_<std::vector<double> >("__vector_double")
+		.def(bp::vector_indexing_suite<std::vector<double> >());
 
 	// std::vector<std::complex<double> >
-		bp::class_<std::vector<std::complex<double> > >("__vector_complex_double")
-			.def(bp::vector_indexing_suite<std::vector<std::complex<double> > >());
+	bp::class_<std::vector<std::complex<double> > >("__vector_complex_double")
+		.def(bp::vector_indexing_suite<std::vector<std::complex<double> > >());
+
+	// std::vector<rpwa::amplitudeMetadata*>
+	bp::class_<std::vector<rpwa::amplitudeMetadata*> >("__vector_amplitudeMetadata")
+		.def(bp::vector_indexing_suite<std::vector<rpwa::amplitudeMetadata*> >());
 
 }

@@ -101,6 +101,10 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
