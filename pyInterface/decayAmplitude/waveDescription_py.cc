@@ -1,5 +1,7 @@
 #include "waveDescription_py.h"
 
+#include "amplitudeMetadata.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -51,6 +53,7 @@ void rpwa::py::exportWaveDescription() {
 
 	bp::class_<rpwa::waveDescription>("waveDescription")
 
+		.def(bp::init<const rpwa::amplitudeMetadata*>())
 		.def("parseKeyFile", &rpwa::waveDescription::parseKeyFile)
 		.def("parseKeyFileContent", &rpwa::waveDescription::parseKeyFileContent)
 		.def("keyFileParsed", &rpwa::waveDescription::keyFileParsed)
