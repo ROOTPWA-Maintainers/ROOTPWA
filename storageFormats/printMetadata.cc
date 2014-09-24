@@ -7,6 +7,7 @@
 
 #include "reportingUtilsEnvironment.h"
 #include "reportingUtils.hpp"
+#include "amplitudeMetadata.h"
 #include "eventMetadata.h"
 
 
@@ -26,6 +27,7 @@ usage(const string& progName,
 	     << " -i inputFile [-r]" << endl
 	     << "    where:" << endl
 	     << "        -i file    input file in ROOTPWA format (default: ./input.root)" << endl
+	     << "        -a name    amplitude object base name" << endl
 	     << "        -r         recalculate hash and compare it with the stored one (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -42,6 +44,7 @@ int main(int argc, char** argv)
 
 	const string progName = argv[0];
 	string inputFileName  = "input.root";
+	string objectBaseName = "";
 	bool recalculateHash = false;
 
 	// if the following line is missing, there are error messages of the sort
@@ -52,11 +55,14 @@ int main(int argc, char** argv)
 
 	extern char* optarg;
 	int c;
-	while((c = getopt(argc, argv, "i:rh")) != -1)
+	while((c = getopt(argc, argv, "i:a:rh")) != -1)
 	{
 		switch(c) {
 		case 'i':
 			inputFileName = optarg;
+			break;
+		case 'a':
+			objectBaseName = optarg;
 			break;
 		case 'r':
 			recalculateHash = true;
@@ -109,6 +115,24 @@ int main(int argc, char** argv)
 			}
 		}
 		printInfo << *eventMeta << endl;
+		cout << endl;
+		return 0;
+	}
+	const amplitudeMetadata* amplitudeMeta = (objectBaseName == "") ? 0 : amplitudeMetadata::readAmplitudeFile(inputFile, objectBaseName/*, true*/);
+	if(amplitudeMeta) {
+		if(recalculateHash) {
+			printInfo << "recalculating hash..." << endl;
+			const string calculatedHash = amplitudeMeta->recalculateHash(true);
+			if(calculatedHash != amplitudeMeta->contentHash()) {
+				printErr << "hash verification failed, hash from metadata '" << amplitudeMeta->contentHash() << "' does "
+				         << "not match with calculated hash '" << calculatedHash << "'. Aborting..." << endl;
+			} else {
+				cout << endl;
+				printSucc << "recalculated hash matches with hash from metadata." << endl;
+				cout << endl;
+			}
+		}
+		printInfo << *amplitudeMeta;
 		cout << endl;
 		return 0;
 	}

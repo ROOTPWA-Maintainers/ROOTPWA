@@ -40,6 +40,7 @@
 
 
 #pragma link C++ class rpwa::eventMetadata+;
+#pragma link C++ class rpwa::amplitudeMetadata+;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
