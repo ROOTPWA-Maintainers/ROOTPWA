@@ -15,7 +15,7 @@ using namespace rpwa;
 void rpwa::printGitHash()
 {
 	printInfo << "git repository hash at compile time was "
-	          << "'" << GIT_HASH << "'" << std::endl;
+	          << "'" << gitHash() << "'" << std::endl;
 }
 
 
@@ -45,4 +45,10 @@ void rpwa::printLibraryInfo()
 	std::cout << "    MPI libraries; using Boost.MPI" << std::endl;
 #endif
 	std::cout << "    Python version " << PYTHONLIBS_VERSION_STRING << " in '" << PYTHON_INCLUDE_DIRS << "'; using Boost.Python" << std::endl;
+}
+
+
+std::string rpwa::gitHash()
+{
+	return GIT_HASH;
 }
