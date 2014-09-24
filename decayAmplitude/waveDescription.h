@@ -58,12 +58,14 @@ namespace libconfig {
 
 namespace rpwa {
 
+	class amplitudeMetadata;
 
 	class waveDescription : public TObject {
 
 	public:
 
 		waveDescription();
+		waveDescription(const amplitudeMetadata* amplitudeMeta);
 		virtual ~waveDescription();
 
 		void clear();
