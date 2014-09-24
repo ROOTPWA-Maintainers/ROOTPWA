@@ -40,7 +40,7 @@ if __name__ == "__main__":
 	for name in inputFile.Get(decayKinPartNamesObjName):
 		finalStateParticleNames.append(str(name))
 
-	fileWriter = pyRootPwa.core.dataFileWriter()
+	fileWriter = pyRootPwa.core.eventFileWriter()
 	fileWriter.initialize(outputFile,
 	                      userString,
 	                      initialStateParticleNames,
