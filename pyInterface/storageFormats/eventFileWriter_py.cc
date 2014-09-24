@@ -25,13 +25,13 @@ namespace {
 		std::vector<std::string> productionKinematicsParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProductionKinematicsParticleNames, productionKinematicsParticleNames))
 		{
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for initialStateParticleNames when executing rpwa::dataFileWriter::initialize()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for initialStateParticleNames when executing rpwa::eventFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
 		std::vector<std::string> decayKinematicsParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyDecayKinematicsParticleNames, decayKinematicsParticleNames))
 		{
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::dataFileWriter::initialize()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::eventFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
 		std::map<std::string, std::pair<double, double> > binningMap;
@@ -40,12 +40,12 @@ namespace {
 			for(int i = 0; i < bp::len(keys); ++i) {
 				std::pair<double, double> element;
 				if(not rpwa::py::convertBPObjectToPair<double, double>(pyBinningMap[keys[i]], element)) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid pair for binningMap when executing rpwa::dataFileWriter::initialize()");
+					PyErr_SetString(PyExc_TypeError, "Got invalid pair for binningMap when executing rpwa::eventFileWriter::initialize()");
 					bp::throw_error_already_set();
 				}
 				bp::extract<std::string> getString(keys[i]);
 				if(not getString.check()) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid key for binningMap when executing rpwa::dataFileWriter::initialize()");
+					PyErr_SetString(PyExc_TypeError, "Got invalid key for binningMap when executing rpwa::eventFileWriter::initialize()");
 					bp::throw_error_already_set();
 				}
 				binningMap[getString()] = element;
@@ -54,7 +54,7 @@ namespace {
 		std::vector<std::string> additionalVariableLabels;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyAdditionalVariableLabels, additionalVariableLabels))
 		{
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariableLabels when executing rpwa::dataFileWriter::initialize()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariableLabels when executing rpwa::eventFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
 		return self.initialize(*outputFile,
@@ -85,7 +85,7 @@ namespace {
 		std::vector<double> additionalVariablesToSave;
 		if(not rpwa::py::convertBPObjectToVector<double>(pyAdditionalVariablesToSave, additionalVariablesToSave))
 		{
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariablesToSave when executing rpwa::dataFileWriter::addEvent()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariablesToSave when executing rpwa::eventFileWriter::addEvent()");
 			bp::throw_error_already_set();
 		}
 		self.addEvent(productionKinematicsMomenta, decayKinematicsMomenta, additionalVariablesToSave);
@@ -96,7 +96,7 @@ namespace {
 
 void rpwa::py::exportEventFileWriter() {
 
-	bp::class_<rpwa::eventFileWriter, boost::noncopyable>("dataFileWriter")
+	bp::class_<rpwa::eventFileWriter, boost::noncopyable>("eventFileWriter")
 		.def(
 			"initialize"
 			, &eventFileWriter_initialize
