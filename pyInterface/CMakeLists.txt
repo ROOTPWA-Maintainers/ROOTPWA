@@ -102,6 +102,8 @@ set(SOURCES
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
 	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
@@ -119,11 +121,11 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
-	"${RPWA_NBODYPHASESPACE_LIB}"
 	"${RPWA_GENERATORS_LIB}"
+	"${RPWA_NBODYPHASESPACE_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
-	"${RPWA_UTILITIES_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
+	"${RPWA_UTILITIES_LIB}"
 	)
 
 
