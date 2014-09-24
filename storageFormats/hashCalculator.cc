@@ -20,6 +20,14 @@ void rpwa::hashCalculator::Update(const double& value) {
 	TMD5::Update((UChar_t*)&value, 8);
 }
 
+
+void rpwa::hashCalculator::Update(const complex<double>& value)
+{
+	Update(value.real());
+	Update(value.imag());
+}
+
+
 void rpwa::hashCalculator::Update(const TVector3& vector) {
 	if(_debug) {
 		printDebug << "updating with TVector3(" << vector.X() << ", " << vector.Y() << ", " << vector.Z() << ")." << endl;
