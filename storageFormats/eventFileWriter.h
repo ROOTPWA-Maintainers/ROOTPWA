@@ -43,7 +43,7 @@ namespace rpwa {
 	  private:
 
 		bool _initialized;
-		TFile* _outfile;
+		TFile* _outputFile;
 		eventMetadata _metadata;
 		TClonesArray* _productionKinematicsMomenta;
 		TClonesArray* _decayKinematicsMomenta;

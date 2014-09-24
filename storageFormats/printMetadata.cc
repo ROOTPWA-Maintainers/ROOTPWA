@@ -7,7 +7,7 @@
 
 #include "reportingUtilsEnvironment.h"
 #include "reportingUtils.hpp"
-#include "eventFileWriter.h"
+#include "eventMetadata.h"
 
 
 using namespace std;
@@ -111,9 +111,6 @@ int main(int argc, char** argv)
 			}
 		}
 		printInfo << *eventMeta << endl;
-		printInfo << "additional information:" << endl
-		          << "    number of events in file ... " << eventTree->GetEntries() << endl
-		          << "    additional branches ........ " << additionalVariableNames << endl;
 		cout << endl;
 		return 0;
 	}
