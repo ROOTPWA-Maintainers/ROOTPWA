@@ -104,6 +104,8 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
