@@ -19,7 +19,7 @@ using namespace rpwa;
 
 rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
-	  _outfile(0),
+	  _outputFile(0),
 	  _metadata(),
 	  _productionKinematicsMomenta(0),
 	  _decayKinematicsMomenta(0),
@@ -45,11 +45,11 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
                                        const int&                                 buffsize)
 {
 	if(_initialized) {
-		printWarn << "trying to initialize when already initialized" << endl;
+		printWarn << "trying to initialize when already initialized." << endl;
 		return false;
 	}
-	_outfile = &outputFile;
-	_outfile->cd();
+	_outputFile = &outputFile;
+	_outputFile->cd();
 
 	// prepare metadata
 	_metadata.setUserString(userString);
@@ -82,6 +82,10 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
                                      const vector<TVector3>& decayKinematicsMomenta,
                                      const vector<double>&   additionalVariablesToSave)
 {
+	if(not _initialized) {
+		printWarn << "trying to add event when not initialized." << endl;
+		return;
+	}
 	if(productionKinematicsMomenta.size() != _nmbProductionKinematicsParticles) {
 		printErr << "received unexpected number of initial state particles (got "
 		         << productionKinematicsMomenta.size() << ", expected "
@@ -120,13 +124,13 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 
 bool rpwa::eventFileWriter::finalize() {
 	if(not _initialized) {
-		printWarn << "trying to finalize when not initialized" << endl;
+		printWarn << "trying to finalize when not initialized." << endl;
 		return false;
 	}
 	_metadata.setContentHash(_hashCalculator.hash());
-	_outfile->cd();
+	_outputFile->cd();
 	_metadata.Write(eventMetadata::objectNameInFile.c_str());
-	_outfile->Close();
+	_outputFile->Close();
 	reset();
 	return true;
 }
@@ -141,6 +145,7 @@ void rpwa::eventFileWriter::reset() {
 		delete _decayKinematicsMomenta;
 		_decayKinematicsMomenta = 0;
 	}
-	_outfile = 0;
+	_outputFile = 0;
+	_hashCalculator = hashCalculator();
 	_initialized = false;
 }
