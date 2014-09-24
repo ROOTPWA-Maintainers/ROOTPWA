@@ -40,6 +40,7 @@
 
 
 #pragma link C++ class rpwa::eventMetadata+;
+#pragma link C++ class rpwa::amplitudeMetadata+;
 
 
 #pragma link C++ class std::vector<std::complex<double> >+;

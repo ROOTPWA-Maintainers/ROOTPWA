@@ -46,9 +46,11 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
+	amplitudeFileWriter.cc
+	amplitudeMetadata.cc
 	amplitudeTreeLeaf.cc
-	eventMetadata.cc
 	eventFileWriter.cc
+	eventMetadata.cc
 	hashCalculator.cc
 	)
 
@@ -61,7 +63,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
 root_generate_dictionary(
 	${ROOTPWASTORAGE_DICTIONARY}
-	amplitudeTreeLeaf.h eventMetadata.h
+	amplitudeMetadata.h amplitudeTreeLeaf.h eventMetadata.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaStorageLinkDef.h
 	)
@@ -73,8 +75,8 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
+	"${RPWA_UTILITIES_LIB}"
 	)
-#add_dependencies(${THIS_LIB} environment)
 
 
 make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
