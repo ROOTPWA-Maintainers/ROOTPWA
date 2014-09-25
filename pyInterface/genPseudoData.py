@@ -63,14 +63,6 @@ if __name__ == "__main__":
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
 
-	#initialize the printing functors
-	printingCounter = multiprocessing.Array('i', [0]*5)
-	pyRootPwa.utils.printErr = pyRootPwa.utils.printErrClass(printingCounter)
-	pyRootPwa.utils.printWarn = pyRootPwa.utils.printWarnClass(printingCounter)
-	pyRootPwa.utils.printSucc = pyRootPwa.utils.printSuccClass(printingCounter)
-	pyRootPwa.utils.printInfo = pyRootPwa.utils.printInfoClass(printingCounter)
-	pyRootPwa.utils.printDebug = pyRootPwa.utils.printDebugClass(printingCounter)
-
 	printErr  = pyRootPwa.utils.printErr
 	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc
@@ -260,4 +252,4 @@ if __name__ == "__main__":
 	printInfo("attempts: " + str(attempts))
 	printInfo("efficiency: " + str(100. * (float(eventsGenerated) / float(attempts))) + "%")
 
-	pyRootPwa.utils.printPrintingSummary(printingCounter)
+	pyRootPwa.utils.printPrintingSummary(pyRootPwa.utils.printingCounter)

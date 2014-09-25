@@ -1,5 +1,6 @@
 
 import inspect as _inspect
+import multiprocessing as _multiprocessing
 import sys as _sys
 
 import pyRootPwa.utils
@@ -133,8 +134,12 @@ class printDebugClass(_printClass):
 		self.counter[4] += 1
 		self.printFormatted(str(msg), "debug")
 
-printErr = None
-printWarn = None
-printSucc = None
-printInfo = None
-printDebug = None
+try:
+	printingCounter
+except NameError:
+	printingCounter = _multiprocessing.Array('i', [0]*5)
+	printErr = printErrClass(printingCounter)
+	printWarn = printWarnClass(printingCounter)
+	printSucc = printSuccClass(printingCounter)
+	printInfo = printInfoClass(printingCounter)
+	printDebug = printDebugClass(printingCounter)
