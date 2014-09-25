@@ -113,13 +113,6 @@ if __name__ == "__main__":
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
 
-	printingCounter = 5 * [0]
-	pyRootPwa.utils.printErr = pyRootPwa.utils.printErrClass(printingCounter)
-	pyRootPwa.utils.printWarn = pyRootPwa.utils.printWarnClass(printingCounter)
-	pyRootPwa.utils.printSucc = pyRootPwa.utils.printSuccClass(printingCounter)
-	pyRootPwa.utils.printInfo = pyRootPwa.utils.printInfoClass(printingCounter)
-	pyRootPwa.utils.printDebug = pyRootPwa.utils.printDebugClass(printingCounter)
-
 	if arguments.type not in ["data", "acc", "gen"]:
 		pyRootPwa.utils.printErr("invalid type '" + arguments.type + "' found, must be either 'data', 'gen' or 'acc'. Aborting...")
 		sys.exit(5)
@@ -397,4 +390,4 @@ if __name__ == "__main__":
 	outputFile.Write()
 	outputFile.Close()
 
-	pyRootPwa.utils.printPrintingSummary(printingCounter)
+	pyRootPwa.utils.printPrintingSummary(pyRootPwa.utils.printingCounter)
