@@ -44,7 +44,5 @@ void rpwa::printLibraryInfo()
 #ifdef USE_MPI
 	std::cout << "    MPI libraries; using Boost.MPI" << std::endl;
 #endif
-#ifdef USE_PYTHON
 	std::cout << "    Python version " << PYTHONLIBS_VERSION_STRING << " in '" << PYTHON_INCLUDE_DIRS << "'; using Boost.Python" << std::endl;
-#endif
 }

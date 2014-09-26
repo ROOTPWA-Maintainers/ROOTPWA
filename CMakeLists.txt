@@ -89,14 +89,18 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
-    message(WARNING " ??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. Clang version 3.4 or higher is required. Proceed at your own risk.")
+    message(WARNING " ??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+			"Clang version 3.4 or higher is required. Proceed at your own risk.")
   endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
-    message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. AppleClang version 6.0 or higher is required. Proceed at your own risk.")
+    message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+			"AppleClang version 6.0 or higher is required. Proceed at your own risk.")
   endif()
 else()
-  message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. Proceed at your own risk.")
+  message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
+		"is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. "
+		"Proceed at your own risk.")
 endif()
 
 
@@ -209,7 +213,7 @@ if(Boost_FOUND)
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
 else()
 	message(FATAL_ERROR " !!! Could not find Boost installation. "
-		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
+		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please consult README.md.")
 endif()
 
 
@@ -229,8 +233,8 @@ set_package_properties(Libconfig
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
-find_package(ROOT 5.34 REQUIRED ${_ROOT_COMPONENTS})
+set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer" "PyROOT")
+find_package(ROOT 5.34.04 REQUIRED ${_ROOT_COMPONENTS})
 set_package_properties(ROOT
 	PROPERTIES
 	DESCRIPTION "C++ HEP analysis framework"
@@ -239,7 +243,31 @@ set_package_properties(ROOT
 	)
 
 
-# setup CUDA
+# setup Python
+message(STATUS "")
+message(STATUS ">>> Setting up Python.")
+find_package(PYTHON 2.6 REQUIRED)
+set_package_properties(PYTHON
+	PROPERTIES
+	DESCRIPTION "General-purpose, high-level programming language"
+	URL "http://www.python.org"
+	PURPOSE "Provides scripting interface to ROOTPWA classes"
+	TYPE OPTIONAL
+	)
+# check that Boost.Python library was found
+if(NOT Boost_PYTHON_FOUND)
+	message(FATAL_ERROR " !!! Cannot find Boost.Python library in "
+		"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.Python.")
+endif()
+set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
+message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
+set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
+file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
+file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
+message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+
+
+# setup CUDA (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
@@ -297,7 +325,7 @@ endif()
 add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 
 
-# setup MPI
+# setup MPI (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up MPI.")
 option(USE_MPI "En/Disables compilation of MPI components" OFF)
@@ -327,7 +355,7 @@ else()
 		if(NOT Boost_${_BOOST_MPI_COMPONENT}_FOUND)
 			set(USE_MPI OFF)
 			message(STATUS "Cannot find Boost.MPI library '${_BOOST_MPI_COMPONENT}' in "
-				"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.MPI.")
+				"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.MPI.")
 		else()
 			list(APPEND Boost_MPI_LIBS ${Boost_${_BOOST_MPI_COMPONENT}_LIBRARY})
 		endif()
@@ -338,67 +366,11 @@ else()
 		message(STATUS "Enabling compilation of MPI components.")
 		add_definitions(-DUSE_MPI)
 	else()
-		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
-			"No MPI components will be generated.")
+		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly. "
+			"Please consult README.md on how to build Boost.MPI. No MPI components will be generated.")
 	endif()
 endif()
 add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
-
-
-# setup Python
-message(STATUS "")
-message(STATUS ">>> Setting up Python.")
-option(USE_PYTHON "En/Disables Python bindings" OFF)
-if(ROOT_VERSION VERSION_LESS "5.34.04")
-	message(STATUS "Python bindings require ROOT version 5.34.04 or newer "
-		"(found ${ROOT_VERSION}).")
-	message(STATUS "No Python bindings will be generated")
-	set(USE_PYTHON OFF)
-else()
-	find_package(PYTHON 2.6)
-	set_package_properties(PYTHON
-		PROPERTIES
-		DESCRIPTION "General-purpose, high-level programming language"
-		URL "http://www.python.org"
-		PURPOSE "Provides scripting interface to ROOTPWA classes"
-		TYPE OPTIONAL
-		)
-	if(NOT PYTHONLIBS_FOUND)
-		set(USE_PYTHON OFF)
-		message(STATUS "Cannot find Python libraries. No Python bindings will be generated.")
-	else()
-		set(USE_PYTHON ON)
-		# check that Boost.Python library was found
-		set(_BOOST_PYTHON_COMPONENTS "python")
-		foreach(_BOOST_PYTHON_COMPONENT ${_BOOST_PYTHON_COMPONENTS})
-			string(TOUPPER ${_BOOST_PYTHON_COMPONENT} _BOOST_PYTHON_COMPONENT)
-			if(NOT Boost_${_BOOST_PYTHON_COMPONENT}_FOUND)
-				set(USE_PYTHON OFF)
-				message(STATUS "Cannot find Boost.Python library in "
-					"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.Python.")
-			else()
-				list(APPEND Boost_PYTHON_LIBS ${Boost_${_BOOST_PYTHON_COMPONENT}_LIBRARY})
-			endif()
-		endforeach()
-		unset(_BOOST_PYTHON_COMPONENTS)
-		if(USE_PYTHON)
-			message(STATUS "Setting up ROOT again now with PyROOT library.")
-			find_package(ROOT 5.34.04 REQUIRED ${_ROOT_COMPONENTS} PyROOT)
-			message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
-			message(STATUS "Enabling compilation of Python components.")
-			add_definitions(-DUSE_PYTHON)
-			set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-			file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
-			file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
-			message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
-		else()
-			message(STATUS "Found Python installation, but Boost.Python is not built correctly (consult INSTALL). "
-				"No Python bindings will be generated.")
-		endif()
-	endif()
-endif()
-unset(_ROOT_COMPONENTS)
-add_feature_info(Python_scripting USE_PYTHON "The Python_scripting feature provides a scripting interface for some classes.")
 
 
 # make git hash accessible via predefined macro GIT_HASH
@@ -427,7 +399,7 @@ if(GIT_FOUND)
 endif()
 
 
-# setup doxygen
+# setup doxygen (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)
@@ -517,11 +489,9 @@ set(FORTRAN_LIBS
 	RootPwaFortran
 	)
 
-if(USE_PYTHON)
-	set(PYINTERFACE_LIBS
-		RootPwaPy
-		)
-endif()
+set(PYINTERFACE_LIBS
+	RootPwaPy
+	)
 
 if(USE_CUDA)
 	set(CUDACODE_INCLUDE_DIR
@@ -575,9 +545,7 @@ if(USE_MPI)
 endif()
 
 # Python bindings
-if(USE_PYTHON)
-	add_subdirectory(pyInterface)
-endif()
+add_subdirectory(pyInterface)
 
 # compilation of sandBox is optional
 option(COMPILE_SANDBOX "en/disable compilation of code in sandBox directory" OFF)
