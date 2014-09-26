@@ -1,8 +1,16 @@
 #!/bin/bash
 
 
+if [[ ! "${BOOST_ROOT}" ]]
+then
+		echo '!!! error: ${BOOST_ROOT} environment variable is not set or empty. cannot compile BOOST libraries.'
+		exit 1
+fi
+
+
 BOOST_ROOT_DIR=$(readlink --canonicalize ${BOOST_ROOT})
-LOG_FILE=${BOOST_ROOT_DIR}/compileBoostMpi.log
+LOG_FILE=$(basename ${0})
+LOG_FILE=${BOOST_ROOT_DIR}/${LOG_FILE%.*}.log
 if [[ -d ${BOOST_ROOT_DIR} ]]
 then
 		echo ">>> compiling Boost libraries in '${BOOST_ROOT_DIR}'"
@@ -29,7 +37,7 @@ fi
 echo "    view result in ${LOG_FILE}"
 #./bootstrap.sh --with-libraries=mpi,python --with-python=python3 --prefix=. &> ${LOG_FILE}
 ./bootstrap.sh --with-libraries=mpi,python,timer --prefix=. &> ${LOG_FILE}
-./bjam >> ${LOG_FILE} 2>&1
+./bjam -a >> ${LOG_FILE} 2>&1
 
 
 exit 0
