@@ -68,11 +68,11 @@ include(CheckCXXSourceCompiles)
 enforce_out_of_source_build()
 
 
-# warn user if system is not UNIX
+# abort, if system is not UNIX
 message(STATUS "")
 message(STATUS ">>> Setting up system environment.")
 if(NOT UNIX)
-	message(FATAL_ERROR "This is an unsupported system.")
+	message(FATAL_ERROR " !!! This is an unsupported system.")
 endif()
 ProcessorCount(NMB_CPU_CORES)
 message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
@@ -80,6 +80,24 @@ message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
 	"${NMB_CPU_CORES} CPU core(s).")
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
 	"architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
+
+
+# warn user about outdated or unsupported compiler
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.4)
+    message(WARNING " ??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. GCC version 4.4 or higher is required. Proceed at your own risk.")
+  endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
+    message(WARNING " ??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. Clang version 3.4 or higher is required. Proceed at your own risk.")
+  endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
+    message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. AppleClang version 6.0 or higher is required. Proceed at your own risk.")
+  endif()
+else()
+  message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. Proceed at your own risk.")
+endif()
 
 
 # define build types
@@ -190,7 +208,7 @@ if(Boost_FOUND)
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
 else()
-	message(FATAL_ERROR "Could not find Boost installation. "
+	message(FATAL_ERROR " !!! Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
 
@@ -404,7 +422,7 @@ if(GIT_FOUND)
 	if(NOT _GIT_LOG_RETURN)
 		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
-		message(STATUS "Error running 'git'. Repository hash unknown.")
+		message(Warning " ??? Running 'git' did not succeed. Repository hash unknown.")
 	endif()
 endif()
 
@@ -421,7 +439,7 @@ set_package_properties(Doxygen
 	TYPE RECOMMENDED
 	)
 if(NOT DOXYGEN_FOUND)
-	message(WARNING "Cannot find Doxygen. Documentation cannot be generated.")
+	message(WARNING " ??? Cannot find Doxygen. Documentation cannot be generated.")
 else()
 	set(DOXYGEN_TARGET  "doxygen")
 	set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
