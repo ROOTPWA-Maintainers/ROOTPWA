@@ -94,10 +94,10 @@ endif()
 
 
 # set common compiler flags
-# test whether -std=c++11 is supported by the C++ compiler
-check_cxx_compiler_flag("-std=c++11" HAVE_CXX11)
-if(HAVE_CXX11)
-	message(STATUS "C++11 compatible compiler found, enable it.")
+# test whether C++ compiler supports C++11 standard
+check_cxx_compiler_flag("-std=c++11" COMPILER_IS_CXX11_COMPATIBLE)
+if(COMPILER_IS_CXX11_COMPATIBLE)
+	message(STATUS "C++11 compatible compiler found, enable C++11 features.")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
@@ -108,33 +108,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-# code should now compile with clang so forcing of gcc should not be necessary anymore
-# if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
-# 	# use gcc instead of llvm compiler on MacOS 10.7 (Darwin 11.x.y)
-# 	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "10.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "12.0.0")
-# 		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler.")
-# 		set(CMAKE_C_COMPILER gcc-4.2)
-# 		set(CMAKE_CXX_COMPILER g++-4.2)
-# 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
-# 	endif()
-# 	# use gcc instead of llvm compiler on MacOS 10.8 (Darwin 12.x.y)
-# 	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "11.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "13.0.0")
-# 		message(STATUS "Detected MacOS 10.8: using gcc instead of llvm compiler.")
-# 		set(CMAKE_C_COMPILER gcc)
-# 		set(CMAKE_CXX_COMPILER g++)
-# 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
-# 	endif()
-# endif()
-# -march=native switch was disabled so no need anymore to handle the gcc 4.2.1 bug
-# if(CMAKE_COMPILER_IS_GNUCXX)
-# 	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-# 	# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
-# 	# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
-# 	if(GCC_VERSION VERSION_EQUAL "4.2.1")
-# 		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug.")
-# 		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-# 	endif()
-# endif()
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 # report global build settings
 foreach(_LANG "C" "CXX")
