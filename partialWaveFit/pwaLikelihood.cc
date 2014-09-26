@@ -717,7 +717,6 @@ pwaLikelihood<complexT>::readIntegrals
 {
 	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
 	const string normIntFileExt  = extensionFromPath(normIntFileName);
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (normIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -734,9 +733,7 @@ pwaLikelihood<complexT>::readIntegrals
 		}
 		reorderIntegralMatrix(*integral, _normMatrix);
 		intFile->Close();
-	} else
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
-		if(normIntFileExt == "int") {
+	} else if(normIntFileExt == "int") {
 			ampIntegralMatrix integral;
 			integral.readAscii(normIntFileName);
 			reorderIntegralMatrix(integral, _normMatrix);
@@ -748,7 +745,6 @@ pwaLikelihood<complexT>::readIntegrals
 
 	printInfo << "loading acceptance integral from '" << accIntFileName << "'" << endl;
 	const string accIntFileExt  = extensionFromPath(accIntFileName);
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (accIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -771,9 +767,7 @@ pwaLikelihood<complexT>::readIntegrals
 			_totAcc = 1;
 		reorderIntegralMatrix(*integral, _accMatrix);
 		intFile->Close();
-	} else
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
-		if (accIntFileExt == "int") {
+	} else if (accIntFileExt == "int") {
 			ampIntegralMatrix integral;
 			integral.readAscii(accIntFileName);
 			if (_numbAccEvents != 0) {
@@ -820,7 +814,6 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				amps.reserve(nmbEvents);
 			// read decay amplitudes
 			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			if (useRootAmps) {
 				ampFilePath = changeFileExtension(ampFilePath, ".root");
 				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
@@ -855,9 +848,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 						amp /= sqrt(normInt.real());  // rescale decay amplitude
 					amps.push_back(amp);
 				}
-			} else
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
-			{
+			} else {
 				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
 				ifstream ampFile(ampFilePath.c_str());
 				if (not ampFile) {

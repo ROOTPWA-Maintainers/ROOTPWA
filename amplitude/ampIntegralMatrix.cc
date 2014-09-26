@@ -54,9 +54,7 @@ using namespace boost::accumulators;
 using namespace rpwa;
 
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 ClassImp(ampIntegralMatrix);
-#endif
 
 
 bool ampIntegralMatrix::_debug = false;
@@ -624,7 +622,6 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
 	unsigned long nmbAmps = 0;
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
@@ -726,7 +723,6 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		++waveIndex;
 	}
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
 }
 

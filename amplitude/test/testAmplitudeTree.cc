@@ -54,8 +54,6 @@ main(int argc, char** argv)
 	printCompilerInfo();
 	printGitHash();
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-
 	const unsigned int nmbEvents       = 1000000;
 	const unsigned int nmbIncohSubAmps = 3;
 	gRandom->SetSeed(123456789);
@@ -113,7 +111,5 @@ main(int argc, char** argv)
 		if (ampLeaf3 != *ampLeaf)
 			printErr << "problem with arithmetic" << endl;
 	}
-
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
 
 }

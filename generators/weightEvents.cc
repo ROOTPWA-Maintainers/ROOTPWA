@@ -65,7 +65,6 @@ using namespace boost;
 using namespace rpwa;
 
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 unsigned long
 openRootAmpFiles(const string&               ampDirName,
                  const vector<string>&       waveNames,
@@ -128,7 +127,6 @@ openRootAmpFiles(const string&               ampDirName,
 
 	return nmbAmpValues;
 }
-#endif
 
 
 unsigned long
@@ -194,11 +192,7 @@ usage(const string& progName,
 	     << "        -n #       if > 1, additional production amplitudes are generated according to covariances (default: 1)"<< endl
 	     << "        -i file    integral file (default: './norm.int')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
-#else
-	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
-#endif
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
 	     << "        -t name    name of tree in output file (default: rootPwaWeightTree)" << endl
@@ -257,9 +251,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
-#endif
 			break;
 		case 'm':
 			massBinCenter = atof(optarg);
@@ -453,13 +445,10 @@ main(int    argc,
 	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
-	unsigned long nmbEvents = 0;
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-	vector<TTree*> ampRootTrees;
+	unsigned long              nmbEvents = 0;
+	vector<TTree*>             ampRootTrees;
 	vector<amplitudeTreeLeaf*> ampRootLeafs;
-#endif
-	vector<ifstream*> ampBinFiles;
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	vector<ifstream*>          ampBinFiles;
 	if (useRootAmps) {
 		nmbEvents = openRootAmpFiles(ampDirName, waveNames, ampRootTrees, ampRootLeafs);
 		// test that an amplitude file was opened for each wave
@@ -468,9 +457,7 @@ main(int    argc,
 			printErr << "error opening ROOT amplitude files." << endl;
 			exit(1);
 		}
-	} else
-#endif
-	{
+	} else {
 		nmbEvents = openBinAmpFiles(ampDirName, waveNames, ampBinFiles);
 		//const unsigned long nmbBinEvents = openBinAmpFiles(ampDirName, waveNames, ampFiles);
 		// test that an amplitude file was opened for each wave
@@ -537,7 +524,6 @@ main(int    argc,
 		// read decay amplitudes for this event
 		vector<complex<double> > decayAmps(nmbWaves);
 			for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			if (useRootAmps) {
 				if (not ampRootTrees[iWave])  // e.g. flat wave
 					decayAmps[iWave] = complex<double>(0);
@@ -546,9 +532,7 @@ main(int    argc,
 					assert(ampRootLeafs[iWave]->nmbIncohSubAmps() == 1);
 					decayAmps[iWave] = ampRootLeafs[iWave]->incohSubAmp(0);
 				}
-			} else
-#endif
-			{
+			} else {
 				if (not ampBinFiles[iWave])  // e.g. flat wave
 					decayAmps[iWave] = complex<double>(0);
 				else {
@@ -628,25 +612,16 @@ main(int    argc,
 	outFile->Close();
 
 	// cleanup
-	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-		if (useRootAmps) {
-		} else
-#endif
-		{
+	if (useRootAmps) {
+		ampRootTrees.clear();
+		ampRootLeafs.clear();
+	} else {
+		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
 			if (ampBinFiles[iWave]) {
 				ampBinFiles[iWave]->close();
 				delete ampBinFiles[iWave];
 			}
 		}
-	}
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-	if (useRootAmps) {
-		ampRootTrees.clear();
-		ampRootLeafs.clear();
-	} else
-#endif
-	{
 		ampBinFiles.clear();
 	}
 

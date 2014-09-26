@@ -98,11 +98,9 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
-#endif
 
 	// parse command line options
 	const string   progName                 = argv[0];
@@ -215,7 +213,6 @@ main(int    argc,
 
 	// create output file for amplitudes
 	bool writeRootFormat = false;
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	const string ampFileExt = extensionFromPath(ampFileName);
 	if (ampFileExt == "root")
 		writeRootFormat = true;
@@ -226,11 +223,9 @@ main(int    argc,
 		         << "nor a .amp file. aborting." << endl;
 		usage(progName);
 	}
-#endif
 	printInfo << "creating amplitude file '" << ampFileName << "'";
 	ofstream*          ampFilePlain = 0;
 	TFile*             ampFileRoot  = 0;
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	amplitudeTreeLeaf* ampTreeLeaf  = 0;
 	TTree*             ampTree      = 0;
 	if (writeRootFormat) {
@@ -247,12 +242,10 @@ main(int    argc,
 		const int splitLevel = 99;
 		const int bufSize    = 256000;
 		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
-	} else
-#endif
-		{
-			cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
-			ampFilePlain = new ofstream(ampFileName.c_str());
-		}
+	} else {
+		cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
+		ampFilePlain = new ofstream(ampFileName.c_str());
+	}
 	if (   (writeRootFormat and not ampFileRoot)
 	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
 		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
@@ -283,12 +276,10 @@ main(int    argc,
 
 	// write amplitudes to output file
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		if (ampFileRoot) {
 			ampTreeLeaf->setAmp(ampValues[i]);
 			ampTree->Fill();
 		}
-#endif
 		if (ampFilePlain) {
 			if (asciiOutput)
 				*ampFilePlain << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[i] << endl;
@@ -296,7 +287,6 @@ main(int    argc,
 				ampFilePlain->write((char*)(&ampValues[i]), sizeof(complex<double>));
 		}
 	}
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (ampFileRoot) {
 		printInfo << "optimizing tree" << endl;
 		//ampTree->Print();
@@ -306,7 +296,6 @@ main(int    argc,
 		ampFileRoot->Close();
 		delete ampFileRoot;
 	}
-#endif
 	if (ampFilePlain) {
 		ampFilePlain->close();
 		delete ampFilePlain;

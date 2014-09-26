@@ -50,7 +50,6 @@
 	code="{ newObj->parseKeyFileContent(newObj->keyFileContent()); }"
 
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
@@ -60,7 +59,6 @@
 	code="{ newObj->rebuildSubAmpLabelMap(); }"
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
-#endif
 
 
 #endif

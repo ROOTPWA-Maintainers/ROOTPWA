@@ -237,20 +237,13 @@ set_package_properties(Libconfig
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
 set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
-find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS})
+find_package(ROOT 5.34 REQUIRED ${_ROOT_COMPONENTS})
 set_package_properties(ROOT
 	PROPERTIES
 	DESCRIPTION "C++ HEP analysis framework"
 	URL "http://root.cern.ch/"
 	TYPE REQUIRED
 	)
-# some code switches that depend on ROOT version
-# std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
-if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
-	set(USE_STD_COMPLEX_TREE_LEAFS TRUE)
-	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
-endif()
-add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_leaf feature provides ROOT data formats for amplitudes and amplitude integrals.")
 
 
 # setup CUDA

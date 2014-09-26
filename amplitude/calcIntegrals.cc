@@ -132,14 +132,9 @@ main(int    argc,
 	while (optind < argc) {
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
-		if (fileExt == "root") {
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
+		if (fileExt == "root")
 			rootAmpFileNames.push_back(fileName);
-#else
-			printErr << "reading of amplitudes in .root format not supported. "
-			         << "upgrade your ROOT installation. skipping." << endl;
-#endif
-		} else if (fileExt == "amp")
+		else if (fileExt == "amp")
 			binAmpFileNames.push_back(fileName);
 		else
 			printWarn << "input file '" << fileName << "' is neither a .root nor a .amp file. "
@@ -159,7 +154,6 @@ main(int    argc,
 	// write out integral
 	const string outFileExt = extensionFromPath(outFileName);
 	if (outFileExt == "root") {
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 		if (not outFile) {
 			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
@@ -174,11 +168,6 @@ main(int    argc,
 		} else
 			printSucc << "wrote integral to TKey '" << integralName << "' "
 			          << "in file '" << outFileName << "'" << endl;
-#else
-		printErr << "writing of integrals in .root format not supported. "
-		         << "upgrade your ROOT installation. aborting." << endl;
-		exit(1);
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	} else if (outFileExt == "int")
 		integral.writeAscii(outFileName);
 	else {

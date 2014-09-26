@@ -179,9 +179,7 @@ namespace rpwa {
 		std::vector<rpwa::waveDescription> _waveDescriptions;  ///< wave descriptions of all waves
 
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		ClassDef(ampIntegralMatrix,1)
-#endif
 
 	};
 

@@ -113,9 +113,7 @@ namespace rpwa {
 		std::map<std::string, unsigned int> _labelToIndexMap;    //! ///< maps subamp labels to indices
 
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		ClassDef(amplitudeTreeLeaf,1)
-#endif
 
 	};
 

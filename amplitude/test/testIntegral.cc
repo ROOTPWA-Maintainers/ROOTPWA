@@ -118,7 +118,6 @@ main(int    argc,
 		integral.readAscii("testIntegral.int");
 		ampIntegralMatrix integral2(integral);
 		integral2.writeAscii("testIntegral2.int");
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		// root I/O
 		// force loading predefined std::complex dictionary
 		gROOT->ProcessLine("#include <complex>");
@@ -144,7 +143,6 @@ main(int    argc,
 			}
 			inFile->Close();
 		}
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	}
 
 
