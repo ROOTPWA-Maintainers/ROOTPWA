@@ -32,7 +32,9 @@
 
 
 # check if cmake has the required version
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+message(STATUS ">>> This is CMake version ${CMAKE_VERSION}.")
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_policy(VERSION 3.0)
 
 
 # set verbosity
