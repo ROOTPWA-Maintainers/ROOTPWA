@@ -32,10 +32,10 @@
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
-	${GEN_INCLUDE_DIR}
+	${RPWA_GENERATORS_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
@@ -43,7 +43,6 @@ set(INCLUDE_DIRECTORIES
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
@@ -55,5 +54,5 @@ make_executable(testAmplitude               testAmplitude.cc                 "${
 make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
 make_executable(testIsospinSym              testIsospinSym.cc                "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
 make_executable(testIntegral                testIntegral.cc                  "${RPWA_DECAYAMPLITUDE_LIB}")
-make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${RPWA_DECAYAMPLITUDE_LIB}" "${ROOTPWAGEN_LIBS}")
+make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_GENERATORS_LIB}")
 make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${RPWA_DECAYAMPLITUDE_LIB}")

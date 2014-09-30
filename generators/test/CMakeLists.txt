@@ -28,7 +28,7 @@
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -37,8 +37,7 @@ set(INCLUDE_DIRECTORIES
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testMassAndTPrimePicker   testMassAndTPrimePicker.cc   "${ROOTPWAGEN_LIBS}")
+make_executable(testMassAndTPrimePicker   testMassAndTPrimePicker.cc   "${RPWA_GENERATORS_LIB}")

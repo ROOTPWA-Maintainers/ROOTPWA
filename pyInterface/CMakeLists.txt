@@ -50,7 +50,8 @@ set(INCLUDE_DIRECTORIES
 	${AMPLITUDE_SUBDIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${PARTICLEDATA_SUBDIR}
-	${GEN_INCLUDE_DIR}
+	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
+	${RPWA_GENERATORS_INCLUDE_DIR}
 	${GENERATORS_SUBDIR}
 	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${PYUTILS_SUBDIR}
@@ -116,11 +117,13 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
-	"${ROOTPWAGEN_LIBS}"
+	"${RPWA_NBODYPHASESPACE_LIB}"
+	"${RPWA_GENERATORS_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_UTILITIES_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
 	)
+
 
 # link the shared library with the python bindings
 add_custom_target(
@@ -128,12 +131,15 @@ add_custom_target(
 	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}RootPwaPy${CMAKE_SHARED_LIBRARY_SUFFIX}	${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
 )
 
+
 # produce python byte-code and move it to the build directory
 add_custom_target(
 	pyRootPwaPackageLinks ALL
 	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/python_compiler.py ${CMAKE_SOURCE_DIR}/pyInterface/package ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa
 )
 
+
 add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
+
 
 add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)

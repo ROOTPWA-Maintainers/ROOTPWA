@@ -446,9 +446,9 @@ set(_SRC_DIRS
 # 	cuda
   decayAmplitude
 # 	fortran
-# 	generators
+	generators
 # 	mpi
-# 	mySetup.sh
+  nBodyPhaseSpace
 	partialWaveFit
 	particleData
 # 	pyInterface
@@ -511,15 +511,15 @@ endforeach()
 # 	RootPwaResonanceFit
 # 	)
 
-set(GEN_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/generators
-	)
-set(ROOTPWA_NBPSGEN_LIBS
-	RootPwaNBPSGen
-	)
-set(ROOTPWAGEN_LIBS
-	RootPwaGen
-	)
+# set(RPWA_GENERATORS_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/generators
+# 	)
+# set(RPWA_NBODYPHASESPACE_LIB
+# 	RootPwaNBPSGen
+# 	)
+# set(RPWA_GENERATORS_LIB
+# 	RootPwaGen
+# 	)
 
 set(FORTRAN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/fortran
@@ -574,8 +574,8 @@ endif()
 # # resonance fit
 # add_subdirectory(resonanceFit)
 
-# RootPwaGen
-add_subdirectory(generators)
+# # RootPwaGen
+# add_subdirectory(generators)
 
 # Relativic Amplitudes
 add_subdirectory(relativisticAmpCorrections)

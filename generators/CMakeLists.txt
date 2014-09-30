@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for RootPwaGen
+#//      build file for generators library
 #//
 #//
 #// Author List:
@@ -35,9 +35,10 @@ message_setup_this_dir()
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
+	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
 	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -45,36 +46,6 @@ set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-	)
-include_directories(${INCLUDE_DIRECTORIES})
-
-
-set(SOURCES_NBPSG
-	nBodyPhaseSpaceGen.cc
-	randomNumberGenerator.cc
-	)
-
-
-# library name
-set(NBPSG_LIB "RootPwaNBPSGen")
-
-
-# ROOT dictionary
-set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
-root_generate_dictionary(
-	${ROOTPWAGEN_DICTIONARY}
-	nBodyPhaseSpaceGen.h
-	MODULE ${NBPSG_LIB}
-	LINKDEF rootPwaGenLinkDef.h
-	)
-set(SOURCES_NBPSG ${SOURCES_NBPSG} ${ROOTPWAGEN_DICTIONARY})
-
-
-# library
-make_shared_library(
-	"${NBPSG_LIB}"
-	"${SOURCES_NBPSG}"
-	"${ROOT_LIBS}"
 	)
 
 
@@ -89,20 +60,21 @@ set(SOURCES
 
 
 # library
-set(THIS_LIB "RootPwaGen")
+lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_PARTIALWAVEFIT_LIB}"
-	"${NBPSG_LIB}"
+	"${RPWA_NBODYPHASESPACE_LIB}"
 	)
 
 
 # executables
 make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${RPWA_UTILITIES_LIB}")
 make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+
 
 # build tests
 add_subdirectory(test)

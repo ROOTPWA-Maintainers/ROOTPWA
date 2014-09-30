@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${GEN_INCLUDE_DIR}
+	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	SYSTEM
@@ -95,7 +95,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
-	"${ROOTPWA_NBPSGEN_LIBS}"
+	"${RPWA_NBODYPHASESPACE_LIB}"
 	)
 
 
