@@ -449,11 +449,11 @@ set(_SRC_DIRS
 # 	generators
 # 	mpi
 # 	mySetup.sh
-# 	partialWaveFit
+	partialWaveFit
 	particleData
 # 	pyInterface
 # 	relativisticAmpCorrections
-# 	resonanceFit
+	resonanceFit
 # 	sandBox
 	storageFormats
   utilities
@@ -497,19 +497,19 @@ endforeach()
 # 	RootPwaAmp
 # 	)
 
-set(PARTIALWAVEFIT_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/partialWaveFit
-	)
-set(PARTIALWAVEFIT_LIBS
-	RootPwaPartialWaveFit
-	)
+# set(RPWA_PARTIALWAVEFIT_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/partialWaveFit
+# 	)
+# set(RPWA_PARTIALWAVEFIT_LIB
+# 	RootPwaPartialWaveFit
+# 	)
 
-set(RESONANCEFIT_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/resonanceFit
-	)
-set(RESONANCEFIT_LIBS
-	RootPwaResonanceFit
-	)
+# set(RPWA_RESONANCEFIT_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/resonanceFit
+# 	)
+# set(RPWA_RESONANCEFIT_LIB
+# 	RootPwaResonanceFit
+# 	)
 
 set(GEN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/generators
@@ -568,11 +568,11 @@ endif()
 # # RootPwaAmp
 # add_subdirectory(decayAmplitude)
 
-# spin-parity decomposition in bins
-add_subdirectory(partialWaveFit)
+# # spin-parity decomposition in bins
+# add_subdirectory(partialWaveFit)
 
-# resonance fit
-add_subdirectory(resonanceFit)
+# # resonance fit
+# add_subdirectory(resonanceFit)
 
 # RootPwaGen
 add_subdirectory(generators)

@@ -45,5 +45,5 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testParameterSpace testParameterSpace.cc "${PARTIALWAVEFIT_LIBS}")
-make_executable(testLikelihood     testLikelihood.cc     "${PARTIALWAVEFIT_LIBS}")
+make_executable(testParameterSpace testParameterSpace.cc "${RPWA_PARTIALWAVEFIT_LIB}")
+make_executable(testLikelihood     testLikelihood.cc     "${RPWA_PARTIALWAVEFIT_LIB}")

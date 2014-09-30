@@ -35,10 +35,10 @@ message_setup_this_dir()
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
-	${PARTIALWAVEFIT_INCLUDE_DIR}
+	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
@@ -46,7 +46,6 @@ set(INCLUDE_DIRECTORIES
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
@@ -59,7 +58,7 @@ set(SOURCES
 
 
 # library
-set(THIS_LIB "RootPwaResonanceFit")
+lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
@@ -67,7 +66,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_UTILITIES_LIB}"
-	"${PARTIALWAVEFIT_LIBS}"
+	"${RPWA_PARTIALWAVEFIT_LIB}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
 	)
 
