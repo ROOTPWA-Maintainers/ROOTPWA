@@ -38,7 +38,7 @@ message_setup_this_dir()
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${GEN_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	${PARTICLEDATA_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
@@ -101,12 +101,12 @@ make_shared_library(
 
 
 # executables
-make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(ampDiff            ampDiff.cc            ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB} "${UTILITIES_LIBS}")
-make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${UTILITIES_LIBS}")
+make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(ampDiff            ampDiff.cc            ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 
 
 # build tests

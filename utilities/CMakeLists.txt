@@ -35,12 +35,11 @@ message_setup_this_dir()
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	SYSTEM
 	${ROOT_INCLUDE_DIR}
-	)
-include_directories(${INCLUDE_DIRECTORIES})
+)
 
 
 # produce new version of environment printing variables
@@ -76,7 +75,7 @@ set(SOURCES
 
 
 # library
-set(THIS_LIB "RootPwaUtil")
+lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

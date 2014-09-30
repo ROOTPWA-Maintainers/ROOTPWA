@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -58,7 +58,7 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
-	"${UTILITIES_LIBS}"
+	"${RPWA_UTILITIES_LIB}"
 	)
 
 

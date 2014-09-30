@@ -37,7 +37,7 @@ set(INCLUDE_DIRECTORIES
 	${AMPLITUDE_INCLUDE_DIR}
 	${GEN_INCLUDE_DIR}
 	${PARTICLEDATA_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -48,12 +48,12 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # executables
 make_executable(testParticle                testParticle.cc                  "${AMPLITUDE_LIBS}" "${PARTICLEDATA_LIBS}")
-make_executable(testDecayTopology           testDecayTopology.cc             "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
-make_executable(testWaveDescription         testWaveDescription.cc           "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
+make_executable(testDecayTopology           testDecayTopology.cc             "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
+make_executable(testWaveDescription         testWaveDescription.cc           "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
 make_executable(testWaveSetGenerator        testWaveSetGenerator.cc          "${AMPLITUDE_LIBS}")
-make_executable(testAmplitude               testAmplitude.cc                 "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
-make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
-make_executable(testIsospinSym              testIsospinSym.cc                "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
+make_executable(testAmplitude               testAmplitude.cc                 "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
+make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
+make_executable(testIsospinSym              testIsospinSym.cc                "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
 make_executable(testIntegral                testIntegral.cc                  "${AMPLITUDE_LIBS}")
 make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${AMPLITUDE_LIBS}" "${ROOTPWAGEN_LIBS}")
 make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${AMPLITUDE_LIBS}")

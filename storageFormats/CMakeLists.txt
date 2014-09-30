@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
@@ -77,6 +77,6 @@ make_shared_library(
 add_dependencies(${THIS_LIB} environment)
 
 
-make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${UTILITIES_LIBS})
-make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${UTILITIES_LIBS})
-make_executable(mergeDatafiles   mergeDatafiles.cc   ${THIS_LIB} ${UTILITIES_LIBS})
+make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(mergeDatafiles   mergeDatafiles.cc   ${THIS_LIB} ${RPWA_UTILITIES_LIB})

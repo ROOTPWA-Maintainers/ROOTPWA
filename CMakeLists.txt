@@ -429,13 +429,59 @@ endif()
 enable_testing()
 
 
-# set include and library paths
-set(UTILITIES_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/utilities
+# set include and library paths for project-internal libraries
+# the following scheme is used:
+#
+# * for each source folder a shared library is generated
+#
+# * the name 'libRootPwa<Folder>.so' of the libary is derived from the
+#   directory name, e.g. the code in the 'foo' directory will be
+#   compiled into 'libRootPwaFoo.so'.
+#
+# * for each source folder two CMake variables are defined:
+#   RPWA_<FOLDER>_INCLUDE_DIR that points to the source directory and
+#   RPWA_<FOLDER>_LIB that holds the library name
+
+set(_SRC_DIRS
+#	  amplitude
+# 	cuda
+# 	fortran
+# 	generators
+# 	mpi
+# 	mySetup.sh
+# 	partialWaveFit
+# 	particleData
+# 	pyInterface
+# 	relativisticAmpCorrections
+# 	resonanceFit
+# 	sandBox
+# 	storageFormats
+  utilities
 	)
-set(UTILITIES_LIBS
-	RootPwaUtil
-	)
+foreach(_SRC_DIR ${_SRC_DIRS})
+	lib_name_from_dir_name(${_SRC_DIR} _LIB_NAME)
+	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
+	set(${_VAR_NAME}_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/${_SRC_DIR}")
+	set(${_VAR_NAME}_LIB "${_LIB_NAME}")
+	message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
+		"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
+	unset(_LIB_NAME)
+	unset(_VAR_NAME)
+endforeach()
+
+# build project-internal libraries
+foreach(_SRC_DIR ${_SRC_DIRS})
+	add_subdirectory("${_SRC_DIR}")
+endforeach()
+unset(_SRC_DIRS)
+
+
+# set(RPWA_UTILITIES_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/utilities
+# 	)
+# set(RPWA_UTILITIES_LIB
+# 	RootPwaUtil
+# 	)
 
 set(PARTICLEDATA_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/particleData
@@ -505,10 +551,11 @@ else()
 	set(CUDACODE_LIBS)
 endif()
 
+
 # build subprojects
 
-# Utilities
-add_subdirectory(utilities)
+# # Utilities
+# add_subdirectory(utilities)
 
 # Particle data
 add_subdirectory(particleData)

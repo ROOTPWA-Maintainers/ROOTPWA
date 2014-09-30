@@ -40,7 +40,7 @@ set(INCLUDE_DIRECTORIES
 	${AMPLITUDE_INCLUDE_DIR}
 	${CUDACODE_INCLUDE_DIR}
 	${PARTICLEDATA_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -86,7 +86,7 @@ make_shared_library(
 
 
 # executables
-make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${UTILITIES_LIBS}")
+make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 make_executable(pwaplot pwaplots.cc ${THIS_LIB})
 
 

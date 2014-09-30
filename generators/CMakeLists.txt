@@ -40,7 +40,7 @@ set(INCLUDE_DIRECTORIES
 	${AMPLITUDE_INCLUDE_DIR}
 	${PARTIALWAVEFIT_INCLUDE_DIR}
 	${PARTICLEDATA_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -101,8 +101,8 @@ make_shared_library(
 
 
 # executables
-make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${UTILITIES_LIBS}")
-make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${UTILITIES_LIBS}")
+make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${RPWA_UTILITIES_LIB}")
+make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
 
 # build tests
 add_subdirectory(test)
