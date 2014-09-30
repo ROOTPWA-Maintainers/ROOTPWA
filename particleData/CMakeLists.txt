@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for amplitude library
+#//      build file for particleProperties
 #//
 #//
 #// Author List:
@@ -35,7 +35,7 @@ message_setup_this_dir()
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
@@ -43,8 +43,7 @@ set(INCLUDE_DIRECTORIES
 	${Libconfig_INCLUDE_DIR}
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
-	)
-include_directories(${INCLUDE_DIRECTORIES})
+)
 
 
 # source files that are compiled into library
@@ -55,11 +54,8 @@ set(SOURCES
 	)
 
 
-# library name
-set(THIS_LIB "RootPwaParticleData")
-
-
 # library
+lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

@@ -450,12 +450,12 @@ set(_SRC_DIRS
 # 	mpi
 # 	mySetup.sh
 # 	partialWaveFit
-# 	particleData
+	particleData
 # 	pyInterface
 # 	relativisticAmpCorrections
 # 	resonanceFit
 # 	sandBox
-# 	storageFormats
+	storageFormats
   utilities
 	)
 foreach(_SRC_DIR ${_SRC_DIRS})
@@ -483,19 +483,19 @@ unset(_SRC_DIRS)
 # 	RootPwaUtil
 # 	)
 
-set(PARTICLEDATA_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/particleData
-	)
-set(PARTICLEDATA_LIBS
-	RootPwaParticleData
-	)
+# set(RPWA_PARTICLEDATA_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/particleData
+# 	)
+# set(RPWA_PARTICLEDATA_LIB
+# 	RootPwaParticleData
+# 	)
 
-set(STORAGEFORMATS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/storageFormats
-	)
-set(STORAGEFORMATS_LIBS
-	RootPwaMeta
-	)
+# set(RPWA_STORAGEFORMATS_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/storageFormats
+# 	)
+# set(RPWA_STORAGEFORMATS_LIB
+# 	RootPwaMeta
+# 	)
 
 set(AMPLITUDE_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/amplitude
@@ -557,11 +557,11 @@ endif()
 # # Utilities
 # add_subdirectory(utilities)
 
-# Particle data
-add_subdirectory(particleData)
+# # Particle data
+# add_subdirectory(particleData)
 
-# Metadata
-add_subdirectory(storageFormats)
+# # Metadata
+# add_subdirectory(storageFormats)
 
 # CUDA stuff
 if(USE_CUDA)

@@ -36,7 +36,7 @@ set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${GEN_INCLUDE_DIR}
-	${PARTICLEDATA_INCLUDE_DIR}
+	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
@@ -47,7 +47,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testParticle                testParticle.cc                  "${AMPLITUDE_LIBS}" "${PARTICLEDATA_LIBS}")
+make_executable(testParticle                testParticle.cc                  "${AMPLITUDE_LIBS}" "${RPWA_PARTICLEDATA_LIB}")
 make_executable(testDecayTopology           testDecayTopology.cc             "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
 make_executable(testWaveDescription         testWaveDescription.cc           "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
 make_executable(testWaveSetGenerator        testWaveSetGenerator.cc          "${AMPLITUDE_LIBS}")
