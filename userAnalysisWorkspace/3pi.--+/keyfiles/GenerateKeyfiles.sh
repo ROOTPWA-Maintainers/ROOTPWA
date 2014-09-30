@@ -1,7 +1,7 @@
 #!/bin/bash
 
 [[ -z ${DESTINATION_DIR} ]] && DESTINATION_DIR="keyfiles"
-[[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../../amplitude/particleDataTable.txt"
+[[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../../particleData/particleDataTable.txt"
 [[ -z ${WAVESET_FILES} ]] && WAVESET_FILES=""
 
 TEMPLATE_KEY_FILES="template.key"

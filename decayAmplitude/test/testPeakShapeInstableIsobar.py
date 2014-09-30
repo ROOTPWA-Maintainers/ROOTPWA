@@ -91,7 +91,7 @@ def integrate(subAmp, nEvents, parentMass):
 	return (integral, error)
 
 
-pyRootPwa.core.particleDataTable.readFile('/opt/rootpwa/amplitude/particleDataTable.txt')
+pyRootPwa.core.particleDataTable.readFile('/opt/rootpwa/particleData/particleDataTable.txt')
 
 keyfile = '/home/kbicker/analysis/data_horsing_around/keys/1-2-00+rho770_02_a21320-=rho770_21_pi-.key'
 

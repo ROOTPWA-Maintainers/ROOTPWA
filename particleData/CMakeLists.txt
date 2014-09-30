@@ -43,7 +43,7 @@ include_directories(
 	${Libconfig_INCLUDE_DIR}
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
-)
+	)
 
 
 # source files that are compiled into library

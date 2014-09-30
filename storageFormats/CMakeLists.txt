@@ -41,7 +41,7 @@ include_directories(
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
-)
+	)
 
 
 # source files that are compiled into library

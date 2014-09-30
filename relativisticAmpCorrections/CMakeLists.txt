@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
+	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	SYSTEM
@@ -69,4 +69,4 @@ make_shared_library(
 
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
-make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${AMPLITUDE_LIBS} ${RPWA_PARTICLEDATA_LIB})
+make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${RPWA_DECAYAMPLITUDE_LIB} ${RPWA_PARTICLEDATA_LIB})

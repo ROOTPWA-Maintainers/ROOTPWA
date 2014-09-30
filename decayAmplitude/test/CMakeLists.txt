@@ -34,7 +34,7 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
+	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${GEN_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -47,13 +47,13 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testParticle                testParticle.cc                  "${AMPLITUDE_LIBS}" "${RPWA_PARTICLEDATA_LIB}")
-make_executable(testDecayTopology           testDecayTopology.cc             "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(testWaveDescription         testWaveDescription.cc           "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(testWaveSetGenerator        testWaveSetGenerator.cc          "${AMPLITUDE_LIBS}")
-make_executable(testAmplitude               testAmplitude.cc                 "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(testIsospinSym              testIsospinSym.cc                "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(testIntegral                testIntegral.cc                  "${AMPLITUDE_LIBS}")
-make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${AMPLITUDE_LIBS}" "${ROOTPWAGEN_LIBS}")
-make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${AMPLITUDE_LIBS}")
+make_executable(testParticle                testParticle.cc                  "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_PARTICLEDATA_LIB}")
+make_executable(testDecayTopology           testDecayTopology.cc             "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+make_executable(testWaveDescription         testWaveDescription.cc           "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+make_executable(testWaveSetGenerator        testWaveSetGenerator.cc          "${RPWA_DECAYAMPLITUDE_LIB}")
+make_executable(testAmplitude               testAmplitude.cc                 "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+make_executable(testAmplitudeTree           testAmplitudeTree.cc             "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+make_executable(testIsospinSym              testIsospinSym.cc                "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
+make_executable(testIntegral                testIntegral.cc                  "${RPWA_DECAYAMPLITUDE_LIB}")
+make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc   "${RPWA_DECAYAMPLITUDE_LIB}" "${ROOTPWAGEN_LIBS}")
+make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${RPWA_DECAYAMPLITUDE_LIB}")

@@ -50,7 +50,7 @@ fi
 #internal parameters
 #REGENERATE_EVT_FILES="true"
 REGENERATE_EVT_FILES="false"
-PDG_TABLE="${ROOTPWA}/amplitude/particleDataTable.txt"
+PDG_TABLE="${ROOTPWA}/particleData/particleDataTable.txt"
 
 
 # find mass bin directories

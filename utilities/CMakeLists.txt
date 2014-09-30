@@ -39,7 +39,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	SYSTEM
 	${ROOT_INCLUDE_DIR}
-)
+	)
 
 
 # produce new version of environment printing variables

@@ -1065,7 +1065,7 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcWeightTreeName          = "rootPwaWeightTree";
 
 	// guess path to particleDataTable.txt
-	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
+	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt";
 
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;
@@ -1108,7 +1108,7 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcAccWeightTreeName        = "rootPwaWeightTree";
 
 	// guess path to particleDataTable.txt
-	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
+	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt";
 
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;

@@ -220,7 +220,7 @@ then
 fi
 if [[ -z "${PDG_TABLE}" ]]
 then
-    PDG_TABLE="${ROOTPWA}/amplitude/particleDataTable.txt"
+    PDG_TABLE="${ROOTPWA}/particleData/particleDataTable.txt"
 fi
 # parse command line options
 while getopts "${KEY_PATTERN_OPT}:${MASS_BINS_DIR_OPT}:${PDG_TABLE_OPT}:${HELP_OPT}" OPTION

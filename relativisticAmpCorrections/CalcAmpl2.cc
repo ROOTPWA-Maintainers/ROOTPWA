@@ -112,7 +112,7 @@ bool ReadoutTestKeyfile(const char* filename) {
 	int P_parent = (*XWaveQn)["P"];
 
 	particleDataTable& pdt = particleDataTable::instance();
-	pdt.readFile("../amplitude/particleDataTable.txt");
+	pdt.readFile("../particleData/particleDataTable.txt");
 
 
 	if (not buildDecayTopologyRelAmpl(XDecay,J_parent/2,P_parent)) {
@@ -231,7 +231,7 @@ bool RelAmplDummy (int p_J, int p_P, int d1_J, int d1_P, int d2_J, int d2_P, int
 int lookupJ(const char* name) {
 	//	cout << "lookupJDummy running" << endl;
 	//	particleDataTable& pdt = particleDataTable::instance();
-	//	pdt.readFile("../amplitude/particleDataTable.txt");
+	//	pdt.readFile("../particleData/particleDataTable.txt");
 	particleProperties partProp;
 	if (not partProp.fillFromDataTable(name)) {
 		printErr << "canot find particle '" << name << "' in particle data table. aborting." << endl;
@@ -243,7 +243,7 @@ int lookupJ(const char* name) {
 int lookupP(const char* name) {
 	//	cout << "lookupPDummy running" << endl;
 	//	particleDataTable& pdt = particleDataTable::instance();
-	//	pdt.readFile("../amplitude/particleDataTable.txt");
+	//	pdt.readFile("../particleData/particleDataTable.txt");
 	particleProperties partProp;
 	if (not partProp.fillFromDataTable(name)) {
 		printErr << "canot find particle '" << name << "' in particle data table. aborting." << endl;

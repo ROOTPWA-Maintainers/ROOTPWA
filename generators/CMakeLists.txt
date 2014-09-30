@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${AMPLITUDE_INCLUDE_DIR}
+	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -102,7 +102,7 @@ make_shared_library(
 
 # executables
 make_executable(generatePhaseSpace generatePhaseSpace.cc ${THIS_LIB} "${Libconfig_LIBS}" "${RPWA_UTILITIES_LIB}")
-make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}" "${RPWA_UTILITIES_LIB}")
+make_executable(weightEvents       weightEvents.cc       ${THIS_LIB} "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_UTILITIES_LIB}")
 
 # build tests
 add_subdirectory(test)

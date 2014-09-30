@@ -443,8 +443,8 @@ enable_testing()
 #   RPWA_<FOLDER>_LIB that holds the library name
 
 set(_SRC_DIRS
-#	  amplitude
 # 	cuda
+  decayAmplitude
 # 	fortran
 # 	generators
 # 	mpi
@@ -469,13 +469,6 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 	unset(_VAR_NAME)
 endforeach()
 
-# build project-internal libraries
-foreach(_SRC_DIR ${_SRC_DIRS})
-	add_subdirectory("${_SRC_DIR}")
-endforeach()
-unset(_SRC_DIRS)
-
-
 # set(RPWA_UTILITIES_INCLUDE_DIR
 # 	${CMAKE_SOURCE_DIR}/utilities
 # 	)
@@ -497,12 +490,12 @@ unset(_SRC_DIRS)
 # 	RootPwaMeta
 # 	)
 
-set(AMPLITUDE_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/amplitude
-	)
-set(AMPLITUDE_LIBS
-	RootPwaAmp
-	)
+# set(RPWA_DECAYAMPLITUDE_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/decayAmplitude
+# 	)
+# set(RPWA_DECAYAMPLITUDE_LIB
+# 	RootPwaAmp
+# 	)
 
 set(PARTIALWAVEFIT_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/partialWaveFit
@@ -552,7 +545,11 @@ else()
 endif()
 
 
-# build subprojects
+# build project-internal libraries
+foreach(_SRC_DIR ${_SRC_DIRS})
+	add_subdirectory("${_SRC_DIR}")
+endforeach()
+unset(_SRC_DIRS)
 
 # # Utilities
 # add_subdirectory(utilities)
@@ -568,8 +565,8 @@ if(USE_CUDA)
 	add_subdirectory(cuda)
 endif()
 
-# RootPwaAmp
-add_subdirectory(amplitude)
+# # RootPwaAmp
+# add_subdirectory(decayAmplitude)
 
 # spin-parity decomposition in bins
 add_subdirectory(partialWaveFit)

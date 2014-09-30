@@ -35,7 +35,7 @@ message_setup_this_dir()
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${GEN_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -46,7 +46,6 @@ set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
@@ -75,7 +74,7 @@ set(SOURCES
 
 
 # library name
-set(THIS_LIB "RootPwaAmp")
+lib_name_for_current_dir(THIS_LIB)
 
 
 # ROOT dictionary
