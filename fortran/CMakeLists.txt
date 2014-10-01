@@ -69,7 +69,7 @@ set(SOURCES
 
 
 # library
-set(THIS_LIB "RootPwaFortran")
+lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"

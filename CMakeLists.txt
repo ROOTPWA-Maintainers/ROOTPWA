@@ -323,6 +323,9 @@ else()
 	endif()
 endif()
 add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
+if (NOT USE_CUDA)
+	set(DO_NOT_COMPILE_RPWA_CUDA TRUE)
+endif()
 
 
 # setup MPI (optional)
@@ -371,6 +374,9 @@ else()
 	endif()
 endif()
 add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
+if (NOT USE_MPI)
+	set(DO_NOT_COMPILE_RPWA_MPI TRUE)
+endif()
 
 
 # make git hash accessible via predefined macro GIT_HASH
@@ -441,12 +447,16 @@ enable_testing()
 # * for each source folder two CMake variables are defined:
 #   RPWA_<FOLDER>_INCLUDE_DIR that points to the source directory and
 #   RPWA_<FOLDER>_LIB that holds the library name
+#
+# * compilation of each directory can be switched off by defining a
+#   variable with name DO_NOT_COMILE_RPWA_<FOLDER> and setting it to
+#   a non-empty value
 
 set(_SRC_DIRS
-# 	cuda
+#   cuda
   decayAmplitude
-# 	fortran
-	generators
+  fortran
+  generators
 # 	mpi
   nBodyPhaseSpace
 	partialWaveFit
@@ -459,13 +469,15 @@ set(_SRC_DIRS
   utilities
 	)
 foreach(_SRC_DIR ${_SRC_DIRS})
-	lib_name_from_dir_name(${_SRC_DIR} _LIB_NAME)
 	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
-	set(${_VAR_NAME}_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/${_SRC_DIR}")
-	set(${_VAR_NAME}_LIB "${_LIB_NAME}")
-	message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
-		"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
-	unset(_LIB_NAME)
+	if(NOT DO_NOT_COMPILE_${_VAR_NAME})
+		lib_name_from_dir_name(${_SRC_DIR} _LIB_NAME)
+		set(${_VAR_NAME}_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/${_SRC_DIR}")
+		set(${_VAR_NAME}_LIB "${_LIB_NAME}")
+		message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
+			"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
+		unset(_LIB_NAME)
+  endif()
 	unset(_VAR_NAME)
 endforeach()
 
@@ -521,12 +533,12 @@ endforeach()
 # 	RootPwaGen
 # 	)
 
-set(FORTRAN_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/fortran
-	)
-set(FORTRAN_LIBS
-	RootPwaFortran
-	)
+# set(FORTRAN_INCLUDE_DIR
+# 	${CMAKE_SOURCE_DIR}/fortran
+# 	)
+# set(FORTRAN_LIBS
+# 	RootPwaFortran
+# 	)
 
 set(PYINTERFACE_LIBS
 	RootPwaPy
@@ -547,7 +559,11 @@ endif()
 
 # build project-internal libraries
 foreach(_SRC_DIR ${_SRC_DIRS})
-	add_subdirectory("${_SRC_DIR}")
+	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
+	if(NOT DO_NOT_COMPILE_${_VAR_NAME})
+		add_subdirectory("${_SRC_DIR}")
+	endif()
+	unset(_VAR_NAME)
 endforeach()
 unset(_SRC_DIRS)
 
@@ -580,8 +596,8 @@ endif()
 # Relativic Amplitudes
 add_subdirectory(relativisticAmpCorrections)
 
-# Fortran
-add_subdirectory(fortran)
+# # Fortran
+# add_subdirectory(fortran)
 
 # MPI
 if(USE_MPI)
