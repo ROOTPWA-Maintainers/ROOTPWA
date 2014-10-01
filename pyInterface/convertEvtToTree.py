@@ -2,9 +2,18 @@
 
 import argparse
 import os
-import tempfile
 
 import pyRootPwa
+
+def getParticleNameFromGeantParticleID(number):
+    if number==7:
+        return "PION 0"
+    elif number==8:
+        return "PION +"
+    elif number==9:
+        return "PION -"
+    else:
+        return "ERROR"
 
 class EventFile:
 
@@ -37,13 +46,37 @@ class Event:
     def __init__(self, lines):
         self.lines = lines
 
-
     def sort(self):
         new_lines = self.lines[2:]
         new_lines = sorted(new_lines, key=lambda entry: int(entry.split()[0]))
         self.lines = self.lines[0:2] + new_lines
 
+    def getProductionKinematicsParticleNames(self):
+        retVar = []
+        splitUp = self.lines[1].split()
+        retVar.append(getParticleNameFromGeantParticleID(splitUp[0]))
+        return retVar
 
+    def getDecayKinematicsParticleNames(self):
+        retVar = []
+        for line in self.lines[2:]:
+            splitUp = self.lines[1].split()
+            retVar.append(getParticleNameFromGeantParticleID(splitUp[0]))
+        return retVar
+
+    def getProductionKinematicsMomenta(self):
+        retVar = []
+        splitUp = self.lines[1].split()
+        retVar.append(pyRootPwa.ROOT.TVector3(float(splitUp[2]), float(splitUp[3]), float(splitUp[4])))
+        return retVar
+
+    def getDecayKinematicsMomenta(self):
+        retVar = []
+        for line in self.lines[2:]:
+            splitUp = line.split()
+            retVar.append(pyRootPwa.ROOT.TVector3(float(splitUp[2]), float(splitUp[3]), float(splitUp[4])))
+        return retVar
+    
     def __str__(self):
         retval = ""
         for line in self.lines:
@@ -53,35 +86,30 @@ class Event:
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-                                      description="Order particles in .evt files.",
-                                      epilog="BE AWARE: If the output parameter is not given, "
-                                             "the original file will be overwritten with the ordered version!"
+                                      description="Converts .evt file to .root file."
                                     )
-    parser.add_argument("infile", help="The .evt file to be read", nargs='?', default='/nfs/mnemosyne/user/odrotleff/private/proj/rootpwaMaster/ROOTPWA/DATA/1120.1190/1120.1190.evt')
-    parser.add_argument("-o", "--output", help="The .evt file to be written", default='./test.root')
+    parser.add_argument("infile", help="The .evt file to be read")
+    parser.add_argument("-o", "--output", help="The .root file to be written", default="output.root")
+    parser.add_argument("-u", "--userstring", help="User string")
 
     args = parser.parse_args()
 
     input_file = args.infile
-    output_file = args.output
-    
-    print(input_file + " " + output_file)
+    output_file = os.path.abspath(args.output)
+    output_file = pyRootPwa.ROOT.TFile(output_file, "NEW")
 
-    if output_file is None:
-        output_file = tempfile.mkstemp()[1]
-        change_evt_file = Truep
-
-    print("Starting to order events...")
-    
-    fileWriter = pyRootPwa.core.eventFileWriter()
-    fileWriter.initialize(output_file, "test", ["test"], ["test"])
-    
     with open(input_file, 'r') as infile:
         print("Opened input file " + input_file)
         in_event_file = EventFile(infile)
-        
+
         event = in_event_file.get_event()
-        while event is not None:
+
+        fileWriter = pyRootPwa.core.eventFileWriter()
+        success = fileWriter.initialize(output_file, args.userstring, event.getProductionKinematicsParticleNames(), event.getDecayKinematicsParticleNames(), {}, [])
+
+        while event is not None and success:
             event.sort()
-            out_event_file.write_event(event)
+            fileWriter.addEvent(event.getProductionKinematicsMomenta(), event.getDecayKinematicsMomenta())
             event = in_event_file.get_event()
+
+    fileWriter.finalize()
