@@ -8,13 +8,14 @@ import os.path
 import sys
 
 import pyRootPwa
+import pyRootPwa.core
 
 def norm(c):
 	return (c.real*c.real + c.imag*c.imag)
 
 def getBestFitResult(massBinCenter, fitResultTree):
-	fitResult = pyRootPwa.core.fitResult().getAsRootObject()
-	fitResultTree.SetBranchAddress(config.fitResultBranchName, fitResult)
+	fitResult = pyRootPwa.core.fitResult()
+	fitResult.setBranchAddress(fitResultTree, config.fitResultBranchName)
 	bestIndex = 0
 	bestMass = 0.
 	bestLikeli = 0.
@@ -52,6 +53,7 @@ if __name__ == "__main__":
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
+	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
 
 	args = parser.parse_args()
 
@@ -174,6 +176,8 @@ if __name__ == "__main__":
 		printErr("could not open output file. Aborting...")
 		sys.exit(1)
 
+	fileWriter = pyRootPwa.core.eventFileWriter()
+
 	printInfo("opened output root file: " + args.outputFile)
 	try:
 		print(generatorManager)
@@ -183,69 +187,67 @@ if __name__ == "__main__":
 		decayKin = None
 		prodKin = None
 		first = True
-		outTree = None
 		weight = numpy.zeros(1, dtype = float)
 
 		for eventsGenerated in range(args.nEvents):
 
-				attempts += generatorManager.event()
-				generator = generatorManager.getGenerator()
-				beam = generator.getGeneratedBeam()
-				finalState = generator.getGeneratedFinalState()
+			attempts += generatorManager.event()
+			generator = generatorManager.getGenerator()
+			beam = generator.getGeneratedBeam()
+			finalState = generator.getGeneratedFinalState()
 
-				if first:
-					nDecayParticles = len(finalState)
-					decayKinNames = pyRootPwa.ROOT.TClonesArray("TObjString", len(finalState))
-					for i in range(len(finalState)):
-						decayKinNames[i] = pyRootPwa.ROOT.TObjString(finalState[i].name)
-					prodKinNames = pyRootPwa.ROOT.TClonesArray("TObjString", 1)
-					prodKinNames[0] = pyRootPwa.ROOT.TObjString(beam.name)
-					for amplitude in amplitudes:
-						topo = amplitude.decayTopology()
-						if not topo.initKinematicsData(prodKinNames, decayKinNames):
-							printErr('could not initialize kinematics Data. Aborting...')
-							sys.exit(1)
-					decayKin = pyRootPwa.ROOT.TClonesArray("TVector3", len(finalState))
-					prodKin = pyRootPwa.ROOT.TClonesArray("TVector3", 1)
-					outTree = pyRootPwa.ROOT.TTree(config.inTreeName, config.inTreeName)
-					outTree.Branch(config.prodKinMomentaLeafName, "TClonesArray", prodKin, 256000, 99)
-					outTree.Branch(config.decayKinMomentaLeafName, "TClonesArray", decayKin, 256000, 99)
-					outTree.Branch("weight", weight, "weight/D")
-					prodKinNames.Write(config.prodKinPartNamesObjName, pyRootPwa.ROOT.TObject.kSingleKey)
-					decayKinNames.Write(config.decayKinPartNamesObjName, pyRootPwa.ROOT.TObject.kSingleKey)
-					first = False
+			if first:
+				prodKinNames = [ beam.name ]
+				decayKinNames = [ particle.name for particle in finalState]
+				success = fileWriter.initialize(
+				                                outputFile,
+				                                args.userString,
+				                                pyRootPwa.core.eventMetadata.GENERATED,
+				                                prodKinNames,
+				                                decayKinNames,
+# TODO: FILL THESE
+				                                {},
+				                                []
+				                                )
+				if not success:
+					printErr('could not initialize file writer. Aborting...')
+					sys.exit(1)
 
-				for i in range(len(finalState)):
-					decayKin[i] = finalState[i].lzVec.Vect()
-				prodKin[0] = beam.lzVec.Vect()
-
-				posReflAmpSum = 0
-				negReflAmpSum = 0
-
-				for i in range(len(amplitudes)):
-					amplitude = amplitudes[i]
+				for amplitude in amplitudes:
 					topo = amplitude.decayTopology()
-					if not topo.readKinematicsData(prodKin, decayKin):
-						progressBar.cancel()
-						printErr('could not read kinematics data. Aborting...')
+					if not topo.initKinematicsData(prodKinNames, decayKinNames):
+						printErr('could not initialize kinematics Data. Aborting...')
 						sys.exit(1)
+				first = False
 
-					amp = (amplitude() * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
-					if reflectivities[i] > 0:
-						posReflAmpSum += amp
-					else:
-						negReflAmpSum += amp
+			prodKin = [ beam.lzVec.Vect() ]
+			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
 
-				weight[0] = norm(posReflAmpSum) + norm(negReflAmpSum)
-				outTree.Fill()
+			posReflAmpSum = 0
+			negReflAmpSum = 0
 
-				progressBar.update(eventsGenerated)
+			for i in range(len(amplitudes)):
+				amplitude = amplitudes[i]
+				topo = amplitude.decayTopology()
+				if not topo.readKinematicsData(prodKin, decayKin):
+					progressBar.cancel()
+					printErr('could not read kinematics data. Aborting...')
+					sys.exit(1)
+
+				amp = (amplitude() * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
+				if reflectivities[i] > 0:
+					posReflAmpSum += amp
+				else:
+					negReflAmpSum += amp
+
+			weight[0] = norm(posReflAmpSum) + norm(negReflAmpSum)
+			fileWriter.addEvent(prodKin, decayKin)
+
+			progressBar.update(eventsGenerated)
 	except:
 		raise
-	else:
-		outTree.Write()
 	finally:
-		outputFile.Close()
+		fileWriter.finalize()
 
 	eventsGenerated += 1
 	printSucc("generated " + str(eventsGenerated) + " events.")
