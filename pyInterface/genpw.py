@@ -6,6 +6,7 @@ import os.path
 import sys
 
 import pyRootPwa
+import pyRootPwa.core
 
 if __name__ == "__main__":
 
@@ -16,12 +17,13 @@ if __name__ == "__main__":
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-a", type=int, metavar="#", dest="maxAttempts", default=0, help="(max) number of attempts to do (default: infinity)")
-	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="", help="ASCII output file (if not specified, generated automatically)")
+	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="", help="ROOT output file (if not specified, generated automatically)")
 	parser.add_argument("-p", type=str, metavar="<particleDataTable>", dest="particleDataTableFileName", default="./particleDataTable.txt", help="path to particle data table file (default: ./particleDataTable.txt)")
 	parser.add_argument("-c", action="store_true", dest="comgeantOutput", help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
+	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
 	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
@@ -79,17 +81,21 @@ if __name__ == "__main__":
 
 	if args.outputFileName == "":
 		if overrideMass:
-			args.outputFileName = str(args.massLowerBinBoundary) + "." + str(args.massLowerBinBoundary + args.massBinWidth) + ".phaseSpace.evt"
+			args.outputFileName = str(args.massLowerBinBoundary) + "." + str(args.massLowerBinBoundary + args.massBinWidth) + ".phaseSpace.root"
 		else:
 			index = 1
-			filename = "1.phaseSpace.evt"
+			filename = "1.phaseSpace.root"
 			while os.path.exists(filename):
 				index += 1
-				filename = str(index) + ".phaseSpace.evt"
+				filename = str(index) + ".phaseSpace.root"
 			args.outputFileName = filename
 
-	outputEvtFile = open(args.outputFileName, 'w')
-	printInfo("opened output event file: " + args.outputFileName)
+	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
+	if not outputFile:
+		printErr("could not open output file. Aborting...")
+		sys.exit(1)
+	printInfo("opened output root file: " + args.outputFileName)
+
 	outputComgeantFile = None
 	if args.comgeantOutput:
 		outputComgeantFile = open(args.outputFileName.replace(".evt", ".fort.26"), 'w')
@@ -97,22 +103,43 @@ if __name__ == "__main__":
 
 	try:
 		print(generatorManager)
-		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents-1, sys.stdout)
+		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
 		progressBar.start()
 		attempts = 0
 		eventsGenerated = 0
 
-		while eventsGenerated < args.nEvents:
+		fileWriter = pyRootPwa.core.eventFileWriter()
+		generator = generatorManager.getGenerator()
+		beam = generator.getGeneratedBeam()
+		finalState = generator.getGeneratedFinalState()
 
+		prodKinNames = [ beam.name ]
+		decayKinNames = [ particle.name for particle in finalState ]
+		success = fileWriter.initialize(
+		                                outputFile,
+		                                args.userString,
+		                                pyRootPwa.core.eventMetadata.GENERATED,
+		                                prodKinNames,
+		                                decayKinNames,
+# TODO: FILL THESE
+		                                {},
+		                                []
+		                                )
+		if not success:
+			printErr('could not initialize file writer. Aborting...')
+			sys.exit(1)
+
+		while eventsGenerated < args.nEvents:
 			attempts += generatorManager.event()
 			if args.maxAttempts and attempts > args.maxAttempts:
 				printWarn("reached maximum attempts. Aborting...")
 				break
-
-			generator = generatorManager.getGenerator()
 			beam = generator.getGeneratedBeam()
 			finalState = generator.getGeneratedFinalState()
-			outputEvtFile.write(generator.convertEventToAscii(beam, finalState))
+			prodKin = [ beam.lzVec.Vect() ]
+			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
+			fileWriter.addEvent(prodKin, decayKin)
+
 			if args.comgeantOutput:
 				recoil = generator.getGeneratedRecoil()
 				vertex = generator.getGeneratedVertex()
@@ -121,7 +148,7 @@ if __name__ == "__main__":
 			eventsGenerated += 1
 			progressBar.update(eventsGenerated)
 	finally:
-		outputEvtFile.close()
+		fileWriter.finalize()
 		if outputComgeantFile is not None:
 			outputComgeantFile.close()
 
