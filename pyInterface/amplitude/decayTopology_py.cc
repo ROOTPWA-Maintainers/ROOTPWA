@@ -1,6 +1,7 @@
 #include "decayTopology_py.h"
 
 #include<TLorentzRotation.h>
+#include<TVector3.h>
 
 #include<productionVertex.h>
 
@@ -96,24 +97,55 @@ namespace {
 		}
 	}
 
-	bool decayTopology_initKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinParticles, PyObject* pyDecayKinParticles) {
-		TClonesArray* prodKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinParticles);
-		TClonesArray* decayKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinParticles);
-		if((prodKinParticles == NULL) || (decayKinParticles == NULL)) {
-			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::initKinematicsData()."<<std::endl;
-			return false;
-		}
-		return self.initKinematicsData(*prodKinParticles, *decayKinParticles);
+	bool decayTopology_initKinematicsData(rpwa::decayTopology& self, bp::list pyProdKinParticles, bp::list pyDecayKinParticles) {
+
+		std::vector<std::string> productionKinematicsParticleNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProdKinParticles, productionKinematicsParticleNames))
+			{
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for initialStateParticleNames when executing rpwa::decayTopology::initKinematicsData()");
+				bp::throw_error_already_set();
+			}
+
+		std::vector<std::string> decayKinematicsParticleNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyDecayKinParticles, decayKinematicsParticleNames))
+			{
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::decayTopology::initKinematicsData()");
+				bp::throw_error_already_set();
+			}
+		return self.initKinematicsData(productionKinematicsParticleNames, decayKinematicsParticleNames);
 	}
 
-	bool decayTopology_readKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinMomenta, PyObject* pyDecayKinMomenta) {
-		TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinMomenta);
-		TClonesArray* decayKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinMomenta);
-		if((prodKinMomenta == NULL) || (decayKinMomenta == NULL)) {
-			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::readKinematicsData()."<<std::endl;
-			return false;
+	bool decayTopology_readKinematicsData(rpwa::decayTopology& self, bp::list pyProdKinMomenta, bp::list pyDecayKinMomenta) {
+
+		std::vector<TVector3> productionKinematicsMomenta(len(pyProdKinMomenta));
+		for(unsigned int i = 0; i < len(pyProdKinMomenta); ++i) {
+			bp::object item = bp::extract<bp::object>(pyProdKinMomenta[i]);
+			productionKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
 		}
-		return self.readKinematicsData(*prodKinMomenta, *decayKinMomenta);
+
+		std::vector<TVector3> decayKinematicsMomenta(len(pyDecayKinMomenta));
+		for(unsigned int i = 0; i < len(pyDecayKinMomenta); ++i) {
+			bp::object item = bp::extract<bp::object>(pyDecayKinMomenta[i]);
+			decayKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
+		}
+
+		/*
+		std::vector<TVector3> productionKinematicsMomenta;
+		if(not rpwa::py::convertBPObjectToVector<TVector3>(pyProdKinMomenta, productionKinematicsMomenta))
+			{
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for initialStateParticleMomenta when executing rpwa::decayTopology::readKinematicsData()");
+				bp::throw_error_already_set();
+			}
+
+		std::vector<TVector3> decayKinematicsMomenta;
+		if(not rpwa::py::convertBPObjectToVector<TVector3>(pyDecayKinMomenta, decayKinematicsMomenta))
+			{
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::decayTopology::readKinematicsData()");
+				bp::throw_error_already_set();
+			}
+		*/
+
+		return self.readKinematicsData(productionKinematicsMomenta, decayKinematicsMomenta);
 	}
 
 	bool decayTopology_revertMomenta1(rpwa::decayTopology& self) {
