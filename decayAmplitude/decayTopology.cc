@@ -561,7 +561,8 @@ decayTopology::addDecay(const decayTopology& topo)
 }
 
 
-void decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
+void
+decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
 {
 	if (not productionVertex) {
 		printErr << "null pointer for production vertex. Aborting..." << endl;
@@ -677,6 +678,23 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 	}
 
 	return success;
+}
+
+
+bool
+decayTopology::readKinematicsData(const vector<TVector3>& prodKinMomentaVec,
+                                  const vector<TVector3>& decayKinMomentaVec)
+{
+	TClonesArray prodKinMomenta("TVector3", prodKinMomentaVec.size());
+	for (unsigned int i = 0; i < prodKinMomentaVec.size(); ++i) {
+		new (prodKinMomenta[i]) TVector3(prodKinMomentaVec[i]);
+	}
+	TClonesArray decayKinMomenta("TVector3", decayKinMomentaVec.size());
+	for (unsigned int i = 0; i < decayKinMomentaVec.size(); ++i) {
+		new (decayKinMomenta[i]) TVector3(decayKinMomentaVec[i]);
+	}
+
+	return readKinematicsData(prodKinMomenta, decayKinMomenta);
 }
 
 
