@@ -12,6 +12,9 @@ if __name__ == "__main__":
 	pyRootPwa.core.printLibraryInfo()
 	pyRootPwa.core.printGitHash()
 
+	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
+	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
+
 	parser = argparse.ArgumentParser(description="convert event file")
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format without meta data")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="input file in ROOTPWA format with meta data")
@@ -46,10 +49,7 @@ if __name__ == "__main__":
 	                      initialStateParticleNames,
 	                      finalStateParticleNames,
 	                      {},
-	                      [],
-	                      inTreeName,
-	                      prodKinMomentaLeafName,
-	                      decayKinMomentaLeafName)
+	                      [])
 
 	inputTree = inputFile.Get(inTreeName)
 	for event in inputTree:
