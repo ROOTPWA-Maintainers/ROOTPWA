@@ -37,6 +37,7 @@ rpwa::eventFileWriter::~eventFileWriter()
 
 bool rpwa::eventFileWriter::initialize(TFile&                                     outputFile,
                                        const string&                              userString,
+                                       const eventMetadata::eventsTypeEnum&       eventsType,
                                        const vector<string>&                      productionKinematicsParticleNames,
                                        const vector<string>&                      decayKinematicsParticleNames,
                                        const map<string, pair<double, double> >&  binningMap,
@@ -53,6 +54,7 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 
 	// prepare metadata
 	_metadata.setUserString(userString);
+	_metadata.setEventsType(eventsType);
 	_metadata.setProductionKinematicsParticleNames(productionKinematicsParticleNames);
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
 	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);

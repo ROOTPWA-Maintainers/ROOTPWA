@@ -21,10 +21,18 @@ namespace rpwa {
 
 	  public:
 
+		enum eventsTypeEnum {
+			OTHER,
+			REAL,
+			GENERATED,
+			ACCEPTED
+		};
+
 		~eventMetadata();
 
 		const std::string& userString() const { return _userString; }
 		const std::string& contentHash() const { return _contentHash; }
+		const eventsTypeEnum& eventsType() const { return _eventsType; }
 		const binningMapType& binningMap() const { return _binningMap; }
 		const std::vector<std::string>& productionKinematicsParticleNames() const { return _productionKinematicsParticleNames; }
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
@@ -67,6 +75,7 @@ namespace rpwa {
 		                        const std::string& delimiter = ", ");
 
 		void setContentHash(const std::string& contentHash) { _contentHash = contentHash; }
+		void setEventsType(const eventsTypeEnum& eventsType) { _eventsType = eventsType; }
 		void setProductionKinematicsParticleNames(const std::vector<std::string>& productionKinematicsParticleNames);
 		void setDecayKinematicsParticleNames(const std::vector<std::string>& decayKinematicsParticleNames);
 		void setAdditionalSavedVariableLables(std::vector<std::string> labels) { _additionalSavedVariableLabels = labels; }
@@ -75,8 +84,11 @@ namespace rpwa {
 		void setBinningVariableRange(const std::string& label, const rangePairType& range);
 		void setBinningMap(const binningMapType& binningMap);
 
+		static std::string getStringForEventsType(const eventsTypeEnum& type);
+
 		std::string _userString;
 		std::string _contentHash;
+		eventsTypeEnum _eventsType;
 
 		std::vector<std::string> _productionKinematicsParticleNames;
 		std::vector<std::string> _decayKinematicsParticleNames;

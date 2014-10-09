@@ -2,6 +2,7 @@
 
 import argparse
 import os.path
+import sys
 
 import pyRootPwa
 ROOT = pyRootPwa.ROOT
@@ -19,6 +20,7 @@ if __name__ == "__main__":
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format without meta data")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="input file in ROOTPWA format with meta data")
 	parser.add_argument("-l", type=str, metavar="string", dest="userString", help="label which is saved to the metadata (default: output file name)")
+	parser.add_argument("-t", type=str, metavar="eventsType", dest="eventsType", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
 	args = parser.parse_args()
 
@@ -29,6 +31,16 @@ if __name__ == "__main__":
 	inTreeName = "rootPwaEvtTree"
 
 	userString = "" if not args.userString else args.userString
+
+	eventTypeTranslation = { "other": pyRootPwa.core.eventMetadata.OTHER,
+	                         "real": pyRootPwa.core.eventMetadata.REAL,
+	                         "generated": pyRootPwa.core.eventMetadata.GENERATED,
+	                         "accepted": pyRootPwa.core.eventMetadata.ACCEPTED,
+	                       }
+	eventsTypeString = str.lower(args.eventsType)
+	if args.eventsType not in eventTypeTranslation.keys():
+		pyRootPwa.utils.printErr("type '" + args.eventsType + "' is invalid as an event data type.")
+		sys.exit(1)
 
 	inputFileName = os.path.abspath(args.inputFile)
 	inputFile = ROOT.TFile(inputFileName, "READ")
@@ -46,6 +58,7 @@ if __name__ == "__main__":
 	fileWriter = pyRootPwa.core.eventFileWriter()
 	fileWriter.initialize(outputFile,
 	                      userString,
+	                      eventTypeTranslation[eventsTypeString],
 	                      initialStateParticleNames,
 	                      finalStateParticleNames,
 	                      {},

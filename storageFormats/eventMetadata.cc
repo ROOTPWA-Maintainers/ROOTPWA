@@ -24,6 +24,7 @@ const std::string rpwa::eventMetadata::decayKinematicsMomentaBranchName = "decay
 rpwa::eventMetadata::eventMetadata()
 	: _userString(""),
 	  _contentHash(""),
+	  _eventsType(eventMetadata::eventsTypeEnum::OTHER),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
 	  _binningMap(),
@@ -37,10 +38,11 @@ rpwa::eventMetadata::~eventMetadata() { };
 ostream& rpwa::eventMetadata::print(ostream& out) const
 {
 	out << "eventMetadata: " << endl
-	    << "    userString ...................... '" << _userString << "'"                 << endl
-	    << "    contentHash ..................... '" << _contentHash << "'"                << endl
-	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames << endl
-	    << "    final state particle names: ..... "  << _decayKinematicsParticleNames      << endl
+	    << "    userString ...................... '" << _userString << "'"                  << endl
+	    << "    contentHash ..................... '" << _contentHash << "'"                 << endl
+	    << "    eventsType ...................... '" << getStringForEventsType(_eventsType) << "'" << endl
+	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames  << endl
+	    << "    final state particle names: ..... "  << _decayKinematicsParticleNames       << endl
 	    << "    binning map";
 	if(_binningMap.empty()) {
 		out << " ..................... " << "<empty>" << endl;
@@ -293,4 +295,20 @@ Int_t rpwa::eventMetadata::Write(const char* name, Int_t option, Int_t bufsize) 
 		retval = _eventTree->Write();
 	}
 	return retval + TObject::Write(name, option, bufsize);
+}
+
+
+std::string rpwa::eventMetadata::getStringForEventsType(const eventsTypeEnum& type)
+{
+	switch(type) {
+		case eventsTypeEnum::OTHER:
+			return "other";
+		case eventsTypeEnum::REAL:
+			return "real";
+		case eventsTypeEnum::GENERATED:
+			return "generated";
+		case eventsTypeEnum::ACCEPTED:
+			return "accepted";
+	}
+	return "UNKNOWN";
 }

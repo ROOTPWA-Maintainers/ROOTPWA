@@ -22,6 +22,7 @@ namespace rpwa {
 
 		bool initialize(TFile&                                                   outputFile,                        // output file to write the data to (user keeps ownership!)
 		                const std::string&                                       userString,                        // some arbitrary string to identify this data file
+		                const eventMetadata::eventsTypeEnum&                     eventsType,                        // type of events
 		                const std::vector<std::string>&                          productionKinematicsParticleNames, // particle names of initial state particles (has to be the same order as the particles appear in the data!)
 		                const std::vector<std::string>&                          decayKinematicsParticleNames,      // particle names of final state particles (has to be the same order as the particles appear in the data!)
 		                const std::map<std::string, std::pair<double, double> >& binningMap,                        // binning variable map with content "label" -> (lowerBound, upperBound) describing which bin these data belong to

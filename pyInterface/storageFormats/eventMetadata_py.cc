@@ -53,12 +53,11 @@ namespace {
 		return rpwa::eventMetadata::readEventFile(inputFile, quiet);
 	}
 
-
 }
 
 void rpwa::py::exportEventMetadata() {
 
-	bp::class_<rpwa::eventMetadata, boost::noncopyable>("eventMetadata", bp::no_init)
+	bp::scope theScope = bp::class_<rpwa::eventMetadata, boost::noncopyable>("eventMetadata", bp::no_init)
 
 		.def(bp::self_ns::str(bp::self))
 
@@ -84,6 +83,25 @@ void rpwa::py::exportEventMetadata() {
 			, (bp::arg("inputFile"), bp::arg("quiet")=false)
 			, bp::return_value_policy<bp::reference_existing_object>()
 		)
-		.staticmethod("readEventFile");
+		.staticmethod("readEventFile")
+		.def_readonly("objectNameInFile", &rpwa::eventMetadata::objectNameInFile)
+		.def_readonly("eventTreeName", &rpwa::eventMetadata::eventTreeName)
+		.def_readonly("productionKinematicsMomentaBranchName", &rpwa::eventMetadata::productionKinematicsMomentaBranchName)
+		.def_readonly("decayKinematicsMomentaBranchName", &rpwa::eventMetadata::decayKinematicsMomentaBranchName)
+
+		;
+
+
+	bp::enum_<rpwa::eventMetadata::eventsTypeEnum>("eventsTypeEnum")
+		.value("OTHER", rpwa::eventMetadata::OTHER)
+		.value("REAL", rpwa::eventMetadata::REAL)
+		.value("GENERATED", rpwa::eventMetadata::GENERATED)
+		.value("ACCEPTED", rpwa::eventMetadata::ACCEPTED)
+		.export_values();
+
+	theScope.attr("OTHER") = rpwa::eventMetadata::OTHER;
+	theScope.attr("REAL") = rpwa::eventMetadata::REAL;
+	theScope.attr("GENERATED") = rpwa::eventMetadata::GENERATED;
+	theScope.attr("ACCEPTED") = rpwa::eventMetadata::ACCEPTED;
 
 }
