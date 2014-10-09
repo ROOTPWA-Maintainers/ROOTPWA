@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include <boost/progress.hpp>
 
 #include <TClonesArray.h>
@@ -32,6 +34,7 @@ usage(const string& progName,
 	     << "        -i file    input file in ROOTPWA format without meta data (default: ./input.root)" << endl
 	     << "        -o file    input file in ROOTPWA format with meta data (default: ./output.root)" << endl
 	     << "        -l string  label which is saved to the metadata (default: output file name)" << endl
+	     << "        -t type    type of data (can be 'real', 'generated' or 'accepted', default: 'other')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -47,6 +50,8 @@ int main(int argc, char** argv)
 	printLibraryInfo();
 	printGitHash();
 	cout << endl;
+
+	string eventsTypeString = "other";
 
 	string prodKinPartNamesObjName = "prodKinParticles";
 	string prodKinMomentaLeafName = "prodKinMomenta";
@@ -70,7 +75,7 @@ int main(int argc, char** argv)
 
 	extern char* optarg;
 	int c;
-	while((c = getopt(argc, argv, "i:o:l:vh")) != -1)
+	while((c = getopt(argc, argv, "i:o:l:t:vh")) != -1)
 	{
 		switch(c) {
 		case 'i':
@@ -81,6 +86,9 @@ int main(int argc, char** argv)
 			break;
 		case 'l':
 			userString = optarg;
+			break;
+		case 't':
+			eventsTypeString = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -100,6 +108,21 @@ int main(int argc, char** argv)
 		printErr << "could not open output file. Aborting..." << endl;
 		return 1;
 	}
+	transform(eventsTypeString.begin(), eventsTypeString.end(), eventsTypeString.begin(), ::tolower);
+	eventMetadata::eventsTypeEnum eventsType = eventMetadata::eventsTypeEnum::OTHER;
+	if(eventsTypeString == "real") {
+		eventsType = eventMetadata::eventsTypeEnum::REAL;
+	} else if(eventsTypeString == "generated") {
+		eventsType = eventMetadata::eventsTypeEnum::GENERATED;
+	} else if(eventsTypeString == "accepted") {
+		eventsType = eventMetadata::eventsTypeEnum::ACCEPTED;
+	} else if(eventsTypeString == "other") {
+		// do nothing
+	} else {
+		printErr << "type '" << eventsTypeString << "' is invalid as an event data type." << endl;
+		return 1;
+	}
+
 	vector<string> productionKinematicsParticleNames;
 	vector<string> decayKinematicsParticleNames;
 	{
@@ -132,6 +155,7 @@ int main(int argc, char** argv)
 	{
 		bool success = fileWriter.initialize(*outputFile,
 											 userString,
+											 eventsType,
 											 productionKinematicsParticleNames,
 											 decayKinematicsParticleNames,
 											 map<string, pair<double, double> >(),
