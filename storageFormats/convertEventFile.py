@@ -5,6 +5,7 @@ import os.path
 import sys
 
 import pyRootPwa
+import pyRootPwa.core
 ROOT = pyRootPwa.ROOT
 
 if __name__ == "__main__":
