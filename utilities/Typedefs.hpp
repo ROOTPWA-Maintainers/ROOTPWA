@@ -21,43 +21,61 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      production vertex virtual base class
+//      Defines the types used for vectors, rotations etc.
 //
 //
 // Author List:
-//      Boris Grube          TUM            (original author)
+//      Armin Gensler          TUM            (original author)
 //
 //
 //-------------------------------------------------------------------------
 
 
-#include "reportingUtils.hpp"
-#include "productionVertex.h"
+#ifndef RPWA_TYPEDEFS_HPP
+#define RPWA_TYPEDEFS_HPP
+
+#include <complex>
+
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include "TRotation.h"
+#include "TLorentzRotation.h"
+
+#include "Complex.hpp"
+#include "Vector3.hpp"
+#include "LorentzVector.hpp"
+#include "Rotation.hpp"
+#include "LorentzRotation.hpp"
+
+namespace rpwa {
+
+	typedef double Scalar;
+
+	typedef RpwaComplex<Scalar> Complex;
+
+	typedef RpwaVector3<Scalar> Vector3;
+
+	typedef RpwaLorentzVector<Scalar> LorentzVector;
+
+	typedef RpwaRotation<Scalar> Rotation;
+
+	typedef RpwaLorentzRotation<Scalar> LorentzRotation;
+
+	/*
+	typedef double Scalar;
+
+	typedef std::complex<Scalar> Complex;
+  
+	typedef TVector3 Vector3;
+	
+	typedef TLorentzVector LorentzVector;
+	
+	typedef TRotation Rotation;
+	
+	typedef TLorentzRotation LorentzRotation;
+	*/
+
+}  // namespace rpwa
 
 
-using namespace std;
-using namespace rpwa;
-
-
-bool productionVertex::_debug = false;
-
-
-productionVertex::productionVertex()
-	: interactionVertex()
-{
-	if (_debug)
-		printDebug << "constructed " << *this << endl;
-}
-
-
-productionVertex::~productionVertex()
-{ }
-
-
-// default implementation
-vector<Complex>
-productionVertex::productionAmps() const
-{
-	size_t numEvents = XParticle()->numEvents();
-	return vector<Complex>(numEvents, 1);
-}
+#endif  // RPWA_TYPEDEFS_HPP

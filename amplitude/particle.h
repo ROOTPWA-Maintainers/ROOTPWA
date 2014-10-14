@@ -43,10 +43,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "TVector3.h"
-#include "TLorentzVector.h"
-#include "TLorentzRotation.h"
-
+#include "Typedefs.hpp"
 #include "conversionUtils.hpp"
 #include "parallelUtils.hpp"
 #include "particleProperties.h"
@@ -63,50 +60,48 @@ namespace rpwa {
 	public:
 
 		particle();
-		particle(const particle&              part);
-		particle(const particleProperties&    partProp,
-		         const int                    index    = -1,
-		         const int                    spinProj = 0,
-		         const int                    refl     = 0,
-		         const std::vector<TVector3>& momenta  = std::vector<TVector3>());
-		particle(const std::string&           partName,
-		         const bool                   requirePartInTable = true,
-		         const int                    index              = -1,
-		         const int                    spinProj           = 0,
-		         const int                    refl               = 0,
-		         const std::vector<TVector3>& momenta            = std::vector<TVector3>());
-		particle(const std::string&           partName,
-		         const int                    isospin,
-		         const int                    G,
-		         const int                    J,
-		         const int                    P,
-		         const int                    C,
-		         const int                    spinProj,
-		         const int                    refl  = 0,
-		         const int                    index = -1);
+		particle(const particle&             part);
+		particle(const particleProperties&   partProp,
+		         const int                   index    = -1,
+		         const int                   spinProj = 0,
+		         const int                   refl     = 0,
+		         const std::vector<Vector3>& momenta  = std::vector<Vector3>());
+		particle(const std::string&          partName,
+		         const bool                  requirePartInTable = true,
+		         const int                   index              = -1,
+		         const int                   spinProj           = 0,
+		         const int                   refl               = 0,
+		         const std::vector<Vector3>& momenta            = std::vector<Vector3>());
+		particle(const std::string&          partName,
+		         const int                   isospin,
+		         const int                   G,
+		         const int                   J,
+		         const int                   P,
+		         const int                   C,
+		         const int                   spinProj,
+		         const int                   refl  = 0,
+		         const int                   index = -1);
 		virtual ~particle();
 
 		particle& operator =(const particle& part);
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
-		int                                spinProj     () const { return _spinProj; }  ///< returns particle's spin projection quantum number
-		//const std::vector<TVector3>&       momenta      () const;                       ///< returns particle's three-momenta
-		const std::vector<TLorentzVector>& lzVecs       () const { return _lzVecs;   }  ///< returns particle's Lorentz vectors
-		std::vector<TLorentzVector>&       mutableLzVecs()       { return _lzVecs;   }  ///< returns particle's Lorentz vectors as modifiable refrence; use with care
-		int                                index        () const { return _index;    }  ///< returns index label assigned to particle; -1 means undefined
-		int                                reflectivity () const { return _refl;     }  ///< returns particle's reflectivity; 0 means undefined
+		int                               spinProj     () const { return _spinProj; }  ///< returns particle's spin projection quantum number
+		const std::vector<LorentzVector>& lzVecs       () const { return _lzVecs;   }  ///< returns particle's Lorentz vectors
+		std::vector<LorentzVector>&       mutableLzVecs()       { return _lzVecs;   }  ///< returns particle's Lorentz vectors as modifiable refrence; use with care
+		int                               index        () const { return _index;    }  ///< returns index label assigned to particle; -1 means undefined
+		int                               reflectivity () const { return _refl;     }  ///< returns particle's reflectivity; 0 means undefined
 
-		void setSpinProj    (const int                          spinProj) { _spinProj = spinProj;     }  ///< sets particle's spin projection quantum number
-		void setMomenta     (const std::vector<TVector3>&       momenta );                               ///< sets particle's Lorentz vectors
-		void setLzVecs      (const std::vector<TLorentzVector>& lzVecs  ) { _lzVecs   = lzVecs;       }  ///< sets particle's Lorentz vectors; if used to inject external data the mass values likely will become inconsistent
-		void setIndex       (const int                          index   ) { _index    = index;        }  ///< sets particle's index label
-		void setReflectivity(const int                          refl    ) { _refl     = signum(refl); }  ///< sets particle's reflectivity
+		void setSpinProj    (const int                         spinProj) { _spinProj = spinProj;     }  ///< sets particle's spin projection quantum number
+		void setMomenta     (const std::vector<Vector3>&       momenta );                               ///< sets particle's Lorentz vectors
+		void setLzVecs      (const std::vector<LorentzVector>& lzVecs  ) { _lzVecs   = lzVecs;       }  ///< sets particle's Lorentz vectors; if used to inject external data the mass values likely will become inconsistent
+		void setIndex       (const int                         index   ) { _index    = index;        }  ///< sets particle's index label
+		void setReflectivity(const int                         refl    ) { _refl     = signum(refl); }  ///< sets particle's reflectivity
 
 		void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
-		const std::vector<TLorentzVector>& transform  (const std::vector<TLorentzRotation>& lorentzTransforms);      ///< applies different Lorentz transformation to each Lorentz vector
-		const std::vector<TLorentzVector>& transform  (const std::vector<TVector3>&         boosts           );      ///< applies different Lorentz boost to each Lorentz vector
-		void                               scaleLzVecs(double scaleX, double scaleY, double scaleZ, double scaleE);  ///< multiplies the components of all Lorentz vectors by scaling values
+		const std::vector<LorentzVector>& transform  (const std::vector<LorentzRotation>& lorentzTransforms);      ///< applies different Lorentz transformation to each Lorentz vector
+		const std::vector<LorentzVector>& transform  (const std::vector<Vector3>&         boosts           );      ///< applies different Lorentz boost to each Lorentz vector
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)M]
 
@@ -114,7 +109,7 @@ namespace rpwa {
 
 		virtual std::string label() const;  ///< returns particle label
 
-		size_t numParallelEvents() const { return _lzVecs.size(); }  ///< returns number of events handled in parallel (= size of event data arrays)
+		size_t numEvents() const { return _lzVecs.size(); }  ///< returns number of events handled in parallel (= size of event data arrays)
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -129,10 +124,10 @@ namespace rpwa {
 
 	private:
 
-		int                         _spinProj;  ///< spin projection quantum number; can be either M or helicity
-		std::vector<TLorentzVector> _lzVecs;    ///< Lorentz vector [GeV]
-		int                         _index;     ///< index that can be used to label indistinguishable particles
-		int                         _refl;      ///< reflectivity
+		int                        _spinProj;  ///< spin projection quantum number; can be either M or helicity
+		std::vector<LorentzVector> _lzVecs;    ///< Lorentz vector [GeV]
+		int                        _index;     ///< index that can be used to label indistinguishable particles
+		int                        _refl;      ///< reflectivity
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -150,11 +145,11 @@ namespace rpwa {
 
 	inline
 	particlePtr
-	createParticle(const particleProperties&    partProp,
-	               const int                    index    = -1,
-	               const int                    spinProj = 0,
-	               const int                    refl     = 0,
-	               const std::vector<TVector3>& momenta  = std::vector<TVector3>())
+	createParticle(const particleProperties&   partProp,
+	               const int                   index    = -1,
+	               const int                   spinProj = 0,
+	               const int                   refl     = 0,
+	               const std::vector<Vector3>& momenta  = std::vector<Vector3>())
 	{
 		particlePtr part(new particle(partProp, index, spinProj, refl, momenta));
 		return part;
@@ -163,12 +158,12 @@ namespace rpwa {
 
 	inline
 	particlePtr
-	createParticle(const std::string&           partName,
-	               const bool                   requirePartInTable = true,
-	               const int                    index              = -1,
-	               const int                    spinProj           = 0,
-	               const int                    refl               = 0,
-	               const std::vector<TVector3>& momenta            = std::vector<TVector3>())
+	createParticle(const std::string&          partName,
+	               const bool                  requirePartInTable = true,
+	               const int                   index              = -1,
+	               const int                   spinProj           = 0,
+	               const int                   refl               = 0,
+	               const std::vector<Vector3>& momenta            = std::vector<Vector3>())
 	{
 		particlePtr part(new particle(partName, requirePartInTable, index, spinProj, refl, momenta));
 		return part;

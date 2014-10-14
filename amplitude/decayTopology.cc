@@ -50,7 +50,6 @@
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
-#include "TVector3.h"
 
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
@@ -235,7 +234,7 @@ decayTopology::reflectionEigenValue() const
 
 
 void
-decayTopology::transformFsParticles(const std::vector<TLorentzRotation>& lorentzTransforms)
+decayTopology::transformFsParticles(const std::vector<LorentzRotation>& lorentzTransforms)
 {
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i)
 		fsParticles()[i]->transform(lorentzTransforms);
@@ -668,8 +667,8 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 
 
 bool
-decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta,
-                                  const vector<vector<TVector3> >& decayKinMomenta)
+decayTopology::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta,
+                                  const vector<vector<Vector3> >& decayKinMomenta)
 {
 	// set production kinematics
 	bool success = productionVertex()->readKinematicsData(prodKinMomenta);
@@ -687,18 +686,16 @@ decayTopology::readKinematicsData(const vector<vector<TVector3> >& prodKinMoment
 
 	// set decay kinematics
 	_fsDataPartMomCache.clear();
-	_fsDataPartMomCache.resize(nmbFsParticles(), std::vector<TVector3>());
+	_fsDataPartMomCache.resize(nmbFsParticles());
 	for (size_t i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr&      part      = fsParticles()[i];
-		const unsigned int      partIndex = _fsDataPartIndexMap[i];
-		const vector<TVector3>& momenta   = decayKinMomenta[partIndex];
-		for(size_t k = 0; k < momenta.size(); ++k) {
-			const TVector3& mom = momenta[k];
-			if (_debug)
-				printDebug << "setting momentum of final-state particle '" << part->name() << "' "
-						   << "at index [" << i << "] to " << mom << " GeV "
-						   << "at input data index [" << partIndex << "]" << endl;
-			_fsDataPartMomCache[i].push_back(mom);
+		const particlePtr&     part      = fsParticles()[i];
+		const unsigned int     partIndex = _fsDataPartIndexMap[i];
+		const vector<Vector3>& momenta   = decayKinMomenta[partIndex];
+		_fsDataPartMomCache[i] = momenta;
+		if (_debug) {
+			printDebug << "setting momentum of final-state particle '" << part->name() << "' "
+					   << "at index [" << i << "] to " << firstEntriesToString(momenta, 3) << " GeV "
+					   << "at input data index [" << partIndex << "]" << endl;
 		}
 	}
 

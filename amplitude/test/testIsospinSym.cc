@@ -57,10 +57,10 @@ using namespace rpwa;
 
 
 long int
-calcNewAmps(const string&             rootInFileName,
-            const string&             keyFileName,
-            vector<complex<double> >& amps,
-            const long int            maxNmbEvents)
+calcNewAmps(const string&    rootInFileName,
+            const string&    keyFileName,
+            vector<Complex>& amps,
+            const long int   maxNmbEvents)
 {
 	waveDescription    waveDesc;
 	isobarAmplitudePtr amp;
@@ -130,8 +130,8 @@ calcNewAmps(const string&             rootInFileName,
 		const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
 		const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
 
-		vector<vector<TVector3> > prodMomenta(numProdMomenta, vector<TVector3>(1));
-		vector<vector<TVector3> > decayMomenta(numDecayMomenta, vector<TVector3>(1));
+		vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
+		vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
 
 		bool success = true;
 
@@ -163,7 +163,7 @@ calcNewAmps(const string&             rootInFileName,
 		}
 
 		if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
-			const vector<complex<double> > ampResult = (*amp)();
+			const vector<Complex> ampResult = (*amp)();
 			if(ampResult.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;
 				return 0;
@@ -297,7 +297,7 @@ main(int argc, char** argv)
 
 	timer.Reset();
 	timer.Start();
-	vector<complex<double> > newAmps;
+	vector<Complex> newAmps;
 	calcNewAmps(rootInFileName, newKeyFileName, newAmps, maxNmbEvents);
 	timer.Stop();
 	printSucc << "read " << newAmps.size() << " events from file(s) "

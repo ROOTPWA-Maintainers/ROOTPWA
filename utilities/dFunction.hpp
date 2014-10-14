@@ -119,11 +119,11 @@ namespace rpwa {
 			const T sinThetaHalf = sin(thetaHalf);
 
 			T               dFuncVal   = 0;
-			cacheEntryType& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
 			if (_useCache) {
 				if (not _cacheIsInitialized)
 					initCache();
 				// calculate function value using cache
+				cacheEntryType& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
 				T sumTerm = 0;
 				for (unsigned int i = 0; i < cacheEntry.numSumTerms; ++i) {
 					sumTerm +=   rpwa::pow(cosThetaHalf, cacheEntry.kmn1[i])
@@ -169,6 +169,44 @@ namespace rpwa {
 		static void         setUseCache(const bool useCache = true) { _useCache = useCache;  }  ///< sets caching flag
 		static unsigned int cacheSize  ()                           { return sizeof(_cache); }  ///< returns cache size in bytes
 
+		static void initCacheEntry(cacheEntryType& cacheEntry, int j, int m, int n)
+		{
+			const int jpm        = (j + m) / 2;
+			const int jpn        = (j + n) / 2;
+			const int jmm        = (j - m) / 2;
+			const int jmn        = (j - n) / 2;
+			const T   kk         = rpwa::factorial<T>(jpm)
+									* rpwa::factorial<T>(jmm)
+									* rpwa::factorial<T>(jpn)
+									* rpwa::factorial<T>(jmn);
+			cacheEntry.constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
+
+			const int mpn     = (m + n) / 2;
+			const int kMin    = std::max(0,   mpn);
+			const int kMax    = std::min(jpm, jpn);
+			cacheEntry.numSumTerms = kMax - kMin + 1;
+			for (int k = kMin; k <= kMax; ++k) {
+				const int kmn1   = 2 * k - (m + n) / 2;
+				const int jmnk   = j + (m + n) / 2 - 2 * k;
+				const int jmk    = (j + m) / 2 - k;
+				const int jnk    = (j + n) / 2 - k;
+				const int kmn2   = k - (m + n) / 2;
+				const T   factor = (  rpwa::factorial<T>(k   )
+									* rpwa::factorial<T>(jmk )
+									* rpwa::factorial<T>(jnk )
+									* rpwa::factorial<T>(kmn2)) / powMinusOne(k);
+				int kRel = k - kMin;
+				if (kRel >= j + 1) {
+					printErr << "there are more than (j + 1) possible values for k, "
+						  << "this should be impossible" << std::endl;
+					throw;
+				}
+				cacheEntry.kmn1  [kRel] = kmn1;
+				cacheEntry.jmnk  [kRel] = jmnk;
+				cacheEntry.factor[kRel] = factor;
+			}
+		}
+
 		static void initCache()
 		{
 			if (_cacheIsInitialized)
@@ -181,42 +219,7 @@ namespace rpwa {
 				for (int m = -j; m <= j; m += 2) {
 					for (int n = -j; n <= j; n += 2) {
 						cacheEntryType& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
-
-						const int jpm        = (j + m) / 2;
-						const int jpn        = (j + n) / 2;
-						const int jmm        = (j - m) / 2;
-						const int jmn        = (j - n) / 2;
-						const T   kk         =   rpwa::factorial<T>(jpm)
-							                     * rpwa::factorial<T>(jmm)
-						                       * rpwa::factorial<T>(jpn)
-								                   * rpwa::factorial<T>(jmn);
-						cacheEntry.constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
-
-						T         sumTerm = 0;
-						const int mpn     = (m + n) / 2;
-						const int kMin    = std::max(0,   mpn);
-						const int kMax    = std::min(jpm, jpn);
-						cacheEntry.numSumTerms = kMax - kMin + 1;
-						for (int k = kMin; k <= kMax; ++k) {
-							const int kmn1   = 2 * k - (m + n) / 2;
-							const int jmnk   = j + (m + n) / 2 - 2 * k;
-							const int jmk    = (j + m) / 2 - k;
-							const int jnk    = (j + n) / 2 - k;
-							const int kmn2   = k - (m + n) / 2;
-							const T   factor = (  rpwa::factorial<T>(k   )
-							                    * rpwa::factorial<T>(jmk )
-							                    * rpwa::factorial<T>(jnk )
-							                    * rpwa::factorial<T>(kmn2)) / powMinusOne(k);
-							int kRel = k - kMin;
-							if (kRel >= j + 1) {
-								printErr << "there are more than (j + 1) possible values for k, "
-									  << "this should be impossible" << std::endl;
-								throw;
-							}
-							cacheEntry.kmn1  [kRel] = kmn1;
-							cacheEntry.jmnk  [kRel] = jmnk;
-							cacheEntry.factor[kRel] = factor;
-						}
+						initCacheEntry(cacheEntry, j, m, n);
 					}
 				}
 			}

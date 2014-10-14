@@ -50,7 +50,7 @@ std::vector<std::complex<double> > phaseSpaceIntegral::operator()(const isobarDe
 
 	// get Breit-Wigner parameters
 	const particlePtr& parent = vertex.parent();
-	const std::vector<TLorentzVector>& parentVec = vertex.parent()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = vertex.parent()->lzVecs();
 	const double M0     = parent->mass();                  // resonance peak position
 	const double Gamma0 = parent->width();                 // resonance peak width
 

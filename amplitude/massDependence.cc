@@ -58,24 +58,24 @@ massDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 flatMassDependence::amp(const isobarDecayVertex& v)
 {
 	if (_debug)
 		printDebug << name() << " = 1" << endl;
-	std::vector<std::complex<double> > result(v.parent()->numParallelEvents(), 1);
+	std::vector<Complex> result(v.parent()->numEvents(), 1);
 	return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 flatRangeMassDependence::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
-	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -103,7 +103,7 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
@@ -112,16 +112,16 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 //	if(daughter1->isStable() and daughter2->isStable()) {
 
-		const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
-		const std::vector<TLorentzVector>& daughter1Vec = daughter1->lzVecs();
-		const std::vector<TLorentzVector>& daughter2Vec = daughter2->lzVecs();
+		const std::vector<LorentzVector>& parentVec = parent->lzVecs();
+		const std::vector<LorentzVector>& daughter1Vec = daughter1->lzVecs();
+		const std::vector<LorentzVector>& daughter2Vec = daughter2->lzVecs();
 
 		if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 			printErr << "size of per-event-data vectors does not match. aborting." << endl;
 			throw;
 		}
 
-		std::vector<std::complex<double> > result(parentVec.size(), 0);
+		std::vector<Complex> result(parentVec.size(), 0);
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = result.size();
@@ -140,7 +140,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 			const double       Gamma0 = parent->width();             // resonance peak width
 			const unsigned int L      = v.L();
 
-			complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
+			Complex bw = breitWigner<Complex>(M, M0, Gamma0, L, q, q0);
 			result[i] = bw;
 
 			if (_debug) {
@@ -160,7 +160,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 //	} else {
 //
-//		std::vector<std::complex<double> > bw = (*phaseSpaceIntegral::instance())(v);
+//		std::vector<Complex> bw = (*phaseSpaceIntegral::instance())(v);
 //		return bw;
 //
 //	}
@@ -169,7 +169,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 constWidthBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
@@ -178,9 +178,9 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 	const double M0     = parent->mass();  // resonance peak position
 	const double Gamma0 = parent->width(); // resonance peak width
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -193,8 +193,8 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
 		const double          A  = M0 * Gamma0;
 		const double          B  = M0 * M0 - M * M;
-		const complex<double> bw = (A / (B * B + A * A)) * complex<double>(B, A);
-		// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		const Complex bw = (A / (B * B + A * A)) * Complex(B, A);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
 		result[i] = bw;
 
 		if (_debug)
@@ -213,21 +213,21 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 rhoBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
-	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
-	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const std::vector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -251,12 +251,12 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 		// Gamma = Gamma0 * (q / q0) * F
 
 		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-		const double          A  = M0 * Gamma0 * sqrt(F);
+		const double  A  = M0 * Gamma0 * sqrt(F);
 		// in the original publication A reads
 		// A = sqrt(M0 * Gamma0 * (m / q0) * F)
-		const double          B  = M0 * M0 - M * M;
-		const double          C  = M0 * Gamma;
-		const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+		const double  B  = M0 * M0 - M * M;
+		const double  C  = M0 * Gamma;
+		const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
 		// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
 		result[i] = bw;
 
@@ -278,21 +278,21 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 f0980BreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<TLorentzVector>& parentVec = parent->lzVecs();
-	const std::vector<TLorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
-	const std::vector<TLorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
+	const std::vector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const std::vector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -311,10 +311,10 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 		const double Gamma  = Gamma0 * (q / q0);
 
 		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-		const double          C  = M0 * Gamma;
-		const double          A  = C * M / q;
-		const double          B  = M0 * M0 - M * M;
-		const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+		const double  C  = M0 * Gamma;
+		const double  A  = C * M / q;
+		const double  B  = M0 * M0 - M * M;
+		const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
 		// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
 		result[i] = bw;
 
@@ -339,8 +339,8 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	: massDependence(),
 	  _T       (2, 2),
-	  _a       (2, matrix<complex<double> >(2, 2)),
-	  _c       (5, matrix<complex<double> >(2, 2)),
+	  _a       (2, matrix<Complex>(2, 2)),
+	  _c       (5, matrix<Complex>(2, 2)),
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
@@ -389,21 +389,22 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }
 
-
-std::vector<std::complex<double> >
+std::vector<Complex>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int k = 0; k < size; ++k) {
 
-		const complex<double> imag(0, 1);
+		/*
+
+		const Complex imag(0, 1);
 
 		double mass = parentVec[k].M();
 		double s    = mass * mass;
@@ -412,13 +413,13 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 			s     = mass * mass;
 		}
 
-		const complex<double> qPiPi   = breakupMomentumComplex(mass, _piChargedMass,   _piChargedMass  );
-		const complex<double> qPi0Pi0 = breakupMomentumComplex(mass, _piNeutralMass,   _piNeutralMass  );
-		const complex<double> qKK     = breakupMomentumComplex(mass, _kaonChargedMass, _kaonChargedMass);
-		const complex<double> qK0K0   = breakupMomentumComplex(mass, _kaonNeutralMass, _kaonNeutralMass);
-		complex<double>       qKmKm   = breakupMomentumComplex(mass, _kaonMeanMass,    _kaonMeanMass   );
+		const Complex qPiPi   = breakupMomentumComplex<Complex>(mass, _piChargedMass,   _piChargedMass  );
+		const Complex qPi0Pi0 = breakupMomentumComplex<Complex>(mass, _piNeutralMass,   _piNeutralMass  );
+		const Complex qKK     = breakupMomentumComplex<Complex>(mass, _kaonChargedMass, _kaonChargedMass);
+		const Complex qK0K0   = breakupMomentumComplex<Complex>(mass, _kaonNeutralMass, _kaonNeutralMass);
+		Complex       qKmKm   = breakupMomentumComplex<Complex>(mass, _kaonMeanMass,    _kaonMeanMass   );
 
-		matrix<complex<double> > rho(2, 2);
+		matrix<Complex> rho(2, 2);
 		if (_vesSheet) {
 			if (qKmKm.imag() > 0)
 				qKmKm *= -1;
@@ -432,13 +433,13 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 		const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
 
-		matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
+		matrix<Complex> M(zero_matrix<Complex>(2, 2));
 		for (unsigned int i = 0; i < _sP.size2(); ++i) {
-			const complex<double> fa = 1. / (s - _sP(0, i));
+			const Complex fa = 1. / (s - _sP(0, i));
 			M += fa * _a[i];
 		}
 		for (unsigned int i = 0; i < _c.size(); ++i) {
-			const complex<double> sc = pow(scale, (int)i);
+			const Complex sc = pow(scale, (int)i);
 			M += sc *_c[i];
 		}
 
@@ -446,14 +447,16 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		M(0, 1) = 0;
 		M(1, 0) = 0;
 
-		invertMatrix<complex<double> >(M - imag * rho, _T);
-		const complex<double> amp = _T(0, 0);
+		invertMatrix<Complex>(M - imag * rho, _T);
+		const Complex amp = _T(0, 0);
 		result[k] = amp;
 
 		if (_debug)
 			#pragma omp critical
 			printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
+
+		*/
 
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
@@ -463,7 +466,6 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	return result;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 	: piPiSWaveAuMorganPenningtonM()
@@ -472,24 +474,24 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 }
 
 
-std::vector<std::complex<double> >
+std::vector<Complex>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
 
-	const double          f0Mass  = 0.9837;  // [GeV]
-	const double          f0Width = 0.0376;  // [GeV]
-	const complex<double> coupling(-0.3743, 0.3197);
+	const double  f0Mass  = 0.9837;  // [GeV]
+	const double  f0Width = 0.0376;  // [GeV]
+	const Complex coupling(-0.3743, 0.3197);
 
-	const std::vector<std::complex<double> > ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+	const std::vector<Complex> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
 	if(parentVec.size() != ampM.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -498,7 +500,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 		const double M = parentVec[i].M();
 
-		complex<double> bw = 0;
+		Complex bw = 0;
 		if (M > 2 * _piChargedMass) {
 			const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
 			const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
@@ -507,10 +509,10 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 			const double C     = f0Mass * Gamma;
 			const double A     = C * (M / q);
 			const double B     = f0Mass * f0Mass - M * M;
-			bw = (A / (B * B + C * C)) * complex<double>(B, C);
+			bw = (A / (B * B + C * C)) * Complex(B, C);
 		}
 
-		const complex<double> amp = ampM[i] - coupling * bw;
+		const Complex amp = ampM[i] - coupling * bw;
 		result[i] = amp;
 
 		if (_debug)
@@ -546,11 +548,11 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<std::complex<double> >
+std::vector<Complex>
 rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<TLorentzVector>& parentVec = v.parent()->lzVecs();
+	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
 	// rho' parameters
 	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
@@ -558,7 +560,7 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
 	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	std::vector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -568,22 +570,22 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 		// get Breit-Wigner parameters
 		const double M  = parentVec[i].M();                 // parent mass
 
-		// const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
-		// const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
+		// const Complex bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
+		// const Complex bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
 
 		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
-		const double          A1  = M01 * Gamma01;
-		const double          B1  = M01 * M01 - M * M;
-		const complex<double> bw1 = (A1 / (B1 * B1 + A1 * A1)) * complex<double>(B1, A1);
-		// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		const double  A1  = M01 * Gamma01;
+		const double  B1  = M01 * M01 - M * M;
+		const Complex bw1 = (A1 / (B1 * B1 + A1 * A1)) * Complex(B1, A1);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
 
 		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
-		const double          A2  = M02 * Gamma02;
-		const double          B2  = M02 * M02 - M * M;
-		const complex<double> bw2 = (A2 / (B2 * B2 + A2 * A2)) * complex<double>(B2, A2);
-		// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		const double  A2  = M02 * Gamma02;
+		const double  B2  = M02 * M02 - M * M;
+		const Complex bw2 = (A2 / (B2 * B2 + A2 * A2)) * Complex(B2, A2);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
 
-		const complex<double> bw = (4 * bw1 - 3 * bw2) / 7;
+		const Complex bw = (4.0 * bw1 - 3.0 * bw2) / 7.0;
 		result[i] = bw;
 
 		if (_debug)

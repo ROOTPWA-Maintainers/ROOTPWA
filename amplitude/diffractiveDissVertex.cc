@@ -42,7 +42,6 @@
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
-#include "TVector3.h"
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
@@ -152,7 +151,7 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 }
 
 
-std::vector<std::complex<double> >
+std::vector<Complex>
 diffractiveDissVertex::productionAmps() const
 {
 	size_t numEvents = _beamMomCache.size();
@@ -160,7 +159,7 @@ diffractiveDissVertex::productionAmps() const
 		printErr << "no data to calculate production amplitude. aborting." << endl;
 		throw;
 	}
-	return vector<complex<double> >(numEvents, 1);
+	return vector<Complex>(numEvents, 1);
 }
 
 
@@ -233,9 +232,9 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
+diffractiveDissVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
-	_beamMomCache.clear  ();
+	_beamMomCache.clear();
 	_recoilMomCache.clear();
 	_targetMomCache.clear();
 
@@ -248,36 +247,40 @@ diffractiveDissVertex::readKinematicsData(const vector<vector<TVector3> >& prodK
 		return false;
 	}
 
-	bool success = true;
-	for (size_t i = 0; i < prodKinMomenta[0].size(); ++i) {
+	// set beam
+	_beamMomCache = prodKinMomenta[0];
+	if (_debug) {
+		printDebug << "setting momentum of beam particle '" << beam()->name()
+				   << "' to " << firstEntriesToString(_beamMomCache, 3) << " GeV" << endl;
+	}
 
-		// set beam
-		const TVector3& beamMom = prodKinMomenta[0][i];
-		if (_debug)
-			printDebug << "setting momentum of beam particle '" << beam()->name()
-					   << "' to " << beamMom << " GeV" << endl;
-		_beamMomCache.push_back(beamMom);
-
-		// set recoil (optional)
-		if (_nmbProdKinPart >= 2) {
-			const TVector3& recoilMom = prodKinMomenta[1][i];
-			if (_debug)
-				printDebug << "setting momentum of recoil particle '" << recoil()->name()
-						   << "' to " << recoilMom << " GeV" << endl;
-			_recoilMomCache.push_back(recoilMom);
+	// set recoil (optional)
+	if (_nmbProdKinPart >= 2) {
+		if(prodKinMomenta[0].size() != prodKinMomenta[1].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
 		}
-
-		// set target (optional); if not defined fixed target is assumed
-		if (_nmbProdKinPart >= 3) {
-			const TVector3& targetMom = prodKinMomenta[2][i];
-			if (_debug)
-				printDebug << "setting momentum of target particle '" << target()->name()
-						   << "' to " << targetMom << " GeV" << endl;
-			_targetMomCache.push_back(targetMom);
+		_recoilMomCache = prodKinMomenta[1];
+		if (_debug) {
+			printDebug << "setting momentum of recoil particle '" << recoil()->name()
+					   << "' to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl;
 		}
 	}
 
-	return success;
+	// set target (optional); if not defined fixed target is assumed
+	if (_nmbProdKinPart >= 3) {
+		if(prodKinMomenta[0].size() != prodKinMomenta[2].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+		_targetMomCache = prodKinMomenta[2];
+		if (_debug) {
+			printDebug << "setting momentum of target particle '" << target()->name()
+					   << "' to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
+		}
+	}
+
+	return true;
 }
 
 

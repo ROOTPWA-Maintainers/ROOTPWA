@@ -38,6 +38,7 @@
 #include "TVector3.h"
 #include "TSystem.h"
 
+#include "arrayUtils.hpp"
 #include "../particleDataTable.h"
 #include "../particle.h"
 #include "decayGraph.hpp"
@@ -55,13 +56,6 @@ using namespace boost;
 
 
 typedef decayGraph<interactionVertex, particle> graphType;
-
-template<typename T>
-static vector<T> make_vector_1(const T& element) {
-	vector<T> vec;
-	vec.push_back(element);
-	return vec;
-}
 
 int
 main(int argc, char** argv)
@@ -83,8 +77,8 @@ main(int argc, char** argv)
 
 	// test construction of vertices
 	if (0) {
-		vector<TVector3> mom;
-		mom = make_vector_1(TVector3(1, 2, 3));
+		vector<Vector3> mom;
+		mom = make_vector_1(Vector3(1, 2, 3));
 		particlePtr beam = createParticle("pi-");
 		beam->setMomenta(mom);
 		particlePtr target = createParticle("p+");
@@ -100,10 +94,10 @@ main(int argc, char** argv)
 		printInfo << "copied vertex: " << endl
 		          << *vert2 << endl;
 
-		mom = make_vector_1(TVector3(3, 4, 5));
+		mom = make_vector_1(Vector3(3, 4, 5));
 		particlePtr daughter1 = createParticle("pi-");
 		daughter1->setMomenta(mom);
-		mom = make_vector_1(TVector3(4, 5, 6));
+		mom = make_vector_1(Vector3(4, 5, 6));
 		particlePtr daughter2 = createParticle("pi0");
 		daughter2->setMomenta(mom);
 		isobarDecayVertexPtr vert3 = createIsobarDecayVertex(X, daughter1, daughter2, 1, 2);

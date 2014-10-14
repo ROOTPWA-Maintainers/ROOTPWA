@@ -33,9 +33,7 @@
 
 #include <algorithm>
 
-#include "TLorentzRotation.h"
-#include "TMath.h"
-
+#include "Typedefs.hpp"
 #include "spinUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
@@ -82,9 +80,9 @@ isobarCanonicalAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
-	const std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const std::vector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
+	const std::vector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
+	const std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -99,8 +97,8 @@ isobarCanonicalAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " daughter RF" << endl;
 
-		const std::vector<TLorentzVector>& parentVec = vertex->parent()->lzVecs();
-		std::vector<TVector3> rfBoost(parentVec.size());
+		const std::vector<LorentzVector>& parentVec = vertex->parent()->lzVecs();
+		std::vector<Vector3> rfBoost(parentVec.size());
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = rfBoost.size();
@@ -127,7 +125,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-std::vector<std::complex<double> >
+std::vector<Complex>
 isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                 const bool                  topVertex) const
 {
@@ -139,7 +137,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	int numEvents = parent->numParallelEvents();
+	int numEvents = parent->numEvents();
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
@@ -150,10 +148,10 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int    mS        = m1 + m2;
 	const double ssClebsch = clebschGordanCoeff<double>(s1, m1, s2, m2, S, mS, _debug);
 	if (ssClebsch == 0)
-		return std::vector<std::complex<double> >(numEvents, 0);
+		return std::vector<Complex>(numEvents, 0);
 
 	// calculate Breit-Wigner
-	const std::vector<complex<double> > bw = vertex->massDepAmplitudes();
+	const std::vector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)
@@ -164,7 +162,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
 
-	std::vector<std::complex<double> > amp(numEvents, 0);
+	std::vector<Complex> amp(numEvents, 0);
 
 	// sum over all possible spin projections of L
 	const int L  = vertex->L();
@@ -199,7 +197,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		for(unsigned int i = 0; i < size; ++i) {
 			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVecs()[i].Theta();
-			amp[i] += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
+			amp[i] += LSClebsch * sphericalHarmonic<Complex>(L, mL, theta, phi, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();

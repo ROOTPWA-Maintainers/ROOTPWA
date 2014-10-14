@@ -44,35 +44,37 @@ namespace rpwa {
 
 
 	// computes squared breakup momentum of 2-body decay
+	template<typename T>
 	inline
-	double
-	breakupMomentumSquared(const double M,   // mass of mother particle
-	                       const double m1,  // mass of daughter particle 1
-	                       const double m2,  // mass of daughter particle 2
+	T
+	breakupMomentumSquared(const T M,   // mass of mother particle
+	                       const T m1,  // mass of daughter particle 1
+	                       const T m2,  // mass of daughter particle 2
 	                       const bool   allowSubThr = false)  // if set sub-threshold decays with negative return values are allowed
 	{
-		const double mSum  = m1 + m2;
+		const T mSum  = m1 + m2;
 		if (not allowSubThr and (M < mSum)) {
 			printErr << "mother mass " << M << " GeV/c^2 is smaller than sum of daughter masses "
 			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
 			throw;
 		}
-		const double mDiff = m1 - m2;
-		double q2 = (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
+		const T mDiff = m1 - m2;
+		T q2 = (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
 		// check for rounding errors
 		if (not allowSubThr and q2 < 0) {
-			q2 = 0.;
+			q2 = 0;
 		}
 		return q2;
 	}
 
 
 	// computes breakup momentum of 2-body decay
+	template<typename T>
 	inline
 	double
-	breakupMomentum(const double M,   // mass of mother particle
-	                const double m1,  // mass of daughter particle 1
-	                const double m2)  // mass of daughter particle 2
+	breakupMomentum(const T M,   // mass of mother particle
+	                const T m1,  // mass of daughter particle 1
+	                const T m2)  // mass of daughter particle 2
 	{
 		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2, false));
 	}
@@ -80,47 +82,50 @@ namespace rpwa {
 
 	// computes breakup momentum of 2-body decay
 	// complex version with analytic continuation below threshold as used in K-matrix formalism
+	template<typename complexT>
 	inline
-	std::complex<double>
-	breakupMomentumComplex(const double M,   // mass of mother particle
-	                       const double m1,  // mass of daughter particle 1
-	                       const double m2)  // mass of daughter particle 2
+	complexT
+	breakupMomentumComplex(const typename complexT::value_type& M,   // mass of mother particle
+	                       const typename complexT::value_type& m1,  // mass of daughter particle 1
+	                       const typename complexT::value_type& m2)  // mass of daughter particle 2
 	{
-		const double q2 = rpwa::breakupMomentumSquared(M, m1, m2, true);
-		const double q  = sqrt(fabs(q2));
+		typedef typename complexT::value_type T;
+		const T q2 = rpwa::breakupMomentumSquared(M, m1, m2, true);
+		const T q  = sqrt(fabs(q2));
 		if (q2 < 0)
-			return std::complex<double>(0, q);
-		return std::complex<double>(q, 0);
+			return complexT(0, q);
+		return complexT(q, 0);
 	}
 
 
 	// kinematic border in Dalitz plot; PDG 2008 eq. 38.22a, b
 	// for decay M -> m0 m1 m2
+	template<typename T>
 	inline
 	double
-	dalitzKinematicBorder(const double  mass_2,      // 2-body mass squared on x-axis
-	                      const double  M,           // 3-body mass
-	                      const double* m,           // array with the 3 daughter masses
-	                      const bool    min = true)  // switches between curves for minimum and maximum mass squared on y-axis
+	dalitzKinematicBorder(const T    mass_2,      // 2-body mass squared on x-axis
+	                      const T    M,           // 3-body mass
+	                      const T*   m,           // array with the 3 daughter masses
+	                      const bool min = true)  // switches between curves for minimum and maximum mass squared on y-axis
 	{
 		if (mass_2 < 0)
 			return 0;
-		const double  mass   = rpwa::sqrt(mass_2);
-		const double  M_2    = M * M;                                    // 3-body mass squared
-		const double  m_2[3] = {m[0] * m[0], m[1] * m[1], m[2] * m[2]};  // daughter masses squared
+		const T  mass   = rpwa::sqrt(mass_2);
+		const T  M_2    = M * M;                                    // 3-body mass squared
+		const T  m_2[3] = {m[0] * m[0], m[1] * m[1], m[2] * m[2]};  // daughter masses squared
 
 		// calculate energies of particles 1 and 2 in m01 RF
-		const double E1 = (mass_2 - m_2[0] + m_2[1]) / (2 * mass);
-		const double E2 = (M_2    - mass_2 - m_2[2]) / (2 * mass);
-		const double E1_2  = E1 * E1;
-		const double E2_2  = E2 * E2;
+		const T E1 = (mass_2 - m_2[0] + m_2[1]) / (2 * mass);
+		const T E2 = (M_2    - mass_2 - m_2[2]) / (2 * mass);
+		const T E1_2  = E1 * E1;
+		const T E2_2  = E2 * E2;
 		if ((E1_2 < m_2[1]) or (E2_2 < m_2[2]))
 			return 0;
 
 		// calculate m12^2
-		const double p1     = rpwa::sqrt(E1_2 - m_2[1]);
-		const double p2     = rpwa::sqrt(E2_2 - m_2[2]);
-		const double Esum_2 = (E1 + E2) * (E1 + E2);
+		const T p1     = rpwa::sqrt(E1_2 - m_2[1]);
+		const T p2     = rpwa::sqrt(E2_2 - m_2[2]);
+		const T Esum_2 = (E1 + E2) * (E1 + E2);
 		if (min)
 			return Esum_2 - (p1 + p2) * (p1 + p2);
 		else
@@ -128,12 +133,13 @@ namespace rpwa {
 	}
 
 
+	template<typename T>
 	inline
-	double
+	T
 	angMomNormFactor(const int  L,
 	                 const bool debug = false)  ///< angular momentum normalization factor in amplitudes
 	{
-		const double norm = rpwa::sqrt(L + 1);
+		const T norm = rpwa::sqrt(L + 1);
 		if (debug)
 			printDebug << "normalization factor sqrt(2 * L = " << spinQn(L) << " + 1) = "
 			           << maxPrecision(norm) << std::endl;
@@ -169,15 +175,16 @@ namespace rpwa {
 
 	// computes square of Blatt-Weisskopf barrier factor for 2-body decay
 	// !NOTE! L is units of hbar/2
+	template<typename T>
 	inline
-	double
-	barrierFactorSquared(const int    L,               // relative orbital angular momentum
-	                     const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
-	                     const bool   debug = false,
-	                     const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
+	T
+	barrierFactorSquared(const int  L,               // relative orbital angular momentum
+	                     const T    breakupMom,      // breakup momentum of 2-body decay [GeV/c]
+	                     const bool debug = false,
+	                     const T    Pr    = (T) 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
-		const double z   = (breakupMom * breakupMom) / (Pr * Pr);
-		double       bf2 = 0;
+		const T z   = (breakupMom * breakupMom) / (Pr * Pr);
+		T       bf2 = 0;
 		switch (L) {
 		case 0:  // L = 0
 			bf2 = 1;
@@ -193,27 +200,27 @@ namespace rpwa {
 			break;
 		case 8:  // L = 4
 			{
-				const double z2 = z * z;
+				const T z2 = z * z;
 				bf2 = (12746 * z2 * z2) / (z * (z * (z * (z + 10) + 135) + 1575) + 11025);
 			}
 			break;
 		case 10:  // L = 5
 			{
-				const double z2 = z * z;
+				const T z2 = z * z;
 				bf2 = (998881 * z2 * z2 * z)
 					/ (z * (z * (z * (z * (z + 15) + 315) + 6300) + 99225) + 893025);
 			}
 			break;
 		case 12:  // L = 6
 			{
-				const double z3 = z * z * z;
+				const T z3 = z * z * z;
 				bf2 = (118394977 * z3 * z3)
 					/ (z * (z * (z * (z * (z * (z + 21) + 630) + 18900) + 496125) + 9823275) + 108056025);
 			}
 			break;
 		case 14:  // L = 7
 			{
-				const double z3 = z * z * z;
+				const T z3 = z * z * z;
 				bf2 = (19727003738LL * z3 * z3 * z)
 					/ (z * (z * (z * (z * (z * (z * (z + 28) + 1134) + 47250) + 1819125) + 58939650)
 					        + 1404728325L) + 18261468225LL);
@@ -234,14 +241,15 @@ namespace rpwa {
 
 	// computes Blatt-Weisskopf barrier factor for 2-body decay
 	// !NOTE! L is units of hbar/2
+	template<typename T>
 	inline
 	double
-	barrierFactor(const int    L,               // relative orbital angular momentum
-	              const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
-	              const bool   debug = false,
-	              const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
+	barrierFactor(const int  L,               // relative orbital angular momentum
+	              const T    breakupMom,      // breakup momentum of 2-body decay [GeV/c]
+	              const bool debug = false,
+	              const T    Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
-		const double bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
+		const T bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
 		if (debug)
 			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
 			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
@@ -252,24 +260,27 @@ namespace rpwa {
 
 	// computes relativistic Breit-Wigner amplitude with mass-dependent width for 2-body decay
 	// !NOTE! L is units of hbar/2
+	template<typename complexT>
 	inline
-	std::complex<double>
-	breitWigner(const double M,       // mass
-	            const double M0,      // peak position
-	            const double Gamma0,  // total width
-	            const int    L,       // relative orbital angular momentum
-	            const double q,       // 2-body breakup momentum
-	            const double q0)      // 2-body breakup momentum at peak position
+	complexT
+	breitWigner(const typename complexT::value_type& M,       // mass
+	            const typename complexT::value_type& M0,      // peak position
+	            const typename complexT::value_type& Gamma0,  // total width
+	            const int                            L,       // relative orbital angular momentum
+	            const typename complexT::value_type& q,       // 2-body breakup momentum
+	            const typename complexT::value_type& q0)      // 2-body breakup momentum at peak position
 	{
+		typedef typename complexT::value_type T;
+
 		if (q0 == 0)
 			return 0;
-		const double Gamma  = Gamma0 * (M0 / M) * (q / q0)
+		const T Gamma  = Gamma0 * (M0 / M) * (q / q0)
 			                    * (barrierFactorSquared(L, q) / barrierFactorSquared(L, q0));
 		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-		const double A = M0 * Gamma0;
-		const double B = M0 * M0 - M * M;
-		const double C = M0 * Gamma;
-		return (A / (B * B + C * C)) * std::complex<double>(B, C);
+		const T A = M0 * Gamma0;
+		const T B = M0 * M0 - M * M;
+		const T C = M0 * Gamma;
+		return (A / (B * B + C * C)) * complexT(B, C);
 		// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	}
 

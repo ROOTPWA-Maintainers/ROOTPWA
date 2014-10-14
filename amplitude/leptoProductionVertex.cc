@@ -161,15 +161,15 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 }
 
 
-vector<complex<double> >
+vector<Complex>
 leptoProductionVertex::productionAmps() const
 {
 
-	const vector<TLorentzVector>& targetVec          = target         ()->lzVecs();
-	const vector<TLorentzVector>& beamVec            = beamLepton     ()->lzVecs();
-	const vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
-	const vector<TLorentzVector>& virtPhotonVec      = virtPhoton     ()->lzVecs();
-	const vector<TLorentzVector>& XParticleVec       = XParticle      ()->lzVecs();
+	const vector<LorentzVector>& targetVec          = target         ()->lzVecs();
+	const vector<LorentzVector>& beamVec            = beamLepton     ()->lzVecs();
+	const vector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec      = virtPhoton     ()->lzVecs();
+	const vector<LorentzVector>& XParticleVec       = XParticle      ()->lzVecs();
 
 	vector<double> epsilons(targetVec.size());
 	this->epsilon(epsilons);
@@ -186,7 +186,7 @@ leptoProductionVertex::productionAmps() const
 		throw;
 	}
 
-	vector<complex<double> > result(numEvents);
+	vector<Complex> result(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	#pragma omp parallel for
@@ -194,10 +194,10 @@ leptoProductionVertex::productionAmps() const
 
 		// calculate azimuthal angle between lepton-scattering and
 		// production plane in (virtual photon, target) CM system since
-		TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
-											// and X particle used to define lepton-scattering and
-											// production plane
-		const TLorentzVector targetLv = targetVec[i];
+		Vector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
+										   // and X particle used to define lepton-scattering and
+										   // production plane
+		const LorentzVector targetLv = targetVec[i];
 		if (targetLv.Vect() == TVector3(0, 0, 0)) {
 			// fixed target case:
 			// since going from fixed target frame into (virtual photon,
@@ -213,12 +213,12 @@ leptoProductionVertex::productionAmps() const
 		} else {
 			// general case
 			// boost vectors to (virtual photon, target) CM system
-			TLorentzVector       beamLeptonLv      = beamVec           [i];
-			TLorentzVector       scatteredLeptonLv = scatteredLeptonVec[i];
-			TLorentzVector       virtPhotonLv      = virtPhotonVec     [i];
-			TLorentzVector       XParticleLv       = XParticleVec      [i];
-			const TLorentzVector photonTargetCM    = virtPhotonLv + targetLv;
-			const TVector3       cmBoost           = photonTargetCM.BoostVector();
+			LorentzVector       beamLeptonLv      = beamVec           [i];
+			LorentzVector       scatteredLeptonLv = scatteredLeptonVec[i];
+			LorentzVector       virtPhotonLv      = virtPhotonVec     [i];
+			LorentzVector       XParticleLv       = XParticleVec      [i];
+			const LorentzVector photonTargetCM    = virtPhotonLv + targetLv;
+			const Vector3       cmBoost           = photonTargetCM.BoostVector();
 			beamLeptonLv.Boost     (cmBoost);
 			scatteredLeptonLv.Boost(cmBoost);
 			virtPhotonLv.Boost     (cmBoost);
@@ -229,11 +229,11 @@ leptoProductionVertex::productionAmps() const
 			v  = XParticleLv.Vect      ();
 		}
 		// calculate azimuthal angle in [-pi, +pi]
-		const TVector3 leptonPlaneNormal     = k1.Cross(k2);
-		const TVector3 productionPlaneNormal = q.Cross(v);
-		const double   parProjection         = leptonPlaneNormal.Dot(productionPlaneNormal);
-		const double   perpProjection        = leptonPlaneNormal.Cross(productionPlaneNormal).Mag();
-		const double   phi                   = atan2(perpProjection, parProjection);
+		const Vector3 leptonPlaneNormal     = k1.Cross(k2);
+		const Vector3 productionPlaneNormal = q.Cross(v);
+		const double   parProjection        = leptonPlaneNormal.Dot(productionPlaneNormal);
+		const double   perpProjection       = leptonPlaneNormal.Cross(productionPlaneNormal).Mag();
+		const double   phi                  = atan2(perpProjection, parProjection);
 
 		// compute some kinematic variables
 		const double epsilon = epsilons[i];
@@ -241,10 +241,10 @@ leptoProductionVertex::productionAmps() const
 		//printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
 		//		  << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
 		// compute some intermediary terms
-		const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
-		const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
-		const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
-		const complex<double> phase = exp(complex<double>(0, phi));
+		const double  xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
+		const double  zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
+		const double  term  = _longPol * sqrt(1 - epsilon * epsilon);
+		const Complex phase = exp(Complex(0, phi));
 		//printInfo << "xi = " << xi << ", zeta = " << zeta << ", term = " << term << endl;
 
 		// define lower triangle of virtual photon spin density matrix
@@ -252,16 +252,16 @@ leptoProductionVertex::productionAmps() const
 		// Wolf (common factor 1/2 is dropped):
 		//   eq. 44 and 57 with 60, where alpha_2 was set to 0 (long. lepton
 		//   polarization), into eq. 62
-		complex<double> rho[3][3];
+		Complex rho[3][3];
 		// column with lambda' = -1
-		rho[0][0] = 1 + term;                                     // lambda = -1
-		rho[1][0] = (_longPol * zeta + xi) * phase;               // lambda =  0
-		rho[2][0] = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
+		rho[0][0] = 1 + term;                             // lambda = -1
+		rho[1][0] = (_longPol * zeta + xi) * phase;       // lambda =  0
+		rho[2][0] = -epsilon * exp(Complex(0, 2 * phi));  // lambda = +1
 		// column with lambda' =  0
-		rho[1][1] = 2 * (epsilon + delta);                        // lambda =  0
-		rho[2][1] = (_longPol * zeta - xi) * phase;               // lambda = +1
+		rho[1][1] = 2 * (epsilon + delta);                // lambda =  0
+		rho[2][1] = (_longPol * zeta - xi) * phase;       // lambda = +1
 		// column with lambda' = +1
-		rho[2][2] = 1 - term;                                     // lambda = +1
+		rho[2][2] = 1 - term;                             // lambda = +1
 		// conjugated elements
 		rho[0][1] = conj(rho[1][0]);
 		rho[0][2] = conj(rho[2][0]);
@@ -269,7 +269,7 @@ leptoProductionVertex::productionAmps() const
 		//for (unsigned int j = 0; j < 3; ++j)
 		//	for (unsigned int i = 0; i < 3; ++i)
 		//		printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
-		// const complex<double> detRho
+		// const Complex detRho
 		// 	=   rho[0][0] * rho[1][1] * rho[2][2]
 		// 	  + rho[0][1] * rho[1][2] * rho[2][0]
 		// 	  + rho[1][0] * rho[2][1] * rho[0][2]
@@ -284,7 +284,7 @@ leptoProductionVertex::productionAmps() const
 
 		// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
 		// triangle matrix with real diagonal elements
-		complex<double> V[3][3];
+		Complex V[3][3];
 		// first column
 		V[0][0] = sqrt(real(rho[0][0]));
 		V[1][0] = rho[1][0] / real(V[0][0]);
@@ -303,7 +303,7 @@ leptoProductionVertex::productionAmps() const
 		//for (unsigned int j = 0; j < 3; ++j)
 		//	for (unsigned int i = 0; i < 3; ++i)
 		//		printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
-		complex<double> rhoPrime[3][3];
+		Complex rhoPrime[3][3];
 		for (unsigned int j = 0; j < 3; ++j)
 			for (unsigned int i = 0; i < 3; ++i) {
 				rhoPrime[i][j] = 0;
@@ -317,7 +317,7 @@ leptoProductionVertex::productionAmps() const
 
 
 		// compute production amplitude for given photon helicity
-		complex<double> prodAmp = 0;
+		Complex prodAmp = 0;
 		result[i] = prodAmp;
 
 	}
@@ -332,7 +332,7 @@ leptoProductionVertex::productionAmps() const
 void
 leptoProductionVertex::Q2(vector<double>& result) const
 {
-	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -355,8 +355,8 @@ leptoProductionVertex::Q2(vector<double>& result) const
 void
 leptoProductionVertex::nu(vector<double>& result) const
 {
-	const vector<TLorentzVector>& targetVec = target()->lzVecs();
-	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<LorentzVector>& targetVec = target()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 	double targetMass = target()->mass();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
@@ -380,9 +380,9 @@ leptoProductionVertex::nu(vector<double>& result) const
 void
 leptoProductionVertex::y(vector<double>& result) const
 {
-	const vector<TLorentzVector>& targetVec = target()->lzVecs();
-	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
-	const vector<TLorentzVector>& beamVec = beamLepton()->lzVecs();
+	const vector<LorentzVector>& targetVec = target()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<LorentzVector>& beamVec = beamLepton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size() || result.size() != beamVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -496,8 +496,8 @@ leptoProductionVertex::xBj(vector<double>& result) const
 	vector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	const vector<TLorentzVector>& targetVec = target()->lzVecs();
-	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<LorentzVector>& targetVec = target()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -521,8 +521,8 @@ leptoProductionVertex::xBj(vector<double>& result) const
 void
 leptoProductionVertex::s(vector<double>& result) const
 {
-	const vector<TLorentzVector>& targetVec = target()->lzVecs();
-	const vector<TLorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const vector<LorentzVector>& targetVec = target()->lzVecs();
+	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -668,7 +668,7 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-leptoProductionVertex::readKinematicsData(const vector<vector<TVector3> >& prodKinMomenta)
+leptoProductionVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
 	_beamLeptonMomCache.clear     ();
 	_scatteredLeptonMomCache.clear();
@@ -684,44 +684,53 @@ leptoProductionVertex::readKinematicsData(const vector<vector<TVector3> >& prodK
 		return false;
 	}
 
-	// set beam lepton
-	bool success = true;
-	for(size_t i = 0; i < prodKinMomenta[0].size(); ++i) {
+	// set beam
+	_beamLeptonMomCache = prodKinMomenta[0];
+	if (_debug) {
+		printDebug << "setting momentum of beam lepton particle '" << beamLepton()->name()
+				   << "' to " << firstEntriesToString(_beamLeptonMomCache, 3) << " GeV" << endl;
+	}
 
-		const TVector3& beamLeptonMom = prodKinMomenta[0][i];
-		if (_debug)
-			printDebug << "setting momentum of beam lepton '" << beamLepton()->name()
-					   << "' to " << beamLeptonMom << " GeV" << endl;
-		_beamLeptonMomCache.push_back(beamLeptonMom);
-
-		// set scattered lepton
-		const TVector3& scatteredLeptonMom = prodKinMomenta[1][i];
-		if (_debug)
-			printDebug << "setting momentum of scattered lepton '" << beamLepton()->name()
-					   << "' to " << beamLeptonMom << " GeV" << endl;
-		_scatteredLeptonMomCache.push_back(scatteredLeptonMom);
-
-
-		// set recoil (optional)
-		if (_nmbProdKinPart >= 3) {
-			const TVector3& recoilMom = prodKinMomenta[2][i];
-			if (_debug)
-				printDebug << "setting momentum of recoil particle '" << recoil()->name()
-						   << "' to " << recoilMom << " GeV" << endl;
-			_recoilMomCache.push_back(recoilMom);
+	// set recoil (optional)
+	if (_nmbProdKinPart >= 2) {
+		if(prodKinMomenta[0].size() != prodKinMomenta[1].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
 		}
-
-		// set target (optional); if not defined fixed target is assumed
-		if (_nmbProdKinPart >= 4) {
-			const TVector3& targetMom = prodKinMomenta[3][i];
-			if (_debug)
-				printDebug << "setting momentum of target particle '" << target()->name()
-						   << "' to " << targetMom << " GeV" << endl;
-			_targetMomCache.push_back(targetMom);
+		_scatteredLeptonMomCache = prodKinMomenta[1];
+		if (_debug) {
+			printDebug << "setting momentum of scattered lepton particle '" << beamLepton()->name()
+					   << "' to " << firstEntriesToString(_scatteredLeptonMomCache, 3) << " GeV" << endl;
 		}
 	}
 
-	return success;
+	// set target (optional); if not defined fixed target is assumed
+	if (_nmbProdKinPart >= 3) {
+		if(prodKinMomenta[0].size() != prodKinMomenta[2].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+		_recoilMomCache = prodKinMomenta[2];
+		if (_debug) {
+			printDebug << "setting momentum of recoil particle '" << recoil()->name()
+					   << "' to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl;
+		}
+	}
+
+	// set target (optional); if not defined fixed target is assumed
+	if (_nmbProdKinPart >= 4) {
+		if(prodKinMomenta[0].size() != prodKinMomenta[3].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+		_targetMomCache = prodKinMomenta[3];
+		if (_debug) {
+			printDebug << "setting momentum of target particle '" << target()->name()
+					   << "' to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
+		}
+	}
+
+	return true;
 }
 
 
@@ -741,8 +750,8 @@ leptoProductionVertex::revertMomenta()
 	target         ()->setMomenta(_targetMomCache         );
 
 	// set virtual photon
-	vector<TLorentzVector>&       beamLeptonVec      = beamLepton()->mutableLzVecs();  // mutable !!!
-	const vector<TLorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	vector<LorentzVector>&       beamLeptonVec      = beamLepton()->mutableLzVecs();  // mutable !!!
+	const vector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
 
 	const size_t numEvents = beamLeptonVec.size();
 	if (scatteredLeptonVec.size() != numEvents) {

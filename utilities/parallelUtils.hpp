@@ -39,10 +39,7 @@
 #include <vector>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "TVector3.h"
-#include "TLorentzVector.h"
-#include "TLorentzRotation.h"
-
+#include "Typedefs.hpp"
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 
@@ -51,7 +48,7 @@ namespace rpwa {
 
 	inline
 	void
-	parallelLorentzRotationInvert(std::vector<TLorentzRotation>& lzRot)
+	parallelLorentzRotationInvert(std::vector<LorentzRotation>& lzRot)
 	{
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();

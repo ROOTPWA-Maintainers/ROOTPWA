@@ -60,10 +60,10 @@ particle::particle(const particle& part)
 
 
 particle::particle(const particleProperties&    partProp,
-                   const int                    index,
-                   const int                    spinProj,
-                   const int                    refl,
-                   const std::vector<TVector3>& momenta)
+                   const int                   index,
+                   const int                   spinProj,
+                   const int                   refl,
+                   const std::vector<Vector3>& momenta)
 	: particleProperties(partProp),
 	  _spinProj         (spinProj),
 	  _lzVecs           (),
@@ -74,12 +74,12 @@ particle::particle(const particleProperties&    partProp,
 }
 
 
-particle::particle(const string&                partName,
-                   const bool                   requirePartInTable,
-                   const int                    index,
-                   const int                    spinProj,
-                   const int                    refl,
-                   const std::vector<TVector3>& momenta)
+particle::particle(const string&               partName,
+                   const bool                  requirePartInTable,
+                   const int                   index,
+                   const int                   spinProj,
+                   const int                   refl,
+                   const std::vector<Vector3>& momenta)
 	: particleProperties(),
 	  _spinProj(spinProj),
 	  _lzVecs  (),
@@ -126,16 +126,8 @@ particle::operator =(const particle& part)
 	return *this;
 }
 
-
-/*void
-particle::momenta (std::vector<TVector3>& result) const
-{
-	parallelLorentzVectorToVector3(_lzVecs, result);
-}*/
-
-
 void
-particle::setMomenta(const std::vector<TVector3>& momenta)
+particle::setMomenta(const std::vector<Vector3>& momenta)
 {
 	const size_t nmbMom = momenta.size();
 	_lzVecs.resize(nmbMom);
@@ -143,8 +135,8 @@ particle::setMomenta(const std::vector<TVector3>& momenta)
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	#pragma omp parallel for
 	for(size_t i = 0; i < nmbMom; ++i) {
-		const TVector3& mom = momenta[i];
-		_lzVecs[i] = TLorentzVector(mom, sqrt(mom.Mag2() + mass2()));
+		const Vector3& mom = momenta[i];
+		_lzVecs[i] = LorentzVector(mom, sqrt(mom.Mag2() + mass2()));
 	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
@@ -152,10 +144,10 @@ particle::setMomenta(const std::vector<TVector3>& momenta)
 }
 
 
-const std::vector<TLorentzVector>&
-particle::transform(const std::vector<TLorentzRotation>& lorentzTransforms)
+const std::vector<LorentzVector>&
+particle::transform(const std::vector<LorentzRotation>& lorentzTransforms)
 {
-	const size_t nmbLzVec = numParallelEvents();
+	const size_t nmbLzVec = numEvents();
 	if(lorentzTransforms.size() != nmbLzVec) {
 		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 		throw;
@@ -163,8 +155,9 @@ particle::transform(const std::vector<TLorentzRotation>& lorentzTransforms)
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	#pragma omp parallel for
-	for(size_t i = 0; i < nmbLzVec; ++i)
+	for(size_t i = 0; i < nmbLzVec; ++i) {
 		_lzVecs[i].Transform(lorentzTransforms[i]);
+	}
 	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: particle::transform (rotation) timediff = " << timeDiff << endl;
@@ -173,10 +166,10 @@ particle::transform(const std::vector<TLorentzRotation>& lorentzTransforms)
 }
 
 
-const std::vector<TLorentzVector>&
-particle::transform(const std::vector<TVector3>& boosts)
+const std::vector<LorentzVector>&
+particle::transform(const std::vector<Vector3>& boosts)
 {
-	const size_t nmbLzVec = numParallelEvents();
+	const size_t nmbLzVec = numEvents();
 	if(boosts.size() != nmbLzVec) {
 		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 		throw;
@@ -192,26 +185,6 @@ particle::transform(const std::vector<TVector3>& boosts)
 
 	return _lzVecs;
 }
-
-
-void
-particle::scaleLzVecs(double scaleX,
-                      double scaleY,
-                      double scaleZ,
-                      double scaleE)
-{
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
-	#pragma omp parallel for
-	for(unsigned int i = 0; i < numParallelEvents(); ++i) {
-		TLorentzVector& v = _lzVecs[i];
-		_lzVecs[i].SetXYZT(v.X() * scaleX, v.Y() * scaleY, v.Z() * scaleZ, v.E() * scaleE);
-	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: particle::scaleLzVecs timediff = " << timeDiff << endl;
-}
-
 
 particle*
 particle::doClone() const
@@ -261,10 +234,10 @@ particle::print(ostream& out) const
 {
 	particleProperties::print(out);
 	out << ", "
-	    << "spin proj. = "     << spinQn(_spinProj) << ", "
-	    << "reflectivity = "   << _refl             << ", "
-	//    << "Lorentz-vectors = [" << _lzVecs            << "] GeV, "
-	    << "index = "          << _index;
+	    << "spin proj. = "      << spinQn(_spinProj)  << ", "
+	    << "reflectivity = "    << _refl              << ", "
+	    << "Lorentz-vectors = " << firstEntriesToString(_lzVecs, 3) << " GeV, "
+	    << "index = "           << _index;
 	return out;
 }
 

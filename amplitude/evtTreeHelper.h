@@ -112,9 +112,9 @@ namespace rpwa {
 	                 const TClonesArray&                 prodKinPartNames,   // array of particle names
 	                 const TClonesArray&                 decayKinPartNames,  // array of particle names
 	                 const std::vector<isobarAmplitudePtr>&            amplitude, // one amplitude for each keyfile
-	                 std::vector<std::vector<std::complex<double> > >& ampValues, // [keyfile][event]
+	                 std::vector<std::vector<Complex> >& ampValues, // [keyfile][event]
 	                 const long int                      maxNmbEvents            = -1,
-	                 const long int                      numParallelEvents       = 50000,
+	                 const long int                      numEvents       = 50000,
 	                 const std::string&                  prodKinMomentaLeafName  = "prodKinMomenta",
 	                 const std::string&                  decayKinMomentaLeafName = "decayKinMomenta",
 	                 const bool                          printProgress           = true,

@@ -111,7 +111,7 @@ main(int    argc,
 	const string   progName                 = argv[0];
 	vector<string> keyFileNames;
 	long int       maxNmbEvents             = -1;
-	long int       numParallelEvents        = 50000;
+	long int       numEvents        = 50000;
 	string         pdgFileName              = "./particleDataTable.txt";
 	vector<string> ampFileName; //              = "./out.root";
 	string         ampLeafName              = "amplitude";
@@ -133,7 +133,7 @@ main(int    argc,
 			maxNmbEvents = atol(optarg);
 			break;
 		case 'b':
-			numParallelEvents = atol(optarg);
+			numEvents = atol(optarg);
 			break;
 		case 'p':
 			pdgFileName = optarg;
@@ -285,7 +285,7 @@ main(int    argc,
 	TStopwatch timer;
 	timer.Reset();
 	timer.Start();
-	vector<vector<complex<double> > > ampValues(keyFileNames.size()); // [keyfile][event]
+	vector<vector<Complex> > ampValues(keyFileNames.size()); // [keyfile][event]
 	for (unsigned int i = 0; i < inTrees.size(); ++i) {
 		printInfo << "processing ";
 		if ((rootFileNames.size() > 0) and (i == 0))
@@ -295,7 +295,7 @@ main(int    argc,
 		cout << endl;
 		if (not processTree(*inTrees[i], *prodKinPartNames, *decayKinPartNames,
 		                    amplitude, ampValues, maxNmbEvents - ampValues[0].size(),
-		                    numParallelEvents, prodKinMomentaLeafName, decayKinMomentaLeafName))
+		                    numEvents, prodKinMomentaLeafName, decayKinMomentaLeafName))
 			printWarn << "problems reading tree" << endl;
 	}
 	printSucc << "calculated amplitudes for " << ampValues.size() << " topologies and "
@@ -308,17 +308,18 @@ main(int    argc,
 	for (unsigned int k = 0; k < ampValues.size(); ++k) {
 
 		for (unsigned int i = 0; i < ampValues[k].size(); ++i) {
+			std::complex<double> ampValue = (std::complex<double>) ampValues[k][i];
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 			if (ampFileRoot[k]) {
-				ampTreeLeaf[k]->setAmp(ampValues[k][i]);
+				ampTreeLeaf[k]->setAmp(ampValue);
 				ampTree[k]->Fill();
 			}
 #endif
 			if (ampFilePlain[k]) {
 				if (asciiOutput)
-					*(ampFilePlain[k]) << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[k][i] << endl;
+					*(ampFilePlain[k]) << setprecision(numeric_limits<double>::digits10 + 1) << ampValue << endl;
 				else
-					ampFilePlain[k]->write((char*)(&ampValues[k][i]), sizeof(complex<double>));
+					ampFilePlain[k]->write((char*)(&ampValue), sizeof(complex<double>));
 			}
 		}
 

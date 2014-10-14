@@ -46,6 +46,9 @@
 #include "TH2.h"
 #include "TSystem.h"
 
+#include "arrayUtils.hpp"
+#include "LorentzRotation.hpp"
+#include "LorentzVector.hpp"
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
@@ -62,15 +65,6 @@
 using namespace std;
 using namespace boost;
 using namespace rpwa;
-
-
-template<typename T>
-static vector<T> make_vector_1(const T& element) {
-	vector<T> vec;
-	vec.push_back(element);
-	return vec;
-}
-
 
 int
 main(int argc, char** argv)
@@ -97,9 +91,9 @@ main(int argc, char** argv)
 	if (0) {
 
 		{
-			TLorentzVector p(0.5, 0.75, 1, 2);
-			TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
-			TRotation R1;
+			LorentzVector p(0.5, 0.75, 1, 2);
+			Vector3       n = Vector3(0, 0, 1).Cross(p.Vect());
+			Rotation R1;
 			R1.RotateZ(-n.Phi());
 			R1.RotateY(piHalf - n.Theta());
 			R1.RotateZ(piHalf);
@@ -107,46 +101,48 @@ main(int argc, char** argv)
 			p *= R1;
 			cout << "R1 -> " << n << "    " << p << endl;
 			// rotate about yHfAxis so that daughter momentum is along z-axis
-			TRotation R2;
+			Rotation R2;
 			R2.RotateY(-signum(p.X()) * p.Theta());
 			p *= R2;
 			cout << "R2 -> " << p << endl;
 			// boost into daughter RF
-			TLorentzRotation L3(-p.BoostVector());
+			LorentzRotation L3(-p.BoostVector());
 			cout << "L3 -> " << L3 * p << endl;
 
 			R1.Transform(R2);
-			TLorentzRotation L(R1);
+			LorentzRotation L(R1);
 			L.Boost(-p.BoostVector());
-			p = TLorentzVector(0.5, 0.75, 1, 2);
+			p = LorentzVector(0.5, 0.75, 1, 2);
 			p *= L;
 			cout << "L -> " << p << endl;
 		}
 
 		{
 			particlePtr X = createParticle("X");
-			const vector<TLorentzVector> p = make_vector_1(TLorentzVector(0.5, 0.75, 1, 2));
+			const vector<LorentzVector> p = make_vector_1(LorentzVector(0.5, 0.75, 1, 2));
 			X->setLzVecs(p);
 			isobarHelicityAmplitude amp;
-			vector<TLorentzRotation> L = amp.hfTransform(X->lzVecs());
+			vector<LorentzRotation> L = amp.hfTransform(X->lzVecs());
 			if(L.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;
 				return 0;
 			}
-			cout << "!!! L -> " << L[0] * p[0] << endl;
+			LorentzVector p0 = p[0];
+			cout << "!!! L -> " << (L[0] * p0) << endl;
 		}
 	}
 
 	if (0) {
-		const vector<TLorentzVector> beam = make_vector_1(TLorentzVector(1,   0.5,  180, 182));
-		const vector<TLorentzVector> X    = make_vector_1(TLorentzVector(0.5, 0.75, 1,   3  ));
+		const vector<LorentzVector> beam = make_vector_1(LorentzVector(1,   0.5,  180, 182));
+		const vector<LorentzVector> X    = make_vector_1(LorentzVector(0.5, 0.75, 1,   3  ));
 		isobarHelicityAmplitude amp;
-		vector<TLorentzRotation> L = amp.gjTransform(beam, X);
+		vector<LorentzRotation> L = amp.gjTransform(beam, X);
 		if(L.size() != 1) {
 			cout << "ERROR: wrong vector size. aborting!" << endl;
 			return 0;
 		}
-		cout << "!!! L -> " << L[0] * X[0] << endl;
+		LorentzVector X0 = X[0];
+		cout << "!!! L -> " << (L[0] * X0) << endl;
 	}
 
 	if (0) {
@@ -174,12 +170,12 @@ main(int argc, char** argv)
 		isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
 		isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
 		// set Lorentz vectors
-		beam->setLzVecs(make_vector_1(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058)));
-		pi0->setLzVecs(make_vector_1(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947)));
-		pi1->setLzVecs(make_vector_1(TLorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973)));
-		pi2->setLzVecs(make_vector_1(TLorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114)));
-		pi3->setLzVecs(make_vector_1(TLorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277)));
-		pi4->setLzVecs(make_vector_1(TLorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995)));
+		beam->setLzVecs(make_vector_1(LorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058)));
+		pi0->setLzVecs(make_vector_1(LorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947)));
+		pi1->setLzVecs(make_vector_1(LorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973)));
+		pi2->setLzVecs(make_vector_1(LorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114)));
+		pi3->setLzVecs(make_vector_1(LorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277)));
+		pi4->setLzVecs(make_vector_1(LorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995)));
 		// build graph
 		vector<isobarDecayVertexPtr> decayVertices;
 		decayVertices.push_back(vert3);
@@ -198,7 +194,7 @@ main(int argc, char** argv)
 		//topo->fillKinematicsDataCache();
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
-		vector<complex<double> > decayAmp = amp.amplitude();
+		vector<Complex> decayAmp = amp.amplitude();
 		if(decayAmp.size() != 1) {
 			cout << "ERROR: wrong vector size. aborting!" << endl;
 			return 0;
@@ -240,7 +236,7 @@ main(int argc, char** argv)
 		TChain chain("rootPwaEvtTree");
 		chain.Add("../../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
 		chain.GetListOfFiles()->ls();
-		vector<vector<complex<double> > > ampValues[2] = { vector<vector<complex<double> > >(1), vector<vector<complex<double> > >(1) };
+		vector<vector<Complex> > ampValues[2] = { vector<vector<Complex> >(1), vector<vector<Complex> >(1) };
 
 		TClonesArray* prodKinPartNames  = 0;
 		TClonesArray* decayKinPartNames = 0;
@@ -334,7 +330,7 @@ main(int argc, char** argv)
 			const string&            prodKinMomentaLeafName   = "prodKinMomenta";
 			const string&            decayKinPartNamesObjName = "decayKinParticles";
 			const string&            decayKinMomentaLeafName  = "decayKinMomenta";
-			vector<complex<double> > myAmps;
+			vector<Complex> myAmps;
 			// open input file
 			vector<TTree*> inTrees;
 			TClonesArray*  prodKinPartNames  = 0;
@@ -392,8 +388,8 @@ main(int argc, char** argv)
 				const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
 				const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
 
-				vector<vector<TVector3> > prodMomenta(numProdMomenta, vector<TVector3>(1));
-				vector<vector<TVector3> > decayMomenta(numDecayMomenta, vector<TVector3>(1));
+				vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
+				vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
 
 				bool success = true;
 
@@ -426,7 +422,7 @@ main(int argc, char** argv)
 
 				// test single events
 				if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
-					const vector<complex<double> > ampResult = (*amp)();
+					const vector<Complex> ampResult = (*amp)();
 					if(ampResult.size() != 1) {
 						cout << "ERROR: wrong vector size. aborting!" << endl;
 						return 0;

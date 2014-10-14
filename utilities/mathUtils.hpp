@@ -56,9 +56,6 @@ namespace rpwa {
 	const double twoPi  = 2 * pi;
 	const double fourPi = 4 * pi;
 
-	const std::complex<double> imag(0, 1);
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	// define aliases for some math functions so implementations may be switched easliy
 	template<typename T> inline T abs(const T& x) { return std::abs (x); }

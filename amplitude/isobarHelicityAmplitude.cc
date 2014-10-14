@@ -34,9 +34,7 @@
 #include <algorithm>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "TLorentzRotation.h"
-#include "TMath.h"
-
+#include "Typedefs.hpp"
 #include "spinUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
@@ -64,10 +62,10 @@ isobarHelicityAmplitude::~isobarHelicityAmplitude()
 { }
 
 
-std::vector<TLorentzRotation>
-isobarHelicityAmplitude::hfTransform(const std::vector<TLorentzVector>& daughterLv)
+std::vector<LorentzRotation>
+isobarHelicityAmplitude::hfTransform(const std::vector<LorentzVector>& daughterLv)
 {
-	std::vector<TLorentzRotation> result(daughterLv.size());
+	std::vector<LorentzRotation> result(daughterLv.size());
 
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
@@ -75,21 +73,21 @@ isobarHelicityAmplitude::hfTransform(const std::vector<TLorentzVector>& daughter
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
 
-		TLorentzVector daughter = daughterLv[i];
-		const TVector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
-		const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
+		LorentzVector daughter = daughterLv[i];
+		const Vector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
+		const Vector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
 		// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
-		TRotation rot1;
+		Rotation rot1;
 		rot1.RotateZ(piHalf - yHfAxis.Phi());
 		rot1.RotateX(yHfAxis.Theta() - piHalf);
 		daughter *= rot1;
 		// rotate about yHfAxis so that daughter momentum is along z-axis
-		TRotation rot2;
+		Rotation rot2;
 		rot2.RotateY(-signum(daughter.X()) * daughter.Theta());
 		daughter *= rot2;
 		// boost to daughter RF
 		rot1.Transform(rot2);
-		TLorentzRotation hfTransform(rot1);
+		LorentzRotation hfTransform(rot1);
 		hfTransform.Boost(-daughter.BoostVector());
 		result[i] = hfTransform;
 
@@ -122,9 +120,9 @@ isobarHelicityAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<TLorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<TLorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
-	const std::vector<TLorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const std::vector<LorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
+	const std::vector<LorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
+	const std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -139,7 +137,7 @@ isobarHelicityAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " helicity RF" << endl;
 
-		const std::vector<TLorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
+		const std::vector<LorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
 
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -156,7 +154,7 @@ isobarHelicityAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-std::vector<std::complex<double> >
+std::vector<Complex>
 isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                const bool                  topVertex) const
 {
@@ -168,7 +166,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	unsigned int numEvents = parent->numParallelEvents();
+	unsigned int numEvents = parent->numEvents();
 
 	// calculate Clebsch-Gordan coefficient for L-S coupling
 	const int    L         = vertex->L();
@@ -179,21 +177,21 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    lambda    = lambda1 - lambda2;
 	const double lsClebsch = clebschGordanCoeff<double>(L, 0, S, lambda, J, lambda, _debug);
 	if (lsClebsch == 0)
-		return std::vector<std::complex<double> >(numEvents, 0);
+		return std::vector<Complex>(numEvents, 0);
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
 	const int    s2        = daughter2->J();
 	const double ssClebsch = clebschGordanCoeff<double>(s1, lambda1, s2, -lambda2, S, lambda, _debug);
 	if (ssClebsch == 0)
-		return std::vector<std::complex<double> >(numEvents, 0);
+		return std::vector<Complex>(numEvents, 0);
 
 	// calculate D-function
 	const int       Lambda = parent->spinProj();
 	const int       P      = parent->P();
 	const int       refl   = parent->reflectivity();
 
-	std::vector<std::complex<double> > DFunc(numEvents);
+	std::vector<Complex> DFunc(numEvents);
 	if (topVertex and _useReflectivityBasis) {
 
 		// !! EVENT PARALLEL LOOP
@@ -202,7 +200,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVecs()[i].Theta();
-			DFunc[i] = DFunctionReflConj<complex<double> >(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
+			DFunc[i] = DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
@@ -216,7 +214,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVecs()[i].Theta();
-			DFunc[i] = DFunctionConj<complex<double> >(J, Lambda, lambda, phi, theta, 0, _debug);
+			DFunc[i] = DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, _debug);
 		}
 		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
@@ -225,13 +223,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	}
 
 	// calculate Breit-Wigner
-	const std::vector<std::complex<double> > bw = vertex->massDepAmplitudes();
+	const std::vector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
-	const double norm = angMomNormFactor(L, _debug);
+	const double norm = angMomNormFactor<double>(L, _debug);
 
 	// calculate decay amplitude
-	std::vector<std::complex<double> > amp(numEvents);
+	std::vector<Complex> amp(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = amp.size();

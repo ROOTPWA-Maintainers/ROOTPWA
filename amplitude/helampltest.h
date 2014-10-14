@@ -58,7 +58,7 @@ namespace rpwa {
 		isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarHelicityAmplitude();
 
-		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
+		static LorentzRotation<double> hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
 
 		std::string name() const { return "isobarHelicityAmplitude"; }
     

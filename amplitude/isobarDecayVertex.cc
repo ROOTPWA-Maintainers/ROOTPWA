@@ -157,16 +157,16 @@ isobarDecayVertex::addOutParticle(const particlePtr&)
 }
 
 
-const vector<TLorentzVector>&
+const vector<LorentzVector>&
 isobarDecayVertex::calcParentLzVecs()
 {
 	if (_debug)
 		printDebug << "calculating Lorentz vectors of parent particle " << parent()->name()
 		           << " before = " << parent()->lzVecs() << " GeV, " << flush;
 
-	vector<TLorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
-	const vector<TLorentzVector>& daughter1Vec = daughter1()->lzVecs();
-	const vector<TLorentzVector>& daughter2Vec = daughter2()->lzVecs();
+	vector<LorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
+	const vector<LorentzVector>& daughter1Vec = daughter1()->lzVecs();
+	const vector<LorentzVector>& daughter2Vec = daughter2()->lzVecs();
 
 	const size_t numEvents = daughter1Vec.size();  // parentVec does not have correct size
 	if (daughter2Vec.size() != numEvents) {

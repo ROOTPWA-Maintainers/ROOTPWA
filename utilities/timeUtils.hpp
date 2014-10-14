@@ -34,17 +34,29 @@
 #ifndef TIMEUTILS_HPP
 #define TIMEUTILS_HPP
 
+#include <string>
 #include "stdint.h"
 #include "time.h"
 
 
 namespace rpwa {
-
+	
+	boost::posix_time::ptime rpwa_timeUtils_lastTime;
+	
 	inline
-	uint64_t
-	getTimeMilliseconds()
+	void
+	timingStart()
 	{
-		const boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+		rpwa_timeUtils_lastTime = boost::posix_time::microsec_clock::local_time();
+	}
+	
+	inline
+	void
+	timingStop(const std::string& location)
+	{
+		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+		uint64_t timeDiff = (timeAfter - rpwa_timeUtils_lastTime).total_milliseconds();
+		std::cout << location << " timediff = " << timeDiff << std::endl;
 	}
 
 
