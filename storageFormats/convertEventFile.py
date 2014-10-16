@@ -66,6 +66,9 @@ if __name__ == "__main__":
 	                      [])
 
 	inputTree = inputFile.Get(inTreeName)
+	progressBar = pyRootPwa.utils.progressBar(0, inputTree.GetEntries(), sys.stdout)
+	progressBar.start()
+	i = 0
 	for event in inputTree:
 		initialStateMomenta = []
 		for particle in event.__getattr__(prodKinMomentaLeafName):
@@ -74,5 +77,7 @@ if __name__ == "__main__":
 		for particle in event.__getattr__(decayKinMomentaLeafName):
 			finalStateMomenta.append(ROOT.TVector3(particle))
 		fileWriter.addEvent(initialStateMomenta, finalStateMomenta)
+		progressBar.update(i)
+		i += 1
 
 	fileWriter.finalize()
