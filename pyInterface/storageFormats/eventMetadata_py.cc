@@ -71,6 +71,11 @@ void rpwa::py::exportEventMetadata() {
 			, &rpwa::eventMetadata::contentHash
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
+		.def(
+			"eventsType"
+			, &rpwa::eventMetadata::eventsType
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def("binningMap", &eventMetadata_binningMap)
 		.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
 		.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)
