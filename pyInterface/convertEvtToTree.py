@@ -2,18 +2,40 @@
 
 import argparse
 import os
+import sys
 
 import pyRootPwa
+import pyRootPwa.core
 
-def getParticleNameFromGeantParticleID(number):
-    if number == 7:
-        return "PION 0"
-    elif number == 8:
-        return "PION +"
-    elif number == 9:
-        return "PION -"
-    else:
-        return "ERROR"
+_geantParticleCodes = {}
+_geantParticleCodes[0] = "unknown"
+_geantParticleCodes[1] = "gamma"
+_geantParticleCodes[2] = "e"
+_geantParticleCodes[3] = "e"
+_geantParticleCodes[7] = "pi0"
+_geantParticleCodes[8] = "pi"
+_geantParticleCodes[9] = "pi"
+_geantParticleCodes[11] = "K"
+_geantParticleCodes[12] = "K"
+_geantParticleCodes[13] = "n"
+_geantParticleCodes[14] = "p"
+_geantParticleCodes[15] = "pbar"
+_geantParticleCodes[16] = "K0"
+_geantParticleCodes[17] = "eta"
+_geantParticleCodes[18] = "lambda"
+_geantParticleCodes[57] = "rho(770)"
+_geantParticleCodes[58] = "rho(770)"
+_geantParticleCodes[59] = "rho(770)"
+_geantParticleCodes[60] = "omega(782)"
+_geantParticleCodes[61] = "eta'(958)"
+_geantParticleCodes[62] = "phi(1020)"
+_geantParticleCodes[45] = "d"
+
+def getParticleNameFromGeantParticleID(id):
+    try:
+        return _geantParticleCodes[int(id)]
+    except (KeyError,ValueError):
+        return False
 
 class EventFile:
 
@@ -54,14 +76,24 @@ class Event:
     def getProductionKinematicsParticleNames(self):
         retVar = []
         splitUp = self.lines[1].split()
-        retVar.append(getParticleNameFromGeantParticleID(splitUp[0]))
+        particleName = getParticleNameFromGeantParticleID(splitUp[0])
+        if not particleName == False:
+            retVar.append(particleName)
+        else:
+            printErr("invalid particle ID (" + splitUp[0] + ").")
+            sys.exit(1)
         return retVar
 
     def getDecayKinematicsParticleNames(self):
         retVar = []
         for line in self.lines[2:]:
-            splitUp = self.lines[1].split()
-            retVar.append(getParticleNameFromGeantParticleID(splitUp[0]))
+            splitUp = line.split()
+            particleName = getParticleNameFromGeantParticleID(splitUp[0])
+            if not particleName == False:
+                retVar.append(particleName)
+            else:
+                printErr("invalid particle ID (" + splitUp[0] + ").")
+                sys.exit(1)
         return retVar
 
     def getProductionKinematicsMomenta(self):
@@ -91,11 +123,26 @@ if __name__ == "__main__":
     parser.add_argument("infile", help="The .evt file to be read")
     parser.add_argument("-o", "--output", help="The .root file to be written", default="output.root")
     parser.add_argument("-u", "--userstring", help="User string", default="")
+    parser.add_argument("-t", "--type", dest="eventsTypeString", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')", default="other")
 
     args = parser.parse_args()
 
     printErr = pyRootPwa.utils.printErr
+    printWarn = pyRootPwa.utils.printWarn
     printInfo = pyRootPwa.utils.printInfo
+
+    eventsType = pyRootPwa.core.eventMetadata.OTHER
+    if args.eventsTypeString == "real":
+        eventsType = pyRootPwa.core.eventMetadata.REAL
+    elif args.eventsTypeString == "generated":
+        eventsType = pyRootPwa.core.eventMetadata.GENERATED
+    elif args.eventsTypeString == "accepted":
+        eventsType = pyRootPwa.core.eventMetadata.ACCEPTED
+    elif args.eventsTypeString == "other":
+        pass
+        # do nothing
+    else:
+        printErr("type '" + eventsTypeString + "' is invalid as an event data type.")
 
     inputFile = args.infile
 
@@ -111,7 +158,13 @@ if __name__ == "__main__":
         event = in_event_file.get_event()
 
         fileWriter = pyRootPwa.core.eventFileWriter()
-        success = fileWriter.initialize(outputFile, args.userstring, event.getProductionKinematicsParticleNames(), event.getDecayKinematicsParticleNames(), {}, [])
+        success = fileWriter.initialize(outputFile,
+                                        args.userstring,
+                                        eventsType,
+                                        event.getProductionKinematicsParticleNames(),
+                                        event.getDecayKinematicsParticleNames(),
+                                        {},
+                                        [])
 
         while event is not None and success:
             event.sort()
