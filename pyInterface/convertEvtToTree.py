@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import sys
 
 import pyRootPwa
 
@@ -91,11 +92,26 @@ if __name__ == "__main__":
     parser.add_argument("infile", help="The .evt file to be read")
     parser.add_argument("-o", "--output", help="The .root file to be written", default="output.root")
     parser.add_argument("-u", "--userstring", help="User string", default="")
+    parser.add_argument("-t", "--type", dest="eventsTypeString", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')", default="other")
 
     args = parser.parse_args()
 
     printErr = pyRootPwa.utils.printErr
+    printWarn = pyRootPwa.utils.printWarn
     printInfo = pyRootPwa.utils.printInfo
+
+    eventsType = pyRootPwa.core.eventMetadata.OTHER
+    if args.eventsTypeString == "real":
+        eventsType = pyRootPwa.core.eventMetadata.REAL
+    elif args.eventsTypeString == "generated":
+        eventsType = pyRootPwa.core.eventMetadata.GENERATED
+    elif args.eventsTypeString == "accepted":
+        eventsType = pyRootPwa.core.eventMetadata.ACCEPTED
+    elif args.eventsTypeString == "other":
+        pass
+        # do nothing
+    else:
+        printErr("type '" + eventsTypeString + "' is invalid as an event data type.")
 
     inputFile = args.infile
 
@@ -111,7 +127,13 @@ if __name__ == "__main__":
         event = in_event_file.get_event()
 
         fileWriter = pyRootPwa.core.eventFileWriter()
-        success = fileWriter.initialize(outputFile, args.userstring, event.getProductionKinematicsParticleNames(), event.getDecayKinematicsParticleNames(), {}, [])
+        success = fileWriter.initialize(outputFile,
+                                        args.userstring,
+                                        eventsType,
+                                        event.getProductionKinematicsParticleNames(),
+                                        event.getDecayKinematicsParticleNames(),
+                                        {},
+                                        [])
 
         while event is not None and success:
             event.sort()
