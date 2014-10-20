@@ -7,36 +7,6 @@ import sys
 import pyRootPwa
 import pyRootPwa.core
 
-_geantParticleCodes = {}
-_geantParticleCodes[0] = "unknown"
-_geantParticleCodes[1] = "gamma"
-_geantParticleCodes[2] = "e"
-_geantParticleCodes[3] = "e"
-_geantParticleCodes[7] = "pi0"
-_geantParticleCodes[8] = "pi"
-_geantParticleCodes[9] = "pi"
-_geantParticleCodes[11] = "K"
-_geantParticleCodes[12] = "K"
-_geantParticleCodes[13] = "n"
-_geantParticleCodes[14] = "p"
-_geantParticleCodes[15] = "pbar"
-_geantParticleCodes[16] = "K0"
-_geantParticleCodes[17] = "eta"
-_geantParticleCodes[18] = "lambda"
-_geantParticleCodes[57] = "rho(770)"
-_geantParticleCodes[58] = "rho(770)"
-_geantParticleCodes[59] = "rho(770)"
-_geantParticleCodes[60] = "omega(782)"
-_geantParticleCodes[61] = "eta'(958)"
-_geantParticleCodes[62] = "phi(1020)"
-_geantParticleCodes[45] = "d"
-
-def getParticleNameFromGeantParticleID(id):
-    try:
-        return _geantParticleCodes[int(id)]
-    except (KeyError,ValueError):
-        return False
-
 class EventFile:
 
     evtfile = None
@@ -76,11 +46,11 @@ class Event:
     def getProductionKinematicsParticleNames(self):
         retVar = []
         splitUp = self.lines[1].split()
-        particleName = getParticleNameFromGeantParticleID(splitUp[0])
-        if not particleName == False:
+        try:
+            particleName = pyRootPwa.core.particleDataTable.particleNameFromGeantId(int(splitUp[0]))
             retVar.append(particleName)
-        else:
-            printErr("invalid particle ID (" + splitUp[0] + ").")
+        except:
+            printErr("invalid particle ID (" + str(splitUp[0]) + ").")
             sys.exit(1)
         return retVar
 
@@ -88,10 +58,10 @@ class Event:
         retVar = []
         for line in self.lines[2:]:
             splitUp = line.split()
-            particleName = getParticleNameFromGeantParticleID(splitUp[0])
-            if not particleName == False:
+            try:
+                particleName = pyRootPwa.core.particleDataTable.particleNameFromGeantId(int(splitUp[0]))
                 retVar.append(particleName)
-            else:
+            except:
                 printErr("invalid particle ID (" + splitUp[0] + ").")
                 sys.exit(1)
         return retVar
@@ -146,7 +116,7 @@ if __name__ == "__main__":
 
     inputFile = args.infile
 
-    outputFile = pyRootPwa.ROOT.TFile(args.output, "NEW")
+    outputFile = pyRootPwa.ROOT.TFile.Open(args.output, "NEW")
     if not outputFile:
         printErr("could not open output file. Aborting...")
         sys.exit(1)

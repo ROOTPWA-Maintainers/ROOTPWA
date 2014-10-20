@@ -118,6 +118,20 @@ void rpwa::py::exportParticleDataTable()
 		.def("clear", &rpwa::particleDataTable::clear)
 		.staticmethod("clear")
 
+		.def(
+			"particleNameFromGeantId"
+			, &rpwa::particleDataTable::particleNameFromGeantId
+			, (bp::arg("id"))
+		)
+		.staticmethod("particleNameFromGeantId")
+
+		.def(
+			"geantIdFromParticleName"
+			, &rpwa::particleDataTable::geantIdFromParticleName
+			, (bp::arg("name"))
+		)
+		.staticmethod("geantIdFromParticleName")
+
 		.add_static_property("debugParticleDataTable", &rpwa::particleDataTable::debug, &rpwa::particleDataTable::setDebug);
 
 }
