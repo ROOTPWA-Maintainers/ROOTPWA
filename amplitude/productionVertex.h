@@ -39,7 +39,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "Typedefs.hpp"
+#include "typedefs.h"
 #include "interactionVertex.h"
 
 

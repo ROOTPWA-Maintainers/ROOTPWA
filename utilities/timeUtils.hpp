@@ -63,4 +63,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // PARALLELUTILS_HPP
+#endif  // TIMEUTILS_HPP

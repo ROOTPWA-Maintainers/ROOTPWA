@@ -33,7 +33,9 @@
 
 #include <algorithm>
 
-#include "Typedefs.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include "typedefs.h"
 #include "spinUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"

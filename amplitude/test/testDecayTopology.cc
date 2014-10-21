@@ -78,7 +78,7 @@ main(int argc, char** argv)
 	// test construction of vertices
 	if (0) {
 		ParVector<Vector3> mom;
-		mom = make_vector_1(Vector3(1, 2, 3));
+		mom = toParVector(make_vector_1(Vector3(1, 2, 3)));
 		particlePtr beam = createParticle("pi-");
 		beam->setMomenta(mom);
 		particlePtr target = createParticle("p+");
@@ -94,10 +94,10 @@ main(int argc, char** argv)
 		printInfo << "copied vertex: " << endl
 		          << *vert2 << endl;
 
-		mom = make_vector_1(Vector3(3, 4, 5));
+		mom = toParVector(make_vector_1(Vector3(3, 4, 5)));
 		particlePtr daughter1 = createParticle("pi-");
 		daughter1->setMomenta(mom);
-		mom = make_vector_1(Vector3(4, 5, 6));
+		mom = toParVector(make_vector_1(Vector3(4, 5, 6)));
 		particlePtr daughter2 = createParticle("pi0");
 		daughter2->setMomenta(mom);
 		isobarDecayVertexPtr vert3 = createIsobarDecayVertex(X, daughter1, daughter2, 1, 2);

@@ -47,8 +47,6 @@
 #include "TSystem.h"
 
 #include "arrayUtils.hpp"
-#include "LorentzRotation.hpp"
-#include "LorentzVector.hpp"
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
@@ -119,7 +117,7 @@ main(int argc, char** argv)
 
 		{
 			particlePtr X = createParticle("X");
-			const ParVector<LorentzVector> p = make_vector_1(LorentzVector(0.5, 0.75, 1, 2));
+			const ParVector<LorentzVector> p = toParVector(make_vector_1(LorentzVector(0.5, 0.75, 1, 2)));
 			X->setLzVecs(p);
 			isobarHelicityAmplitude amp;
 			ParVector<LorentzRotation> L = amp.hfTransform(X->lzVecs());
@@ -133,8 +131,8 @@ main(int argc, char** argv)
 	}
 
 	if (0) {
-		const ParVector<LorentzVector> beam = make_vector_1(LorentzVector(1,   0.5,  180, 182));
-		const ParVector<LorentzVector> X    = make_vector_1(LorentzVector(0.5, 0.75, 1,   3  ));
+		const ParVector<LorentzVector> beam = toParVector(make_vector_1(LorentzVector(1,   0.5,  180, 182)));
+		const ParVector<LorentzVector> X    = toParVector(make_vector_1(LorentzVector(0.5, 0.75, 1,   3  )));
 		isobarHelicityAmplitude amp;
 		ParVector<LorentzRotation> L = amp.gjTransform(beam, X);
 		if(L.size() != 1) {
@@ -170,12 +168,12 @@ main(int argc, char** argv)
 		isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
 		isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
 		// set Lorentz vectors
-		beam->setLzVecs(make_vector_1(LorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058)));
-		pi0->setLzVecs(make_vector_1(LorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947)));
-		pi1->setLzVecs(make_vector_1(LorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973)));
-		pi2->setLzVecs(make_vector_1(LorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114)));
-		pi3->setLzVecs(make_vector_1(LorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277)));
-		pi4->setLzVecs(make_vector_1(LorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995)));
+		beam->setLzVecs(toParVector(make_vector_1(LorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058))));
+		pi0->setLzVecs(toParVector(make_vector_1(LorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947))));
+		pi1->setLzVecs(toParVector(make_vector_1(LorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973))));
+		pi2->setLzVecs(toParVector(make_vector_1(LorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114))));
+		pi3->setLzVecs(toParVector(make_vector_1(LorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277))));
+		pi4->setLzVecs(toParVector(make_vector_1(LorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995))));
 		// build graph
 		vector<isobarDecayVertexPtr> decayVertices;
 		decayVertices.push_back(vert3);

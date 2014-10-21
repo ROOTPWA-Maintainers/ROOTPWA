@@ -81,9 +81,9 @@ main(int argc, char** argv)
 	// test construction of particles
 	if (0) {
 		ParVector<Vector3> mom;
-		mom = make_vector_1(Vector3(1, 2, 3));
+		mom = toParVector(make_vector_1(Vector3(1, 2, 3)));
 		const particle p1("pi+", true, 0,  0, 0, mom);
-		mom = make_vector_1(Vector3(2, 3, 4));
+		mom = toParVector(make_vector_1(Vector3(2, 3, 4)));
 		const particle p2("pi-", true, 1, -1, 0, mom);
 		particle p3 = p2;
 		p3.setName("X+");

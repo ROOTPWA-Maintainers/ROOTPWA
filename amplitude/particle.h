@@ -43,9 +43,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "Typedefs.hpp"
+#include "typedefs.h"
 #include "conversionUtils.hpp"
-#include "parallelUtils.hpp"
 #include "particleProperties.h"
 
 

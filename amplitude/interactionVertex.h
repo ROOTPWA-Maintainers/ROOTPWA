@@ -42,7 +42,7 @@
 #include <boost/weak_ptr.hpp>
 
 
-#include "Typedefs.hpp"
+#include "typedefs.h"
 #include "particle.h"
 
 

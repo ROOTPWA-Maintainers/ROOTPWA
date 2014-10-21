@@ -32,30 +32,30 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef RPWA_LORENTZ_VECTOR_HPP
-#define RPWA_LORENTZ_VECTOR_HPP
+#ifndef CUDA_LORENTZ_VECTOR_HPP
+#define CUDA_LORENTZ_VECTOR_HPP
 
 #include <cmath>
 
 #include "TLorentzVector.h"
 
 #include "cudaUtils.hpp"
-#include "LorentzRotation.hpp"
-#include "Vector3.hpp"
+#include "cudaLorentzRotation.hpp"
+#include "cudaVector3.hpp"
 
 namespace rpwa {
 
 	template<typename Ty> // Ty would shadow method named T
-	class RpwaLorentzVector {
+	class CudaLorentzVector {
 	
 	public:
 
 		typedef Ty Scalar;
 	  
-		HOST_DEVICE RpwaLorentzVector(): _xyz(0, 0, 0), _t(0) {}
-		HOST_DEVICE RpwaLorentzVector(Ty x, Ty y, Ty z, Ty t): _xyz(x, y, z), _t(t) {}
-		HOST_DEVICE RpwaLorentzVector(const RpwaVector3<Ty>& xyz, Ty t): _xyz(xyz), _t(t) {}
-		HOST        RpwaLorentzVector(const TLorentzVector & v): _xyz(v.Vect()), _t(v.T()) {}
+		HOST_DEVICE CudaLorentzVector(): _xyz(0, 0, 0), _t(0) {}
+		HOST_DEVICE CudaLorentzVector(Ty x, Ty y, Ty z, Ty t): _xyz(x, y, z), _t(t) {}
+		HOST_DEVICE CudaLorentzVector(const CudaVector3<Ty>& xyz, Ty t): _xyz(xyz), _t(t) {}
+		HOST        CudaLorentzVector(const TLorentzVector & v): _xyz(v.Vect()), _t(v.T()) {}
 		
 		HOST TLorentzVector ToROOT() const { return TLorentzVector(_xyz.ToROOT(), _t); }
 		HOST operator TLorentzVector() const { return TLorentzVector(_xyz.ToROOT(), _t); }
@@ -90,52 +90,52 @@ namespace rpwa {
 		//HOST_DEVICE void SetVectMag(const Vector3<Ty>& vect, Ty mag) { SetXYZT(vect.X(), vect.Y(), vect.Z(), mag); }
 		//HOST_DEVICE void SetVectM(const Vector3<Ty>& vect, Ty m) { SetVectMag(vect, m); }
 		
-		HOST_DEVICE RpwaVector3<Ty> Vect() const { return _xyz; }
-		HOST_DEVICE void SetVect(const RpwaVector3<Ty>& p) { _xyz = p; }
+		HOST_DEVICE CudaVector3<Ty> Vect() const { return _xyz; }
+		HOST_DEVICE void SetVect(const CudaVector3<Ty>& p) { _xyz = p; }
 		HOST_DEVICE Ty P() const { return _xyz.Mag(); }	
 		
-		HOST_DEVICE bool operator == (const RpwaLorentzVector<Ty> & that) const {
+		HOST_DEVICE bool operator == (const CudaLorentzVector<Ty> & that) const {
 			return _xyz == that._xyz && _t == that._t; 
 		}
-		HOST_DEVICE bool operator != (const RpwaLorentzVector<Ty> & that) const {
+		HOST_DEVICE bool operator != (const CudaLorentzVector<Ty> & that) const {
 			return ! ((*this) == that); 
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty>& operator += (const RpwaLorentzVector<Ty> & that) {
+		HOST_DEVICE CudaLorentzVector<Ty>& operator += (const CudaLorentzVector<Ty> & that) {
 			_xyz += that._xyz; 
 			_t += that._t; 
 			return *this; 
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty>& operator -= (const RpwaLorentzVector<Ty> & that) {
+		HOST_DEVICE CudaLorentzVector<Ty>& operator -= (const CudaLorentzVector<Ty> & that) {
 			_xyz -= that._xyz; 
 			_t -= that._t; 
 			return *this; 
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty>& operator *= (Ty f) {
+		HOST_DEVICE CudaLorentzVector<Ty>& operator *= (Ty f) {
 			_xyz *= f;
 			_t *= f; 
 			return *this;
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty> operator + (const RpwaLorentzVector<Ty> & that) const {
-			return RpwaLorentzVector<Ty>(_xyz + that._xyz, _t + that._t);
+		HOST_DEVICE CudaLorentzVector<Ty> operator + (const CudaLorentzVector<Ty> & that) const {
+			return CudaLorentzVector<Ty>(_xyz + that._xyz, _t + that._t);
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty> operator - (const RpwaLorentzVector<Ty> & that) const {
-			return RpwaLorentzVector<Ty>(_xyz - that._xyz, _t - that._t);
+		HOST_DEVICE CudaLorentzVector<Ty> operator - (const CudaLorentzVector<Ty> & that) const {
+			return CudaLorentzVector<Ty>(_xyz - that._xyz, _t - that._t);
 		}
 		
-		HOST_DEVICE RpwaLorentzVector<Ty> operator * (Ty f) const {
-			return RpwaLorentzVector<Ty>(_xyz * f, _t * f);
+		HOST_DEVICE CudaLorentzVector<Ty> operator * (Ty f) const {
+			return CudaLorentzVector<Ty>(_xyz * f, _t * f);
 		}
 		
-		HOST_DEVICE Ty Dot(const RpwaLorentzVector<Ty> & that) const {
+		HOST_DEVICE Ty Dot(const CudaLorentzVector<Ty> & that) const {
 			return T() * that.T() - X() * that.X() - Y() * that.Y() - Y() * that.Y();
 		}
 		
-		HOST_DEVICE Ty operator * (const RpwaLorentzVector<Ty> & that) const {
+		HOST_DEVICE Ty operator * (const CudaLorentzVector<Ty> & that) const {
 			return Dot(that);
 		}
 		
@@ -154,24 +154,24 @@ namespace rpwa {
 		HOST_DEVICE Ty M2() const { return Mag2(); }
 		HOST_DEVICE Ty M() const { return Mag(); }
 		
-		HOST_DEVICE void Transform(const RpwaLorentzRotation<Ty> & rot) {
-			*this = RpwaLorentzVector(
+		HOST_DEVICE void Transform(const CudaLorentzRotation<Ty> & rot) {
+			*this = CudaLorentzVector(
 				rot.XX()*X() + rot.XY()*Y() + rot.XZ()*Z() + rot.XT()*T(),
 				rot.YX()*X() + rot.YY()*Y() + rot.YZ()*Z() + rot.YT()*T(),
 				rot.ZX()*X() + rot.ZY()*Y() + rot.ZZ()*Z() + rot.ZT()*T(),
 				rot.TX()*X() + rot.TY()*Y() + rot.TZ()*Z() + rot.TT()*T());
 		}
 		
-		HOST_DEVICE void operator *= (const RpwaLorentzRotation<Ty> & rot) { Transform(rot); }
+		HOST_DEVICE void operator *= (const CudaLorentzRotation<Ty> & rot) { Transform(rot); }
 		
-		//HOST_DEVICE void Transform(const Rotation<Ty> & rot);
-		//HOST_DEVICE void operator *= (const Rotation<Ty> & rot) { Transform(rot); }
+		//HOST_DEVICE void Transform(const CudaRotation<Ty> & rot);
+		//HOST_DEVICE void operator *= (const CudaRotation<Ty> & rot) { Transform(rot); }
 		
-		HOST_DEVICE RpwaVector3<Ty> BoostVector() const {
-			return RpwaVector3<Ty>(X()/T(), Y()/T(), Z()/T());
+		HOST_DEVICE CudaVector3<Ty> BoostVector() const {
+			return CudaVector3<Ty>(X()/T(), Y()/T(), Z()/T());
 		}
 		
-		HOST_DEVICE void Boost(const RpwaVector3<Ty> & b) {
+		HOST_DEVICE void Boost(const CudaVector3<Ty> & b) {
 			Ty bx = b.X();
 			Ty by = b.Y();
 			Ty bz = b.Z();
@@ -186,24 +186,24 @@ namespace rpwa {
 		}
 		
 	private:
-		RpwaVector3<Ty> _xyz;
+		CudaVector3<Ty> _xyz;
 		Ty _t;
 	};
 	
 	template <typename Ty>
-	HOST_DEVICE inline RpwaLorentzVector<Ty> operator * (Ty f, const RpwaLorentzVector<Ty>& b) {
+	HOST_DEVICE inline CudaLorentzVector<Ty> operator * (Ty f, const CudaLorentzVector<Ty>& b) {
 		return b * f;
 	}	
 	
 	template <typename T>
-	HOST_DEVICE inline RpwaLorentzVector<T> operator * (const RpwaLorentzRotation<T> rot, const RpwaLorentzVector<T>& v) {
-		RpwaLorentzVector<T> result = v;
+	HOST_DEVICE inline CudaLorentzVector<T> operator * (const CudaLorentzRotation<T> rot, const CudaLorentzVector<T>& v) {
+		CudaLorentzVector<T> result = v;
 		result.Transform(rot);
 		return result;
 	}
 
 	template <typename T>
-	HOST inline std::ostream& operator << (std::ostream& stream, const RpwaLorentzVector<T>& vec) {
+	HOST inline std::ostream& operator << (std::ostream& stream, const CudaLorentzVector<T>& vec) {
 		return stream << vec.ToROOT();
 	}
 

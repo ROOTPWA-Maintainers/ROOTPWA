@@ -34,7 +34,9 @@
 #include <algorithm>
 #include <cassert>
 
-#include "Typedefs.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include "typedefs.h"
 #include "conversionUtils.hpp"
 #include "factorial.hpp"
 #include "isobarAmplitude.h"

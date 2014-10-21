@@ -42,19 +42,19 @@
 namespace rpwa {
 
 	template<typename T>
-	class RpwaRotation {
+	class CudaRotation {
 	
 	public:
 
 		typedef T Scalar;
 		
-		HOST_DEVICE RpwaRotation():
+		HOST_DEVICE CudaRotation():
 			xx(1), xy(0), xz(0),
 			yx(0), yy(1), yz(0),
 			zx(0), zy(0), zz(1)
 		{}
 		
-		HOST_DEVICE RpwaRotation(T xx, T xy, T xz,
+		HOST_DEVICE CudaRotation(T xx, T xy, T xz,
 			 T yx, T yy, T yz,
 			 T zx, T zy, T zz):
 			xx(xx), xy(xy), xz(xz),
@@ -62,7 +62,7 @@ namespace rpwa {
 			zx(zx), zy(zy), zz(zz)
 		{}
 		
-		HOST RpwaRotation(const TRotation & rot):
+		HOST CudaRotation(const TRotation & rot):
 			xx(rot.XX()), xy(rot.XY()), xz(rot.XZ()),
 			yx(rot.YX()), yy(rot.YY()), yz(rot.YZ()),
 			zx(rot.ZX()), zy(rot.ZY()), zz(rot.ZZ())
@@ -121,8 +121,8 @@ namespace rpwa {
 			yz = s*z + c*yz;
 		}
 		
-		HOST_DEVICE RpwaRotation<T> operator* (const RpwaRotation<T> & b) const {
-			return RpwaRotation<T>(
+		HOST_DEVICE CudaRotation<T> operator* (const CudaRotation<T> & b) const {
+			return CudaRotation<T>(
 					xx*b.xx + xy*b.yx + xz*b.zx,
 					xx*b.xy + xy*b.yy + xz*b.zy,
 					xx*b.xz + xy*b.yz + xz*b.zz,
@@ -134,10 +134,10 @@ namespace rpwa {
 					zx*b.xz + zy*b.yz + zz*b.zz);
 		}
 		
-		HOST_DEVICE void operator *= (const RpwaRotation<T> & m) {
+		HOST_DEVICE void operator *= (const CudaRotation<T> & m) {
 			*this = (*this) * m;
 		}
-		HOST_DEVICE void Transform(const RpwaRotation<T> & m) {
+		HOST_DEVICE void Transform(const CudaRotation<T> & m) {
 			*this = m * (*this);
 		}
 		

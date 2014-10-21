@@ -39,7 +39,7 @@
 
 #include <vector>
 
-#include "Typedefs.hpp"
+#include "typedefs.h"
 #include "interactionVertex.h"
 #include "massDependence.h"
 

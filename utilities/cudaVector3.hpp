@@ -32,29 +32,29 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef RPWA_VECTOR3_HPP
-#define RPWA_VECTOR3_HPP
+#ifndef CUDA_VECTOR3_HPP
+#define CUDA_VECTOR3_HPP
 
 #include <cmath>
 #include <iostream>
 
 #include "TVector3.h"
 
-#include "Rotation.hpp"
+#include "cudaRotation.hpp"
 #include "cudaUtils.hpp"
 
 namespace rpwa {
 
 	template<typename T>
-	class RpwaVector3 {
+	class CudaVector3 {
 	
 	public:
 
 		typedef T Scalar;
 	  
-		HOST_DEVICE RpwaVector3(): _x(0), _y(0), _z(0) {}
-		HOST_DEVICE RpwaVector3(T x, T y, T z): _x(x), _y(y), _z(z) {}
-		HOST        RpwaVector3(const TVector3 & v): _x(v.X()), _y(v.Y()), _z(v.Z()) {}
+		HOST_DEVICE CudaVector3(): _x(0), _y(0), _z(0) {}
+		HOST_DEVICE CudaVector3(T x, T y, T z): _x(x), _y(y), _z(z) {}
+		HOST        CudaVector3(const TVector3 & v): _x(v.X()), _y(v.Y()), _z(v.Z()) {}
 		
 		HOST TVector3 ToROOT() const { return TVector3(_x, _y, _z); }
 		
@@ -86,50 +86,50 @@ namespace rpwa {
 			return (_x == 0 && _y == 0 && _z == 0) ? 0 : atan2(perp, _z);
 		}
 		
-		HOST_DEVICE bool operator == (const RpwaVector3<T> & other) const {
+		HOST_DEVICE bool operator == (const CudaVector3<T> & other) const {
 			return _x == other._x && _y == other._y  && _z == other._z; 
 		}
-		HOST_DEVICE bool operator != (const RpwaVector3<T> & other) const {
+		HOST_DEVICE bool operator != (const CudaVector3<T> & other) const {
 			return ! ((*this) == other); 
 		}
 		
-		HOST_DEVICE RpwaVector3<T>& operator += (const RpwaVector3<T> & other) {
+		HOST_DEVICE CudaVector3<T>& operator += (const CudaVector3<T> & other) {
 			_x += other._x;
 			_y += other._y;
 			_z += other._z;
 			return *this;
 		}
 		
-		HOST_DEVICE RpwaVector3<T>& operator -= (const RpwaVector3<T> & other) {
+		HOST_DEVICE CudaVector3<T>& operator -= (const CudaVector3<T> & other) {
 			_x -= other._x; 
 			_y -= other._y; 
 			_z -= other._z; 
 			return *this; 
 		}
 		
-		HOST_DEVICE RpwaVector3<T>& operator *= (T f) {
+		HOST_DEVICE CudaVector3<T>& operator *= (T f) {
 			_x *= f;
 			_y *= f; 
 			_z *= f; 
 			return *this;
 		}
 		
-		HOST_DEVICE RpwaVector3<T>& operator *= (const RpwaRotation<T> & rot) {
-			*this = RpwaVector3<T>(
+		HOST_DEVICE CudaVector3<T>& operator *= (const CudaRotation<T> & rot) {
+			*this = CudaVector3<T>(
 				rot.XX() * _x + rot.XY() * _y + rot.XZ() * _z,
 				rot.YX() * _x + rot.YY() * _y + rot.YZ() * _z,
 				rot.ZX() * _x + rot.ZY() * _y + rot.ZZ() * _z);
 			return *this;
 		}
 
-		HOST_DEVICE RpwaVector3<T> operator - () const { return RpwaVector3<T>(- _x, - _y, - _z); }
+		HOST_DEVICE CudaVector3<T> operator - () const { return CudaVector3<T>(- _x, - _y, - _z); }
 		
-		HOST_DEVICE T Dot(const RpwaVector3<T> & other) const {
+		HOST_DEVICE T Dot(const CudaVector3<T> & other) const {
 			return _x * other._x + _y * other._y + _z * other._z;
 		}
 
-		HOST_DEVICE RpwaVector3<T> Cross(const RpwaVector3<T> & other) const {
-			return RpwaVector3(
+		HOST_DEVICE CudaVector3<T> Cross(const CudaVector3<T> & other) const {
+			return CudaVector3(
 					_y * other._z - _z * other._y,
 					_z * other._x - _x * other._z,
 					_x * other._y - _y * other._x);
@@ -141,31 +141,31 @@ namespace rpwa {
 	};
 	
 	template <typename T>
-	HOST_DEVICE inline RpwaVector3<T> operator + (const RpwaVector3<T>& a, const RpwaVector3<T>& b) {
-		return RpwaVector3<T>(a.x() + b.x(), a.y() + b.y(), a.z() + b.z());
+	HOST_DEVICE inline CudaVector3<T> operator + (const CudaVector3<T>& a, const CudaVector3<T>& b) {
+		return CudaVector3<T>(a.x() + b.x(), a.y() + b.y(), a.z() + b.z());
 	}
 	
 	template <typename T>
-	HOST_DEVICE inline RpwaVector3<T> operator - (const RpwaVector3<T>& a, const RpwaVector3<T>& b) {
-		return RpwaVector3<T>(a.x() - b.x(), a.y() - b.y(), a.z() - b.z());
+	HOST_DEVICE inline CudaVector3<T> operator - (const CudaVector3<T>& a, const CudaVector3<T>& b) {
+		return CudaVector3<T>(a.x() - b.x(), a.y() - b.y(), a.z() - b.z());
 	}
 	template <typename T>
-	HOST_DEVICE inline RpwaVector3<T> operator * (T f, const RpwaVector3<T>& a) {
-		return RpwaVector3<T>(f * a.x(), f * a.y(), f * a.z());
-	}
-	
-	template <typename T>
-	HOST_DEVICE inline RpwaVector3<T> operator * (const RpwaVector3<T>& a, T f) {
-		return RpwaVector3<T>(f * a.x(), f * a.y(), f * a.z());
+	HOST_DEVICE inline CudaVector3<T> operator * (T f, const CudaVector3<T>& a) {
+		return CudaVector3<T>(f * a.x(), f * a.y(), f * a.z());
 	}
 	
 	template <typename T>
-	HOST_DEVICE inline RpwaVector3<T> operator * (const RpwaVector3<T>& a, const RpwaVector3<T>& b) {
+	HOST_DEVICE inline CudaVector3<T> operator * (const CudaVector3<T>& a, T f) {
+		return CudaVector3<T>(f * a.x(), f * a.y(), f * a.z());
+	}
+	
+	template <typename T>
+	HOST_DEVICE inline CudaVector3<T> operator * (const CudaVector3<T>& a, const CudaVector3<T>& b) {
 		return a.Dot(b);
 	}	
 
 	template <typename T>
-	HOST inline std::ostream& operator << (std::ostream& stream, const RpwaVector3<T>& vec) {
+	HOST inline std::ostream& operator << (std::ostream& stream, const CudaVector3<T>& vec) {
 		return stream << vec.ToROOT();
 	}
 

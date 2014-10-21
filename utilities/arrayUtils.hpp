@@ -290,6 +290,17 @@ namespace rpwa {
 
 	};
 	
+	//////////////////////////////////////////////////////////////////////////////
+	// utility function to create single-element vectors
+	template<typename T>
+	inline
+	std::vector<T>
+	make_vector_1(const T& element) {
+		std::vector<T> vec(1);
+		vec[0] = element;
+		return vec;
+	}
+
 }  // namespace rpwa
 
 

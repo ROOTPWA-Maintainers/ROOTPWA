@@ -32,19 +32,19 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef RPWA_LORENTZ_ROTATION_HPP
-#define RPWA_LORENTZ_ROTATION_HPP
+#ifndef CUDA_LORENTZ_ROTATION_HPP
+#define CUDA_LORENTZ_ROTATION_HPP
 
 #include "TLorentzRotation.h"
 
 #include "cudaUtils.hpp"
-#include "Vector3.hpp"
-#include "Rotation.hpp"
+#include "cudaVector3.hpp"
+#include "cudaRotation.hpp"
 
 namespace rpwa {
 
 	template<typename T>
-	class RpwaLorentzRotation {
+	class CudaLorentzRotation {
 	
 	public:
 
@@ -66,14 +66,14 @@ namespace rpwa {
 			tt = gamma;
 		}
 		
-		HOST_DEVICE RpwaLorentzRotation():
+		HOST_DEVICE CudaLorentzRotation():
 			xx(1), xy(0), xz(0), xt(0),
 			yx(0), yy(1), yz(0), yt(0),
 			zx(0), zy(0), zz(1), zt(0),
 			tx(0), ty(0), tz(0), tt(1)
 		{}
 		
-		HOST_DEVICE RpwaLorentzRotation(T xx, T xy, T xz, T xt,
+		HOST_DEVICE CudaLorentzRotation(T xx, T xy, T xz, T xt,
 			        T yx, T yy, T yz, T yt,
 			        T zx, T zy, T zz, T zt,
 			        T tx, T ty, T tz, T tt):
@@ -83,27 +83,27 @@ namespace rpwa {
 			tx(tx), ty(ty), tz(tz), tt(tt)
 		{}
 		
-		HOST_DEVICE RpwaLorentzRotation(const RpwaRotation<T> & rot):
+		HOST_DEVICE CudaLorentzRotation(const CudaRotation<T> & rot):
 			xx(rot.XX()), xy(rot.XY()), xz(rot.XZ()), xt(0),
 			yx(rot.YX()), yy(rot.YY()), yz(rot.YZ()), yt(0),
 			zx(rot.ZX()), zy(rot.ZY()), zz(rot.ZZ()), zt(0),
 			tx(0), ty(0), tz(0), tt(1)
 		{}
 		
-		HOST_DEVICE RpwaLorentzRotation(const RpwaVector3<T> & boost) {
+		HOST_DEVICE CudaLorentzRotation(const CudaVector3<T> & boost) {
 			SetBoost(boost.X(), boost.Y(), boost.Z());
 		}
 		
 		
-		HOST RpwaLorentzRotation(const TLorentzRotation & rot):
+		HOST CudaLorentzRotation(const TLorentzRotation & rot):
 			xx(rot.XX()), xy(rot.XY()), xz(rot.XZ()), xt(rot.XT()),
 			yx(rot.YX()), yy(rot.YY()), yz(rot.YZ()), yt(rot.YT()),
 			zx(rot.ZX()), zy(rot.ZY()), zz(rot.ZZ()), zt(rot.ZT()),
 			tx(rot.TX()), ty(rot.TY()), tz(rot.TZ()), tt(rot.TT())
 		{}
 		
-		HOST RpwaLorentzRotation ToROOT() const {
-			return RpwaLorentzRotation(
+		HOST CudaLorentzRotation ToROOT() const {
+			return CudaLorentzRotation(
 				xx, xy, xz, xt,
 				yx, yy, yz, yt,
 				zx, zy, zz, zt,
@@ -127,8 +127,8 @@ namespace rpwa {
 		HOST_DEVICE T TZ() const { return tz; }
 		HOST_DEVICE T TT() const { return tt; }
 		
-		HOST_DEVICE RpwaLorentzRotation<T> operator * (const RpwaLorentzRotation<T> & b) const {
-			return RpwaLorentzRotation<T>(
+		HOST_DEVICE CudaLorentzRotation<T> operator * (const CudaLorentzRotation<T> & b) const {
+			return CudaLorentzRotation<T>(
 				xx*b.xx + xy*b.yx + xz*b.zx + xt*b.tx,
 				xx*b.xy + xy*b.yy + xz*b.zy + xt*b.ty,
 				xx*b.xz + xy*b.yz + xz*b.zz + xt*b.tz,
@@ -147,19 +147,19 @@ namespace rpwa {
 				tx*b.xt + ty*b.yt + tz*b.zt + tt*b.tt);
 		}
 		
-		HOST_DEVICE void Transform(const RpwaLorentzRotation<T> & rot) {
+		HOST_DEVICE void Transform(const CudaLorentzRotation<T> & rot) {
 			*this = rot * (*this);
 		}
-		HOST_DEVICE void operator *= (const RpwaLorentzRotation<T> & rot) {
+		HOST_DEVICE void operator *= (const CudaLorentzRotation<T> & rot) {
 			*this = (*this) * rot;  
 		}
 		
-		HOST_DEVICE void Boost(const RpwaVector3<T> & b) {
-			Transform(RpwaLorentzRotation<T>(b));
+		HOST_DEVICE void Boost(const CudaVector3<T> & b) {
+			Transform(CudaLorentzRotation<T>(b));
 		}
 		
-		HOST_DEVICE RpwaLorentzRotation<T> Inverse() const {
-			return RpwaLorentzRotation<T>(
+		HOST_DEVICE CudaLorentzRotation<T> Inverse() const {
+			return CudaLorentzRotation<T>(
 				 xx,  yx,  zx, -tx,
 				 xy,  yy,  zy, -ty,
 				 xz,  yz,  zz, -tz,

@@ -31,8 +31,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef RPWA_TYPEDEFS_HPP
-#define RPWA_TYPEDEFS_HPP
+#ifndef RPWA_TYPEDEFS_H
+#define RPWA_TYPEDEFS_H
 
 #include <complex>
 #include <vector>
@@ -42,11 +42,11 @@
 #include "TRotation.h"
 #include "TLorentzRotation.h"
 
-#include "Complex.hpp"
-#include "Vector3.hpp"
-#include "LorentzVector.hpp"
-#include "Rotation.hpp"
-#include "LorentzRotation.hpp"
+#include "cudaComplex.hpp"
+#include "cudaVector3.hpp"
+#include "cudaLorentzVector.hpp"
+#include "cudaRotation.hpp"
+#include "cudaLorentzRotation.hpp"
 
 namespace rpwa {
 
@@ -95,50 +95,75 @@ namespace rpwa {
 
 }
 
-//#define ParVector std::vector
-#define ParVector RpwaVec
-//#define ParVector thrust::device_vector
+#ifdef USE_CUDA
 
-namespace rpwa {
+	//#define ParVector thrust::device_vector
+	#define ParVector RpwaVec
 
-	// utility function to create single-element vectors
-	template<typename T>
-	inline
-	ParVector<T>
-	make_vector_1(const T& element) {
-		ParVector<T> vec(1);
-		vec[0] = element;
-		return vec;
-	}
+	namespace rpwa {
+
+		typedef double Scalar;
+
+		typedef CudaComplex<Scalar> Complex;
+		typedef CudaVector3<Scalar> Vector3;
+		typedef CudaLorentzVector<Scalar> LorentzVector;
+		typedef CudaRotation<Scalar> Rotation;
+		typedef CudaLorentzRotation<Scalar> LorentzRotation;
+
+		template<typename T>
+		inline ParVector<T> toParVector(const std::vector<T>& v) {
+			return RpwaVec<T>(v);
+		}
+
+		/*
+		template<typename T>
+		inline ParVector<T> toParVector(const std::vector<T>& v) {
+			thrust::host_vector h(v.size());
+			std::copy(v.begin(), v.end(), h.begin());
+			return thrust::device_vector(h);
+		}
+		*/
+
+	} // namespace rpwa
 
 
-	typedef double Scalar;
+#else
 
-	typedef RpwaComplex<Scalar> Complex;
+	//#define ParVector std::vector
+	#define ParVector RpwaVec
 
-	typedef RpwaVector3<Scalar> Vector3;
+	namespace rpwa {
 
-	typedef RpwaLorentzVector<Scalar> LorentzVector;
+		typedef double Scalar;
 
-	typedef RpwaRotation<Scalar> Rotation;
+		typedef CudaComplex<Scalar> Complex;
+		typedef CudaVector3<Scalar> Vector3;
+		typedef CudaLorentzVector<Scalar> LorentzVector;
+		typedef CudaRotation<Scalar> Rotation;
+		typedef CudaLorentzRotation<Scalar> LorentzRotation;
 
-	typedef RpwaLorentzRotation<Scalar> LorentzRotation;
+		/*
+		typedef std::complex<Scalar> Complex;
+		typedef TVector3 Vector3;
+		typedef TLorentzVector LorentzVector;
+		typedef TRotation Rotation;
+		typedef TLorentzRotation LorentzRotation;
+		*/
 
-	/*
-	typedef double Scalar;
+		template<typename T>
+		inline ParVector<T> toParVector(const std::vector<T>& v) {
+			return RpwaVec<T>(v);
+		}
 
-	typedef std::complex<Scalar> Complex;
-  
-	typedef TVector3 Vector3;
-	
-	typedef TLorentzVector LorentzVector;
-	
-	typedef TRotation Rotation;
-	
-	typedef TLorentzRotation LorentzRotation;
-	*/
+		/*
+		template<typename T>
+		inline ParVector<T> toParVector(const std::vector<T>& v) {
+			return v;
+		}
+		*/
 
-}  // namespace rpwa
+	} // namespace rpwa
 
+#endif
 
 #endif  // RPWA_TYPEDEFS_HPP
