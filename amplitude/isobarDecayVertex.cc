@@ -157,16 +157,16 @@ isobarDecayVertex::addOutParticle(const particlePtr&)
 }
 
 
-const vector<LorentzVector>&
+const ParVector<LorentzVector>&
 isobarDecayVertex::calcParentLzVecs()
 {
 	if (_debug)
 		printDebug << "calculating Lorentz vectors of parent particle " << parent()->name()
-		           << " before = " << parent()->lzVecs() << " GeV, " << flush;
+		           << " before = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV, " << flush;
 
-	vector<LorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
-	const vector<LorentzVector>& daughter1Vec = daughter1()->lzVecs();
-	const vector<LorentzVector>& daughter2Vec = daughter2()->lzVecs();
+	ParVector<LorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
+	const ParVector<LorentzVector>& daughter1Vec = daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = daughter2()->lzVecs();
 
 	const size_t numEvents = daughter1Vec.size();  // parentVec does not have correct size
 	if (daughter2Vec.size() != numEvents) {
@@ -185,7 +185,7 @@ isobarDecayVertex::calcParentLzVecs()
 	cout << "EPL: isobarDecayVertex::calcParentLzVec timediff = " << timeDiff << endl;
 
 	if (_debug)
-		cout << "after = " << parent()->lzVecs() << " GeV" << endl;
+		cout << "after = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV" << endl;
 	return parent()->lzVecs();
 }
 

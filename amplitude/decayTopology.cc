@@ -234,7 +234,7 @@ decayTopology::reflectionEigenValue() const
 
 
 void
-decayTopology::transformFsParticles(const std::vector<LorentzRotation>& lorentzTransforms)
+decayTopology::transformFsParticles(const ParVector<LorentzRotation>& lorentzTransforms)
 {
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i)
 		fsParticles()[i]->transform(lorentzTransforms);
@@ -667,8 +667,8 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 
 
 bool
-decayTopology::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta,
-                                  const vector<vector<Vector3> >& decayKinMomenta)
+decayTopology::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta,
+                                  const vector<ParVector<Vector3> >& decayKinMomenta)
 {
 	// set production kinematics
 	bool success = productionVertex()->readKinematicsData(prodKinMomenta);
@@ -690,7 +690,7 @@ decayTopology::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta
 	for (size_t i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr&     part      = fsParticles()[i];
 		const unsigned int     partIndex = _fsDataPartIndexMap[i];
-		const vector<Vector3>& momenta   = decayKinMomenta[partIndex];
+		const ParVector<Vector3>& momenta   = decayKinMomenta[partIndex];
 		_fsDataPartMomCache[i] = momenta;
 		if (_debug) {
 			printDebug << "setting momentum of final-state particle '" << part->name() << "' "
@@ -721,7 +721,7 @@ decayTopology::revertMomenta()
 		part->setMomenta(_fsDataPartMomCache[i]);
 		if (_debug)
 			printDebug << "resetting momenta of final-state particle '" << part->name() << "'"
-			           << "[" << i << "] to " << _fsDataPartMomCache[i] << " GeV" << endl;
+			           << "[" << i << "] to " << firstEntriesToString(_fsDataPartMomCache[i], 3) << " GeV" << endl;
 	}
 	return success;
 }
@@ -750,7 +750,7 @@ decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // fina
 			printDebug << "(re)setting momenta of final-state particle "
 			           << "'" << part->name() << "'[" << i << "] "
 			           << "to that of '" << fsParticles()[newIndex]->name()
-			           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
+			           << "'[" << newIndex << "] = " << firstEntriesToString(_fsDataPartMomCache[newIndex], 3) << " GeV" << endl;
 	}
 	return success;
 }
@@ -807,12 +807,12 @@ decayTopology::printProdKinParticles(ostream& out) const
 	for (unsigned int i = 0; i < productionVertex()->nmbInParticles(); ++i) {
 		const particlePtr& part = productionVertex()->inParticles()[i];
 		out << "    incoming particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << firstEntriesToString(part->lzVecs(), 3) << " GeV" << endl;
 	}
 	for (unsigned int i = 0; i < productionVertex()->nmbOutParticles(); ++i) {
 		const particlePtr& part = productionVertex()->outParticles()[i];
 		out << "    outgoing particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << firstEntriesToString(part->lzVecs(), 3) << " GeV" << endl;
 	}
 	return out;
 }
@@ -825,7 +825,7 @@ decayTopology::printDecayKinParticles(ostream& out) const
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
 		out << "    particle[" << i << "]: " << part->qnSummary() << ", "
-		    << "index = " << part->index() << ", p = " << part->lzVecs() << " GeV" << endl;
+		    << "index = " << part->index() << ", p = " << firstEntriesToString(part->lzVecs(), 3) << " GeV" << endl;
 	}
 	return out;
 }

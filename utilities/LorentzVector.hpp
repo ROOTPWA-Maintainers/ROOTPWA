@@ -58,7 +58,7 @@ namespace rpwa {
 		HOST        RpwaLorentzVector(const TLorentzVector & v): _xyz(v.Vect()), _t(v.T()) {}
 		
 		HOST TLorentzVector ToROOT() const { return TLorentzVector(_xyz.ToROOT(), _t); }
-		HOST TLorentzVector operator()() const { return TLorentzVector(_xyz.ToROOT(), _t); }
+		HOST operator TLorentzVector() const { return TLorentzVector(_xyz.ToROOT(), _t); }
 		
 		HOST_DEVICE Ty X() const { return _xyz.X(); }
 		HOST_DEVICE Ty Y() const { return _xyz.Y(); }

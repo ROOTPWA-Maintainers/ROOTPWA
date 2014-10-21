@@ -55,9 +55,9 @@ productionVertex::~productionVertex()
 
 
 // default implementation
-vector<Complex>
+ParVector<Complex>
 productionVertex::productionAmps() const
 {
 	size_t numEvents = XParticle()->numEvents();
-	return vector<Complex>(numEvents, 1);
+	return ParVector<Complex>(numEvents, 1);
 }

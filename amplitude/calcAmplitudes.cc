@@ -163,9 +163,9 @@ main(int    argc,
 
 	// caches are initialized here to allow multi-threaded access
 	cout << "Init factiorial cache ..." << std::endl;
-	initFactorial<double>();
+	initFactorial<Scalar>();
 	cout << "Init dFunction cache ..." << std::endl;
-	initDFunction<double>();
+	initDFunction<Scalar>();
 
 	// get input file names
 	if (optind >= argc) {

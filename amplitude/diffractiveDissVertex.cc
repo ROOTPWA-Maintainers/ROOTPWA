@@ -151,7 +151,7 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 }
 
 
-std::vector<Complex>
+ParVector<Complex>
 diffractiveDissVertex::productionAmps() const
 {
 	size_t numEvents = _beamMomCache.size();
@@ -159,7 +159,7 @@ diffractiveDissVertex::productionAmps() const
 		printErr << "no data to calculate production amplitude. aborting." << endl;
 		throw;
 	}
-	return vector<Complex>(numEvents, 1);
+	return ParVector<Complex>(numEvents, 1);
 }
 
 
@@ -232,7 +232,7 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-diffractiveDissVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
+diffractiveDissVertex::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta)
 {
 	_beamMomCache.clear();
 	_recoilMomCache.clear();
@@ -288,9 +288,9 @@ bool
 diffractiveDissVertex::revertMomenta()
 {
 	if (_debug) {
-		printDebug << "resetting beam momentum to "       << _beamMomCache   << " GeV" << endl
-		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
-		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+		printDebug << "resetting beam momentum to "       << firstEntriesToString(_beamMomCache, 3)   << " GeV" << endl
+		           << "    resetting recoil momentum to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl
+		           << "    resetting target momentum to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
 	}
 	beam  ()->setMomenta(_beamMomCache  );
 	recoil()->setMomenta(_recoilMomCache);

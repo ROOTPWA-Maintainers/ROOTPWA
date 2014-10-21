@@ -35,6 +35,7 @@
 #define RPWA_TYPEDEFS_HPP
 
 #include <complex>
+#include <vector>
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
@@ -48,6 +49,68 @@
 #include "LorentzRotation.hpp"
 
 namespace rpwa {
+
+	template<typename T>
+	class RpwaVec {
+
+	public:
+
+		typedef typename std::vector<T>::iterator iterator;
+		typedef typename std::vector<T>::const_iterator const_iterator;
+
+		RpwaVec(): vec() {}
+		RpwaVec(const RpwaVec<T>& v): vec(v.vec) {}
+		RpwaVec(size_t s, T v = T()): vec(s, v) {}
+		explicit RpwaVec(const std::vector<T>& v): vec(v) {}
+
+		const std::vector<T>& toStdVector() const { return vec; }
+
+		T& operator[](int i) { return vec[i]; }
+		const T& operator[](int i) const { return vec[i]; }
+
+		T& front() { return vec.front(); }
+		const T& front() const { return vec.front(); }
+
+		T& back() { return vec.back(); }
+		const T& back() const { return vec.back(); }
+
+		void push_back(const T& x) { vec.push_back(x); }
+
+		void clear() { vec.clear(); }
+		void resize(size_t s, T v = T()) { vec.resize(s, v); }
+
+		size_t size() const { return vec.size(); }
+
+		iterator begin() { return vec.begin(); }
+		iterator end() { return vec.end(); }
+		const_iterator begin() const { return vec.begin(); }
+		const_iterator end() const { return vec.end(); }
+
+
+	private:
+
+		std::vector<T> vec;
+
+	};
+
+}
+
+//#define ParVector std::vector
+#define ParVector RpwaVec
+//#define ParVector thrust::device_vector
+
+namespace rpwa {
+
+	// utility function to create single-element vectors
+	template<typename T>
+	inline
+	ParVector<T>
+	make_vector_1(const T& element) {
+		ParVector<T> vec(1);
+		vec[0] = element;
+		return vec;
+	}
+
 
 	typedef double Scalar;
 

@@ -113,7 +113,7 @@ isobarAmplitude::init()
 // at the moment it is not possible to fix the helicity state of
 // final state particles for cases where the amplitudes for the
 // different helicity states have to be added incoherently
-std::vector<Complex>
+ParVector<Complex>
 isobarAmplitude::amplitude() const
 {
 	//int numEvents = _decay->XIsobarDecayVertex()->parent()->numEvents();
@@ -123,15 +123,15 @@ isobarAmplitude::amplitude() const
 	if (nmbSymTerms < 1) {
 		printErr << "array of symmetrization terms is empty. make sure isobarAmplitude::init() "
 		         << "was called. cannot calculate amplitude. returning 0." << endl;
-		return std::vector<Complex>(numEvents, 0);
+		return ParVector<Complex>(numEvents, 0);
 	}
 	// loop over all symmetrization terms; assumes that init() was called before
 
-	std::vector<Complex> amp(numEvents);
+	ParVector<Complex> amp(numEvents);
 
 	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
 
-		std::vector<Complex> permAmp = symTermAmp(_symTermMaps[i].fsPartPermMap);
+		ParVector<Complex> permAmp = symTermAmp(_symTermMaps[i].fsPartPermMap);
 
 		if(amp.size() != permAmp.size()) {
 			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
@@ -154,9 +154,9 @@ isobarAmplitude::amplitude() const
 }
 
 
-std::vector<LorentzRotation>
-isobarAmplitude::gjTransform(const std::vector<LorentzVector>& beamLv,  // beam Lorentz-vector
-                             const std::vector<LorentzVector>& XLv)     // X  Lorentz-vector
+ParVector<LorentzRotation>
+isobarAmplitude::gjTransform(const ParVector<LorentzVector>& beamLv,  // beam Lorentz-vector
+                             const ParVector<LorentzVector>& XLv)     // X  Lorentz-vector
 {
 
 	if(beamLv.size() != XLv.size()) {
@@ -164,7 +164,7 @@ isobarAmplitude::gjTransform(const std::vector<LorentzVector>& beamLv,  // beam 
 		throw;
 	}
 
-	std::vector<LorentzRotation> result(beamLv.size());
+	ParVector<LorentzRotation> result(beamLv.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -201,6 +201,19 @@ isobarAmplitude::gjTransform(const std::vector<LorentzVector>& beamLv,  // beam 
 	return result;
 }
 
+static
+void
+parallelLorentzRotationInvert(ParVector<LorentzRotation>& lzRot)
+{
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < lzRot.size(); ++i)
+		lzRot[i].Invert();
+	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
+	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
+	std::cout << "EPL: parallelLorentzRotationInvert timediff = " << timeDiff << std::endl;
+}
 
 void
 isobarAmplitude::spaceInvertDecay() const
@@ -209,9 +222,9 @@ isobarAmplitude::spaceInvertDecay() const
 		printDebug << "space inverting final state momenta." << endl;
 
 	// transform final state particles into X rest frame
-	const std::vector<LorentzVector>& beamLv = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<LorentzVector>& XLv    = _decay->XParticle()->lzVecs();
-	std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>& beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>& XLv    = _decay->XParticle()->lzVecs();
+	ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
 
 	// perform parity transformation on final state particles in X rest frame
@@ -241,9 +254,9 @@ isobarAmplitude::reflectDecay() const
 	if (_debug)
 		printDebug << "reflecting final state momenta through production plane." << endl;
 	// transform final state particles into X rest frame
-	const std::vector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
-	std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
+	ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
 
 	// reflect final state particles through production plane
@@ -274,7 +287,7 @@ isobarAmplitude::reflectDecay() const
 //     additional speed can be gained by checking that daughter
 //     amplitudes are not zero before calculating the remaining parts
 //     of the amplitude
-std::vector<Complex>
+ParVector<Complex>
 isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,           // current vertex
                                           const bool                  topVertex) const  // switches special treatment of X decay vertex; needed for reflectivity basis
 {
@@ -284,7 +297,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 
 	int numEvents = parent->numEvents();
 
-	std::vector<Complex> ampSum(numEvents, 0);
+	ParVector<Complex> ampSum(numEvents, 0);
 
 	for (int lambda1 = -daughter1->J(); lambda1 <= +daughter1->J(); lambda1 += 2) {
 
@@ -293,11 +306,11 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 		const isobarDecayVertexPtr& daughter1Vertex =
 			dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
 
-		std::vector<Complex> daughter1Amp(numEvents, 0);
+		ParVector<Complex> daughter1Amp;
 		if (daughter1Vertex) {
 			daughter1Amp = twoBodyDecayAmplitudeSum(daughter1Vertex, false);
 		} else
-			daughter1Amp = std::vector<Complex>(numEvents, 1);
+			daughter1Amp = ParVector<Complex>(numEvents, 1);
 
 		for (int lambda2 = -daughter2->J(); lambda2 <= +daughter2->J(); lambda2 += 2) {
 
@@ -306,13 +319,13 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			const isobarDecayVertexPtr& daughter2Vertex =
 				dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
 
-			std::vector<Complex> daughter2Amp(numEvents, 0);
+			ParVector<Complex> daughter2Amp;
 			if (daughter2Vertex) {
 				daughter2Amp = twoBodyDecayAmplitudeSum(daughter2Vertex, false);
 			} else
-				daughter2Amp = std::vector<Complex>(numEvents, 1);
+				daughter2Amp = ParVector<Complex>(numEvents, 1);
 
-			std::vector<Complex> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
+			ParVector<Complex> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
 
 			if(ampSum.size() != parentAmp.size() || ampSum.size() != daughter1Amp.size() || ampSum.size() != daughter2Amp.size()) {
 				printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -346,13 +359,18 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			cout << "EPL: isobarAmplitude::twoBodyDecayAmplitudeSum timediff = " << timeDiff << endl;
 		}
 	}
-	if (_debug)
-		printDebug << "decay amplitude for " << *vertex << " = " << maxPrecisionDouble(ampSum) << endl;
+	if (_debug) {
+		printDebug << "decay amplitude for " << *vertex << " = ";
+		for(unsigned int i = 0; i < ampSum.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(ampSum[i]);
+		}
+		printDebug << endl;
+	}
 	return ampSum;
 }
 
 
-std::vector<Complex>
+ParVector<Complex>
 isobarAmplitude::symTermAmp(const vector<unsigned int>& fsPartPermMap) const
 {
 	// (re)set final state momenta
@@ -360,7 +378,7 @@ isobarAmplitude::symTermAmp(const vector<unsigned int>& fsPartPermMap) const
 		printErr << "problems reverting momenta in decay topology. cannot calculate amplitude. "
 		         << "returning 0." << endl;
 		int numEvents = _decay->fsParticles().at(0)->numEvents();
-		return std::vector<Complex>(numEvents, 0);
+		return ParVector<Complex>(numEvents, 0);
 	}
 	// transform daughters into their respective RFs
 	transformDaughters();

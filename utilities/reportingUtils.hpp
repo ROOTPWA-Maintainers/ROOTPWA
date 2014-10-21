@@ -479,7 +479,7 @@ namespace rpwa {
 	template<typename T>
 	inline
 	std::string
-	firstEntriesToString (const std::vector<T>& vec, unsigned int n)
+	firstEntriesToString (const T& vec, unsigned int n)
 	{
 		unsigned int len = std::min(n, (unsigned int) vec.size());
 		std::stringstream ss;
@@ -487,6 +487,9 @@ namespace rpwa {
 		for (unsigned int i = 0; i < len; ++i) {
 			if(i != 0) ss << ", ";
 			ss << vec[i];
+		}
+		if(vec.size() > len) {
+			ss << ", ...";
 		}
 		ss << "}";
 		return ss.str();

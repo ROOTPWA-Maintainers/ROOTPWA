@@ -75,10 +75,10 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual const std::vector<LorentzVector>& referenceLzVecs() const { return virtPhoton()->lzVecs(); }  ///< returns Lorentz-vectors for a number of events that defines z-axis for angular distributions
-		virtual const particlePtr&                XParticle      () const { return outParticles()[0];      }  ///< returns X particle
+		virtual const ParVector<LorentzVector>& referenceLzVecs() const { return virtPhoton()->lzVecs(); }  ///< returns Lorentz-vectors for a number of events that defines z-axis for angular distributions
+		virtual const particlePtr&              XParticle      () const { return outParticles()[0];      }  ///< returns X particle
 
-		virtual std::vector<Complex> productionAmps() const;  ///< returns production amplitudes all events stored in particles
+		virtual ParVector<Complex> productionAmps() const;  ///< returns production amplitudes all events stored in particles
 
 		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
@@ -93,18 +93,18 @@ namespace rpwa {
 		inline void   setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
 
 		// leptoproduction kinematic variables
-		void Q2     (std::vector<double>& result) const; ///< returns Q^2 of virtual photon
-		void nu     (std::vector<double>& result) const; ///< returns energy of virtual photon
-		void y      (std::vector<double>& result) const; ///< returns relative energy loss of virtual photon
-		void epsilon(std::vector<double>& result) const; ///< returns photon's polarization parameter
-		void delta  (std::vector<double>& result) const; ///< returns photon's mass correction parameter
-		void xBj    (std::vector<double>& result) const; ///< returns Bjorken x
-		void s      (std::vector<double>& result) const; ///< returns total energy squared in (virtual photon, target) CM system
-		void W      (std::vector<double>& result) const; ///< returns total energy in (virtual photon, target) CM system
-		void delta  (const std::vector<double>& epsilon, std::vector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
+		void Q2     (ParVector<double>& result) const; ///< returns Q^2 of virtual photon
+		void nu     (ParVector<double>& result) const; ///< returns energy of virtual photon
+		void y      (ParVector<double>& result) const; ///< returns relative energy loss of virtual photon
+		void epsilon(ParVector<double>& result) const; ///< returns photon's polarization parameter
+		void delta  (ParVector<double>& result) const; ///< returns photon's mass correction parameter
+		void xBj    (ParVector<double>& result) const; ///< returns Bjorken x
+		void s      (ParVector<double>& result) const; ///< returns total energy squared in (virtual photon, target) CM system
+		void W      (ParVector<double>& result) const; ///< returns total energy in (virtual photon, target) CM system
+		void delta  (const ParVector<double>& epsilon, ParVector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
 
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                    );  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<std::vector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
+		virtual bool readKinematicsData(const std::vector<ParVector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 
@@ -128,11 +128,11 @@ namespace rpwa {
 
 		double _longPol;  ///< longitudinal beam polarization
 
-		size_t               _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
-		std::vector<Vector3> _beamLeptonMomCache;       ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<Vector3> _scatteredLeptonMomCache;  ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<Vector3> _recoilMomCache;           ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
-		std::vector<Vector3> _targetMomCache;           ///< caches target momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		size_t             _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
+		ParVector<Vector3> _beamLeptonMomCache;       ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		ParVector<Vector3> _scatteredLeptonMomCache;  ///< caches beam momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		ParVector<Vector3> _recoilMomCache;           ///< caches recoil momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
+		ParVector<Vector3> _targetMomCache;           ///< caches target momenta of last block of events read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

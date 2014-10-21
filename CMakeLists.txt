@@ -230,7 +230,8 @@ set_package_properties(Libconfig
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
+#set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
+set(_ROOT_COMPONENTS "MathMore" "TreePlayer")
 find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS})
 set_package_properties(ROOT
 	PROPERTIES
@@ -524,7 +525,7 @@ if(USE_CUDA)
 		${CMAKE_SOURCE_DIR}/cuda
 		)
 	set(CUDACODE_LIBS
-		RootPwaCuda
+#		RootPwaCuda
 		)
 else()
 	set(CUDACODE_INCLUDE_DIR)
@@ -539,7 +540,7 @@ add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
-	add_subdirectory(cuda)
+#	add_subdirectory(cuda)
 endif()
 
 # RootPwaAmp

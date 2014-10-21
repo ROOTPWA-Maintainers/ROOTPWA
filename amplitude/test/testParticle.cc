@@ -80,7 +80,7 @@ main(int argc, char** argv)
 
 	// test construction of particles
 	if (0) {
-		vector<Vector3> mom;
+		ParVector<Vector3> mom;
 		mom = make_vector_1(Vector3(1, 2, 3));
 		const particle p1("pi+", true, 0,  0, 0, mom);
 		mom = make_vector_1(Vector3(2, 3, 4));

@@ -74,12 +74,12 @@ namespace rpwa {
 		void enableSpaceInversion(const bool flag = true) { _doSpaceInversion = flag; }  ///< en/disables parity transformation of decay
 		void enableReflection    (const bool flag = true) { _doReflection     = flag; }  ///< en/disables reflection of decay through production plane
 
-		static std::vector<LorentzRotation> gjTransform(
-				const std::vector<LorentzVector>& beamLv,
-				const std::vector<LorentzVector>& XLv);  ///< constructs Lorentz-transformation to X Gottfried-Jackson frame
+		static ParVector<LorentzRotation> gjTransform(
+				const ParVector<LorentzVector>& beamLv,
+				const ParVector<LorentzVector>& XLv);  ///< constructs Lorentz-transformation to X Gottfried-Jackson frame
     
-		std::vector<Complex> amplitude()   const;                         ///< computes amplitude
-		std::vector<Complex> operator ()() const { return amplitude(); }  ///< computes amplitude
+		ParVector<Complex> amplitude()   const;                         ///< computes amplitude
+		ParVector<Complex> operator ()() const { return amplitude(); }  ///< computes amplitude
 
 		virtual std::string   name           ()                  const { return "isobarAmplitude"; }
 		virtual std::ostream& printParameters(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
@@ -97,15 +97,15 @@ namespace rpwa {
 
 //		virtual void transformDaughters() const = 0;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
-		virtual std::vector<Complex> twoBodyDecayAmplitude
+		virtual ParVector<Complex> twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const = 0;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
     
-		virtual std::vector<Complex> twoBodyDecayAmplitudeSum
+		virtual ParVector<Complex> twoBodyDecayAmplitudeSum
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex = false) const;  ///< recursive function that sums up decay amplitudes for all allowed helicitities for all vertices below the given vertex
 
-		virtual std::vector<Complex> symTermAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
+		virtual ParVector<Complex> symTermAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
 
 		virtual bool initSymTermMaps();
 

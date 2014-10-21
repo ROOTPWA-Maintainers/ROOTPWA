@@ -119,10 +119,10 @@ main(int argc, char** argv)
 
 		{
 			particlePtr X = createParticle("X");
-			const vector<LorentzVector> p = make_vector_1(LorentzVector(0.5, 0.75, 1, 2));
+			const ParVector<LorentzVector> p = make_vector_1(LorentzVector(0.5, 0.75, 1, 2));
 			X->setLzVecs(p);
 			isobarHelicityAmplitude amp;
-			vector<LorentzRotation> L = amp.hfTransform(X->lzVecs());
+			ParVector<LorentzRotation> L = amp.hfTransform(X->lzVecs());
 			if(L.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;
 				return 0;
@@ -133,10 +133,10 @@ main(int argc, char** argv)
 	}
 
 	if (0) {
-		const vector<LorentzVector> beam = make_vector_1(LorentzVector(1,   0.5,  180, 182));
-		const vector<LorentzVector> X    = make_vector_1(LorentzVector(0.5, 0.75, 1,   3  ));
+		const ParVector<LorentzVector> beam = make_vector_1(LorentzVector(1,   0.5,  180, 182));
+		const ParVector<LorentzVector> X    = make_vector_1(LorentzVector(0.5, 0.75, 1,   3  ));
 		isobarHelicityAmplitude amp;
-		vector<LorentzRotation> L = amp.gjTransform(beam, X);
+		ParVector<LorentzRotation> L = amp.gjTransform(beam, X);
 		if(L.size() != 1) {
 			cout << "ERROR: wrong vector size. aborting!" << endl;
 			return 0;
@@ -194,7 +194,7 @@ main(int argc, char** argv)
 		//topo->fillKinematicsDataCache();
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
-		vector<Complex> decayAmp = amp.amplitude();
+		ParVector<Complex> decayAmp = amp.amplitude();
 		if(decayAmp.size() != 1) {
 			cout << "ERROR: wrong vector size. aborting!" << endl;
 			return 0;
@@ -330,7 +330,7 @@ main(int argc, char** argv)
 			const string&            prodKinMomentaLeafName   = "prodKinMomenta";
 			const string&            decayKinPartNamesObjName = "decayKinParticles";
 			const string&            decayKinMomentaLeafName  = "decayKinMomenta";
-			vector<Complex> myAmps;
+			ParVector<Complex> myAmps;
 			// open input file
 			vector<TTree*> inTrees;
 			TClonesArray*  prodKinPartNames  = 0;
@@ -388,8 +388,8 @@ main(int argc, char** argv)
 				const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
 				const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
 
-				vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
-				vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
+				vector<ParVector<Vector3> > prodMomenta(numProdMomenta, ParVector<Vector3>(1));
+				vector<ParVector<Vector3> > decayMomenta(numDecayMomenta, ParVector<Vector3>(1));
 
 				bool success = true;
 
@@ -422,7 +422,7 @@ main(int argc, char** argv)
 
 				// test single events
 				if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
-					const vector<Complex> ampResult = (*amp)();
+					const ParVector<Complex> ampResult = (*amp)();
 					if(ampResult.size() != 1) {
 						cout << "ERROR: wrong vector size. aborting!" << endl;
 						return 0;

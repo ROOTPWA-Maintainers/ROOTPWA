@@ -161,20 +161,20 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 }
 
 
-vector<Complex>
+ParVector<Complex>
 leptoProductionVertex::productionAmps() const
 {
 
-	const vector<LorentzVector>& targetVec          = target         ()->lzVecs();
-	const vector<LorentzVector>& beamVec            = beamLepton     ()->lzVecs();
-	const vector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
-	const vector<LorentzVector>& virtPhotonVec      = virtPhoton     ()->lzVecs();
-	const vector<LorentzVector>& XParticleVec       = XParticle      ()->lzVecs();
+	const ParVector<LorentzVector>& targetVec          = target         ()->lzVecs();
+	const ParVector<LorentzVector>& beamVec            = beamLepton     ()->lzVecs();
+	const ParVector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec      = virtPhoton     ()->lzVecs();
+	const ParVector<LorentzVector>& XParticleVec       = XParticle      ()->lzVecs();
 
-	vector<double> epsilons(targetVec.size());
+	ParVector<double> epsilons(targetVec.size());
 	this->epsilon(epsilons);
 
-	vector<double> deltas(targetVec.size());
+	ParVector<double> deltas(targetVec.size());
 	this->delta(epsilons, deltas);
 
 	size_t numEvents = targetVec.size();
@@ -186,7 +186,7 @@ leptoProductionVertex::productionAmps() const
 		throw;
 	}
 
-	vector<Complex> result(numEvents);
+	ParVector<Complex> result(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	#pragma omp parallel for
@@ -330,9 +330,9 @@ leptoProductionVertex::productionAmps() const
 
 
 void
-leptoProductionVertex::Q2(vector<double>& result) const
+leptoProductionVertex::Q2(ParVector<double>& result) const
 {
-	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -353,10 +353,10 @@ leptoProductionVertex::Q2(vector<double>& result) const
 
 
 void
-leptoProductionVertex::nu(vector<double>& result) const
+leptoProductionVertex::nu(ParVector<double>& result) const
 {
-	const vector<LorentzVector>& targetVec = target()->lzVecs();
-	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const ParVector<LorentzVector>& targetVec = target()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 	double targetMass = target()->mass();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
@@ -378,11 +378,11 @@ leptoProductionVertex::nu(vector<double>& result) const
 
 
 void
-leptoProductionVertex::y(vector<double>& result) const
+leptoProductionVertex::y(ParVector<double>& result) const
 {
-	const vector<LorentzVector>& targetVec = target()->lzVecs();
-	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
-	const vector<LorentzVector>& beamVec = beamLepton()->lzVecs();
+	const ParVector<LorentzVector>& targetVec = target()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const ParVector<LorentzVector>& beamVec = beamLepton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size() || result.size() != beamVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -403,16 +403,16 @@ leptoProductionVertex::y(vector<double>& result) const
 
 
 void
-leptoProductionVertex::epsilon(vector<double>& result) const
+leptoProductionVertex::epsilon(ParVector<double>& result) const
 {
 
-	vector<double> Q2(result.size());
+	ParVector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	vector<double> xBj(result.size());
+	ParVector<double> xBj(result.size());
 	this->xBj(xBj);
 
-	vector<double> y(result.size());
+	ParVector<double> y(result.size());
 	this->y(y);
 
 	const double targetMass2 = target()->mass2();
@@ -464,13 +464,13 @@ leptoProductionVertex::epsilon(vector<double>& result) const
 
 
 void
-leptoProductionVertex::delta(vector<double>& result) const
+leptoProductionVertex::delta(ParVector<double>& result) const
 {
 
-	vector<double> Q2(result.size());
+	ParVector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	vector<double> epsilon(result.size());
+	ParVector<double> epsilon(result.size());
 	this->epsilon(epsilon);
 
 	const double beamMass2 = beamLepton()->mass2();
@@ -490,14 +490,14 @@ leptoProductionVertex::delta(vector<double>& result) const
 
 
 void
-leptoProductionVertex::xBj(vector<double>& result) const
+leptoProductionVertex::xBj(ParVector<double>& result) const
 {
 
-	vector<double> Q2(result.size());
+	ParVector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	const vector<LorentzVector>& targetVec = target()->lzVecs();
-	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const ParVector<LorentzVector>& targetVec = target()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -519,10 +519,10 @@ leptoProductionVertex::xBj(vector<double>& result) const
 
 
 void
-leptoProductionVertex::s(vector<double>& result) const
+leptoProductionVertex::s(ParVector<double>& result) const
 {
-	const vector<LorentzVector>& targetVec = target()->lzVecs();
-	const vector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
+	const ParVector<LorentzVector>& targetVec = target()->lzVecs();
+	const ParVector<LorentzVector>& virtPhotonVec = virtPhoton()->lzVecs();
 
 	if(result.size() != targetVec.size() || result.size() != virtPhotonVec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -544,9 +544,9 @@ leptoProductionVertex::s(vector<double>& result) const
 
 
 void
-leptoProductionVertex::W(vector<double>& result) const
+leptoProductionVertex::W(ParVector<double>& result) const
 {
-	vector<double> s(result.size());
+	ParVector<double> s(result.size());
 	this->s(s);
 
 	// !! EVENT PARALLEL LOOP
@@ -563,7 +563,7 @@ leptoProductionVertex::W(vector<double>& result) const
 
 
 void
-leptoProductionVertex::delta(const vector<double>& epsilon, vector<double>& result) const
+leptoProductionVertex::delta(const ParVector<double>& epsilon, ParVector<double>& result) const
 {
 	if(epsilon.size() != epsilon.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
@@ -572,7 +572,7 @@ leptoProductionVertex::delta(const vector<double>& epsilon, vector<double>& resu
 
 	const double beamMass2 = beamLepton()->mass2();
 
-	vector<double> Q2(result.size());
+	ParVector<double> Q2(result.size());
 	this->Q2(Q2);
 
 	// !! EVENT PARALLEL LOOP
@@ -668,7 +668,7 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-leptoProductionVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
+leptoProductionVertex::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta)
 {
 	_beamLeptonMomCache.clear     ();
 	_scatteredLeptonMomCache.clear();
@@ -738,11 +738,14 @@ bool
 leptoProductionVertex::revertMomenta()
 {
 	if (_debug) {
-		printDebug << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl
+		printDebug << "resetting beam lepton momentum to "
+				   << firstEntriesToString(_beamLeptonMomCache, 3) << " GeV" << endl
 		           << "    resetting scattered lepton momentum to "
-		           << _scatteredLeptonMomCache << " GeV" << endl
-		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
-		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+		           << firstEntriesToString(_scatteredLeptonMomCache, 3) << " GeV" << endl
+		           << "    resetting recoil momentum to "
+		           << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl
+		           << "    resetting target momentum to "
+		           << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
 	}
 	beamLepton     ()->setMomenta(_beamLeptonMomCache     );
 	scatteredLepton()->setMomenta(_scatteredLeptonMomCache);
@@ -750,8 +753,8 @@ leptoProductionVertex::revertMomenta()
 	target         ()->setMomenta(_targetMomCache         );
 
 	// set virtual photon
-	vector<LorentzVector>&       beamLeptonVec      = beamLepton()->mutableLzVecs();  // mutable !!!
-	const vector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
+	ParVector<LorentzVector>&       beamLeptonVec      = beamLepton()->mutableLzVecs();  // mutable !!!
+	const ParVector<LorentzVector>& scatteredLeptonVec = scatteredLepton()->lzVecs();
 
 	const size_t numEvents = beamLeptonVec.size();
 	if (scatteredLeptonVec.size() != numEvents) {

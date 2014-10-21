@@ -80,7 +80,7 @@ namespace rpwa {
 		inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
 		inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
 
-		const std::vector<LorentzVector>& calcParentLzVecs();  ///< (re)calculates array of parent Lorentz vectors from array of daughter Lorentz vectors
+		const ParVector<LorentzVector>& calcParentLzVecs();  ///< (re)calculates array of parent Lorentz vectors from array of daughter Lorentz vectors
 
 		int calcParentCharge   ();  ///< sets parent charge to sum of daughter charges
 		int calcParentBaryonNmb();  ///< sets parent baryon number to sum of daughter baryon numbers
@@ -91,7 +91,7 @@ namespace rpwa {
 		inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
-		inline std::vector<Complex>     massDepAmplitudes() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitudes for all stored events
+		inline ParVector<Complex>       massDepAmplitudes() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitudes for all stored events
 		inline const massDependencePtr& massDependence   () const { return _massDep;             }  ///< returns mass-dependence
 		inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }               ///< sets mass dependence
 

@@ -106,7 +106,7 @@ namespace rpwa {
 		 const isobarDecayTopology&  daughter1Decay,
 		 const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
-		const std::vector<LorentzVector>& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final-state particles and returns Lorentz-vector of X-system
+		const ParVector<LorentzVector>& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final-state particles and returns Lorentz-vector of X-system
 
 		void calcIsobarCharges   (bool quiet = false);  ///< sets isobar charges as defined by final-state particles
 		void calcIsobarBaryonNmbs();                    ///< sets isobar baryon numbers as defined by final-state particles

@@ -64,8 +64,8 @@ namespace rpwa {
 		template<typename U>
 		HOST std::complex<U> toStdComplex() const { return std::complex<U>(_real, _imag); }
 
-		template<typename U>
-		HOST std::complex<U> operator()() const { return std::complex<U>(_real, _imag); }
+		//template<typename U>
+		HOST operator std::complex<T>() const { return std::complex<T>(_real, _imag); }
 
 		//////////////////////////////////////////////////////////////////////////
 		// accessors

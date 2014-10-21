@@ -34,7 +34,7 @@ phaseSpaceIntegral* phaseSpaceIntegral::instance()
 }
 
 
-std::vector<std::complex<double> > phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
+ParVector<Complex> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
 
 	map<const isobarDecayVertex*, string>::iterator name_it = _vertexToSubwaveName.find(&vertex);
 	if(name_it == _vertexToSubwaveName.end()) {
@@ -50,11 +50,11 @@ std::vector<std::complex<double> > phaseSpaceIntegral::operator()(const isobarDe
 
 	// get Breit-Wigner parameters
 	const particlePtr& parent = vertex.parent();
-	const std::vector<LorentzVector>& parentVec = vertex.parent()->lzVecs();
+	const ParVector<LorentzVector>& parentVec = vertex.parent()->lzVecs();
 	const double M0     = parent->mass();                  // resonance peak position
 	const double Gamma0 = parent->width();                 // resonance peak width
 
-	std::vector<std::complex<double> > result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	cout << "EPL: phaseSpaceIntegral::operator()" << endl;
 	for(unsigned int i = 0; i < result.size(); ++i) {
@@ -185,7 +185,7 @@ integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
 }
 
 
-complex<double> integralTableContainer::operator()(double M, double M0, double Gamma0) {
+Complex integralTableContainer::operator()(double M, double M0, double Gamma0) {
 
 	if(not _init) {
 		printErr << "trying to use uninitialized integralTableContainer. Aborting..." << endl;
@@ -197,7 +197,7 @@ complex<double> integralTableContainer::operator()(double M, double M0, double G
 	const double A = M0 * Gamma0;
 	const double B = M0 * M0 - M * M;
 	const double C = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
+	const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
 
 	return bw;
 	// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);

@@ -80,9 +80,9 @@ isobarCanonicalAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
-	const std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
+	const ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -97,8 +97,8 @@ isobarCanonicalAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " daughter RF" << endl;
 
-		const std::vector<LorentzVector>& parentVec = vertex->parent()->lzVecs();
-		std::vector<Vector3> rfBoost(parentVec.size());
+		const ParVector<LorentzVector>& parentVec = vertex->parent()->lzVecs();
+		ParVector<Vector3> rfBoost(parentVec.size());
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = rfBoost.size();
@@ -125,7 +125,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-std::vector<Complex>
+ParVector<Complex>
 isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                 const bool                  topVertex) const
 {
@@ -148,10 +148,10 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int    mS        = m1 + m2;
 	const double ssClebsch = clebschGordanCoeff<double>(s1, m1, s2, m2, S, mS, _debug);
 	if (ssClebsch == 0)
-		return std::vector<Complex>(numEvents, 0);
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate Breit-Wigner
-	const std::vector<Complex> bw = vertex->massDepAmplitudes();
+	const ParVector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)
@@ -162,7 +162,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
 
-	std::vector<Complex> amp(numEvents, 0);
+	ParVector<Complex> amp(numEvents, 0);
 
 	// sum over all possible spin projections of L
 	const int L  = vertex->L();
@@ -224,7 +224,12 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: isobarCanonicalAmplitude::twoBodyDecayAmplitude 2 timediff = " << timeDiff << endl;
 
-	if (_debug)
-		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+	if (_debug) {
+		printDebug << "two-body decay amplitude = ";
+		for(unsigned int i = 0; i < amp.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(amp[i]);
+		}
+		printDebug << endl;
+	}
 	return amp;
 }

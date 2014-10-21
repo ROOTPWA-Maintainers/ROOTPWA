@@ -130,8 +130,8 @@ calcNewAmps(const string&    rootInFileName,
 		const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
 		const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
 
-		vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
-		vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
+		vector<ParVector<Vector3> > prodMomenta(numProdMomenta, ParVector<Vector3>(1));
+		vector<ParVector<Vector3> > decayMomenta(numDecayMomenta, ParVector<Vector3>(1));
 
 		bool success = true;
 
@@ -163,7 +163,7 @@ calcNewAmps(const string&    rootInFileName,
 		}
 
 		if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
-			const vector<Complex> ampResult = (*amp)();
+			const ParVector<Complex> ampResult = (*amp)();
 			if(ampResult.size() != 1) {
 				cout << "ERROR: wrong vector size. aborting!" << endl;
 				return 0;

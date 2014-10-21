@@ -59,11 +59,11 @@ particle::particle(const particle& part)
 }
 
 
-particle::particle(const particleProperties&    partProp,
-                   const int                   index,
-                   const int                   spinProj,
-                   const int                   refl,
-                   const std::vector<Vector3>& momenta)
+particle::particle(const particleProperties& partProp,
+                   const int                 index,
+                   const int                 spinProj,
+                   const int                 refl,
+                   const ParVector<Vector3>& momenta)
 	: particleProperties(partProp),
 	  _spinProj         (spinProj),
 	  _lzVecs           (),
@@ -74,12 +74,12 @@ particle::particle(const particleProperties&    partProp,
 }
 
 
-particle::particle(const string&               partName,
-                   const bool                  requirePartInTable,
-                   const int                   index,
-                   const int                   spinProj,
-                   const int                   refl,
-                   const std::vector<Vector3>& momenta)
+particle::particle(const string&             partName,
+                   const bool                requirePartInTable,
+                   const int                 index,
+                   const int                 spinProj,
+                   const int                 refl,
+                   const ParVector<Vector3>& momenta)
 	: particleProperties(),
 	  _spinProj(spinProj),
 	  _lzVecs  (),
@@ -127,7 +127,7 @@ particle::operator =(const particle& part)
 }
 
 void
-particle::setMomenta(const std::vector<Vector3>& momenta)
+particle::setMomenta(const ParVector<Vector3>& momenta)
 {
 	const size_t nmbMom = momenta.size();
 	_lzVecs.resize(nmbMom);
@@ -144,8 +144,8 @@ particle::setMomenta(const std::vector<Vector3>& momenta)
 }
 
 
-const std::vector<LorentzVector>&
-particle::transform(const std::vector<LorentzRotation>& lorentzTransforms)
+const ParVector<LorentzVector>&
+particle::transform(const ParVector<LorentzRotation>& lorentzTransforms)
 {
 	const size_t nmbLzVec = numEvents();
 	if(lorentzTransforms.size() != nmbLzVec) {
@@ -166,8 +166,8 @@ particle::transform(const std::vector<LorentzRotation>& lorentzTransforms)
 }
 
 
-const std::vector<LorentzVector>&
-particle::transform(const std::vector<Vector3>& boosts)
+const ParVector<LorentzVector>&
+particle::transform(const ParVector<Vector3>& boosts)
 {
 	const size_t nmbLzVec = numEvents();
 	if(boosts.size() != nmbLzVec) {

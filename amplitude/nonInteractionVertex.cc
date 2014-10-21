@@ -76,7 +76,7 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-nonInteractionVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
+nonInteractionVertex::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta)
 {
 	// check production vertex data
 	const size_t nmbProdKinMom = prodKinMomenta.size();
@@ -102,7 +102,8 @@ bool
 nonInteractionVertex::revertMomenta()
 {
 	if (_debug) {
-		printDebug << "resetting XParticle momentum to " << _XParticleCache << " GeV" << endl;
+		printDebug << "resetting XParticle momentum to "
+				   << firstEntriesToString(_XParticleCache, 3) << " GeV" << endl;
 	}
 	XParticle()->setMomenta(_XParticleCache);
 	return true;

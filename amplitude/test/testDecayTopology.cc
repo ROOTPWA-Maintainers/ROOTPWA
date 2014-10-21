@@ -77,7 +77,7 @@ main(int argc, char** argv)
 
 	// test construction of vertices
 	if (0) {
-		vector<Vector3> mom;
+		ParVector<Vector3> mom;
 		mom = make_vector_1(Vector3(1, 2, 3));
 		particlePtr beam = createParticle("pi-");
 		beam->setMomenta(mom);

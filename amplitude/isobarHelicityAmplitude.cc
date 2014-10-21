@@ -62,10 +62,10 @@ isobarHelicityAmplitude::~isobarHelicityAmplitude()
 { }
 
 
-std::vector<LorentzRotation>
-isobarHelicityAmplitude::hfTransform(const std::vector<LorentzVector>& daughterLv)
+ParVector<LorentzRotation>
+isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 {
-	std::vector<LorentzRotation> result(daughterLv.size());
+	ParVector<LorentzRotation> result(daughterLv.size());
 
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
@@ -120,9 +120,9 @@ isobarHelicityAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const std::vector<LorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
-	const std::vector<LorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
-	const std::vector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
+	const ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -137,7 +137,7 @@ isobarHelicityAmplitude::transformDaughters() const
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " helicity RF" << endl;
 
-		const std::vector<LorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
+		const ParVector<LorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
 
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -154,7 +154,7 @@ isobarHelicityAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-std::vector<Complex>
+ParVector<Complex>
 isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                const bool                  topVertex) const
 {
@@ -177,14 +177,14 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    lambda    = lambda1 - lambda2;
 	const double lsClebsch = clebschGordanCoeff<double>(L, 0, S, lambda, J, lambda, _debug);
 	if (lsClebsch == 0)
-		return std::vector<Complex>(numEvents, 0);
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
 	const int    s2        = daughter2->J();
 	const double ssClebsch = clebschGordanCoeff<double>(s1, lambda1, s2, -lambda2, S, lambda, _debug);
 	if (ssClebsch == 0)
-		return std::vector<Complex>(numEvents, 0);
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate D-function
 	const int       Lambda = parent->spinProj();
@@ -223,13 +223,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	}
 
 	// calculate Breit-Wigner
-	const std::vector<Complex> bw = vertex->massDepAmplitudes();
+	const ParVector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = angMomNormFactor<double>(L, _debug);
 
 	// calculate decay amplitude
-	std::vector<Complex> amp(numEvents);
+	ParVector<Complex> amp(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = amp.size();
@@ -247,8 +247,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
 	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3 timediff = " << timeDiff << endl;
 
-	if (_debug)
-		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+	if (_debug) {
+		printDebug << "two-body decay amplitude = ";
+		for(unsigned int i = 0; i < amp.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(amp[i]);
+		}
+		printDebug << endl;
+	}
 
 	return amp;
 }

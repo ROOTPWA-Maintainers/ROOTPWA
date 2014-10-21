@@ -58,24 +58,24 @@ massDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 flatMassDependence::amp(const isobarDecayVertex& v)
 {
 	if (_debug)
 		printDebug << name() << " = 1" << endl;
-	std::vector<Complex> result(v.parent()->numEvents(), 1);
+	ParVector<Complex> result(v.parent()->numEvents(), 1);
 	return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 flatRangeMassDependence::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
-	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -103,7 +103,7 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
@@ -112,16 +112,16 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 //	if(daughter1->isStable() and daughter2->isStable()) {
 
-		const std::vector<LorentzVector>& parentVec = parent->lzVecs();
-		const std::vector<LorentzVector>& daughter1Vec = daughter1->lzVecs();
-		const std::vector<LorentzVector>& daughter2Vec = daughter2->lzVecs();
+		const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+		const ParVector<LorentzVector>& daughter1Vec = daughter1->lzVecs();
+		const ParVector<LorentzVector>& daughter2Vec = daughter2->lzVecs();
 
 		if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 			printErr << "size of per-event-data vectors does not match. aborting." << endl;
 			throw;
 		}
 
-		std::vector<Complex> result(parentVec.size(), 0);
+		ParVector<Complex> result(parentVec.size());
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 		const unsigned int size = result.size();
@@ -169,7 +169,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 constWidthBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
@@ -178,9 +178,9 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 	const double M0     = parent->mass();  // resonance peak position
 	const double Gamma0 = parent->width(); // resonance peak width
 
-	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -213,21 +213,21 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 rhoBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
-	const std::vector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
-	const std::vector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -278,21 +278,21 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 f0980BreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const std::vector<LorentzVector>& parentVec = parent->lzVecs();
-	const std::vector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
-	const std::vector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
 	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -389,13 +389,16 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }
 
-std::vector<Complex>
+ParVector<Complex>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported" << endl;
+	throw;
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
+
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -474,24 +477,27 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 }
 
 
-std::vector<Complex>
+ParVector<Complex>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
+
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported" << endl;
+	throw;
 
 	const double  f0Mass  = 0.9837;  // [GeV]
 	const double  f0Width = 0.0376;  // [GeV]
 	const Complex coupling(-0.3743, 0.3197);
 
-	const std::vector<Complex> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+	const ParVector<Complex> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
 	if(parentVec.size() != ampM.size()) {
 		printErr << "size of per-event-data vectors does not match. aborting." << endl;
 		throw;
 	}
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();
@@ -548,11 +554,11 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-std::vector<Complex>
+ParVector<Complex>
 rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
 
-	const std::vector<LorentzVector>& parentVec = v.parent()->lzVecs();
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
 	// rho' parameters
 	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
@@ -560,7 +566,7 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
 	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
 
-	std::vector<Complex> result(parentVec.size(), 0);
+	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	const unsigned int size = result.size();

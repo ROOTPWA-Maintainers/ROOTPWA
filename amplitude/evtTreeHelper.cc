@@ -635,18 +635,18 @@ namespace rpwa {
 
 
 	bool
-	processTree(TTree&                    tree,
-	            const TClonesArray&       prodKinPartNames,
-	            const TClonesArray&       decayKinPartNames,
+	processTree(TTree&                       tree,
+	            const TClonesArray&          prodKinPartNames,
+	            const TClonesArray&          decayKinPartNames,
 	            const vector<isobarAmplitudePtr>& amplitude,  // one amplitude for each keyfile
-	            vector<vector<Complex> >& ampValues, // [keyfile][event]
-	            const long int            maxNmbEvents,
-	            const long int            numEvents,
-	            const string&             prodKinMomentaLeafName,
-	            const string&             decayKinMomentaLeafName,
-	            const bool                printProgress,
-	            const string&             treePerfStatOutFileName,
-	            const long int            treeCacheSize)
+	            vector<vector<Complex> >&    ampValues, // [keyfile][event]
+	            const long int               maxNmbEvents,
+	            const long int               numEvents,
+	            const string&                prodKinMomentaLeafName,
+	            const string&                decayKinMomentaLeafName,
+	            const bool                   printProgress,
+	            const string&                treePerfStatOutFileName,
+	            const long int               treeCacheSize)
 	{
 
 		for(unsigned int i = 0; i < amplitude.size(); ++i) {
@@ -681,8 +681,8 @@ namespace rpwa {
 
 		// momenta from event file are stored here to avoid reading them multiple times for
 		// different topologies
-		vector<vector<Vector3> > prodMomenta(numProdMomenta); // [particle][event]
-		vector<vector<Vector3> > decayMomenta(numDecayMomenta); // [particle][event]
+		vector<ParVector<Vector3> > prodMomenta(numProdMomenta); // [particle][event]
+		vector<ParVector<Vector3> > decayMomenta(numDecayMomenta); // [particle][event]
 
 		bool success = true;
 
@@ -802,7 +802,7 @@ namespace rpwa {
 					boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 
 					amplitude[i]->decayTopology()->revertMomenta();
-					vector<Complex> amps = (*(amplitude[i]))();
+					ParVector<Complex> amps = (*(amplitude[i]))();
 					ampValues[i].insert(ampValues[i].end(), amps.begin(), amps.end());
 
 					boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();

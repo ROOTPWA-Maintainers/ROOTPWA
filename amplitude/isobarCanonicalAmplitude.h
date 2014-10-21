@@ -63,7 +63,7 @@ namespace rpwa {
 
 		void transformDaughters() const;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
-		std::vector<Complex> twoBodyDecayAmplitude
+		ParVector<Complex> twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
 
