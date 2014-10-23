@@ -93,9 +93,10 @@ class fileManager:
 			bound = globalBinList[0]
 			for bin in globalBinList[1:]:
 				if bound[1] > bin[0]:
-					pyRootPwa.utils.printWarn("overlap in bin structure found for binned variable '" +
-					                          binningVariable + "' between bin '" + str(bound) +
-					                          "' and bin '" + str(bin) + "'.")
+					pyRootPwa.utils.printErr("overlap in bin structure found for binned variable '" +
+					                         binningVariable + "' between bin '" + str(bound) +
+					                         "' and bin '" + str(bin) + "'.")
+					return {}
 				bound = bin
 			globalAxes[binningVariable] = globalBinList
 		return globalAxes
