@@ -67,8 +67,8 @@ if __name__ == "__main__":
 	particleCount = len(prodKinPartNames) + len(decayKinPartNames)
 
 	for event in tree:
-		prodKinMomenta  = event.prodKinMomenta
-		decayKinMomenta = event.decayKinMomenta
+		prodKinMomenta  = event.__getattr__(metaData.productionKinematicsMomentaBranchName)
+		decayKinMomenta = event.__getattr__(metaData.decayKinematicsMomentaBranchName)
 		if particleCount != prodKinMomenta.GetEntries() + decayKinMomenta.GetEntries():
 			printWarn("particle count in metaData does not match particle count in event data.")
 		outputEvtFile.write(str(particleCount) + '\n')
