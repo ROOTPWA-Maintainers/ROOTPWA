@@ -70,27 +70,47 @@ namespace {
 	}
 
 	void eventFileWriter_addEvent(rpwa::eventFileWriter& self,
-	                              bp::list pyProductionKinematicsMomenta,
-	                              bp::list pyDecayKinematicsMomenta,
-	                              bp::list pyAdditionalVariablesToSave)
+	                              PyObject* pyProductionKinematicsMomenta,
+	                              PyObject* pyDecayKinematicsMomenta,
+	                              bp::list  pyAdditionalVariablesToSave)
 	{
-		std::vector<TVector3> productionKinematicsMomenta(len(pyProductionKinematicsMomenta));
-		for(unsigned int i = 0; i < len(pyProductionKinematicsMomenta); ++i) {
-			bp::object item = bp::extract<bp::object>(pyProductionKinematicsMomenta[i]);
-			productionKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
-		}
-		std::vector<TVector3> decayKinematicsMomenta(len(pyDecayKinematicsMomenta));
-		for(unsigned int i = 0; i < len(pyDecayKinematicsMomenta); ++i) {
-			bp::object item = bp::extract<bp::object>(pyDecayKinematicsMomenta[i]);
-			decayKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
-		}
 		std::vector<double> additionalVariablesToSave;
 		if(not rpwa::py::convertBPObjectToVector<double>(pyAdditionalVariablesToSave, additionalVariablesToSave))
 		{
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for additionalVariablesToSave when executing rpwa::eventFileWriter::addEvent()");
 			bp::throw_error_already_set();
 		}
-		self.addEvent(productionKinematicsMomenta, decayKinematicsMomenta, additionalVariablesToSave);
+
+		TClonesArray* prodKinMomentaClonesArray = rpwa::py::convertFromPy<TClonesArray*>(pyProductionKinematicsMomenta);
+		TClonesArray* decayKinMomentaClonesArray = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinematicsMomenta);
+
+		if ((not prodKinMomentaClonesArray) or (not decayKinMomentaClonesArray)) {
+			bp::extract<bp::list> getProdKinMomentaList(pyProductionKinematicsMomenta);
+			if(not getProdKinMomentaList.check()) {
+				printErr<<"Got invalid input for prodKinMomenta when executing rpwa::eventFileWriter::addEvent()"<<std::endl;
+			}
+			bp::list prodKinMomentaList = getProdKinMomentaList();
+			std::vector<TVector3> productionKinematicsMomenta(len(prodKinMomentaList));
+			for(unsigned int i = 0; i < len(prodKinMomentaList); ++i) {
+				bp::object item = bp::extract<bp::object>(prodKinMomentaList[i]);
+				productionKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
+			}
+
+			bp::extract<bp::list> getDecayKinMomentaList(pyDecayKinematicsMomenta);
+			if(not getDecayKinMomentaList.check()) {
+				printErr<<"Got invalid input for decayKinMomenta when executing rpwa::eventFileWriter::addEvent()"<<std::endl;
+			}
+			bp::list decayKinMomentaList = getDecayKinMomentaList();
+			std::vector<TVector3> decayKinematicsMomenta(len(decayKinMomentaList));
+			for(unsigned int i = 0; i < len(decayKinMomentaList); ++i) {
+				bp::object item = bp::extract<bp::object>(decayKinMomentaList[i]);
+				decayKinematicsMomenta[i] = *rpwa::py::convertFromPy<TVector3*>(item.ptr());
+			}
+			self.addEvent(productionKinematicsMomenta, decayKinematicsMomenta, additionalVariablesToSave);
+		}
+		else {
+			self.addEvent(*prodKinMomentaClonesArray, *decayKinMomentaClonesArray, additionalVariablesToSave);
+		}
 	}
 
 }

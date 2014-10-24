@@ -32,6 +32,10 @@ namespace rpwa {
 
 		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
 		              const std::vector<TVector3>& decayKinematicsMomenta,
+		              const std::vector<double>&   additionalVariablesToSave = std::vector<double>());
+
+		void addEvent(const TClonesArray&        productionKinematicsMomenta,
+		              const TClonesArray&        decayKinematicsMomenta,
 		              const std::vector<double>& additionalVariablesToSave = std::vector<double>());
 
 
