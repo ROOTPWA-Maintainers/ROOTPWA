@@ -124,6 +124,22 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 }
 
 
+void rpwa::eventFileWriter::addEvent(const TClonesArray&   productionKinematicsMomenta,
+                                     const TClonesArray&   decayKinematicsMomenta,
+                                     const vector<double>& additionalVariablesToSave)
+{
+	vector<TVector3> prodKinMomVec(productionKinematicsMomenta.GetEntries());
+	vector<TVector3> decayKinMomVec(decayKinematicsMomenta.GetEntries());
+	for(int i = 0; i < productionKinematicsMomenta.GetEntries(); ++i) {
+		prodKinMomVec[i] = *((TVector3*) productionKinematicsMomenta[i]);
+	}
+	for(int i = 0; i < decayKinematicsMomenta.GetEntries(); ++i) {
+		decayKinMomVec[i] = *((TVector3*) decayKinematicsMomenta[i]);
+	}
+	this->addEvent(prodKinMomVec, decayKinMomVec, additionalVariablesToSave);
+}
+
+
 bool rpwa::eventFileWriter::finalize() {
 	if(not _initialized) {
 		printWarn << "trying to finalize when not initialized." << endl;
