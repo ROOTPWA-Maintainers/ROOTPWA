@@ -15,6 +15,8 @@ if __name__ == "__main__":
 
 	f = pyRootPwa.fileManager()
 	f.dataDirectory = "/home/kbicker/sandbox/rootpwaV3/rpwaV3_data"
+	#f.dataDirectory = "../DATA/rpwaV3_data"
+	#f.dataFiles = f._openInputFiles()
 
 	types = [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]
 	typeToStringConversion = { types[0]: "", types[1]: ".genPS", types[2]: ".accPS" }
@@ -36,10 +38,11 @@ if __name__ == "__main__":
 				if random.random() > 0.05:
 					inputFiles[eventsType].append(inputFile)
 
-#	inputFiles = f._openInputFiles()
+	f.dataFiles = inputFiles
 
-#	pprint.pprint(inputFiles)
+	#pprint.pprint(f.dataFiles)
 	allAxes = []
-	for eventsType in inputFiles:
-		allAxes.append(f._getBinningAxes(inputFiles[eventsType]))
-	pprint.pprint(f._combineAxes(allAxes))
+	for eventsType in f.dataFiles:
+		allAxes.append(f._getBinningAxes(f.dataFiles[eventsType]))
+	f._combineAxes(allAxes)
+	pyRootPwa.utils.printSucc(f.getDataFilePath({'mass':3000, 'tPrime':1.05}, pyRootPwa.core.eventMetadata.eventsTypeEnum.GENERATED))

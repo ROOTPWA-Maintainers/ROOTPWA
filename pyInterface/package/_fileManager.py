@@ -28,7 +28,21 @@ class fileManager:
 
 
 	def getDataFilePath(self, binInformation, eventsType):
-		pass
+		foundFiles = []
+		for file in self.dataFiles[eventsType]:
+			found = True
+			for binningVariable in binInformation:
+				lower = file.binningMap[binningVariable][0]
+				upper = file.binningMap[binningVariable][1]
+				givenValue = binInformation[binningVariable]
+				if givenValue < lower or givenValue > upper:
+					found = False
+					break
+				elif givenValue == lower or givenValue == upper:
+					pyRootPwa.utils.printErr("hit boundary of the " + binningVariable + "-bin.")
+					return []
+			if found: foundFiles.append(file.dataFileName)
+		return foundFiles
 
 
 	def getAmplitudeFilePaths(self):
