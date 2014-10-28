@@ -38,10 +38,23 @@ class Event:
 	def __init__(self, lines):
 		self.lines = lines
 
-	def sort(self):
-		new_lines = self.lines[2:]
-		new_lines = sorted(new_lines, key=lambda entry: int(entry.split()[0]))
-		self.lines = self.lines[0:2] + new_lines
+	def reorder(self, targetProdNames, targetDecayNames):
+		currentProdNames  = self.getProductionKinematicsParticleNames()
+		currentDecayNames = self.getDecayKinematicsParticleNames()
+		if currentProdNames[0] != targetProdNames[0]:
+			printErr("production kinematics particles do not match over all events. Aborting...")
+			sys.exit(1)
+		newlines = []
+		newlines.append(self.lines[0])
+		newlines.append(self.lines[1])
+
+		for i in range(len(targetDecayNames)):
+			for j in range(len(currentDecayNames)):
+				if currentDecayNames[j] == targetDecayNames[i]:
+					newlines.append(self.lines[j+2])
+					currentDecayNames[j]=""
+					break
+		self.lines = newlines
 
 	def getProductionKinematicsParticleNames(self):
 		retVar = []
@@ -141,19 +154,20 @@ if __name__ == "__main__":
 		in_event_file = EventFile(infile)
 
 		event = in_event_file.get_event()
-		event.sort()
 
 		fileWriter = pyRootPwa.core.eventFileWriter()
+		initialProdNames  = event.getProductionKinematicsParticleNames()
+		initialDecayNames = event.getDecayKinematicsParticleNames()
 		success = fileWriter.initialize(outputFile,
 		                                args.userstring,
 		                                eventsType,
-		                                event.getProductionKinematicsParticleNames(),
-		                                event.getDecayKinematicsParticleNames(),
+		                                initialProdNames,
+		                                initialDecayNames,
 		                                binningMap,
 		                                [])
 
 		while event is not None and success:
-			event.sort()
+			event.reorder(initialProdNames, initialDecayNames)
 			fileWriter.addEvent(event.getProductionKinematicsMomenta(), event.getDecayKinematicsMomenta())
 			event = in_event_file.get_event()
 
