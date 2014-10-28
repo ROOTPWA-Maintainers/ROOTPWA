@@ -257,7 +257,7 @@ if(NOT ENABLE_CUDA)
   message(STATUS "Cuda is disabled. No CUDA components will be generated.")
 else()
   set(CUDA_SHADER_MODELS "20")
-  find_package(CUDA 5.5)
+  find_package(CUDA 6.5)
   set_package_properties(CUDA
 	  PROPERTIES
 	  DESCRIPTION "nvidia GPGPU framework"

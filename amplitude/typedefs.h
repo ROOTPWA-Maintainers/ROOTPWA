@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2010
+//    Copyright 2014
 //
 //    This file is part of rootpwa
 //
@@ -34,19 +34,7 @@
 #ifndef RPWA_TYPEDEFS_H
 #define RPWA_TYPEDEFS_H
 
-#include <complex>
 #include <vector>
-
-#include "TVector3.h"
-#include "TLorentzVector.h"
-#include "TRotation.h"
-#include "TLorentzRotation.h"
-
-#include "cudaComplex.hpp"
-#include "cudaVector3.hpp"
-#include "cudaLorentzVector.hpp"
-#include "cudaRotation.hpp"
-#include "cudaLorentzRotation.hpp"
 
 namespace rpwa {
 
@@ -60,7 +48,7 @@ namespace rpwa {
 
 		RpwaVec(): vec() {}
 		RpwaVec(const RpwaVec<T>& v): vec(v.vec) {}
-		RpwaVec(size_t s, T v = T()): vec(s, v) {}
+		RpwaVec(std::size_t s, T v = T()): vec(s, v) {}
 		explicit RpwaVec(const std::vector<T>& v): vec(v) {}
 
 		const std::vector<T>& toStdVector() const { return vec; }
@@ -77,9 +65,9 @@ namespace rpwa {
 		void push_back(const T& x) { vec.push_back(x); }
 
 		void clear() { vec.clear(); }
-		void resize(size_t s, T v = T()) { vec.resize(s, v); }
+		void resize(std::size_t s, T v = T()) { vec.resize(s, v); }
 
-		size_t size() const { return vec.size(); }
+		std::size_t size() const { return vec.size(); }
 
 		iterator begin() { return vec.begin(); }
 		iterator end() { return vec.end(); }
@@ -97,8 +85,22 @@ namespace rpwa {
 
 #ifdef USE_CUDA
 
+
+
+	//#include "cuda.h"
+	//#include <thrust/host_vector.h>
+	//#include <thrust/device_vector.h>
+	#include "thrustVector.h"
+
+	#include "cudaComplex.hpp"
+	#include "cudaVector3.hpp"
+	#include "cudaLorentzVector.hpp"
+	#include "cudaRotation.hpp"
+	#include "cudaLorentzRotation.hpp"
+
 	//#define ParVector thrust::device_vector
-	#define ParVector RpwaVec
+	#define ParVector rpwa::ThrustVector
+	//#define ParVector RpwaVec
 
 	namespace rpwa {
 
@@ -110,24 +112,39 @@ namespace rpwa {
 		typedef CudaRotation<Scalar> Rotation;
 		typedef CudaLorentzRotation<Scalar> LorentzRotation;
 
-		template<typename T>
+		/*template<typename T>
 		inline ParVector<T> toParVector(const std::vector<T>& v) {
 			return RpwaVec<T>(v);
+		}*/
+
+		template<typename T>
+		inline ParVector<T> toParVector(const std::vector<T>& v) {
+			return rpwa::ThrustVector<T>(v);
 		}
 
-		/*
-		template<typename T>
+		/*template<typename T>
 		inline ParVector<T> toParVector(const std::vector<T>& v) {
 			thrust::host_vector h(v.size());
 			std::copy(v.begin(), v.end(), h.begin());
 			return thrust::device_vector(h);
-		}
-		*/
+		}*/
 
-	} // namespace rpwa
-
+	}
 
 #else
+
+	#include <complex>
+
+	#include "TVector3.h"
+	#include "TLorentzVector.h"
+	#include "TRotation.h"
+	#include "TLorentzRotation.h"
+
+	#include "cudaComplex.hpp"
+	#include "cudaVector3.hpp"
+	#include "cudaLorentzVector.hpp"
+	#include "cudaRotation.hpp"
+	#include "cudaLorentzRotation.hpp"
 
 	//#define ParVector std::vector
 	#define ParVector RpwaVec
@@ -162,7 +179,7 @@ namespace rpwa {
 		}
 		*/
 
-	} // namespace rpwa
+	}
 
 #endif
 

@@ -39,6 +39,7 @@ message(STATUS ">>> Setting up 'amplitude' directory.")
 set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
 	SYSTEM ${Boost_INCLUDE_DIRS}
+	SYSTEM ${CUDA_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
@@ -48,6 +49,7 @@ set(INCLUDE_DIRECTORIES
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
+set(CUDA_VERSION 6500)
 
 # source files that are compiled into library
 set(SOURCES
@@ -74,7 +76,13 @@ set(SOURCES
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
+	thrustVector.cc
 	)
+	
+# source files that are compiled into cudalibrary
+#set(SOURCES_CUDA
+#	thrustVector.cu
+#	)
 
 
 # ROOT dictionary
@@ -94,6 +102,7 @@ set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 # library
 set(THIS_LIB "RootPwaAmp")
 make_shared_library(
+#cuda_add_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
@@ -101,9 +110,17 @@ make_shared_library(
 	"${PWA2000_LIBS}"
 	"${ROOTPWA_NBPSGEN_LIBS}"
 	)
+	
+# cuda library
+#set(THIS_LIB_CUDA "RootPwaAmpCuda")
+#cuda_add_library(
+#	"${THIS_LIB_CUDA}"
+#	"${SOURCES_CUDA}"
+#	)
 
 
 # executables
+#cuda_add_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})
 make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})
 make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB})
 make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB})

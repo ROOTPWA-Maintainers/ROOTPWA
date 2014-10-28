@@ -36,6 +36,7 @@
 #define CUDA_COMPLEX_HPP
 
 #include <cmath>
+#include <complex>
 #include <sstream>
 
 #include "cudaUtils.hpp"

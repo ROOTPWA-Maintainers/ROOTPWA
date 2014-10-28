@@ -39,6 +39,7 @@ message(STATUS ">>> Setting up 'generators' directory.")
 set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
 	SYSTEM ${Boost_INCLUDE_DIRS}
+	SYSTEM ${CUDA_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
