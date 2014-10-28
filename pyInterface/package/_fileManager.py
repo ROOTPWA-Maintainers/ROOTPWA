@@ -18,14 +18,25 @@ class fileManager:
 	amplitudeDirectory = ""
 
 	dataFiles = {}
+	globalAxes = {}
+	binList = []
 
-	def __init__(self):
-		pass
+	def __init__(self, dataDirectory):
+		self.dataDirectory = dataDirectory
+		self.dataFiles = self._openInputFiles()
+		allAxes = []
+		for eventsType in self.dataFiles:
+			allAxes.append(self._getBinningAxes(self.dataFiles[eventsType]))
+		self.globalAxes = self._combineAxes(allAxes)
+		self.binList = self._createBinIDs()
 
 
 	def getDataFilePaths(self):
-		pass
-
+		allDataFiles =[]
+		for eventsType in self.dataFiles:
+			for dataFile in self.dataFiles[eventsType]:
+				allDataFiles.append(dataFile.dataFileName)
+		return allDataFiles
 
 	def getDataFilePath(self, binInformation, eventsType):
 		foundFiles = []
@@ -53,14 +64,35 @@ class fileManager:
 		pass
 
 
-	def _getBinningAxes(self, inputFiles):
-		if not inputFiles:
+	def getBinID(self, binInformation):
+		foundBins = []
+		for binID in range(len(self.binList)):
+			found = True
+			bin = self.binList[binID]
+			for binningVariable in binInformation:
+				lower = bin[binningVariable][0]
+				upper = bin[binningVariable][1]
+				given = binInformation[binningVariable]
+				if lower > given or upper < given:
+					found = False
+					break
+			if found: foundBins.append(binID)
+		return foundBins
+
+	def getBinFromID(self, id):
+		if (not id < len(self.binList)) or (id < 0):
+			pyRootPwa.utils.printErr("id not found: " + str(id))
+			raise Exception("do this properly")
+		return self.binList[id]
+
+	def _getBinningAxes(self, fileList):
+		if not fileList:
 			pyRootPwa.utils.printErr("got no input files")
 			raise Exception("do this properly")
 		binAxes = {}
-		for binningVariable in inputFiles[0].binningMap:
+		for binningVariable in fileList[0].binningMap:
 			binAxes[binningVariable] = []
-		for inputFile in inputFiles:
+		for inputFile in fileList:
 			if inputFile.binningMap.keys() != binAxes.keys():
 				pyRootPwa.utils.printErr("data file '" + inputFile.dataFileName +
 				                         "' seems to have different binning variables.")
@@ -113,6 +145,7 @@ class fileManager:
 					return {}
 				bound = bin
 			globalAxes[binningVariable] = globalBinList
+		pyRootPwa.utils.printSucc("combined bin axes: " + str(globalAxes.keys()))
 		return globalAxes
 
 
@@ -147,3 +180,19 @@ class fileManager:
 				return {}
 
 		return inputFiles
+
+	def _createBinIDs(self):
+		binList = self._iterateBins(0, {}, [])
+		return binList
+
+	def _iterateBins(self, dim, currentBin, result):
+		keys = self.globalAxes.keys()
+		if not dim >= len(self.globalAxes):
+			for bin in self.globalAxes[keys[dim]]:
+				newCurrentBin = currentBin.copy()
+				newCurrentBin[keys[dim]] = bin
+				result = self._iterateBins(dim+1, newCurrentBin, result)
+		else:
+			result.append(currentBin)
+			return result
+		return result
