@@ -330,6 +330,10 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 			ParVector<Complex> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
 
 			if(ampSum.size() != parentAmp.size() || ampSum.size() != daughter1Amp.size() || ampSum.size() != daughter2Amp.size()) {
+				printErr << "ampSum.size() = " << ampSum.size() << endl;
+				printErr << "parentAmp.size() = " << parentAmp.size() << endl;
+				printErr << "daughter1Amp.size() = " << daughter1Amp.size() << endl;
+				printErr << "daughter2Amp.size() = " << daughter2Amp.size() << endl;
 				printErr << "size of per-event-data vectors does not match. aborting." << endl;
 				throw;
 			}

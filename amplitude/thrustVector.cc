@@ -30,6 +30,8 @@
 //
 //-------------------------------------------------------------------------
 
+#ifdef USE_CUDA
+
 #include <vector>
 
 #include "typedefs.h"
@@ -69,6 +71,13 @@ template<typename T>
 ThrustVector<T>::~ThrustVector()
 {
 	delete vec;
+}
+
+template<typename T>
+ThrustVector<T>& ThrustVector<T>::operator = (const ThrustVector<T>& other)
+{
+	*vec = *(other.vec);
+	return *this;
 }
 
 template<typename T>
@@ -176,3 +185,5 @@ template class ThrustVector<Vector3>;
 template class ThrustVector<LorentzVector>;
 template class ThrustVector<Rotation>;
 template class ThrustVector<LorentzRotation>;
+
+#endif

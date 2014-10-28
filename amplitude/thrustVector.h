@@ -53,6 +53,8 @@ namespace rpwa {
 		explicit ThrustVector(const std::vector<T>& v);
 		~ThrustVector();
 
+		ThrustVector<T>& operator = (const ThrustVector<T>& other);
+
 		std::vector<T> toStdVector() const;
 		thrust::host_vector<T>& toRawThrustVector();
 
