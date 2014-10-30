@@ -30,6 +30,19 @@ class fileManager:
 		self.globalAxes = self._combineAxes(allAxes)
 		self.binList = self._createBinIDs()
 
+	def getMissingBins(self):
+		missingBins = {}
+		for bin in self.binList:
+			for eventsType in self.dataFiles:
+				found = False
+				for file in self.dataFiles[eventsType]:
+					if file.binningMap == bin:
+						found = True
+						break
+				if not found:
+					if not eventsType in missingBins: missingBins[eventsType]=[]
+					missingBins[eventsType].append(bin.copy())
+		return missingBins
 
 	def getDataFilePaths(self):
 		allDataFiles =[]
