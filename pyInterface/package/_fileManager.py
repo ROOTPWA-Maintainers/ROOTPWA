@@ -14,21 +14,30 @@ class fileManager:
 		binningMap = {}
 		eventsType = None
 
-	dataDirectory = ""
+	dataDirectory      = ""
+	keyDirectory       = ""
 	amplitudeDirectory = ""
 
-	dataFiles = {}
+	dataFiles       = {}
+	keyFiles        = []
+	amplitudeFiles  = {}
 	globalAxes = {}
 	binList = []
 
-	def __init__(self, dataDirectory):
-		self.dataDirectory = dataDirectory
-		self.dataFiles = self._openInputFiles()
+	def __init__(self, dataDirectory, keyDirectory, amplitudeDirectory):
+		self.dataDirectory      = dataDirectory
+		self.keyDirectory       = keyDirectory
+		self.amplitudeDirectory = amplitudeDirectory
+
+		self.dataFiles = self._openDataFiles()
 		allAxes = []
 		for eventsType in self.dataFiles:
 			allAxes.append(self._getBinningAxes(self.dataFiles[eventsType]))
 		self.globalAxes = self._combineAxes(allAxes)
 		self.binList = self._createBinIDs()
+
+		self.keyFiles = self._openKeyFiles()
+
 
 	def getMissingBins(self):
 		missingBins = {}
@@ -44,12 +53,14 @@ class fileManager:
 					missingBins[eventsType].append(bin.copy())
 		return missingBins
 
+
 	def getDataFilePaths(self):
-		allDataFiles =[]
-		for eventsType in self.dataFiles:
-			for dataFile in self.dataFiles[eventsType]:
-				allDataFiles.append(dataFile.dataFileName)
-		return allDataFiles
+		return self.dataFilesDictToList(self.dataFiles)
+
+
+	def getKeyFilePaths(self):
+		return keyFiles
+
 
 	def getDataFilePath(self, binInformation, eventsType):
 		foundFiles = []
@@ -92,11 +103,13 @@ class fileManager:
 			if found: foundBins.append(binID)
 		return foundBins
 
+
 	def getBinFromID(self, id):
 		if (not id < len(self.binList)) or (id < 0):
 			pyRootPwa.utils.printErr("id not found: " + str(id))
 			raise Exception("do this properly")
 		return self.binList[id]
+
 
 	def _getBinningAxes(self, fileList):
 		if not fileList:
@@ -162,7 +175,11 @@ class fileManager:
 		return globalAxes
 
 
-	def _openInputFiles(self):
+	def _openKeyFiles(self):
+		return glob.glob(self.keyDirectory + "/*.key")
+
+
+	def _openDataFiles(self):
 		dataFileNames = glob.glob(self.dataDirectory + "/*.root")
 		inputFiles = {}
 
@@ -194,9 +211,11 @@ class fileManager:
 
 		return inputFiles
 
+
 	def _createBinIDs(self):
 		binList = self._iterateBins(0, {}, [])
 		return binList
+
 
 	def _iterateBins(self, dim, currentBin, result):
 		keys = self.globalAxes.keys()
@@ -209,3 +228,28 @@ class fileManager:
 			result.append(currentBin)
 			return result
 		return result
+
+
+	def areDataFilesSynced(self):
+		return self.getDataFilePaths() == self.dataFilesDictToList(self._openDataFiles())
+
+
+	def areKeyFilesSynced(self):
+		return self.keyFiles == self._openKeyFiles()
+
+
+	def areAmpFilesSynced(self):
+		return True
+
+
+	def areFilesSynced(self):
+		return self.areDataFilesSynced() and self.areDataFilesSynced() and self.areAmpFilesSynced()
+
+
+	@staticmethod
+	def dataFilesDictToList(dataFilesDict):
+		allDataFiles =[]
+		for eventsType in dataFilesDict:
+			for dataFile in dataFilesDict[eventsType]:
+				allDataFiles.append(dataFile.dataFileName)
+		return allDataFiles
