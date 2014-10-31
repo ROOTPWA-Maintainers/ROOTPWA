@@ -16,9 +16,11 @@ class rootPwaConfig:
 	dataDirectory                          = ""
 	phaseSpaceWeightFileExtensionQualifier = ""
 	accCorrPSWeightFileExtensionQualifier  = ""
+	fileManagerPath                        = ""
 
 	# amplitude section
-	keyfilePattern                         = ""
+	keyDirectory                           = ""
+	ampDirectory                           = ""
 	dataAmplitudeDirectoryName             = ""
 	phaseSpaceAmpDirectoryName             = ""
 	accCorrPSAmpDirectoryName              = ""
@@ -46,17 +48,22 @@ class rootPwaConfig:
 		try:
 			self.pdgFileName = os.path.expanduser(os.path.expandvars(self.config.get('general', 'particleDataTable')))
 
-			if self.config.has_option('general', 'dataDirectory'):
-				self.dataDirectory = os.path.expanduser(os.path.expandvars(self.config.get('general', 'dataDirectory')))
-				if self.dataDirectory == "":
-					self.dataDirectory = os.path.abspath(os.path.dirname(configFileName))
-			else:
-				self.dataDirectory = os.path.abspath(os.path.dirname(configFileName))
-
+			self.dataDirectory                          = os.path.expanduser(os.path.expandvars(self.config.get('general', 'dataFileDirectory')))
 			self.phaseSpaceWeightFileExtensionQualifier = self.config.get('general', 'phaseSpaceWeightFileExtensionQualifier')
 			self.accCorrPSWeightFileExtensionQualifier  = self.config.get('general', 'accCorrPSWeightFileExtensionQualifier')
 			self.massBinDirectoryNamePattern            = self.config.get('general', 'massBinDirectoryNamePattern')
+			if self.config.has_option('general', 'fileManagerPath'):
+				self.fileManagerPath                   = os.path.expanduser(os.path.expandvars(self.config.get('general', 'fileManagerPath')))
+			else:
+				self.fileManagerPath                   = os.path.expanduser("./fileManager.p")
+
 			rawKeyfilePattern                           = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
+			self.keyDirectory                           = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyFileDirectory')))
+			self.ampDirectory                           = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'ampFileDirectory')))
+			if self.config.has_option('amplitudes', 'limitFilesPerDir'):
+				self.limitFilesPerDir                   = self.config.get('amplitudes', 'limitFilesPerDir')
+			else:
+				self.limitFilesPerDir                   = 0
 
 			self.dataAmplitudeDirectoryName             = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
 			self.phaseSpaceAmpDirectoryName             = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')

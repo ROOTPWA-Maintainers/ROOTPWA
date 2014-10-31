@@ -1,6 +1,6 @@
 
 import glob
-import os.path
+import os
 
 import pyRootPwa
 import pyRootPwa.core
@@ -13,10 +13,23 @@ class fileManager:
 		dataFileName = ""
 		binningMap = {}
 		eventsType = None
+		def __init__(self, dataFileName, binningMap, eventsType):
+			self.dataFileName = dataFileName
+			self.binningMap = binningMap
+			self.eventsType = eventsType
+
+	class KeyFile:
+		keyFileName = ""
+		waveName = ""
+		def __init__(self, keyFileName, waveName):
+			self.keyFileName = keyFileName
+			self.waveName = waveName
 
 	dataDirectory      = ""
 	keyDirectory       = ""
 	amplitudeDirectory = ""
+
+	limitFilesInDir = -1
 
 	dataFiles       = {}
 	keyFiles        = []
@@ -24,10 +37,14 @@ class fileManager:
 	globalAxes = {}
 	binList = []
 
-	def __init__(self, dataDirectory, keyDirectory, amplitudeDirectory):
-		self.dataDirectory      = dataDirectory
-		self.keyDirectory       = keyDirectory
-		self.amplitudeDirectory = amplitudeDirectory
+	def initialize(self, configFileName):
+		config = pyRootPwa.rootPwaConfig(configFileName)
+		self.dataDirectory      = config.dataDirectory
+		self.keyDirectory       = config.keyDirectory
+		self.amplitudeDirectory = config.ampDirectory
+		pyRootPwa.utils.printInfo("data file dir read from config file: '" + self.dataDirectory + "'.")
+		pyRootPwa.utils.printInfo("key file dir read from config file: '" + self.keyDirectory + "'.")
+		pyRootPwa.utils.printInfo("amplitude file dir read from config file: '" + self.amplitudeDirectory + "'.")
 
 		self.dataFiles = self._openDataFiles()
 		allAxes = []
@@ -36,12 +53,27 @@ class fileManager:
 		self.globalAxes = self._combineAxes(allAxes)
 		self.binList = self._createBinIDs()
 
+		particleDataTableFileName = os.environ['ROOTPWA'] + "/particleData/particleDataTable.txt"
+		if not pyRootPwa.core.particleDataTable.readFile(particleDataTableFileName):
+			pyRootPwa.utils.printErr("error reading particle data table file '" + particleDataTableFileName + "'.")
 		self.keyFiles = self._openKeyFiles()
+
+		if int(config.limitFilesPerDir) == 0:
+			self.limitFilesInDir = len(self.keyFiles) * len(self.dataFiles)
+			pyRootPwa.utils.printInfo("limit for files per directory set to " + str(self.limitFilesInDir))
+		elif int(config.limitFilesPerDir) == -1:
+			self.limitFilesInDir = -1
+			pyRootPwa.utils.printInfo("limit for files per directory set to infinite")
+		else:
+			self.limitFilesInDir = int(config.limitFilesPerDir)
+			pyRootPwa.utils.printInfo("limit for files per directory set to " + str(self.limitFilesInDir))
+		return True
 
 
 	def getMissingBins(self):
-		missingBins = {}
-		for bin in self.binList:
+		missingBins = []
+		for binID in self.getBinIDList():
+			bin = self.binList[binID]
 			for eventsType in self.dataFiles:
 				found = False
 				for file in self.dataFiles[eventsType]:
@@ -49,43 +81,61 @@ class fileManager:
 						found = True
 						break
 				if not found:
-					if not eventsType in missingBins: missingBins[eventsType]=[]
-					missingBins[eventsType].append(bin.copy())
+					missingBins.append(binID)
 		return missingBins
 
 
 	def getDataFilePaths(self):
-		return self.dataFilesDictToList(self.dataFiles)
+		return fileManager.convertDataFilesToPaths(self.dataFiles)
 
 
 	def getKeyFilePaths(self):
-		return keyFiles
+		return fileManager.convertKeyFilesToPaths(self.keyFiles)
 
 
-	def getDataFilePath(self, binInformation, eventsType):
+	def getAmpFilePaths(self, eventsType):
+		ampFileList = []
+		for key in sorted(self.amplitudeFiles):
+			if (key[2] == eventsType):
+				ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
+		return ampFileList
+
+
+	def getDataFile(self, binID, eventsType):
 		foundFiles = []
 		for file in self.dataFiles[eventsType]:
 			found = True
-			for binningVariable in binInformation:
-				lower = file.binningMap[binningVariable][0]
-				upper = file.binningMap[binningVariable][1]
-				givenValue = binInformation[binningVariable]
-				if givenValue < lower or givenValue > upper:
+			if not file.binningMap.keys() == self.binList[binID].keys():
+				continue
+			for binningVariable in file.binningMap:
+				if not self.binList[binID][binningVariable] == file.binningMap[binningVariable]:
 					found = False
 					break
-				elif givenValue == lower or givenValue == upper:
-					pyRootPwa.utils.printErr("hit boundary of the " + binningVariable + "-bin.")
-					return []
-			if found: foundFiles.append(file.dataFileName)
-		return foundFiles
+			if found: return file
+		pyRootPwa.utils.printWarn("no data file found for binID = " + str(binID) + "and eventsType = '" + str(eventsType) + "'.")
+		return False
+
+
+	def getKeyFile(self, keyFileID):
+		return self.keyFiles[keyFileID]
 
 
 	def getAmplitudeFilePaths(self):
 		pass
 
 
-	def getAmplitudeFilePath(self, binInformation, waveName, eventsType):
-		pass
+	def getAmplitudeFilePath(self, binID, keyFileID, eventsType):
+		binInformation = self.getBinFromID(binID)
+		keyFile = self.keyFiles[keyFileID]
+		if self.isFilePerDirLimitReached():
+			return self.amplitudeDirectory + "/" + self.getAmplitudeFileSubdir(binID, keyFileID) + "/" + keyFile.waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+		else:
+			return self.amplitudeDirectory + "/" + keyFile.waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+
+
+	def getAmplitudeFileSubdir(self, binID, keyFileID):
+		subDirNumber = (binID * len(self.keyFiles) + keyFileID) * len(self.dataFiles) / self.limitFilesInDir
+		return str(subDirNumber)
 
 
 	def getBinID(self, binInformation):
@@ -105,10 +155,18 @@ class fileManager:
 
 
 	def getBinFromID(self, id):
-		if (not id < len(self.binList)) or (id < 0):
-			pyRootPwa.utils.printErr("id not found: " + str(id))
+		if id not in self.getBinIDList():
+			pyRootPwa.utils.printErr("id not found: " + str(id) + ".")
 			raise Exception("do this properly")
 		return self.binList[id]
+
+
+	def getBinIDList(self):
+		return range(len(self.binList))
+
+
+	def getKeyFileIDList(self):
+		return range(len(self.keyFiles))
 
 
 	def _getBinningAxes(self, fileList):
@@ -176,7 +234,24 @@ class fileManager:
 
 
 	def _openKeyFiles(self):
-		return glob.glob(self.keyDirectory + "/*.key")
+		keyFileNames = glob.glob(self.keyDirectory + "/*.key")
+		keyFiles = []
+
+		for keyFileID in range(len(keyFileNames)):
+			keyFileName = keyFileNames[keyFileID]
+			waveDescription = pyRootPwa.core.waveDescription()
+			waveDescription.parseKeyFile(keyFileName)
+			(success, amplitude) = waveDescription.constructAmplitude()
+			if not success:
+				pyRootPwa.utils.printErr("could not construct decay topology for key file '" + keyFileName + "'.")
+				return []
+			waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology(), True)
+			if waveName in keyFiles:
+				pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName] + "' and '" + keyFileName + "'.")
+				return []
+			keyFile = fileManager.KeyFile(keyFileName, waveName)
+			keyFiles.append(keyFile)
+		return keyFiles
 
 
 	def _openDataFiles(self):
@@ -192,10 +267,7 @@ class fileManager:
 			if not eventMeta:
 				pyRootPwa.utils.printErr("could not find metadata in event file '" + dataFileName + "'.")
 				return {}
-			inputFile = self.InputFile()
-			inputFile.dataFileName = dataFileName
-			inputFile.binningMap = eventMeta.binningMap()
-			inputFile.eventsType = eventMeta.eventsType()
+			inputFile = fileManager.InputFile(dataFileName, eventMeta.binningMap(), eventMeta.eventsType())
 			if inputFile.eventsType not in inputFiles:
 				inputFiles[inputFile.eventsType] = []
 			inputFiles[inputFile.eventsType].append(inputFile)
@@ -219,27 +291,32 @@ class fileManager:
 
 	def _iterateBins(self, dim, currentBin, result):
 		keys = self.globalAxes.keys()
-		if not dim >= len(self.globalAxes):
+		if dim < len(self.globalAxes):
 			for bin in self.globalAxes[keys[dim]]:
 				newCurrentBin = currentBin.copy()
 				newCurrentBin[keys[dim]] = bin
 				result = self._iterateBins(dim+1, newCurrentBin, result)
-		else:
+		elif dim == len(self.globalAxes):
 			result.append(currentBin)
 			return result
+		else: raise Exception("do this properly")
 		return result
 
 
+	def isFilePerDirLimitReached(self):
+		return len(self.binList) * len(self.keyFiles) * len(self.dataFiles) > self.limitFilesInDir or not self.limitFilesInDir == -1
+
+
 	def areDataFilesSynced(self):
-		return self.getDataFilePaths() == self.dataFilesDictToList(self._openDataFiles())
+		return self.getDataFilePaths() == fileManager.convertDataFilesToPaths(self._openDataFiles())
 
 
 	def areKeyFilesSynced(self):
-		return self.keyFiles == self._openKeyFiles()
+		return self.getKeyFilePaths() == fileManager.convertKeyFilesToPaths(self._openKeyFiles())
 
 
 	def areAmpFilesSynced(self):
-		return True
+		return False
 
 
 	def areFilesSynced(self):
@@ -247,9 +324,16 @@ class fileManager:
 
 
 	@staticmethod
-	def dataFilesDictToList(dataFilesDict):
-		allDataFiles =[]
+	def convertDataFilesToPaths(dataFilesDict):
+		allDataFiles = []
 		for eventsType in dataFilesDict:
 			for dataFile in dataFilesDict[eventsType]:
 				allDataFiles.append(dataFile.dataFileName)
 		return allDataFiles
+
+	@staticmethod
+	def convertKeyFilesToPaths(keyFilesList):
+		allKeyFiles = []
+		for keyFile in keyFilesList:
+			allKeyFiles.append(keyFile.keyFileName)
+		return allKeyFiles
