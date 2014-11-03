@@ -681,8 +681,8 @@ namespace rpwa {
 
 		// momenta from event file are stored here to avoid reading them multiple times for
 		// different topologies
-		vector<ParVector<Vector3> > prodMomenta(numProdMomenta); // [particle][event]
-		vector<ParVector<Vector3> > decayMomenta(numDecayMomenta); // [particle][event]
+		vector<vector<Vector3> > prodMomenta(numProdMomenta); // [particle][event]
+		vector<vector<Vector3> > decayMomenta(numDecayMomenta); // [particle][event]
 
 		bool success = true;
 
@@ -803,7 +803,11 @@ namespace rpwa {
 
 					amplitude[i]->decayTopology()->revertMomenta();
 					ParVector<Complex> amps = (*(amplitude[i]))();
+#ifdef USE_CUDA
+					amps.insertInStdVector(ampValues[i], ampValues[i].end());
+#else
 					ampValues[i].insert(ampValues[i].end(), amps.begin(), amps.end());
+#endif
 
 					boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
 					uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();

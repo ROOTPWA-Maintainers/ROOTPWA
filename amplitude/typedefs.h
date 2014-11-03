@@ -118,8 +118,13 @@ namespace rpwa {
 		}*/
 
 		template<typename T>
-		inline ParVector<T> toParVector(const std::vector<T>& v) {
+		inline ParVector<T> makeParVector(const std::vector<T>& v) {
 			return rpwa::ThrustVector<T>(v);
+		}
+
+		template<typename T>
+		inline void copyToParVector(ParVector<T>& parVec, const std::vector<T>& v) {
+			parVec.fromStdVector(v);
 		}
 
 		/*template<typename T>
@@ -168,8 +173,13 @@ namespace rpwa {
 		*/
 
 		template<typename T>
-		inline ParVector<T> toParVector(const std::vector<T>& v) {
+		inline ParVector<T> makeParVector(const std::vector<T>& v) {
 			return RpwaVec<T>(v);
+		}
+
+		template<typename T>
+		inline void copyToParVector(ParVector<T>& parVec, const std::vector<T>& v) {
+			parVec = RpwaVec<T>(v);
 		}
 
 		/*

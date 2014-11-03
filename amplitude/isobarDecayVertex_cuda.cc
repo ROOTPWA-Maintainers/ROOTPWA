@@ -21,7 +21,8 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      functions geting time
+//      CUDA code for isobarDecayVertex.cc
+//      This is only used when compiling with CUDA enabled.
 //
 //
 // Author List:
@@ -30,29 +31,19 @@
 //
 //-------------------------------------------------------------------------
 
+#include <cuda.h>
+#include <thrust/transform.h>
 
-#ifndef TIMEUTILS_HPP
-#define TIMEUTILS_HPP
+#include "cudaUtils.hpp"
+#include "isobarDecayVertex_cuda.h"
 
-#include <string>
-#include "stdint.h"
-#include "time.h"
+using namespace rpwa;
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-namespace rpwa {
-	
-	inline
-	void
-	printTimeDiff(boost::posix_time::ptime startTime, const std::string& location)
-	{
-		boost::posix_time::ptime stopTime = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (stopTime - startTime).total_milliseconds();
-		std::cout << location << " timediff = " << timeDiff << std::endl;
-	}
-
-
-}  // namespace rpwa
-
-
-#endif  // TIMEUTILS_HPP
+void 
+rpwa::thrust_isobarDecayVertex_calcParentLzVecs(const ParVector<LorentzVector>& daughter1, 
+						const ParVector<LorentzVector>& daughter2, 
+						ParVector<LorentzVector>& parent)
+{
+	thrust::transform(daughter1.begin(), daughter1.end(), daughter2.begin(), 
+			  parent.begin(), thrust::plus<LorentzVector>());
+}

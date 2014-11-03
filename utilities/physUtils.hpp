@@ -34,7 +34,7 @@
 #ifndef PHYSUTILS_H
 #define PHYSUTILS_H
 
-
+#include "cudaUtils.hpp"
 #include "mathUtils.hpp"
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
@@ -176,6 +176,7 @@ namespace rpwa {
 	// computes square of Blatt-Weisskopf barrier factor for 2-body decay
 	// !NOTE! L is units of hbar/2
 	template<typename T>
+	HOST_DEVICE
 	inline
 	T
 	barrierFactorSquared(const int  L,               // relative orbital angular momentum
@@ -227,14 +228,18 @@ namespace rpwa {
 			}
 			break;
 		default:
+#ifndef __CUDA_ARCH__
 			printDebug << "calculation of Blatt-Weisskopf barrier factor is not (yet) implemented for L = "
 			           << spinQn(L) << ". returning 0." << std::endl;
+#endif
 			return 0;
 		}
+#ifndef __CUDA_ARCH__
 		if (debug)
 			printDebug << "squared Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
 			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
 			           << maxPrecision(bf2) << std::endl;
+#endif
 		return bf2;
 	}
 
@@ -242,6 +247,7 @@ namespace rpwa {
 	// computes Blatt-Weisskopf barrier factor for 2-body decay
 	// !NOTE! L is units of hbar/2
 	template<typename T>
+	HOST_DEVICE
 	inline
 	double
 	barrierFactor(const int  L,               // relative orbital angular momentum
@@ -250,10 +256,12 @@ namespace rpwa {
 	              const T    Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
 		const T bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
+#ifndef __CUDA_ARCH__
 		if (debug)
 			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
 			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
 			           << maxPrecision(bf) << std::endl;
+#endif
 		return bf;
 	}
 

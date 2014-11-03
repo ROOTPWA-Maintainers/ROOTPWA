@@ -36,9 +36,13 @@
 
 #include "typedefs.h"
 #include "spinUtils.hpp"
+#include "timeUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
+#ifdef USE_CUDA
+#include "isobarHelicityAmplitude_cuda.h"
+#endif
 
 using namespace std;
 using namespace boost;
@@ -69,6 +73,9 @@ isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_isobarHelicityAmplitude_hfTransform(daughterLv, result);
+#else
 	const unsigned int size = daughterLv.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -92,9 +99,8 @@ isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 		result[i] = hfTransform;
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: isobarHelicityAmplitude::hfTransform timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::hfTransform");
 
 	return result;
 
@@ -191,34 +197,38 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int       P      = parent->P();
 	const int       refl   = parent->reflectivity();
 
-	std::vector<Complex> DFunc(numEvents);
+	ParVector<Complex> DFunc(numEvents);
 	if (topVertex and _useReflectivityBasis) {
 
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
+#else
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVecs()[i].Theta();
 			DFunc[i] = DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
 		}
-		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 1 timediff = " << timeDiff << endl;
+#endif
+		printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 1");
 
 	} else {
 
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
+#else
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < numEvents; ++i) {
 			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
 			double theta = daughter1->lzVecs()[i].Theta();
 			DFunc[i] = DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, _debug);
 		}
-		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 2 timediff = " << timeDiff << endl;
+#endif
+		printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 2");
 
 	}
 
@@ -232,6 +242,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	ParVector<Complex> amp(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_3(daughter1->lzVecs(), DFunc, bw, amp, L, norm, lsClebsch, ssClebsch);
+#else
 	const unsigned int size = amp.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -243,9 +256,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 		amp[i] = norm * DFunc[i] * lsClebsch * ssClebsch * bf * bw[i];
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: isobarHelicityAmplitude::twoBodyDecayAmplitude 3 timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 3");
 
 	if (_debug) {
 		printDebug << "two-body decay amplitude = ";

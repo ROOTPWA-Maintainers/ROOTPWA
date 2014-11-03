@@ -133,7 +133,7 @@ diffractivePhaseSpace::event()
 	}
 
 	_vertex = _beamAndVertexGenerator->getVertex();
-	_beam.particle.setLzVecs(toParVector(make_vector_1(LorentzVector(_beamAndVertexGenerator->getBeam()))));
+	_beam.particle.setLzVecs(makeParVector(make_vector_1(LorentzVector(_beamAndVertexGenerator->getBeam()))));
 
 	if(not _pickerFunction) {
 		printErr << "mass- and t'-picker function has not been set. Aborting..." << endl;
@@ -212,7 +212,7 @@ diffractivePhaseSpace::event()
 		TVector3 beamDir = beamLorentzVector.Vect().Unit();
 		xSystemLab.RotateUz(beamDir);
 		// calculate the recoil proton properties
-		_target.recoilParticle.setLzVecs(toParVector(make_vector_1(LorentzVector((beamLorentzVector + targetLab) - xSystemLab)))); // targetLab
+		_target.recoilParticle.setLzVecs(makeParVector(make_vector_1(LorentzVector((beamLorentzVector + targetLab) - xSystemLab)))); // targetLab
 
 		do {
 			// generate n-body phase space for X system
@@ -246,7 +246,7 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 	for(unsigned int i = 0; i < daughters.size(); ++i) {
-		_decayProducts[i].setLzVecs(toParVector(make_vector_1(LorentzVector(daughters[i]))));
+		_decayProducts[i].setLzVecs(makeParVector(make_vector_1(LorentzVector(daughters[i]))));
 	}
 
 	return attempts;

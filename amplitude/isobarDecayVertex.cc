@@ -39,8 +39,12 @@
 
 #include "reportingUtilsRoot.hpp"
 #include "spinUtils.hpp"
+#include "timeUtils.hpp"
 #include "isobarDecayVertex.h"
 
+#ifdef USE_CUDA
+#include "isobarDecayVertex_cuda.h"
+#endif
 
 using namespace std;
 using namespace rpwa;
@@ -179,12 +183,14 @@ isobarDecayVertex::calcParentLzVecs()
 	parentVec.resize(numEvents);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_isobarDecayVertex_calcParentLzVecs(daughter1Vec, daughter2Vec, parentVec);
+#else
 	#pragma omp parallel for
 	for(size_t i = 0; i < numEvents; ++i)
 		parentVec[i] = daughter1Vec[i] + daughter2Vec[i];
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: isobarDecayVertex::calcParentLzVec timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : isobarDecayVertex::calcParentLzVec");
 
 	if (_debug)
 		cout << "after = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV" << endl;

@@ -21,7 +21,8 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      functions geting time
+//      CUDA code for particle.cc
+//      This is only used when compiling with CUDA enabled.
 //
 //
 // Author List:
@@ -31,28 +32,29 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef TIMEUTILS_HPP
-#define TIMEUTILS_HPP
+#ifndef PARTICLE_CUDA_H
+#define PARTICLE_CUDA_H
 
-#include <string>
-#include "stdint.h"
-#include "time.h"
+#include "typedefs.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rpwa {
-	
-	inline
-	void
-	printTimeDiff(boost::posix_time::ptime startTime, const std::string& location)
-	{
-		boost::posix_time::ptime stopTime = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (stopTime - startTime).total_milliseconds();
-		std::cout << location << " timediff = " << timeDiff << std::endl;
-	}
+
+	void 
+	thrust_particle_setMomenta(const ParVector<Vector3>& moms, 
+				   ParVector<LorentzVector>& lzVecs, 
+				   double mass2);
+
+	void 
+	thrust_particle_transformRot(const ParVector<LorentzRotation>& lzTrafos,
+				     ParVector<LorentzVector>& lzVecs);
+
+	void 
+	thrust_particle_transformBoost(const ParVector<Vector3>& boosts,
+				       ParVector<LorentzVector>& lzVecs);
 
 
 }  // namespace rpwa
 
 
-#endif  // TIMEUTILS_HPP
+#endif  // PARTICLE_CUDA_H

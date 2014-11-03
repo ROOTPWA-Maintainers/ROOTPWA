@@ -129,8 +129,8 @@ namespace rpwa {
 		bool initKinematicsData(const TClonesArray& prodKinParticles,
 		                        const TClonesArray& decayKinParticles);  ///< initializes input data
 
-		bool readKinematicsData(const std::vector<ParVector<Vector3> >& prodKinMomenta,
-		                        const std::vector<ParVector<Vector3> >& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool readKinematicsData(const std::vector<std::vector<Vector3> >& prodKinMomenta,
+		                        const std::vector<std::vector<Vector3> >& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& fsPartPermMap);  ///< resets momenta to the values of last event read, but reordering them according to index map

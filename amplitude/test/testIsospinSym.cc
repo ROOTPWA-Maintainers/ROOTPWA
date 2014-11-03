@@ -130,8 +130,8 @@ calcNewAmps(const string&    rootInFileName,
 		const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
 		const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
 
-		vector<ParVector<Vector3> > prodMomenta(numProdMomenta, ParVector<Vector3>(1));
-		vector<ParVector<Vector3> > decayMomenta(numDecayMomenta, ParVector<Vector3>(1));
+		vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
+		vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
 
 		bool success = true;
 

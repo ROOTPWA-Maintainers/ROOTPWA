@@ -33,6 +33,8 @@
 #ifndef RPWA_THRUST_VECTOR_H
 #define RPWA_THRUST_VECTOR_H
 
+#include <vector>
+
 #include "cuda.h"
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
@@ -44,9 +46,6 @@ namespace rpwa {
 
 	public:
 
-		typedef typename thrust::host_vector<T>::iterator iterator;
-		typedef typename thrust::host_vector<T>::const_iterator const_iterator;
-
 		ThrustVector();
 		ThrustVector(const ThrustVector<T>& v);
 		ThrustVector(std::size_t s, T v = T());
@@ -55,33 +54,29 @@ namespace rpwa {
 
 		ThrustVector<T>& operator = (const ThrustVector<T>& other);
 
-		std::vector<T> toStdVector() const;
 		thrust::host_vector<T>& toRawThrustVector();
+		const thrust::host_vector<T>& toRawThrustVector() const;
+
+		typename thrust::host_vector<T>::iterator begin();
+		typename thrust::host_vector<T>::const_iterator begin() const;
+
+		typename thrust::host_vector<T>::iterator end();
+		typename thrust::host_vector<T>::const_iterator end() const;
 
 		T& operator[](int i);
 		const T& operator[](int i) const;
-
-		T& front();
-		const T& front() const;
-
-		T& back();
-		const T& back() const;
-
-		void push_back(const T& x);
 
 		void clear();
 		void resize(std::size_t s, T v = T());
 
 		std::size_t size() const;
 
-		iterator begin();
-		iterator end();
-		const_iterator begin() const;
-		const_iterator end() const;
-
+		void fromStdVector(const std::vector<T>& vec);
+		void insertInStdVector(std::vector<T>& vec, typename std::vector<T>::iterator it) const;
 
 	private:
 
+		// make object instead of pointer? (should work with external implementation)
 		thrust::host_vector<T>* vec;
 
 	};

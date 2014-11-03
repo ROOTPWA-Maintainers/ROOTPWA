@@ -35,11 +35,15 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include "physUtils.hpp"
+#include "timeUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"
 #include "phaseSpaceIntegral.h"
 #include "massDependence.h"
 
+#ifdef USE_CUDA
+#include "massDependence_cuda.h"
+#endif
 
 using namespace std;
 using namespace boost::numeric::ublas;
@@ -76,9 +80,13 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 	const particlePtr& parent = v.parent();
 	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
-	ParVector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	ParVector<Complex> result(parentVec.size());
+	thrust_massDependence_flatRangeMassDependence_amp(parentVec, result, parent->mass(), parent->width());
+#else
+	ParVector<Complex> result(parentVec.size(), 0);
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -86,9 +94,8 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 			result[i] = 1.;
 		}
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: flatRangeMassDependence::amp timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : flatRangeMassDependence::amp");
 
 	if(_debug) {
 		for(unsigned int i = 0; i < result.size(); ++i) {
@@ -125,6 +132,10 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 		ParVector<Complex> result(parentVec.size());
 		// !! EVENT PARALLEL LOOP
 		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+		thrust_massDependence_relativisticBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+				result, parent->mass(), parent->width(), v.L());
+#else
 		const unsigned int size = result.size();
 		#pragma omp parallel for
 		for(unsigned int i = 0; i < size; ++i) {
@@ -153,9 +164,8 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 			}
 
 		}
-		boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-		cout << "EPL: relativisticBreitWigner::amp timediff = " << timeDiff << endl;
+#endif
+		printTimeDiff(timeBefore, "EPL : relativisticBreitWigner::amp");
 
 		return result;
 
@@ -184,6 +194,9 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_massDependence_constWidthBreitWigner_amp(parentVec, result, M0, Gamma0);
+#else
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -205,9 +218,8 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 					   << maxPrecisionDouble(bw) << endl;
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: constWidthBreitWigner::amp timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : constWidthBreitWigner::amp");
 
 	return result;
 }
@@ -231,6 +243,10 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_massDependence_rhoBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+			result, parent->mass(), parent->width());
+#else
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -269,9 +285,8 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 					   << "= " << maxPrecisionDouble(bw) << endl;
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: rhoBreitWigner::amp timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : rhoBreitWigner::amp");
 
 	return result;
 
@@ -296,6 +311,10 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_massDependence_f0980BreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+			result, parent->mass(), parent->width());
+#else
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -327,9 +346,8 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 					   << "= " << maxPrecisionDouble(bw) << endl;
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: f0980BreitWigner::amp timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : f0980BreitWigner::amp");
 
 	return result;
 
@@ -463,9 +481,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		*/
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: piPiSWaveAuMorganPenningtonM::amp timediff = " << timeDiff << endl;
+	printTimeDiff(timeBefore, "EPL: piPiSWaveAuMorganPenningtonM::amp");
 
 	return result;
 }
@@ -527,9 +543,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: piPiSWaveAuMorganPenningtonVes::amp timediff = " << timeDiff << endl;
+	printTimeDiff(timeBefore, "EPL: piPiSWaveAuMorganPenningtonVes::amp");
 
 	return result;
 }
@@ -570,6 +584,9 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_massDependence_rhoPrimeMassDep_amp(parentVec, result, M01, Gamma01, M02, Gamma02);
+#else
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -601,10 +618,8 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 					   << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
 
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: rhoPrimeMassDep::amp timediff = " << timeDiff << endl;
-
+#endif
+	printTimeDiff(timeBefore, "EPL : rhoPrimeMassDep::amp");
 
 	return result;
 

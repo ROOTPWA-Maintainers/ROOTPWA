@@ -76,8 +76,21 @@ set(SOURCES
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
-	thrustVector.cc
 	)
+	
+if(USE_CUDA)	
+	set(SOURCES
+		${SOURCES}
+		thrustVector.cc
+		particle_cuda.cc
+		leptoProductionVertex_cuda.cc
+		isobarDecayVertex_cuda.cc
+		massDependence_cuda.cc
+		isobarAmplitude_cuda.cc
+		isobarHelicityAmplitude_cuda.cc
+		isobarCanonicalAmplitude_cuda.cc
+		)
+endif()
 	
 # source files that are compiled into cudalibrary
 #set(SOURCES_CUDA

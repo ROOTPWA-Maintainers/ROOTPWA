@@ -34,9 +34,13 @@
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
+#include "timeUtils.hpp"
 #include "conversionUtils.hpp"
 #include "particle.h"
 
+#ifdef USE_CUDA
+#include "particle_cuda.h"
+#endif
 
 using namespace std;
 using namespace rpwa;
@@ -132,18 +136,20 @@ particle::setMomenta(const ParVector<Vector3>& momenta)
 {
 	const size_t nmbMom = momenta.size();
 	_lzVecs.resize(nmbMom);
+
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_particle_setMomenta(momenta, _lzVecs, mass2());
+#else
 	#pragma omp parallel for
 	for(size_t i = 0; i < nmbMom; ++i) {
 		const Vector3& mom = momenta[i];
 		_lzVecs[i] = LorentzVector(mom, sqrt(mom.Mag2() + mass2()));
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: particle::setMomenta timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : particle::setMomenta");
 }
-
 
 const ParVector<LorentzVector>&
 particle::transform(const ParVector<LorentzRotation>& lorentzTransforms)
@@ -155,17 +161,18 @@ particle::transform(const ParVector<LorentzRotation>& lorentzTransforms)
 	}
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_particle_transformRot(lorentzTransforms, _lzVecs);
+#else
 	#pragma omp parallel for
 	for(size_t i = 0; i < nmbLzVec; ++i) {
 		_lzVecs[i].Transform(lorentzTransforms[i]);
 	}
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	cout << "EPL: particle::transform (rotation) timediff = " << timeDiff << endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : particle::transform (rotation)");
 
 	return _lzVecs;
 }
-
 
 const ParVector<LorentzVector>&
 particle::transform(const ParVector<Vector3>& boosts)
@@ -177,12 +184,14 @@ particle::transform(const ParVector<Vector3>& boosts)
 	}
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_particle_transformBoost(boosts, _lzVecs);
+#else
 	#pragma omp parallel for
 	for(size_t i = 0; i < nmbLzVec; ++i)
 		_lzVecs[i].Boost(boosts[i]);
-	boost::posix_time::ptime timeAfter = boost::posix_time::microsec_clock::local_time();
-	uint64_t timeDiff = (timeAfter - timeBefore).total_milliseconds();
-	std::cout << "EPL: particle::transform (boost) timediff = " << timeDiff << std::endl;
+#endif
+	printTimeDiff(timeBefore, "EPL : particle::transform (boost)");
 
 	return _lzVecs;
 }

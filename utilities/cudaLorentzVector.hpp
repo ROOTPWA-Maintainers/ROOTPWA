@@ -100,7 +100,7 @@ namespace rpwa {
 		HOST_DEVICE bool operator != (const CudaLorentzVector<Ty> & that) const {
 			return ! ((*this) == that); 
 		}
-		
+
 		HOST_DEVICE CudaLorentzVector<Ty>& operator += (const CudaLorentzVector<Ty> & that) {
 			_xyz += that._xyz; 
 			_t += that._t; 
@@ -131,6 +131,10 @@ namespace rpwa {
 			return CudaLorentzVector<Ty>(_xyz * f, _t * f);
 		}
 		
+		HOST_DEVICE CudaLorentzVector<Ty> operator - () const {
+			return CudaLorentzVector<Ty>(- _xyz, - _t);
+		}
+
 		HOST_DEVICE Ty Dot(const CudaLorentzVector<Ty> & that) const {
 			return T() * that.T() - X() * that.X() - Y() * that.Y() - Y() * that.Y();
 		}

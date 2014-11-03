@@ -76,7 +76,7 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-nonInteractionVertex::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta)
+nonInteractionVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
 	// check production vertex data
 	const size_t nmbProdKinMom = prodKinMomenta.size();
@@ -87,7 +87,7 @@ nonInteractionVertex::readKinematicsData(const vector<ParVector<Vector3> >& prod
 		return false;
 	}
 
-	_XParticleCache = prodKinMomenta[0];
+	copyToParVector(_XParticleCache, prodKinMomenta[0]);
 
 	if (_debug) {
 		printDebug << "setting momentum of beam particle '" << XParticle()->name()

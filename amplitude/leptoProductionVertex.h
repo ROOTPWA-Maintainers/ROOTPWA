@@ -104,7 +104,7 @@ namespace rpwa {
 		void delta  (const ParVector<double>& epsilon, ParVector<double>& result) const; ///< returns photon's mass correction parameter for known epsilon
 
 		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                    );  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<ParVector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
+		virtual bool readKinematicsData(const std::vector<std::vector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 

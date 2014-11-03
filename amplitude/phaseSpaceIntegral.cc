@@ -17,6 +17,7 @@
 #include"mathUtils.hpp"
 #include"nBodyPhaseSpaceGen.h"
 #include"physUtils.hpp"
+#include"timeUtils.hpp"
 #include"waveDescription.h"
 
 using namespace std;
@@ -56,14 +57,12 @@ ParVector<Complex> phaseSpaceIntegral::operator()(const isobarDecayVertex& verte
 
 	ParVector<Complex> result(parentVec.size(), 0);
 	// !! EVENT PARALLEL LOOP
-	cout << "EPL: phaseSpaceIntegral::operator()" << endl;
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 	for(unsigned int i = 0; i < result.size(); ++i) {
-
 		const double M = parentVec[i].M();    // parent mass
-
 		result[i] = _subwaveNameToIntegral[waveName](M, M0, Gamma0);
-
 	}
+	printTimeDiff(timeBefore, "EPL: phaseSpaceIntegral::operator()");
 
 	return result;
 

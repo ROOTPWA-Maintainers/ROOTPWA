@@ -62,9 +62,9 @@ ThrustVector<T>::ThrustVector(std::size_t s, T v)
 
 template<typename T>
 ThrustVector<T>::ThrustVector(const std::vector<T>& v)
-: vec(new thrust::host_vector<T>(v.size()))
+: vec(new thrust::host_vector<T>(v))
 {
-	std::copy(v.begin(), v.end(), vec->begin());
+
 }
 
 template<typename T>
@@ -81,17 +81,39 @@ ThrustVector<T>& ThrustVector<T>::operator = (const ThrustVector<T>& other)
 }
 
 template<typename T>
-std::vector<T> ThrustVector<T>::toStdVector() const
-{
-	std::vector<T> result(vec->size());
-	std::copy(vec->begin(), vec->end(), result.begin());
-	return result;
-}
-
-template<typename T>
 thrust::host_vector<T>& ThrustVector<T>::toRawThrustVector()
 {
 	return *vec;
+}
+
+template<typename T>
+const thrust::host_vector<T>& ThrustVector<T>::toRawThrustVector() const
+{
+	return *vec;
+}
+
+template<typename T>
+typename thrust::host_vector<T>::iterator ThrustVector<T>::begin()
+{
+	return vec->begin();
+}
+
+template<typename T>
+typename thrust::host_vector<T>::const_iterator ThrustVector<T>::begin() const
+{
+	return vec->begin();
+}
+
+template<typename T>
+typename thrust::host_vector<T>::iterator ThrustVector<T>::end()
+{
+	return vec->end();
+}
+
+template<typename T>
+typename thrust::host_vector<T>::const_iterator ThrustVector<T>::end() const
+{
+	return vec->end();
 }
 
 template<typename T>
@@ -104,36 +126,6 @@ template<typename T>
 const T& ThrustVector<T>::operator[](int i) const
 {
 	return (*vec)[i];
-}
-
-template<typename T>
-T& ThrustVector<T>::front()
-{
-	return vec->front();
-}
-
-template<typename T>
-const T& ThrustVector<T>::front() const
-{
-	return vec->front();
-}
-
-template<typename T>
-T& ThrustVector<T>::back()
-{
-	return vec->back();
-}
-
-template<typename T>
-const T& ThrustVector<T>::back() const
-{
-	return vec->back();
-}
-
-template<typename T>
-void ThrustVector<T>::push_back(const T& x)
-{
-	vec->push_back(x);
 }
 
 template<typename T>
@@ -155,27 +147,15 @@ std::size_t ThrustVector<T>::size() const
 }
 
 template<typename T>
-typename ThrustVector<T>::iterator ThrustVector<T>::begin()
+void ThrustVector<T>::fromStdVector(const std::vector<T>& v)
 {
-	return vec->begin();
+	*vec = v;
 }
 
 template<typename T>
-typename ThrustVector<T>::iterator ThrustVector<T>::end()
+void ThrustVector<T>::insertInStdVector(std::vector<T>& v, typename std::vector<T>::iterator it) const
 {
-	return vec->end();
-}
-
-template<typename T>
-typename ThrustVector<T>::const_iterator ThrustVector<T>::begin() const
-{
-	return vec->begin();
-}
-
-template<typename T>
-typename ThrustVector<T>::const_iterator ThrustVector<T>::end() const
-{
-	return vec->end();
+	v.insert(it, vec->begin(), vec->end());
 }
 
 // instantiate template because it has to be compiled with nvcc but is used by gcc

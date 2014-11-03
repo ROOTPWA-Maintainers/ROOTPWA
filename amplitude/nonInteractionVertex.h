@@ -20,8 +20,8 @@ namespace rpwa {
 		virtual const ParVector<LorentzVector>& referenceLzVecs() const { return XParticle()->lzVecs(); }
 		inline const particlePtr&               XParticle      () const { return outParticles()[0];     }
 
-		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                  );  ///< initializes input data
-		virtual bool readKinematicsData(const std::vector<ParVector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames                    );  ///< initializes input data
+		virtual bool readKinematicsData(const std::vector<std::vector<Vector3> >& prodKinMomenta);  ///< reads multiple input data event
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last read event block
 

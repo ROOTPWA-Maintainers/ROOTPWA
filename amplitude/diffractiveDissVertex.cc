@@ -232,7 +232,7 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-diffractiveDissVertex::readKinematicsData(const vector<ParVector<Vector3> >& prodKinMomenta)
+diffractiveDissVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
 	_beamMomCache.clear();
 	_recoilMomCache.clear();
@@ -248,7 +248,7 @@ diffractiveDissVertex::readKinematicsData(const vector<ParVector<Vector3> >& pro
 	}
 
 	// set beam
-	_beamMomCache = prodKinMomenta[0];
+	copyToParVector(_beamMomCache, prodKinMomenta[0]);
 	if (_debug) {
 		printDebug << "setting momentum of beam particle '" << beam()->name()
 				   << "' to " << firstEntriesToString(_beamMomCache, 3) << " GeV" << endl;
@@ -260,7 +260,7 @@ diffractiveDissVertex::readKinematicsData(const vector<ParVector<Vector3> >& pro
 			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 			throw;
 		}
-		_recoilMomCache = prodKinMomenta[1];
+		copyToParVector(_recoilMomCache, prodKinMomenta[1]);
 		if (_debug) {
 			printDebug << "setting momentum of recoil particle '" << recoil()->name()
 					   << "' to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl;
@@ -273,7 +273,7 @@ diffractiveDissVertex::readKinematicsData(const vector<ParVector<Vector3> >& pro
 			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 			throw;
 		}
-		_targetMomCache = prodKinMomenta[2];
+		copyToParVector(_targetMomCache, prodKinMomenta[2]);
 		if (_debug) {
 			printDebug << "setting momentum of target particle '" << target()->name()
 					   << "' to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;

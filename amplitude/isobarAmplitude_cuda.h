@@ -21,7 +21,8 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      functions geting time
+//      CUDA code for isobarAmplitude.cc
+//      This is only used when compiling with CUDA enabled.
 //
 //
 // Author List:
@@ -31,28 +32,46 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef TIMEUTILS_HPP
-#define TIMEUTILS_HPP
+#ifndef ISOBARAMPLITUDE_CUDA_H
+#define ISOBARAMPLITUDE_CUDA_H
 
-#include <string>
-#include "stdint.h"
-#include "time.h"
+#include "typedefs.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 namespace rpwa {
-	
-	inline
-	void
-	printTimeDiff(boost::posix_time::ptime startTime, const std::string& location)
-	{
-		boost::posix_time::ptime stopTime = boost::posix_time::microsec_clock::local_time();
-		uint64_t timeDiff = (stopTime - startTime).total_milliseconds();
-		std::cout << location << " timediff = " << timeDiff << std::endl;
-	}
 
+	void 
+	thrust_isobarAmplitude_amplitude(
+		const ParVector<Complex>& permAmp,
+		ParVector<Complex>& amp,
+		Complex smyTermFactor);
+
+	void
+	thrust_isobarAmplitude_gjTransform(
+		const ParVector<LorentzVector>& beamLv,
+		const ParVector<LorentzVector>& XLv,
+		ParVector<LorentzRotation>& result);
+
+	void
+	thrust_isobarAmplitude_parallelLorentzRotationInvert(
+		ParVector<LorentzRotation>& lzRot);
+
+	void
+	thrust_isobarAmplitude_spaceInvertDecay(
+		ParVector<LorentzVector>& lzVec);
+
+	void
+	thrust_isobarAmplitude_reflectDecay(
+		ParVector<LorentzVector>& lzVec);
+
+	void
+	thrust_isobarAmplitude_twoBodyDecayAmplitudeSum(
+		const ParVector<Complex>& parentAmp,
+		const ParVector<Complex>& daughter1Amp,
+		const ParVector<Complex>& daughter2Amp,
+		ParVector<Complex>& ampSum);
 
 }  // namespace rpwa
 
 
-#endif  // TIMEUTILS_HPP
+#endif  // ISOBARAMPLITUDE_CUDA_H

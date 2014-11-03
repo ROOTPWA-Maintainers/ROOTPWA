@@ -122,7 +122,9 @@ namespace rpwa {
 			return *this;
 		}
 
-		HOST_DEVICE CudaVector3<T> operator - () const { return CudaVector3<T>(- _x, - _y, - _z); }
+		HOST_DEVICE CudaVector3<T> operator - () const {
+			return CudaVector3<T>(- _x, - _y, - _z);
+		}
 		
 		HOST_DEVICE T Dot(const CudaVector3<T> & other) const {
 			return _x * other._x + _y * other._y + _z * other._z;
