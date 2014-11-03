@@ -13,7 +13,7 @@ def writeParticleToFile (file, particleName, particleMomentum):
 		partProperties = pyRootPwa.core.particleDataTable.entry(particleName)
 		charge = partProperties.charge
 		energy = math.sqrt(particleMomentum.Px()**2 + particleMomentum.Py()**2 + particleMomentum.Pz()**2 + partProperties.mass2)
-		outputEvtFile.write(
+		file.write(
 		                    str(pyRootPwa.core.particleDataTable.geantIdFromParticleName(particleName)) + " " +
 		                    str(charge) + " " +
 		                    '%.16e' % particleMomentum.Px() + " " +
@@ -21,18 +21,20 @@ def writeParticleToFile (file, particleName, particleMomentum):
 		                    '%.16e' % particleMomentum.Pz() + " " +
 		                    '%.16e' % energy + "\n"
 		                   )
+		return True
 	else:
-		printErr("particle (" + particleName + ") not found in particleDataTable. Aborting...")
-		sys.exit()
+		pyRootPwa.utils.printErr("particle '" + particleName + "' not found in particleDataTable.")
+		return False
 
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
 	                                 description="Converts ROOTPWA .root file to .evt file."
 	                                 )
-	parser.add_argument("inputFile", help="The .root file to be read")
-	parser.add_argument("-o", "--outputFile", help="The .evt file to be written", default="output.evt")
-	parser.add_argument("-p", "--particleDataTable", help="Path of particleDataTable file", default='$ROOTPWA/particleData/particleDataTable.txt')
+	parser.add_argument("inputFileName", help="The path to the RootPwa input file")
+	parser.add_argument("outputFileName", help="The path to the ASCII evt output file")
+	parser.add_argument("-p", "--particleDataTable", help="The path of particleDataTable file (default: '$ROOTPWA/particleData/particleDataTable.txt')",
+	                    default='$ROOTPWA/particleData/particleDataTable.txt')
 
 	args = parser.parse_args()
 
@@ -41,11 +43,12 @@ if __name__ == "__main__":
 	printSucc = pyRootPwa.utils.printSucc
 	ROOT = pyRootPwa.ROOT
 
-	if not pyRootPwa.core.particleDataTable.instance.readFile(args.particleDataTable):
-		printErr("error loading particleDataTable. Aborting...")
+	pdtPath = os.path.expandvars(args.particleDataTable)
+	if not pyRootPwa.core.particleDataTable.instance.readFile(pdtPath):
+		printErr("error loading particleDataTable from '" + pdtPath + "'. Aborting...")
 		sys.exit(1)
 
-	inputFile = ROOT.TFile(args.inputFile, "READ")
+	inputFile = ROOT.TFile(args.inputFileName, "READ")
 	if not inputFile:
 		printErr("error opening input file. Aborting...")
 		sys.exit(1)
@@ -55,30 +58,26 @@ if __name__ == "__main__":
 	prodKinPartNames = metaData.productionKinematicsParticleNames()
 	decayKinPartNames = metaData.decayKinematicsParticleNames()
 	tree = metaData.eventTree()
-	outputFileName = args.outputFile
-	if outputFileName == "output.evt":
-		binningMap = metaData.binningMap()
-		if len(binningMap) > 0:
-			for binningVariable in binningMap:
-				outputFileName = binningVariable & "(" & binningMap[binningVariable][0] & "-" & binningMap[binningVariable][1] & ")"
-			outputFileName += ".evt"
 
-	outputEvtFile = open(outputFileName, 'w')
-	particleCount = len(prodKinPartNames) + len(decayKinPartNames)
+	with open(args.outputFileName, 'w') as outputEvtFile:
+		particleCount = len(prodKinPartNames) + len(decayKinPartNames)
+		for event in tree:
+			prodKinMomenta  = event.__getattr__(metaData.productionKinematicsMomentaBranchName)
+			decayKinMomenta = event.__getattr__(metaData.decayKinematicsMomentaBranchName)
+			if particleCount != (prodKinMomenta.GetEntries() + decayKinMomenta.GetEntries()):
+				printErr("particle count in metaData does not match particle count in event data.")
+				sys.exit(1)
+			outputEvtFile.write(str(particleCount) + '\n')
 
-	for event in tree:
-		prodKinMomenta  = event.__getattr__(metaData.productionKinematicsMomentaBranchName)
-		decayKinMomenta = event.__getattr__(metaData.decayKinematicsMomentaBranchName)
-		if particleCount != prodKinMomenta.GetEntries() + decayKinMomenta.GetEntries():
-			printWarn("particle count in metaData does not match particle count in event data.")
-		outputEvtFile.write(str(particleCount) + '\n')
+			for particle in range(prodKinMomenta.GetEntries()):
+				if not writeParticleToFile(outputEvtFile, prodKinPartNames[particle], prodKinMomenta[particle]):
+					printErr("failed writing particle '" + particle + "' to output file.")
+					sys.exit(1)
 
-		for particle in range(prodKinMomenta.GetEntries()):
-			writeParticleToFile(outputEvtFile, prodKinPartNames[particle], prodKinMomenta[particle])
+			for particle in range(decayKinMomenta.GetEntries()):
+				if not writeParticleToFile(outputEvtFile, decayKinPartNames[particle], decayKinMomenta[particle]):
+					printErr("failed writing particle '" + particle + "' to output file.")
+					sys.exit(1)
 
-		for particle in range(decayKinMomenta.GetEntries()):
-			writeParticleToFile(outputEvtFile, decayKinPartNames[particle], decayKinMomenta[particle])
-
-	inputFile.Close()
-	outputEvtFile.close()
-	printSucc("successfully converted '" + args.inputFile + "' to '" + args.outputFile + "'.")
+		inputFile.Close()
+	printSucc("successfully converted '" + args.inputFileName + "' to '" + args.outputFileName + "'.")
