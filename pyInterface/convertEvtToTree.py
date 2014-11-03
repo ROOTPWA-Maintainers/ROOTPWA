@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import os
 import sys
 
 import pyRootPwa
@@ -9,27 +8,27 @@ import pyRootPwa.core
 
 class EventFile:
 
-	evtfile = None
+	evtFile = None
 
-	def __init__(self, infile):
-		self.evtfile = infile
+	def __init__(self, inputFile):
+		self.evtFile = inputFile
 
 
-	def get_event(self):
-		n_lines_to_read = self.evtfile.readline()[:-1]
-		if n_lines_to_read == "":
+	def getEvent(self):
+		linesToRead = self.evtFile.readline()[:-1]
+		if linesToRead == "":
 			return None
-		lines = [n_lines_to_read]
-		for i in range(0, int(n_lines_to_read)):
-			lines.append(self.evtfile.readline()[:-1])
+		lines = [linesToRead]
+		for i in range(0, int(linesToRead)):
+			lines.append(self.evtFile.readline()[:-1])
 			if lines[-1] == "":
 				raise Exception("Unexpected end of file")
 		return Event(lines)
 
 
-	def write_event(self, event):
+	def writeEvent(self, event):
 		for line in event.lines:
-			self.evtfile.write(line + "\n")
+			self.evtFile.write(line + "\n")
 
 class Event:
 
@@ -103,8 +102,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
 	                                  description="Converts .evt file to .root file."
 	                                )
-	parser.add_argument("infile", help="The .evt file to be read")
-	parser.add_argument("-o", "--output", help="The .root file to be written", default="output.root")
+	parser.add_argument("inputFileName", help="The .evt file to be read")
+	parser.add_argument("outputFileName", help="The .root file to be written")
 	parser.add_argument("-u", "--userstring", help="User string", default="")
 	parser.add_argument("-t", "--type", dest="eventsTypeString", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')", default="other")
 	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
@@ -128,12 +127,13 @@ if __name__ == "__main__":
 		pass
 		# do nothing
 	else:
-		printErr("type '" + eventsTypeString + "' is invalid as an event data type.")
+		printErr("type '" + args.eventsTypeString + "' is invalid as an event data type.")
+	printInfo("set eventsType to '" + str(eventsType) + "'.")
+	printInfo("set userString to '" + args.userstring + "'.")
 
-	inputFile = args.infile
-	outputFile = pyRootPwa.ROOT.TFile.Open(args.output, "NEW")
+	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
-		printErr("could not open output file. Aborting...")
+		printErr("could not open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 
 	binningMap = {}
@@ -145,15 +145,17 @@ if __name__ == "__main__":
 					binningMap[splitUp[0]] = (float(splitUp[1]), float(splitUp[2]))
 					printInfo("adding to binning map: " + splitUp[0] + " -> (" + splitUp[1] + "," + splitUp[2] + ")")
 				else:
-					printWarn("did not get the right amount of semicolon seperated values for " + splitUp[0] + "-bin. Binning variable was ignored!")
+					printErr("did not get the right amount of semicolon seperated values for " + splitUp[0] + "-bin. Aborting...")
+					sys.exit(1)
 			except ValueError:
-				printWarn("could not convert binning map boundaries of " + splitUp[0] + "-bin to float. Binning variable was ignored!")
+				printErr("could not convert binning map boundaries of " + splitUp[0] + "-bin to float. Aborting...")
+				sys.exit(1)
 
-	with open(inputFile, 'r') as infile:
-		printInfo("Opened input file " + inputFile)
-		in_event_file = EventFile(infile)
+	with open(args.inputFileName, 'r') as inputFile:
+		printInfo("Opened input file '" + args.inputFileName + "'.")
+		eventFile = EventFile(inputFile)
 
-		event = in_event_file.get_event()
+		event = eventFile.getEvent()
 
 		fileWriter = pyRootPwa.core.eventFileWriter()
 		initialProdNames  = event.getProductionKinematicsParticleNames()
@@ -169,7 +171,7 @@ if __name__ == "__main__":
 		while event is not None and success:
 			event.reorder(initialProdNames, initialDecayNames)
 			fileWriter.addEvent(event.getProductionKinematicsMomenta(), event.getDecayKinematicsMomenta())
-			event = in_event_file.get_event()
+			event = eventFile.getEvent()
 
 	fileWriter.finalize()
-	printSucc("successfully converted " + args.infile + " to " + args.output + ".")
+	printSucc("successfully converted '" + args.inputFileName + "' to '" + args.outputFileName + "'.")
