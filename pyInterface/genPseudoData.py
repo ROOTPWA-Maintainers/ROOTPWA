@@ -70,20 +70,23 @@ if __name__ == "__main__":
 	printInfo = pyRootPwa.utils.printInfo
 	printDebug = pyRootPwa.utils.printDebug
 
-	config = pyRootPwa.rootPwaConfig(args.configFileName)
+	config = pyRootPwa.rootPwaConfig()
+	if not config.initialize(args.configFileName):
+		pyRootPwa.utils.printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
+		sys.exit(1)
 	pyRootPwa.core.particleDataTable.instance.readFile(config.pdgFileName)
 
-	if config.outputFileFormat == "root":
+	#if config.outputFileFormat == "root":
 		# read integral matrix from ROOT file
-		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-		integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get("integral"))
-		integralFile.Close()
-	else:
-		# read integral matrix from ASCII file
-		integral = pyRootPwa.core.ampIntegralMatrix()
-		if not integral.readAscii(args.integralFile):
-			printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
-			sys.exit(1)
+	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
+	integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get("integral"))
+	integralFile.Close()
+	#else:
+	#	# read integral matrix from ASCII file
+	#	integral = pyRootPwa.core.ampIntegralMatrix()
+	#	if not integral.readAscii(args.integralFile):
+	#		printErr("Cannot read normalization integral from file '" + args.integralFile + "'. Aborting...")
+	#		sys.exit(1)
 	nmbNormEvents = integral.nmbEvents()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
@@ -143,10 +146,10 @@ if __name__ == "__main__":
 		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		if config.outputFileFormat == "root":
-			keyfile = keyfileDirectory + "/" + waveName + ".key"
-		else:
-			keyfile = keyfileDirectory + "/" + waveName.replace(".amp", ".key")
+		#if config.outputFileFormat == "root":
+		keyfile = keyfileDirectory + "/" + waveName + ".key"
+		#else:
+		#	keyfile = keyfileDirectory + "/" + waveName.replace(".amp", ".key")
 		if not os.path.isfile(keyfile):
 			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)

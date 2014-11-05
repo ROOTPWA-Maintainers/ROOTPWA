@@ -38,7 +38,10 @@ class fileManager:
 	binList = []
 
 	def initialize(self, configFileName):
-		config = pyRootPwa.rootPwaConfig(configFileName)
+		config = pyRootPwa.rootPwaConfig()
+		if not config.initialize(configFileName):
+			pyRootPwa.utils.printErr("loading config file '" + configFileName + "' failed.")
+			return False
 		self.dataDirectory      = config.dataDirectory
 		self.keyDirectory       = config.keyDirectory
 		self.amplitudeDirectory = config.ampDirectory
