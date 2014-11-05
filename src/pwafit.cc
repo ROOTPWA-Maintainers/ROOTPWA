@@ -53,10 +53,10 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
-#ifdef USE_CUDA
-#include "complex.cuh"
-#include "likelihoodInterface.cuh"
-#endif
+// #ifdef USE_CUDA
+// #include "complex.cuh"
+// #include "likelihoodInterface.cuh"
+// #endif
 #include "amplitudeTreeLeaf.h"
 
 
@@ -107,11 +107,11 @@ usage(const string& progName,
 	     << "                                         Fumili:      -" << endl
 	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-#ifdef USE_CUDA
-	     << "        -c         enable CUDA acceleration (default: off)" << endl
-#else
+// #ifdef USE_CUDA
+// 	     << "        -c         enable CUDA acceleration (default: off)" << endl
+// #else
 	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
-#endif
+//#endif
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -260,9 +260,9 @@ main(int    argc,
 			minimizerTolerance = atof(optarg);
 			break;
 		case 'c':
-#ifdef USE_CUDA
-			cudaEnabled = true;
-#endif
+// #ifdef USE_CUDA
+// 			cudaEnabled = true;
+// #endif
 			break;
 		case 'q':
 			quiet = true;
@@ -313,9 +313,9 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-#ifdef USE_CUDA
-	L.enableCuda(cudaEnabled);
-#endif
+// #ifdef USE_CUDA
+// 	L.enableCuda(cudaEnabled);
+// #endif
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
@@ -530,10 +530,10 @@ main(int    argc,
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
-#ifdef USE_CUDA
-	printInfo << "total CUDA kernel time: "
-	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
-#endif
+// #ifdef USE_CUDA
+// 	printInfo << "total CUDA kernel time: "
+// 	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
+// #endif
 
 	// ---------------------------------------------------------------------------
 	// write out result

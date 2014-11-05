@@ -49,7 +49,7 @@ struct ThrustFunctor_leptoProductionVertex_productionAmps
 	HOST_DEVICE
 	Complex operator()(T t) const
 	{
-		const LorentzVector& targetVec = thrust::get<0>(t);
+		const LorentzVector& targetLv = thrust::get<0>(t);
 		const LorentzVector& beamVec = thrust::get<1>(t);
 		const LorentzVector& scatteredLeptonVec = thrust::get<2>(t);
 		const LorentzVector& virtPhotonVec = thrust::get<3>(t);
@@ -65,7 +65,6 @@ struct ThrustFunctor_leptoProductionVertex_productionAmps
 		Vector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
 										   // and X particle used to define lepton-scattering and
 										   // production plane
-		const LorentzVector targetLv = targetVec;
 		if (targetLv.Vect() == TVector3(0, 0, 0)) {
 			// fixed target case:
 			// since going from fixed target frame into (virtual photon,

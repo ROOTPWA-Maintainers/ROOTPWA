@@ -78,25 +78,19 @@ set(SOURCES
 	phaseSpaceIntegral.cc
 	)
 	
-if(USE_CUDA)	
-	set(SOURCES
-		${SOURCES}
-		thrustVector.cc
-		particle_cuda.cc
-		leptoProductionVertex_cuda.cc
-		isobarDecayVertex_cuda.cc
-		massDependence_cuda.cc
-		isobarAmplitude_cuda.cc
-		isobarHelicityAmplitude_cuda.cc
-		isobarCanonicalAmplitude_cuda.cc
+# source files that are compiled into cudalibrary
+if(USE_CUDA)
+	set(SOURCES_CUDA
+		thrustVector.cu
+		particle_cuda.cu
+		leptoProductionVertex_cuda.cu
+		isobarDecayVertex_cuda.cu
+		massDependence_cuda.cu
+		isobarAmplitude_cuda.cu
+		isobarHelicityAmplitude_cuda.cu
+		isobarCanonicalAmplitude_cuda.cu
 		)
 endif()
-	
-# source files that are compiled into cudalibrary
-#set(SOURCES_CUDA
-#	thrustVector.cu
-#	)
-
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
@@ -111,29 +105,32 @@ root_generate_dictionary(
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
-
+# cuda library
+if(USE_CUDA)
+	set(THIS_LIB_CUDA "RootPwaAmpCuda")
+	cuda_add_library(
+	#make_shared_library(
+		"${THIS_LIB_CUDA}"
+		"${SOURCES_CUDA}"
+		SHARED)
+else()
+	set(THIS_LIB_CUDA "")	
+endif()
+	
 # library
 set(THIS_LIB "RootPwaAmp")
 make_shared_library(
-#cuda_add_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	"${ROOTPWA_NBPSGEN_LIBS}"
+	"${THIS_LIB_CUDA}"
 	)
-	
-# cuda library
-#set(THIS_LIB_CUDA "RootPwaAmpCuda")
-#cuda_add_library(
-#	"${THIS_LIB_CUDA}"
-#	"${SOURCES_CUDA}"
-#	)
 
 
 # executables
-#cuda_add_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})
 make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})
 make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB})
 make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB})

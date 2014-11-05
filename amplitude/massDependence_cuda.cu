@@ -267,6 +267,51 @@ rpwa::thrust_massDependence_f0980BreitWigner_amp(
 			ThrustFunctor_massDependence_f0980BreitWigner_amp(parentMass, parentWidth));
 }
 
+struct ThrustFunctor_massDependence_piPiSWaveAuMorganPenningtonVes_amp
+{
+	const double _piChargedMass;
+	const double f0Mass;
+	const double f0Width;
+	const Complex coupling;
+	ThrustFunctor_massDependence_piPiSWaveAuMorganPenningtonVes_amp(double _piChargedMass, double f0Mass, double f0Width, Complex coupling):
+		_piChargedMass(_piChargedMass), f0Mass(f0Mass), f0Width(f0Width), coupling(coupling) {}
+
+	HOST_DEVICE
+	Complex operator()(const LorentzVector& parentVec, const Complex& ampM)
+	{
+		const double M = parentVec.M();
+
+		Complex bw = 0;
+		if (M > 2 * _piChargedMass) {
+			const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
+			const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
+			const double Gamma = f0Width * (q / q0);
+			// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+			const double C     = f0Mass * Gamma;
+			const double A     = C * (M / q);
+			const double B     = f0Mass * f0Mass - M * M;
+			bw = (A / (B * B + C * C)) * Complex(B, C);
+		}
+
+		const Complex amp = ampM - coupling * bw;
+		return amp;
+	}
+};
+
+void
+rpwa::thrust_massDependence_piPiSWaveAuMorganPenningtonVes_amp(
+	const ParVector<LorentzVector>& parentVec,
+	const ParVector<Complex>& ampM,
+	ParVector<Complex>& result,
+	double _piChargedMass,
+	double f0Mass,
+	double f0Width,
+	Complex coupling)
+{
+	thrust::transform(parentVec.begin(), parentVec.end(), ampM.begin(), result.begin(),
+			ThrustFunctor_massDependence_piPiSWaveAuMorganPenningtonVes_amp(_piChargedMass, f0Mass, f0Width, coupling));
+}
+
 struct ThrustFunctor_massDependence_rhoPrimeMassDep_amp
 {
 	const double M01;

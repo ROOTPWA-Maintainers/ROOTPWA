@@ -83,6 +83,16 @@ namespace rpwa {
 		double parentWidth);
 
 	void
+	thrust_massDependence_piPiSWaveAuMorganPenningtonVes_amp(
+		const ParVector<LorentzVector>& parentVec,
+		const ParVector<Complex>& ampM,
+		ParVector<Complex>& result,
+		double _piChargedMass,
+		double f0Mass,
+		double f0Width,
+		Complex coupling);
+
+	void
 	thrust_massDependence_rhoPrimeMassDep_amp(
 		const ParVector<LorentzVector>& parentVec,
 		ParVector<Complex>& result,

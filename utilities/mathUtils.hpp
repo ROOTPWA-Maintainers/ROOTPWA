@@ -44,6 +44,7 @@
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 
+#include "cudaUtils.hpp"
 
 namespace rpwa {
 
@@ -71,6 +72,7 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// various small helper functions
+	HOST_DEVICE
 	inline
 	int
 	powMinusOne(const int exponent)  ///< optimized function for (-1)^n
@@ -83,6 +85,7 @@ namespace rpwa {
 
 
 	template <typename T>
+	HOST_DEVICE
 	inline
 	bool
 	isOdd(const T val)  ///< returns whether val is an odd number (assuming T is integer type)
@@ -92,6 +95,7 @@ namespace rpwa {
 
 
 	template <typename T>
+	HOST_DEVICE
 	inline
 	bool
 	isEven(const T val)  ///< returns whether val is an even number (assuming T is integer type)
@@ -101,6 +105,7 @@ namespace rpwa {
 
 
 	template<typename T>
+	HOST_DEVICE
 	inline
 	T signum(const T& val)  ///< extracts sign from value
 	{

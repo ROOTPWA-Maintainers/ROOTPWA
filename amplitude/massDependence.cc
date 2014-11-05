@@ -98,7 +98,7 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 	printTimeDiff(timeBefore, "EPL : flatRangeMassDependence::amp");
 
 	if(_debug) {
-		for(unsigned int i = 0; i < result.size(); ++i) {
+		for(unsigned int i = 0; i < 3 && i < result.size(); ++i) {
 			printDebug << name() << " M = " << parentVec[i].M()
 								 << ", M0 = " << parent->mass()
 								 << ", G0 = " << parent->width()
@@ -497,10 +497,6 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 ParVector<Complex>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-
-	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported" << endl;
-	throw;
-
 	const double  f0Mass  = 0.9837;  // [GeV]
 	const double  f0Width = 0.0376;  // [GeV]
 	const Complex coupling(-0.3743, 0.3197);
@@ -517,6 +513,10 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 	ParVector<Complex> result(parentVec.size());
 	// !! EVENT PARALLEL LOOP
 	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+#ifdef USE_CUDA
+	thrust_massDependence_piPiSWaveAuMorganPenningtonVes_amp(
+			parentVec, ampM, result, _piChargedMass, f0Mass, f0Width, coupling);
+#else
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int i = 0; i < size; ++i) {
@@ -543,7 +543,8 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 	}
-	printTimeDiff(timeBefore, "EPL: piPiSWaveAuMorganPenningtonVes::amp");
+#endif
+	printTimeDiff(timeBefore, "EPL : piPiSWaveAuMorganPenningtonVes::amp");
 
 	return result;
 }

@@ -35,6 +35,7 @@
 #include <thrust/transform.h>
 
 #include "cudaUtils.hpp"
+#include "mathUtils.hpp"
 #include "particle_cuda.h"
 
 using namespace rpwa;
@@ -47,7 +48,7 @@ struct ThrustFunctor_particle_setMomenta
 	HOST_DEVICE
 	LorentzVector operator()(const Vector3& mom)
 	{
-		return LorentzVector(mom, sqrt(mom.Mag2() + mass2));
+		return LorentzVector(mom, rpwa::sqrt(mom.Mag2() + mass2));
 	}
 };
 

@@ -75,7 +75,7 @@ namespace rpwa {
 		{
 			if (_cache.size() == 0)
 				initCache();
-			if ((n < 0) or (n >= _cache.size())) {
+			if (n >= _cache.size()) {
 				printErr << "cannot calculate factorial of " << n << ": value out of range" << std::endl;
 				throw;
 			}
