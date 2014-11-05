@@ -30,13 +30,13 @@ namespace rpwa {
 		                const int&                                               splitlevel = 99,
 		                const int&                                               buffsize = 256000);
 
-		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
-		              const std::vector<TVector3>& decayKinematicsMomenta,
-		              const std::vector<double>&   additionalVariablesToSave = std::vector<double>());
-
 		void addEvent(const TClonesArray&        productionKinematicsMomenta,
 		              const TClonesArray&        decayKinematicsMomenta,
 		              const std::vector<double>& additionalVariablesToSave = std::vector<double>());
+
+		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
+		              const std::vector<TVector3>& decayKinematicsMomenta,
+		              const std::vector<double>&   additionalVariablesToSave = std::vector<double>());
 
 
 		bool finalize();
