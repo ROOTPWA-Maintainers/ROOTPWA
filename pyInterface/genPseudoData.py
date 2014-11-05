@@ -70,7 +70,10 @@ if __name__ == "__main__":
 	printInfo = pyRootPwa.utils.printInfo
 	printDebug = pyRootPwa.utils.printDebug
 
-	config = pyRootPwa.rootPwaConfig(args.configFileName)
+	config = pyRootPwa.rootPwaConfig()
+	if not config.initialize(args.configFileName):
+		pyRootPwa.utils.printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
+		sys.exit(1)
 	pyRootPwa.core.particleDataTable.instance.readFile(config.pdgFileName)
 
 	# read integral matrix from ROOT file

@@ -40,7 +40,7 @@ class rootPwaConfig:
 	fitResultBranchName                    = ""
 
 
-	def __init__(self, configFileName):
+	def initialize(self, configFileName):
 		self.config = ConfigParser.ConfigParser()
 		self.configFileName = configFileName
 
@@ -48,11 +48,11 @@ class rootPwaConfig:
 			with open(configFileName, 'r') as configFile:
 				self.config.readfp(configFile)
 		except IOError:
-			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be opened. Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be opened.")
+			return False
 		except ConfigParser.Error:
-			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be parsed. Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be parsed.")
+			return False
 
 		try:
 			self.pdgFileName                 = os.path.expanduser(os.path.expandvars(self.config.get('general', 'particleDataTable')))
@@ -108,14 +108,15 @@ class rootPwaConfig:
 			self.fitResultBranchName = self.config.get('fit', 'fitResultBranch')
 
 		except ConfigParser.Error as exc:
-			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "'). Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "').")
+			return False
 
 		if not os.path.isdir(self.dataDirectory):
-			pyRootPwa.utils.printErr("Data directory invalid. Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("data directory invalid. ('" + self.dataDirectory + "')")
+			return False
 
 		if self.phaseSpaceEventFileExtensionQualifier == "":
 			pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
 		if self.accCorrPSEventFileExtensionQualifier == "":
 			pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")
+		return True

@@ -145,7 +145,10 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printInfo("X mass histogram found. Switching root to batch mode.")
 		pyRootPwa.ROOT.gROOT.SetBatch(True)
 
-	pyRootPwa.config = pyRootPwa.rootPwaConfig(arguments.configFileName)
+	pyRootPwa.config = pyRootPwa.rootPwaConfig()
+	if not pyRootPwa.config.initialize(arguments.configFileName):
+		pyRootPwa.utils.printErr("loading config file '" + arguments.configFileName + "' failed. Aborting...")
+		sys.exit(1)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
 	waveDesc = pyRootPwa.core.waveDescription()
