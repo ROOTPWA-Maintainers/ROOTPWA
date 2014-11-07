@@ -136,20 +136,9 @@ if __name__ == "__main__":
 		printErr("could not open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	binningMap = {}
-	if args.binning:
-		for bin in args.binning:
-			try:
-				splitUp = bin.split(";")
-				if len(splitUp)==3:
-					binningMap[splitUp[0]] = (float(splitUp[1]), float(splitUp[2]))
-					printInfo("adding to binning map: " + splitUp[0] + " -> (" + splitUp[1] + "," + splitUp[2] + ")")
-				else:
-					printErr("did not get the right amount of semicolon seperated values for " + splitUp[0] + "-bin. Aborting...")
-					sys.exit(1)
-			except ValueError:
-				printErr("could not convert binning map boundaries of " + splitUp[0] + "-bin to float. Aborting...")
-				sys.exit(1)
+	binningMap = pyRootPwa.utils.binningMapFromArgList(args.binning)
+	if not binningMap:
+		printWarn("received no valid binning map argument")
 
 	with open(args.inputFileName, 'r') as inputFile:
 		printInfo("Opened input file '" + args.inputFileName + "'.")
