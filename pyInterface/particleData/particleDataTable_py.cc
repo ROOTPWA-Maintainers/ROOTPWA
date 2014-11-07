@@ -56,6 +56,12 @@ namespace {
 		return bp::list(retVec);
 
 	}
+	bp::tuple particleDataTable_geantIdAndChargeFromParticleName(const std::string& name) {
+			int id;
+			int charge;
+			rpwa::particleDataTable::geantIdAndChargeFromParticleName(name, id, charge);
+			return bp::make_tuple(id, charge);
+	}
 
 }
 
@@ -118,19 +124,16 @@ void rpwa::py::exportParticleDataTable()
 		.def("clear", &rpwa::particleDataTable::clear)
 		.staticmethod("clear")
 
-		.def(
-			"particleNameFromGeantId"
-			, &rpwa::particleDataTable::particleNameFromGeantId
-			, (bp::arg("id"))
-		)
+		.def("particleNameFromGeantId", &rpwa::particleDataTable::particleNameFromGeantId)
 		.staticmethod("particleNameFromGeantId")
 
-		.def(
-			"geantIdFromParticleName"
-			, &rpwa::particleDataTable::geantIdFromParticleName
-			, (bp::arg("name"))
-		)
+		.def("geantIdFromParticleName", &rpwa::particleDataTable::geantIdFromParticleName)
 		.staticmethod("geantIdFromParticleName")
+
+		.def("geantIdAndChargeFromParticleName"
+		     , &particleDataTable_geantIdAndChargeFromParticleName
+		     , (bp::arg("name")))
+		.staticmethod("geantIdAndChargeFromParticleName")
 
 		.add_static_property("debugParticleDataTable", &rpwa::particleDataTable::debug, &rpwa::particleDataTable::setDebug);
 
