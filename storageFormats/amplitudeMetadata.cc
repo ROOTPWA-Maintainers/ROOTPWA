@@ -15,6 +15,7 @@
 using namespace rpwa;
 using namespace std;
 
+const std::string rpwa::amplitudeMetadata::amplitudeLeafName = "amplitude";
 
 rpwa::amplitudeMetadata::amplitudeMetadata()
 	: _contentHash(""),

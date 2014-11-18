@@ -64,6 +64,8 @@ void rpwa::py::exportAmplitudeMetadata() {
 			, (bp::arg("inputFile"), bp::arg("objectBaseName"), bp::arg("quiet")=false)
 			, bp::return_value_policy<bp::reference_existing_object>()
 		)
-		.staticmethod("readAmplitudeFile");
+		.staticmethod("readAmplitudeFile")
+		.def_readonly("amplitudeLeafName", &rpwa::amplitudeMetadata::amplitudeLeafName)
+		;
 
 }
