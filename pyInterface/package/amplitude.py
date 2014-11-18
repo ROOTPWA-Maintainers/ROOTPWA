@@ -23,11 +23,6 @@ def calcAmplitude(inputFileName,
 	if 'ROOTPWA' not in _os.environ:
 		printWarn("$ROOTPWA not set.")
 		return False
-	particleDataTableFileName = _os.environ['ROOTPWA'] + "/particleData/particleDataTable.txt"
-	if not _os.path.isfile(particleDataTableFileName):
-		printWarn("particle data table '" + particleDataTableFileName + "' not found.")
-		return False
-	pyRootPwa.core.particleDataTable.readFile(particleDataTableFileName)
 
 	inputFile = ROOT.TFile.Open(inputFileName, "READ")
 	if not inputFile:
@@ -42,8 +37,7 @@ def calcAmplitude(inputFileName,
 		nEvents = min(nEvents, maxNumberOfEvents)
 	outputFile = ROOT.TFile.Open(outputFileName, "NEW")
 	if not outputFile:
-		printWarn("could not open output file '" + outputFile + "'.")
-		outputFile.Close()
+		printWarn("could not open output file '" + outputFileName + "'.")
 		return False
 
 	if not _os.path.isfile(keyFileName):
