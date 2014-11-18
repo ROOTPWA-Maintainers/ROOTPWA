@@ -33,6 +33,8 @@ namespace rpwa {
 		Int_t Write(const char* name = 0, Int_t option = 0, Int_t bufsize = 0) { return ((const amplitudeMetadata*)this)->Write(name, option, bufsize); }
 		Int_t Write(const char* name = 0, Int_t option = 0, Int_t bufsize = 0) const;
 
+		static const std::string amplitudeLeafName;
+
 #if defined(__CINT__) || defined(__CLING__) || defined(G__DICTIONARY)
 	// root needs a public default constructor
 	  public:

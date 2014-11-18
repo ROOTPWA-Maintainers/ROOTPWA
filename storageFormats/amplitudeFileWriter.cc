@@ -56,8 +56,8 @@ bool rpwa::amplitudeFileWriter::initialize(TFile&                       outputFi
 	const string treeName = amplitudeMetadata::getObjectNames(objectBaseName).first;
 
 	_metadata._amplitudeTree = new TTree(treeName.c_str(), treeName.c_str());
-	_ampTreeLeaf = new amplitudeTreeLeaf();
-	_metadata._amplitudeTree->Branch(objectBaseName.c_str(), &_ampTreeLeaf, buffsize, splitlevel);
+	_ampTreeLeaf = new rpwa::amplitudeTreeLeaf();
+	_metadata._amplitudeTree->Branch(rpwa::amplitudeMetadata::amplitudeLeafName.c_str(), &_ampTreeLeaf, buffsize, splitlevel);
 
 	_initialized = true;
 	return _initialized;

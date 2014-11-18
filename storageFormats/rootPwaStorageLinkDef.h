@@ -42,7 +42,6 @@
 #pragma link C++ class rpwa::eventMetadata+;
 #pragma link C++ class rpwa::amplitudeMetadata+;
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
@@ -50,7 +49,6 @@
 	targetClass="rpwa::amplitudeTreeLeaf" \
 	source="" target="" \
 	code="{ newObj->rebuildSubAmpLabelMap(); }"
-#endif
 
 
 #endif
