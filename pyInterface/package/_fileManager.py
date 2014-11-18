@@ -1,10 +1,42 @@
 
 import glob
 import os
+import cPickle as pickle
 
 import pyRootPwa
 import pyRootPwa.core
 ROOT = pyRootPwa.ROOT
+
+
+def saveFileManager(fileManagerObject, path):
+	if not os.path.isfile(path):
+		try:
+			pickle.dump(fileManagerObject, open(path, "wb"))
+		except:
+			pyRootPwa.utils.printErr("error saving file manager.")
+			return False
+		return True
+	else:
+		pyRootPwa.utils.printErr("cannot open file manager file '" + path + "'. File already exists.")
+		return False
+
+
+def loadFileManager(path):
+	try:
+		fileManagerObject = pickle.load(open(path, "rb"))
+	except IOError:
+		pyRootPwa.utils.printErr("error loading file manager. File manager not found at '" + path + "'")
+		return None
+	except:
+		pyRootPwa.utils.printErr("error loading file manager.")
+		raise
+	if not fileManagerObject.areKeyFilesSynced():
+		pyRootPwa.utils.printErr("key files are not the same as in file manager.")
+		return None
+	if not fileManagerObject.areDataFilesSynced():
+		pyRootPwa.utils.printErr("data files are not the same as in file manager.")
+		return None
+	return fileManagerObject
 
 
 class InputFile:
