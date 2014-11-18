@@ -39,6 +39,7 @@
 	gSystem->AddIncludePath("-I$ROOTPWA/nBodyPhaseSpace");
 	gSystem->AddIncludePath("-I$ROOTPWA/partialWaveFit");
 	gSystem->AddIncludePath("-I$ROOTPWA/particleData");
+	gSystem->AddIncludePath("-I$ROOTPWA/storageFormats");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 	gSystem->AddIncludePath("-I$BOOST_ROOT");
 	gSystem->AddIncludePath("-I$LIBCONFIG/include");
