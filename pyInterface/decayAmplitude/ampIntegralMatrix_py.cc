@@ -38,22 +38,23 @@ namespace {
 	}
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
-	                                 const bp::object& pyBinAmpFileNames,
-	                                 const bp::object& pyRootAmpFileNames,
+	                                 const bp::list&  ampTreeList,
+	                                 const bp::object& waveNameList,
 	                                 const unsigned long maxNmbEvents,
 	                                 const std::string& weightFileName)
 	{
-		std::vector<std::string> binAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyBinAmpFileNames, binAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for binAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
+		std::vector<TTree*> ampTreeVector(len(ampTreeList));
+		for(unsigned int i = 0; i < len(ampTreeList); ++i) {
+			bp::object item = bp::extract<bp::object>(ampTreeList[i]);
+			ampTreeVector[i] = rpwa::py::convertFromPy<TTree*>(item.ptr());
+		}
+		std::vector<std::string> waveNamesVector;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(waveNameList, waveNamesVector))
+		{
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for waveNames when executing rpwa::ampIntegralMatrix::integrate()");
 			bp::throw_error_already_set();
 		}
-		std::vector<std::string> rootAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyRootAmpFileNames, rootAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for rootAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
-			bp::throw_error_already_set();
-		}
-		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
+		return self.integrate(ampTreeVector, waveNamesVector, maxNmbEvents, weightFileName);
 	}
 
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
@@ -123,8 +124,8 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.def("integrate"
 		     , &ampIntegralMatrix_integrate
-		     , (bp::arg("pyBinAmpFileNames"),
-		         bp::arg("pyRootAmpFileNames"),
+		     , (bp::arg("ampTreeList"),
+		         bp::arg("waveNameList"),
 		         bp::arg("maxNmbEvents")=0,
 		         bp::arg("weightFileName")="")
 		)

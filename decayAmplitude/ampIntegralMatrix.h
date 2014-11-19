@@ -123,9 +123,8 @@ namespace rpwa {
 		                             const std::string& waveNameJ)  const  ///< returns integral matrix element divided by number of events defined by pair of wave names
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
-
-		bool integrate(const std::vector<std::string>& binAmpFileNames,
-		               const std::vector<std::string>& rootAmpFileNames,
+		bool integrate(const std::vector<TTree*>&      ampTrees,
+		               const std::vector<std::string>& waveNames,
 		               const unsigned long             maxNmbEvents   = 0,
 		               const std::string&              weightFileName = "");
 
@@ -144,16 +143,6 @@ namespace rpwa {
 
 
 	private:
-
-		unsigned long openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
-		                              const std::vector<std::string>& ampFileNames,
-		                              const unsigned int              waveIndexOffset = 0);  ///< opens array of .amp files, performs some scrunity checks and adds waves to name <-> index maps
-
-		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
-		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
-		                               const std::vector<std::string>&        ampFileNames,
-		                               const unsigned int                     waveIndexOffset = 0,
-		                               const std::string&                     ampLeafName     = "amplitude");  ///< opens array of .root files, performs some scrunity checks and adds waves to name <-> index maps
 
 		void rebuildWaveNameToIndexMap();  ///< rebuilds the wave name -> index map from _waveNames
 
