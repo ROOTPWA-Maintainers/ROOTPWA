@@ -37,10 +37,11 @@
 #include "TROOT.h"
 #include "TFile.h"
 
+#include "ampIntegralMatrix.h"
+#include "amplitudeMetadata.h"
+#include "fileUtils.hpp"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
-#include "fileUtils.hpp"
-#include "ampIntegralMatrix.h"
 
 
 using namespace std;
@@ -123,24 +124,42 @@ main(int    argc,
 		printErr << "you need to specify at least one amplitude file to process. Aborting..." << endl;
 		usage(progName, 1);
 	}
-	vector<string> rootAmpFileNames;
+	vector<string> ampFileNames;
 	while (optind < argc) {
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
-		if (fileExt == "root")
-			rootAmpFileNames.push_back(fileName);
-		else
-			printWarn << "input file '" << fileName << "' is not a .root file. "
-			          << "skipping." << endl;
+		if (fileExt != "root")
+			printWarn << "input file '" << fileName << "' is not a .root file. skipping." << endl;
+		ampFileNames.push_back(fileName);
 	}
-	if (rootAmpFileNames.size() == 0) {
+	if (ampFileNames.size() == 0) {
 		printErr << "none of the specified input files is a .root file. Aborting..." << endl;
 		usage(progName, 1);
 	}
 
+	// open files containing amplitude data
+	vector<const amplitudeMetadata*> ampMetas;
+	for (size_t i=0; i<ampFileNames.size(); ++i) {
+		const string ampFileName = ampFileNames[i];
+		const string waveName = fileNameNoExtFromPath(ampFileName);
+		TFile* file = TFile::Open(ampFileName.c_str());
+		if (file == NULL || file->IsZombie()) {
+			printErr << "amplitude file '" << ampFileName << "' cannot be opened. Aborting..." << endl;
+			exit(1);
+		}
+
+		const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(file, waveName);
+		if (ampMeta == NULL) {
+			printErr << "cannot read event data from event file '" << ampFileName << "'. Aborting..." << endl;
+			exit(1);
+		}
+
+		ampMetas.push_back(ampMeta);
+	}
+
 	// calculate integral
 	ampIntegralMatrix integral;
-	integral.integrate(rootAmpFileNames, maxNmbEvents, weightFileName);
+	integral.integrate(ampMetas, maxNmbEvents, weightFileName);
 	if (nmbEventsRenorm > 0)
 		integral.renormalize(nmbEventsRenorm);
 

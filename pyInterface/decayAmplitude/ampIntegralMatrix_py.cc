@@ -1,5 +1,6 @@
 #include "ampIntegralMatrix_py.h"
 
+#include <amplitudeMetadata.h>
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
@@ -38,16 +39,16 @@ namespace {
 	}
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
-	                                 const bp::object& pyRootAmpFileNames,
+	                                 const bp::object& pyAmplitudeMetadata,
 	                                 const unsigned long maxNmbEvents,
 	                                 const std::string& weightFileName)
 	{
-		std::vector<std::string> rootAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyRootAmpFileNames, rootAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for rootAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
+		std::vector<const rpwa::amplitudeMetadata*> amplitudeMeta;
+		if(not rpwa::py::convertBPObjectToVector<const rpwa::amplitudeMetadata*>(pyAmplitudeMetadata, amplitudeMeta)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for amplitudeMetadata when executing rpwa::ampIntegralMatrix::integrate()");
 			bp::throw_error_already_set();
 		}
-		return self.integrate(rootAmpFileNames, maxNmbEvents, weightFileName);
+		return self.integrate(amplitudeMeta, maxNmbEvents, weightFileName);
 	}
 
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
@@ -117,7 +118,7 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.def("integrate"
 		     , &ampIntegralMatrix_integrate
-		     , (bp::arg("pyRootAmpFileNames"),
+		     , (bp::arg("amplitudeMetadata"),
 		        bp::arg("maxNmbEvents")=0,
 		        bp::arg("weightFileName")="")
 		)
