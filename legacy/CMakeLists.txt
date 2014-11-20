@@ -50,3 +50,4 @@ include_directories(
 
 # executables
 make_executable(calcAmplitudes calcAmplitudes.cc ${RPWA_HIGHLEVELINTERFACE_LIB})
+make_executable(calcIntegrals  calcIntegrals.cc  ${RPWA_DECAYAMPLITUDE_LIB})
