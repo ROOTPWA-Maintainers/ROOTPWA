@@ -2,9 +2,77 @@
 
 import argparse
 import sys
+import numpy
 
 import pyRootPwa
 import pyRootPwa.core
+ROOT = pyRootPwa.ROOT
+
+def getDiffListAbs(list1, list2):
+	diff = []
+	for i in range(len(list1)):
+		diff.append(list1[i] - list2[i])
+	return diff
+
+def getHistogram(name, title, lst):
+	minHist = minimum(lst) * 1.1
+	maxHist = maximum(lst) * 1.1
+	if abs(maxHist) > abs(minHist):
+		minHist = - abs(maxHist)
+	else:
+		maxHist = abs(minHist)
+	if maxHist == 0: maxHist = 10**(-11)
+	if minHist == 0: minHist = -10**(-11)
+	minHist = -1e-14
+	maxHist = 1e-14
+	hist = ROOT.TH1D(name, title, 150, minHist, maxHist)
+	for val in lst:
+		hist.Fill(val)
+	return hist
+
+def saveHistogram(path, hist):
+	rootFile = ROOT.TFile.Open(path, "RECREATE")
+	hist.Write()
+	rootFile.Close()
+
+def saveTree(path, name, title, lst):
+	rootFile = ROOT.TFile.Open(path, "RECREATE")
+	tree = ROOT.TTree(name, title)
+	arr = numpy.zeros(1)
+	tree.Branch("diff", arr, "diff/D")
+	for element in lst:
+		arr[0] = element
+		tree.Fill()
+	hist = ROOT.TH1D(name + "_hist", title, 301, -1e-11, 1e-11)
+	tree.Draw("diff>>" + name + "_hist")
+	rootFile.Write()
+	rootFile.Close()
+
+def minimum(lst):
+	currMin = lst[0]
+	for val in lst[1:]:
+		if val < currMin: currMin = val
+	return currMin
+
+def maximum(lst):
+	currMax = lst[0]
+	for val in lst[1:]:
+		if val > currMax: currMax = val
+	return currMax
+
+def extractRealImagListsFromAmpFile(fileName):
+	ampFile = ROOT.TFile(fileName, "READ")
+	tree = None
+	for currKey in ampFile.GetListOfKeys():
+		if currKey.GetName()[-3:] == "amp": tree = ampFile.Get(currKey.GetName())
+
+	real = []
+	imag = []
+	for currEvent in tree:
+		leaf  = currEvent.__getattr__(pyRootPwa.core.amplitudeMetadata.amplitudeLeafName)
+		real.append(leaf.amp().real())
+		imag.append(leaf.amp().imag())
+	return (real, imag)
 
 if __name__ == "__main__":
 
@@ -18,42 +86,18 @@ if __name__ == "__main__":
 
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-	ROOT = pyRootPwa.ROOT
 
-	file1 = ROOT.TFile(args.file1, "READ")
-	file2 = ROOT.TFile(args.file2, "READ")
-	tree1 = None
-	tree2 = None
-	for key in file1.GetListOfKeys():
-		if key.GetName()[-3:] == "amp": tree1 = file1.Get(key.GetName())
-	for key in file2.GetListOfKeys():
-		if key.GetName()[-3:] == "amp": tree2 = file2.Get(key.GetName())
-
-	if not tree1.GetEntries() == tree2.GetEntries():
-		print "both trees have to have the same number of entries. Aborting..."
+	real1, imag1 = extractRealImagListsFromAmpFile(args.file1)
+	real2, imag2 = extractRealImagListsFromAmpFile(args.file2)
+	if not len(real1) == len(real2):
+		pyRootPwa.utils.printErr("both trees have to have the same number of entries. Aborting...")
 		sys.exit(1)
 
-	real1 = []
-	imag1 = []
+	diffAbsReal = getDiffListAbs(real1, real2)
+	diffAbsImag = getDiffListAbs(imag1, imag2)
 
-	for event in tree1:
-		leaf1  = event.__getattr__(pyRootPwa.core.amplitudeMetadata.amplitudeLeafName)
-		real1.append(leaf1.amp().real())
-		imag1.append(leaf1.amp().imag())
-
-	real2 = []
-	imag2 = []
-
-	for event in tree2:
-		leaf2  = event.__getattr__(pyRootPwa.core.amplitudeMetadata.amplitudeLeafName)
-		real2.append(leaf2.amp().real())
-		imag2.append(leaf2.amp().imag())
-
-	diff = []
-	diffSum = 0
-
-	for i in range(len(real1)):
-		diff.append((real1[i] - real2[i])**2 + (imag1[i] - imag2[i])**2)
-		diffSum += diff[i]
-	print "Sum of differences squared: " + str(diffSum)
-		
+	histReal = getHistogram("deltaReal", "delta real", diffAbsReal)
+	histImag = getHistogram("deltaImag", "delta imag", diffAbsImag)
+	saveHistogram("histReal.root", histReal)
+	saveHistogram("histImag.root", histImag)
+	pyRootPwa.utils.printSucc("comparing the files '" + args.file1 + "' and '" + args.file2 + "' done.")
