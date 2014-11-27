@@ -109,13 +109,13 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	transform(eventsTypeString.begin(), eventsTypeString.end(), eventsTypeString.begin(), ::tolower);
-	eventMetadata::eventsTypeEnum eventsType = eventMetadata::eventsTypeEnum::OTHER;
+	eventMetadata::eventsTypeEnum eventsType = eventMetadata::OTHER;
 	if(eventsTypeString == "real") {
-		eventsType = eventMetadata::eventsTypeEnum::REAL;
+		eventsType = eventMetadata::REAL;
 	} else if(eventsTypeString == "generated") {
-		eventsType = eventMetadata::eventsTypeEnum::GENERATED;
+		eventsType = eventMetadata::GENERATED;
 	} else if(eventsTypeString == "accepted") {
-		eventsType = eventMetadata::eventsTypeEnum::ACCEPTED;
+		eventsType = eventMetadata::ACCEPTED;
 	} else if(eventsTypeString == "other") {
 		// do nothing
 	} else {
