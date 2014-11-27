@@ -24,7 +24,7 @@ const std::string rpwa::eventMetadata::decayKinematicsMomentaBranchName = "decay
 rpwa::eventMetadata::eventMetadata()
 	: _userString(""),
 	  _contentHash(""),
-	  _eventsType(eventMetadata::eventsTypeEnum::OTHER),
+	  _eventsType(eventMetadata::OTHER),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
 	  _binningMap(),
@@ -301,13 +301,13 @@ Int_t rpwa::eventMetadata::Write(const char* name, Int_t option, Int_t bufsize) 
 std::string rpwa::eventMetadata::getStringForEventsType(const eventsTypeEnum& type)
 {
 	switch(type) {
-		case eventsTypeEnum::OTHER:
+		case OTHER:
 			return "other";
-		case eventsTypeEnum::REAL:
+		case REAL:
 			return "real";
-		case eventsTypeEnum::GENERATED:
+		case GENERATED:
 			return "generated";
-		case eventsTypeEnum::ACCEPTED:
+		case ACCEPTED:
 			return "accepted";
 	}
 	return "UNKNOWN";
