@@ -42,6 +42,42 @@ int rpwa::py::setBranchAddress(T objectPtr, PyObject* pyTree, const std::string&
 		return tree->SetBranchAddress(name.c_str(), pointerMap[objectPtr]);
 }
 
+namespace {
+
+	template<typename T>
+	T* getFromTDirectoryTemplate(PyObject* pyDir, const std::string& name)
+	{
+		TDirectory* dir = rpwa::py::convertFromPy<TDirectory*>(pyDir);
+		if(not dir) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for directory when executing rpwa::py::getFromTDirectory()");
+			bp::throw_error_already_set();
+		}
+		return dynamic_cast<T*>(dir->Get(name.c_str()));
+	}
+
+}
+
+template<typename T>
+T* rpwa::py::getFromTDirectory(PyObject* pyDir, const std::string& name)
+{
+	printErr<<"Because of boost::python, this function has to be explicitly instantiated."<<std::endl;
+	throw;
+}
+
+namespace rpwa {
+
+	namespace py {
+
+		template<>
+		rpwa::ampIntegralMatrix* getFromTDirectory<rpwa::ampIntegralMatrix>(PyObject* pyDir, const std::string& name)
+		{
+			return getFromTDirectoryTemplate<rpwa::ampIntegralMatrix>(pyDir, name);
+		}
+
+	}
+
+}
+
 void rpwa::py::exportRootConverters() {
 
 	bp::def("__RootConverters_convertToPy_TVector3", &rpwa::py::convertToPy<TVector3>);

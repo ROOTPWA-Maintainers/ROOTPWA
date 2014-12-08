@@ -3,6 +3,7 @@
 
 #include<boost/python.hpp>
 
+class TDirectory;
 class TLorentzRotation;
 class TVector3;
 
@@ -18,6 +19,9 @@ namespace rpwa {
 
 		template<typename T>
 		int setBranchAddress(T objectPtr, PyObject* pyTree, const std::string& name);
+
+		template<typename T>
+		T* getFromTDirectory(PyObject* pyDir, const std::string& name);
 
 		void exportRootConverters();
 
