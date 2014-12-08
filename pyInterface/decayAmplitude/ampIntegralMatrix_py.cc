@@ -1,5 +1,7 @@
 #include "ampIntegralMatrix_py.h"
 
+#include <TDirectory.h>
+
 #include <amplitudeMetadata.h>
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
@@ -132,5 +134,11 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug)
 		.def_readonly("integralObjectName", &rpwa::ampIntegralMatrix::integralObjectName);
+
+	bp::def(
+		"getFromTDirectory"
+		, &rpwa::py::getFromTDirectory<rpwa::ampIntegralMatrix>
+		, bp::return_value_policy<bp::manage_new_object>()
+	);
 
 }

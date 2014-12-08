@@ -9,6 +9,7 @@
 #include<TTree.h>
 
 #include<ampIntegralMatrix.h>
+#include<amplitudeMetadata.h>
 #include<fitResult.h>
 
 namespace bp = boost::python;
@@ -40,6 +41,63 @@ int rpwa::py::setBranchAddress(T objectPtr, PyObject* pyTree, const std::string&
 			pointerMap[objectPtr] = new T(objectPtr);
 		}
 		return tree->SetBranchAddress(name.c_str(), pointerMap[objectPtr]);
+}
+
+template<typename T>
+bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name)
+{
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(not tree) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for tree when executing rpwa::py::branch()");
+			bp::throw_error_already_set();
+		}
+		static std::map<T, T*> pointerMap;
+		if(pointerMap.find(objectPtr) == pointerMap.end())
+		{
+			pointerMap[objectPtr] = new T(objectPtr);
+		}
+		TBranch* branch = tree->Branch(name.c_str(), pointerMap[objectPtr]);
+		if (branch == 0) {
+			return false;
+		} else {
+			return true;
+		}
+}
+
+namespace {
+
+	template<typename T>
+	T* getFromTDirectoryTemplate(PyObject* pyDir, const std::string& name)
+	{
+		TDirectory* dir = rpwa::py::convertFromPy<TDirectory*>(pyDir);
+		if(not dir) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for directory when executing rpwa::py::getFromTDirectory()");
+			bp::throw_error_already_set();
+		}
+		return dynamic_cast<T*>(dir->Get(name.c_str()));
+	}
+
+}
+
+template<typename T>
+T* rpwa::py::getFromTDirectory(PyObject* pyDir, const std::string& name)
+{
+	printErr<<"Because of boost::python, this function has to be explicitly instantiated."<<std::endl;
+	throw;
+}
+
+namespace rpwa {
+
+	namespace py {
+
+		template<>
+		rpwa::ampIntegralMatrix* getFromTDirectory<rpwa::ampIntegralMatrix>(PyObject* pyDir, const std::string& name)
+		{
+			return getFromTDirectoryTemplate<rpwa::ampIntegralMatrix>(pyDir, name);
+		}
+
+	}
+
 }
 
 void rpwa::py::exportRootConverters() {
@@ -90,7 +148,18 @@ void rpwa::py::exportRootConverters() {
 		, bp::return_internal_reference<1>()
 	);
 
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaAmpIntegralMatrix", &rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaAmplitudeMetadata", &rpwa::py::convertFromPy<rpwa::amplitudeMetadata*>
+		, bp::return_internal_reference<1>()
+	);
+
 	rpwa::py::setBranchAddress<rpwa::fitResult*>(0, 0, "");
 	rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>(0, 0, "");
+	rpwa::py::branch<rpwa::fitResult*>(0, 0, "");
 
 }
