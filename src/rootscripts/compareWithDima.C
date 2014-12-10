@@ -13,7 +13,6 @@
 #include "TFile.h"
 #include "TMultiGraph.h"
 #include "TGraphErrors.h"
-#include "TRegexp.h"
 #include "TPRegexp.h"
 #include "TH1.h"
 #include "TLegend.h"
