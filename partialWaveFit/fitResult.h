@@ -48,7 +48,7 @@
 #include "TComplex.h"
 #include "TMatrixT.h"
 #include "TString.h"
-#include "TRegexp.h"
+#include "TPRegexp.h"
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
@@ -479,10 +479,11 @@ namespace rpwa {
 		TString Pattern(waveNamePattern);
 		Pattern.ReplaceAll("+","\\+");
 		Pattern.ReplaceAll("\\\\+","\\+");
+		TPRegexp Regexp(Pattern);
 		std::vector<unsigned int> waveIndices;
 		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
 			//std::cout<<waveName(waveIndex)<<std::endl;
-			if (waveName(waveIndex).Contains(TRegexp(Pattern)))
+			if (waveName(waveIndex).Contains(Regexp))
 				waveIndices.push_back(waveIndex);
 		}
 		return waveIndices;
@@ -498,9 +499,10 @@ namespace rpwa {
 		TString Pattern(ampNamePattern);
 		Pattern.ReplaceAll("+","\\+");
 		Pattern.ReplaceAll("\\\\+","\\+");
+		TPRegexp Regexp(Pattern);
 		std::vector<unsigned int> prodAmpIndices;
 		for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
-			if (prodAmpName(prodAmpIndex).Contains(TRegexp(Pattern)))
+			if (prodAmpName(prodAmpIndex).Contains(Regexp))
 				prodAmpIndices.push_back(prodAmpIndex);
 		return prodAmpIndices;
 	}
