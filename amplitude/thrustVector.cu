@@ -30,8 +30,6 @@
 //
 //-------------------------------------------------------------------------
 
-#ifdef USE_CUDA
-
 #include <vector>
 
 #include "typedefs.h"
@@ -41,28 +39,28 @@ using namespace rpwa;
 
 template<typename T>
 ThrustVector<T>::ThrustVector()
-: vec(new thrust::host_vector<T>)
+: vec()
 {
 
 }
 
 template<typename T>
 ThrustVector<T>::ThrustVector(const ThrustVector<T>& v)
-: vec(new thrust::host_vector<T>(*(v.vec)))
+: vec(v.vec)
 {
 
 }
 
 template<typename T>
 ThrustVector<T>::ThrustVector(std::size_t s, T v)
-: vec(new thrust::host_vector<T>(s, v))
+: vec(s, v)
 {
 
 }
 
 template<typename T>
 ThrustVector<T>::ThrustVector(const std::vector<T>& v)
-: vec(new thrust::host_vector<T>(v))
+: vec(v)
 {
 
 }
@@ -70,92 +68,87 @@ ThrustVector<T>::ThrustVector(const std::vector<T>& v)
 template<typename T>
 ThrustVector<T>::~ThrustVector()
 {
-	delete vec;
+	//delete vec;
 }
 
 template<typename T>
 ThrustVector<T>& ThrustVector<T>::operator = (const ThrustVector<T>& other)
 {
-	*vec = *(other.vec);
+	vec = other.vec;
 	return *this;
 }
 
 template<typename T>
-thrust::host_vector<T>& ThrustVector<T>::toRawThrustVector()
+thrust::device_vector<T>& ThrustVector<T>::toRawThrustVector()
 {
-	return *vec;
+	return vec;
 }
 
 template<typename T>
-const thrust::host_vector<T>& ThrustVector<T>::toRawThrustVector() const
+const thrust::device_vector<T>& ThrustVector<T>::toRawThrustVector() const
 {
-	return *vec;
+	return vec;
 }
 
 template<typename T>
-typename thrust::host_vector<T>::iterator ThrustVector<T>::begin()
+typename thrust::device_vector<T>::iterator ThrustVector<T>::begin()
 {
-	return vec->begin();
+	return vec.begin();
 }
 
 template<typename T>
-typename thrust::host_vector<T>::const_iterator ThrustVector<T>::begin() const
+typename thrust::device_vector<T>::const_iterator ThrustVector<T>::begin() const
 {
-	return vec->begin();
+	return vec.begin();
 }
 
 template<typename T>
-typename thrust::host_vector<T>::iterator ThrustVector<T>::end()
+typename thrust::device_vector<T>::iterator ThrustVector<T>::end()
 {
-	return vec->end();
+	return vec.end();
 }
 
 template<typename T>
-typename thrust::host_vector<T>::const_iterator ThrustVector<T>::end() const
+typename thrust::device_vector<T>::const_iterator ThrustVector<T>::end() const
 {
-	return vec->end();
+	return vec.end();
 }
 
 template<typename T>
-T& ThrustVector<T>::operator[](int i)
+T ThrustVector<T>::operator[](int i) const
 {
-	return (*vec)[i];
-}
-
-template<typename T>
-const T& ThrustVector<T>::operator[](int i) const
-{
-	return (*vec)[i];
+	return vec[i];
 }
 
 template<typename T>
 void ThrustVector<T>::clear()
 {
-	vec->clear();
+	vec.clear();
 }
 
 template<typename T>
 void ThrustVector<T>::resize(std::size_t s, T v)
 {
-	vec->resize(s, v);
+	vec.resize(s, v);
 }
 
 template<typename T>
 std::size_t ThrustVector<T>::size() const
 {
-	return vec->size();
+	return vec.size();
 }
 
 template<typename T>
 void ThrustVector<T>::fromStdVector(const std::vector<T>& v)
 {
-	*vec = v;
+	vec = v;
 }
 
 template<typename T>
 void ThrustVector<T>::insertInStdVector(std::vector<T>& v, typename std::vector<T>::iterator it) const
 {
-	v.insert(it, vec->begin(), vec->end());
+	thrust::host_vector<T> hv(vec);
+	v.insert(it, hv.begin(), hv.end());
 }
 
 // instantiate template because it has to be compiled with nvcc but is used by gcc
@@ -165,5 +158,3 @@ template class ThrustVector<Vector3>;
 template class ThrustVector<LorentzVector>;
 template class ThrustVector<Rotation>;
 template class ThrustVector<LorentzRotation>;
-
-#endif

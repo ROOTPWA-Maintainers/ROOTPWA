@@ -59,16 +59,70 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// define aliases for some math functions so implementations may be switched easliy
-	template<typename T> inline T abs(const T& x) { return std::abs (x); }
+
 	template<typename T>
-	inline typename boost::math::tools::promote_args<T>::type sqrt(const T& x) { return std::sqrt(x); }
+	HOST_DEVICE inline T abs(const T& x)
+	{
+#ifdef __CUDA_ARCH__
+		return ::abs(x);
+#else
+		return std::abs (x);
+#endif
+	}
+
+#ifdef USE_CUDA
+	// these wrapper functions are needed because the cuda sqrt is not defined for int and
+	// therefore can conflict with std::sqrt when using with a template argument
+	DEVICE inline double cuda_sqrt(int x) { return ::sqrt((double)x); }
+	DEVICE inline double cuda_sqrt(double x) { return ::sqrt(x); }
+	DEVICE inline float cuda_sqrt(float x) { return ::sqrt(x); }
+#endif
+
+	template<typename T>
+	HOST_DEVICE inline typename boost::math::tools::promote_args<T>::type sqrt(const T& x)
+	{
+#ifdef __CUDA_ARCH__
+		return cuda_sqrt(x);
+#else
+		return std::sqrt(x);
+#endif
+	}
+
 	template<typename T>
 	inline typename boost::math::tools::promote_args<T>::type exp (const T& x) { return std::exp (x); }
-	template<typename T1, typename T2>
-	inline typename boost::math::tools::promote_args<T1, T2>::type pow(const T1& base,
-	                                                                   const T2& exponent)
-	{ return std::pow(base, exponent); }
 
+	template<typename T1, typename T2>
+	HOST_DEVICE inline typename boost::math::tools::promote_args<T1, T2>::type pow(
+			const T1& base, const T2& exponent)
+	{
+#ifdef __CUDA_ARCH__
+		return ::pow(base, exponent);
+#else
+		return std::pow(base, exponent);
+#endif
+	}
+
+	template<typename T1, typename T2>
+	HOST_DEVICE inline typename boost::math::tools::promote_args<T1, T2>::type max(
+			const T1& x, const T2& y)
+	{
+#ifdef __CUDA_ARCH__
+		return (x >= y) ? x : y;
+#else
+		return std::max(x, y);
+#endif
+	}
+
+	template<typename T1, typename T2>
+	HOST_DEVICE inline typename boost::math::tools::promote_args<T1, T2>::type min(
+			const T1& x, const T2& y)
+		{
+#ifdef __CUDA_ARCH__
+			return (x <= y) ? x : y;
+#else
+			return std::min(x, y);
+#endif
+		}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// various small helper functions

@@ -46,6 +46,12 @@
 #include <algorithm>
 #include <vector>
 
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#endif
+
+#include "cudaUtils.hpp"
 #include "physUtils.hpp"
 #include "factorial.hpp"
 
@@ -55,33 +61,28 @@ namespace rpwa {
 	template<typename T>
 	class dFunctionCached {
 
-		static const unsigned int _maxJ = 41; ///< maximum allowed angular momentum * 2 + 1
-
 	public:
 
+		static const unsigned int _maxJ = 41; ///< maximum allowed angular momentum * 2 + 1
+
+		// this type has to be a POD type because it is copied with memcpy
 		struct cacheEntryType {
-
-			cacheEntryType()
-				: constTerm(0), numSumTerms(0)
-			{ }
-
 			T   constTerm;
-
 			int numSumTerms;  // The number of valid entries in the following 3 arrays. (has to be <= _maxJ + 1)
-
 			int kmn1  [_maxJ + 1];
 			int jmnk  [_maxJ + 1];
 			T   factor[_maxJ + 1];
-
 		};
 
+		struct cacheType {
+			const typename factorialCached<T>::cacheType* cudaFactorialCache;
+			cacheEntryType entries[_maxJ][_maxJ + 1][_maxJ + 1];  ///< cache for intermediate terms [j][m][n]
+		};
 
-		static dFunctionCached& instance() { return _instance; }  ///< get singleton instance
-
-		T operator ()(const int j,
-		              const int m,
-		              const int n,
-		              const T&  theta)  ///< returns d^j_{m n}(theta)
+		static T calculate(const int j,
+				           const int m,
+				           const int n,
+				           const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
 
 			if (_useCache and not _cacheIsInitialized) {
@@ -89,18 +90,45 @@ namespace rpwa {
 				throw;
 			}
 
+			const cacheType* cacheData = _useCache ? (& _cache) : NULL;
+			return calculate(j, m, n, theta, cacheData);
+
+		}
+
+		HOST_DEVICE
+		static T calculate(const int j,
+		                   const int m,
+		                   const int n,
+		                   const T&  theta,
+		                   const cacheType* cacheData)  ///< returns d^j_{m n}(theta)
+		{
+
 			// check input parameters
 			if (j >= (int)_maxJ) {
+#ifndef __CUDA_ARCH__
 				printErr << "J = " << 0.5 * j << " is too large. maximum allowed J is "
-				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
+						 << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
 				throw;
+#else
+				return 0;
+#endif
 			}
+
 			if ((j < 0) or (rpwa::abs(m) > j) or (rpwa::abs(n) > j)) {
+#ifndef __CUDA_ARCH__
 				printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
-				         << "_{M = " << 0.5 * m << ", M' = " << 0.5 * n << "}"
-				         << "(theta = " << maxPrecision(theta) << "). aborting." << std::endl;
+						 << "_{M = " << 0.5 * m << ", M' = " << 0.5 * n << "}"
+						 << "(theta = " << maxPrecision(theta) << "). aborting." << std::endl;
 				throw;
+#else
+				return 0;
+#endif
 			}
+
+			const typename factorialCached<T>::cacheType* cudaFactorialCache = NULL;
+#ifdef __CUDA_ARCH__
+			cudaFactorialCache = cacheData->cudaFactorialCache;
+#endif
 
 			// trivial case
 			if (j == 0)
@@ -112,18 +140,18 @@ namespace rpwa {
 			T   thetaHalf = theta / 2;
 			if (theta < 0) {
 				thetaHalf = rpwa::abs(thetaHalf);
-				std::swap(_m, _n);
+				int temp = _m;
+				_m = _n;
+				_n = temp;
 			}
 
 			const T cosThetaHalf = cos(thetaHalf);
 			const T sinThetaHalf = sin(thetaHalf);
 
 			T               dFuncVal   = 0;
-			if (_useCache) {
-				if (not _cacheIsInitialized)
-					initCache();
+			if (cacheData) {
 				// calculate function value using cache
-				cacheEntryType& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
+				const cacheEntryType& cacheEntry = cacheData->entries[j][(j + _m) / 2][(j + _n) / 2];
 				T sumTerm = 0;
 				for (unsigned int i = 0; i < cacheEntry.numSumTerms; ++i) {
 					sumTerm +=   rpwa::pow(cosThetaHalf, cacheEntry.kmn1[i])
@@ -136,26 +164,26 @@ namespace rpwa {
 				const int jpn       = (j + _n) / 2;
 				const int jmm       = (j - _m) / 2;
 				const int jmn       = (j - _n) / 2;
-				const T   kk        =   rpwa::factorial<T>(jpm)
-					                    * rpwa::factorial<T>(jmm)
-					                    * rpwa::factorial<T>(jpn)
-					                    * rpwa::factorial<T>(jmn);
+				const T   kk        =   rpwa::factorial<T>(jpm, cudaFactorialCache)
+					                    * rpwa::factorial<T>(jmm, cudaFactorialCache)
+					                    * rpwa::factorial<T>(jpn, cudaFactorialCache)
+					                    * rpwa::factorial<T>(jmn, cudaFactorialCache);
 				const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
 
 				T         sumTerm = 0;
 				const int mpn     = (_m + _n) / 2;
-				const int kMin    = std::max(0,   mpn);
-				const int kMax    = std::min(jpm, jpn);
+				const int kMin    = rpwa::max(0,   mpn);
+				const int kMax    = rpwa::min(jpm, jpn);
 				for (int k = kMin; k <= kMax; ++k) {
 					const int kmn1   = 2 * k - (_m + _n) / 2;
 					const int jmnk   = j + (_m + _n) / 2 - 2 * k;
 					const int jmk    = (j + _m) / 2 - k;
 					const int jnk    = (j + _n) / 2 - k;
 					const int kmn2   = k - (_m + _n) / 2;
-					const T   factor = (  rpwa::factorial<T>(k   )
-						                  * rpwa::factorial<T>(jmk )
-						                  * rpwa::factorial<T>(jnk )
-					                    * rpwa::factorial<T>(kmn2)) / powMinusOne(k);
+					const T   factor = (  rpwa::factorial<T>(k, cudaFactorialCache)
+						                  * rpwa::factorial<T>(jmk, cudaFactorialCache)
+						                  * rpwa::factorial<T>(jnk, cudaFactorialCache)
+					                    * rpwa::factorial<T>(kmn2, cudaFactorialCache)) / powMinusOne(k);
 					// using the 1 / factor here so that function value is the same as in PWA2000
 					sumTerm += rpwa::pow(cosThetaHalf, kmn1) * rpwa::pow(sinThetaHalf, jmnk) / factor;
 				}
@@ -215,16 +243,30 @@ namespace rpwa {
 			if (_debug)
 				printDebug << "filling dFunction cache" << std::endl;
 
+			_cache.cudaFactorialCache = NULL;// only set in cuda version of this cache
+
 			for (int j = 0; j < (int)_maxJ; ++j) {
 				for (int m = -j; m <= j; m += 2) {
 					for (int n = -j; n <= j; n += 2) {
-						cacheEntryType& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
+						cacheEntryType& cacheEntry = _cache.entries[j][(j + m) / 2][(j + n) / 2];
 						initCacheEntry(cacheEntry, j, m, n);
 					}
 				}
 			}
+
+#ifdef USE_CUDA
+			_cache.cudaFactorialCache = getFactorialCudaCache<T>();
+			cudaMalloc((void**)&_cudaCache, sizeof(cacheType));
+			cudaMemcpy(_cudaCache, &_cache, sizeof(cacheType), cudaMemcpyHostToDevice);
+			_cache.cudaFactorialCache = NULL;
+#endif
+
 			_cacheIsInitialized = true;
 		}
+
+#ifdef USE_CUDA
+		static const cacheType* getCudaCache() { return _cudaCache; }
+#endif
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -237,23 +279,26 @@ namespace rpwa {
 		dFunctionCached (const dFunctionCached&);
 		dFunctionCached& operator =(const dFunctionCached&);
 
-		static dFunctionCached _instance;            ///< singleton instance
-		static bool            _useCache;            ///< if set to true, cache is used
-		static bool            _cacheIsInitialized;  ///< indicates, whether cache was initialized or not
-		static bool            _debug;               ///< if set to true, debug messages are printed
+		static bool      _useCache;            ///< if set to true, cache is used
+		static bool      _cacheIsInitialized;  ///< indicates, whether cache was initialized or not
+		static bool      _debug;               ///< if set to true, debug messages are printed
 
-		static cacheEntryType _cache[_maxJ][_maxJ + 1][_maxJ + 1];  ///< cache for intermediate terms [j][m][n]
+		static cacheType _cache;
+
+#ifdef USE_CUDA
+		static cacheType* _cudaCache; ///< pointer to device memory containing the cache
+#endif
+
 	};
 
+	template<typename T> bool dFunctionCached<T>::_useCache           = true;
+	template<typename T> bool dFunctionCached<T>::_cacheIsInitialized = false;
+	template<typename T> bool dFunctionCached<T>::_debug              = false;
 
-	template<typename T> dFunctionCached<T> dFunctionCached<T>::_instance;
-	template<typename T> bool               dFunctionCached<T>::_useCache           = true;
-	template<typename T> bool               dFunctionCached<T>::_cacheIsInitialized = false;
-	template<typename T> bool               dFunctionCached<T>::_debug              = false;
-
-	template<typename T> typename dFunctionCached<T>::cacheEntryType
-	  dFunctionCached<T>::_cache[_maxJ][_maxJ + 1][_maxJ + 1];
-
+	template<typename T> typename dFunctionCached<T>::cacheType dFunctionCached<T>::_cache;
+#ifdef USE_CUDA
+	template<typename T> typename dFunctionCached<T>::cacheType* dFunctionCached<T>::_cudaCache;
+#endif
 
 	template<typename T>
 	inline
@@ -261,48 +306,68 @@ namespace rpwa {
 	initDFunction() ///< Initializes the cache used for dFunction calculation
 	{ dFunctionCached<T>::initCache(); }
 
+#ifdef USE_CUDA
+	template<typename T>
+	inline
+	const typename dFunctionCached<T>::cacheType*
+	getDFunctionCudaCache() ///< Returns the device version of the cache
+	{ return dFunctionCached<T>::getCudaCache(); }
+#endif
+
 
 	template<typename T>
+	HOST_DEVICE
 	inline
 	T
 	dFunction(const int  j,
 	          const int  m,
 	          const int  n,
 	          const T&   theta,
-	          const bool debug = false)  ///< Wigner d-function d^j_{m n}(theta)
+	          const bool debug = false, ///< Wigner d-function d^j_{m n}(theta)
+	          const typename dFunctionCached<T>::cacheType* cudaCacheData = NULL) ///< cuda cache memory, ignored when not in device code
 	{
-		const T dFuncVal = dFunctionCached<T>::instance()(j, m, n, theta);
+#ifndef __CUDA_ARCH__
+		const T dFuncVal = dFunctionCached<T>::calculate(j, m, n, theta);
 		if (debug)
 			printDebug << "Wigner d^{J = " << 0.5 * j << "}_{M = " << 0.5 * m << ", "
 			           << "M' = " << 0.5 * n << "}(theta = " << maxPrecision(theta) << ") = "
 			           << maxPrecision(dFuncVal) << std::endl;
+#else
+		const T dFuncVal = dFunctionCached<T>::calculate(j, m, n, theta, cudaCacheData);
+#endif
 		return dFuncVal;
+	}
+
+	template<typename complexT>
+	HOST_DEVICE
+	inline
+	complexT
+	sphericalHarmonic(const int                            l,
+			          const int                            m,
+			          const typename complexT::value_type& theta,
+			          const typename complexT::value_type& phi,
+			          const bool                           debug = false,  ///< spherical harmonics Y_l^{m}(theta, phi)
+    				  const typename dFunctionCached<typename complexT::value_type>::cacheType* cudaCacheData = NULL) // cuda cache memory, ignored when not in device code
+
+	{
+		typedef typename complexT::value_type T;
+
+		double fourPi     = 4 *  2 * asin((double)1);
+		// crude implementation using Wigner d-function
+		const complexT YVal = rpwa::sqrt((l + 1) / fourPi)
+		                      * rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta, false, cudaCacheData);
+#ifndef __CUDA_ARCH__
+		if (debug)
+			printDebug << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
+			           << "(phi = " << maxPrecision(phi) << ", theta = " << maxPrecision(theta) << ") = "
+		               << maxPrecisionDouble(YVal) << std::endl;
+#endif
+		return YVal;
 	}
 
 
 	template<typename complexT>
-  inline
-  complexT
-  sphericalHarmonic
-	(const int                            l,
-	 const int                            m,
-	 const typename complexT::value_type& theta,
-	 const typename complexT::value_type& phi,
-	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
-	{
-		typedef typename complexT::value_type T;
-		// crude implementation using Wigner d-function
-		const complexT YVal =   rpwa::sqrt((l + 1) / fourPi)
-			                    * rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta);
-	  if (debug)
-		  printDebug << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
-		             << "(phi = " << maxPrecision(phi) << ", theta = " << maxPrecision(theta) << ") = "
-		             << maxPrecisionDouble(YVal) << std::endl;
-    return YVal;
-  }
-
-
-	template<typename complexT>
+	HOST_DEVICE
 	inline
 	complexT
 	DFunction(const int                            j,
@@ -311,21 +376,25 @@ namespace rpwa {
 	          const typename complexT::value_type& alpha,
 	          const typename complexT::value_type& beta,
 	          const typename complexT::value_type& gamma = typename complexT::value_type(),
-	          const bool                           debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	          const bool                           debug = false,  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+    		  const typename dFunctionCached<typename complexT::value_type>::cacheType* cudaCacheData = NULL) // cuda cache memory, ignored when not in device code
 	{
 		typedef typename complexT::value_type T;
 		const T        arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
-		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction(j, m, n, beta);
+		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction(j, m, n, beta, false, cudaCacheData);
+#ifndef __CUDA_ARCH__
 		if (debug)
 			printDebug << "Wigner D^{J = " << 0.5 * j << "}_{M = " << 0.5 * m << ", "
 			           << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha)
 			           << ", beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
 			           << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+#endif
 		return DFuncVal;
 	}
 
 
 	template<typename complexT>
+	HOST_DEVICE
 	inline
 	complexT
 	DFunctionConj(const int                            j,
@@ -334,80 +403,91 @@ namespace rpwa {
 	              const typename complexT::value_type& alpha,
 	              const typename complexT::value_type& beta,
 	              const typename complexT::value_type& gamma = typename complexT::value_type(),
-	              const bool                           debug = false)  ///< complex conjugate of Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	              const bool                           debug = false,  ///< complex conjugate of Wigner D-function D^j_{m n}(alpha, beta, gamma)
+    			  const typename dFunctionCached<typename complexT::value_type>::cacheType* cudaCacheData = NULL) // cuda cache memory, ignored when not in device code
 	{
-		const complexT DFuncVal = conj(DFunction<complexT>(j, m, n, alpha, beta, gamma, false));
+		const complexT DFuncVal = conj(DFunction<complexT>(j, m, n, alpha, beta, gamma, false, cudaCacheData));
+#ifndef __CUDA_ARCH__
 		if (debug)
 			printDebug << "Wigner D^{J = " << 0.5 * j << "}*_{M = " << 0.5 * m << ", "
 			           << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha)
 			           << ", beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
 			           << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+#endif
 		return DFuncVal;
 	}
 
 
 	template<typename complexT>
-  inline
-  complexT
-  DFunctionRefl(const int                            j,
-                const int                            m,
-                const int                            n,
-                const int                            P,
-                const int                            refl,
+	HOST_DEVICE
+	inline
+	complexT
+	DFunctionRefl(const int                            j,
+                  const int                            m,
+                  const int                            n,
+                  const int                            P,
+                  const int                            refl,
 	              const typename complexT::value_type& alpha,
 	              const typename complexT::value_type& beta,
-                const typename complexT::value_type& gamma = typename complexT::value_type(),
-                const bool                           debug = false)  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
-  {
+                  const typename complexT::value_type& gamma = typename complexT::value_type(),
+                  const bool                           debug = false,  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+    			  const typename dFunctionCached<typename complexT::value_type>::cacheType* cudaCacheData = NULL) // cuda cache memory, ignored when not in device code
+	{
 		typedef typename complexT::value_type T;
-    complexT  DFuncVal;
-    const int reflFactor = reflectivityFactor(j, P, m, refl);
-    if (m == 0) {
-	    if (reflFactor == +1) {
-		    DFuncVal = complexT(0);
-		    // printWarn << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-		    //           << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
-		    //           << "M' = " << 0.5 * n << "}(alpha, beta, gamma) is always zero." << endl;
-	    } else
-		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma, false);
-    } else {
-	    DFuncVal = 1 / rpwa::sqrt(2)
-		    * (                  DFunction<complexT>(j, +m, n, alpha, beta, gamma, false)
-		       - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma, false));
-    }
-    if (debug)
-	    printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-	               << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
-	               << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
-	               << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
-	               << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
-    return DFuncVal;
-  }
+		complexT  DFuncVal;
+		const int reflFactor = reflectivityFactor(j, P, m, refl);
+		if (m == 0) {
+			if (reflFactor == +1) {
+				DFuncVal = complexT(0);
+				// printWarn << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+				//           << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
+				//           << "M' = " << 0.5 * n << "}(alpha, beta, gamma) is always zero." << endl;
+			} else
+				DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma, false, cudaCacheData);
+		} else {
+			DFuncVal = 1 / rpwa::sqrt(2)
+		    	* (                  DFunction<complexT>(j, +m, n, alpha, beta, gamma, false, cudaCacheData)
+		    	   - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma, false, cudaCacheData));
+		}
+#ifndef __CUDA_ARCH__
+		if (debug)
+			printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+	               	   << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
+	               	   << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
+	               	   << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
+	               	   << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+#endif
+		return DFuncVal;
+	}
 
 
 	template<typename complexT>
-  inline
-  complexT
-  DFunctionReflConj(const int                            j,
-                    const int                            m,
-                    const int                            n,
-                    const int                            P,
-                    const int                            refl,
-                    const typename complexT::value_type& alpha,
-                    const typename complexT::value_type& beta,
-                    const typename complexT::value_type& gamma = typename complexT::value_type(),
-                    const bool                           debug = false)  ///< complex conjugate of Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
-  {
-	  const complexT DFuncVal = conj(DFunctionRefl<complexT>(j, m, n, P, refl,
-	                                                         alpha, beta, gamma, false));
-    if (debug)
-	    printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-	               << "refl = " << sign(refl) << "}*_{M = " << 0.5 * m << ", "
-	               << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
-	               << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma) << ") = "
-	               << maxPrecisionDouble(DFuncVal) << std::endl;
-    return DFuncVal;
-  }
+	HOST_DEVICE
+	inline
+	complexT
+	DFunctionReflConj(const int                            j,
+                      const int                            m,
+                      const int                            n,
+                      const int                            P,
+                      const int                            refl,
+                      const typename complexT::value_type& alpha,
+                      const typename complexT::value_type& beta,
+                      const typename complexT::value_type& gamma = typename complexT::value_type(),
+                      const bool                           debug = false,  ///< complex conjugate of Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+    				  const typename dFunctionCached<typename complexT::value_type>::cacheType* cudaCacheData = NULL) // cuda cache memory, ignored when not in device code
+	{
+		const complexT DFuncVal = conj(DFunctionRefl<complexT>(j, m, n, P, refl,
+	                                                         alpha, beta, gamma, false, cudaCacheData));
+#ifndef __CUDA_ARCH__
+		if (debug)
+			printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+	               	   << "refl = " << sign(refl) << "}*_{M = " << 0.5 * m << ", "
+	               	   << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
+	               	   << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma) << ") = "
+	               	   << maxPrecisionDouble(DFuncVal) << std::endl;
+#endif
+    	return DFuncVal;
+	}
 
 
 }  // namespace rpwa

@@ -65,7 +65,7 @@ struct ThrustFunctor_leptoProductionVertex_productionAmps
 		Vector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
 										   // and X particle used to define lepton-scattering and
 										   // production plane
-		if (targetLv.Vect() == TVector3(0, 0, 0)) {
+		if (targetLv.Vect() == Vector3(0, 0, 0)) {
 			// fixed target case:
 			// since going from fixed target frame into (virtual photon,
 			// target) CM system involves only a boost along the virtual

@@ -688,11 +688,11 @@ decayTopology::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta
 	_fsDataPartMomCache.clear();
 	_fsDataPartMomCache.resize(nmbFsParticles());
 	for (size_t i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr&     part      = fsParticles()[i];
 		const unsigned int     partIndex = _fsDataPartIndexMap[i];
 		const vector<Vector3>& momenta   = decayKinMomenta[partIndex];
 		copyToParVector(_fsDataPartMomCache[i], momenta);
 		if (_debug) {
+			const particlePtr& part = fsParticles()[i];
 			printDebug << "setting momentum of final-state particle '" << part->name() << "' "
 					   << "at index [" << i << "] to " << firstEntriesToString(momenta, 3) << " GeV "
 					   << "at input data index [" << partIndex << "]" << endl;

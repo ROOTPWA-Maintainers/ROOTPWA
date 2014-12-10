@@ -208,7 +208,7 @@ leptoProductionVertex::productionAmps() const
 										   // and X particle used to define lepton-scattering and
 										   // production plane
 		const LorentzVector targetLv = targetVec[i];
-		if (targetLv.Vect() == TVector3(0, 0, 0)) {
+		if (targetLv.Vect() == Vector3(0, 0, 0)) {
 			// fixed target case:
 			// since going from fixed target frame into (virtual photon,
 			// target) CM system involves only a boost along the virtual

@@ -36,9 +36,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "typedefs.h"
+#include "dFunction.hpp"
 #include "spinUtils.hpp"
 #include "timeUtils.hpp"
-#include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 
 #ifdef USE_CUDA

@@ -45,6 +45,7 @@ namespace rpwa {
 
 	// computes squared breakup momentum of 2-body decay
 	template<typename T>
+	HOST_DEVICE
 	inline
 	T
 	breakupMomentumSquared(const T M,   // mass of mother particle
@@ -54,9 +55,13 @@ namespace rpwa {
 	{
 		const T mSum  = m1 + m2;
 		if (not allowSubThr and (M < mSum)) {
+#ifndef __CUDA_ARCH__
 			printErr << "mother mass " << M << " GeV/c^2 is smaller than sum of daughter masses "
 			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
 			throw;
+#else
+			return 0;
+#endif
 		}
 		const T mDiff = m1 - m2;
 		T q2 = (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
@@ -70,6 +75,7 @@ namespace rpwa {
 
 	// computes breakup momentum of 2-body decay
 	template<typename T>
+	HOST_DEVICE
 	inline
 	double
 	breakupMomentum(const T M,   // mass of mother particle
@@ -146,7 +152,7 @@ namespace rpwa {
 		return norm;
 	}
 
-
+	HOST_DEVICE
 	inline
 	int
 	reflectivityFactor(const int J,
@@ -155,18 +161,24 @@ namespace rpwa {
 	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
 	{
 		if (rpwa::abs(P) != 1) {
+#ifndef __CUDA_ARCH__
 			printWarn << "parity value P = " << P << " != +-1 is not allowed. "
 			          << "returning 0." << std::endl;
+#endif
 			return 0;
 		}
 		if (M < 0) {
+#ifndef __CUDA_ARCH__
 			printWarn << "in reflectivity basis M = " << spinQn(M) << " < 0 is not allowed. "
 			          << "returning 0." << std::endl;
+#endif
 			return 0;
 		}
 		if (rpwa::abs(refl) != 1) {
+#ifndef __CUDA_ARCH__
 			printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
 			          << "returning 0." << std::endl;
+#endif
 			return 0;
 		}
 		return refl * P * powMinusOne((J - M) / 2);
@@ -269,6 +281,7 @@ namespace rpwa {
 	// computes relativistic Breit-Wigner amplitude with mass-dependent width for 2-body decay
 	// !NOTE! L is units of hbar/2
 	template<typename complexT>
+	HOST_DEVICE
 	inline
 	complexT
 	breitWigner(const typename complexT::value_type& M,       // mass

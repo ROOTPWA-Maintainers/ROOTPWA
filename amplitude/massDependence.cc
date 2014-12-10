@@ -363,6 +363,12 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
+
+#ifdef USE_CUDA
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported when using CUDA" << endl;
+	throw;
+#endif
+
 	const double f[2] = {0.1968, -0.0154};  // AMP Table 1, M solution: f_1^1 and f_2^1
 
 	_a[0](0, 0) =  0.1131;  // AMP Table 1, M solution: f_2^2
@@ -412,8 +418,10 @@ ParVector<Complex>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
 
-	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported" << endl;
+#ifdef USE_CUDA
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported when using CUDA" << endl;
 	throw;
+#else
 
 	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
@@ -423,8 +431,6 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	const unsigned int size = result.size();
 	#pragma omp parallel for
 	for(unsigned int k = 0; k < size; ++k) {
-
-		/*
 
 		const Complex imag(0, 1);
 
@@ -478,12 +484,13 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 			printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
 					   << maxPrecisionDouble(amp) << endl;
 
-		*/
-
 	}
 	printTimeDiff(timeBefore, "EPL: piPiSWaveAuMorganPenningtonM::amp");
 
 	return result;
+
+#endif
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

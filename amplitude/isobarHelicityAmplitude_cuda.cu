@@ -89,15 +89,17 @@ struct ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_1
 	const int lambda;
 	const int P;
 	const int refl;
-	ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(int J, int Lambda, int lambda, int P, int refl):
-		J(J), Lambda(Lambda), lambda(lambda), P(P), refl(refl) {}
+	const dFunctionCached<double>::cacheType* dFunctionCudaCache;
+	ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(int J, int Lambda, int lambda, int P, int refl,
+			const dFunctionCached<double>::cacheType* dFunctionCudaCache):
+		J(J), Lambda(Lambda), lambda(lambda), P(P), refl(refl), dFunctionCudaCache(dFunctionCudaCache) {}
 
 	HOST_DEVICE
-	Complex operator()(const TLorentzVector& daughterLv)
+	Complex operator()(const LorentzVector& daughterLv)
 	{
 		double phi = daughterLv.Phi(); // use daughter1 as analyzer
 		double theta = daughterLv.Theta();
-		return DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, false);
+		return DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, false, dFunctionCudaCache);
 	}
 };
 
@@ -112,7 +114,8 @@ rpwa::thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(
 	int refl)
 {
 	thrust::transform(lzVec.begin(), lzVec.end(), result.begin(),
-			ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(J, Lambda, lambda, P, refl));
+			ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(J, Lambda, lambda, P, refl,
+					getDFunctionCudaCache<double>()));
 }
 
 struct ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2
@@ -122,15 +125,17 @@ struct ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2
 	const int lambda;
 	const int P;
 	const int refl;
-	ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(int J, int Lambda, int lambda, int P, int refl):
-		J(J), Lambda(Lambda), lambda(lambda), P(P), refl(refl) {}
+	const dFunctionCached<double>::cacheType* dFunctionCudaCache;
+	ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(int J, int Lambda, int lambda, int P, int refl,
+			const dFunctionCached<double>::cacheType* dFunctionCudaCache):
+		J(J), Lambda(Lambda), lambda(lambda), P(P), refl(refl), dFunctionCudaCache(dFunctionCudaCache) {}
 
 	HOST_DEVICE
-	Complex operator()(const TLorentzVector& daughterLv)
+	Complex operator()(const LorentzVector& daughterLv)
 	{
 		double phi = daughterLv.Phi(); // use daughter1 as analyzer
 		double theta = daughterLv.Theta();
-		return DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, false);
+		return DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, false, dFunctionCudaCache);
 	}
 };
 
@@ -145,7 +150,8 @@ rpwa::thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(
 	int refl)
 {
 	thrust::transform(lzVec.begin(), lzVec.end(), result.begin(),
-			ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(J, Lambda, lambda, P, refl));
+			ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(J, Lambda, lambda, P, refl,
+					getDFunctionCudaCache<double>()));
 }
 
 struct ThrustFunctor_isobarHelicityAmplitude_twoBodyDecayAmplitude_3

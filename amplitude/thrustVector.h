@@ -54,17 +54,16 @@ namespace rpwa {
 
 		ThrustVector<T>& operator = (const ThrustVector<T>& other);
 
-		thrust::host_vector<T>& toRawThrustVector();
-		const thrust::host_vector<T>& toRawThrustVector() const;
+		thrust::device_vector<T>& toRawThrustVector();
+		const thrust::device_vector<T>& toRawThrustVector() const;
 
-		typename thrust::host_vector<T>::iterator begin();
-		typename thrust::host_vector<T>::const_iterator begin() const;
+		typename thrust::device_vector<T>::iterator begin();
+		typename thrust::device_vector<T>::const_iterator begin() const;
 
-		typename thrust::host_vector<T>::iterator end();
-		typename thrust::host_vector<T>::const_iterator end() const;
+		typename thrust::device_vector<T>::iterator end();
+		typename thrust::device_vector<T>::const_iterator end() const;
 
-		T& operator[](int i);
-		const T& operator[](int i) const;
+		T operator[](int i) const;
 
 		void clear();
 		void resize(std::size_t s, T v = T());
@@ -77,7 +76,7 @@ namespace rpwa {
 	private:
 
 		// make object instead of pointer? (should work with external implementation)
-		thrust::host_vector<T>* vec;
+		thrust::device_vector<T> vec;
 
 	};
 

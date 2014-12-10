@@ -67,8 +67,10 @@ struct ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1
 	double LSClebsch;
 	int L;
 	int mL;
-	ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1(double LSClebsch, int L, int mL):
-		LSClebsch(LSClebsch), L(L), mL(mL) {}
+	const dFunctionCached<double>::cacheType* dFunctionCudaCache;
+	ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1(double LSClebsch, int L, int mL,
+			const dFunctionCached<double>::cacheType* dFunctionCudaCache):
+		LSClebsch(LSClebsch), L(L), mL(mL), dFunctionCudaCache(dFunctionCudaCache) {}
 
 	template<typename T>
 	HOST_DEVICE
@@ -76,10 +78,9 @@ struct ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1
 	{
 		const LorentzVector& lzVec = thrust::get<0>(t);
 		Complex& ampSum = thrust::get<1>(t);
-
 		double phi = lzVec.Phi(); // use daughter1 as analyzer
 		double theta = lzVec.Theta();
-		ampSum += LSClebsch * sphericalHarmonic<Complex>(L, mL, theta, phi, false);
+		ampSum += LSClebsch * sphericalHarmonic<Complex>(L, mL, theta, phi, false, dFunctionCudaCache);
 	}
 };
 
@@ -94,7 +95,7 @@ rpwa::thrust_isobarCanonicalAmplitude_twoBodyDecayAmplitude_1(
 	thrust::for_each(
 			thrust::make_zip_iterator(thrust::make_tuple(lzVec.begin(), ampSum.begin())),
 			thrust::make_zip_iterator(thrust::make_tuple(lzVec.end(),   ampSum.end())),
-			ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1(LSClebsch, L, mL));
+			ThrustFunctor_isobarAmplitude_twoBodyDecayAmplitude_1(LSClebsch, L, mL, getDFunctionCudaCache<double>()));
 }
 
 struct ThrustFunctor_isobarCanonicalAmplitude_twoBodyDecayAmplitude_2
