@@ -51,20 +51,36 @@
 #include "TStopwatch.h"
 #include "Minuit2/Minuit2Minimizer.h"
 
+#include <nlopt.hpp>
+
 #include "reportingUtilsEnvironment.h"
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
-#ifdef USE_CUDA
-#include "complex.cuh"
-#include "likelihoodInterface.cuh"
-#endif
+
 #include "amplitudeTreeLeaf.h"
 
 
 using namespace std;
 using namespace ROOT::Math;
 using namespace rpwa;
+
+
+double rpwaNloptFunc(unsigned n, const double* x, double* gradient, void* func_data)
+{
+	pwaLikelihood<complex<double> >* L = (pwaLikelihood<complex<double> >*)func_data;
+	if(n != L->nmbPars()) {
+		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
+		throw;
+	}
+	double likeli;
+	if(gradient) {
+		L->FdF(x, likeli, gradient);
+	} else {
+		likeli = L->DoEval(x);
+	}
+	return likeli;
+}
 
 
 void
@@ -76,8 +92,8 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -N -n normfile"
+	     << " [-a normfile] -r rank [-t # -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -89,7 +105,6 @@ usage(const string& progName,
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
 #endif
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
-	     << "        -S file    path to file with start values (default: none; highest priority)" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
 	     << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
 
@@ -98,61 +113,11 @@ usage(const string& progName,
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
 	     << "        -A #       number of input events to normalize acceptance to" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -M name    minimizer (default: Minuit2)" << endl
-	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
-	     << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-	     << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
-	     << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
-	     << "                                         GSLMultiFit: -" << endl
-	     << "                                         GSLSimAn:    -" << endl
-	     << "                                         Linear:      Robust" << endl
-	     << "                                         Fumili:      -" << endl
-	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
-	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: on)" << endl
-#else
-	     << "        -e         set minimizer storage level to 1 [not supported; ROOT version too low]" << endl
-#endif
-#ifdef USE_CUDA
-	     << "        -c         enable CUDA acceleration (default: off)" << endl
-#else
-	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
-#endif
+	     << "        -t #       minimizer tolerance (default: 0.001)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
-}
-
-
-ostream&
-printMinimizerStatus(ostream&   out,
-                     Minimizer& minimizer)
-{
-	out << "minimization stopped after " << minimizer.NCalls() << " function calls. "
-	    << "minimizer status summary:" << endl
-	    << "    total number of parameters .......................... " << minimizer.NDim()                 << endl
-	    << "    number of free parameters ........................... " << minimizer.NFree()                << endl
-	    << "    maximum allowed number of iterations ................ " << minimizer.MaxIterations()        << endl
-	    << "    maximum allowed number of function calls ............ " << minimizer.MaxFunctionCalls()     << endl
-	    << "    minimizer status .................................... " << minimizer.Status()               << endl
-	    << "    minimizer provides error and error matrix ........... " << yesNo(minimizer.ProvidesError()) << endl
-	    << "    minimizer has performed detailed error validation ... " << yesNo(minimizer.IsValidError())  << endl
-	    << "    estimated distance to minimum ....................... " << minimizer.Edm()                  << endl
-	    << "    statistical scale used for error calculation ........ " << minimizer.ErrorDef()             << endl
-	    << "    strategy ............................................ " << minimizer.Strategy()             << endl
-	    << "    absolute tolerance .................................. " << minimizer.Tolerance()            << endl
-	    << "    precision ........................................... " << minimizer.Precision()            << endl;
-	return out;
-}
-
-
-ostream&
-operator <<(ostream&   out,
-            Minimizer& minimizer)
-{
-	return printMinimizerStatus(out, minimizer);
 }
 
 
@@ -175,11 +140,7 @@ main(int    argc,
 	const string       valBranchName         = "fitResult_v2";
 	double             defaultStartValue     = 0.01;
 	bool               useFixedStartValues   = false;
-	double             startValStep          = 0.0005;
 	const unsigned int maxNmbOfIterations    = 20000;
-	const unsigned int maxNmbOfFunctionCalls = 40000;
-	const bool         runHesse              = true;
-	const bool         runMinos              = false;
 	int                startValSeed          = 1234567;
 
 	// ---------------------------------------------------------------------------
@@ -192,24 +153,17 @@ main(int    argc,
 	bool         useRootAmps         = false;                  // if true .root amplitude files are read
 	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
 	string       outFileName         = "fitresult.root";       // output filename
-	string       startValFileName    = "";                     // file with start values
 	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
 	string       normIntFileName     = "";                     // file with normalization integrals
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
 	unsigned int rank                = 1;                      // rank of fit
-	string       minimizerType[2]    = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-	int          minimizerStrategy   = 1;                      // minimizer strategy
-	double       minimizerTolerance  = 1e-10;                  // minimizer tolerance
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	bool         saveMinimizerMemory = true;
-#endif
-	bool         cudaEnabled         = false;                  // if true CUDA kernels are activated
+	double       minimizerTolerance  = 0.001;                   // minimizer tolerance
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:qh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -230,9 +184,6 @@ main(int    argc,
 			break;
 		case 'o':
 			outFileName = optarg;
-			break;
-		case 'S':
-			startValFileName = optarg;
 			break;
 		case 's':
 			startValSeed = atoi(optarg);
@@ -257,27 +208,8 @@ main(int    argc,
 		case 'r':
 			rank = atoi(optarg);
 			break;
-		case 'M':
-			minimizerType[0] = optarg;
-			break;
-		case 'm':
-			minimizerType[1] = optarg;
-			break;
-		case 'g':
-			minimizerStrategy = atoi(optarg);
-			break;
 		case 't':
 			minimizerTolerance = atof(optarg);
-			break;
-		case 'e':
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-			saveMinimizerMemory = false;
-#endif
-			break;
-		case 'c':
-#ifdef USE_CUDA
-			cudaEnabled = true;
-#endif
 			break;
 		case 'q':
 			quiet = true;
@@ -305,9 +237,7 @@ main(int    argc,
 	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
 	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
 	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
-	     << "    path to output file ............................ '" << outFileName      << "'" << endl
-	     << "    path to file with start values ................. '" << startValFileName << "'" << endl
-	     << "    seed for random start values ................... "  << startValSeed            << endl;
+	     << "    path to output file ............................ '" << outFileName      << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
 	cout << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
@@ -315,10 +245,7 @@ main(int    argc,
 	     << "        path to file with acceptance integral ...... '" << accIntFileName   << "'" << endl
 	     << "        number of acceptance norm. events .......... "  << numbAccEvents    << endl
 	     << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
-	     << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
-	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -328,206 +255,39 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-#ifdef USE_CUDA
-	L.enableCuda(cudaEnabled);
-#endif
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
-
-	// ---------------------------------------------------------------------------
-	// setup minimizer
-	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
-	          << "using algorithm '" << minimizerType[1] << "'" << endl;
-	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-	if (not minimizer) {
-		printErr << "could not create minimizer. exiting." << endl;
-		throw;
-	}
-
-	// special for Minuit2
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	if(saveMinimizerMemory and dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer)) {
-			((ROOT::Minuit2::Minuit2Minimizer*)minimizer)->SetStorageLevel(0);
-			printInfo << "Minuit2 storage level set to 0." << endl;
-	}
-#endif
-
-	minimizer->SetFunction        (L);
-	minimizer->SetStrategy        (minimizerStrategy);
-	minimizer->SetTolerance       (minimizerTolerance);
-
-	// setting the ErrorDef to 1 since the ROOT interface does not
-	// Propagate the value. Will do the error rescaling by hand below.
-	minimizer->SetErrorDef(1);
-	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
-	minimizer->SetMaxIterations   (maxNmbOfIterations);
-	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
-
-	// ---------------------------------------------------------------------------
-	// read in fitResult with start values
-	printInfo << "reading start values from '" << startValFileName << "'" << endl;
 	const double massBinCenter  = (massBinMin + massBinMax) / 2;
-	fitResult*   startFitResult = NULL;
-	bool         startValValid  = false;
-	TFile*       startValFile   = NULL;
-	if (startValFileName.length() <= 2)
-		printWarn << "start value file name '" << startValFileName << "' is invalid. "
-		          << "using default start values." << endl;
-	else {
-		// open root file
-		startValFile = TFile::Open(startValFileName.c_str(), "READ");
-		if (not startValFile or startValFile->IsZombie())
-			printWarn << "cannot open start value file '" << startValFileName << "'. "
-			          << "using default start values." << endl;
-		else {
-			// get tree with start values
-			TTree* tree;
-			startValFile->GetObject(valTreeName.c_str(), tree);
-			if (not tree)
-				printWarn << "cannot find start value tree '"<< valTreeName << "' in file "
-				          << "'" << startValFileName << "'" << endl;
-			else {
-				startFitResult = new fitResult();
-				tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
-				// find tree entry which is closest to mass bin center
-				unsigned int bestIndex = 0;
-				double       bestMass  = 0;
-				for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
-					tree->GetEntry(i);
-					if (fabs(massBinCenter - startFitResult->massBinCenter()) <= fabs(massBinCenter - bestMass)) {
-						bestIndex = i;
-						bestMass  = startFitResult->massBinCenter();
-					}
-				}
-				tree->GetEntry(bestIndex);
-				startValValid = true;
-			}
-		}
-	}
 
-	// ---------------------------------------------------------------------------
-	// set start parameter values
-	printInfo << "setting start values for " << nmbPar << " parameters" << endl
-	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
-	unsigned int maxParNameLength = 0;       // maximum length of parameter names
-	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
-	{
-		// use local instance of random number generator so that other
-		// code has no chance of tampering with gRandom and thus cannot
-		// affect the reproducability of the start values
+	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
+	optimizer.set_min_objective(&rpwaNloptFunc, &L);
+
+	vector<double>params(nmbPar, defaultStartValue);
+	if(not useFixedStartValues) {
 		TRandom3 random(startValSeed);
-		bool     success = true;
-		for (unsigned int i = 0; i < nmbPar; ++i) {
-			const string parName = L.parName(i);
-			if (parName.length() > maxParNameLength)
-				maxParNameLength = parName.length();
-			// workaround, because Minuit2Minimizer::SetVariable() expects
-			// that variables are set consecutively. how stupid is that?
-			// so we prepare variables here and set values below
-			if ((L.parThreshold(i) == 0) or (L.parThreshold(i) < massBinCenter)) {
-				if (not minimizer->SetVariable(i, parName, 0, startValStep))
-					success = false;
-			} else {
-				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
-					success = false;
-				parIsFixed[i] = true;
-			}
-		}
-		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
-		vector<unsigned int> parIndices  = L.orderedParIndices();
-		for (unsigned int i = 0; i < parIndices.size(); ++i) {
-			const unsigned int parIndex = parIndices[i];
-			double             startVal;
-			const string       parName = minimizer->VariableName(parIndex);
-			if (parName != L.parName(parIndex)) {
-				printWarn << "parameter name in minimizer and likelihood is inconsistent "
-				          << "(" << parName << " vs. " << L.parName(parIndex) << ")" << endl;
-				success = false;
-			}
-			if (startValValid) {
-				// get parameter value from fitResult
-				assert(startFitResult);
-				startVal = startFitResult->fitParameter(parName.c_str());
-			} else
-				startVal = (useFixedStartValues) ? defaultStartValue
-					: random.Uniform(defaultStartValue, sqrtNmbEvts);
-			// check if parameter needs to be fixed because of threshold
-			if ((L.parThreshold(parIndex) == 0) or (L.parThreshold(parIndex) < massBinCenter)) {
-				if (startVal == 0) {
-					cout << "    read start value 0 for parameter " << parName << ". "
-					     << "using default start value." << endl;
-					startVal = (useFixedStartValues) ? defaultStartValue
-						: random.Uniform(defaultStartValue, sqrtNmbEvts);
-				}
-				cout << "    setting parameter [" << setw(3) << i << "] "
-				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-				if (not minimizer->SetVariableValue(parIndex, startVal))
-					success = false;
-			} else {
-				cout << "    fixing parameter  [" << setw(3) << i << "] "
-				     << setw(maxParNameLength) << parName << " = 0" << endl;
-				if (not minimizer->SetVariableValue(parIndex, 0.))  // fix this parameter to 0
-					success = false;
-				parIsFixed[parIndex] = true;
-			}
-			if (not success) {
-				printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
-				throw;
-			}
-		}
-		// cleanup
-		if(startValFile) {
-			startValFile->Close();
-			delete startValFile;
-			startValFile = NULL;
+		const double sqrtNmbEvts = sqrt((double)nmbEvts);
+		for(unsigned int i = 0; i < params.size(); ++i)
+		{
+			params[i] = random.Uniform(defaultStartValue, sqrtNmbEvts);
+			cout << "    setting parameter [" << setw(3) << i << "] = "
+			     << maxPrecisionAlign(params[i]) << endl;
 		}
 	}
 
-	// ---------------------------------------------------------------------------
-	// find minimum of likelihood function
-	bool converged = false;
-	bool hasHesse  = false;
-	printInfo << "performing minimization" << endl;
-	{
-		TStopwatch timer;
-		timer.Start();
-		bool success = minimizer->Minimize();
-		timer.Stop();
-		if (success)
-			printInfo << "minimization finished successfully. " << flush;
-		else
-			printWarn << "minimization failed. " << flush;
-		cout << "used " << flush;
-		timer.Print();
-		converged = success;
-		printInfo << *minimizer;
-		// printInfo << "covariance matrix:" <<endl;
-		// for(unsigned int i = 0; i < nmbPar; ++i)
-		// 	for(unsigned int j = 0; j < nmbPar; ++j)
-		// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
-		if (runHesse) {
-			printInfo << "calculating Hessian matrix" << endl;
-			timer.Start();
-			success = minimizer->Hesse();
-			timer.Stop();
-			if (success)
-				printInfo << "successfully calculated Hessian matrix. " << flush;
-			else
-				printWarn << "calculation of Hessian matrix failed. " << flush;
-			cout << "used " << flush;
-			timer.Print();
-			hasHesse = success;
-			printInfo << *minimizer;
-			// printInfo << "covariance matrix:" <<endl;
-			// for(unsigned int i = 0; i < nmbPar; ++i)
-			// 	for(unsigned int j = 0; j < nmbPar; ++j)
-			// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
-		}
+	optimizer.set_xtol_rel(minimizerTolerance);
+	optimizer.set_maxeval(maxNmbOfIterations);
+
+	double likeli;
+	nlopt::result result = optimizer.optimize(params, likeli);
+	bool converged = true;
+	if(result < 0) {
+		converged = false;
 	}
+
 
 	// ---------------------------------------------------------------------------
 	// print results
@@ -536,28 +296,13 @@ main(int    argc,
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(parIndex) << " = ";
-		if (parIsFixed[parIndex])
-			cout << minimizer->X()[parIndex] << " (fixed)" << endl;
-		else {
-			cout << setw(12) << maxPrecisionAlign(minimizer->X()     [parIndex]) << " +- "
-			     << setw(12) << maxPrecisionAlign(minimizer->Errors()[parIndex]);
-			if (runMinos) {
-				double minosErrLow = 0;
-				double minosErrUp  = 0;
-				const bool success = minimizer->GetMinosError(parIndex, minosErrLow, minosErrUp);
-				if (success)
-					cout << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]" << endl;
-			} else
-				cout << endl;
-		}
+		     << setw(12) << L.parName(parIndex) << " = ";
+		cout << setw(12) << maxPrecisionAlign(params[parIndex]) << " +- "
+		     << setw(12) << "[not available]";
+		cout << endl;
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
-#ifdef USE_CUDA
-	printInfo << "total CUDA kernel time: "
-	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
-#endif
 
 	// ---------------------------------------------------------------------------
 	// write out result
@@ -587,7 +332,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(&params[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
@@ -596,7 +341,7 @@ main(int    argc,
 					  // function and not a loglikeli
 					  // (see Minuit manual!)
 					  // Note: SetErrorDef in ROOT does not work
-						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
+						fitParCovMatrix[i][j] = -1.;
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
@@ -616,7 +361,7 @@ main(int    argc,
 				result->fill(L.nmbEvents(),
 				             normNmbEvents,
 				             massBinCenter,
-				             minimizer->MinValue(),
+				             likeli,
 				             rank,
 				             prodAmps,
 				             prodAmpNames,
@@ -626,7 +371,7 @@ main(int    argc,
 				             accIntegral,
 				             phaseSpaceIntegral,
 				             converged,
-				             hasHesse);
+				             false);
 				//printDebug << *result;
 			}
 
@@ -637,7 +382,5 @@ main(int    argc,
 		}
 	}
 
-	if (minimizer)
-		delete minimizer;
 	return 0;
 }
