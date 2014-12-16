@@ -261,15 +261,23 @@ main(int    argc,
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
+	const double sqrtNmbEvts = sqrt((double)nmbEvts);
 	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 
-	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
+//	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
+	nlopt::opt optimizer(nlopt::G_MLSL_LDS, nmbPar);
+	nlopt::opt localOpt(nlopt::LD_LBFGS, nmbPar);
+	localOpt.set_ftol_rel(1e-6);
+	localOpt.set_xtol_rel(1e-3);
+	optimizer.set_local_optimizer(localOpt);
 	optimizer.set_min_objective(&rpwaNloptFunc, &L);
+
+	optimizer.set_lower_bounds(-2.*sqrtNmbEvts);
+	optimizer.set_upper_bounds(2.*sqrtNmbEvts);
 
 	vector<double>params(nmbPar, defaultStartValue);
 	if(not useFixedStartValues) {
 		TRandom3 random(startValSeed);
-		const double sqrtNmbEvts = sqrt((double)nmbEvts);
 		for(unsigned int i = 0; i < params.size(); ++i)
 		{
 			params[i] = random.Uniform(defaultStartValue, sqrtNmbEvts);
@@ -282,12 +290,17 @@ main(int    argc,
 	optimizer.set_maxeval(maxNmbOfIterations);
 
 	double likeli;
+	printInfo << "starting minimization." << endl;
 	nlopt::result result = optimizer.optimize(params, likeli);
 	bool converged = true;
 	if(result < 0) {
 		converged = false;
 	}
-
+	if(converged) {
+		printSucc << "minimization succeeded." << endl;
+	} else {
+		printWarn << "minimization failed." << endl;
+	}
 
 	// ---------------------------------------------------------------------------
 	// print results
@@ -303,6 +316,45 @@ main(int    argc,
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
+
+	printInfo << "optimizer status:" << endl;
+	cout << "    ";
+	switch(result) {
+		case nlopt::SUCCESS:
+			cout << "success!" << endl;
+			break;
+		case nlopt::STOPVAL_REACHED:
+			cout << "likelihood threshold reached." << endl;
+			break;
+		case nlopt::FTOL_REACHED:
+			cout << "function tolerance reached." << endl;
+			break;
+		case nlopt::XTOL_REACHED:
+			cout << "parameter tolerance reached." << endl;
+			break;
+		case nlopt::MAXEVAL_REACHED:
+			cout << "maximum number of evaluations reached." << endl;
+			break;
+		case nlopt::MAXTIME_REACHED:
+			cout << "time limit reached." << endl;
+			break;
+
+		case nlopt::FAILURE:
+			cout << "generic error." << endl;
+			break;
+		case nlopt::INVALID_ARGS:
+			cout << "invalid arguments." << endl;
+			break;
+		case nlopt::OUT_OF_MEMORY:
+			cout << "out of memory." << endl;
+			break;
+		case nlopt::ROUNDOFF_LIMITED:
+			cout << "roundoff errors limited progress." << endl;
+			break;
+		case nlopt::FORCED_STOP:
+			cout << "forced stop." << endl;
+			break;
+	}
 
 	// ---------------------------------------------------------------------------
 	// write out result
