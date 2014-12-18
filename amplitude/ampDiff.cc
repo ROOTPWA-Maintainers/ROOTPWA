@@ -216,6 +216,10 @@ main(int    argc,
 		const complex<double> absDiff = amps[0][i] - amps[1][i];
 		const complex<double> relDiff = complex<double>(absDiff.real() / amps[0][i].real(),
 		                                                absDiff.imag() / amps[0][i].imag());
+		absDiffReal = absDiff.real();
+		absDiffImag = absDiff.imag();
+		relDiffReal = relDiff.real();
+		relDiffImag = relDiff.imag();
 		// fill tree
 		if (outFile) {
 			eventNmb    = i;
@@ -223,10 +227,6 @@ main(int    argc,
 			valImag[0]  = amps[0][i].imag();
 			valReal[1]  = amps[1][i].real();
 			valImag[1]  = amps[1][i].imag();
-			absDiffReal = absDiff.real();
-			absDiffImag = absDiff.imag();
-			relDiffReal = relDiff.real();
-			relDiffImag = relDiff.imag();
 			tree->Fill();
 		}
 		// print amplitudes
