@@ -420,8 +420,6 @@ main(int    argc,
 				}
 				// read production amplitude
 				const complex<double> prodAmp = result->prodAmp(iProdAmp);
-				if (prodAmp == 0.)
-					continue;
 				prodAmps[iSample].push_back(prodAmp);
 				// for first fit result store wave info
 				if (iSample == 0) {
