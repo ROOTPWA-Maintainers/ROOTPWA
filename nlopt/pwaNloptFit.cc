@@ -140,7 +140,7 @@ main(int    argc,
 	const string       valBranchName         = "fitResult_v2";
 	double             defaultStartValue     = 0.01;
 	bool               useFixedStartValues   = false;
-	const unsigned int maxNmbOfIterations    = 20000;
+	const unsigned int maxNmbOfIterations    = 40000;
 	int                startValSeed          = 1234567;
 
 	// ---------------------------------------------------------------------------
@@ -264,12 +264,25 @@ main(int    argc,
 	const double sqrtNmbEvts = sqrt((double)nmbEvts);
 	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 
-//	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
-	nlopt::opt optimizer(nlopt::G_MLSL_LDS, nmbPar);
-	nlopt::opt localOpt(nlopt::LD_LBFGS, nmbPar);
-	localOpt.set_ftol_rel(1e-6);
-	localOpt.set_xtol_rel(1e-3);
-	optimizer.set_local_optimizer(localOpt);
+	L.setPriorType(L.HALF_CAUCHY);
+
+	printInfo << "using prior: ";
+	switch(L.priorType())
+	{
+		case pwaLikelihood<complex<double> >::FLAT:
+			cout << "flat" << endl;
+			break;
+		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
+			cout << "half-cauchy" << endl;
+			break;
+	}
+
+	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
+//	nlopt::opt optimizer(nlopt::G_MLSL_LDS, nmbPar);
+//	nlopt::opt localOpt(nlopt::LD_LBFGS, nmbPar);
+//	localOpt.set_ftol_rel(1e-6);
+//	localOpt.set_xtol_rel(1e-3);
+//	optimizer.set_local_optimizer(localOpt);
 	optimizer.set_min_objective(&rpwaNloptFunc, &L);
 
 	optimizer.set_lower_bounds(-2.*sqrtNmbEvts);
