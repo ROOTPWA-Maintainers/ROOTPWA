@@ -99,6 +99,11 @@ namespace rpwa {
 			timeAccType  totalTime;  // total execution time of function
 		};
 
+		enum priorEnum {
+			FLAT,
+			HALF_CAUCHY
+		};
+
 		pwaLikelihood();
 		~pwaLikelihood();
 
@@ -142,6 +147,8 @@ namespace rpwa {
 		void        enableCuda       (const bool enableCuda = true);
 		bool        cudaEnabled      () const;
 		void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
+		void        setPriorType(const priorEnum priorType = pwaLikelihood::FLAT) { _priorType = priorType; }
+		priorEnum   priorType() const { return _priorType; }
 		static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
 		// operations
@@ -211,6 +218,9 @@ namespace rpwa {
 		unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves
 		unsigned int _nmbWavesReflMax;  // maximum of number of negative and positive reflectivity waves
 		unsigned int _nmbPars;          // number of function parameters
+
+		priorEnum _priorType;
+		static const double _cauchyWidth = 0.5;
 
 	#ifdef USE_CUDA
 		bool        _cudaEnabled;        // if true CUDA kernels are used for some calculations

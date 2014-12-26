@@ -68,6 +68,29 @@ using namespace boost::accumulators;
 template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
 
 
+namespace {
+
+	double cauchyFunction(const double& x, const double gamma)
+	{
+		if(x < 0.) {
+			printWarn << "got negative argument." << endl;
+		}
+//		return 1. / (TMath::Pi() * gamma * (1+((x/gamma)*(x/gamma))));
+		return 1. / (1+((x/gamma)*(x/gamma)));
+	}
+
+	double cauchyFunctionDerivative(const double& x, const double& gamma)
+	{
+		if(x < 0.) {
+			printWarn << "got negative argument." << endl;
+		}
+//		return (-2. * x) / (TMath::Pi() * gamma * (gamma + x*x/gamma) * (gamma + x*x/gamma));
+		return (-2. * x) / ((gamma + x*x/gamma) * (gamma + x*x/gamma));
+	}
+
+}
+
+
 template<typename complexT>
 pwaLikelihood<complexT>::pwaLikelihood()
 	: _nmbEvents        (0),
@@ -75,6 +98,7 @@ pwaLikelihood<complexT>::pwaLikelihood()
 	  _nmbWaves         (0),
 	  _nmbWavesReflMax  (0),
 	  _nmbPars          (0),
+	  _priorType        (pwaLikelihood::FLAT),
 #ifdef USE_CUDA
 	  _cudaEnabled      (false),
 #endif
@@ -202,6 +226,30 @@ pwaLikelihood<complexT>::FdF
 	timer.Stop();
 	_funcCallInfo[FDF].normTime(timer.RealTime());
 
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
+						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+/*						printDebug << "#################################" << endl;
+						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
+						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
+						cout << "r = " << r << endl;
+						cout << "factor = " << factor << endl;
+						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
+						cout << "#################################" << endl;
+						derivatives[iRank][iRefl][iWave] -= derivative;
+*/					}
+				}
+			}
+	}
+
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
 	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
@@ -317,7 +365,23 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 		           << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
 		           << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
 
-	return funcVal;
+	double priorValue = 0.;
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						priorValue -= log(cauchyFunction(abs(prodAmps[iRank][iRefl][iWave]), _cauchyWidth));
+						}
+				}
+			}
+	}
+//	printDebug << "priorValue = " << priorValue << endl;
+
+	return funcVal + priorValue;
 
 #endif  // USE_FDF
 }
@@ -485,6 +549,30 @@ pwaLikelihood<complexT>::Gradient
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
+
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
+						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+/*						printDebug << "#################################" << endl;
+						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
+						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
+						cout << "r = " << r << endl;
+						cout << "factor = " << factor << endl;
+						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
+						cout << "#################################" << endl;
+						derivatives[iRank][iRefl][iWave] -= derivative;
+*/					}
+				}
+			}
+	}
 
 	// set return gradient values
 	copyToParArray(derivatives, derivativeFlat, gradient);
