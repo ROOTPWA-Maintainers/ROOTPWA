@@ -236,10 +236,11 @@ pwaLikelihood<complexT>::FdF
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 						const double r = abs(prodAmps[iRank][iRefl][iWave]);
-						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
+						const double cauchyFunctionValue = cauchyFunction(r, _cauchyWidth);
+						const double factor = (1./(r*cauchyFunctionValue)) * cauchyFunctionDerivative(r, _cauchyWidth);
 						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+						priorValue -= log(cauchyFunctionValue);
 						derivatives[iRank][iRefl][iWave] -= derivative;
-						priorValue -= log(cauchyFunction(abs(prodAmps[iRank][iRefl][iWave]), _cauchyWidth));
 					}
 				}
 			}
