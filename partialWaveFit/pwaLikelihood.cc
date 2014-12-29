@@ -77,8 +77,7 @@ namespace {
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
 		}
-//		return 1. / (TMath::Pi() * gamma * (1+((x/gamma)*(x/gamma))));
-		return 1. / (1+((x/gamma)*(x/gamma)));
+		return 1. / (1+((x*x)/(gamma*gamma)));
 	}
 
 	double cauchyFunctionDerivative(const double& x, const double& gamma)
@@ -86,8 +85,7 @@ namespace {
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
 		}
-//		return (-2. * x) / (TMath::Pi() * gamma * (gamma + x*x/gamma) * (gamma + x*x/gamma));
-		return (-2. * x) / ((gamma + x*x/gamma) * (gamma + x*x/gamma));
+		return (-2. * x * gamma * gamma) / ((gamma*gamma + x*x) * (gamma*gamma + x*x));
 	}
 
 }
@@ -228,6 +226,7 @@ pwaLikelihood<complexT>::FdF
 	timer.Stop();
 	_funcCallInfo[FDF].normTime(timer.RealTime());
 
+	double priorValue = 0.;
 	switch(_priorType)
 	{
 		case FLAT:
@@ -239,15 +238,16 @@ pwaLikelihood<complexT>::FdF
 						const double r = abs(prodAmps[iRank][iRefl][iWave]);
 						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
 						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
-/*						printDebug << "#################################" << endl;
+						derivatives[iRank][iRefl][iWave] -= derivative;
+						priorValue -= log(cauchyFunction(abs(prodAmps[iRank][iRefl][iWave]), _cauchyWidth));
+						printDebug << "#################################" << endl;
 						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
 						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
 						cout << "r = " << r << endl;
 						cout << "factor = " << factor << endl;
 						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
 						cout << "#################################" << endl;
-						derivatives[iRank][iRefl][iWave] -= derivative;
-*/					}
+					}
 				}
 			}
 	}
@@ -258,6 +258,8 @@ pwaLikelihood<complexT>::FdF
 
 	// set function return value
 	funcVal = sum(logLikelihoodAcc) + nmbEvt * sum(normFactorAcc);
+	cout << "priorValue = " << priorValue << endl;
+	funcVal += priorValue;
 
 	// log total consumed time
 	timerTot.Stop();
@@ -563,6 +565,7 @@ pwaLikelihood<complexT>::Gradient
 						const double r = abs(prodAmps[iRank][iRefl][iWave]);
 						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
 						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+						derivatives[iRank][iRefl][iWave] -= derivative;
 /*						printDebug << "#################################" << endl;
 						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
 						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
@@ -570,7 +573,6 @@ pwaLikelihood<complexT>::Gradient
 						cout << "factor = " << factor << endl;
 						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
 						cout << "#################################" << endl;
-						derivatives[iRank][iRefl][iWave] -= derivative;
 */					}
 				}
 			}
