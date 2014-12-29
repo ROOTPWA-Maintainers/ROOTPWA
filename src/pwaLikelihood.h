@@ -147,7 +147,7 @@ namespace rpwa {
 		void        enableCuda       (const bool enableCuda = true);
 		bool        cudaEnabled      () const;
 		void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
-		void        setPriorType(const priorEnum priorType = pwaLikelihood::FLAT) { _priorType = priorType; }
+		void        setPriorType(const priorEnum& priorType = pwaLikelihood::FLAT) { _priorType = priorType; }
 		priorEnum   priorType() const { return _priorType; }
 		static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
