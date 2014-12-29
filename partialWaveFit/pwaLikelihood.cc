@@ -240,13 +240,6 @@ pwaLikelihood<complexT>::FdF
 						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
 						derivatives[iRank][iRefl][iWave] -= derivative;
 						priorValue -= log(cauchyFunction(abs(prodAmps[iRank][iRefl][iWave]), _cauchyWidth));
-						printDebug << "#################################" << endl;
-						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
-						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
-						cout << "r = " << r << endl;
-						cout << "factor = " << factor << endl;
-						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
-						cout << "#################################" << endl;
 					}
 				}
 			}
@@ -258,7 +251,6 @@ pwaLikelihood<complexT>::FdF
 
 	// set function return value
 	funcVal = sum(logLikelihoodAcc) + nmbEvt * sum(normFactorAcc);
-	cout << "priorValue = " << priorValue << endl;
 	funcVal += priorValue;
 
 	// log total consumed time
@@ -383,7 +375,6 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 				}
 			}
 	}
-//	printDebug << "priorValue = " << priorValue << endl;
 
 	return funcVal + priorValue;
 
@@ -566,14 +557,7 @@ pwaLikelihood<complexT>::Gradient
 						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
 						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
 						derivatives[iRank][iRefl][iWave] -= derivative;
-/*						printDebug << "#################################" << endl;
-						cout << "derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = " << -derivative << endl;
-						cout << "prodAmp = " << prodAmps[iRank][iRefl][iWave] << endl;
-						cout << "r = " << r << endl;
-						cout << "factor = " << factor << endl;
-						cout << "prior = " << -log(cauchyFunction(r, _cauchyWidth)) << endl;
-						cout << "#################################" << endl;
-*/					}
+					}
 				}
 			}
 	}
