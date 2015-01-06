@@ -93,7 +93,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -N -n normfile"
-	     << " [-a normfile] -r rank [-t # -q -h]" << endl
+	     << " [-a normfile] -r rank [-t # -m # -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -113,7 +113,8 @@ usage(const string& progName,
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
 	     << "        -A #       number of input events to normalize acceptance to" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -t #       minimizer tolerance (default: 0.001)" << endl
+	     << "        -t #       relative parameter tolerance (default: 0.001)" << endl
+	     << "        -m #       absolute likelihood tolerance (default: 0.001)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -140,7 +141,7 @@ main(int    argc,
 	const string       valBranchName         = "fitResult_v2";
 	double             defaultStartValue     = 0.01;
 	bool               useFixedStartValues   = false;
-	const unsigned int maxNmbOfIterations    = 40000;
+	const unsigned int maxNmbOfIterations    = 50000;
 	int                startValSeed          = 1234567;
 
 	// ---------------------------------------------------------------------------
@@ -158,12 +159,13 @@ main(int    argc,
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
 	unsigned int rank                = 1;                      // rank of fit
-	double       minimizerTolerance  = 0.001;                   // minimizer tolerance
+	double       minimizerTolerance  = 1e-4;                  // minimizer tolerance
+	double       likelihoodTolerance = 1e-6;                   // tolerance of likelihood function
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:qh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:qh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -211,6 +213,9 @@ main(int    argc,
 		case 't':
 			minimizerTolerance = atof(optarg);
 			break;
+		case 'm':
+			likelihoodTolerance = atof(optarg);
+			break;
 		case 'q':
 			quiet = true;
 			break;
@@ -245,7 +250,8 @@ main(int    argc,
 	     << "        path to file with acceptance integral ...... '" << accIntFileName   << "'" << endl
 	     << "        number of acceptance norm. events .......... "  << numbAccEvents    << endl
 	     << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
+	     << "    relative parameter tolerance.................... "  << minimizerTolerance << endl
+	     << "    absolute likelihood tolerance................... "  << likelihoodTolerance << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -278,13 +284,7 @@ main(int    argc,
 	}
 
 	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
-//	nlopt::opt optimizer(nlopt::G_MLSL_LDS, nmbPar);
-//	nlopt::opt localOpt(nlopt::LD_LBFGS, nmbPar);
-//	localOpt.set_ftol_rel(1e-6);
-//	localOpt.set_xtol_rel(1e-3);
-//	optimizer.set_local_optimizer(localOpt);
 	optimizer.set_min_objective(&rpwaNloptFunc, &L);
-
 	optimizer.set_lower_bounds(-2.*sqrtNmbEvts);
 	optimizer.set_upper_bounds(2.*sqrtNmbEvts);
 
@@ -301,6 +301,17 @@ main(int    argc,
 
 	optimizer.set_xtol_rel(minimizerTolerance);
 	optimizer.set_maxeval(maxNmbOfIterations);
+	optimizer.set_ftol_abs(likelihoodTolerance);
+
+	{
+		printInfo << "optimizer parameters:" << endl;
+		cout << "    absolute likelihood tolerance.............. " << optimizer.get_ftol_abs() << endl;
+		cout << "    relative likelihood tolerance.............. " << optimizer.get_ftol_rel() << endl;
+		cout << "    maximum number of likelihood evaluations... " << optimizer.get_maxeval() << endl;
+		cout << "    maximum time for optimization.............. " << optimizer.get_maxtime() << endl;
+		cout << "    stop when this likelihood is found......... " << optimizer.get_stopval() << endl;
+		cout << "    relative parameter tolerance............... " << optimizer.get_xtol_rel() << endl;
+	}
 
 	double likeli;
 	printInfo << "starting minimization." << endl;
