@@ -1049,7 +1049,8 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
                       const std::string& mcFileName,
                       const std::string& mcWeightFileName,
                       const std::string& massBin,
-                      const std::string& outFileName)
+                      const std::string& outFileName,
+                      const std::string& pdgFileName      = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt")
 {
 	// set some default values for tree names and so on
 	const std::string dataTreeName              = "rootPwaEvtTree";
@@ -1063,9 +1064,6 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcDecayKinPartNamesName   = "decayKinParticles";
 	const std::string mcDecayKinMomentaName     = "decayKinMomenta";
 	const std::string mcWeightTreeName          = "rootPwaWeightTree";
-
-	// guess path to particleDataTable.txt
-	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt";
 
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;
@@ -1086,7 +1084,8 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
                       const std::string& mcAccFileName,
                       const std::string& mcAccWeightFileName,
                       const std::string& massBin,
-                      const std::string& outFileName)
+                      const std::string& outFileName,
+                      const std::string& pdgFileName         = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt")
 {
 	// set some default values for tree names and so on
 	const std::string dataTreeName               = "rootPwaEvtTree";
@@ -1106,9 +1105,6 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcAccDecayKinPartNamesName = "decayKinParticles";
 	const std::string mcAccDecayKinMomentaName   = "decayKinMomenta";
 	const std::string mcAccWeightTreeName        = "rootPwaWeightTree";
-
-	// guess path to particleDataTable.txt
-	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/particleData/particleDataTable.txt";
 
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;
