@@ -178,6 +178,8 @@ public:
 	}
 
 	void Process(const MassBin& massBin, const bool twoMc) const {
+		std::vector<TH1*> clearHistos;
+
 		TCanvas* c = GetCanvas();
 		c->Clear();
 		c->Divide(2, 3);
@@ -244,6 +246,9 @@ public:
 					continue;
 				}
 
+				histMcPsp = dynamic_cast<TH1*>(histMcPsp->Clone((histMcPspName + "Clone").c_str()));
+				clearHistos.push_back(histMcPsp);
+
 				double scalePsp = 1.;
 				if (histMcPsp->Integral() != 0.)
 					scalePsp = histData->Integral() / histMcPsp->Integral();
@@ -297,6 +302,9 @@ public:
 				continue;
 			}
 
+			histDiff = dynamic_cast<TH1*>(histDiff->Clone((histDiffName + "Clone").c_str()));
+			clearHistos.push_back(histDiff);
+
 			histDiff->SetMaximum();
 			histDiff->SetMinimum();
 			const double maxDiff = std::max(std::abs(histDiff->GetMaximum()), std::abs(histDiff->GetMinimum()));
@@ -321,6 +329,9 @@ public:
 				continue;
 			}
 
+			histRelDiff = dynamic_cast<TH1*>(histRelDiff->Clone((histRelDiffName + "Clone").c_str()));
+			clearHistos.push_back(histRelDiff);
+
 			histRelDiff->SetMaximum();
 			histRelDiff->SetMinimum();
 			const double maxRelDiff = std::max(std::abs(histRelDiff->GetMaximum()), std::abs(histRelDiff->GetMinimum()));
@@ -342,6 +353,9 @@ public:
 					std::cerr << "Could not find histogram '" << histAcceptance << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 					continue;
 				}
+
+				histAcceptance = dynamic_cast<TH1*>(histAcceptance->Clone((histAcceptanceName + "Clone").c_str()));
+				clearHistos.push_back(histAcceptance);
 
 				histAcceptance->SetMaximum();
 				maxAcceptance = histAcceptance->GetMaximum();
@@ -414,6 +428,9 @@ public:
 		label.Draw();
 
 		c->Print((GetName() + ".ps").c_str());
+
+		for (std::vector<TH1*>::iterator it=clearHistos.begin(); it!=clearHistos.end(); ++it)
+			delete *it;
 	}
 
 	std::vector<TCanvas*> Finalize() const {
