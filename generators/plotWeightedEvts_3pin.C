@@ -831,6 +831,14 @@ createWeightedPlots(const std::string& dataFileName,
 
 		TLorentzVector lvOut;
 
+		// Lorentz vector for target proton
+		const rpwa::particleProperties* targetPart = rpwa::particleDataTable::entry("p+");
+		if (targetPart == NULL) {
+			printErr << "Unknown particle 'p+' for target particle." << std::endl;
+			return;
+		}
+		const TLorentzVector lvTarget(0., 0., 0., targetPart->mass());
+
 		// loop over tree entries
 		const long int nmbEvents = tree->GetEntries();
 		double maxweight = 0;
@@ -880,16 +888,14 @@ createWeightedPlots(const std::string& dataFileName,
 				maxweight = weight;
 			avweight += weight;
 
-			double tprime;
-			{
-				TVector3 dir=lvBeam.Vect();
-				double const mpi=lvBeam.M();
-				double k=sqrt(lvOut.E()*lvOut.E()-mpi*mpi)/dir.Mag();
-				dir*=k;
-				TLorentzVector beam;
-				beam.SetVectM(dir,mpi);
-				tprime = -(beam-lvOut).M2();
-			}
+			// prepare boost to overall center-of-mass system
+			const TVector3 boostLab2Cm(-(lvBeam+lvTarget).BoostVector());
+			TLorentzVector lvBeam_Cm(lvBeam); lvBeam_Cm.Boost(boostLab2Cm);
+			TLorentzVector lvOut_Cm (lvOut);  lvOut_Cm. Boost(boostLab2Cm);
+
+			const double t      = (lvBeam - lvOut).Mag2();
+			const double tMin   = lvBeam_Cm.M2() + lvOut_Cm.M2() - 2.*(lvBeam_Cm.E()*lvOut_Cm.E() - lvBeam_Cm.P()*lvOut_Cm.P());
+			const double tPrime = -t + tMin; // (-t) - (-tMin)
 
 			unsigned int npart = 3;
 
@@ -981,7 +987,7 @@ createWeightedPlots(const std::string& dataFileName,
 
 				if ((qPart[mapstates[is][0]] + qPart[mapstates[is][1]]) == 0) {
 					// this is a neutral isobar state with 2 final state particles
-					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_neutral_isobar);
+					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tPrime, itree, GJHB_neutral_isobar);
 					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][0]], NULL,  true), weight, itree, HHB_neutral_isobar);
 					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][1]], NULL, false), weight, itree, HHB_neutral_isobar);
 				}
@@ -990,7 +996,7 @@ createWeightedPlots(const std::string& dataFileName,
 					if (qPart[mapstates[is][1]] == 0) neutralidx = 1;
 
 					// this is a negativly charged isobar state with 2 final state particles
-					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_charged_isobar);
+					fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tPrime, itree, GJHB_charged_isobar);
 					fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][neutralidx]]), weight, itree, HHB_charged_isobar);
 
 					// fill the angles only if the isobar mass is close the the rho mass
@@ -1001,7 +1007,7 @@ createWeightedPlots(const std::string& dataFileName,
 					}
 
 					if (std::abs(lvIsobar.M() - pp->mass()) < pp->width()/2.) {
-						fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_rho);
+						fillWeightedGJAnglePlots(lvIsobar, weight, weightPosRef, weightNegRef, weightFlat, tPrime, itree, GJHB_rho);
 						fillWeightedHelicityAnglePlots(calculateHelicityAngles(lvIsobar, lvPart[mapstates[is][neutralidx]]), weight, itree, HHB_rho);
 					}
 				}
