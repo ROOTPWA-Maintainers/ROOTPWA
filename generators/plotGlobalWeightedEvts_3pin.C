@@ -808,7 +808,13 @@ plotGlobalWeightedEvts_3pin(const std::string& inFileName,
 	}
 
 	for (std::map<std::string, BookyDefinition*>::const_iterator itBookies=bookies.begin(); itBookies!=bookies.end(); itBookies++) {
-		std::vector<TCanvas*> cs = itBookies->second->Finalize();
+		BookyDefinition* bookyPlots = itBookies->second;
+
+		bookyPlots->Process(MassBin(outSum, -1., -1., -1.), twoMc);
+		outGlobal->cd();
+		bookyPlots->GetCanvas()->Write(NULL, TObject::kOverwrite);
+
+		std::vector<TCanvas*> cs = bookyPlots->Finalize();
 		for (std::vector<TCanvas*>::iterator c=cs.begin(); c!=cs.end(); c++) {
 			outGlobal->cd();
 			(*c)->Write(NULL, TObject::kOverwrite);
