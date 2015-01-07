@@ -108,6 +108,19 @@ public:
 			return;
 		}
 
+		hist[0]->SetMaximum();
+		hist[0]->SetMinimum();
+		hist[1]->SetMaximum();
+		hist[1]->SetMinimum();
+		const double max = std::max(hist[0]->GetMaximum(), hist[1]->GetMaximum());
+		hist[0]->SetMaximum(max);
+		hist[1]->SetMaximum(max);
+
+		// skip mass bins without any entries
+		if (max == 0.) {
+			return;
+		}
+
 		for (unsigned int i=2; i<4; i++) {
 			std::string histName(templateName);
 			size_t len = (i==1&&twoMc) ? 5 : 2;
@@ -121,14 +134,6 @@ public:
 		hist[3]->Add(hist[1], -1.);
 		hist[3]->Divide(hist[1]);
 
-		hist[0]->SetMaximum();
-		hist[0]->SetMinimum();
-		hist[1]->SetMaximum();
-		hist[1]->SetMinimum();
-		const double max = std::max(hist[0]->GetMaximum(), hist[1]->GetMaximum());
-		hist[0]->SetMaximum(max);
-		hist[1]->SetMaximum(max);
-
 		const double max2 = std::max(std::abs(hist[2]->GetMaximum()), std::abs(hist[2]->GetMinimum()));
 		hist[2]->SetMaximum( 1.1 * max2);
 		hist[2]->SetMinimum(-1.1 * max2);
@@ -136,11 +141,6 @@ public:
 		// force histogram with relative differences to a range
 		hist[3]->SetMaximum( 1.);
 		hist[3]->SetMinimum(-1.);
-
-		// skip mass bins without any entries
-		if (max == 0.) {
-			return;
-		}
 
 		for (unsigned int i=0; i<4; i++) {
 			c->cd(i+1);
