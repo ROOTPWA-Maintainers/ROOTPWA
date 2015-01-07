@@ -92,7 +92,7 @@ public:
 		const char* replacement[4] = { "Mc", "Data", "Diff", "RelDiff" };
 		TH1* hist[4];
 
-		for (unsigned int i=0; i<4; i++) {
+		for (unsigned int i=0; i<2; i++) {
 			std::string histName(templateName);
 			size_t len = (i==1&&twoMc) ? 5 : 2;
 			histName.replace(pos, len, replacement[i]);
@@ -108,6 +108,19 @@ public:
 			return;
 		}
 
+		for (unsigned int i=2; i<4; i++) {
+			std::string histName(templateName);
+			size_t len = (i==1&&twoMc) ? 5 : 2;
+			histName.replace(pos, len, replacement[i]);
+
+			hist[i] = dynamic_cast<TH1*>(hist[0]->Clone(histName.c_str()));
+		}
+
+		hist[2]->Add(hist[1], -1.);
+
+		hist[3]->Add(hist[1], -1.);
+		hist[3]->Divide(hist[1]);
+
 		const double max = std::max(hist[0]->GetMaximum(), hist[1]->GetMaximum());
 		hist[0]->SetMaximum(max);
 		hist[1]->SetMaximum(max);
@@ -118,17 +131,11 @@ public:
 		}
 
 		// force histogram with relative differences to a range
-		if (hist[3] != NULL) {
-			hist[3]->SetMaximum( 1.);
-			hist[3]->SetMinimum(-1.);
-		}
+		hist[3]->SetMaximum( 1.);
+		hist[3]->SetMinimum(-1.);
 
 		for (unsigned int i=0; i<4; i++) {
 			c->cd(i+1);
-
-			if (hist[i] == NULL) {
-				continue;
-			}
 
 			hist[i]->SetStats(false);
 
@@ -161,6 +168,10 @@ public:
 		label.Draw();
 
 		c->Print((GetName() + ".ps").c_str());
+
+		for (unsigned int i=2; i<4; i++) {
+			delete hist[i];
+		}
 	}
 
 	std::vector<TCanvas*> Finalize() const {
@@ -235,10 +246,9 @@ public:
 			}
 
 			TH1* histFirst(NULL);
+			TH1* histMcPsp(NULL);
 			if (twoMc) {
 				const std::string histMcPspName = GetHistogramName(prefix[i], "McPsp", suffix);
-
-				TH1* histMcPsp;
 				massBin.GetDir()->GetObject(histMcPspName.c_str(), histMcPsp);
 
 				if (histMcPsp == NULL) {
@@ -246,23 +256,23 @@ public:
 					continue;
 				}
 
-				histMcPsp = dynamic_cast<TH1*>(histMcPsp->Clone((histMcPspName + "Clone").c_str()));
-				clearHistos.push_back(histMcPsp);
+				TH1* histMcPspScaled = dynamic_cast<TH1*>(histMcPsp->Clone((histMcPspName + "Scaled").c_str()));
+				clearHistos.push_back(histMcPspScaled);
 
 				double scalePsp = 1.;
 				if (histMcPsp->Integral() != 0.)
 					scalePsp = histData->Integral() / histMcPsp->Integral();
-				histMcPsp->Scale(scalePsp);
+				histMcPspScaled->Scale(scalePsp);
 
-				max = std::max(max, histMcPsp->GetMaximum());
+				max = std::max(max, histMcPspScaled->GetMaximum());
 
-				histMcPsp->SetFillColor(kBlue);
-				histMcPsp->SetLineColor(kBlue);
-				histMcPsp->SetMarkerColor(kBlue);
-				histMcPsp->SetStats(false);
-				histMcPsp->Draw("A E2");
+				histMcPspScaled->SetFillColor(kBlue);
+				histMcPspScaled->SetLineColor(kBlue);
+				histMcPspScaled->SetMarkerColor(kBlue);
+				histMcPspScaled->SetStats(false);
+				histMcPspScaled->Draw("A E2");
 
-				histFirst = histMcPsp;
+				histFirst = histMcPspScaled;
 			} else {
 				histFirst = histMc;
 			}
@@ -287,22 +297,9 @@ public:
 			histFirst->SetMaximum(boundUpper);
 			histFirst->SetMinimum(boundLower);
 
-			std::string histDiffName;
-			if (twoMc) {
-				histDiffName = GetHistogramName(prefix[i], "DiffAcc", suffix);
-			} else {
-				histDiffName = GetHistogramName(prefix[i], "Diff", suffix);
-			}
-
-			TH1* histDiff;
-			massBin.GetDir()->GetObject(histDiffName.c_str(), histDiff);
-
-			if (histDiff == NULL) {
-				std::cerr << "Could not find histogram '" << histDiffName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
-				continue;
-			}
-
-			histDiff = dynamic_cast<TH1*>(histDiff->Clone((histDiffName + "Clone").c_str()));
+			const std::string histDiffName = GetHistogramName(prefix[i], "Diff", suffix);
+			TH1* histDiff = dynamic_cast<TH1*>(histMc->Clone(histDiffName.c_str()));
+			histDiff->Add(histData, -1.);
 			clearHistos.push_back(histDiff);
 
 			histDiff->SetMaximum();
@@ -311,25 +308,14 @@ public:
 
 			TransformHistogram(histDiff, -1.1*maxDiff, 1.1*maxDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
 
+			histDiff->SetFillColor(kWhite);
+			histDiff->SetLineColor(kBlack);
 			histDiff->SetStats(false);
 			histDiff->Draw("SAME");
 
-			std::string histRelDiffName;
-			if (twoMc) {
-				histRelDiffName = GetHistogramName(prefix[i], "RelDiffAcc", suffix);
-			} else {
-				histRelDiffName = GetHistogramName(prefix[i], "RelDiff", suffix);
-			}
-
-			TH1* histRelDiff;
-			massBin.GetDir()->GetObject(histRelDiffName.c_str(), histRelDiff);
-
-			if (histRelDiff == NULL) {
-				std::cerr << "Could not find histogram '" << histRelDiffName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
-				continue;
-			}
-
-			histRelDiff = dynamic_cast<TH1*>(histRelDiff->Clone((histRelDiffName + "Clone").c_str()));
+			const std::string histRelDiffName = GetHistogramName(prefix[i], "RelDiff", suffix);
+			TH1* histRelDiff = dynamic_cast<TH1*>(histDiff->Clone(histRelDiffName.c_str()));
+			histRelDiff->Divide(histData);
 			clearHistos.push_back(histRelDiff);
 
 			histRelDiff->SetMaximum();
@@ -345,16 +331,8 @@ public:
 			double maxAcceptance(0.);
 			if (twoMc) {
 				const std::string histAcceptanceName = GetHistogramName(prefix[i], "Acceptance", suffix);
-
-				TH1* histAcceptance;
-				massBin.GetDir()->GetObject(histAcceptanceName.c_str(), histAcceptance);
-
-				if (histAcceptance == NULL) {
-					std::cerr << "Could not find histogram '" << histAcceptance << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
-					continue;
-				}
-
-				histAcceptance = dynamic_cast<TH1*>(histAcceptance->Clone((histAcceptanceName + "Clone").c_str()));
+				TH1* histAcceptance = dynamic_cast<TH1*>(histMc->Clone(histAcceptanceName.c_str()));
+				histAcceptance->Divide(histMcPsp);
 				clearHistos.push_back(histAcceptance);
 
 				histAcceptance->SetMaximum();
@@ -362,8 +340,9 @@ public:
 
 				TransformHistogram(histAcceptance, 0., 1.1*maxAcceptance, boundLower, boundWidth*spaceAcc + boundLower);
 
-				histAcceptance->SetStats(false);
+				histAcceptance->SetFillColor(kWhite);
 				histAcceptance->SetLineColor(kBlack);
+				histAcceptance->SetStats(false);
 				histAcceptance->Draw("SAME");
 			}
 
@@ -466,37 +445,67 @@ public:
 			if (!TClass::GetClass(key->GetClassName())->InheritsFrom("TH1D"))
 				continue;
 
-			const std::string s(key->GetName());
+			const std::string histNameMc(key->GetName());
+			std::string histNameData(histNameMc);
+			std::string histNameDiff(histNameMc);
 			if (twoMc) {
-				if (s.find("DiffAcc") == std::string::npos) continue;
-				if (s.find("RelDiffAcc") != std::string::npos) continue;
+				if ((histNameMc.length() >= 5 && histNameMc.substr(histNameMc.length()-5, 5) == "McAcc") || histNameMc.find("McAcc_") != std::string::npos) {
+					size_t pos = histNameMc.find("McAcc");
+
+					histNameData.erase(pos, 5);
+					histNameData.insert(pos, "Data");
+
+					histNameDiff.erase(pos, 5);
+					histNameDiff.insert(pos, "Diff");
+				} else {
+					continue;
+				}
 			} else {
-				if (s.find("Diff") == std::string::npos) continue;
-				if (s.find("RelDiff") != std::string::npos) continue;
+				if ((histNameMc.length() >= 2 && histNameMc.substr(histNameMc.length()-2, 2) == "Mc") || histNameMc.find("Mc_") != std::string::npos) {
+					size_t pos = histNameMc.find("Mc");
+
+					histNameData.erase(pos, 2);
+					histNameData.insert(pos, "Data");
+
+					histNameDiff.erase(pos, 2);
+					histNameDiff.insert(pos, "Diff");
+				} else {
+					continue;
+				}
 			}
 
-			TH1D* histBin;
-			massBin.GetDir()->GetObject(key->GetName(), histBin);
-			assert(histBin != NULL);
+			TH1D* histBinMc;
+			massBin.GetDir()->GetObject(histNameMc.c_str(), histBinMc);
 
-			const std::string n(s + "VsMass");
+			if (histBinMc == NULL) {
+				continue;
+			}
+
+			TH1D* histBinData;
+			massBin.GetDir()->GetObject(histNameData.c_str(), histBinData);
+
+			if (histBinData == NULL) {
+				continue;
+			}
+
+			const std::string n(histNameDiff + "VsMass");
 
 			TH2D* histVsMass;
 			out->GetObject(n.c_str(), histVsMass);
 			if (histVsMass == NULL) {
 				out->cd();
-				histVsMass = new TH2D(n.c_str(), (std::string(histBin->GetTitle()) + " vs. mass").c_str(),
+				histVsMass = new TH2D(n.c_str(), (std::string("difference of ") + histBinMc->GetTitle() + " vs. mass").c_str(),
 				                      massBins, massBinsLower, massBinsUpper,
-				                      histBin->GetNbinsX(), histBin->GetXaxis()->GetXmin(), histBin->GetXaxis()->GetXmax());
+				                      histBinMc->GetNbinsX(), histBinMc->GetXaxis()->GetXmin(), histBinMc->GetXaxis()->GetXmax());
 				histVsMass->SetOption("COLZ");
 				histVsMass->SetXTitle("Resonance Mass [GeV/c^{2}]");
-				histVsMass->SetYTitle(histBin->GetXaxis()->GetTitle());
+				histVsMass->SetYTitle(histBinMc->GetXaxis()->GetTitle());
 			}
 
-			for (Int_t i=1; i<=histBin->GetNbinsX(); i++) {
+			for (Int_t i=1; i<=histBinMc->GetNbinsX(); i++) {
 				const double x = massBin.GetMassBinCenter();
-				const double y = histBin->GetBinCenter(i);
-				const double z = histBin->GetBinContent(i);
+				const double y = histBinMc->GetBinCenter(i);
+				const double z = histBinMc->GetBinContent(i) - histBinData->GetBinContent(i);
 
 				histVsMass->Fill(x, y, z);
 			}
