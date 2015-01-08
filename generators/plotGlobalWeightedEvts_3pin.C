@@ -323,13 +323,6 @@ public:
 			histDiff->SetMinimum();
 			const double maxDiff = std::max(std::abs(histDiff->GetMaximum()), std::abs(histDiff->GetMinimum()));
 
-			TransformHistogram(histDiff, -1.1*maxDiff, 1.1*maxDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
-
-			histDiff->SetFillColor(kWhite);
-			histDiff->SetLineColor(kBlack);
-			histDiff->SetStats(false);
-			histDiff->Draw("SAME");
-
 			const std::string histRelDiffName = GetHistogramName(prefix[i], "RelDiff", suffix);
 			TH1* histRelDiff = dynamic_cast<TH1*>(histDiff->Clone(histRelDiffName.c_str()));
 			histRelDiff->Divide(histData);
@@ -339,10 +332,18 @@ public:
 			histRelDiff->SetMinimum();
 			const double maxRelDiff = std::max(std::abs(histRelDiff->GetMaximum()), std::abs(histRelDiff->GetMinimum()));
 
+			TransformHistogram(histDiff, -1.1*maxDiff, 1.1*maxDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
+
+			histDiff->SetFillColor(kWhite);
+			histDiff->SetLineColor(kBlack);
+			histDiff->SetStats(false);
+			histDiff->Draw("SAME");
+
 			TransformHistogram(histRelDiff, -1.1*maxRelDiff, 1.1*maxRelDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
 
-			histRelDiff->SetStats(false);
+			histRelDiff->SetFillColor(kWhite);
 			histRelDiff->SetLineColor(kBlue);
+			histRelDiff->SetStats(false);
 			histRelDiff->Draw("SAME");
 
 			double maxAcceptance(0.);
