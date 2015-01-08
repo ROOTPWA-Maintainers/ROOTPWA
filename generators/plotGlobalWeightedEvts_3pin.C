@@ -64,13 +64,13 @@ public:
 		canvas->Print((bookyName + ".ps[").c_str());
 	}
 
-	~BookyDefinition() {
+	virtual ~BookyDefinition() {
 		canvas->Print((bookyName + ".ps]").c_str());
 		delete canvas;
 	}
 
-	virtual void Process(const MassBin& massBin, const bool twoMc) const = 0;
-	virtual std::vector<TCanvas*> Finalize() const = 0;
+	virtual void Process(const MassBin& massBin, const bool twoMc) = 0;
+	virtual std::vector<TCanvas*> Finalize() = 0;
 
 	TCanvas* GetCanvas() const { return canvas; }
 	const std::string& GetName() const { return bookyName; }
@@ -85,7 +85,12 @@ public:
 	Default2DComparison(const std::string& b, const std::string& t) : BookyDefinition(b), templateName(t) {
 	}
 
-	void Process(const MassBin& massBin, const bool twoMc) const {
+	~Default2DComparison() {
+		for (std::vector<TH1*>::iterator it=clearHistos.begin(); it!=clearHistos.end(); ++it)
+			delete *it;
+	}
+
+	void Process(const MassBin& massBin, const bool twoMc) {
 		TCanvas* c = GetCanvas();
 		c->Clear();
 		c->Divide(2, 2);
@@ -129,6 +134,7 @@ public:
 			histName.replace(pos, len, replacement[i]);
 
 			hist[i] = dynamic_cast<TH1*>(hist[0]->Clone(histName.c_str()));
+			clearHistos.push_back(hist[i]);
 		}
 
 		hist[2]->Add(hist[1], -1.);
@@ -178,19 +184,17 @@ public:
 		label.Draw();
 
 		c->Print((GetName() + ".ps").c_str());
-
-		for (unsigned int i=2; i<4; i++) {
-			delete hist[i];
-		}
 	}
 
-	std::vector<TCanvas*> Finalize() const {
+	std::vector<TCanvas*> Finalize() {
 		std::vector<TCanvas*> ret;
 		return ret;
 	}
 
 private:
 	std::string templateName;
+
+	std::vector<TH1*> clearHistos;
 };
 
 class AnglesComparison : public BookyDefinition {
@@ -198,9 +202,12 @@ public:
 	AnglesComparison(const std::string& b, const std::string& s) : BookyDefinition(b, 480, 640), suffix(s) {
 	}
 
-	void Process(const MassBin& massBin, const bool twoMc) const {
-		std::vector<TH1*> clearHistos;
+	~AnglesComparison() {
+		for (std::vector<TH1*>::iterator it=clearHistos.begin(); it!=clearHistos.end(); ++it)
+			delete *it;
+	}
 
+	void Process(const MassBin& massBin, const bool twoMc) {
 		TCanvas* c = GetCanvas();
 		c->Clear();
 		c->Divide(2, 3);
@@ -417,12 +424,9 @@ public:
 		label.Draw();
 
 		c->Print((GetName() + ".ps").c_str());
-
-		for (std::vector<TH1*>::iterator it=clearHistos.begin(); it!=clearHistos.end(); ++it)
-			delete *it;
 	}
 
-	std::vector<TCanvas*> Finalize() const {
+	std::vector<TCanvas*> Finalize() {
 		std::vector<TCanvas*> ret;
 		return ret;
 	}
@@ -442,13 +446,15 @@ private:
 	}
 
 	std::string suffix;
+
+	std::vector<TH1*> clearHistos;
 };
 
 class DiffVsMass : public BookyDefinition {
 public:
 	DiffVsMass(const std::string& b, TDirectory* o, const unsigned int mb, const double ml, const double mu) : BookyDefinition(b), out(o), massBins(mb), massBinsLower(ml), massBinsUpper(mu) {};
 
-	void Process(const MassBin& massBin, const bool twoMc) const {
+	void Process(const MassBin& massBin, const bool twoMc) {
 		TIter histiter(massBin.GetDir()->GetListOfKeys());
 		TKey* key;
 		while ((key = dynamic_cast<TKey*>(histiter()))) {
@@ -522,7 +528,7 @@ public:
 		}
 	}
 
-	std::vector<TCanvas*> Finalize() const {
+	std::vector<TCanvas*> Finalize() {
 		std::vector<TCanvas*> ret;
 
 		TIter histiter(out->GetList());
