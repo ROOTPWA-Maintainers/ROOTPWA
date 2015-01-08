@@ -11,12 +11,14 @@
  */
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <sstream>
 
 #include <TCanvas.h>
+#include <TClass.h>
 #include <TColor.h>
 #include <TExec.h>
 #include <TFile.h>
@@ -702,8 +704,8 @@ getMassBins(TFile* in) {
 			continue;
 
 		// extract upper and lower limits of massbin
-		double massBinLower; istringstream(nameDir.substr(0, pointpos)) >> massBinLower;
-		double massBinUpper; istringstream(nameDir.substr(pointpos+1)) >> massBinUpper;
+		double massBinLower; std::istringstream(nameDir.substr(0, pointpos)) >> massBinLower;
+		double massBinUpper; std::istringstream(nameDir.substr(pointpos+1)) >> massBinUpper;
 		double massBinCenter = (massBinLower + massBinUpper) / 2.;
 
 		TDirectory* inDir;
