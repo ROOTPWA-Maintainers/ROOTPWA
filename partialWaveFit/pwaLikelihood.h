@@ -46,6 +46,7 @@
 #include "Math/IFunction.h"
 #include "TFile.h"
 #include "TH1.h"
+#include "TMatrixT.h"
 
 #include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
@@ -119,6 +120,9 @@ namespace rpwa {
 		/// calculates gradient (vector of partial derivatives) of function at point defined by par
 		virtual void Gradient(const double* par,
 							  double*       gradient) const;
+		/// calculates covariance matrix of function at point defined by par
+		virtual void CovarianceMatrixAnalytically(const double*     par,
+							                      TMatrixT<double>& covMatrix) const;
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
