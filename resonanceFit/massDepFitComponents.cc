@@ -58,7 +58,8 @@ rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
 }
 
 
-rpwa::massDepFit::channel::~channel() {
+rpwa::massDepFit::channel::~channel()
+{
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 		delete _interpolator[idxBin];
 	}
@@ -90,7 +91,8 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
                                   const std::map<std::string, size_t>& waveIndices,
                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                   const bool useBranchings,
-                                  const bool debug) {
+                                  const bool debug)
+{
 	if(debug) {
 		printDebug << "starting initialization of 'component' for component '" << getName() << "'." << std::endl;
 	}

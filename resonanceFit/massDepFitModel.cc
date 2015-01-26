@@ -31,7 +31,8 @@ rpwa::massDepFit::model::model()
 }
 
 
-rpwa::massDepFit::model::~model() {
+rpwa::massDepFit::model::~model()
+{
 	for(std::vector<rpwa::massDepFit::component*>::iterator it=_components.begin(); it!=_components.end(); ++it) {
 		delete *it;
 	}

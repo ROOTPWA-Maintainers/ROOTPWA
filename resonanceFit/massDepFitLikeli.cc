@@ -5,19 +5,22 @@
 
 
 rpwa::massDepFit::likelihood*
-rpwa::massDepFit::likelihood::Clone() const {
+rpwa::massDepFit::likelihood::Clone() const
+{
 	return new likelihood(*this);
 }
 
 
 unsigned int
-rpwa::massDepFit::likelihood::NDim() const {
+rpwa::massDepFit::likelihood::NDim() const
+{
 	return _compset->getNrParameters();
 }
 
 
 unsigned int
-rpwa::massDepFit::likelihood::NDataPoints() const {
+rpwa::massDepFit::likelihood::NDataPoints() const
+{
 	unsigned int nrPts(0);
 
 	if(_fitProductionAmplitudes) {
@@ -302,7 +305,8 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 
 
 double
-rpwa::massDepFit::likelihood::DoEval(const double* par) const {
+rpwa::massDepFit::likelihood::DoEval(const double* par) const
+{
 	// set parameters for resonances, background and phase space
 	_compset->setParameters(par);
 
@@ -315,7 +319,8 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
+rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const
+{
 	double chi2=0;
 
 	// loop over bins
@@ -363,7 +368,8 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const {
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const {
+rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const
+{
 	double chi2=0;
 
 	// loop over bins
