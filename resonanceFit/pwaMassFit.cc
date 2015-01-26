@@ -38,6 +38,7 @@
 #include <Math/Factory.h>
 #include <Minuit2/Minuit2Minimizer.h>
 #include <TFile.h>
+#include <TROOT.h>
 #include <TStopwatch.h>
 
 #include "conversionUtils.hpp"
@@ -315,6 +316,10 @@ main(int    argc,
 	printLibraryInfo ();
 	printGitHash     ();
 	cout << endl;
+
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
+	gROOT->ProcessLine("#include <complex>");
 
 	// --------------------------------------------------------------------------
 	// internal parameters
