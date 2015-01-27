@@ -14,6 +14,7 @@
 #define MASSDEPFITFSMD_HH
 
 #include <iostream>
+#include <limits>
 #include <vector>
 
 namespace libconfig {
