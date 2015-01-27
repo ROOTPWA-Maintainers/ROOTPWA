@@ -13,20 +13,18 @@
 
 #include "massDepFitModel.h"
 
-#include <TF1.h>
-
 #include "massDepFitComponents.h"
+#include "massDepFitFsmd.h"
 #include "reportingUtils.hpp"
 
 
 rpwa::massDepFit::model::model()
 	: _nrParameters(0),
+	  _fsmd(NULL),
 	  _useBranchings(false),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
-	  _idxAnchorChannel(std::numeric_limits<size_t>::max()),
-	  _fsmdFunction(NULL),
-	  _fsmdFixed(false)
+	  _idxAnchorChannel(std::numeric_limits<size_t>::max())
 {
 }
 
@@ -38,16 +36,15 @@ rpwa::massDepFit::model::~model()
 	}
 	_components.clear();
 
-	if(_fsmdFunction != NULL) {
-		delete _fsmdFunction;
-		_fsmdFunction = NULL;
+	if(_fsmd != NULL) {
+		delete _fsmd;
+		_fsmd = NULL;
 	}
 }
 
 
 bool
 rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
-                              const std::vector<double>& massBinCenters,
                               const std::string& anchorWaveName,
                               const std::string& anchorComponentName)
 {
@@ -55,11 +52,6 @@ rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
 
 	if(not initMapping(anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
-		return false;
-	}
-
-	if(not initFsmd(massBinCenters)) {
-		printErr << "error precalculating the final-state mass dependence." << std::endl;
 		return false;
 	}
 
@@ -86,37 +78,17 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 
 
 void
-rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
+rpwa::massDepFit::model::setFsmd(rpwa::massDepFit::fsmd* fsmd)
 {
-	if(_fsmdFunction != NULL) {
-		_nrParameters -= _fsmdFreeParameterIndices.size();
-		delete _fsmdFunction;
-	}
-	_fsmdFunction = fsmdFunction;
-
-	// clear list of free parameters
-	_fsmdFreeParameterIndices.clear();
-
-	if(_fsmdFunction == NULL) {
-		_fsmdFixed = true;
-		return;
+	if(_fsmd != NULL) {
+		_nrParameters -= _fsmd->getNrParameters();
+		delete _fsmd;
 	}
 
-	// check if there are free parameters in the phase space that should be fitted
-	unsigned int nparFsmd = _fsmdFunction->GetNpar();
-	// loop over parameters and check limits
-	// remember which parameters to let float
-	for(unsigned int i=0;i<nparFsmd;++i) {
-		double min, max;
-		_fsmdFunction->GetParLimits(i,min,max);
-		if(min!=max) {
-			_fsmdFreeParameterIndices.push_back(i);
-		}
-	}// end loop over parameters
+	_fsmd = fsmd;
 
-	_nrParameters += _fsmdFreeParameterIndices.size();
-	if(_fsmdFreeParameterIndices.size() == 0) {
-		_fsmdFixed = true;
+	if(_fsmd != NULL) {
+		_nrParameters += _fsmd->getNrParameters();
 	}
 }
 
@@ -215,35 +187,6 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 }
 
 
-bool
-rpwa::massDepFit::model::initFsmd(const std::vector<double>& massBinCenters)
-{
-	const size_t nrMassBins = massBinCenters.size();
-
-	_fsmdValues.resize(nrMassBins);
-
-	for(size_t idxMassBin=0; idxMassBin<nrMassBins; ++idxMassBin) {
-		_fsmdValues[idxMassBin] = calcFsmd(massBinCenters[idxMassBin], std::numeric_limits<size_t>::max());
-	}
-
-	return true;
-}
-
-
-double
-rpwa::massDepFit::model::getFsmdParameter(const size_t idx) const
-{
-	return _fsmdFunction->GetParameter(_fsmdFreeParameterIndices[idx]);
-}
-
-
-void
-rpwa::massDepFit::model::getFsmdParameterLimits(const size_t idx, double& lower, double& upper) const
-{
-	return _fsmdFunction->GetParLimits(_fsmdFreeParameterIndices[idx], lower, upper);
-}
-
-
 void
 rpwa::massDepFit::model::getParameters(double* par) const
 {
@@ -267,10 +210,8 @@ rpwa::massDepFit::model::getParameters(double* par) const
 	}
 
 	// final-state mass dependence
-	unsigned int nfreepar=_fsmdFreeParameterIndices.size();
-	for(unsigned int ipar=0; ipar<nfreepar; ++ipar) {
-		par[parcount] = _fsmdFunction->GetParameter(_fsmdFreeParameterIndices[ipar]);
-		++parcount;
+	if(_fsmd != NULL) {
+		parcount += _fsmd->getParameters(&par[parcount]);
 	}
 }
 
@@ -298,27 +239,9 @@ rpwa::massDepFit::model::setParameters(const double* par)
 	}
 
 	// final-state mass-dependence
-	unsigned int nfreepar=_fsmdFreeParameterIndices.size();
-	for(unsigned int ipar=0;ipar<nfreepar;++ipar){
-		_fsmdFunction->SetParameter(_fsmdFreeParameterIndices[ipar], par[parcount]);
-		++parcount;
+	if(_fsmd != NULL) {
+		parcount += _fsmd->setParameters(&par[parcount]);
 	}
-}
-
-
-double
-rpwa::massDepFit::model::calcFsmd(const double mass,
-                                  const size_t idxMass) const
-{
-	if(_fsmdFixed && idxMass != std::numeric_limits<size_t>::max()) {
-		return _fsmdValues[idxMass];
-	}
-
-	if(not _fsmdFunction) {
-		return 1.;
-	}
-
-	return _fsmdFunction->Eval(mass);
 }
 
 
@@ -341,7 +264,9 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 		prodAmp += _components[idxComponent]->val(idxBin, mass) * _components[idxComponent]->getCouplingPhaseSpace(idxChannel, idxBin, mass, idxMass);
 	}
 
-	prodAmp *= calcFsmd(mass, idxMass);
+	if(_fsmd != NULL) {
+		prodAmp *= _fsmd->val(mass, idxMass);
+	}
 
 	return prodAmp;
 }

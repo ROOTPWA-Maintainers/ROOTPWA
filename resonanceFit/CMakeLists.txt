@@ -52,6 +52,7 @@ include_directories(
 set(SOURCES
 	massDepFit.cc
 	massDepFitComponents.cc
+	massDepFitFsmd.cc
 	massDepFitLikeli.cc
 	massDepFitModel.cc
 	)

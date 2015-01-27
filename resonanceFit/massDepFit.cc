@@ -44,7 +44,6 @@
 #include <Math/Minimizer.h>
 #include <Math/Factory.h>
 #include <TTree.h>
-#include <TF1.h>
 #include <TFile.h>
 #include <TGraph.h>
 #include <TGraph2D.h>
@@ -63,6 +62,7 @@
 #include "fitResult.h"
 #include "libConfigUtils.hpp"
 #include "massDepFitComponents.h"
+#include "massDepFitFsmd.h"
 #include "massDepFitLikeli.h"
 #include "massDepFitModel.h"
 #include "reportingUtils.hpp"
@@ -567,96 +567,23 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
 	if(not configFsmd) {
-		printInfo << "not using final-state mass dependence." << endl;
+		printInfo << "not using final-state mass dependence." << std::endl;
 		return true;
 	}
 
 	if(_debug) {
-		printDebug << "reading final-state mass-dependence from configuration file." << endl;
+		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
-	map<string, Setting::Type> mandatoryArguments;
-	insert(mandatoryArguments)
-	      ("formula", Setting::TypeString)
-	      ("val", Setting::TypeArray)
-	      ("lower", Setting::TypeArray)
-	      ("upper", Setting::TypeArray)
-	      ("error", Setting::TypeArray)
-	      ("fix", Setting::TypeArray);
-	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
-		printErr << "'finalStateMassDependence' section in configuration file contains errors." << endl;
+	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd();
+	if(not fsmd->init(configFsmd, _massBinCenters, _debug)) {
+		delete fsmd;
+		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
 	}
+	fitModel.setFsmd(fsmd);
 
-	string formula;
-	configFsmd->lookupValue("formula", formula);
-
-	TF1* fsmdFunction = new TF1("finalStateMassDependence", formula.c_str(), _massMin, _massMax);
-	const Int_t nrPar = fsmdFunction->GetNpar();
-
-	const Setting& configFsmdValue = (*configFsmd)["val"];
-	if(configFsmdValue.getLength() != nrPar) {
-		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-		return false;
-	}
-	if(configFsmdValue.getLength() > 0 and configFsmdValue[0].getType() != Setting::TypeFloat) {
-		printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-		return false;
-	}
-
-	const Setting& configFsmdLower = (*configFsmd)["lower"];
-	if(configFsmdLower.getLength() != nrPar) {
-		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-		return false;
-	}
-	if(configFsmdLower.getLength() > 0 and configFsmdLower[0].getType() != Setting::TypeFloat) {
-		printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-		return false;
-	}
-
-	const Setting& configFsmdUpper = (*configFsmd)["upper"];
-	if(configFsmdUpper.getLength() != nrPar) {
-		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-		return false;
-	}
-	if(configFsmdUpper.getLength() > 0 and configFsmdUpper[0].getType() != Setting::TypeFloat) {
-		printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-		return false;
-	}
-
-	const Setting& configFsmdError = (*configFsmd)["error"];
-	if(configFsmdError.getLength() != nrPar) {
-		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-		return false;
-	}
-	if(configFsmdError.getLength() > 0 and configFsmdError[0].getType() != Setting::TypeFloat) {
-		printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-		return false;
-	}
-
-	const Setting& configFsmdFix = (*configFsmd)["fix"];
-	if(configFsmdFix.getLength() != nrPar) {
-		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-		return false;
-	}
-	if(configFsmdFix.getLength() > 0 and configFsmdFix[0].getType() != Setting::TypeBoolean) {
-		printErr << "'fix' in 'finalStateMassDependence' has to be made up of booleans." << endl;
-		return false;
-	}
-
-	for(Int_t i=0; i<nrPar; ++i) {
-		fsmdFunction->SetParameter(i, configFsmdValue[i]);
-		fsmdFunction->SetParError(i, configFsmdError[i]);
-		fsmdFunction->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
-
-		if(configFsmdFix[i]) {
-			fsmdFunction->FixParameter(i, configFsmdValue[i]);
-		}
-	}
-
-	fitModel.setFsmdFunction(fsmdFunction);
-
-	printInfo << "using final-state mass dependence as defined in the configuration file." << endl;
+	printInfo << "using final-state mass dependence as defined in the configuration file." << std::endl;
 
 	return true;
 }
@@ -667,7 +594,6 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
                                    rpwa::massDepFit::likelihood& L)
 {
 	if(not fitModel.init(_waveNames,
-	                     _massBinCenters,
 	                     _anchorWaveName,
 	                     _anchorComponentName)) {
 		printErr << "error while initializing the fit model." << endl;
@@ -814,7 +740,6 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 		}
 	}
 
-
 	return true;
 }
 
@@ -827,7 +752,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
 	if(not configFsmd) {
-		if(fitModel.getFsmdFunction()) {
+		if(fitModel.getFsmd() != NULL) {
 			printErr << "no section 'finalStateMassDependence' in configuration file, but final-state mass-dependence exists." << endl;
 			return false;
 		}
@@ -838,28 +763,9 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 		printDebug << "updating final-state mass-dependence in configuration file." << endl;
 	}
 
-	const Setting& configFsmdValue = (*configFsmd)["val"];
-	const Setting& configFsmdError = (*configFsmd)["error"];
-	const Setting& configFsmdFix = (*configFsmd)["fix"];
-
-	const unsigned int nrPar =fitModel.getFsmdFunction()->GetNpar();
-	unsigned int iPar = 0;
-	for(unsigned int i=0; i<nrPar; ++i) {
-		if(not configFsmdFix[i]) {
-			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
-
-			ostringstream sName;
-			sName << "PSP__" << iPar;
-			const int varIndex = minimizer->VariableIndex(sName.str());
-			if(varIndex == -1) {
-				printErr << "variable '" << sName.str() << "' used to extract the error for one parameter "
-				         << "of the final-state mass-dependence  not known to the minimizer." << endl;
-				return false;
-			}
-			configFsmdError[i] = minimizer->Errors()[varIndex];
-
-			++iPar;
-		}
+	if(not fitModel.getFsmd()->update(configFsmd, minimizer, _debug)) {
+		printErr << "error while updating final-state mass-dependence." << endl;
+		return false;
 	}
 
 	return true;
@@ -1689,9 +1595,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(fitModel.getFsmdFunction() != NULL) {
-		TF1* func = fitModel.getFsmdFunction();
-
+	if(fitModel.getFsmd() != NULL) {
 		TGraph graph;
 		graph.SetName("finalStateMassDependence");
 		graph.SetTitle("finalStateMassDependence");
@@ -1702,7 +1606,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			++point;
 			const double mass = _massBinCenters[idxMass];
 
-			graph.SetPoint(point, mass, pow(func->Eval(_massBinCenters[idxMass]), 2.));
+			graph.SetPoint(point, mass, pow(fitModel.getFsmd()->val(_massBinCenters[idxMass], idxMass), 2.));
 		}
 
 		outFile->cd();
@@ -1829,7 +1733,9 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(idxBin, _massBinCenters[idxMass]);
 			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
-			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
+			if(fitModel.getFsmd() != NULL) {
+				prodAmp *= fitModel.getFsmd()->val(_massBinCenters[idxMass], idxMass);
+			}
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
 			maxIE = max(maxIE, norm(prodAmp));
