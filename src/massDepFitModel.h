@@ -17,13 +17,12 @@
 #include <limits>
 #include <vector>
 
-class TF1;
-
 namespace rpwa {
 
 	namespace massDepFit {
 
 		class component;
+		class fsmd;
 
 		class model {
 
@@ -34,11 +33,7 @@ namespace rpwa {
 
 			void add(rpwa::massDepFit::component* comp);
 
-			TF1* getFsmdFunction() const { return _fsmdFunction; }
-			void setFsmdFunction(TF1* fsmdFunction);
-
 			bool init(const std::vector<std::string>& waveNames,
-			          const std::vector<double>& massBinCenters,
 			          const std::string& anchorWaveName,
 			          const std::string& anchorComponentName);
 
@@ -49,9 +44,8 @@ namespace rpwa {
 			size_t getNrComponents() const { return _components.size(); }
 			const rpwa::massDepFit::component* getComponent(size_t idx) const { return _components[idx]; }
 
-			unsigned int getFsmdNrParameters() const { return _fsmdFreeParameterIndices.size(); }
-			double getFsmdParameter(const size_t idx) const;
-			void getFsmdParameterLimits(const size_t idx, double& lower, double& upper) const;
+			const rpwa::massDepFit::fsmd* getFsmd() const { return _fsmd; }
+			void setFsmd(rpwa::massDepFit::fsmd* fsmd);
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
 
@@ -83,16 +77,12 @@ namespace rpwa {
 			             const double mass,
 			             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			double calcFsmd(const double mass,
-			                const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			std::ostream& print(std::ostream& out) const;
 
 		private:
 
 			bool initMapping(const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
-			bool initFsmd(const std::vector<double>& massBinCenters);
 
 			std::vector<std::string> _waveNames;
 
@@ -100,16 +90,13 @@ namespace rpwa {
 
 			std::vector<rpwa::massDepFit::component*> _components;
 
+			rpwa::massDepFit::fsmd* _fsmd;
+
 			bool _useBranchings;
 
 			size_t _idxAnchorWave;
 			size_t _idxAnchorComponent;
 			size_t _idxAnchorChannel;
-
-			TF1* _fsmdFunction;
-			bool _fsmdFixed;
-			std::vector<double> _fsmdValues;
-			std::vector<size_t> _fsmdFreeParameterIndices;
 
 			std::vector<std::vector<std::pair<size_t, size_t> > > _waveComponentChannel;
 

@@ -46,6 +46,7 @@
 #include "libConfigUtils.hpp"
 #include "massDepFit.h"
 #include "massDepFitComponents.h"
+#include "massDepFitFsmd.h"
 #include "massDepFitLikeli.h"
 #include "massDepFitModel.h"
 #include "reportingUtils.hpp"
@@ -287,22 +288,55 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 		}
 	} // end loop over components
 
-	// set phase space
-	const unsigned int nfreeFsmd=compset.getFsmdNrParameters();
-	for(unsigned int ifreeFsmd=0; ifreeFsmd<nfreeFsmd; ++ifreeFsmd) {
-		const double val = par[parcount];
-		double lower,upper;
-		compset.getFsmdParameterLimits(ifreeFsmd, lower, upper);
-		ostringstream name;
-		name << "PSP__" << ifreeFsmd;
-		printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << val << endl;
-		minimizer->SetLimitedVariable(parcount,
-		                              name.str().c_str(),
-		                              val,
-		                              0.0001,
-		                              lower,
-		                              upper);
-		++parcount;
+	// set parameters for final-state mass-dependence
+	if(compset.getFsmd() != NULL) {
+		const rpwa::massDepFit::fsmd* fsmd = compset.getFsmd();
+		for(size_t idxParameter=0; idxParameter<fsmd->getNrParameters(); ++idxParameter) {
+			std::ostringstream name;
+			name << "PSP__" << idxParameter;
+
+			const bool fix = fsmd->getParameterFixed(idxParameter);
+
+			if(fix) {
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << par[parcount] << endl;
+				minimizer->SetFixedVariable(parcount,
+				                            name.str(),
+				                            par[parcount]);
+			} else if(fsmd->getParameterLimitedLower(idxParameter) && fsmd->getParameterLimitedUpper(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				          << " (limited between " << fsmd->getParameterLimitLower(idxParameter)
+				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
+				minimizer->SetLimitedVariable(parcount,
+				                              name.str(),
+				                              par[parcount],
+				                              fsmd->getParameterStep(idxParameter),
+				                              fsmd->getParameterLimitLower(idxParameter),
+				                              fsmd->getParameterLimitUpper(idxParameter));
+			} else if(fsmd->getParameterLimitedLower(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << endl;
+				minimizer->SetLowerLimitedVariable(parcount,
+				                                   name.str(),
+				                                   par[parcount],
+				                                   fsmd->getParameterStep(idxParameter),
+				                                   fsmd->getParameterLimitLower(idxParameter));
+			} else if(fsmd->getParameterLimitedUpper(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
+				minimizer->SetUpperLimitedVariable(parcount,
+				                                   name.str(),
+				                                   par[parcount],
+				                                   fsmd->getParameterStep(idxParameter),
+				                                   fsmd->getParameterLimitUpper(idxParameter));
+			} else {
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount] << endl;
+				minimizer->SetVariable(parcount,
+				                       name.str(),
+				                       par[parcount],
+				                       fsmd->getParameterStep(idxParameter));
+			}
+			++parcount;
+		}
 	}
 
 	return true;
