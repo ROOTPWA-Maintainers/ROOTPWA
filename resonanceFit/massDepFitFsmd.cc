@@ -69,11 +69,11 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		delete _function;
 	}
 	_function = new TFormula("finalStateMassDependence", formula.c_str());
-	_nrParameters = _function->GetNpar();
+	const int nrPar = _function->GetNpar();
 
 	const libconfig::Setting& configFsmdValue = (*configFsmd)["val"];
-	if(configFsmdValue.getLength() != _nrParameters) {
-		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << _nrParameters << "." << std::endl;
+	if(configFsmdValue.getLength() != nrPar) {
+		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
 		return false;
 	}
 	if(configFsmdValue.getLength() > 0 and configFsmdValue[0].getType() != libconfig::Setting::TypeFloat) {
@@ -82,8 +82,8 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	const libconfig::Setting& configFsmdLower = (*configFsmd)["lower"];
-	if(configFsmdLower.getLength() != _nrParameters) {
-		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << _nrParameters << "." << std::endl;
+	if(configFsmdLower.getLength() != nrPar) {
+		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
 		return false;
 	}
 	if(configFsmdLower.getLength() > 0 and configFsmdLower[0].getType() != libconfig::Setting::TypeFloat) {
@@ -92,8 +92,8 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	const libconfig::Setting& configFsmdUpper = (*configFsmd)["upper"];
-	if(configFsmdUpper.getLength() != _nrParameters) {
-		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << _nrParameters << "." << std::endl;
+	if(configFsmdUpper.getLength() != nrPar) {
+		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
 		return false;
 	}
 	if(configFsmdUpper.getLength() > 0 and configFsmdUpper[0].getType() != libconfig::Setting::TypeFloat) {
@@ -102,8 +102,8 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	const libconfig::Setting& configFsmdError = (*configFsmd)["error"];
-	if(configFsmdError.getLength() != _nrParameters) {
-		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << _nrParameters << "." << std::endl;
+	if(configFsmdError.getLength() != nrPar) {
+		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
 		return false;
 	}
 	if(configFsmdError.getLength() > 0 and configFsmdError[0].getType() != libconfig::Setting::TypeFloat) {
@@ -112,8 +112,8 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	const libconfig::Setting& configFsmdFix = (*configFsmd)["fix"];
-	if(configFsmdFix.getLength() != _nrParameters) {
-		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << _nrParameters << "." << std::endl;
+	if(configFsmdFix.getLength() != nrPar) {
+		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
 		return false;
 	}
 	if(configFsmdFix.getLength() > 0 and configFsmdFix[0].getType() != libconfig::Setting::TypeBoolean) {
@@ -122,6 +122,8 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	_functionFixed = true;
+
+	_nrParameters = _function->GetNpar();
 
 	_parameters.resize(_nrParameters);
 	_parametersFixed.resize(_nrParameters);
