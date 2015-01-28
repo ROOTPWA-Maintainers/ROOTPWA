@@ -514,7 +514,8 @@ rpwa::massDepFit::component::getBranchings(double* par) const
 	}
 
 	size_t counter=0;
-	for(size_t idx=0; idx<_channels.size(); ++idx) {
+	// branching with idx 0 is always real and fixed to 1
+	for(size_t idx=1; idx<_channels.size(); ++idx) {
 		if(idx != _channelsBranching[idx]) {
 			continue;
 		}
@@ -522,10 +523,8 @@ rpwa::massDepFit::component::getBranchings(double* par) const
 		par[counter] = _branchings[idx].real();
 		counter += 1;
 
-		if(idx != 0) {
-			par[counter] = _branchings[idx].imag();
-			counter += 1;
-		}
+		par[counter] = _branchings[idx].imag();
+		counter += 1;
 	}
 
 	return counter;
@@ -540,18 +539,14 @@ rpwa::massDepFit::component::setBranchings(const double* par)
 	}
 
 	size_t counter=0;
-	for(size_t idx=0; idx<_channels.size(); ++idx) {
+	// branching with idx 0 is always real and fixed to 1
+	for(size_t idx=1; idx<_channels.size(); ++idx) {
 		if(idx != _channelsBranching[idx]) {
 			continue;
 		}
 
-		if(idx == 0) {
-			_branchings[idx] = std::complex<double>(par[counter], 0.);
-			counter += 1;
-		} else {
-			_branchings[idx] = std::complex<double>(par[counter], par[counter+1]);
-			counter += 2;
-		}
+		_branchings[idx] = std::complex<double>(par[counter], par[counter+1]);
+		counter += 2;
 	}
 
 	return counter;

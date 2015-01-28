@@ -170,9 +170,10 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 	if(compset.useBranchings()) {
 		for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 			const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-			for(size_t idxChannel=0; idxChannel<comp->getNrChannels(); ++idxChannel) {
+			// branching with idxChannel 0 is always real and fixed to 1
+			for(size_t idxChannel=1; idxChannel<comp->getNrChannels(); ++idxChannel) {
 				// if branchings are used, not every channel has its own coupling
-				if(idxChannel != comp->getChannelIdxBranching(idxChannel) || comp->getNrChannels() <= 1) {
+				if(idxChannel != comp->getChannelIdxBranching(idxChannel)) {
 					continue;
 				}
 
@@ -191,13 +192,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				}
 				bool fix = not free;
 
-				if(idxChannel == 0) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
-					minimizer->SetFixedVariable(parcount,
-					                            prefixName.str() + "__real",
-					                            par[parcount]);
-					++parcount;
-				} else if (fix) {
+				if (fix) {
 					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__real",
