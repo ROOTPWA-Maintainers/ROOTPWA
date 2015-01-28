@@ -591,18 +591,18 @@ main(int    argc,
 		if(success) {
 			chi2 = L.DoEval(par);
 		} else {
-			printInfo << "chi2 (if fit were successful) = " << maxPrecisionAlign(L.DoEval(par)) << endl;
+			printInfo << "chi2 (if fit were successful) =" << maxPrecisionAlign(L.DoEval(par)) << endl;
 		}
-		printInfo << "chi2 = " << maxPrecisionAlign(chi2) << endl;
+		printInfo << "chi2 =" << maxPrecisionAlign(chi2) << endl;
 		compset.setParameters(par);
 
 		const unsigned int nrDataPoints = L.NDataPoints();
 		const unsigned int nrFree = minimizer->NFree();
 		const unsigned int ndf = nrDataPoints - nrFree;
-		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << "=" << ndf << endl;
+		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << endl;
 
 		double chi2red = chi2/(double)ndf;
-		printInfo << "chi2/ndf = " << maxPrecisionAlign(chi2red) << endl;
+		printInfo << "chi2/ndf =" << maxPrecisionAlign(chi2red) << endl;
 
 		if(not mdepFit.updateConfig(&configRoot, compset, minimizer.get(), chi2, ndf, chi2red)) {
 			printErr << "error while updating configuration file." << endl;
