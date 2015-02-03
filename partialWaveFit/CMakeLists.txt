@@ -89,6 +89,8 @@ make_executable(pwafit                      pwafit.cc                       ${TH
 make_executable(pwaplot                     pwaplots.cc                     ${THIS_LIB})
 make_executable(likelihoodPointCalculator   likelihoodPointCalculator.cc    ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 
+make_executable(stripIntegralsFromFitResult  stripIntegralsFromFitResult.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+
 
 # build tests
 add_subdirectory(test)
