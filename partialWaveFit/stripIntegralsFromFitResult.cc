@@ -54,10 +54,11 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -i inuptFile -o outputFile" << endl
+	     << " -i inuptFile -o outputFile [-c]" << endl
 	     << "    where:" << endl
 	     << "        -i         input fit result file" << endl
 	     << "        -o         output fit result file" << endl
+	     << "        -c         also strip covariance matrix (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -83,16 +84,20 @@ main(int    argc,
 	const string progName            = argv[0];
 	string inputFileName = "";
 	string outputFileName = "";
+	bool stripCovarianceMatrix = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "i:o:h")) != -1)
+	while ((c = getopt(argc, argv, "i:o:ch")) != -1)
 		switch (c) {
 		case 'i':
 			inputFileName = optarg;
 			break;
 		case 'o':
 			outputFileName = optarg;
+			break;
+		case 'c':
+			stripCovarianceMatrix = true;
 			break;
 		case 'h':
 			usage(progName);
@@ -140,7 +145,12 @@ main(int    argc,
 			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
 		}
 		const vector<string>& prodAmpNames = inResult->prodAmpNames();
-		const TMatrixT<double>& fitParCovMatrix = inResult->fitParCovMatrix();
+		const TMatrixT<double>* fitParCovMatrix = 0;
+		if(stripCovarianceMatrix) {
+			fitParCovMatrix = new TMatrixT<double>(0, 0);
+		} else {
+			fitParCovMatrix = &(inResult->fitParCovMatrix());
+		}
 		const vector<pair<int, int> >& fitParCovMatrixIndices = inResult->fitParCovIndices();
 		const complexMatrix normIntegral(0, 0);
 		const complexMatrix accIntegral(0, 0);
@@ -156,7 +166,7 @@ main(int    argc,
 		                rank,
 		                prodAmps,
 		                prodAmpNames,
-		                fitParCovMatrix,
+		                *fitParCovMatrix,
 		                fitParCovMatrixIndices,
 		                normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 		                accIntegral,
@@ -165,6 +175,7 @@ main(int    argc,
 		                hasHesse);
 
 		outResultTree->Fill();
+		delete fitParCovMatrix;
 
 	}
 
