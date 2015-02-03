@@ -96,5 +96,7 @@ make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
 make_executable(pwaMassFit        pwaMassFit.cc        ${THIS_LIB} "${UTILITIES_LIBS}" "${Libconfig_LIBS}")
 
+make_executable(stripIntegralsFromFitResult  stripIntegralsFromFitResult.cc	${ROOTPWA_LIBS} ${UTILITIES_LIBS})
+
 # build tests
 add_subdirectory(test)
