@@ -409,15 +409,7 @@ main(int    argc,
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 				L.buildProdAmpArrays(&params[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
-				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
-				for(unsigned int i = 0; i < nmbPar; ++i)
-					for(unsigned int j = 0; j < nmbPar; ++j)
-					  // The factor 0.5 is needed because
-					  // MINUIT by default assumes a Chi2
-					  // function and not a loglikeli
-					  // (see Minuit manual!)
-					  // Note: SetErrorDef in ROOT does not work
-						fitParCovMatrix[i][j] = -1.;
+				TMatrixT<double> fitParCovMatrix(0, 0);          // nlopt does not calculate the covariance matrix, so do not save it
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
