@@ -1,0 +1,262 @@
+% style file sets up the packages for the paper
+\ProvidesPackage{packages}[2014/01/23 Version 1 paper packages]
+
+
+% ------------------------------------------------------------------------------
+% define key-value arguments of this package
+\RequirePackage{pgfopts}
+\newif\ifpackages@printSvnInfo
+\newif\ifpackages@printDraftLabel
+\newif\ifpackages@useTodoNotes
+\newif\ifpackages@printLineNumbers
+\newif\ifpackages@checkReferences
+\newcounter{packages@morefloats}
+\pgfqkeys{/packages}{
+  % define editing switches
+  printSvnInfo/.is if     = packages@printSvnInfo,      % if set svn repository information is printed on every page
+  printDraftLabel/.is if  = packages@printDraftLabel,   % if set "Draft" watermark is put on first page
+  useTodoNotes/.is if     = packages@useTodoNotes,      % en/disables todo notes
+  printLineNumbers/.is if = packages@printLineNumbers,  % if set line numbers are printed
+  checkReferences/.is if  = packages@checkReferences,   % if set references are checked by the refcheck package
+  morefloats/.code        = \setcounter{packages@morefloats}{#1},  % increases limit of unprocessed floats to get around 'Too many unprocessed floats' error
+  % define default values
+  printSvnInfo/.default     = false,
+  printDraftLabel/.default  = false,
+  useTodoNotes/.default     = false,
+  printLineNumbers/.default = false,
+  checkReferences/.default  = false,
+  morefloats/.default       = 0
+}
+% apply default values
+\pgfqkeys{/packages}{
+  printSvnInfo,
+  printDraftLabel,
+  useTodoNotes,
+  printLineNumbers,
+  checkReferences,
+  morefloats
+}
+\ProcessPgfPackageOptions{/packages}
+
+
+% ------------------------------------------------------------------------------
+% load packages
+% documentation for the individual packages is usually easily accessible by calling
+% texdoc <package name>
+
+
+% ------------------------------------------------------------------------------
+% basic packages
+\RequirePackage{etex}              % extends capabilities of TeX3
+\RequirePackage{etoolbox}          % extensive collection of usefull macros for class and package authors
+\RequirePackage{microtype}         % subliminal refinements towards typographical perfection
+\RequirePackage{ifthen}            % provides \ifthenelse command
+\RequirePackage{xifthen}           % provides extended test expressions for \ifthenelse
+\RequirePackage{xspace}            % automatically adds space after macro expressions, if necessary
+\xspaceaddexceptions{]}
+\RequirePackage{xpunctuate}        % provides macros for post-macro punctuation insertion
+\RequirePackage[T1]{fontenc}       % the encoding used for fonts
+\RequirePackage[latin1]{inputenc}  % the uncoding used for .tex files; latin1 corresponds to ISO 8859-1
+\RequirePackage{suffix}            % makes definition of *-variants of commands easier
+
+
+% ------------------------------------------------------------------------------
+% graphics packages
+\RequirePackage{graphics}  % package for including graphics
+\RequirePackage{graphicx}  % package for including graphics
+\RequirePackage{grffile}   % extends file name processing of graphicx to support larger range of file names
+\RequirePackage{epstopdf}  % provides automatic on-the-fly conversion of .eps to .pdf files using epstopdf
+\RequirePackage{xcolor}    % provides colors, tints, shades, tones, and mixes of arbitrary colors
+\RequirePackage{feynmp}    % draws Feynman graphs with Metapost
+\RequirePackage{tikz}      % general drawing package
+%\usetikzlibrary{decorations}
+\usetikzlibrary{decorations.pathmorphing}
+\usepackage{wrapfig}
+
+% ------------------------------------------------------------------------------
+% layout packages
+\RequirePackage{blindtext}                      % generates dummy text test purposes
+\RequirePackage{afterpage}                      % expand commands after current page is output; typical example: \afterpage{\clearpage}
+\RequirePackage{geometry}                       % allows to define page layout
+\RequirePackage{babel}                          % defines language specific typesetting
+\RequirePackage[autostyle=true]{csquotes}       % package for quoting text using the correct language-dependent symbols
+\RequirePackage{enumitem}                       % adds extended customization interface to lists and enums
+\RequirePackage{multicol}                       % adds environment for multicolumn output
+\RequirePackage{array}                          % adds extra column formatting capabilities
+\RequirePackage{dcolumn}                        % aligns table or array entries to decimal point
+\RequirePackage{rotating}                       % rotates objects like tables etc.
+\RequirePackage{longtable}                      % typesets multi-page tables
+\RequirePackage{booktabs}                       % additional commands to enhance the quality of tables
+\RequirePackage{tabularx}                       % allows fixed-width tables with flexible column widths
+\RequirePackage{subfloat}
+% !!!NOTE!!! RevTeX 4.1 is incompatible with caption and subcaption; use subfig instead
+\RequirePackage{caption}                        % allows to customize captions of floating environments
+\RequirePackage{subcaption}                     % makes sub-figures and adds separate captions for them
+%\RequirePackage[caption=false]{subfig}          % makes sub-figures and subtables
+%\RequirePackage{authblk}                        % package to typeset author and affiliation blocks
+\RequirePackage[stable]{footmisc}               % allows footnotes in section headings
+\RequirePackage{cite}                           % compresses and sorts lists of numerical citations
+\RequirePackage{siunitx}  % typesets numbers and units properly with correct spacing
+\sisetup{%
+  exponent-product=\cdot,
+  separate-uncertainty=true,
+  range-units=single,
+  % make ranges work in math environment
+  %range-phrase=\ensuremath{\text{--}},
+  range-phrase=\ensuremath{\text{ to }},
+  list-units=single,
+  % make lists work in math environment
+  list-final-separator=\ensuremath{\text{, and }},  % serial comma
+  list-pair-separator=\ensuremath{\text{ and }},
+  list-separator=\ensuremath{\text{, }},
+  % enable automatic detection of font
+  detect-family=true,
+  detect-weight=true
+}
+\RequirePackage{relsize}                        % provides macros to change text size relative to current size
+
+
+% ------------------------------------------------------------------------------
+% math packages
+\RequirePackage[%
+  sumlimits,
+  intlimits,
+  namelimits]{amsmath}              % extra math commands from AMS
+\RequirePackage{mathtools}          % extension to amsmath
+\RequirePackage{amssymb}            % extra math symbols from AMS
+\RequirePackage{amsfonts}           % extra AMS fonts and symbols
+\RequirePackage{amsxtra}            % a few less often used math commands
+\RequirePackage{IEEEtrantools}      % useful environments for multiline equations
+\RequirePackage{xfrac}              % provides more options for typesetting split-level fractions
+\RequirePackage{commath}            % typographically correct derivative operators
+\RequirePackage{braket}             % macros for Dirac <bra|ket> notation
+\RequirePackage[version=3]{mhchem}  % typesets chemical elements and compounds
+
+
+% ------------------------------------------------------------------------------
+% math fonts
+\RequirePackage{isomath}  % italic capital Greek letters, sets up bold italic and sans-serif bold italic math alphabets
+\RequirePackage{bbm}      % roman, sans-serif, and type-writer double-stroke font
+\RequirePackage{amsbsy}   % macros for bold math
+\RequirePackage{bm}       % macros for bold math
+% define slanted version for mathbbm
+\DeclareMathAlphabet{\mathbbmsl}{U}{bbm}{m}{sl}
+\SetMathAlphabet\mathbbmsl{bold}{U}{bbm}{bx}{sl}
+% define sans-serif italics version for mathbbm
+%\DeclareMathAlphabet{\mathbbmssit}{U}{bbmss}{m}{it}
+
+
+% ------------------------------------------------------------------------------
+% special packages for editing
+\RequirePackage{changes}  % provides manual change markup; use delcmdchanges.bash to remove markup
+
+\ifpackages@printSvnInfo
+  \RequirePackage[today,fancyhdr,long]{svninfo}  % used to inject repository information into the document
+  % modify svninfo footer definition
+  \AtBeginDocument{%
+    \pagestyle{fancyplain}
+    \if@twoside
+      \renewcommand{\headrulewidth}{0pt}  % remove header rule
+      \renewcommand{\footrulewidth}{0pt}  % remove footer rule
+      \fancyhead{}                        % clear all header fields
+      \fancyfoot[LE,RO]{\footnotesize \textsc{Draft} \textit{rev: \svnInfoMaxRevision, \svnInfoMaxToday}}%
+      \fancyfoot[LO,RE]{\footnotesize \texttt{\svnInfoFile}}%
+      \fancypagestyle{plain}{%
+        \renewcommand{\headrulewidth}{0pt}  % remove header rule
+        \renewcommand{\footrulewidth}{0pt}  % remove footer rule
+        \fancyhead{}                        % clear all header fields
+        \fancyfoot[LE,RO]{\footnotesize \textsc{Draft} \textit{rev: \svnInfoMaxRevision, \svnInfoMaxToday}}%
+        \fancyfoot[LO,RE]{\footnotesize \texttt{\svnInfoFile}}%
+      }
+    \else
+      \renewcommand{\headrulewidth}{0pt}  % remove header rule
+      \renewcommand{\footrulewidth}{0pt}  % remove footer rule
+      \fancyhead{}                        % clear all header fields
+      \fancyfoot[L]{\footnotesize \textsc{Draft} \textit{rev: \svnInfoMaxRevision, \svnInfoMaxToday}}%
+      \fancyfoot[R]{\footnotesize \texttt{\svnInfoFile}}%
+      \fancypagestyle{plain}{%
+        \renewcommand{\headrulewidth}{0pt}  % remove header rule
+        \renewcommand{\footrulewidth}{0pt}  % remove footer rule
+        \fancyhead{}                        % clear all header fields
+        \fancyfoot[L]{\footnotesize \textsc{Draft} \textit{rev: \svnInfoMaxRevision, \svnInfoMaxToday}}%
+        \fancyfoot[R]{\footnotesize \texttt{\svnInfoFile}}%
+      }    
+    \fi
+  }
+  \typeout{>>> package.sty info: putting svn repository info on every page.}
+\else
+  \RequirePackage[notoday,nofancy,final]{svninfo}
+\fi
+
+
+\ifpackages@printDraftLabel
+  \RequirePackage[firstpage]{draftwatermark}  % puts "Draft" watermark on first page
+  \SetWatermarkScale{4}
+  \typeout{>>> package.sty info: putting ``Draft'' watermark on first page.}
+\fi
+
+
+\ifpackages@useTodoNotes
+  \RequirePackage[%
+    textwidth=2.5cm,
+    textsize=footnotesize,
+    backgroundcolor=red!10,
+    linecolor=red,
+    bordercolor=red]{todonotes}  % provides commands to annotate text:
+    %
+    % \todo{some text} puts box with "some text" in the margin with a line to the current text position
+    %
+    % !!!NOTE!!! within captions one has to use \todo[inline]{some text}
+    %
+    % !!!NOTE!!! with RevTeX it is recommended to use \todo[inline]{}
+    % also in normal text, because LaTeX will throw strange errors
+    % with too many \todo side notes around
+    %
+    % \missingfigure{some text} puts a warning sign with "some text"
+  \typeout{>>> package.sty info: enabled todo notes.}
+\else
+  \RequirePackage[disable]{todonotes}
+\fi
+\setlength{\marginparwidth}{2.5cm}  % has to be set to same value as textwidth option in todonotes package
+
+
+\ifpackages@printLineNumbers
+  \RequirePackage{lineno}  % prints line numbers for each line of text
+  \setlength{\linenumbersep}{0.5em}  % decrease distance of numbers from text
+  \linenumbers
+  \typeout{>>> package.sty info: printing line numbers.}
+\fi
+
+
+\ifpackages@checkReferences
+  \RequirePackage{refcheck}  % looks for useless labels, unlabelled equations, unused bibliography references and puts labels on margin; also puts "refcheck" messages into log file
+  \typeout{>>> package.sty info: enabled checking of references.}
+\fi
+
+\ifnum \value{packages@morefloats}>0
+  \RequirePackage[morefloats=\thepackages@morefloats]{morefloats}  % increases default limit of 18 unprocessed floats by <morefloats> in order to get around the 'Too many unprocessed floats' error
+  \typeout{>>> package.sty info: increased limit on unprocessed floats by \thepackages@morefloats.}
+\fi
+
+
+% ------------------------------------------------------------------------------
+% special packages that have to be loaded after all others
+\PassOptionsToPackage{hyphens}{url}  % allow url package loaded by hyperref to line break links
+\RequirePackage{hyperref}            % provides \url command and adds clickable cross references
+\RequirePackage{cleveref}            % formats cross-references automatically by determining their "type" (fig., eq., sec., etc.)
+
+
+% ------------------------------------------------------------------------------
+% other potentially interesting packages
+
+% \RequirePackage{wrapfig}  % Allow text to flow around figures
+% \RequirePackage{floatflt}  % Similar capabilities to wrapfig – allow text to flow around figures
+
+% \RequirePackage{eurosym}  % the EUR symbol
+%\RequirePackage{empheq}         % macros to emphasize equations
+% \RequirePackage{scrpage2}  % Set headers and footer
+% \RequirePackage{standalone}  % Allows you to have a document that you can directly compile for each figure and also input to another document
+% \RequirePackage{adjustbox}  % Add much more sophisticated clipping capabilities than offered by graphicx
+% \RequirePackage{titlesec}  % changes the appearance of chapter and section headings
+% \RequirePackage{subfiles}  % Provides a nice alternative to \include
+% \RequirePackage{floatrow}  % enhanced capability for creating subfigure and adds ability to define own floats

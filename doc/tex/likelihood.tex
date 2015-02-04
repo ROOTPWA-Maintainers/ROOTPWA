@@ -1,0 +1,287 @@
+\section{Likelihood Function}
+\label{sec:likelihood}
+
+% Fabian:
+% rewrite - ln L as (complex vector) x (hermitian matrix) x (complex vector)^*
+% instead of complicated construct with 3 sums
+% the summation schemes (coherent/incoherent) can be defined via the matrix
+
+\ROOTPWA minimizes the following negative log-likelihood function:
+\begin{multline}
+  \label{eq:likelihood_function}
+  -\ln \mathcal{L}
+  = -\sum_{i = 1}^{N} \ln \sBrk[4]{\sum_r^{N_r} \sum_{\refl = \pm 1}
+    \Abs[3]{\sum_a^{N^\refl_\text{waves}} \mathcal{T}_a^{r \refl}\, \Psi_a^\refl(\tau_i)}^2 + \mathcal{T}_\text{flat}^2} \\
+  + N \sBrk[4]{\sum_r^{N_r} \sum_{\refl = \pm 1}
+    \sum_{a, b}^{N^\refl_\text{waves}} \mathcal{T}_a^{r \refl}\, \mathcal{T}_b^{r \refl *}\,
+    \underbrace{\int\!\! \dif{\phi_3(\tau)}\, \eta(\tau)\,
+      \Psi_a^\refl(\tau)\, \Psi_b^{\refl *}(\tau)}_{\displaystyle \equiv I^\refl_{a b}} + \mathcal{T}_\text{flat}^2}
+\end{multline}
+Here $i$ is the event index, $N$ the number of events in the data set,
+$r$ the rank index, $N_r$ the rank of the spin-density matrix, and
+\refl the reflectivity.  The indices $\cbrk{a}_\refl$ and
+$\cbrk{b}_\refl$ enumerate the waves with reflectivity \refl. They
+contain the \PX quantum numbers \IGJPCM and the decay
+specification.  The $\Psi_a^\refl(\tau; \mThreePi)$ are the phase-space
+normalized decay amplitudes
+\begin{equation}
+  \label{eq:decay_amplitude_norm}
+  \Psi_a^\refl(\tau; \mThreePi) \equiv \frac{\widebar{\Psi}\vphantom{\Psi}_a^\refl(\tau; \mThreePi)}
+  {\sqrt{\int\! \dif{\phi_3(\tau')} \Abs[1]{\widebar{\Psi}\vphantom{\Psi}_a^\refl(\tau'; \mThreePi)}^2}},
+\end{equation}
+where $\dif{\phi_3(\tau)}$ is the differential three-body phase-space
+element and $\widebar{\Psi}\vphantom{\Psi}_a^\refl(\tau; \mThreePi)$
+are the amplitudes that are pre-calculated for each wave and each
+event.  This condition also sets the scale for the transition
+amplitudes $\mathcal{T}_a^{r \refl}(\mThreePi, \tpr)$, which are the
+free parameters \wrt which \cref{eq:likelihood_function} is minimized.
+The transition amplitude $\mathcal{T}_\text{flat}$ of the isotropic
+\enquote{flat} wave is purely real and the corresponding decay
+amplitude is unity.  The complex-valued integral matrix
+$I^\refl_{a b}$, which is independent of the transition amplitudes, is
+calculated using the Monte Carlo method:
+\begin{equation}
+  \label{eq:acc_integral}
+  I^\refl_{a b} = \frac{1}{N_\text{MC}^\text{acc}} \sum_{i = 1}^{N_\text{MC}^\text{acc}} \Psi_a^\refl(\tau_i)\, \Psi_b^{\refl *}(\tau_i)
+\end{equation}
+where the sum is only over the accepted Monte Carlo events.
+
+
+\section{Gradient of the Likelihood Function}
+\label{sec:likelihood_gradient}
+
+In order to calculate the first partial derivatives of the negative
+log-likelihood function \cref{eq:likelihood_function} \wrt its
+arguments $\mathcal{T}_a^{r \refl}$ it is advantageous to expand the
+absolute squares terms:
+\begin{multline}
+  \label{eq:likelihood_function_expanded}
+  -\ln \mathcal{L}
+  = -\sum_{i = 1}^{N} \ln \sBrk[4]{\sum_r^{N_r} \sum_{\refl = \pm 1}
+    \sum_{a, b}^{N^\refl_\text{waves}} \mathcal{T}_a^{r \refl}\, \mathcal{T}_b^{r \refl *}\,
+    \underbrace{\Psi_a^\refl(\tau_i)\, \Psi_b^{\refl *}(\tau_i)}_{\equiv D^\refl_{a b, i}} + \mathcal{T}_\text{flat}^2} \\
+  + N \sBrk[4]{\sum_r^{N_r} \sum_{\refl = \pm 1}
+    \sum_{a, b}^{N^\refl_\text{waves}} \mathcal{T}_a^{r \refl}\, \mathcal{T}_b^{r \refl *}\, I^\refl_{a b} + \mathcal{T}_\text{flat}^2}
+\end{multline}
+where the $D^\refl_{a b, i}$ stand just for some complex numbers
+calculated from the decay amplitudes for every event.
+
+In \cref{eq:likelihood_function_expanded} we have two terms of the
+form
+\begin{equation}
+  \label{eq:likelihood_function_sum_term}
+  A_z \equiv
+  \sum_r^{N_r} \sum_{\refl = \pm 1} \sum_{a, b}^{N^\refl_\text{waves}} \mathcal{T}_a^{r \refl}\, \mathcal{T}_b^{r \refl *}\, z^\refl_{a b} + \mathcal{T}_\text{flat}^2
+\end{equation}
+
+The gradient of the likelihood function contains two kinds of
+elements: partial derivatives \wrt the real and the imaginary parts of
+the $\cBrk{\mathcal{T}_a^{r \refl}}$. Defining
+\begin{equation}
+  \mathcal{T}_a^{r \refl} \equiv x_a^{r \refl} + \i y_a^{r \refl}
+  \qquad\text{and}\qquad
+  z^\refl_{a b} \equiv u^\refl_{a b} + \i v^\refl_{a b}
+\end{equation}
+with all $x$, $y$, $u$, and $v$ being real numbers, we can calculate
+the derivative of $A_z$ \wrt the real part of
+$\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}$ is
+\begin{equation}
+  \label{eq:likelihood_function_sum_term_re_deriv_start}
+  \begin{split}
+    \dpd{A_z}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+    = \dpd{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+    \Bigg( \sum_r^{N_r} \sum_{\refl = \pm 1} \sum_{a, b}^{N^\refl_\text{waves}}
+      &\sBrk[2]{(x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, u^\refl_{a b}
+        - (y_a^{r \refl}\, x_b^{r \refl} - x_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b}} \\
+      + \i &\underbrace{\sBrk[2]{(y_a^{r \refl}\, x_b^{r \refl} - x_a^{r \refl}\, y_b^{r \refl})\, u^\refl_{a b}
+        + (x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b}}}_{\equiv B^{r \refl}_{a b}}
+      + \mathcal{T}_\text{flat}^2 \Bigg)
+  \end{split}
+\end{equation}
+One can show that $\sum_{a, b}^{N^\refl_\text{waves}} B^{r \refl}_{a b} = 0$~\footnote{%
+%
+  We use the fact that $z^\refl_{a b}$ is a hermitian matrix with real
+  diagonal elements so that
+  \begin{equation}
+    \label{eq:z_hermitian}
+    u^{\refl}_{a b} = u^{\refl}_{b a},
+    \qquad
+    v^{\refl}_{a b} = - v^{\refl}_{b a}
+    \qquad\text{and}\qquad
+    v^{\refl}_{a a} = 0
+  \end{equation}
+  Therefore
+  \begin{align*}
+    \sum_{a, b}^{N^\refl_\text{waves}} B^{r \refl}_{a b}
+    &= \sum_{a, b}^{N^\refl_\text{waves}}
+    \sBrk[2]{(y_a^{r \refl}\, x_b^{r \refl} - x_a^{r \refl}\, y_b^{r \refl})\, u^\refl_{a b}
+      + (x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b}} \\
+    &= \underbrace{\sum_{a, b}^{N^\refl_\text{waves}} y_a^{r \refl}\, x_b^{r \refl}\, u^\refl_{a b}
+                 - \sum_{b, a}^{N^\refl_\text{waves}} y_b^{r \refl}\, x_a^{r \refl}\, u^\refl_{b a}}_{= 0} \\
+    &\qquad + \sum_{\substack{a, b \\ b > a}}^{N^\refl_\text{waves}} (x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b}
+            + \sum_{\substack{a, b \\ b < a}}^{N^\refl_\text{waves}} (x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b} \\
+    &=   \sum_{\substack{a, b \\ b > a}}^{N^\refl_\text{waves}} (x_a^{r \refl}\, x_b^{r \refl} + y_a^{r \refl}\, y_b^{r \refl})\, v^\refl_{a b}
+       - \sum_{\substack{b, a \\ a > b}}^{N^\refl_\text{waves}} (x_b^{r \refl}\, x_a^{r \refl} + y_b^{r \refl}\, y_a^{r \refl})\, v^\refl_{b a} \\
+    &= 0
+  \end{align*}
+%
+} so that
+\begin{equation}
+  \dpd{A_z}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  = \sum_r^{N_r} \sum_{\refl = \pm 1} \sum_{a, b}^{N^\refl_\text{waves}}
+  \sBrk[3]{\dpd{x_a^{r \refl}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}\, x_b^{r \refl}
+    + x_a^{r \refl}\, \dpd{x_b^{r \refl}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}}\, u^\refl_{a b}
+  - \sBrk[3]{y_a^{r \refl}\, \dpd{x_b^{r \refl}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+    - \dpd{x_a^{r \refl}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}\, y_b^{r \refl}}\, v^\refl_{a b}
+\end{equation}
+Since
+\begin{equation}
+  \dpd{x_a^{r \refl}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  = \delta_{r \tilde{r}}\, \delta_{\refl \tilde{\refl}}\, \delta_{a \tilde{a}}
+\end{equation}
+the sums over $r$ and \refl collapse as do some of the sums over the waves
+\begin{align}
+  \dpd{A_z}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  &= \sum_{a, b}^{N^{\tilde{\refl}}_\text{waves}}
+  \sBrk[3]{\delta_{a \tilde{a}}\, x_b^{\tilde{r} \tilde{\refl}}
+    + x_a^{\tilde{r} \tilde{\refl}}\, \delta_{b \tilde{a}}}\, u^{\tilde{\refl}}_{a b}
+  - \sBrk[3]{y_a^{\tilde{r} \tilde{\refl}}\, \delta_{b \tilde{a}}
+    - \delta_{a \tilde{a}}\, y_b^{\tilde{r} \tilde{\refl}}}\, v^{\tilde{\refl}}_{a b} \\
+  &= \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
+    + \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} x_a^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{a \tilde{a}}
+  - \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} y_a^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{a \tilde{a}}
+    + \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b} \\
+\end{align}
+Using the fact that the matrix $z^\refl_{a b}$ is hermitian
+[cf. \cref{eq:z_hermitian}], we can combine the sums and finally arrive
+at
+\begin{align}
+  \dpd{A_z}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  &= \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
+    + \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} x_a^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} a}
+  - \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} y_a^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{a \tilde{a}}
+    - \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{b \tilde{a}} \\
+  \label{eq:likelihood_function_sum_term_re_deriv}
+  &= 2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \sBrk{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
+    - y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b}}
+  = 2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \Re\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, z^{\tilde{\refl}}_{\tilde{a} b}}
+\end{align}
+Note that the sum runs only over the waves with the same reflectivity.
+
+The corresponding derivative \wrt the imaginary part of the transition
+amplitude can be derived in an analogous way.  However, from
+\cref{eq:likelihood_function_sum_term_re_deriv_start} one sees that
+one just needs to exchange the roles of the $x$ and $y$:
+\begin{equation}
+  \label{eq:likelihood_function_sum_term_im_deriv}
+  \pd{A_z}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  = 2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \sBrk{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
+    + x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b}}
+  = 2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \Im\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, z^{\tilde{\refl}}_{\tilde{a} b}}
+\end{equation}
+
+Using
+\cref{eq:likelihood_function_sum_term_re_deriv,eq:likelihood_function_sum_term_im_deriv}
+we can calculate the derivatives of $-\ln \mathcal{L}$ \wrt the real
+and imaginary parts of
+$\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}$:
+\begin{align}
+  -\dpd{\ln \mathcal{L}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  &= \dpd{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}} \rBrk{-\sum_{i = 1}^{N} \ln \sBrk{A_{D_i}} + N\, A_I} \\
+  &= -\sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  + N\, \dpd{A_I}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}} \\
+  \label{eq:likelihood_function_re_deriv}
+  &= -\sum_{i = 1}^{N} \frac{2}{A_{D_i}} \sum_b^{N^{\tilde{\refl}}_\text{waves}} \underbrace{\sBrk{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b, i}
+    - y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b, i}}}_{= \Re\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{\tilde{a} b, i}}}
+    + 2 N \sum_b^{N^{\tilde{\refl}}_\text{waves}} \underbrace{\sBrk{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, U^{\tilde{\refl}}_{\tilde{a} b}
+    - y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, V^{\tilde{\refl}}_{\tilde{a} b}}}_{= \Re\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, I^{\tilde{\refl}}_{\tilde{a} b}}}
+\end{align}
+Analogously one gets
+\begin{align}
+  \label{eq:likelihood_function_im_deriv}
+  -\dpd{\ln \mathcal{L}}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+  &= -\sum_{i = 1}^{N} \frac{2}{A_{D_i}} \sum_b^{N^{\tilde{\refl}}_\text{waves}} \underbrace{\sBrk{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b, i}
+    + x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b, i}}}_{= \Im\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{\tilde{a} b, i}}}
+    + 2 N \sum_b^{N^{\tilde{\refl}}_\text{waves}} \underbrace{\sBrk{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, U^{\tilde{\refl}}_{\tilde{a} b}
+    + x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, V^{\tilde{\refl}}_{\tilde{a} b}}}_{= \Im\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, I^{\tilde{\refl}}_{\tilde{a} b}}}
+\end{align}
+In both equations we used the definitions
+\begin{equation}
+  D^\refl_{a b, i} \equiv u^\refl_{a b, i} + \i v^\refl_{a b, i}
+  \qquad\text{and}\qquad
+  I^\refl_{a b} \equiv U^\refl_{a b} + \i V^\refl_{a b}
+\end{equation}
+
+
+\section{Hessian Matrix of the Likelihood Function}
+\label{sec:likelihood_gradient}
+
+In order to calculate the matrix of second partial derivatives of the
+likelihood function \wrt the real and imaginary parts of the
+transition amplitudes we start from the first partial derivatives as
+given in
+\cref{eq:likelihood_function_re_deriv,eq:likelihood_function_im_deriv}.
+
+The second partial derivatives \wrt to the real parts of the
+transition amplitudes
+$\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}$ and
+$\mathcal{T}_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}$
+are
+\begin{align}
+  -\dmd{\ln \mathcal{L}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  &= \dpd{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}
+    \rBrk{-\sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}} + N\, \dpd{A_I}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}} \\
+  &= \sum_{i = 1}^{N} \frac{1}{A_{D_i}^2}\, \dpd{A_{D_i}}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+    - \sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dmd{A_{D_i}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+    + N\, \dmd{A_I}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+\end{align}
+Using \cref{eq:likelihood_function_sum_term_re_deriv} we know the
+first-derivative terms in the equation above and can calculate the
+second derivatives:
+\begin{align}
+  \label{eq:likelihood_function_sum_term_re_re_deriv}
+  \dmd{A_z}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  &= \dpd{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}
+    \rBrk{2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \sBrk{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
+    - y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b}}} \\
+  \label{eq:likelihood_function_sum_term_re_re_deriv}
+  &= 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\, \delta_{\tilde{a} \doubletilde{a}}
+    \sum_b^{N^{\tilde{\refl}}_\text{waves}} u^{\tilde{\refl}}_{\tilde{a} b}
+\end{align}
+Therefore
+\begin{multline}
+  \label{eq:likelihood_function_re_re_deriv}
+  -\dmd{\ln \mathcal{L}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  = \sum_{i = 1}^{N} \frac{4}{A_{D_i}^2}
+  \rBrk[4]{\sum_b^{N^{\doubletilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}\, u^{\doubletilde{\refl}}_{\doubletilde{a} b, i}
+    - y_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}\, v^{\doubletilde{\refl}}_{\doubletilde{a} b, i}}}_{%
+     = \Re\sBrk{\mathcal{T}_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}\, D^{\doubletilde{\refl}}_{\doubletilde{a} b, i}}}}
+  \rBrk[4]{\sum_b^{N^{\tilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b, i}
+    - y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b, i}}}_{%
+    = \Re\sBrk{\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{\tilde{a} b, i}}}} \\
+  + 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\, \delta_{\tilde{a} \doubletilde{a}}\,
+  \rBrk[4]{-\sum_{i = 1}^{N} \frac{1}{A_{D_i}} \sum_b^{N^{\tilde{\refl}}_\text{waves}} u^{\tilde{\refl}}_{\tilde{a} b, i}
+  + N \sum_b^{N^{\tilde{\refl}}_\text{waves}} U^{\tilde{\refl}}_{\tilde{a} b}}
+\end{multline}
+
+
+% Wrong!!!!
+%
+% From
+% these equations is clear that all second derivatives \wrt transition
+% amplitudes with different rank index or different reflectivities
+% vanish. We therefore only need to consider partial derivatives of
+% \cref{likelihood_function_re_deriv,likelihood_function_im_deriv} \wrt
+% to the real and imaginary parts of
+% $\mathcal{T}_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}$:
+% \begin{align}
+%   -\dmd{\ln \mathcal{L}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+%   &= \dpd{}{{x_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}}}
+%     \rBrk{-\sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}} + N\, \dpd{A_I}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}} \\
+%   \label{likelihood_function_re_re_deriv}
+%   &= \sum_{i = 1}^{N} \frac{1}{A_{D_i}^2}\, \dpd{A_{D_i}}{{x_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
+%     -\sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dmd{A_{D_i}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+%     + N\, \dmd{A_I}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\tilde{r} \tilde{\refl}}}}{} \\
+% \end{align}

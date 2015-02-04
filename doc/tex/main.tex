@@ -1,0 +1,128 @@
+\documentclass[a4paper,twoside,american]{article}
+
+% ------------------------------------------------------------------------------
+% load packages
+\usepackage[%
+  useTodoNotes=true,
+  printLineNumbers=true,
+  checkReferences=false,
+  morefloats=10]{packages}
+
+
+% ------------------------------------------------------------------------------
+% setup packages
+
+% page layout
+\geometry{text={14cm,24cm},centering}  % set page layout: 14 cm (width) x 24 cm (height), text area centered on page
+
+% paragraph layout
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{12pt plus 4pt minus 2pt}
+\setlength{\baselineskip}{14pt}
+\setlength{\footnotesep}{1.0em}
+
+% formatting of captions
+\captionsetup{%
+  format=plain,
+  justification=justified,
+  singlelinecheck=true,
+  font=small,
+  labelfont=bf,
+  textfont=normal}
+
+% switch to lowercase alphabetic footnote symbols
+\renewcommand{\thefootnote}{\alph{footnote}}
+% switch also for document title (\maketitle ignores the above)
+\makeatletter
+\let\@fnsymbol\@alph
+\makeatother
+
+% modify \bfseries macro to include \boldmath (from http://tex.stackexchange.com/questions/41379)
+% this makes that for _all_ bold text math symbols are also set in bold
+% particularly useful for section headings
+\makeatletter
+\g@addto@macro\bfseries{\boldmath}
+\makeatother
+
+% hyperref setup
+\definecolor{darkred}{rgb}{0.5,0,0}
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\definecolor{darkblue}{rgb}{0,0,0.5}
+\definecolor{darkyellow}{rgb}{0.5,0.5,0}
+\definecolor{darkcyan}{rgb}{0,0.5,0.5}
+\definecolor{darkmagenta}{rgb}{0.5,0,0.5}
+\hypersetup{%
+  colorlinks=true,
+  linkcolor=darkblue,
+  citecolor=darkmagenta,
+  urlcolor=darkgreen,
+  pagebackref=true,
+  hyperindex=true,
+  bookmarksopen
+}
+
+% make cleveref use serial comma
+\newcommand{\creflastconjunction}{, and\nobreakspace}
+
+
+% ------------------------------------------------------------------------------
+% define graphics search path
+\graphicspath{%
+  {./}%
+}
+
+
+% ------------------------------------------------------------------------------
+% load macros
+% all macro definitions should go into macro.sty
+\usepackage{macros}
+
+
+% ------------------------------------------------------------------------------
+% frontmatter
+%\input{frontmatter}
+
+
+% ------------------------------------------------------------------------------
+% for editing: speed up compilation by including only part of the sections
+% \includeonly{introduction}
+
+
+\begin{document}
+
+
+% ------------------------------------------------------------------------------
+% title page and ToC
+
+%\thispagestyle{empty}
+%\maketitle
+
+%\clearpage
+
+%\tableofcontents
+
+
+% ------------------------------------------------------------------------------
+% main text
+\include{likelihood}
+
+
+% ------------------------------------------------------------------------------
+% appendices
+%\clearpage
+%\appendix
+
+
+% ------------------------------------------------------------------------------
+% bibliography
+%\bibliographystyle{plain}
+%\bibliography{../spectroscopy}
+
+
+% ------------------------------------------------------------------------------
+% global todos
+%\clearpage
+%\listoftodos
+
+
+\end{document}

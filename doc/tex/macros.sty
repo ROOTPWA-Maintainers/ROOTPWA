@@ -1,0 +1,416 @@
+% collection of macros
+% use \newcommand* for all macros unless you really need the macro to be "long"
+% see <http://tex.stackexchange.com/questions/1050> for further info
+
+
+% ------------------------------------------------------------------------------
+% text expressions
+\newcommand*{\wrt}{{with respect to}\xspace}
+\newcommand*{\Wrt}{{With respect to}\xspace}
+\newcommand*{\etal}{\textit{et~al.}\xspace}
+\newcommand*{\eg}{{e.g.}\xspace}
+\newcommand*{\ie}{{i.e.}\xspace}
+\newcommand*{\Argand}{{Argand diagram}\xspace}
+\newcommand*{\Argands}{{Argand diagrams}\xspace}
+% macros for direct citation of refrences
+\newcommand*{\refCite}[1]{{ref.~\cite{#1}}\xspace}
+\newcommand*{\refsCite}[1]{{refs.~\cite{#1}}\xspace}
+\newcommand*{\RefCite}[1]{{Reference~\cite{#1}}\xspace}
+\newcommand*{\RefsCite}[1]{{References~\cite{#1}}\xspace}
+% enumeration labels
+\newcommand*{\one}{{\textit{i})}\xspace}
+\newcommand*{\two}{{\textit{ii})}\xspace}
+\newcommand*{\three}{{\textit{iii})}\xspace}
+\newcommand*{\four}{{\textit{iv})}\xspace}
+\newcommand*{\five}{{\textit{v})}\xspace}
+% acronyms
+\newcommand*{\ROOTPWA}{{ROOTPWA}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% symbols
+% real and imaginary part
+\renewcommand*{\Re}{\ensuremath{\mathfrak{Re}}\xspace}
+\renewcommand*{\Im}{\ensuremath{\mathfrak{Im}}\xspace}
+% constants
+\renewcommand*{\i}{\ensuremath{\mathbbmsl{i}}\xspace}  % alternative: \Complex{I,J}, \ii, \jj, or \{i,j}math
+\newcommand*{\e}{\ensuremath{\mathbbmsl{e}}\xspace}    % alternative: \ExponetialE
+\newcommand*{\hbarc}{\ensuremath{\hbar c}\xspace}
+% kinematic variables
+\newcommand*{\tabs}{\ensuremath{|t|}\xspace}
+\newcommand*{\tmin}{\ensuremath{\tabs_{\text{min}}}\xspace}
+\newcommand*{\tpr}{\ensuremath{{t'}}\xspace}
+\newcommand*{\cosTheta}{\ensuremath{{\cos \theta}}\xspace}
+% coordinate systems
+\newcommand*{\yGJ}{\ensuremath{{y_{\text{GJ}}}}\xspace}
+\newcommand*{\yHF}{\ensuremath{{y_{\text{HF}}}}\xspace}
+\newcommand*{\zGJ}{\ensuremath{{z_{\text{GJ}}}}\xspace}
+\newcommand*{\zHF}{\ensuremath{{z_{\text{HF}}}}\xspace}
+\newcommand*{\thetaGJ}{\ensuremath{{\vartheta_{\text{GJ}}}}\xspace}
+\newcommand*{\thetaHF}{\ensuremath{{\vartheta_{\text{HF}}}}\xspace}
+\newcommand*{\cosThetaGJ}{\ensuremath{{\cos \thetaGJ}}\xspace}
+\newcommand*{\cosThetaHF}{\ensuremath{{\cos \thetaHF}}\xspace}
+\newcommand*{\phiGJ}{\ensuremath{{\phi_{\text{TY}}}}\xspace}
+\newcommand*{\phiHF}{\ensuremath{{\phi_{\text{HF}}}}\xspace}
+% quantum number symbols
+\newcommand*{\IG}{\ensuremath{I^G}\xspace}
+\newcommand*{\JP}{\ensuremath{J^P}\xspace}
+\newcommand*{\JPC}{\ensuremath{J^{PC}}\xspace}
+\newcommand*{\Mrefl}{\ensuremath{M^\refl}\xspace}
+\newcommand*{\IGJPC}{\ensuremath{\IG\,\JPC}\xspace}
+\newcommand*{\IGJPCM}{\ensuremath{\IG\,\JPC\,M}\xspace}
+\newcommand*{\JPCMrefl}{\ensuremath{\JPC\,\Mrefl}\xspace}
+\newcommand*{\IGJPCMrefl}{\ensuremath{\IG\,\allowbreak\JPC\,\allowbreak\Mrefl}\xspace}
+\newcommand*{\refl}{\ensuremath{\varepsilon}\xspace}  % reflectivity symbol
+\newcommand*{\reflOp}{\ensuremath{\Pi_y}\xspace}  % reflectivity operator
+% JPC quantum numbers
+\newcommand*{\zeroPP}{\ensuremath{0^{++}}\xspace}
+\newcommand*{\zeroMP}{\ensuremath{0^{-+}}\xspace}
+\newcommand*{\onePP}{\ensuremath{1^{++}}\xspace}
+\newcommand*{\oneMP}{\ensuremath{1^{-+}}\xspace}
+\newcommand*{\oneMM}{\ensuremath{1^{--}}\xspace}
+\newcommand*{\twoPP}{\ensuremath{2^{++}}\xspace}
+\newcommand*{\twoMP}{\ensuremath{2^{-+}}\xspace}
+\newcommand*{\threeMP}{\ensuremath{3^{-+}}\xspace}
+\newcommand*{\threePP}{\ensuremath{3^{++}}\xspace}
+\newcommand*{\fourPP}{\ensuremath{4^{++}}\xspace}
+\newcommand*{\fourMP}{\ensuremath{4^{-+}}\xspace}
+\newcommand*{\fivePP}{\ensuremath{5^{++}}\xspace}
+\newcommand*{\fiveMP}{\ensuremath{5^{-+}}\xspace}
+\newcommand*{\sixPP}{\ensuremath{6^{++}}\xspace}
+\newcommand*{\sixMP}{\ensuremath{6^{-+}}\xspace}
+% expressions
+\newcommand*{\clebsch}[6]{\ensuremath{({#1}\,{#2}\;{#3}\,{#4}\,|\,{#5}\,{#6})}\xspace}
+% Clebsch-Gordan coefficient \clebsch{J_1}{M_1}{J_2}{M_2}{J}{M}
+\newcommand*{\wave}[6]{\ensuremath{{#1}^{{#2}}\,\allowbreak{#3}^{#4}\,\allowbreak{#5}\,\pi\,{#6}}\xspace}
+% partial-wave definition \wave{J}{P}{C}{M}{refl}{isobar}{L}
+
+
+% ------------------------------------------------------------------------------
+% math operators
+\DeclareMathOperator{\var}{var}  % variance
+\DeclareMathOperator{\cov}{cov}  % covariance
+
+
+% ------------------------------------------------------------------------------
+% brackets (see also commath package)
+% macros with capital letter produce automatically sized brackets (no
+% optional argument)
+% the optional argument of these macros can be used to select the
+% bracket size by giving values between 0 and 4
+% round brackets
+\newcommand*{\rbrk}[1]{\ensuremath{({#1})}\xspace}
+\newcommand*{\rBrk}[2][-1]{\ensuremath{\del[#1]{#2}}\xspace}
+% square brackets
+\newcommand*{\sbrk}[1]{\ensuremath{[{#1}]}\xspace}
+\newcommand*{\sBrk}[2][-1]{\ensuremath{\sbr[#1]{#2}}\xspace}
+% curly bracket
+\newcommand*{\cbrk}[1]{\ensuremath{\{{#1}\}}\xspace}
+\newcommand*{\cBrk}[2][-1]{\ensuremath{\cbr[#1]{#2}}\xspace}
+% other brackets
+\newcommand*{\mean}[1]{\ensuremath{\langle{#1}\rangle}\xspace}
+\newcommand*{\Mean}[1]{\ensuremath{\left\langle{#1}\right\rangle}\xspace}  % commath has no macro for angle brackets
+\renewcommand*{\abs}[1]{\ensuremath{\vert{#1}\vert}\xspace}
+\newcommand*{\Abs}[2][-1]{\ensuremath{\envert[#1]{#2}}\xspace}
+\renewcommand*{\norm}[1]{\ensuremath{\|{#1}\|}\xspace}
+\newcommand*{\Norm}[2][-1]{\ensuremath{\enVert[#1]{#2}}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% other math expressions
+\newcommand*{\doubletilde}[1]{\ensuremath{\tilde{\tilde{#1}}}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% particles
+% quark-antiquark combinations
+\newcommand*{\qqbar}{\ensuremath{q\overline{q}}\xspace}
+\newcommand*{\qqbarPrime}{\ensuremath{q\overline{q}'}\xspace}
+\newcommand*{\nnbar}{\ensuremath{n\overline{n}}\xspace}
+\newcommand*{\nnbarPrime}{\ensuremath{n\overline{n}'}\xspace}
+\newcommand*{\uubar}{\ensuremath{u\overline{u}}\xspace}
+\newcommand*{\ddbar}{\ensuremath{d\overline{d}}\xspace}
+\newcommand*{\ssbar}{\ensuremath{s\overline{s}}\xspace}
+% exchange particles
+\newcommand*{\Ppom}{\ensuremath{\mathbbmsl{P}}\xspace}
+\newcommand*{\Preg}{\ensuremath{\mathbbmsl{R}}\xspace}
+% baryons
+\newcommand*{\Ppbar}{\ensuremath{\overline{p}}\xspace}
+% define particle macros using \defParticle{macro suffix}{particle symbol}{mass}
+% e.g. \defParticle{aOne}{a_1}{1260} will define two macros
+% i) an unstarred macro \PaOne that typesets the particle with mass of ground state
+%    it has an optional argument to override mass value: \PaOne[1640]
+%    if mass of -1 is set, no default mass is printed
+% ii) a starred macro \PaOne* that just typeset the particle name (w/o mass)
+\newcommand*{\defParticle}[3]{%
+  \expandafter\newcommand\expandafter*\csname P#1\endcsname[1][]{\ensuremath{#2\ifthenelse{\isempty{##1}}{\ifthenelse{\equal{#3}{-1}}{}{(#3)}}{({##1})}}\xspace}
+  \WithSuffix\expandafter\newcommand\csname P#1\endcsname*[1][]{\ensuremath{#2}\xspace}
+}
+% mesons
+\defParticle{pi}{\pi}{-1}
+\defParticle{eta}{\eta}{548}
+\defParticle{rho}{\rho}{770}
+\defParticle{fZero}{f_0}{980}
+\defParticle{aZero}{a_0}{980}
+\defParticle{phi}{\phi}{1020}
+\defParticle{bOne}{b_1}{1235}
+\defParticle{aOne}{a_1}{1260}
+\defParticle{fTwo}{f_2}{1270}
+\defParticle{fOne}{f_1}{1285}
+\defParticle{aTwo}{a_2}{1320}
+\defParticle{fTwoPr}{f_2'}{1525}
+\defParticle{piOne}{\pi_1}{1600}
+\defParticle{aOnePr}{a_1'}{1640}
+\defParticle{piTwo}{\pi_2}{1670}
+\defParticle{rhoThree}{\rho_3}{1690}
+\defParticle{aTwoPr}{a_2'}{1700}
+\defParticle{aThree}{a_3}{1875}
+\defParticle{piTwoPr}{\pi_2'}{1880}
+\defParticle{aFour}{a_4}{2040}
+\defParticle{X}{X}{-1}
+\newcommand*{\PKbar}{\ensuremath{\overline{K}}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% particle systems
+\newcommand*{\twoPi}{\ensuremath{{\pi^+\pi^-}}\xspace}
+\newcommand*{\pipi}{\ensuremath{{\pi\pi}}\xspace}
+\newcommand*{\pipiS}{\ensuremath{[\pipi]_S}\xspace}
+\newcommand*{\pipiP}{\ensuremath{[\pipi]_P}\xspace}
+\newcommand*{\pipiSF}{\ensuremath{[\pipi]_{0^{++}}}\xspace}
+\newcommand*{\pipiSW}{{\pipi $S$-wave}\xspace}
+\newcommand*{\threePi}{\ensuremath{{\pi^-\pi^-\pi^+}}\xspace}
+\newcommand*{\threePiN}{\ensuremath{{\pi^-\pi^0\pi^0}}\xspace}
+\newcommand*{\reaction}{\ensuremath{\pi^- + p \to \threePi + p_\text{recoil}}\xspace}
+\newcommand*{\KKbar}{\ensuremath{{K \PKbar}}\xspace}
+\newcommand*{\KKstarbar}{\ensuremath{{K \PKbar^*}}\xspace}
+\newcommand*{\pbarp}{\ensuremath{{\Ppbar p}}\xspace}
+\newcommand*{\pbarn}{\ensuremath{{\Ppbar n}}\xspace}
+% masses
+\newcommand*{\mTwoPi}{\ensuremath{m_\twoPi}\xspace}
+\newcommand*{\mThreePi}{\ensuremath{m_{3\pi}}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% tikz commands
+\newcommand{\tikzAngleOfLine}{\tikz@AngleOfLine}
+\def\tikz@AngleOfLine(#1)(#2)#3{%
+  \pgfmathanglebetweenpoints{%
+    \pgfpointanchor{#1}{center}}{%
+    \pgfpointanchor{#2}{center}}
+  \pgfmathsetmacro{#3}{\pgfmathresult}%
+}
+
+
+% ------------------------------------------------------------------------------
+% macros for typesetting numbers and units
+% energy units \eV, \meV, \keV, \MeV, \GeV, and \TeV are already predefined in siunitx
+% redefine speed-of-light symbol
+\DeclareSIUnit{\clight}{\text{\ensuremath{c}}}
+% momentum units
+\DeclareSIUnit[per-mode=symbol]\eVc{\eV\per\clight}
+\DeclareSIUnit[per-mode=symbol]\meVc{\meV\per\clight}
+\DeclareSIUnit[per-mode=symbol]\keVc{\keV\per\clight}
+\DeclareSIUnit[per-mode=symbol]\MeVc{\MeV\per\clight}
+\DeclareSIUnit[per-mode=symbol]\GeVc{\GeV\per\clight}
+\DeclareSIUnit[per-mode=symbol]\TeVc{\TeV\per\clight}
+% mass units
+\DeclareSIUnit[per-mode=symbol]\eVcc{\eV\per\clight\squared}
+\DeclareSIUnit[per-mode=symbol]\meVcc{\meV\per\clight\squared}
+\DeclareSIUnit[per-mode=symbol]\keVcc{\keV\per\clight\squared}
+\DeclareSIUnit[per-mode=symbol]\MeVcc{\MeV\per\clight\squared}
+\DeclareSIUnit[per-mode=symbol]\GeVcc{\GeV\per\clight\squared}
+\DeclareSIUnit[per-mode=symbol]\TeVcc{\TeV\per\clight\squared}
+% momentum squared units
+\DeclareSIUnit[per-mode=symbol]\eVcsq{(eV/\clight)^2}
+\DeclareSIUnit[per-mode=symbol]\meVcsq{(meV/\clight)^2}
+\DeclareSIUnit[per-mode=symbol]\keVcsq{(keV/\clight)^2}
+\DeclareSIUnit[per-mode=symbol]\MeVcsq{(MeV/\clight)^2}
+\DeclareSIUnit[per-mode=symbol]\GeVcsq{(GeV/\clight)^2}
+\DeclareSIUnit[per-mode=symbol]\TeVcsq{(TeV/\clight)^2}
+% inverse momentum squared units
+\DeclareSIUnit[per-mode=symbol]\pereVcsq{(eV/\clight)^{-2}}
+\DeclareSIUnit[per-mode=symbol]\permeVcsq{(meV/\clight)^{-2}}
+\DeclareSIUnit[per-mode=symbol]\perkeVcsq{(keV/\clight)^{-2}}
+\DeclareSIUnit[per-mode=symbol]\perMeVcsq{(MeV/\clight)^{-2}}
+\DeclareSIUnit[per-mode=symbol]\perGeVcsq{(GeV/\clight)^{-2}}
+\DeclareSIUnit[per-mode=symbol]\perTeVcsq{(TeV/\clight)^{-2}}
+% cross section units
+\DeclareSIUnit\mbarn{\milli\barn}
+\DeclareSIUnit\mubarn{\micro\barn}
+\DeclareSIUnit\nbarn{\nano\barn}
+\DeclareSIUnit\pbarn{\pico\barn}
+\DeclareSIUnit\fbarn{\femto\barn}
+\DeclareSIUnit\abarn{\atto\barn}
+% extra commands for numbers with separate statistical and systematic
+% errors as well as asymmetric errors
+\newcommand*{\stat}{\ensuremath{\text{stat.}}}
+\newcommand*{\sys}{\ensuremath{\text{sys.}}}
+\newcommand*{\valueSep}{\,}
+\sisetup{number-unit-product = \valueSep}
+% macros that typeset values with symmetric errors with label
+\newcommand*{\Numerrl}[3][]{% typesets +- error with label
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\pm \num{#2}\valueSep\text{(#3)}}%
+  \endgroup
+}
+\newcommand*{\numerrl}[4][]{% typesets value +- error with label
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\num{#2}\valueSep\Numerrl{#3}{#4}}%
+  \endgroup
+}
+\newcommand*{\SIerrl}[5][]{% typesets value +- error with label and unit
+  \ensuremath{(\numerrl[#1]{#2}{#3}{#4})\valueSep\si{#5}}%
+}
+% macros that typeset values with single set of asymmetric errors
+\newcommand*{\Numaerr}[3][]{% typesets + and - error
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{^{\num[explicit-sign = +]{#2}}_{\num[explicit-sign = -]{#3}}}%
+  \endgroup
+}
+\newcommand*{\numaerr}[4][]{% typesets value with + and - error
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\num{#2}\valueSep\Numaerr{#3}{#4}}%
+  \endgroup
+}
+\newcommand*{\SIaerr}[5][]{% typesets value with + and - error and unit
+  \ensuremath{(\numaerr[#1]{#2}{#3}{#4})\valueSep\si{#5}}%
+}
+% macros that typeset values with single set of asymmetric errors with label
+\newcommand*{\Numaerrl}[4][]{% typesets + and - error with label
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\Numaerr{#2}{#3}\valueSep\text{(#4)}}%
+  \endgroup
+}
+\newcommand*{\numaerrl}[5][]{% typesets value with + and - error with label
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\num{#2}\valueSep\Numaerrl{#3}{#4}{#5}}%
+  \endgroup
+}
+\newcommand*{\SIaerrl}[6][]{% typesets value with + and - error with label and unit
+  \ensuremath{(\numaerrl[#1]{#2}{#3}{#4}{#5})\valueSep\si{#6}}%
+}
+% macros that typeset values with two symmetric errors with labels
+\newcommand*{\numerrsll}[6][]{% typesets value +- error with label1 +- error with label2
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\num{#2}%
+    \valueSep\Numerrl{#3}{#4}%
+    \valueSep\Numerrl{#5}{#6}}%
+  \endgroup
+}
+\newcommand*{\SIerrsll}[7][]{% typesets value +- error with label1 +- error with label2 and unit
+  \ensuremath{(\numerrsll[#1]{#2}{#3}{#4}{#5}{#6})\valueSep\si{#7}}%
+}
+\newcommand*{\numerrs}[4][]{% typesets value +- error (stat.) +- error (sys.)
+  \ensuremath{\numerrsll[#1]{#2}{#3}{\stat}{#4}{\sys}}%
+}
+\newcommand*{\SIerrs}[5][]{% typesets value +- error (stat.) +- error (sys.) with unit
+  \ensuremath{(\numerrs[#1]{#2}{#3}{#4})\valueSep\si{#5}}%
+}
+% macros that typeset values with two asymmetric errors with labels
+\newcommand*{\numaerrsll}[8][]{% typesets value +error -error with label1 +error -error with label2
+  \begingroup
+  \sisetup{#1}%
+  \ensuremath{\num{#2}%
+    \valueSep\Numaerrl{#3}{#4}{#5}%
+    \valueSep\Numaerrl{#6}{#7}{#8}}%
+  \endgroup
+}
+\newcommand*{\SIaerrsll}[9][]{% typesets value +error -error with label1 +error -error with label2 and unit
+  \ensuremath{(\numaerrsll[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8})\valueSep\si{#9}}%
+}
+\newcommand*{\numaerrs}[6][]{% typesets value +error -error (stat.) +error -error (sys.)
+  \ensuremath{\numaerrsll[#1]{#2}{#3}{#4}{\stat}{#5}{#6}{\sys}}%
+}
+\newcommand*{\SIaerrs}[7][]{% typesets value +error -error (stat.) +error -error (sys.) with unit
+  \ensuremath{(\numaerrs[#1]{#2}{#3}{#4}{#5}{#6})\valueSep\si{#7}}%
+}
+% macro that typesets value range like:  {min} < {symbol} < {max} {unit}
+\newcommand*{\valRange}[3]{\ensuremath{{#1} < {#2}\allowbreak < {#3}}\xspace}
+\newcommand*{\SIvalRange}[4]{\ensuremath{{#1} < {#2}\allowbreak < \SI{#3}{#4}}\xspace}
+\newcommand*{\SIvalRangeInc}[4]{\ensuremath{{#1} \leq {#2}\allowbreak \leq \SI{#3}{#4}}\xspace}
+
+
+% ------------------------------------------------------------------------------
+% typesetting macros
+
+% macro \widebar as an improved replacement for overline
+% requires amsmath
+% code by Hendrik Vogt
+% see http://tex.stackexchange.com/questions/16337/can-i-get-a-widebar-without-using-the-mathabx-package
+\makeatletter
+\let\save@mathaccent\mathaccent
+\newcommand*\if@single[3]{%
+  \setbox0\hbox{${\mathaccent"0362{#1}}^H$}%
+  \setbox2\hbox{${\mathaccent"0362{\kern0pt#1}}^H$}%
+  \ifdim\ht0=\ht2 #3\else #2\fi
+}
+% The bar will be moved to the right by a half of \macc@kerna, which is computed by amsmath:
+\newcommand*\rel@kern[1]{\kern#1\dimexpr\macc@kerna}
+% If there's a superscript following the bar, then no negative kern may follow the bar;
+% an additional {} makes sure that the superscript is high enough in this case:
+\newcommand*\widebar[1]{\@ifnextchar^{{\wide@bar{#1}{0}}}{\wide@bar{#1}{1}}}
+% Use a separate algorithm for single symbols:
+\newcommand*\wide@bar[2]{\if@single{#1}{\wide@bar@{#1}{#2}{1}}{\wide@bar@{#1}{#2}{2}}}
+\newcommand*\wide@bar@[3]{%
+  \begingroup
+  \def\mathaccent##1##2{%
+    % Enable nesting of accents:
+    \let\mathaccent\save@mathaccent
+    % If there's more than a single symbol, use the first character instead (see below):
+    \if#32 \let\macc@nucleus\first@char \fi
+    % Determine the italic correction:
+    \setbox\z@\hbox{$\macc@style{\macc@nucleus}_{}$}%
+    \setbox\tw@\hbox{$\macc@style{\macc@nucleus}{}_{}$}%
+    \dimen@\wd\tw@
+    \advance\dimen@-\wd\z@
+    % Now \dimen@ is the italic correction of the symbol.
+    \divide\dimen@ 3
+    \@tempdima\wd\tw@
+    \advance\@tempdima-\scriptspace
+    % Now \@tempdima is the width of the symbol.
+    \divide\@tempdima 10
+    \advance\dimen@-\@tempdima
+    % Now \dimen@ = (italic correction / 3) - (Breite / 10)
+    \ifdim\dimen@>\z@ \dimen@0pt\fi
+    % The bar will be shortened in the case \dimen@<0 !
+    \rel@kern{0.6}\kern-\dimen@
+    \if#31
+    \overline{\rel@kern{-0.6}\kern\dimen@\macc@nucleus\rel@kern{0.4}\kern\dimen@}%
+    \advance\dimen@0.4\dimexpr\macc@kerna
+    % Place the combined final kern (-\dimen@) if it is >0 or if a superscript follows:
+    \let\final@kern#2%
+    \ifdim\dimen@<\z@ \let\final@kern1\fi
+    \if\final@kern1 \kern-\dimen@\fi
+    \else
+    \overline{\rel@kern{-0.6}\kern\dimen@#1}%
+    \fi
+  }%
+  \macc@depth\@ne
+  \let\math@bgroup\@empty \let\math@egroup\macc@set@skewchar
+  \mathsurround\z@ \frozen@everymath{\mathgroup\macc@group\relax}%
+  \macc@set@skewchar\relax
+  \let\mathaccentV\macc@nested@a
+  % The following initialises \macc@kerna and calls \mathaccent:
+  \if#31
+  \macc@nested@a\relax111{#1}%
+  \else
+  % If the argument consists of more than one symbol, and if the first token is
+  % a letter, use that letter for the computations:
+  \def\gobble@till@marker##1\endmarker{}%
+  \futurelet\first@char\gobble@till@marker#1\endmarker
+  \ifcat\noexpand\first@char A\else
+  \def\first@char{}%
+  \fi
+  \macc@nested@a\relax111{\first@char}%
+  \fi
+  \endgroup
+}
+\makeatother
