@@ -128,7 +128,7 @@ namespace rpwa {
 		//----------------------------------------------------------------------------
 		// low-level generator interface
 		/// randomly choses the (n - 2) effective masses of the respective (i + 1)-body systems
-		void pickMasses(const double nBodyMass);  // total energy of n-body system in its RF
+		virtual void pickMasses(const double nBodyMass);  // total energy of n-body system in its RF
 
 		/// \brief computes event weight and breakup momenta
 		/// operates on vector of intermediate two-body masses prepared by pickMasses()
