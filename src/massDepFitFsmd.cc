@@ -162,6 +162,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	}
 
 	if(debug) {
+		print(printDebug);
 		printDebug << "finished initialization of final-state mass-dependence." << std::endl;
 	}
 
@@ -237,5 +238,29 @@ rpwa::massDepFit::fsmd::val(const double mass,
 		return 1.;
 	}
 
-	return _function->EvalPar(&mass, &_parameters[0]);
+	return _function->EvalPar(&mass, fitParameters.getParameters(_id));
+}
+
+
+std::ostream&
+rpwa::massDepFit::fsmd::print(std::ostream& out) const
+{
+	out << "final-state mass-dependence (id " << _id << ")" << std::endl;
+	out << "formula: " << ((_function != NULL) ? _function->GetTitle() : "not set") << std::endl;
+
+	for(size_t i=0; i<_nrParameters; ++i) {
+		out << "    [" << i << "] ";
+		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
+			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
+		} else if(_parametersLimitedLower[i]) {
+			out << "lower limit: " << _parametersLimitLower[i] << " GeV/c^2";
+		} else if(_parametersLimitedUpper[i]) {
+			out << "upper limit: " << _parametersLimitUpper[i] << " GeV/c^2";
+		} else {
+			out << "unlimited";
+		}
+		out << (_parametersFixed[i] ? " (FIXED) " : "") << std::endl;
+	}
+
+	return out;
 }

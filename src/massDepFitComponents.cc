@@ -639,6 +639,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		print(printDebug);
 		printDebug << "finished initialization of 'fixedWidthBreitWigner'." << std::endl;
 	}
+
 	return true;
 }
 
