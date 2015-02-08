@@ -14,6 +14,7 @@
 #define MASSDEPFITMODEL_HH
 
 #include <complex>
+#include <iostream>
 #include <limits>
 #include <vector>
 
@@ -77,7 +78,7 @@ namespace rpwa {
 			             const double mass,
 			             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			std::ostream& print(std::ostream& out) const;
+			std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 

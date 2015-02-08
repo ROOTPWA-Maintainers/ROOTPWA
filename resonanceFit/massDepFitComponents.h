@@ -137,7 +137,7 @@ namespace rpwa {
 			                                           const double mass,
 			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
@@ -185,7 +185,7 @@ namespace rpwa {
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		};
 
@@ -207,7 +207,7 @@ namespace rpwa {
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
@@ -236,7 +236,7 @@ namespace rpwa {
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		};
 
@@ -258,7 +258,7 @@ namespace rpwa {
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
@@ -287,7 +287,7 @@ namespace rpwa {
 			virtual std::complex<double> val(const size_t idxBin,
 			                                 const double m) const;
 
-			virtual std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
