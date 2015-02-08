@@ -165,7 +165,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const Setting* configInput)
 	// get information for plotting of systematic error
 	const Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
 	if(not readConfigInputSystematics(configInputSystematics)) {
-		printErr << "error while reading 'waves' in section '" << configInput->getName() << "' in configuration file." << endl;
+		printErr << "error while reading 'systematics' in section '" << configInput->getName() << "' in configuration file." << endl;
 		return false;
 	}
 
@@ -422,7 +422,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const Setting* configRoot,
 	// get components section of configuration file
 	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
 	if(not configModel) {
-		printErr << "error while reading 'components' section in configuration file." << endl;
+		printErr << "error while reading 'model' section in configuration file." << endl;
 		return false;
 	}
 
@@ -497,7 +497,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		insert(mandatoryArguments)
 		      ("name", Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "'components' list in 'components' section in configuration file contains errors." << endl;
+			printErr << "'components' list in 'model' section in configuration file contains errors." << endl;
 			return false;
 		}
 
@@ -668,7 +668,7 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configModel,
 	}
 
 	if(not configModel) {
-		printErr << "error while updating 'components' section in configuration file." << endl;
+		printErr << "error while updating 'model' section in configuration file." << endl;
 		return false;
 	}
 
@@ -715,7 +715,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 		insert(mandatoryArguments)
 		      ("name", Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "'components' list in 'components' section in configuration file contains errors." << endl;
+			printErr << "'components' list in 'model' section in configuration file contains errors." << endl;
 			return false;
 		}
 
