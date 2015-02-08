@@ -24,8 +24,9 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::fsmd::fsmd()
-	: _function(NULL),
+rpwa::massDepFit::fsmd::fsmd(const size_t id)
+	: _id(id),
+	  _function(NULL),
 	  _functionFixed(false),
 	  _nrParameters(0)
 {

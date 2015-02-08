@@ -66,9 +66,11 @@ rpwa::massDepFit::channel::~channel()
 }
 
 
-rpwa::massDepFit::component::component(const std::string& name,
+rpwa::massDepFit::component::component(const size_t id,
+                                       const std::string& name,
                                        const size_t nrParameters)
-	: _name(name),
+	: _id(id),
+	  _name(name),
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
@@ -603,8 +605,9 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const std::string& name)
-	: component(name, 2)
+rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
+                                                               const std::string& name)
+	: component(id, name, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -654,7 +657,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
@@ -684,8 +687,9 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const std::string& name)
-	: component(name, 2)
+rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
+                                                                   const std::string& name)
+	: component(id, name, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -819,7 +823,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
@@ -856,8 +860,9 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const std::string& name)
-	: component(name, 2)
+rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const size_t id,
+                                                                     const std::string& name)
+	: component(id, name, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -924,7 +929,7 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (parameterizationA1Bowler):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (parameterizationA1Bowler):" << std::endl;
 
 	out << "    mass: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
@@ -954,8 +959,9 @@ rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::exponentialBackground::exponentialBackground(const std::string& name)
-	: component(name, 2)
+rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
+                                                               const std::string& name)
+	: component(id, name, 2)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "g";
@@ -1024,7 +1030,7 @@ rpwa::massDepFit::exponentialBackground::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (exponentialBackground):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
 
 	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
@@ -1056,8 +1062,9 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const std::string& name)
-	: component(name, 5)
+rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const size_t id,
+                                                                       const std::string& name)
+	: component(id, name, 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";
@@ -1146,7 +1153,7 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const size_t idxBin,
 std::ostream&
 rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 {
-	out << "component '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
 
 	out << "    mass threshold: " << _parameters[0] << " GeV/c^2, ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {

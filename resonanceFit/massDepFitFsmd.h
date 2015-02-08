@@ -35,7 +35,7 @@ namespace rpwa {
 
 		public:
 
-			fsmd();
+			fsmd(const size_t id);
 			~fsmd();
 
 			bool init(const libconfig::Setting* configComponent,
@@ -64,6 +64,8 @@ namespace rpwa {
 			std::ostream& print(std::ostream& out) const;
 
 		private:
+
+			const size_t _id;
 
 			TFormula* _function;
 

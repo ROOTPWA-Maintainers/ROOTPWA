@@ -525,15 +525,15 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 
 		rpwa::massDepFit::component* component = NULL;
 		if(type == "fixedWidthBreitWigner") {
-			component = new fixedWidthBreitWigner(name);
+			component = new fixedWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "dynamicWidthBreitWigner") {
-			component = new dynamicWidthBreitWigner(name);
+			component = new dynamicWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "parameterizationA1Bowler") {
-			component = new parameterizationA1Bowler(name);
+			component = new parameterizationA1Bowler(fitModel.getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
-			component = new exponentialBackground(name);
+			component = new exponentialBackground(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
-			component = new tPrimeDependentBackground(name);
+			component = new tPrimeDependentBackground(fitModel.getNrComponents(), name);
 			((tPrimeDependentBackground*)component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << endl;
@@ -575,7 +575,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
-	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd();
+	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
 	if(not fsmd->init(configFsmd, _massBinCenters, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
