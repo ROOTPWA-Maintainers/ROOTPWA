@@ -79,10 +79,12 @@ namespace rpwa {
 
 		public:
 
-			component(const std::string& name,
+			component(const size_t id,
+			          const std::string& name,
 			          const size_t nrParameters);
 			virtual ~component() {};
 
+			size_t getId() const { return _id; }
 			const std::string& getName() const { return _name; }
 
 			virtual bool init(const libconfig::Setting* configComponent,
@@ -139,6 +141,7 @@ namespace rpwa {
 
 		private:
 
+			const size_t _id;
 			const std::string _name;
 
 			std::vector<channel> _channels;
@@ -168,7 +171,8 @@ namespace rpwa {
 
 		public:
 
-			fixedWidthBreitWigner(const std::string& name);
+			fixedWidthBreitWigner(const size_t id,
+			                      const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
@@ -189,7 +193,8 @@ namespace rpwa {
 
 		public:
 
-			dynamicWidthBreitWigner(const std::string& name);
+			dynamicWidthBreitWigner(const size_t id,
+			                        const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
@@ -217,7 +222,8 @@ namespace rpwa {
 
 		public:
 
-			parameterizationA1Bowler(const std::string& name);
+			parameterizationA1Bowler(const size_t id,
+			                         const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
@@ -238,7 +244,8 @@ namespace rpwa {
 
 		public:
 
-			exponentialBackground(const std::string& name);
+			exponentialBackground(const size_t id,
+			                      const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const size_t nrBins,
@@ -264,7 +271,8 @@ namespace rpwa {
 
 		public:
 
-			tPrimeDependentBackground(const std::string& name);
+			tPrimeDependentBackground(const size_t id,
+			                          const std::string& name);
 
 			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
