@@ -31,6 +31,8 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class parameters;
+
 		class fsmd {
 
 		public:
@@ -39,18 +41,19 @@ namespace rpwa {
 			~fsmd();
 
 			bool init(const libconfig::Setting* configComponent,
+			          rpwa::massDepFit::parameters& fitParameters,
 			          const std::vector<double>& massBinCenters,
 			          const bool debug);
 
 			bool update(const libconfig::Setting* configComponent,
+			            const rpwa::massDepFit::parameters& fitParameters,
 			            const ROOT::Math::Minimizer* minimizer,
 			            const bool debug) const;
 
 			size_t getNrParameters() const { return _nrParameters; }
-			size_t getParameters(double* par) const;
-			size_t setParameters(const double* par);
+			size_t importParameters(const double* par,
+			                        rpwa::massDepFit::parameters& fitParameters);
 
-			double getParameter(const size_t idx) const { return _parameters[idx]; }
 			bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }
 			double getParameterLimitLower(const size_t idx) const { return _parametersLimitLower[idx]; }
 			bool getParameterLimitedLower(const size_t idx) const { return _parametersLimitedLower[idx]; }
@@ -58,7 +61,8 @@ namespace rpwa {
 			bool getParameterLimitedUpper(const size_t idx) const { return _parametersLimitedUpper[idx]; }
 			double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
 
-			double val(const double mass,
+			double val(const rpwa::massDepFit::parameters& fitParameters,
+			           const double mass,
 			           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			std::ostream& print(std::ostream& out = std::cout) const;
@@ -73,7 +77,6 @@ namespace rpwa {
 
 			size_t _nrParameters;
 
-			std::vector<double> _parameters;
 			std::vector<bool> _parametersFixed;
 			std::vector<double> _parametersLimitLower;
 			std::vector<bool> _parametersLimitedLower;

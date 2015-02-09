@@ -24,6 +24,7 @@ namespace rpwa {
 
 		class component;
 		class fsmd;
+		class parameters;
 
 		class model {
 
@@ -39,8 +40,7 @@ namespace rpwa {
 			          const std::string& anchorComponentName);
 
 			size_t getNrParameters() const { return _nrParameters; }
-			void getParameters(double* par) const;
-			void setParameters(const double* par);
+			void importParameters(const double* par, rpwa::massDepFit::parameters& parameters) const;
 
 			size_t getNrComponents() const { return _components.size(); }
 			const rpwa::massDepFit::component* getComponent(size_t idx) const { return _components[idx]; }
@@ -48,31 +48,39 @@ namespace rpwa {
 			const rpwa::massDepFit::fsmd* getFsmd() const { return _fsmd; }
 			void setFsmd(rpwa::massDepFit::fsmd* fsmd);
 
-			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
-
-			size_t getAnchorWave() const { return _idxAnchorWave; }
+			size_t getMaxChannelsInComponent() const { return _maxChannelsInComponent; }
+			size_t getMaxParametersInComponent() const { return _maxParametersInComponent; }
 
 			bool useBranchings() const { return _useBranchings; }
 			void useBranchings(const bool val) { _useBranchings = val; }
 
-			std::complex<double> productionAmplitude(const size_t idxWave,
+			size_t getAnchorWave() const { return _idxAnchorWave; }
+
+			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
+
+			std::complex<double> productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
+			                                         const size_t idxWave,
 			                                         const size_t idxBin,
 			                                         const double mass,
 			                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double intensity(const size_t idxWave,
+			double intensity(const rpwa::massDepFit::parameters& fitParameters,
+			                 const size_t idxWave,
 			                 const size_t idxBin,
 			                 const double mass,
 			                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double phaseAbsolute(const size_t idxWave,
+			double phaseAbsolute(const rpwa::massDepFit::parameters& fitParameters,
+			                     const size_t idxWave,
 			                     const size_t idxBin,
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			std::complex<double> spinDensityMatrix(const size_t idxWave,
+			std::complex<double> spinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+			                                       const size_t idxWave,
 			                                       const size_t jdxWave,
 			                                       const size_t idxBin,
 			                                       const double mass,
 			                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double phase(const size_t idxWave,
+			double phase(const rpwa::massDepFit::parameters& fitParameters,
+			             const size_t idxWave,
 			             const size_t jdxWave,
 			             const size_t idxBin,
 			             const double mass,
@@ -92,6 +100,9 @@ namespace rpwa {
 			std::vector<rpwa::massDepFit::component*> _components;
 
 			rpwa::massDepFit::fsmd* _fsmd;
+
+			size_t _maxChannelsInComponent;
+			size_t _maxParametersInComponent;
 
 			bool _useBranchings;
 

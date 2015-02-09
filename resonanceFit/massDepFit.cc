@@ -90,6 +90,7 @@ rpwa::massDepFit::massDepFit::massDepFit()
 bool
 rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
                                          rpwa::massDepFit::model& fitModel,
+                                         rpwa::massDepFit::parameters& fitParameters,
                                          const std::string& valTreeName,
                                          const std::string& valBranchName)
 {
@@ -123,7 +124,7 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 	}
 
 	// set-up fit model (resonances, background, final-state mass dependence
-	if(not readConfigModel(configRoot, fitModel)) {
+	if(not readConfigModel(configRoot, fitModel, fitParameters)) {
 		printErr << "error while reading fit model from configuration file." << endl;
 		return false;
 	}
@@ -413,7 +414,8 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const Setting* confi
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModel(const Setting* configRoot,
-                                              rpwa::massDepFit::model& fitModel)
+                                              rpwa::massDepFit::model& fitModel,
+                                              rpwa::massDepFit::parameters& fitParameters)
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << endl;
@@ -435,14 +437,14 @@ rpwa::massDepFit::massDepFit::readConfigModel(const Setting* configRoot,
 
 	// read information for the individual components
 	const Setting* configComponents = findLibConfigList(*configModel, "components");
-	if(not readConfigModelComponents(configComponents, fitModel)) {
+	if(not readConfigModelComponents(configComponents, fitModel, fitParameters)) {
 		printErr << "error while reading 'components' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
 
 	// get information for creating the final-state mass-dependence
 	const Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not readConfigModelFsmd(configFsmd, fitModel)) {
+	if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters)) {
 		printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
@@ -477,7 +479,8 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const Setting* configAnc
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configComponents,
-                                                        rpwa::massDepFit::model& fitModel) const
+                                                        rpwa::massDepFit::model& fitModel,
+                                                        rpwa::massDepFit::parameters& fitParameters) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
@@ -540,7 +543,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			return false;
 		}
 
-		if(not component->init(configComponent, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << endl;
 			return false;
@@ -562,7 +565,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
-                                                  rpwa::massDepFit::model& fitModel) const
+                                                  rpwa::massDepFit::model& fitModel,
+                                                  rpwa::massDepFit::parameters& fitParameters) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -575,8 +579,9 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
+	std::cout << fitModel.getNrComponents() << std::endl;
 	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
-	if(not fsmd->init(configFsmd, _massBinCenters, _debug)) {
+	if(not fsmd->init(configFsmd, fitParameters, _massBinCenters, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
@@ -591,6 +596,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 
 bool
 rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
+                                   rpwa::massDepFit::parameters& fitParameters,
                                    rpwa::massDepFit::likelihood& L)
 {
 	if(not fitModel.init(_waveNames,
@@ -617,6 +623,7 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 bool
 rpwa::massDepFit::massDepFit::updateConfig(Setting* configRoot,
                                            const rpwa::massDepFit::model& fitModel,
+                                           const rpwa::massDepFit::parameters& fitParameters,
                                            const Minimizer* minimizer,
                                            const double chi2,
                                            const int ndf,
@@ -627,7 +634,7 @@ rpwa::massDepFit::massDepFit::updateConfig(Setting* configRoot,
 	}
 
 	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
-	if(not updateConfigModel(configModel, fitModel, minimizer)) {
+	if(not updateConfigModel(configModel, fitModel, fitParameters, minimizer)) {
 		printErr << "error while updating 'model' section of configuration file." << endl;
 		return false;
 	}
@@ -661,6 +668,7 @@ rpwa::massDepFit::massDepFit::updateConfig(Setting* configRoot,
 bool
 rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configModel,
                                                 const rpwa::massDepFit::model& fitModel,
+                                                const rpwa::massDepFit::parameters& fitParameters,
                                                 const Minimizer* minimizer) const
 {
 	if(_debug) {
@@ -674,14 +682,14 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configModel,
 
 	// update information of the individual components
 	const Setting* configComponents = findLibConfigList(*configModel, "components");
-	if(not updateConfigModelComponents(configComponents, fitModel, minimizer)) {
+	if(not updateConfigModelComponents(configComponents, fitModel, fitParameters, minimizer)) {
 		printErr << "error while updating 'components' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
 
 	// update information of the final-state mass-dependence
 	const Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not updateConfigModelFsmd(configFsmd, fitModel, minimizer)) {
+	if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, minimizer)) {
 		printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
@@ -693,6 +701,7 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configModel,
 bool
 rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configComponents,
                                                           const rpwa::massDepFit::model& fitModel,
+                                                          const rpwa::massDepFit::parameters& fitParameters,
                                                           const Minimizer* minimizer) const
 {
 	if(not configComponents) {
@@ -734,7 +743,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 			return false;
 		}
 
-		if(not component->update(configComponent, minimizer, fitModel.useBranchings(), _debug)) {
+		if(not component->update(configComponent, fitParameters, minimizer, fitModel.useBranchings(), _debug)) {
 			printErr << "error while updating component '" << name << "'." << endl;
 			return false;
 		}
@@ -747,6 +756,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 bool
 rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
                                                     const rpwa::massDepFit::model& fitModel,
+                                                    const rpwa::massDepFit::parameters& fitParameters,
                                                     const Minimizer* minimizer) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
@@ -763,7 +773,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 		printDebug << "updating final-state mass-dependence in configuration file." << endl;
 	}
 
-	if(not fitModel.getFsmd()->update(configFsmd, minimizer, _debug)) {
+	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, minimizer, _debug)) {
 		printErr << "error while updating final-state mass-dependence." << endl;
 		return false;
 	}
@@ -1561,6 +1571,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 
 bool
 rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitModel,
+                                          const rpwa::massDepFit::parameters& fitParameters,
                                           TFile* outFile,
                                           const bool rangePlotting) const
 {
@@ -1579,7 +1590,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWave(fitModel, outDirectory, rangePlotting, idxWave, idxBin)) {
+			if(not createPlotsWave(fitModel, fitParameters, outDirectory, rangePlotting, idxWave, idxBin)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << endl;
 				return false;
 			}
@@ -1587,7 +1598,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
-				if(not createPlotsWavePair(fitModel, outDirectory, rangePlotting, idxWave, jdxWave, idxBin)) {
+				if(not createPlotsWavePair(fitModel, fitParameters, outDirectory, rangePlotting, idxWave, jdxWave, idxBin)) {
 					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << endl;
 					return false;
 				}
@@ -1606,7 +1617,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			++point;
 			const double mass = _massBinCenters[idxMass];
 
-			graph.SetPoint(point, mass, pow(fitModel.getFsmd()->val(_massBinCenters[idxMass], idxMass), 2.));
+			graph.SetPoint(point, mass, pow(fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass), 2.));
 		}
 
 		outFile->cd();
@@ -1623,6 +1634,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 
 bool
 rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fitModel,
+                                              const rpwa::massDepFit::parameters& fitParameters,
                                               TDirectory* outDirectory,
                                               const bool rangePlotting,
                                               const size_t idxWave,
@@ -1723,7 +1735,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 		++pointLimit;
 
-		const double intensity = fitModel.intensity(idxWave, idxBin, _massBinCenters[idxMass], idxMass);
+		const double intensity = fitModel.intensity(fitParameters, idxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		fit->SetPoint(pointLimit, mass, intensity);
 		maxIE = max(maxIE, intensity);
 
@@ -1731,10 +1743,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxComponent = compChannel[idxComponents].first;
 			const size_t idxChannel = compChannel[idxComponents].second;
 
-			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(idxBin, _massBinCenters[idxMass]);
-			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
+			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, idxBin, _massBinCenters[idxMass]);
+			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
 			if(fitModel.getFsmd() != NULL) {
-				prodAmp *= fitModel.getFsmd()->val(_massBinCenters[idxMass], idxMass);
+				prodAmp *= fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass);
 			}
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
@@ -1757,6 +1769,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 bool
 rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
+                                                  const rpwa::massDepFit::parameters& fitParameters,
                                                   TDirectory* outDirectory,
                                                   const bool rangePlotting,
                                                   const size_t idxWave,
@@ -1916,7 +1929,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 		}
 
-		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
+		phaseFitAll.SetPoint(point, mass, fitModel.phase(fitParameters, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1925,7 +1938,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		}
 		++pointLimit;
 
-		const complex<double> element = fitModel.spinDensityMatrix(idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass);
+		const complex<double> element = fitModel.spinDensityMatrix(fitParameters, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		realFit->SetPoint(pointLimit, mass, element.real());
 		imagFit->SetPoint(pointLimit, mass, element.imag());
 	}

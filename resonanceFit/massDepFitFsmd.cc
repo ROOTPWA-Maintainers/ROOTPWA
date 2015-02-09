@@ -21,6 +21,7 @@
 #include <TFormula.h>
 
 #include "libConfigUtils.hpp"
+#include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
 
 
@@ -43,6 +44,7 @@ rpwa::massDepFit::fsmd::~fsmd()
 
 bool
 rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
+                             rpwa::massDepFit::parameters& fitParameters,
                              const std::vector<double>& massBinCenters,
                              const bool debug)
 {
@@ -126,7 +128,6 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 	_nrParameters = _function->GetNpar();
 
-	_parameters.resize(_nrParameters);
 	_parametersFixed.resize(_nrParameters);
 	_parametersLimitLower.resize(_nrParameters);
 	_parametersLimitedLower.resize(_nrParameters);
@@ -134,8 +135,10 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	_parametersLimitedUpper.resize(_nrParameters);
 	_parametersStep.resize(_nrParameters);
 
+	fitParameters.resize(_id+1, 0, _nrParameters, 0);
+
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		_parameters[idxParameter] = configFsmdValue[idxParameter];
+		fitParameters.setParameter(_id, idxParameter, configFsmdValue[idxParameter]);
 		_parametersFixed[idxParameter] = configFsmdFix[idxParameter];
 		_parametersLimitLower[idxParameter] = configFsmdLower[idxParameter];
 		_parametersLimitedLower[idxParameter] = true;
@@ -157,7 +160,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		_values.resize(nrMassBins);
 
 		for(size_t idxMassBin=0; idxMassBin<nrMassBins; ++idxMassBin) {
-			_values[idxMassBin] = val(massBinCenters[idxMassBin], std::numeric_limits<size_t>::max());
+			_values[idxMassBin] = val(fitParameters, massBinCenters[idxMassBin], std::numeric_limits<size_t>::max());
 		}
 	}
 
@@ -172,6 +175,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 bool
 rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
+                               const rpwa::massDepFit::parameters& fitParameters,
                                const ROOT::Math::Minimizer* minimizer,
                                const bool debug) const
 {
@@ -183,7 +187,7 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 	const libconfig::Setting& configFsmdError = (*configFsmd)["error"];
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		configFsmdValue[idxParameter] = _parameters[idxParameter];
+		configFsmdValue[idxParameter] = fitParameters.getParameter(_id, idxParameter);
 
 		std::ostringstream sName;
 		sName << "PSP__" << idxParameter;
@@ -205,21 +209,11 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 
 
 size_t
-rpwa::massDepFit::fsmd::getParameters(double* par) const
+rpwa::massDepFit::fsmd::importParameters(const double* par,
+                                         rpwa::massDepFit::parameters& fitParameters)
 {
-	for(size_t idx=0; idx<_nrParameters; ++idx) {
-		par[idx] = _parameters[idx];
-	}
-
-	return _nrParameters;
-}
-
-
-size_t
-rpwa::massDepFit::fsmd::setParameters(const double* par)
-{
-	for(size_t idx=0; idx<_nrParameters; ++idx) {
-		_parameters[idx] = par[idx];
+	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
+		fitParameters.setParameter(_id, idxParameter, par[idxParameter]);
 	}
 
 	return _nrParameters;
@@ -227,7 +221,8 @@ rpwa::massDepFit::fsmd::setParameters(const double* par)
 
 
 double
-rpwa::massDepFit::fsmd::val(const double mass,
+rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
+                            const double mass,
                             const size_t idxMass) const
 {
 	if(_functionFixed && idxMass != std::numeric_limits<size_t>::max()) {

@@ -19,6 +19,8 @@
 
 #include <Math/Interpolator.h>
 
+#include "massDepFitParameters.h"
+
 namespace libconfig {
 	class Setting;
 }
@@ -38,7 +40,6 @@ namespace rpwa {
 
 			channel(const std::string& waveName,
 			        const size_t nrBins,
-			        const std::vector<std::complex<double> >& couplings,
 			        const std::vector<double>& massBinCenters,
 			        const boost::multi_array<double, 2>& phaseSpace);
 			channel(const rpwa::massDepFit::channel& ch);
@@ -51,10 +52,6 @@ namespace rpwa {
 
 			size_t getNrBins() const { return _nrBins; }
 
-			std::complex<double> getCoupling(const size_t idxBin) const { return _couplings[idxBin]; }
-			const std::vector<std::complex<double> >& getCouplings() const { return _couplings; }
-			void setCouplings(const std::vector<std::complex<double> >& couplings) { _couplings = couplings; }
-
 			double getPhaseSpace(const size_t idxBin,
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -66,8 +63,6 @@ namespace rpwa {
 			bool _anchor;
 
 			size_t _nrBins;
-
-			std::vector<std::complex<double> > _couplings;
 
 			std::vector<double> _massBinCenters;
 			boost::multi_array<double, 2> _phaseSpace;
@@ -88,6 +83,7 @@ namespace rpwa {
 			const std::string& getName() const { return _name; }
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -96,11 +92,12 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool update(const libconfig::Setting* configComponent,
+			                    const rpwa::massDepFit::parameters& fitParameters,
 			                    const ROOT::Math::Minimizer* minimizer,
 			                    const bool useBranchings,
 			                    const bool debug) const;
 
-			const size_t getNrChannels() const { return _channels.size(); }
+			size_t getNrChannels() const { return _channels.size(); }
 			const std::vector<channel>& getChannels() const { return _channels; }
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
@@ -109,18 +106,17 @@ namespace rpwa {
 			size_t getChannelIdxBranching(const size_t i) const { return _channelsBranching[i]; }
 
 			size_t getNrCouplings() const { return _nrCouplings; }
-			size_t getCouplings(double* par) const;
-			size_t setCouplings(const double* par);
+			size_t importCouplings(const double* par,
+			                       rpwa::massDepFit::parameters& fitParameters);
 
 			size_t getNrBranchings() const { return _nrBranchings; }
-			size_t getBranchings(double* par) const;
-			size_t setBranchings(const double* par);
+			size_t importBranchings(const double* par,
+			                        rpwa::massDepFit::parameters& fitParameters);
 
 			size_t getNrParameters() const { return _nrParameters; }
-			virtual size_t getParameters(double* par) const;
-			virtual size_t setParameters(const double* par);
+			virtual size_t importParameters(const double* par,
+			                                rpwa::massDepFit::parameters& fitParameters);
 
-			virtual double getParameter(const size_t idx) const { return _parameters[idx]; }
 			virtual bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }
 			virtual double getParameterLimitLower(const size_t idx) const { return _parametersLimitLower[idx]; }
 			virtual bool getParameterLimitedLower(const size_t idx) const { return _parametersLimitedLower[idx]; }
@@ -129,10 +125,12 @@ namespace rpwa {
 			virtual const std::string& getParameterName(const size_t idx) const { return _parametersName[idx]; }
 			virtual double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const = 0;
 
-			std::complex<double> getCouplingPhaseSpace(const size_t idxChannel,
+			std::complex<double> getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
+			                                           const size_t idxChannel,
 			                                           const size_t idxBin,
 			                                           const double mass,
 			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -146,9 +144,8 @@ namespace rpwa {
 
 			std::vector<channel> _channels;
 			std::vector<size_t> _channelsCoupling;
+			std::vector<size_t> _channelsFromCoupling;
 			std::vector<size_t> _channelsBranching;
-
-			std::vector<std::complex<double> > _branchings;
 
 			const size_t _nrParameters;
 			size_t _nrCouplings;
@@ -156,7 +153,6 @@ namespace rpwa {
 
 		protected:
 
-			std::vector<double> _parameters;
 			std::vector<bool> _parametersFixed;
 			std::vector<double> _parametersLimitLower;
 			std::vector<bool> _parametersLimitedLower;
@@ -175,6 +171,7 @@ namespace rpwa {
 			                      const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -182,7 +179,8 @@ namespace rpwa {
 			                  const bool useBranchings,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -197,6 +195,7 @@ namespace rpwa {
 			                        const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -204,7 +203,8 @@ namespace rpwa {
 			                  const bool useBranchings,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -226,6 +226,7 @@ namespace rpwa {
 			                         const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -233,7 +234,8 @@ namespace rpwa {
 			                  const bool useBranchings,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -248,6 +250,7 @@ namespace rpwa {
 			                      const std::string& name);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -255,7 +258,8 @@ namespace rpwa {
 			                  const bool useBranchings,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -277,6 +281,7 @@ namespace rpwa {
 			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
 			virtual bool init(const libconfig::Setting* configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -284,7 +289,8 @@ namespace rpwa {
 			                  const bool useBranchings,
 			                  const bool debug);
 
-			virtual std::complex<double> val(const size_t idxBin,
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -318,15 +324,14 @@ rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
 
 inline
 std::complex<double>
-rpwa::massDepFit::component::getCouplingPhaseSpace(const size_t idxChannel,
+rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
+                                                   const size_t idxChannel,
                                                    const size_t idxBin,
                                                    const double mass,
                                                    const size_t idxMass) const
 {
-	const channel& channelCoupling = _channels[_channelsCoupling[idxChannel]];
-	const std::complex<double> coupling = channelCoupling.getCoupling(idxBin);
-
-	const std::complex<double> branching = _branchings[_channelsBranching[idxChannel]];
+	const std::complex<double> coupling = fitParameters.getCoupling(_id, _channelsCoupling[idxChannel], idxBin);
+	const std::complex<double> branching = fitParameters.getBranching(_id, _channelsBranching[idxChannel]);
 
 	const channel& channelPhaseSpace = _channels[idxChannel];
 	const double phaseSpace = channelPhaseSpace.getPhaseSpace(idxBin, mass, idxMass);

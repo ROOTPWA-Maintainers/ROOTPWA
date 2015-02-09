@@ -49,6 +49,7 @@
 #include "massDepFitFsmd.h"
 #include "massDepFitLikeli.h"
 #include "massDepFitModel.h"
+#include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
 
@@ -101,20 +102,9 @@ usage(const string& progName,
 bool
 releasePars(ROOT::Math::Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
+            const rpwa::massDepFit::parameters& fitParameters,
             const string& freeParameters)
 {
-	// save current state
-	const size_t npar = compset.getNrParameters();
-	double par[npar];
-
-	if(minimizer->NFree() == 0) {
-		compset.getParameters(par);
-	} else {
-		for(size_t i=0; i<npar; ++i) {
-			par[i]=minimizer->X()[i];
-		}
-	}
-
 	// tokenize freeParameters string (default deparators also include '*')
 	boost::char_separator<char> separators(" ,\t\n");
 	boost::tokenizer<boost::char_separator<char> > tokenizeFreeParameters(freeParameters, separators);
@@ -147,18 +137,20 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 					prefixName << channel.getWaveName();
 				}
 
-				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
+				const std::complex<double> parameter = fitParameters.getCoupling(idxComponent, idxChannel, idxBin);
+
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << endl;
 				minimizer->SetVariable(parcount,
 				                       prefixName.str() + "__real",
-				                       par[parcount],
+				                       parameter.real(),
 				                       0.1);
 				++parcount;
 
 				if(not channel.isAnchor()) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << par[parcount] << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__imag",
-					                       par[parcount],
+					                       parameter.imag(),
 					                       0.1);
 					++parcount;
 				}
@@ -192,30 +184,32 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				}
 				bool fix = not free;
 
+				const std::complex<double> parameter = fitParameters.getBranching(idxComponent, idxChannel);
+
 				if (fix) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << par[parcount] << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__real",
-					                            par[parcount]);
+					                            parameter.real());
 					++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << par[parcount] << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__imag",
-					                            par[parcount]);
+					                            parameter.imag());
 					++parcount;
 				} else {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << par[parcount] << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__real",
-					                       par[parcount],
+					                       parameter.real(),
 					                       0.1);
 					++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << par[parcount] << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__imag",
-					                       par[parcount],
+					                       parameter.imag(),
 					                       0.1);
 					++parcount;
 				}
@@ -241,42 +235,44 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				fix = true;
 			}
 
+			const double parameter = fitParameters.getParameter(idxComponent, idxParameter);
+
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << parameter << endl;
 				minimizer->SetFixedVariable(parcount,
 				                            name,
-				                            par[parcount]);
+				                            parameter);
 			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
 				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetLimitedVariable(parcount,
 				                              name,
-				                              par[parcount],
+				                              parameter,
 				                              comp->getParameterStep(idxParameter),
 				                              comp->getParameterLimitLower(idxParameter),
 				                              comp->getParameterLimitUpper(idxParameter));
 			} else if(comp->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << endl;
 				minimizer->SetLowerLimitedVariable(parcount,
 				                                   name,
-				                                   par[parcount],
+				                                   parameter,
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitLower(idxParameter));
 			} else if(comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetUpperLimitedVariable(parcount,
 				                                   name,
-				                                   par[parcount],
+				                                   parameter,
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter << endl;
 				minimizer->SetVariable(parcount,
 				                       name,
-				                       par[parcount],
+				                       parameter,
 				                       comp->getParameterStep(idxParameter));
 			}
 			++parcount;
@@ -292,42 +288,44 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 
 			const bool fix = fsmd->getParameterFixed(idxParameter);
 
+			const double parameter = fitParameters.getParameter(compset.getNrComponents(), idxParameter);
+
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << parameter << endl;
 				minimizer->SetFixedVariable(parcount,
 				                            name.str(),
-				                            par[parcount]);
+				                            parameter);
 			} else if(fsmd->getParameterLimitedLower(idxParameter) && fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
 				          << " (limited between " << fsmd->getParameterLimitLower(idxParameter)
 				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetLimitedVariable(parcount,
 				                              name.str(),
-				                              par[parcount],
+				                              parameter,
 				                              fsmd->getParameterStep(idxParameter),
 				                              fsmd->getParameterLimitLower(idxParameter),
 				                              fsmd->getParameterLimitUpper(idxParameter));
 			} else if(fsmd->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
 				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << endl;
 				minimizer->SetLowerLimitedVariable(parcount,
 				                                   name.str(),
-				                                   par[parcount],
+				                                   parameter,
 				                                   fsmd->getParameterStep(idxParameter),
 				                                   fsmd->getParameterLimitLower(idxParameter));
 			} else if(fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
 				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetUpperLimitedVariable(parcount,
 				                                   name.str(),
-				                                   par[parcount],
+				                                   parameter,
 				                                   fsmd->getParameterStep(idxParameter),
 				                                   fsmd->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter << endl;
 				minimizer->SetVariable(parcount,
 				                       name.str(),
-				                       par[parcount],
+				                       parameter,
 				                       fsmd->getParameterStep(idxParameter));
 			}
 			++parcount;
@@ -462,13 +460,14 @@ main(int    argc,
 	libconfig::Setting& configRoot = configFile.getRoot();
 
 	// read configuration file
-	if(not mdepFit.readConfig(&configRoot, compset, valTreeName, valBranchName)) {
+	rpwa::massDepFit::parameters fitParameters;
+	if(not mdepFit.readConfig(&configRoot, compset, fitParameters, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
 		return 1;
 	}
 
 	// set-up fit model and likelihood
-	if(not mdepFit.init(compset, L)) {
+	if(not mdepFit.init(compset, fitParameters, L)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
 		return 1;
 	}
@@ -476,12 +475,7 @@ main(int    argc,
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << endl;
 
-		// still calculate a chi2 from the values in the configuration file
-		const size_t npar = compset.getNrParameters();
-		double par[npar];
-		compset.getParameters(par);
-
-		printInfo << "chi2 (valid only if fit was successful) = " << maxPrecisionAlign(L.DoEval(par)) << endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << maxPrecisionAlign(L.DoEval(fitParameters)) << endl;
 	} else {
 		// setup minimizer
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
@@ -512,7 +506,7 @@ main(int    argc,
 		bool success = true;
 		for(size_t step=0; step<nrSteps; ++step) {
 			// set startvalues
-			if(not releasePars(minimizer.get(), compset, freeParameters[step])) {
+			if(not releasePars(minimizer.get(), compset, fitParameters, freeParameters[step])) {
 				printErr << "error while setting start parameters for step " << step << "." << endl;
 				return 1;
 			}
@@ -531,6 +525,9 @@ main(int    argc,
 				printInfo << "minimization successful." << endl;
 			}
 			printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
+
+			// copy current parameters from minimizer
+			compset.importParameters(minimizer->X(), fitParameters);
 		}
 
 		if(runHesse) {
@@ -547,6 +544,9 @@ main(int    argc,
 				printInfo << "calculation of Hessian matrix successful." << endl;
 			}
 			printInfo << "calculating Hessian matrix took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
+
+			// copy current parameters from minimizer
+			compset.importParameters(minimizer->X(), fitParameters);
 		}
 
 		printInfo << "minimizer status summary:" << endl
@@ -564,7 +564,7 @@ main(int    argc,
 
 		// print results
 		ostringstream output;
-		const unsigned int nmbPar  = L.NDim();
+		const unsigned int nmbPar = L.NDim();
 		for(unsigned int i = 0; i<nmbPar; ++i) {
 			output << "    parameter [" << setw(3) << i << "] ";
 			output << minimizer->VariableName(i) << " " ;
@@ -581,15 +581,13 @@ main(int    argc,
 		printInfo << "minimization result:" << endl
 		          << output.str();
 
-		const double* par=minimizer->X();
 		double chi2 = 0.;
 		if(success) {
-			chi2 = L.DoEval(par);
+			chi2 = L.DoEval(fitParameters);
 		} else {
-			printInfo << "chi2 (if fit were successful) =" << maxPrecisionAlign(L.DoEval(par)) << endl;
+			printInfo << "chi2 (if fit were successful) =" << maxPrecisionAlign(L.DoEval(fitParameters)) << endl;
 		}
 		printInfo << "chi2 =" << maxPrecisionAlign(chi2) << endl;
-		compset.setParameters(par);
 
 		const unsigned int nrDataPoints = L.NDataPoints();
 		const unsigned int nrFree = minimizer->NFree();
@@ -599,7 +597,7 @@ main(int    argc,
 		double chi2red = chi2/(double)ndf;
 		printInfo << "chi2/ndf =" << maxPrecisionAlign(chi2red) << endl;
 
-		if(not mdepFit.updateConfig(&configRoot, compset, minimizer.get(), chi2, ndf, chi2red)) {
+		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, minimizer.get(), chi2, ndf, chi2red)) {
 			printErr << "error while updating configuration file." << endl;
 			return 1;
 		}
@@ -630,7 +628,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(compset, outFile.get(), rangePlotting)) {
+	if(not mdepFit.createPlots(compset, fitParameters, outFile.get(), rangePlotting)) {
 		printErr << "error while creating plots." << endl;
 		return 1;
 	}

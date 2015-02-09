@@ -23,6 +23,7 @@ namespace rpwa {
 	namespace massDepFit {
 
 		class model;
+		class parameters;
 
 		class likelihood : public ROOT::Math::IBaseFunctionMultiDim {
 
@@ -36,6 +37,7 @@ namespace rpwa {
 			virtual unsigned int NDim() const;
 
 			virtual double DoEval(const double* par) const;
+			virtual double DoEval(const rpwa::massDepFit::parameters& fitParameters) const;
 
 			unsigned int NDataPoints() const;
 
@@ -55,8 +57,8 @@ namespace rpwa {
 
 		private:
 
-			double DoEvalProductionAmplitudes() const;
-			double DoEvalSpinDensityMatrix() const;
+			double DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters) const;
+			double DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters) const;
 
 			rpwa::massDepFit::model* _compset;
 
