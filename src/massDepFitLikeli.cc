@@ -1,6 +1,7 @@
 #include "massDepFitLikeli.h"
 
 #include "massDepFitModel.h"
+#include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
 
 
@@ -307,19 +308,30 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 double
 rpwa::massDepFit::likelihood::DoEval(const double* par) const
 {
-	// set parameters for resonances, background and phase space
-	_compset->setParameters(par);
+	// import parameters (couplings, branchings, resonance parameters, ...)
+	rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                                           _compset->getMaxChannelsInComponent(),
+	                                           _compset->getMaxParametersInComponent(),
+	                                           _nrBins);
+	_compset->importParameters(par, fitParameters);
 
+	return DoEval(fitParameters);
+}
+
+
+double
+rpwa::massDepFit::likelihood::DoEval(const rpwa::massDepFit::parameters& fitParameters) const
+{
 	if(_fitProductionAmplitudes) {
-		return DoEvalProductionAmplitudes();
+		return DoEvalProductionAmplitudes(fitParameters);
 	} else {
-		return DoEvalSpinDensityMatrix();
+		return DoEvalSpinDensityMatrix(fitParameters);
 	}
 }
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const
+rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters) const
 {
 	double chi2=0;
 
@@ -330,7 +342,7 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const
 			const double mass = _massBinCenters[idxMass];
 
 			// phase of fit in anchor wave
-			const std::complex<double> anchorFit = _compset->productionAmplitude(_idxAnchorWave, idxBin, mass, idxMass);
+			const std::complex<double> anchorFit = _compset->productionAmplitude(fitParameters, _idxAnchorWave, idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
 			TMatrixT<double> prodAmpDiffMat(2*_nrWaves - 1, 1);
@@ -344,7 +356,7 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const
 				}
 
 				// calculate target spin density matrix element
-				const std::complex<double> prodAmpFit = _compset->productionAmplitude(idxWave, idxBin, mass, idxMass) / anchorFitPhase;
+				const std::complex<double> prodAmpFit = _compset->productionAmplitude(fitParameters, idxWave, idxBin, mass, idxMass) / anchorFitPhase;
 
 				const std::complex<double> prodAmpDiff = prodAmpFit - _productionAmplitudes[idxBin][idxMass][idxWave];
 
@@ -368,7 +380,7 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes() const
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const
+rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters) const
 {
 	double chi2=0;
 
@@ -388,7 +400,7 @@ rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix() const
 					}
 
 					// calculate target spin density matrix element
-					const std::complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, idxBin, mass, idxMass);
+					const std::complex<double> rhoFit = _compset->spinDensityMatrix(fitParameters, idxWave, jdxWave, idxBin, mass, idxMass);
 
 					const std::complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
 

@@ -21,6 +21,8 @@
 rpwa::massDepFit::model::model()
 	: _nrParameters(0),
 	  _fsmd(NULL),
+	  _maxChannelsInComponent(0),
+	  _maxParametersInComponent(0),
 	  _useBranchings(false),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
@@ -66,6 +68,7 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 
 	// number of resonance parameters
 	_nrParameters += comp->getNrParameters();
+	_maxParametersInComponent = std::max(_maxParametersInComponent, comp->getNrParameters());
 
 	// number of coupling parameters
 	_nrParameters += 2 * comp->getNrCouplings() * comp->getChannel(0).getNrBins();
@@ -74,6 +77,9 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 	if(_useBranchings && comp->getNrChannels() > 1) {
 		_nrParameters += 2 * comp->getNrBranchings() - 2;
 	}
+
+	// maximum number of channels in one component
+	_maxChannelsInComponent = std::max(_maxChannelsInComponent, comp->getNrChannels());
 }
 
 
@@ -89,6 +95,7 @@ rpwa::massDepFit::model::setFsmd(rpwa::massDepFit::fsmd* fsmd)
 
 	if(_fsmd != NULL) {
 		_nrParameters += _fsmd->getNrParameters();
+		_maxParametersInComponent = std::max(_maxParametersInComponent, _fsmd->getNrParameters());
 	}
 }
 
@@ -188,65 +195,35 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 
 
 void
-rpwa::massDepFit::model::getParameters(double* par) const
-{
-	size_t parcount=0;
-
-	// couplings
-	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
-		parcount += _components[idxComponent]->getCouplings(&par[parcount]);
-	}
-
-	// branchings
-	if(_useBranchings) {
-		for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
-			parcount += _components[idxComponent]->getBranchings(&par[parcount]);
-		}
-	}
-
-	// parameters
-	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
-		parcount += _components[idxComponent]->getParameters(&par[parcount]);
-	}
-
-	// final-state mass dependence
-	if(_fsmd != NULL) {
-		parcount += _fsmd->getParameters(&par[parcount]);
-	}
-}
-
-
-void
-rpwa::massDepFit::model::setParameters(const double* par)
+rpwa::massDepFit::model::importParameters(const double* par, rpwa::massDepFit::parameters& parameters) const
 {
 	size_t parcount=0;
 
 	// couplings
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
-		parcount += _components[idxComponent]->setCouplings(&par[parcount]);
+		parcount += _components[idxComponent]->importCouplings(&par[parcount], parameters);
 	}
 
 	// branchings
-	if(_useBranchings) {
-		for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
-			parcount += _components[idxComponent]->setBranchings(&par[parcount]);
-		}
+	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
+		parcount += _components[idxComponent]->importBranchings(&par[parcount], parameters);
 	}
 
 	// parameters
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
-		parcount += _components[idxComponent]->setParameters(&par[parcount]);
+		parcount += _components[idxComponent]->importParameters(&par[parcount], parameters);
 	}
 
 	// final-state mass-dependence
 	if(_fsmd != NULL) {
-		parcount += _fsmd->setParameters(&par[parcount]);
+		parcount += _fsmd->importParameters(&par[parcount], parameters);
 	}
 }
 
 
 std::complex<double>
-rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
+rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
+                                             const size_t idxWave,
                                              const size_t idxBin,
                                              const double mass,
                                              const size_t idxMass) const
@@ -261,11 +238,11 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _components[idxComponent]->val(idxBin, mass) * _components[idxComponent]->getCouplingPhaseSpace(idxChannel, idxBin, mass, idxMass);
+		prodAmp += _components[idxComponent]->val(fitParameters, idxBin, mass) * _components[idxComponent]->getCouplingPhaseSpace(fitParameters, idxChannel, idxBin, mass, idxMass);
 	}
 
 	if(_fsmd != NULL) {
-		prodAmp *= _fsmd->val(mass, idxMass);
+		prodAmp *= _fsmd->val(fitParameters, mass, idxMass);
 	}
 
 	return prodAmp;
@@ -273,51 +250,55 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 
 
 double
-rpwa::massDepFit::model::intensity(const size_t idxWave,
+rpwa::massDepFit::model::intensity(const rpwa::massDepFit::parameters& fitParameters,
+                                   const size_t idxWave,
                                    const size_t idxBin,
                                    const double mass,
                                    const size_t idxMass) const
 {
-	const std::complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmp = productionAmplitude(fitParameters, idxWave, idxBin, mass, idxMass);
 
 	return norm(prodAmp);
 }
 
 
 double
-rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
+rpwa::massDepFit::model::phaseAbsolute(const rpwa::massDepFit::parameters& fitParameters,
+                                       const size_t idxWave,
                                        const size_t idxBin,
                                        const double mass,
                                        const size_t idxMass) const
 {
-	const std::complex<double> prodAmp = productionAmplitude(idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmp = productionAmplitude(fitParameters, idxWave, idxBin, mass, idxMass);
 
 	return arg(prodAmp);
 }
 
 
 std::complex<double>
-rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
+rpwa::massDepFit::model::spinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+                                           const size_t idxWave,
                                            const size_t jdxWave,
                                            const size_t idxBin,
                                            const double mass,
                                            const size_t idxMass) const
 {
-	const std::complex<double> prodAmpI = productionAmplitude(idxWave, idxBin, mass, idxMass);
-	const std::complex<double> prodAmpJ = productionAmplitude(jdxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmpI = productionAmplitude(fitParameters, idxWave, idxBin, mass, idxMass);
+	const std::complex<double> prodAmpJ = productionAmplitude(fitParameters, jdxWave, idxBin, mass, idxMass);
 
 	return prodAmpI * conj(prodAmpJ);
 }
 
 
 double
-rpwa::massDepFit::model::phase(const size_t idxWave,
+rpwa::massDepFit::model::phase(const rpwa::massDepFit::parameters& fitParameters,
+                               const size_t idxWave,
                                const size_t jdxWave,
                                const size_t idxBin,
                                const double mass,
                                const size_t idxMass) const
 {
-	return arg(spinDensityMatrix(idxWave, jdxWave, idxBin, mass, idxMass));
+	return arg(spinDensityMatrix(fitParameters, idxWave, jdxWave, idxBin, mass, idxMass));
 }
 
 

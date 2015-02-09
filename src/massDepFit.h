@@ -26,6 +26,7 @@ namespace rpwa {
 
 		class likelihood;
 		class model;
+		class parameters;
 
 		class massDepFit {
 
@@ -36,14 +37,17 @@ namespace rpwa {
 
 			bool readConfig(const libconfig::Setting* configRoot,
 			                rpwa::massDepFit::model& fitModel,
+			                rpwa::massDepFit::parameters& fitParameters,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
 			bool init(rpwa::massDepFit::model& fitModel,
+			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::likelihood& L);
 
 			bool updateConfig(libconfig::Setting* configRoot,
 			                  const rpwa::massDepFit::model& fitModel,
+			                  const rpwa::massDepFit::parameters& fitParameters,
 			                  const ROOT::Math::Minimizer* minimizer,
 			                  const double chi2,
 			                  const int ndf,
@@ -51,6 +55,7 @@ namespace rpwa {
 
 // FIXME: make private
 			bool createPlots(const rpwa::massDepFit::model& fitModel,
+			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 TFile* outFile,
 			                 const bool rangePlotting) const;
 
@@ -70,21 +75,27 @@ namespace rpwa {
 			bool readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters);
 
 			bool readConfigModel(const libconfig::Setting* configRoot,
-			                     rpwa::massDepFit::model& fitModel);
+			                     rpwa::massDepFit::model& fitModel,
+			                     rpwa::massDepFit::parameters& fitParameters);
 			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 			bool readConfigModelComponents(const libconfig::Setting* configComponents,
-			                               rpwa::massDepFit::model& fitModel) const;
+			                               rpwa::massDepFit::model& fitModel,
+			                               rpwa::massDepFit::parameters& fitParameters) const;
 			bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
-			                         rpwa::massDepFit::model& fitModel) const;
+			                         rpwa::massDepFit::model& fitModel,
+			                         rpwa::massDepFit::parameters& fitParameters)  const;
 
 			bool updateConfigModel(const libconfig::Setting* configModel,
 			                       const rpwa::massDepFit::model& fitModel,
+			                       const rpwa::massDepFit::parameters& fitParameters,
 			                       const ROOT::Math::Minimizer* minimizer) const;
 			bool updateConfigModelComponents(const libconfig::Setting* configComponents,
 			                                 const rpwa::massDepFit::model& fitModel,
+			                                 const rpwa::massDepFit::parameters& fitParameters,
 			                                 const ROOT::Math::Minimizer* minimizer) const;
 			bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
 			                           const rpwa::massDepFit::model& fitModel,
+			                           const rpwa::massDepFit::parameters& fitParameters,
 			                           const ROOT::Math::Minimizer* minimizer) const;
 
 			bool readInFiles(const std::string& valTreeName   = "pwa",
@@ -123,11 +134,13 @@ namespace rpwa {
 			                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
 			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
+			                     const rpwa::massDepFit::parameters& fitParameters,
 			                     TDirectory* outDirectory,
 			                     const bool rangePlotting,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
 			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
+			                         const rpwa::massDepFit::parameters& fitParameters,
 			                         TDirectory* outDirectory,
 			                         const bool rangePlotting,
 			                         const size_t idxWave,
