@@ -118,13 +118,13 @@ namespace rpwa {
 			virtual size_t importParameters(const double* par,
 			                                rpwa::massDepFit::parameters& fitParameters);
 
-			virtual bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }
-			virtual double getParameterLimitLower(const size_t idx) const { return _parametersLimitLower[idx]; }
-			virtual bool getParameterLimitedLower(const size_t idx) const { return _parametersLimitedLower[idx]; }
-			virtual double getParameterLimitUpper(const size_t idx) const { return _parametersLimitUpper[idx]; }
-			virtual bool getParameterLimitedUpper(const size_t idx) const { return _parametersLimitedUpper[idx]; }
-			virtual const std::string& getParameterName(const size_t idx) const { return _parametersName[idx]; }
-			virtual double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
+			virtual bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
+			virtual double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
+			virtual bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
+			virtual double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
+			virtual bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
+			virtual const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
+			virtual double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,

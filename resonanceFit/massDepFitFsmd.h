@@ -54,12 +54,12 @@ namespace rpwa {
 			size_t importParameters(const double* par,
 			                        rpwa::massDepFit::parameters& fitParameters);
 
-			bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }
-			double getParameterLimitLower(const size_t idx) const { return _parametersLimitLower[idx]; }
-			bool getParameterLimitedLower(const size_t idx) const { return _parametersLimitedLower[idx]; }
-			double getParameterLimitUpper(const size_t idx) const { return _parametersLimitUpper[idx]; }
-			bool getParameterLimitedUpper(const size_t idx) const { return _parametersLimitedUpper[idx]; }
-			double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
+			bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
+			double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
+			bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
+			double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
+			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
+			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
 			double val(const rpwa::massDepFit::parameters& fitParameters,
 			           const double mass,

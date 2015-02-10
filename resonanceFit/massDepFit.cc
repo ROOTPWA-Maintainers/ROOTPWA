@@ -553,8 +553,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 	}
 
 	ostringstream output;
-	for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
-		output << "    " << fitModel.getComponent(idx)->getName() << endl;
+	for(size_t idxComponent=0; idxComponent<fitModel.getNrComponents(); ++idxComponent) {
+		output << "    " << fitModel.getComponent(idxComponent)->getName() << endl;
 	}
 	printInfo << "fitting " << fitModel.getNrComponents() << " components to the data:" << endl
 	          << output.str();
