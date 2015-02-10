@@ -87,7 +87,7 @@ usage(const string& progName,
       const int     errCode = 0)
 {
 
-	cerr << "removes normalization integrals from fit result file" << endl
+	cerr << "adds normalization integrals from fit result file" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName

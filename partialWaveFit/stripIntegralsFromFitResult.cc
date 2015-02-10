@@ -145,12 +145,6 @@ main(int    argc,
 			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
 		}
 		const vector<string>& prodAmpNames = inResult->prodAmpNames();
-		const TMatrixT<double>* fitParCovMatrix = 0;
-		if(stripCovarianceMatrix) {
-			fitParCovMatrix = new TMatrixT<double>(0, 0);
-		} else {
-			fitParCovMatrix = &(inResult->fitParCovMatrix());
-		}
 		const vector<pair<int, int> >& fitParCovMatrixIndices = inResult->fitParCovIndices();
 		const complexMatrix normIntegral(0, 0);
 		const complexMatrix accIntegral(0, 0);
@@ -166,7 +160,7 @@ main(int    argc,
 		                rank,
 		                prodAmps,
 		                prodAmpNames,
-		                *fitParCovMatrix,
+		                stripCovarianceMatrix ? TMatrixT<double>(0, 0) : inResult->fitParCovMatrix(),
 		                fitParCovMatrixIndices,
 		                normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 		                accIntegral,
@@ -175,7 +169,6 @@ main(int    argc,
 		                hasHesse);
 
 		outResultTree->Fill();
-		delete fitParCovMatrix;
 
 	}
 
