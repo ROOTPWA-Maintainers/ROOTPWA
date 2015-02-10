@@ -786,13 +786,22 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const size_t id,
                                                                      const std::string& name)
-	: component(id, name, 2)
+	: component(id, name, 2),
+	  _interpolator(NULL)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
 
 	_parametersStep[0] = 0.001;
 	_parametersStep[1] = 0.001;
+}
+
+
+rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
+{
+	if (_interpolator != NULL) {
+		delete _interpolator;
+	}
 }
 
 
@@ -816,11 +825,51 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 	}
 
 	// just to be on the safe side, in principle this should be possible,
-	// but probably one should then also give branching ratios somewhere.
+	// one should then use an array of interpolators (one for each channel),
+	// and probably would have to calculate the involved integrals for each
+	// channel
 	if(getNrChannels() != 1) {
 		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << std::endl;
 		return false;
 	}
+
+	const libconfig::Setting* integrals = findLibConfigList(*configComponent, "integral");
+	if(not integrals) {
+		printErr << "component '" << getName() << "' has no phase-space integrals required for the Bowler parameterisation." << std::endl;
+		return false;
+	}
+
+	const int nrValues = integrals->getLength();
+
+	std::vector<double> masses;
+	std::vector<double> values;
+
+	for(int idx=0; idx<nrValues; ++idx) {
+		const libconfig::Setting* integral = &((*integrals)[idx]);
+		if (integral->getType() != libconfig::Setting::TypeArray) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if (integral->getLength() != 2) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+
+		if (masses.size() > 0 && masses.back() > (double)((*integral)[0])) {
+			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
+			return false;
+		}
+
+		masses.push_back((*integral)[0]);
+		values.push_back((*integral)[1]);
+	}
+
+	assert(_interpolator == NULL); // huh, init called twice?
+	_interpolator = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
 
 	if(debug) {
 		print(printDebug);
@@ -840,11 +889,10 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const rpwa::massDepFit::paramete
 
 	double gamma = 0.;
 	for(size_t i=0; i<getNrChannels(); ++i) {
-		const rpwa::massDepFit::channel& channel = getChannel(i);
-		const double ps = channel.getPhaseSpace(idxBin, m, std::numeric_limits<size_t>::max());
-		const double ps0 = channel.getPhaseSpace(idxBin, m0, std::numeric_limits<size_t>::max());
+		const double ps = _interpolator->Eval(m);
+		const double ps0 = _interpolator->Eval(m0);
 
-		gamma += (ps*ps) / (ps0*ps0);
+		gamma += ps / ps0;
 	}
 	gamma *= gamma0 * m0/m;
 
