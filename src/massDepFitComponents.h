@@ -13,6 +13,7 @@
 #ifndef MASSDEPFITCOMPONENTS_HH
 #define MASSDEPFITCOMPONENTS_HH
 
+#include <iostream>
 #include <map>
 
 #include <boost/multi_array.hpp>
