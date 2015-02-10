@@ -166,8 +166,8 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		decayChannel->lookupValue("amp", waveName);
 
 		// check that a wave with this wave is not yet in the decay channels
-		for(size_t idx=0; idx<_channels.size(); ++idx) {
-			if(_channels[idx].getWaveName() == waveName) {
+		for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+			if(_channels[idxChannel].getWaveName() == waveName) {
 				printErr << "wave '" << waveName << "' defined twice in the decay channels of '" << getName() << "'." << std::endl;
 				return false;
 			}
@@ -390,10 +390,10 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 
 		const rpwa::massDepFit::channel* channel = NULL;
 		size_t channelIdx = 0;
-		for(size_t idx=0; idx<getNrChannels(); ++idx) {
-			if(getChannelWaveName(idx) == waveName) {
-				channel = &getChannel(idx);
-				channelIdx = idx;
+		for(size_t idxChannel=0; idxChannel<getNrChannels(); ++idxChannel) {
+			if(getChannelWaveName(idxChannel) == waveName) {
+				channel = &getChannel(idxChannel);
+				channelIdx = idxChannel;
 				break;
 			}
 		}

@@ -43,7 +43,7 @@ namespace rpwa {
 			void importParameters(const double* par, rpwa::massDepFit::parameters& parameters) const;
 
 			size_t getNrComponents() const { return _components.size(); }
-			const rpwa::massDepFit::component* getComponent(size_t idx) const { return _components[idx]; }
+			const rpwa::massDepFit::component* getComponent(size_t idxComponent) const { return _components[idxComponent]; }
 
 			const rpwa::massDepFit::fsmd* getFsmd() const { return _fsmd; }
 			void setFsmd(rpwa::massDepFit::fsmd* fsmd);
@@ -56,7 +56,7 @@ namespace rpwa {
 
 			size_t getAnchorWave() const { return _idxAnchorWave; }
 
-			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
+			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idxWave) const { return _waveComponentChannel[idxWave]; }
 
 			std::complex<double> productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
 			                                         const size_t idxWave,
