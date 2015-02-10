@@ -225,6 +225,7 @@ namespace rpwa {
 
 			parameterizationA1Bowler(const size_t id,
 			                         const std::string& name);
+			virtual ~parameterizationA1Bowler();
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
@@ -240,6 +241,10 @@ namespace rpwa {
 			                                 const double m) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		private:
+
+			ROOT::Math::Interpolator* _interpolator;
 
 		};
 
