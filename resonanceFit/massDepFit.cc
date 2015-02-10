@@ -731,7 +731,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 		configComponent->lookupValue("name", name);
 
 		const rpwa::massDepFit::component* component = NULL;
-		for(size_t idx=0; fitModel.getNrComponents(); ++idx) {
+		for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
 			if(fitModel.getComponent(idx)->getName() == name) {
 				component = fitModel.getComponent(idx);
 				break;
