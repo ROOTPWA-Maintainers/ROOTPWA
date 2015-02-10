@@ -12,12 +12,12 @@ class progressBar:
 
 	def __init__(self, minimum = 0, maximum = 100, fp=sys.stdout):
 		self.fp = fp
-		self.reset(minimum, maximum)
+		self.reset(minimum, maximum - 1)
 
 	def reset(self, minimum = 0, maximum = 100):
 		self.full = False
 		self.minimum = float(minimum)
-		self.maximum = float(maximum)
+		self.maximum = float(maximum - 1)
 		try:
 			self.effRange = 51. / (self.maximum - self.minimum)
 		except ZeroDivisionError:

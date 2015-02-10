@@ -466,6 +466,7 @@ set(_SRC_DIRS
 	resonanceFit
 # 	sandBox
 	storageFormats
+	highLevelInterface
   utilities
 	)
 foreach(_SRC_DIR ${_SRC_DIRS})
@@ -575,6 +576,9 @@ unset(_SRC_DIRS)
 
 # # Metadata
 # add_subdirectory(storageFormats)
+
+# # High-level Interface
+# add_subdirectory(highLevelInterface)
 
 # CUDA stuff
 if(USE_CUDA)

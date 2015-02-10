@@ -41,6 +41,7 @@ set(STORAGEFORMATS_SUBDIR storageFormats)
 set(PYUTILS_SUBDIR pyUtils)
 set(PARTIALWAVEFIT_SUBDIR partialWaveFit)
 set(UTILITIES_SUBDIR utilities)
+set(HIGHLEVELINTERFACE_SUBDIR highLevelInterface)
 
 
 # set include directories
@@ -60,6 +61,8 @@ set(INCLUDE_DIRECTORIES
 	${PARTIALWAVEFIT_SUBDIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${UTILITIES_SUBDIR}
+	${RPWA_HIGHLEVELINTERFACE_INCLUDE_DIR}
+	${HIGHLEVELINTERFACE_SUBDIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -101,9 +104,12 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
 	)
 
 
@@ -122,6 +128,7 @@ make_shared_library(
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_UTILITIES_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
+	"${RPWA_HIGHLEVELINTERFACE_LIB}"
 	)
 
 

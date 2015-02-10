@@ -560,7 +560,8 @@ decayTopology::addDecay(const decayTopology& topo)
 }
 
 
-void decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
+void
+decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
 {
 	if (not productionVertex) {
 		printErr << "null pointer for production vertex. aborting." << endl;
@@ -580,6 +581,22 @@ void decayTopology::setProductionVertex(const productionVertexPtr& productionVer
 		_prodVertex.reset();
 	}
 	_prodVertex = productionVertex;
+}
+
+
+bool
+decayTopology::initKinematicsData(const vector<string>& prodKinPartNamesVec,
+                                  const vector<string>& decayKinPartNamesVec)
+{
+	TClonesArray prodKinPartNames("TObjString", prodKinPartNamesVec.size());
+	TClonesArray decayKinPartNames("TObjString", decayKinPartNamesVec.size());
+	for(unsigned int i = 0; i < prodKinPartNamesVec.size(); ++i) {
+		new (prodKinPartNames[i]) TObjString(prodKinPartNamesVec[i].c_str());
+	}
+	for(unsigned int i = 0; i < decayKinPartNamesVec.size(); ++i) {
+		new (decayKinPartNames[i]) TObjString(decayKinPartNamesVec[i].c_str());
+	}
+	return initKinematicsData(prodKinPartNames, decayKinPartNames);
 }
 
 
@@ -658,10 +675,24 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 		printWarn << "could not find all final-state particles in input data." << endl;
 		success = false;
 	}
-
 	return success;
 }
 
+bool
+decayTopology::readKinematicsData(
+                                  const vector<TVector3>& prodKinMomentaVec,
+                                  const vector<TVector3>& decayKinMomentaVec)
+{
+	TClonesArray prodKinMomenta("TVector3", prodKinMomentaVec.size());
+	for (unsigned int i = 0; i < prodKinMomentaVec.size(); ++i) {
+		new (prodKinMomenta[i]) TVector3(prodKinMomentaVec[i]);
+	}
+	TClonesArray decayKinMomenta("TVector3", decayKinMomentaVec.size());
+	for (unsigned int i = 0; i < decayKinMomentaVec.size(); ++i) {
+		new (decayKinMomenta[i]) TVector3(decayKinMomentaVec[i]);
+	}
+	return readKinematicsData(prodKinMomenta, decayKinMomenta);
+}
 
 bool
 decayTopology::readKinematicsData(const TClonesArray& prodKinMomenta,

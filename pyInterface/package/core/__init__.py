@@ -1,2 +1,0 @@
-
-from pyRootPwa.libRootPwaPy import *

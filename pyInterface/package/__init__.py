@@ -1,13 +1,10 @@
 
 import ROOT
 
-from _calcAmplitudes import calcAmplitudes
 from _config import rootPwaConfig
-from _exception import rootPwaException
+from _fileManager import fileManager
 
-del libRootPwaPy
-del _calcAmplitudes
 del _config
-del _exception
+del _fileManager
 
 config = None
