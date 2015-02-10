@@ -90,6 +90,8 @@ make_executable(pwaplot                     pwaplots.cc                     ${TH
 make_executable(likelihoodPointCalculator   likelihoodPointCalculator.cc    ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 
 make_executable(stripIntegralsFromFitResult  stripIntegralsFromFitResult.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(addIntegralsToFitResult      addIntegralsToFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(compareFitResultsIntegrals   compareFitResultsIntegrals.cc  ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 
 
 # build tests
