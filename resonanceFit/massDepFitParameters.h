@@ -14,6 +14,7 @@
 #define MASSDEPFITPARAMETERS_HH
 
 #include <complex>
+#include <iostream>
 
 #include <boost/multi_array.hpp>
 
