@@ -181,8 +181,7 @@ isobarDecayVertex::calcParentLzVecs()
 	}
 
 	parentVec.resize(numEvents);
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_isobarDecayVertex_calcParentLzVecs(daughter1Vec, daughter2Vec, parentVec);
 #else
@@ -190,7 +189,6 @@ isobarDecayVertex::calcParentLzVecs()
 	for(size_t i = 0; i < numEvents; ++i)
 		parentVec[i] = daughter1Vec[i] + daughter2Vec[i];
 #endif
-	printTimeDiff(timeBefore, "EPL : isobarDecayVertex::calcParentLzVec");
 
 	if (_debug)
 		cout << "after = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV" << endl;

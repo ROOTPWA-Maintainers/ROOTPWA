@@ -71,8 +71,6 @@ isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 {
 	ParVector<LorentzRotation> result(daughterLv.size());
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_isobarHelicityAmplitude_hfTransform(daughterLv, result);
 #else
@@ -100,7 +98,6 @@ isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::hfTransform");
 
 	return result;
 
@@ -200,8 +197,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	ParVector<Complex> DFunc(numEvents);
 	if (topVertex and _useReflectivityBasis) {
 
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
 #else
@@ -212,12 +207,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 			DFunc[i] = DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 1");
 
 	} else {
 
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
 #else
@@ -228,7 +220,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 			DFunc[i] = DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, _debug);
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 2");
 
 	}
 
@@ -240,8 +231,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 
 	// calculate decay amplitude
 	ParVector<Complex> amp(numEvents);
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_3(daughter1->lzVecs(), DFunc, bw, amp, L, norm, lsClebsch, ssClebsch);
 #else
@@ -257,7 +247,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : isobarHelicityAmplitude::twoBodyDecayAmplitude 3");
 
 	if (_debug) {
 		printDebug << "two-body decay amplitude = ";

@@ -348,8 +348,6 @@ leptoProductionVertex::Q2(ParVector<double>& result) const
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_Q2(virtPhotonVec, result);
 #else
@@ -359,7 +357,7 @@ leptoProductionVertex::Q2(ParVector<double>& result) const
 		result[i] = - virtPhotonVec[i].Mag2();
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::Q2");
+
 }
 
 
@@ -375,8 +373,6 @@ leptoProductionVertex::nu(ParVector<double>& result) const
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_nu(targetVec, virtPhotonVec, result, targetMass);
 #else
@@ -386,7 +382,7 @@ leptoProductionVertex::nu(ParVector<double>& result) const
 		result[i] = (targetVec[i] * virtPhotonVec[i]) / targetMass;
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::nu");
+
 }
 
 
@@ -402,8 +398,6 @@ leptoProductionVertex::y(ParVector<double>& result) const
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_y(targetVec, virtPhotonVec, beamVec, result);
 #else
@@ -413,7 +407,7 @@ leptoProductionVertex::y(ParVector<double>& result) const
 		result[i] = (targetVec[i] * virtPhotonVec[i]) / (targetVec[i] * beamVec[i]);
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::y");
+
 }
 
 
@@ -433,8 +427,6 @@ leptoProductionVertex::epsilon(ParVector<double>& result) const
 	const double targetMass2 = target()->mass2();
 	const double beamLeptonMass2 = beamLepton()->mass2();
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_epsilon(Q2, xBj, y, result, targetMass2, beamLeptonMass2);
 #else
@@ -475,7 +467,6 @@ leptoProductionVertex::epsilon(ParVector<double>& result) const
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::epsilon");
 
 }
 
@@ -492,8 +483,6 @@ leptoProductionVertex::delta(ParVector<double>& result) const
 
 	const double beamMass2 = beamLepton()->mass2();
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_delta(Q2, epsilon, result, beamMass2);
 #else
@@ -503,7 +492,6 @@ leptoProductionVertex::delta(ParVector<double>& result) const
 		result[i] = (2 * beamMass2 / Q2[i]) * (1 - epsilon[i]);
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::delta");
 
 }
 
@@ -523,8 +511,6 @@ leptoProductionVertex::xBj(ParVector<double>& result) const
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_xBj(targetVec, virtPhotonVec, Q2, result);
 #else
@@ -534,7 +520,6 @@ leptoProductionVertex::xBj(ParVector<double>& result) const
 		result[i] = Q2[i] / (2 * (targetVec[i] * virtPhotonVec[i]));
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::xBj");
 
 }
 
@@ -550,8 +535,6 @@ leptoProductionVertex::s(ParVector<double>& result) const
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_s(targetVec, virtPhotonVec, result);
 #else
@@ -561,7 +544,6 @@ leptoProductionVertex::s(ParVector<double>& result) const
 		result[i] = (targetVec[i] + virtPhotonVec[i]).Mag2();
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::s");
 
 }
 
@@ -572,8 +554,6 @@ leptoProductionVertex::W(ParVector<double>& result) const
 	ParVector<double> s(result.size());
 	this->s(s);
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_W(s, result);
 #else
@@ -583,7 +563,7 @@ leptoProductionVertex::W(ParVector<double>& result) const
 		result[i] = sqrt(s[i]);
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::W");
+
 }
 
 
@@ -600,8 +580,6 @@ leptoProductionVertex::delta(const ParVector<double>& epsilon, ParVector<double>
 	ParVector<double> Q2(result.size());
 	this->Q2(Q2);
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_delta(Q2, epsilon, result, beamMass2);
 #else
@@ -611,7 +589,7 @@ leptoProductionVertex::delta(const ParVector<double>& epsilon, ParVector<double>
 		result[i] = (2 * beamMass2 / Q2[i]) * (1 - epsilon[i]);
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::delta");
+
 }
 
 
@@ -789,8 +767,6 @@ leptoProductionVertex::revertMomenta()
 		throw;
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_leptoProductionVertex_revertMomenta(scatteredLeptonVec, beamLeptonVec);
 #else
@@ -798,7 +774,6 @@ leptoProductionVertex::revertMomenta()
 	for(size_t i = 0; i < numEvents; ++i)
 		beamLeptonVec[i] -= scatteredLeptonVec[i];
 #endif
-	printTimeDiff(timeBefore, "EPL : leptoProductionVertex::revertMomenta");
 
 	return true;
 }

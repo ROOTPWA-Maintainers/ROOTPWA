@@ -143,8 +143,6 @@ isobarAmplitude::amplitude() const
 			throw;
 		}
 
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 		thrust_isobarAmplitude_amplitude(permAmp, amp, _symTermMaps[i].factor);
 #else
@@ -154,7 +152,6 @@ isobarAmplitude::amplitude() const
 			amp[k] += permAmp[k] * _symTermMaps[i].factor;
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarAmplitude::amplitude");
 
 	}
 	return amp;
@@ -172,8 +169,6 @@ isobarAmplitude::gjTransform(const ParVector<LorentzVector>& beamLv,  // beam Lo
 	}
 
 	ParVector<LorentzRotation> result(beamLv.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_isobarAmplitude_gjTransform(beamLv, XLv, result);
 #else
@@ -205,7 +200,6 @@ isobarAmplitude::gjTransform(const ParVector<LorentzVector>& beamLv,  // beam Lo
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : isobarAmplitude::gjTransform");
 
 	return result;
 }
@@ -214,8 +208,6 @@ static
 void
 parallelLorentzRotationInvert(ParVector<LorentzRotation>& lzRot)
 {
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_isobarAmplitude_parallelLorentzRotationInvert(lzRot);
 #else
@@ -223,7 +215,6 @@ parallelLorentzRotationInvert(ParVector<LorentzRotation>& lzRot)
 	for(unsigned int i = 0; i < lzRot.size(); ++i)
 		lzRot[i].Invert();
 #endif
-	printTimeDiff(timeBefore, "EPL : parallelLorentzRotationInvert");
 }
 
 void
@@ -242,7 +233,6 @@ isobarAmplitude::spaceInvertDecay() const
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
 		const particlePtr& p  = _decay->fsParticles()[i];
 
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 		thrust_isobarAmplitude_spaceInvertDecay(p->mutableLzVecs());
 #else
@@ -252,7 +242,7 @@ isobarAmplitude::spaceInvertDecay() const
 			p->mutableLzVecs()[k].SetXYZT(-v.X(), -v.Y(), -v.Z(), v.E());
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarAmplitude::spaceInvertDecay");
+
 	}
 
 	// transform final state particles back to lab frame
@@ -275,7 +265,7 @@ isobarAmplitude::reflectDecay() const
 	// reflect final state particles through production plane
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
 		const particlePtr& p  = _decay->fsParticles()[i];
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 		thrust_isobarAmplitude_reflectDecay(p->mutableLzVecs());
 #else
@@ -285,7 +275,7 @@ isobarAmplitude::reflectDecay() const
 			p->mutableLzVecs()[k].SetXYZT(v.X(), -v.Y(), v.Z(), v.E());
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarAmplitude::reflectDecay");
+
 	}
 
 	// transform final state particles back to lab frame
@@ -351,8 +341,6 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 				throw;
 			}
 
-			// !! EVENT PARALLEL LOOP
-			boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 			thrust_isobarAmplitude_twoBodyDecayAmplitudeSum(parentAmp, daughter1Amp, daughter2Amp, ampSum);
 #else
@@ -362,7 +350,6 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 				ampSum[i] += parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
 			}
 #endif
-			printTimeDiff(timeBefore, "EPL : isobarAmplitude::twoBodyDecayAmplitudeSum");
 
 			if (_debug) {
 				printDebug << "amplitude term for : "

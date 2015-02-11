@@ -75,7 +75,6 @@ namespace rpwa {
 
 	private:
 
-		// make object instead of pointer? (should work with external implementation)
 		thrust::device_vector<T> vec;
 
 	};

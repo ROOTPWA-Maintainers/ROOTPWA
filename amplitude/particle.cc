@@ -137,8 +137,6 @@ particle::setMomenta(const ParVector<Vector3>& momenta)
 	const size_t nmbMom = momenta.size();
 	_lzVecs.resize(nmbMom);
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_particle_setMomenta(momenta, _lzVecs, mass2());
 #else
@@ -148,7 +146,7 @@ particle::setMomenta(const ParVector<Vector3>& momenta)
 		_lzVecs[i] = LorentzVector(mom, sqrt(mom.Mag2() + mass2()));
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : particle::setMomenta");
+
 }
 
 const ParVector<LorentzVector>&
@@ -159,8 +157,7 @@ particle::transform(const ParVector<LorentzRotation>& lorentzTransforms)
 		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 		throw;
 	}
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_particle_transformRot(lorentzTransforms, _lzVecs);
 #else
@@ -169,7 +166,6 @@ particle::transform(const ParVector<LorentzRotation>& lorentzTransforms)
 		_lzVecs[i].Transform(lorentzTransforms[i]);
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : particle::transform (rotation)");
 
 	return _lzVecs;
 }
@@ -182,8 +178,7 @@ particle::transform(const ParVector<Vector3>& boosts)
 		printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
 		throw;
 	}
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_particle_transformBoost(boosts, _lzVecs);
 #else
@@ -191,7 +186,6 @@ particle::transform(const ParVector<Vector3>& boosts)
 	for(size_t i = 0; i < nmbLzVec; ++i)
 		_lzVecs[i].Boost(boosts[i]);
 #endif
-	printTimeDiff(timeBefore, "EPL : particle::transform (boost)");
 
 	return _lzVecs;
 }

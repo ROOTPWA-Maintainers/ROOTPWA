@@ -105,8 +105,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 
 		const ParVector<LorentzVector>& parentVec = vertex->parent()->lzVecs();
 		ParVector<Vector3> rfBoost(parentVec.size());
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 		thrust_isobarCanonicalAmplitude_transformDaughters(parentVec, rfBoost);
 #else
@@ -116,7 +115,6 @@ isobarCanonicalAmplitude::transformDaughters() const
 			rfBoost[k] = - parentVec[k].BoostVector();
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarCanonicalAmplitude::transformDaughters");
 
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -198,8 +196,6 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 			continue;
 
 		// multiply spherical harmonic
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 		thrust_isobarCanonicalAmplitude_twoBodyDecayAmplitude_1(daughter1->lzVecs(), amp, L, mL, LSClebsch);
 #else
@@ -211,12 +207,9 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 			amp[i] += LSClebsch * sphericalHarmonic<Complex>(L, mL, theta, phi, _debug);
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : isobarCanonicalAmplitude::twoBodyDecayAmplitude");
 
 	}
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	thrust_isobarCanonicalAmplitude_twoBodyDecayAmplitude_2(daughter1->lzVecs(), bw, amp, L, norm, ssClebsch);
 #else
@@ -233,7 +226,6 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : isobarCanonicalAmplitude::twoBodyDecayAmplitude 2");
 
 	if (_debug) {
 		printDebug << "two-body decay amplitude = ";

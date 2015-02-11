@@ -77,7 +77,7 @@ usage(const string& progName,
 	     << "    where:" << endl
 	     << "        -k file    path to key file" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
-	     << "        -b #       maximum number of events in a single parallelization block  (default: 50000)" << endl
+	     << "        -b #       maximum number of events in a single parallelization block  (default: 500000)" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -o file    path to amplitude file (.amp or .root format; default: ./out.root)" << endl
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
@@ -111,7 +111,7 @@ main(int    argc,
 	const string   progName                 = argv[0];
 	vector<string> keyFileNames;
 	long int       maxNmbEvents             = -1;
-	long int       numEvents        = 50000;
+	long int       numEvents                = 500000;
 	string         pdgFileName              = "./particleDataTable.txt";
 	vector<string> ampFileName; //              = "./out.root";
 	string         ampLeafName              = "amplitude";

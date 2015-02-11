@@ -42,6 +42,7 @@ set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displ
 
 option(DEBUG_OUTPUT "en/disable debug output" OFF)
 option(ENABLE_CUDA "enable CUDA support if available" OFF)
+option(ENABLE_OMP "enable OpenMP support if available" OFF)
 
 # define project
 message(STATUS "")
@@ -93,7 +94,12 @@ endif()
 
 # set common compiler flags
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -Wall -Woverloaded-virtual -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+if(ENABLE_OMP)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
+endif()
 # set additional flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 # -march=native switch was removed, because is caused trouble in heterogeneous environments
@@ -230,8 +236,7 @@ set_package_properties(Libconfig
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-#set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
-set(_ROOT_COMPONENTS "MathMore" "TreePlayer")
+set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
 find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS})
 set_package_properties(ROOT
 	PROPERTIES

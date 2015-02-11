@@ -80,8 +80,6 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 	const particlePtr& parent = v.parent();
 	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
 #ifdef USE_CUDA
 	ParVector<Complex> result(parentVec.size());
 	thrust_massDependence_flatRangeMassDependence_amp(parentVec, result, parent->mass(), parent->width());
@@ -95,7 +93,6 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 		}
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : flatRangeMassDependence::amp");
 
 	if(_debug) {
 		for(unsigned int i = 0; i < 3 && i < result.size(); ++i) {
@@ -130,8 +127,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 		}
 
 		ParVector<Complex> result(parentVec.size());
-		// !! EVENT PARALLEL LOOP
-		boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 		thrust_massDependence_relativisticBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
 				result, parent->mass(), parent->width(), v.L());
@@ -165,7 +161,6 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 		}
 #endif
-		printTimeDiff(timeBefore, "EPL : relativisticBreitWigner::amp");
 
 		return result;
 
@@ -192,8 +187,7 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
 	ParVector<Complex> result(parentVec.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_massDependence_constWidthBreitWigner_amp(parentVec, result, M0, Gamma0);
 #else
@@ -219,7 +213,6 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : constWidthBreitWigner::amp");
 
 	return result;
 }
@@ -241,8 +234,7 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 	}
 
 	ParVector<Complex> result(parentVec.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_massDependence_rhoBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
 			result, parent->mass(), parent->width());
@@ -286,7 +278,6 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : rhoBreitWigner::amp");
 
 	return result;
 
@@ -309,8 +300,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 	}
 
 	ParVector<Complex> result(parentVec.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_massDependence_f0980BreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
 			result, parent->mass(), parent->width());
@@ -347,7 +337,6 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : f0980BreitWigner::amp");
 
 	return result;
 
@@ -518,8 +507,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 	}
 
 	ParVector<Complex> result(parentVec.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_massDependence_piPiSWaveAuMorganPenningtonVes_amp(
 			parentVec, ampM, result, _piChargedMass, f0Mass, f0Width, coupling);
@@ -551,7 +539,6 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 					   << maxPrecisionDouble(amp) << endl;
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : piPiSWaveAuMorganPenningtonVes::amp");
 
 	return result;
 }
@@ -590,8 +577,7 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
 
 	ParVector<Complex> result(parentVec.size());
-	// !! EVENT PARALLEL LOOP
-	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+
 #ifdef USE_CUDA
 	thrust_massDependence_rhoPrimeMassDep_amp(parentVec, result, M01, Gamma01, M02, Gamma02);
 #else
@@ -627,7 +613,6 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 
 	}
 #endif
-	printTimeDiff(timeBefore, "EPL : rhoPrimeMassDep::amp");
 
 	return result;
 
