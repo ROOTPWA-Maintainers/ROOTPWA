@@ -162,7 +162,7 @@ main(int    argc,
 		                prodAmpNames,
 		                stripCovarianceMatrix ? TMatrixT<double>(0, 0) : inResult->fitParCovMatrix(),
 		                fitParCovMatrixIndices,
-		                normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+		                normIntegral,
 		                accIntegral,
 		                phaseSpaceIntegral,
 		                converged,

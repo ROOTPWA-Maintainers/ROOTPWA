@@ -47,40 +47,6 @@ using namespace std;
 using namespace rpwa;
 
 
-const ampIntegralMatrix* readIntegralMatrix(const string& intFileName, const string& integralTKeyName = "integral") {
-	printInfo << "loading normalization integral from '" << intFileName << "'" << endl;
-	ampIntegralMatrix* integral = 0;
-	const string normIntFileExt  = extensionFromPath(intFileName);
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-	if (normIntFileExt == "root") {
-		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
-		if (not intFile or intFile->IsZombie()) {
-			printErr << "could open normalization integral file '" << intFileName << "'. "
-			         << "aborting." << endl;
-			throw;
-		}
-		intFile->GetObject(integralTKeyName.c_str(), integral);
-		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << intFileName << "'. aborting." << endl;
-			throw;
-		}
-		intFile->Close();
-	} else
-#endif  // USE_STD_COMPLEX_TREE_LEAFS
-		if(normIntFileExt == "int") {
-			integral = new ampIntegralMatrix();
-			integral->readAscii(intFileName);
-	} else {
-		printErr << "unknown file type '" << intFileName << "'. "
-		         << "only .int and .root files are supported. aborting." << endl;
-		throw;
-	}
-	return integral;
-}
-
-
-
 void
 usage(const string& progName,
       const int     errCode = 0)
