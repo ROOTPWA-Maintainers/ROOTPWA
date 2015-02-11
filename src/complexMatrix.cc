@@ -46,7 +46,7 @@ bool complexMatrix::operator==(const complexMatrix& rhs) const
 		return false;
 	}
 	for(unsigned int i = 0; i < this->nCols(); ++i) {
-		for(unsigned int j = 0; j < this->nCols(); ++j) {
+		for(unsigned int j = 0; j < this->nRows(); ++j) {
 			if(this->get(i, j) != rhs.get(i, j)) {
 				return false;
 			}
@@ -66,7 +66,7 @@ bool complexMatrix::equalToPrecision(const complexMatrix& rhs, const double& pre
 		return false;
 	}
 	for(unsigned int i = 0; i < this->nCols(); ++i) {
-		for(unsigned int j = 0; j < this->nCols(); ++j) {
+		for(unsigned int j = 0; j < this->nRows(); ++j) {
 			if(fabs(this->get(i,j).real() - rhs.get(i,j).real()) > precision) {
 				if(verbose) {
 					printDebug << "real part of element (" << i << ", " << j << ") above precision ("
