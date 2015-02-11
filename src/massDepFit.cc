@@ -1723,7 +1723,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			maxIE = max(maxIE, maxSI);
 		}
 
-		const double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
+		double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
+		if(fitModel.getFsmd() != NULL) {
+			ps *= pow(fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass), 2);
+		}
 		phaseSpace->SetPoint(point, mass, ps);
 		maxP = max(maxP, ps);
 
