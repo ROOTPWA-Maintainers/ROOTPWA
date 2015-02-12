@@ -410,6 +410,7 @@ main(int    argc,
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 				L.buildProdAmpArrays(&params[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(0, 0);          // nlopt does not calculate the covariance matrix, so do not save it
+				L.CovarianceMatrixAnalytically(&params[0], fitParCovMatrix);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
