@@ -178,14 +178,15 @@ namespace rpwa {
 
 		//----------------------------------------------------------------------------
 		// trivial accessors
-		const TLorentzVector&              daughter        (const int index) const { return _daughters[index];  }  ///< returns Lorentz vector of daughter at index
-		const std::vector<TLorentzVector>& daughters       ()                const { return _daughters;         }  ///< returns Lorentz vectors of all daughters
-		unsigned int                       nmbOfDaughters  ()                const { return _n;                 }  ///< returns number of daughters
-		double                             daughterMass    (const int index) const { return _m[index];          }  ///< returns invariant mass of daughter at index
-		double                             intermediateMass(const int index) const { return _M[index];          }  ///< returns intermediate mass of (index + 1)-body system
-		double                             breakupMom      (const int index) const { return _breakupMom[index]; }  ///< returns breakup momentum in (index + 1)-body RF
-		double                             cosTheta        (const int index) const { return _cosTheta[index];   }  ///< returns polar angle in (index + 1)-body RF
-		double                             phi             (const int index) const { return _phi[index];        }  ///< returns azimuth in (index + 1)-body RF
+		const TLorentzVector&              daughter           (const int index) const { return _daughters[index];  }  ///< returns Lorentz vector of daughter at index
+		const std::vector<TLorentzVector>& daughters          ()                const { return _daughters;         }  ///< returns Lorentz vectors of all daughters
+		unsigned int                       nmbOfDaughters     ()                const { return _n;                 }  ///< returns number of daughters
+		double                             daughterMass       (const int index) const { return _m[index];          }  ///< returns invariant mass of daughter at index
+		double                             intermediateMass   (const int index) const { return _M[index];          }  ///< returns intermediate mass of (index + 1)-body system
+		double                             sumOfDaughterMasses(const int index) const { return _mSum[index];       }  ///< returns sum of invariant masses of daughters up to index
+		double                             breakupMom         (const int index) const { return _breakupMom[index]; }  ///< returns breakup momentum in (index + 1)-body RF
+		double                             cosTheta           (const int index) const { return _cosTheta[index];   }  ///< returns polar angle in (index + 1)-body RF
+		double                             phi                (const int index) const { return _phi[index];        }  ///< returns azimuth in (index + 1)-body RF
 
 
 
@@ -203,10 +204,16 @@ namespace rpwa {
 		// external parameters
 		std::vector<double> _m;  ///< masses of daughter particles
 
+	  protected:
+
+		// internal variables that might need to be modified by pickMasses
+		std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
+		double                      _weight;             ///< phase space weight of generated event
+
+	  private:
 
 		// internal variables
 		unsigned int                _n;                  ///< number of daughter particles
-		std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
 		std::vector<double>         _cosTheta;           ///< cosine of polar angle of the 2-body decay of the (i + 1)-body system
 		std::vector<double>         _phi;                ///< azimuthal angle of the 2-body decay of the (i + 1)-body system
 		std::vector<double>         _mSum;               ///< sums of daughter particle masses
@@ -214,7 +221,6 @@ namespace rpwa {
 		std::vector<TLorentzVector> _daughters;          ///< Lorentz vectors of the daughter particles
 		weightTypeEnum              _weightType;         ///< switches between different weight formulas
 		double                      _norm;               ///< normalization value
-		double                      _weight;             ///< phase space weight of generated event
 		double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
 		double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
 		kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
