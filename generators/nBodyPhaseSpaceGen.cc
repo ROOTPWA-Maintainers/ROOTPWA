@@ -97,10 +97,10 @@ ClassImp(nBodyPhaseSpaceGen);
 
 
 nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
-	: _n                (0),
+	: _weight           (0),
+	  _n                (0),
 	  _weightType       (S_U_CHUNG),
 	  _norm             (0),
-	  _weight           (0),
 	  _maxWeightObserved(0),
 	  _maxWeight        (0),
 	  _kinematicsType   (BLOCK),
