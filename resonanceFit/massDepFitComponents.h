@@ -244,7 +244,8 @@ namespace rpwa {
 
 		private:
 
-			ROOT::Math::Interpolator* _interpolator;
+			std::vector<double> _ratio;
+			std::vector<ROOT::Math::Interpolator*> _interpolator;
 
 		};
 
