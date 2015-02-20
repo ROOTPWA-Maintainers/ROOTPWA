@@ -640,65 +640,54 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("mIsobar1", libconfig::Setting::TypeArray)
-	                     ("mIsobar2", libconfig::Setting::TypeArray)
-	                     ("relAngularMom", libconfig::Setting::TypeArray);
-	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-		printErr << "not all required arrays are defined for the component '" << getName() << "'." << std::endl;
+	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
+	if(not decayChannels) {
+		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
 		return false;
 	}
 
-	const libconfig::Setting& configMassIsobar1 = (*configComponent)["mIsobar1"];
-	const libconfig::Setting& configMassIsobar2 = (*configComponent)["mIsobar2"];
-	const libconfig::Setting& configRelAngularMom = (*configComponent)["relAngularMom"];
 
-	const int nrDecayChannels = configMassIsobar1.getLength();
-	if(configMassIsobar2.getLength() != nrDecayChannels || configRelAngularMom.getLength() != nrDecayChannels) {
-		printErr << "not all arrays have the same length for component '" << getName() << "'." << std::endl;
-		return false;
-	}
-
-	if(configMassIsobar1[0].getType() != libconfig::Setting::TypeFloat
-	   || configMassIsobar2[0].getType() != libconfig::Setting::TypeFloat
-	   || configRelAngularMom[0].getType() != libconfig::Setting::TypeInt) {
-		printErr << "not all arrays have the correct type for component '" << getName() << "'." << std::endl;
-		return false;
-	}
+	const int nrDecayChannels = decayChannels->getLength();
 
 	_ratio.resize(nrDecayChannels);
 	_l.resize(nrDecayChannels);
 	_m1.resize(nrDecayChannels);
 	_m2.resize(nrDecayChannels);
 
-	for(int i=0; i<nrDecayChannels; ++i) {
-		_l[i] = configRelAngularMom[i];
-		_m1[i] = configMassIsobar1[i];
-		_m2[i] = configMassIsobar2[i];
+	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
+
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("mIsobar1", libconfig::Setting::TypeFloat)
+		                     ("mIsobar2", libconfig::Setting::TypeFloat)
+		                     ("relAngularMom", libconfig::Setting::TypeInt)
+		                     ("branchingRatio", libconfig::Setting::TypeFloat);
+		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			return false;
+		}
+
+		double mIsobar1;
+		decayChannel->lookupValue("mIsobar1", mIsobar1);
+		_m1[idxDecayChannel] = mIsobar1;
+
+		double mIsobar2;
+		decayChannel->lookupValue("mIsobar2", mIsobar2);
+		_m2[idxDecayChannel] = mIsobar2;
+
+		int relAngularMom;
+		decayChannel->lookupValue("relAngularMom", relAngularMom);
+		_l[idxDecayChannel] = relAngularMom;
+
+		double branchingRatio;
+		decayChannel->lookupValue("branchingRatio", branchingRatio);
+		_ratio[idxDecayChannel] = branchingRatio;
 	}
 
 	if(nrDecayChannels > 1) {
-		boost::assign::insert(mandatoryArguments)
-		                     ("branchingRatio", libconfig::Setting::TypeArray);
-		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "not all required arrays are defined for the component '" << getName() << "'." << std::endl;
-			return false;
-		}
-
-		const libconfig::Setting& configBranchingRatio = (*configComponent)["branchingRatio"];
-		if(configBranchingRatio.getLength() != nrDecayChannels) {
-			printErr << "not all arrays have the same length for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-		if(configBranchingRatio[0].getType() != libconfig::Setting::TypeFloat) {
-			printErr << "not all arrays have the correct type for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-
 		double sum = 0.;
-		for(int i=0; i<nrDecayChannels; ++i) {
-			_ratio[i] = configBranchingRatio[i];
+		for(size_t i=0; i<_ratio.size(); ++i) {
 			sum += _ratio[i];
 		}
 		for(size_t i=0; i<_ratio.size(); ++i) {
@@ -837,49 +826,19 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 	_ratio.resize(nrDecayChannels);
 	_interpolator.resize(nrDecayChannels, NULL);
 
-	if(nrDecayChannels > 1) {
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("branchingRatio", libconfig::Setting::TypeArray);
-		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "array 'branchingRatio' not defined for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-
-		const libconfig::Setting& configBranchingRatio = (*configComponent)["branchingRatio"];
-		if(configBranchingRatio.getLength() != nrDecayChannels) {
-			printErr << "array 'branchingRatio' does not have the correct length for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-		if(configBranchingRatio[0].getType() != libconfig::Setting::TypeFloat) {
-			printErr << "array 'branchingRatio' is not of the correct type for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-
-		double sum = 0.;
-		for(int i=0; i<nrDecayChannels; ++i) {
-			_ratio[i] = configBranchingRatio[i];
-			sum += _ratio[i];
-		}
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			_ratio[i] *= 1. / sum;
-		}
-	} else {
-		_ratio[0] = 1.;
-	}
-
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
 
 		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("integral", libconfig::Setting::TypeList);
+		                     ("integral", libconfig::Setting::TypeList)
+		                     ("branchingRatio", libconfig::Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not have the required phase-space integrals." << std::endl;
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
 			return false;
 		}
 
-		const libconfig::Setting* integrals = findLibConfigList((*decayChannels)[idxDecayChannel], "integral");
+		const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
 
 		const int nrValues = integrals->getLength();
 
@@ -912,6 +871,22 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 
 		assert(_interpolator[idxDecayChannel] == NULL); // huh, init called twice?
 		_interpolator[idxDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
+
+		double branchingRatio;
+		decayChannel->lookupValue("branchingRatio", branchingRatio);
+		_ratio[idxDecayChannel] = branchingRatio;
+	}
+
+	if(nrDecayChannels > 1) {
+		double sum = 0.;
+		for(size_t i=0; i<_ratio.size(); ++i) {
+			sum += _ratio[i];
+		}
+		for(size_t i=0; i<_ratio.size(); ++i) {
+			_ratio[i] *= 1. / sum;
+		}
+	} else {
+		_ratio[0] = 1.;
 	}
 
 	if(debug) {
