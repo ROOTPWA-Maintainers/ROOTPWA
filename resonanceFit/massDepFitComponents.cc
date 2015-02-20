@@ -784,7 +784,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 }
 
 
-rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const size_t id,
+rpwa::massDepFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
                                                                      const std::string& name)
 	: component(id, name, 2),
 	  _interpolator(NULL)
@@ -797,7 +797,7 @@ rpwa::massDepFit::parameterizationA1Bowler::parameterizationA1Bowler(const size_
 }
 
 
-rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
+rpwa::massDepFit::integralWidthBreitWigner::~integralWidthBreitWigner()
 {
 	if (_interpolator != NULL) {
 		delete _interpolator;
@@ -806,7 +806,7 @@ rpwa::massDepFit::parameterizationA1Bowler::~parameterizationA1Bowler()
 
 
 bool
-rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                                  rpwa::massDepFit::parameters& fitParameters,
                                                  const size_t nrBins,
                                                  const std::vector<double>& massBinCenters,
@@ -816,7 +816,7 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
                                                  const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of 'parameterizationA1Bowler' for component '" << getName() << "'." << std::endl;
+		printDebug << "starting initialization of 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
 	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
@@ -829,13 +829,13 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 	// and probably would have to calculate the involved integrals for each
 	// channel
 	if(getNrChannels() != 1) {
-		printErr << "component of type 'parameterizationA1Bowler' must have exactly one channel." << std::endl;
+		printErr << "component of type 'integralWidthBreitWigner' must have exactly one channel." << std::endl;
 		return false;
 	}
 
 	const libconfig::Setting* integrals = findLibConfigList(*configComponent, "integral");
 	if(not integrals) {
-		printErr << "component '" << getName() << "' has no phase-space integrals required for the Bowler parameterisation." << std::endl;
+		printErr << "component '" << getName() << "' does not have the required phase-space integrals." << std::endl;
 		return false;
 	}
 
@@ -873,14 +873,14 @@ rpwa::massDepFit::parameterizationA1Bowler::init(const libconfig::Setting* confi
 
 	if(debug) {
 		print(printDebug);
-		printDebug << "finished initialization of 'parameterizationA1Bowler'." << std::endl;
+		printDebug << "finished initialization of 'integralWidthBreitWigner'." << std::endl;
 	}
 	return true;
 }
 
 
 std::complex<double>
-rpwa::massDepFit::parameterizationA1Bowler::val(const rpwa::massDepFit::parameters& fitParameters,
+rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
                                                 const size_t idxBin,
                                                 const double m) const
 {
@@ -901,9 +901,9 @@ rpwa::massDepFit::parameterizationA1Bowler::val(const rpwa::massDepFit::paramete
 
 
 std::ostream&
-rpwa::massDepFit::parameterizationA1Bowler::print(std::ostream& out) const
+rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 {
-	out << "component " << getId() << " '" << getName() << "' (parameterizationA1Bowler):" << std::endl;
+	out << "component " << getId() << " '" << getName() << "' (integralWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {

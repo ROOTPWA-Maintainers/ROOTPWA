@@ -219,13 +219,13 @@ namespace rpwa {
 
 		};
 
-		class parameterizationA1Bowler : public component {
+		class integralWidthBreitWigner : public component {
 
 		public:
 
-			parameterizationA1Bowler(const size_t id,
+			integralWidthBreitWigner(const size_t id,
 			                         const std::string& name);
-			virtual ~parameterizationA1Bowler();
+			virtual ~integralWidthBreitWigner();
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,

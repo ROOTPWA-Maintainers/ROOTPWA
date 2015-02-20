@@ -531,8 +531,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			component = new fixedWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "dynamicWidthBreitWigner") {
 			component = new dynamicWidthBreitWigner(fitModel.getNrComponents(), name);
-		} else if(type == "parameterizationA1Bowler") {
-			component = new parameterizationA1Bowler(fitModel.getNrComponents(), name);
+		} else if(type == "integralWidthBreitWigner") {
+			component = new integralWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
 			component = new exponentialBackground(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
