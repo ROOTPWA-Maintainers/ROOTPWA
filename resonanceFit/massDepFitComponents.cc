@@ -1007,6 +1007,11 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 		return false;
 	}
 
+	if(getNrChannels() != 1) {
+		printErr << "component '" << getName() << "' of type 'exponentialBackground' needs to have exactly one decay channel." << std::endl;
+		return false;
+	}
+
 	std::map<std::string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
 	                     ("mIsobar1", libconfig::Setting::TypeFloat)
@@ -1124,6 +1129,11 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 
 	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
+		return false;
+	}
+
+	if(getNrChannels() != 1) {
+		printErr << "component '" << getName() << "' of type 'tPrimeDependentBackground' needs to have exactly one decay channel." << std::endl;
 		return false;
 	}
 
