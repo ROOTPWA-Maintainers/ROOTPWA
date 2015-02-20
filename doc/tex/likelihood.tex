@@ -160,7 +160,7 @@ the sums over $r$ and \refl collapse as do some of the sums over the waves
   &= \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{\tilde{a} b}
     + \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} x_a^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{a \tilde{a}}
   - \sum_{a}^{N^{\tilde{\refl}}_\text{waves}} y_a^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{a \tilde{a}}
-    + \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b} \\
+    + \sum_{b}^{N^{\tilde{\refl}}_\text{waves}} y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{\tilde{a} b}
 \end{align}
 Using the fact that the matrix $z^\refl_{a b}$ is hermitian
 [cf. \cref{eq:z_hermitian}], we can combine the sums and finally arrive
@@ -224,7 +224,7 @@ In both equations we used the definitions
 
 
 \section{Hessian Matrix of the Likelihood Function}
-\label{sec:likelihood_gradient}
+\label{sec:likelihood_hessian}
 
 In order to calculate the matrix of second partial derivatives of the
 likelihood function \wrt the real and imaginary parts of the
@@ -249,7 +249,6 @@ Using \cref{eq:likelihood_function_sum_term_re_deriv} we know the
 first-derivative terms in the equation above and can calculate the
 second derivatives with \cref{eq:likelihood_function_par_deriv}:
 \begin{align}
-  \label{eq:likelihood_function_sum_term_re_re_deriv}
   \dmd{A_z}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
   &= \dpd{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}
     \rBrk{2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \sBrk{x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{b \tilde{a}}
