@@ -646,13 +646,15 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		return false;
 	}
 
+	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
 
 	const int nrDecayChannels = decayChannels->getLength();
+	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
 
-	_ratio.resize(nrDecayChannels);
-	_l.resize(nrDecayChannels);
-	_m1.resize(nrDecayChannels);
-	_m2.resize(nrDecayChannels);
+	_ratio.resize(nrDecayChannels + nrExtraDecayChannels);
+	_l.resize(nrDecayChannels + nrExtraDecayChannels);
+	_m1.resize(nrDecayChannels + nrExtraDecayChannels);
+	_m2.resize(nrDecayChannels + nrExtraDecayChannels);
 
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
@@ -685,7 +687,38 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		_ratio[idxDecayChannel] = branchingRatio;
 	}
 
-	if(nrDecayChannels > 1) {
+	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
+		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
+
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("mIsobar1", libconfig::Setting::TypeFloat)
+		                     ("mIsobar2", libconfig::Setting::TypeFloat)
+		                     ("relAngularMom", libconfig::Setting::TypeInt)
+		                     ("branchingRatio", libconfig::Setting::TypeFloat);
+		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			return false;
+		}
+
+		double mIsobar1;
+		decayChannel->lookupValue("mIsobar1", mIsobar1);
+		_m1[nrDecayChannels + idxExtraDecayChannel] = mIsobar1;
+
+		double mIsobar2;
+		decayChannel->lookupValue("mIsobar2", mIsobar2);
+		_m2[nrDecayChannels + idxExtraDecayChannel] = mIsobar2;
+
+		int relAngularMom;
+		decayChannel->lookupValue("relAngularMom", relAngularMom);
+		_l[nrDecayChannels + idxExtraDecayChannel] = relAngularMom;
+
+		double branchingRatio;
+		decayChannel->lookupValue("branchingRatio", branchingRatio);
+		_ratio[nrDecayChannels + idxExtraDecayChannel] = branchingRatio;
+	}
+
+	if(nrDecayChannels + nrExtraDecayChannels > 1) {
 		double sum = 0.;
 		for(size_t i=0; i<_ratio.size(); ++i) {
 			sum += _ratio[i];
@@ -821,10 +854,13 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 		return false;
 	}
 
-	const int nrDecayChannels = decayChannels->getLength();
+	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
 
-	_ratio.resize(nrDecayChannels);
-	_interpolator.resize(nrDecayChannels, NULL);
+	const int nrDecayChannels = decayChannels->getLength();
+	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
+
+	_ratio.resize(nrDecayChannels + nrExtraDecayChannels);
+	_interpolator.resize(nrDecayChannels + nrExtraDecayChannels, NULL);
 
 	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
@@ -877,7 +913,58 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 		_ratio[idxDecayChannel] = branchingRatio;
 	}
 
-	if(nrDecayChannels > 1) {
+	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
+		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
+
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("integral", libconfig::Setting::TypeList)
+		                     ("branchingRatio", libconfig::Setting::TypeFloat);
+		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			return false;
+		}
+
+		const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
+
+		const int nrValues = integrals->getLength();
+
+		std::vector<double> masses;
+		std::vector<double> values;
+
+		for(int idx=0; idx<nrValues; ++idx) {
+			const libconfig::Setting* integral = &((*integrals)[idx]);
+			if (integral->getType() != libconfig::Setting::TypeArray) {
+				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+				return false;
+			}
+			if (integral->getLength() != 2) {
+				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+				return false;
+			}
+			if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
+				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+				return false;
+			}
+
+			if (masses.size() > 0 && masses.back() > (double)((*integral)[0])) {
+				printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
+				return false;
+			}
+
+			masses.push_back((*integral)[0]);
+			values.push_back((*integral)[1]);
+		}
+
+		assert(_interpolator[nrDecayChannels + idxExtraDecayChannel] == NULL); // huh, init called twice?
+		_interpolator[nrDecayChannels + idxExtraDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
+
+		double branchingRatio;
+		decayChannel->lookupValue("branchingRatio", branchingRatio);
+		_ratio[nrDecayChannels + idxExtraDecayChannel] = branchingRatio;
+	}
+
+	if(nrDecayChannels + nrExtraDecayChannels > 1) {
 		double sum = 0.;
 		for(size_t i=0; i<_ratio.size(); ++i) {
 			sum += _ratio[i];
