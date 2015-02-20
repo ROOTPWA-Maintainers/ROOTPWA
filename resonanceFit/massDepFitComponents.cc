@@ -748,6 +748,16 @@ rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameter
 
 	double gamma = 0.;
 	for(size_t i=0; i<_ratio.size(); ++i) {
+		// calculation of the break-up momentum will fail if the
+		// sum of the two isobar masses is heavier than the mother
+		// mass, which is probably a good thing as some more advanced
+		// stuff should be used for at- or sub-threshold decays.
+		// but if the branching ratio for this channel is 0, then
+		// simply ignore this channel
+		if (_ratio[i] == 0.) {
+			continue;
+		}
+
 		if(m >= _m1[i] + _m2[i]) {
 			// calculate breakup momenta
 			const double q = rpwa::breakupMomentum(m, _m1[i], _m2[i]);
@@ -994,6 +1004,11 @@ rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::paramete
 
 	double gamma = 0.;
 	for(size_t i=0; i<_ratio.size(); ++i) {
+		// save some time not calculating stuff that is ignored
+		if (_ratio[i] == 0.) {
+			continue;
+		}
+
 		const double ps = _interpolator[i]->Eval(m);
 		const double ps0 = _interpolator[i]->Eval(m0);
 
