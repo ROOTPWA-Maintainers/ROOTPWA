@@ -29,7 +29,15 @@ namespace rpwa {
 
 		public:
 
-			likelihood(const bool fitProductionAmplitudes, const bool useCovariance);
+			enum useCovarianceMatrix {
+				useDiagnalElementsOnly,
+				useComplexDiagnalElementsOnly,
+				useFullCovarianceMatrix,
+				useCovarianceMatrixDefault
+			};
+
+			likelihood(const bool fitProductionAmplitudes,
+			           const rpwa::massDepFit::likelihood::useCovarianceMatrix useCovariance);
 			virtual ~likelihood() {}
 
 			virtual likelihood* Clone() const;
@@ -77,7 +85,7 @@ namespace rpwa {
 			size_t _idxAnchorWave;
 
 			const bool _fitProductionAmplitudes;
-			const bool _useCovariance;
+			rpwa::massDepFit::likelihood::useCovarianceMatrix _useCovariance;
 
 		};
 
