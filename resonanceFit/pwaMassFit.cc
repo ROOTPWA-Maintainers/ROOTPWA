@@ -54,42 +54,38 @@
 #include "reportingUtilsEnvironment.h"
 
 
-using namespace std;
-using namespace rpwa;
-
-
 void
-usage(const string& progName,
+usage(const std::string& progName,
       const int     errCode = 0)
 {
-	cerr << "performs mass-dependent fit" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C -d -q -h] config file" << endl
-	     << "    where:" << endl
-	     << "        -o file    path to output file (default: 'mDep.result.root')" << endl
-	     << "        -M name    minimizer (default: Minuit2)" << endl
-	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
-	     << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-	     << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
-	     << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
-	     << "                                         GSLMultiFit: -" << endl
-	     << "                                         GSLSimAn:    -" << endl
-	     << "                                         Linear:      Robust" << endl
-	     << "                                         Fumili:      -" << endl
-	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
-	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-	     << "        -P         plotting only - no fit" << endl
-	     << "        -R         plot in fit range only" << endl
-	     << "        -A         fit to the production amplitudes (default: spin-density matrix)" << endl
-	     << "        -B         use branchings (reducing number of couplings)" << endl
-	     << "        -C         fit to spin-density matrix:   switch OFF covariances between real and imag part" << endl
-	     << "                   fit to production amplitudes: switch OFF covariances between amplitudes" << endl
-	     << "        -d         additional debug output (default: false)" << endl
-	     << "        -q         run quietly (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	std::cerr << "performs mass-dependent fit" << std::endl
+	          << std::endl
+	          << "usage:" << std::endl
+	          << progName
+	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C -d -q -h] config file" << std::endl
+	          << "    where:" << std::endl
+	          << "        -o file    path to output file (default: 'mDep.result.root')" << std::endl
+	          << "        -M name    minimizer (default: Minuit2)" << std::endl
+	          << "        -m name    minimization algorithm (optional, default: Migrad)" << std::endl
+	          << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << std::endl
+	          << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << std::endl
+	          << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << std::endl
+	          << "                                         GSLMultiFit: -" << std::endl
+	          << "                                         GSLSimAn:    -" << std::endl
+	          << "                                         Linear:      Robust" << std::endl
+	          << "                                         Fumili:      -" << std::endl
+	          << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << std::endl
+	          << "        -t #       minimizer tolerance (default: 1e-10)" << std::endl
+	          << "        -P         plotting only - no fit" << std::endl
+	          << "        -R         plot in fit range only" << std::endl
+	          << "        -A         fit to the production amplitudes (default: spin-density matrix)" << std::endl
+	          << "        -B         use branchings (reducing number of couplings)" << std::endl
+	          << "        -C         fit to spin-density matrix:   switch OFF covariances between real and imag part" << std::endl
+	          << "                   fit to production amplitudes: switch OFF covariances between amplitudes" << std::endl
+	          << "        -d         additional debug output (default: false)" << std::endl
+	          << "        -q         run quietly (default: false)" << std::endl
+	          << "        -h         print help" << std::endl
+	          << std::endl;
 	exit(errCode);
 }
 
@@ -103,7 +99,7 @@ bool
 releasePars(ROOT::Math::Minimizer* minimizer,
             const rpwa::massDepFit::model& compset,
             const rpwa::massDepFit::parameters& fitParameters,
-            const string& freeParameters)
+            const std::string& freeParameters)
 {
 	// tokenize freeParameters string (default deparators also include '*')
 	boost::char_separator<char> separators(" ,\t\n");
@@ -124,7 +120,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 
 			const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
 			for(size_t idxBin=0; idxBin<channel.getNrBins(); ++idxBin) {
-				ostringstream prefixName;
+				std::ostringstream prefixName;
 				prefixName << "coupling__bin"
 				           << idxBin
 				           << "__"
@@ -139,7 +135,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 
 				const std::complex<double> parameter = fitParameters.getCoupling(idxComponent, idxChannel, idxBin);
 
-				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << endl;
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
 				minimizer->SetVariable(parcount,
 				                       prefixName.str() + "__real",
 				                       parameter.real(),
@@ -147,7 +143,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				++parcount;
 
 				if(not channel.isAnchor()) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__imag",
 					                       parameter.imag(),
@@ -171,7 +167,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 
 				const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
 				const std::string waveDecay = channel.getWaveName().substr(7);
-				ostringstream prefixName;
+				std::ostringstream prefixName;
 				prefixName << "branching__"
 				           << comp->getName()
 				           << "__"
@@ -187,26 +183,26 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				const std::complex<double> parameter = fitParameters.getBranching(idxComponent, idxChannel);
 
 				if (fix) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << std::endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__real",
 					                            parameter.real());
 					++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
 					minimizer->SetFixedVariable(parcount,
 					                            prefixName.str() + "__imag",
 					                            parameter.imag());
 					++parcount;
 				} else {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__real",
 					                       parameter.real(),
 					                       0.1);
 					++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << endl;
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
 					minimizer->SetVariable(parcount,
 					                       prefixName.str() + "__imag",
 					                       parameter.imag(),
@@ -221,7 +217,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
-			const string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
+			const std::string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
 
 			bool free = false;
 			if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
@@ -238,14 +234,14 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 			const double parameter = fitParameters.getParameter(idxComponent, idxParameter);
 
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << parameter << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << parameter << std::endl;
 				minimizer->SetFixedVariable(parcount,
 				                            name,
 				                            parameter);
 			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
-				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
+				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				minimizer->SetLimitedVariable(parcount,
 				                              name,
 				                              parameter,
@@ -254,7 +250,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				                              comp->getParameterLimitUpper(idxParameter));
 			} else if(comp->getParameterLimitedLower(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
-				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << endl;
+				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << std::endl;
 				minimizer->SetLowerLimitedVariable(parcount,
 				                                   name,
 				                                   parameter,
@@ -262,14 +258,14 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				                                   comp->getParameterLimitLower(idxParameter));
 			} else if(comp->getParameterLimitedUpper(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
-				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
+				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				minimizer->SetUpperLimitedVariable(parcount,
 				                                   name,
 				                                   parameter,
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter << std::endl;
 				minimizer->SetVariable(parcount,
 				                       name,
 				                       parameter,
@@ -291,14 +287,14 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 			const double parameter = fitParameters.getParameter(compset.getNrComponents(), idxParameter);
 
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << parameter << endl;
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << parameter << std::endl;
 				minimizer->SetFixedVariable(parcount,
 				                            name.str(),
 				                            parameter);
 			} else if(fsmd->getParameterLimitedLower(idxParameter) && fsmd->getParameterLimitedUpper(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
 				          << " (limited between " << fsmd->getParameterLimitLower(idxParameter)
-				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
+				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				minimizer->SetLimitedVariable(parcount,
 				                              name.str(),
 				                              parameter,
@@ -307,7 +303,7 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				                              fsmd->getParameterLimitUpper(idxParameter));
 			} else if(fsmd->getParameterLimitedLower(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
-				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << endl;
+				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << std::endl;
 				minimizer->SetLowerLimitedVariable(parcount,
 				                                   name.str(),
 				                                   parameter,
@@ -315,14 +311,14 @@ releasePars(ROOT::Math::Minimizer* minimizer,
 				                                   fsmd->getParameterLimitLower(idxParameter));
 			} else if(fsmd->getParameterLimitedUpper(idxParameter)) {
 				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
-				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << endl;
+				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				minimizer->SetUpperLimitedVariable(parcount,
 				                                   name.str(),
 				                                   parameter,
 				                                   fsmd->getParameterStep(idxParameter),
 				                                   fsmd->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter << endl;
+				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter << std::endl;
 				minimizer->SetVariable(parcount,
 				                       name.str(),
 				                       parameter,
@@ -339,10 +335,10 @@ int
 main(int    argc,
      char** argv)
 {
-	printCompilerInfo();
-	printLibraryInfo ();
-	printGitHash     ();
-	cout << endl;
+	rpwa::printCompilerInfo();
+	rpwa::printLibraryInfo ();
+	rpwa::printGitHash     ();
+	std::cout << std::endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -350,8 +346,8 @@ main(int    argc,
 
 	// --------------------------------------------------------------------------
 	// internal parameters
-	const string       valTreeName           = "pwa";
-	const string       valBranchName         = "fitResult_v2";
+	const std::string  valTreeName           = "pwa";
+	const std::string  valBranchName         = "fitResult_v2";
 	const unsigned int maxNmbOfIterations    = 20000;
 	const unsigned int maxNmbOfFunctionCalls = 2000000;
 	const bool         runHesse              = true;
@@ -359,18 +355,18 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
-	const string progName           = argv[0];
-	string       outFileName        = "mDep.result.root";     // output filename
-	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-	int          minimizerStrategy  = 1;                      // minimizer strategy
-	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool         onlyPlotting       = false;
-	bool         rangePlotting      = false;
-	bool         doProdAmp          = false;
-	bool         doBranching        = false;
-	bool         doCov              = true;
-	bool         debug              = false;
-	bool         quiet              = false;
+	const std::string progName           = argv[0];
+	std::string       outFileName        = "mDep.result.root";     // output filename
+	std::string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	int               minimizerStrategy  = 1;                      // minimizer strategy
+	double            minimizerTolerance = 1e-10;                  // minimizer tolerance
+	bool              onlyPlotting       = false;
+	bool              rangePlotting      = false;
+	bool              doProdAmp          = false;
+	bool              doBranching        = false;
+	bool              doCov              = true;
+	bool              debug              = false;
+	bool              quiet              = false;
 	extern char* optarg;
 	extern int   optind;
 	int c;
@@ -422,25 +418,25 @@ main(int    argc,
 	// there must only be one remaining (unhandled) argument which is the
 	// configuration file
 	if(optind+1 != argc) {
-		printErr << "you need to specify exactly one configuration file." << endl;
+		printErr << "you need to specify exactly one configuration file." << std::endl;
 		usage(progName, 1);
 	}
-	const string configFileName = argv[optind];
+	const std::string configFileName = argv[optind];
 
 	// report parameters
-	printInfo << "running " << progName << " with the following parameters:" << endl
-	          << "    path to configuration file ..................... '" << configFileName << "'" << endl
-	          << "    path to output file ............................ '" << outFileName << "'" << endl
-	          << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
-	          << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
-	          << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
-	          << "    only plotting .................................. "  << yesNo(onlyPlotting) << endl
-	          << "    plot in fit range only ......................... "  << yesNo(rangePlotting) << endl
-	          << "    fit to production amplitudes ................... "  << yesNo(doProdAmp) << endl
-	          << "    use branchings ................................. "  << yesNo(doBranching) << endl
-	          << "    take covariance into account ................... "  << yesNo(doCov) << endl
-	          << "    debug .......................................... "  << yesNo(debug) << endl
-	          << "    quiet .......................................... "  << yesNo(quiet) << endl;
+	printInfo << "running " << progName << " with the following parameters:" << std::endl
+	          << "    path to configuration file ..................... '" << configFileName << "'" << std::endl
+	          << "    path to output file ............................ '" << outFileName << "'" << std::endl
+	          << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << std::endl
+	          << "    minimizer strategy ............................. "  << minimizerStrategy  << std::endl
+	          << "    minimizer tolerance ............................ "  << minimizerTolerance << std::endl
+	          << "    only plotting .................................. "  << rpwa::yesNo(onlyPlotting) << std::endl
+	          << "    plot in fit range only ......................... "  << rpwa::yesNo(rangePlotting) << std::endl
+	          << "    fit to production amplitudes ................... "  << rpwa::yesNo(doProdAmp) << std::endl
+	          << "    use branchings ................................. "  << rpwa::yesNo(doBranching) << std::endl
+	          << "    take covariance into account ................... "  << rpwa::yesNo(doCov) << std::endl
+	          << "    debug .......................................... "  << rpwa::yesNo(debug) << std::endl
+	          << "    quiet .......................................... "  << rpwa::yesNo(quiet) << std::endl;
 
 	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
@@ -453,8 +449,8 @@ main(int    argc,
 	L.useCovariance(doCov);
 
 	libconfig::Config configFile;
-	if(not parseLibConfigFile(configFileName, configFile, debug)) {
-		printErr << "could not read configuration file '" << configFileName << "'." << endl;
+	if(not rpwa::parseLibConfigFile(configFileName, configFile, debug)) {
+		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 	libconfig::Setting& configRoot = configFile.getRoot();
@@ -462,27 +458,27 @@ main(int    argc,
 	// read configuration file
 	rpwa::massDepFit::parameters fitParameters;
 	if(not mdepFit.readConfig(&configRoot, compset, fitParameters, valTreeName, valBranchName)) {
-		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
+		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 
 	// set-up fit model and likelihood
 	if(not mdepFit.init(compset, fitParameters, L)) {
-		printErr << "error while reading configuration file '" << configFileName << "'." << endl;
+		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 
 	if(onlyPlotting) {
-		printInfo << "plotting only mode, skipping minimzation." << endl;
+		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
-		printInfo << "chi2 (valid only if fit was successful) = " << maxPrecisionAlign(L.DoEval(fitParameters)) << endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(L.DoEval(fitParameters)) << std::endl;
 	} else {
 		// setup minimizer
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
-		          << "using algorithm '" << minimizerType[1] << "'" << endl;
+		          << "using algorithm '" << minimizerType[1] << "'" << std::endl;
 		std::auto_ptr<ROOT::Math::Minimizer> minimizer(ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]));
 		if(minimizer.get() == NULL) {
-			printErr << "could not create minimizer. exiting." << endl;
+			printErr << "could not create minimizer. exiting." << std::endl;
 			return 1;
 		}
 		minimizer->SetFunction        (L);
@@ -500,31 +496,31 @@ main(int    argc,
 		}
 
 		// keep list of parameters to free
-		const vector<string> freeParameters = mdepFit.getFreeParameters();
+		const std::vector<std::string> freeParameters = mdepFit.getFreeParameters();
 		const size_t nrSteps = freeParameters.size();
 
 		bool success = true;
 		for(size_t step=0; step<nrSteps; ++step) {
 			// set startvalues
 			if(not releasePars(minimizer.get(), compset, fitParameters, freeParameters[step])) {
-				printErr << "error while setting start parameters for step " << step << "." << endl;
+				printErr << "error while setting start parameters for step " << step << "." << std::endl;
 				return 1;
 			}
 
 			// keep track of the time spend in the fit
 			TStopwatch stopwatch;
 
-			printInfo << "performing minimization step " << step << ": '" << freeParameters[step] << "' (" << minimizer->NFree() << " free parameters)." << endl;
+			printInfo << "performing minimization step " << step << ": '" << freeParameters[step] << "' (" << minimizer->NFree() << " free parameters)." << std::endl;
 			stopwatch.Start();
 			success &= minimizer->Minimize();
 			stopwatch.Stop();
 
 			if(not success) {
-				printWarn << "minimization failed." << endl;
+				printWarn << "minimization failed." << std::endl;
 			} else {
-				printInfo << "minimization successful." << endl;
+				printInfo << "minimization successful." << std::endl;
 			}
-			printInfo << "minimization took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
+			printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
 			compset.importParameters(minimizer->X(), fitParameters);
@@ -533,42 +529,42 @@ main(int    argc,
 		if(runHesse) {
 			TStopwatch stopwatch;
 
-			printInfo << "calculating Hessian matrix." << endl;
+			printInfo << "calculating Hessian matrix." << std::endl;
 			stopwatch.Start();
 			success &= minimizer->Hesse();
 			stopwatch.Stop();
 
 			if(not success) {
-				printWarn << "calculation of Hessian matrix failed." << endl;
+				printWarn << "calculation of Hessian matrix failed." << std::endl;
 			} else {
-				printInfo << "calculation of Hessian matrix successful." << endl;
+				printInfo << "calculation of Hessian matrix successful." << std::endl;
 			}
-			printInfo << "calculating Hessian matrix took " <<  maxPrecisionAlign(stopwatch.CpuTime()) << " s" << endl;
+			printInfo << "calculating Hessian matrix took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
 			compset.importParameters(minimizer->X(), fitParameters);
 		}
 
-		printInfo << "minimizer status summary:" << endl
-		          << "    total number of parameters .......................... " << minimizer->NDim()             << endl
-		          << "    number of free parameters ........................... " << minimizer->NFree()            << endl
-		          << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
-		          << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
-		          << "    minimizer status .................................... " << minimizer->Status()           << endl
-		          << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
-		          << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
-		          << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
-		          << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
-		          << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
-		          << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
+		printInfo << "minimizer status summary:" << std::endl
+		          << "    total number of parameters .......................... " << minimizer->NDim()             << std::endl
+		          << "    number of free parameters ........................... " << minimizer->NFree()            << std::endl
+		          << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << std::endl
+		          << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << std::endl
+		          << "    minimizer status .................................... " << minimizer->Status()           << std::endl
+		          << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << std::endl
+		          << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << std::endl
+		          << "    estimated distance to minimum ....................... " << minimizer->Edm()              << std::endl
+		          << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << std::endl
+		          << "    minimizer strategy .................................. " << minimizer->Strategy()         << std::endl
+		          << "    absolute tolerance .................................. " << minimizer->Tolerance()        << std::endl;
 
 		// print results
-		ostringstream output;
+		std::ostringstream output;
 		const unsigned int nmbPar = L.NDim();
 		for(unsigned int i = 0; i<nmbPar; ++i) {
-			output << "    parameter [" << setw(3) << i << "] ";
+			output << "    parameter [" << std::setw(3) << i << "] ";
 			output << minimizer->VariableName(i) << " " ;
-			output << maxPrecisionAlign(minimizer->X()[i]) << " +- " << maxPrecisionAlign(minimizer->Errors()[i]);
+			output << rpwa::maxPrecisionAlign(minimizer->X()[i]) << " +- " << rpwa::maxPrecisionAlign(minimizer->Errors()[i]);
 
 			if(runMinos) {  // does not work for all parameters
 				double minosErrLow, minosErrUp;
@@ -576,60 +572,60 @@ main(int    argc,
 					output << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]";
 				}
 			}
-			output << endl;
+			output << std::endl;
 		}
-		printInfo << "minimization result:" << endl
+		printInfo << "minimization result:" << std::endl
 		          << output.str();
 
 		double chi2 = 0.;
 		if(success) {
 			chi2 = L.DoEval(fitParameters);
 		} else {
-			printInfo << "chi2 (if fit were successful) =" << maxPrecisionAlign(L.DoEval(fitParameters)) << endl;
+			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(L.DoEval(fitParameters)) << std::endl;
 		}
-		printInfo << "chi2 =" << maxPrecisionAlign(chi2) << endl;
+		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
 		const unsigned int nrDataPoints = L.NDataPoints();
 		const unsigned int nrFree = minimizer->NFree();
 		const unsigned int ndf = nrDataPoints - nrFree;
-		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << endl;
+		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
 
 		double chi2red = chi2/(double)ndf;
-		printInfo << "chi2/ndf =" << maxPrecisionAlign(chi2red) << endl;
+		printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(chi2red) << std::endl;
 
 		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, minimizer.get(), chi2, ndf, chi2red)) {
-			printErr << "error while updating configuration file." << endl;
+			printErr << "error while updating configuration file." << std::endl;
 			return 1;
 		}
 	}
 
-	string confFileName(outFileName);
-	if(extensionFromPath(confFileName) == "root") {
-		confFileName = changeFileExtension(confFileName, "conf");
+	std::string confFileName(outFileName);
+	if(rpwa::extensionFromPath(confFileName) == "root") {
+		confFileName = rpwa::changeFileExtension(confFileName, "conf");
 	} else {
 		confFileName += ".conf";
 	}
 
 	if(debug) {
-		printDebug << "name of output configuration file: '" << confFileName << "'." << endl;
+		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
 	configFile.writeFile(confFileName.c_str());
 
-	string rootFileName(outFileName);
-	if(extensionFromPath(rootFileName) != "root") {
+	std::string rootFileName(outFileName);
+	if(rpwa::extensionFromPath(rootFileName) != "root") {
 		rootFileName += ".root";
 	}
 
 	if(debug) {
-		printDebug << "name of output ROOT file: '" << confFileName << "'." << endl;
+		printDebug << "name of output ROOT file: '" << confFileName << "'." << std::endl;
 	}
 	std::auto_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
 	if(outFile.get() == NULL || outFile->IsZombie()) {
-		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< endl;
+		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
 	if(not mdepFit.createPlots(compset, fitParameters, outFile.get(), rangePlotting)) {
-		printErr << "error while creating plots." << endl;
+		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}
 	outFile->Close();
