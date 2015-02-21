@@ -30,7 +30,7 @@ namespace rpwa {
 
 		public:
 
-			model();
+			model(const bool useBranchings);
 			~model();
 
 			void add(rpwa::massDepFit::component* comp);
@@ -52,7 +52,6 @@ namespace rpwa {
 			size_t getMaxParametersInComponent() const { return _maxParametersInComponent; }
 
 			bool useBranchings() const { return _useBranchings; }
-			void useBranchings(const bool val) { _useBranchings = val; }
 
 			size_t getAnchorWave() const { return _idxAnchorWave; }
 
@@ -104,7 +103,7 @@ namespace rpwa {
 			size_t _maxChannelsInComponent;
 			size_t _maxParametersInComponent;
 
-			bool _useBranchings;
+			const bool _useBranchings;
 
 			size_t _idxAnchorWave;
 			size_t _idxAnchorComponent;

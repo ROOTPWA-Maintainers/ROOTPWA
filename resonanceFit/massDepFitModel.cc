@@ -18,12 +18,12 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::model::model()
+rpwa::massDepFit::model::model(const bool useBranchings)
 	: _nrParameters(0),
 	  _fsmd(NULL),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
-	  _useBranchings(false),
+	  _useBranchings(useBranchings),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
 	  _idxAnchorChannel(std::numeric_limits<size_t>::max())
