@@ -62,7 +62,7 @@ usage(const std::string& progName,
 	          << std::endl
 	          << "usage:" << std::endl
 	          << progName
-	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C -d -q -h] config file" << std::endl
+	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C # -d -q -h] config file" << std::endl
 	          << "    where:" << std::endl
 	          << "        -o file    path to output file (default: 'mDep.result.root')" << std::endl
 	          << "        -M name    minimizer (default: Minuit2)" << std::endl
@@ -80,8 +80,10 @@ usage(const std::string& progName,
 	          << "        -R         plot in fit range only" << std::endl
 	          << "        -A         fit to the production amplitudes (default: spin-density matrix)" << std::endl
 	          << "        -B         use branchings (reducing number of couplings)" << std::endl
-	          << "        -C         fit to spin-density matrix:   switch OFF covariances between real and imag part" << std::endl
-	          << "                   fit to production amplitudes: switch OFF covariances between amplitudes" << std::endl
+	          << "        -C #       part of the covariance matrix to use:" << std::endl
+	          << "                       1 = only diagonal elements" << std::endl
+	          << "                       2 = take covariance between real and imaginary part of the same complex number into account" << std::endl
+	          << "                       3 = full covariance matrix (not available while fitting to the spin-density matrix)" << std::endl
 	          << "        -d         additional debug output (default: false)" << std::endl
 	          << "        -q         run quietly (default: false)" << std::endl
 	          << "        -h         print help" << std::endl
@@ -364,13 +366,15 @@ main(int    argc,
 	bool              rangePlotting      = false;
 	bool              doProdAmp          = false;
 	bool              doBranching        = false;
-	bool              doCov              = true;
 	bool              debug              = false;
 	bool              quiet              = false;
+
+	rpwa::massDepFit::likelihood::useCovarianceMatrix doCov = rpwa::massDepFit::likelihood::useCovarianceMatrixDefault;
+
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRABCdqh")) != -1) {
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRABC:dqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -400,7 +404,13 @@ main(int    argc,
 			doBranching = true;
 			break;
 		case 'C':
-			doCov = false;
+			{
+				int cov = atoi(optarg);
+				if      (cov == 1) { doCov = rpwa::massDepFit::likelihood::useDiagnalElementsOnly;        }
+				else if (cov == 2) { doCov = rpwa::massDepFit::likelihood::useComplexDiagnalElementsOnly; }
+				else if (cov == 3) { doCov = rpwa::massDepFit::likelihood::useFullCovarianceMatrix;       }
+				else               { usage(progName, 1); }
+			}
 			break;
 		case 'd':
 			debug = true;
@@ -434,7 +444,6 @@ main(int    argc,
 	          << "    plot in fit range only ......................... "  << rpwa::yesNo(rangePlotting) << std::endl
 	          << "    fit to production amplitudes ................... "  << rpwa::yesNo(doProdAmp) << std::endl
 	          << "    use branchings ................................. "  << rpwa::yesNo(doBranching) << std::endl
-	          << "    take covariance into account ................... "  << rpwa::yesNo(doCov) << std::endl
 	          << "    debug .......................................... "  << rpwa::yesNo(debug) << std::endl
 	          << "    quiet .......................................... "  << rpwa::yesNo(quiet) << std::endl;
 

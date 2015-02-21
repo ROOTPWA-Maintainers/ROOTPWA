@@ -6,10 +6,40 @@
 
 
 rpwa::massDepFit::likelihood::likelihood(const bool fitProductionAmplitudes,
-                                         const bool useCovariance)
+                                         const rpwa::massDepFit::likelihood::useCovarianceMatrix useCovariance)
 	: _fitProductionAmplitudes(fitProductionAmplitudes),
 	  _useCovariance(useCovariance)
 {
+	// if useCovariance has not been overwritten from the command line set
+	// reasonable defaults depending on what to fit to
+	if (_useCovariance == useCovarianceMatrixDefault) {
+		if (fitProductionAmplitudes) {
+			_useCovariance = useFullCovarianceMatrix;
+		} else {
+			_useCovariance = useComplexDiagnalElementsOnly;
+		}
+	}
+	assert(_useCovariance != useCovarianceMatrixDefault);
+
+	std::ostringstream output;
+	output << "created 'likelihood' object for a fit to the ";
+	if (fitProductionAmplitudes) {
+		output << "production amplitudes";
+	} else {
+		output << "spin-density matrix";
+	}
+	output << " using ";
+	if (_useCovariance == useDiagnalElementsOnly) {
+		output << "only the diagonal elements of the covariance matrix";
+	} else if (_useCovariance == useComplexDiagnalElementsOnly) {
+		output << "blocks of 2x2 along the diagonal of the covariance matrix corresponding to a complex number";
+	} else if (_useCovariance == useFullCovarianceMatrix) {
+		output << "the full covariance matrix";
+	} else {
+		assert(false);
+	}
+	output << ".";
+	printInfo << output.str() << std::endl;
 }
 
 
@@ -72,6 +102,11 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
                                    const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
                                    const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
 {
+	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
+		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
+		return false;
+	}
+
 	_compset = compset;
 
 	_massBinCenters = massBinCenters;
@@ -276,7 +311,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 							continue;
 						}
 
-						if(idxWave != jdxWave && not _useCovariance) {
+						if(idxWave != jdxWave && _useCovariance != useFullCovarianceMatrix) {
 							continue;
 						}
 
@@ -284,10 +319,10 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 						const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
 
 						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = reducedCovMat(row - 2*idxSkip + 0, col - 2*jdxSkip + 0);
-						if(jdxWave != _idxAnchorWave) {
+						if(jdxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
 							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = reducedCovMat(row - 2*idxSkip + 0, col - 2*jdxSkip + 1);
 						}
-						if(idxWave != _idxAnchorWave) {
+						if(idxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
 							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = reducedCovMat(row - 2*idxSkip + 1, col - 2*jdxSkip + 0);
 						}
 						if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
@@ -416,7 +451,10 @@ rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix(const rpwa::massDepFit::pa
 					if(idxWave==jdxWave) {
 						dchi = norm(rhoDiff) / _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][0];
 					} else {
-						if(_useCovariance) {
+						if (_useCovariance == useDiagnalElementsOnly) {
+							dchi  = rhoDiff.real()*rhoDiff.real() / _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][0];
+							dchi += rhoDiff.imag()*rhoDiff.imag() / _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1];
+						} else if(_useCovariance == useComplexDiagnalElementsOnly) {
 							dchi  = rhoDiff.real()*rhoDiff.real() * _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1];
 							dchi -= rhoDiff.real()*rhoDiff.imag() * _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][1];
 							dchi -= rhoDiff.real()*rhoDiff.imag() * _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][0];
@@ -425,8 +463,8 @@ rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix(const rpwa::massDepFit::pa
 							dchi /= _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][0]*_spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1]
 							        - _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][1]*_spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][0];
 						} else {
-							dchi  = rhoDiff.real()*rhoDiff.real() / _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][0][0];
-							dchi += rhoDiff.imag()*rhoDiff.imag() / _spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1];
+							// this should have returned an error during the call to init()
+							assert(false);
 						}
 					}
 					chi2 += dchi;
