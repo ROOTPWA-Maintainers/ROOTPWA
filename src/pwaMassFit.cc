@@ -450,9 +450,7 @@ main(int    argc,
 	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
-	rpwa::massDepFit::model compset;
-	compset.useBranchings(doBranching);
-
+	rpwa::massDepFit::model compset(doBranching);
 	rpwa::massDepFit::likelihood L(doProdAmp, doCov);
 
 	libconfig::Config configFile;
