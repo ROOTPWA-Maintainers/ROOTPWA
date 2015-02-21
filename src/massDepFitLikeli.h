@@ -29,7 +29,7 @@ namespace rpwa {
 
 		public:
 
-			likelihood() {}
+			likelihood(const bool fitProductionAmplitudes, const bool useCovariance);
 			virtual ~likelihood() {}
 
 			virtual likelihood* Clone() const;
@@ -48,12 +48,6 @@ namespace rpwa {
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
 			          const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
-
-			bool fitProductionAmplitudes() const { return _fitProductionAmplitudes; }
-			void fitProductionAmplitudes(const bool val) { _fitProductionAmplitudes = val; }
-
-			bool useCovariance() const { return _useCovariance; }
-			void useCovariance(const bool val) { _useCovariance = val; }
 
 		private:
 
@@ -82,8 +76,8 @@ namespace rpwa {
 
 			size_t _idxAnchorWave;
 
-			bool _fitProductionAmplitudes;
-			bool _useCovariance;
+			const bool _fitProductionAmplitudes;
+			const bool _useCovariance;
 
 		};
 
