@@ -444,9 +444,7 @@ main(int    argc,
 	rpwa::massDepFit::model compset;
 	compset.useBranchings(doBranching);
 
-	rpwa::massDepFit::likelihood L;
-	L.fitProductionAmplitudes(doProdAmp);
-	L.useCovariance(doCov);
+	rpwa::massDepFit::likelihood L(doProdAmp, doCov);
 
 	libconfig::Config configFile;
 	if(not rpwa::parseLibConfigFile(configFileName, configFile, debug)) {

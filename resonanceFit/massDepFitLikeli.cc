@@ -5,6 +5,14 @@
 #include "reportingUtils.hpp"
 
 
+rpwa::massDepFit::likelihood::likelihood(const bool fitProductionAmplitudes,
+                                         const bool useCovariance)
+	: _fitProductionAmplitudes(fitProductionAmplitudes),
+	  _useCovariance(useCovariance)
+{
+}
+
+
 rpwa::massDepFit::likelihood*
 rpwa::massDepFit::likelihood::Clone() const
 {
