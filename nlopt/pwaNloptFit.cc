@@ -115,6 +115,7 @@ usage(const string& progName,
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
 	     << "        -t #       relative parameter tolerance (default: 0.001)" << endl
 	     << "        -m #       absolute likelihood tolerance (default: 0.001)" << endl
+	     << "        -C         use half-Cauchy priors (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -161,11 +162,12 @@ main(int    argc,
 	unsigned int rank                = 1;                      // rank of fit
 	double       minimizerTolerance  = 1e-4;                  // minimizer tolerance
 	double       likelihoodTolerance = 1e-6;                   // tolerance of likelihood function
+	bool         cauchy              = false;
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:qh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:C:qh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -216,6 +218,9 @@ main(int    argc,
 		case 'm':
 			likelihoodTolerance = atof(optarg);
 			break;
+		case 'C':
+			cauchy = true;
+			break;
 		case 'q':
 			quiet = true;
 			break;
@@ -252,6 +257,7 @@ main(int    argc,
 	     << "    rank of spin density matrix .................... "  << rank                    << endl
 	     << "    relative parameter tolerance.................... "  << minimizerTolerance << endl
 	     << "    absolute likelihood tolerance................... "  << likelihoodTolerance << endl
+	     << "    using half-Cauchy priors........................ "  << yesNo(cauchy) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -270,7 +276,8 @@ main(int    argc,
 	const double sqrtNmbEvts = sqrt((double)nmbEvts);
 	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 
-	L.setPriorType(L.HALF_CAUCHY);
+	if (cauchy)
+		L.setPriorType(L.HALF_CAUCHY);
 
 	printInfo << "using prior: ";
 	switch(L.priorType())
