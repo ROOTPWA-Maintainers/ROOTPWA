@@ -294,6 +294,9 @@ main(int    argc,
 		for(unsigned int i = 0; i < params.size(); ++i)
 		{
 			params[i] = random.Uniform(defaultStartValue, sqrtNmbEvts);
+			if(random.Rndm() > 0.5 and i > 0) {
+				params[i] *= -1.;
+			}
 			cout << "    setting parameter [" << setw(3) << i << "] = "
 			     << maxPrecisionAlign(params[i]) << endl;
 		}

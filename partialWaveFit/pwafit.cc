@@ -448,9 +448,12 @@ main(int    argc,
 				// get parameter value from fitResult
 				assert(startFitResult);
 				startVal = startFitResult->fitParameter(parName.c_str());
-			} else
-				startVal = (useFixedStartValues) ? defaultStartValue
-					: random.Uniform(defaultStartValue, sqrtNmbEvts);
+			} else {
+				startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+				if(random.Rndm() > 0.5 and i > 0) {
+					startVal *= -1.;
+				}
+			}
 			// check if parameter needs to be fixed because of threshold
 			if ((L.parThreshold(parIndex) == 0) or (L.parThreshold(parIndex) < massBinCenter)) {
 				if (startVal == 0) {
