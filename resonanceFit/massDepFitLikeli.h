@@ -1,14 +1,39 @@
-//-----------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2010-2012 Sebastian Neubert (TUM)
+//    Copyright 2014,2015 Sebastian Uhl (TUM)
+//
+//    This file is part of ROOTPWA
+//
+//    ROOTPWA is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    ROOTPWA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with ROOTPWA.  If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
 //
 // Description:
-//      mass dependent fit likelihood rank 1!
+//      likelihood for resonance fit
+//      - at the moment only rank 1 is handled
+//      - two different methods to fit are implemented
+//        * a fit to the spin-density matrix
+//        * a fit to the production amplitudes
+//      - several methods to take errors/the covariance matrix into account
+//        * single part of the complex number
+//        * covariance for a complex number
+//        * full covariance matrix while fitting to production amplitudes
 //
-//
-// Author List:
-//      Sebastian Neubert    TUM            (original author)
-//
-//
-//-----------------------------------------------------------
+//-------------------------------------------------------------------------
+
 
 #ifndef MASSDEPFITLIKELI_HH
 #define MASSDEPFITLIKELI_HH
