@@ -150,7 +150,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const = 0;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const = 0;
 
 			std::complex<double> getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
 			                                           const size_t idxChannel,
@@ -204,7 +205,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
@@ -228,7 +230,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
@@ -260,7 +263,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
@@ -289,7 +293,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
@@ -320,7 +325,8 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
