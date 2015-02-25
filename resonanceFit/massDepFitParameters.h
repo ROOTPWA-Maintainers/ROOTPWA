@@ -67,7 +67,7 @@ namespace rpwa {
 
 		private:
 
-			const bool _fixed;
+			const bool _fixedSize;
 
 			boost::multi_array<std::complex<double>, 2> _branchings;
 			boost::multi_array<std::complex<double>, 3> _couplings;
