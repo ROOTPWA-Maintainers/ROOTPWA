@@ -1,3 +1,38 @@
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2010-2012 Sebastian Neubert (TUM)
+//    Copyright 2014,2015 Sebastian Uhl (TUM)
+//
+//    This file is part of ROOTPWA
+//
+//    ROOTPWA is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    ROOTPWA is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with ROOTPWA.  If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+//
+// Description:
+//      master class of the resonance fit
+//      - take care of reading the configuration file and setting up the
+//        fit model including the components accordingly
+//      - take care of reading the fit results from the partial-wave fit
+//      - create plots of the final result
+//      - update the configuration file with the results from the resonance
+//        fit
+//
+//-------------------------------------------------------------------------
+
+
 #ifndef MASSDEPFIT_HH
 #define MASSDEPFIT_HH
 
