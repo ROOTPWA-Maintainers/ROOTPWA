@@ -371,7 +371,9 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::param
 	const channel& channelPhaseSpace = _channels[idxChannel];
 	const double phaseSpace = channelPhaseSpace.getPhaseSpace(idxBin, mass, idxMass);
 
-	return coupling * branching * phaseSpace;
+	const std::complex<double> couplingPhaseSpace = coupling * branching * phaseSpace;
+
+	return couplingPhaseSpace;
 }
 
 

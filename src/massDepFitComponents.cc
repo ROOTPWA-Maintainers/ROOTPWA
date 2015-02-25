@@ -589,7 +589,9 @@ rpwa::massDepFit::fixedWidthBreitWigner::val(const rpwa::massDepFit::parameters&
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
-	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
+
+	return component;
 }
 
 
@@ -790,7 +792,9 @@ rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameter
 	}
 	gamma *= gamma0 * m0/m;
 
-	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+
+	return component;
 }
 
 
@@ -1035,7 +1039,9 @@ rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::paramete
 	}
 	gamma *= gamma0 * m0/m;
 
-	return gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+
+	return component;
 }
 
 
@@ -1144,7 +1150,9 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 	}
 	const double q2 = rpwa::breakupMomentumSquared(mass, _m1, _m2);
 
-	return exp(-fitParameters.getParameter(getId(), 1)*q2);
+	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 1)*q2);
+
+	return component;
 }
 
 
@@ -1275,7 +1283,9 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
 
-	return std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1)) * exp(-(fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime)*q2);
+	const std::complex<double> component = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1)) * exp(-(fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime)*q2);
+
+	return component;
 }
 
 
