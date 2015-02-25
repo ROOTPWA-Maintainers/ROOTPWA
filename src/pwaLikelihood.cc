@@ -1239,21 +1239,34 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 	parIndices.clear();
 	prodAmpNames.clear();
 	unsigned int parIndex = 0;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			bool flipSign = false;
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				double re, im;
 				if (iWave < iRank)  // zero production amplitude
 					continue;
 				else if (iWave == iRank) {  // real production amplitude
 					parIndices.push_back(make_pair(parIndex, -1));
-					re = inPar[parIndex];
 					im = 0;
+					if (inPar[parIndex] >= 0) {
+						re = inPar[parIndex];
+					}
+					else {
+						re = -inPar[parIndex];
+						flipSign = true;
+					}
 					++parIndex;
 				} else {  // complex production amplitude
 					parIndices.push_back(make_pair(parIndex, parIndex + 1));
-					re = inPar[parIndex];
-					im = inPar[parIndex + 1];
+					if (flipSign) {
+						re = -inPar[parIndex];
+						im = -inPar[parIndex + 1];
+					}
+					else {
+						re = inPar[parIndex];
+						im = inPar[parIndex + 1];
+					}
 					parIndex += 2;
 				}
 				prodAmps.push_back(complex<double>(re, im));
@@ -1261,10 +1274,19 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 				prodAmpName << "V" << iRank << "_" << _waveNames[iRefl][iWave];
 				prodAmpNames.push_back(prodAmpName.str());
 			}
+		}
+	}
 	if (withFlat) {
-		prodAmps.push_back(complex<double>(inPar[parIndex], 0));
-		parIndices.push_back(make_pair(parIndex, -1));
-		prodAmpNames.push_back("V_flat");
+		if (inPar[parIndex] >= 0) {
+			prodAmps.push_back(complex<double>(inPar[parIndex], 0));
+			parIndices.push_back(make_pair(parIndex, -1));
+			prodAmpNames.push_back("V_flat");
+		}
+		else {
+			prodAmps.push_back(complex<double>(-inPar[parIndex], 0));
+			parIndices.push_back(make_pair(parIndex, -1));
+			prodAmpNames.push_back("V_flat");
+		}
 	}
 }
 
