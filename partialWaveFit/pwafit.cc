@@ -450,7 +450,7 @@ main(int    argc,
 				startVal = startFitResult->fitParameter(parName.c_str());
 			} else {
 				startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
-				if(random.Rndm() > 0.5 and i > 0) {
+				if(random.Rndm() > 0.5) {
 					startVal *= -1.;
 				}
 			}
