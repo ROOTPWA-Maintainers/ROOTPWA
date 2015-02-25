@@ -33,7 +33,7 @@
 
 
 rpwa::massDepFit::parameters::parameters()
-	: _fixed(false)
+	: _fixedSize(false)
 {
 }
 
@@ -42,7 +42,7 @@ rpwa::massDepFit::parameters::parameters(const size_t maxComponents,
                                          const size_t maxChannels,
                                          const size_t maxParameters,
                                          const size_t maxBins)
-	: _fixed(true),
+	: _fixedSize(true),
 	  _branchings(boost::extents[maxComponents][maxChannels]),
 	  _couplings(boost::extents[maxComponents][maxChannels][maxBins]),
 	  _parameters(boost::extents[maxComponents][maxParameters])
@@ -56,7 +56,7 @@ rpwa::massDepFit::parameters::resize(const size_t maxComponents,
                                      const size_t maxParameters,
                                      const size_t maxBins)
 {
-	if (_fixed) {
+	if (_fixedSize) {
 		printErr << "cannot resize 'parameters' object that has been initialized with a size." << std::endl;
 		throw;
 	}
