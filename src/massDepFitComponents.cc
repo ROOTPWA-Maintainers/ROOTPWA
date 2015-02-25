@@ -583,7 +583,8 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 std::complex<double>
 rpwa::massDepFit::fixedWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
                                              const size_t idxBin,
-                                             const double m) const
+                                             const double m,
+                                             const size_t idxMass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
@@ -757,7 +758,8 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 std::complex<double>
 rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
                                                const size_t idxBin,
-                                               const double m) const
+                                               const double m,
+                                               const size_t idxMass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
@@ -1013,7 +1015,8 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 std::complex<double>
 rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
                                                 const size_t idxBin,
-                                                const double m) const
+                                                const double m,
+                                                const size_t idxMass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
@@ -1129,7 +1132,8 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 std::complex<double>
 rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters& fitParameters,
                                              const size_t idxBin,
-                                             const double m) const
+                                             const double m,
+                                             const size_t idxMass) const
 {
 	// shift baseline mass
 	const double mass = m - fitParameters.getParameter(getId(), 0);
@@ -1259,7 +1263,8 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 std::complex<double>
 rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::parameters& fitParameters,
                                                  const size_t idxBin,
-                                                 const double m) const
+                                                 const double m,
+                                                 const size_t idxMass) const
 {
 	// calculate breakup momentum
 	if(m < _m1+_m2) {
