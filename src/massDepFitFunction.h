@@ -22,7 +22,7 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      likelihood for resonance fit
+//      function to minimize for the resonance fit
 //      - at the moment only rank 1 is handled
 //      - two different methods to fit are implemented
 //        * a fit to the spin-density matrix
@@ -35,8 +35,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITLIKELI_HH
-#define MASSDEPFITLIKELI_HH
+#ifndef MASSDEPFITFUNCTION_HH
+#define MASSDEPFITFUNCTION_HH
 
 #include <boost/multi_array.hpp>
 
@@ -51,7 +51,7 @@ namespace rpwa {
 		class model;
 		class parameters;
 
-		class likelihood : public ROOT::Math::IBaseFunctionMultiDim {
+		class function : public ROOT::Math::IBaseFunctionMultiDim {
 
 		public:
 
@@ -62,11 +62,11 @@ namespace rpwa {
 				useCovarianceMatrixDefault
 			};
 
-			likelihood(const bool fitProductionAmplitudes,
-			           const rpwa::massDepFit::likelihood::useCovarianceMatrix useCovariance);
-			virtual ~likelihood() {}
+			function(const bool fitProductionAmplitudes,
+			         const rpwa::massDepFit::function::useCovarianceMatrix useCovariance);
+			virtual ~function() {}
 
-			virtual likelihood* Clone() const;
+			virtual rpwa::massDepFit::function* Clone() const;
 
 			virtual unsigned int NDim() const;
 
@@ -114,7 +114,7 @@ namespace rpwa {
 			size_t _idxAnchorWave;
 
 			const bool _fitProductionAmplitudes;
-			rpwa::massDepFit::likelihood::useCovarianceMatrix _useCovariance;
+			rpwa::massDepFit::function::useCovarianceMatrix _useCovariance;
 
 		};
 

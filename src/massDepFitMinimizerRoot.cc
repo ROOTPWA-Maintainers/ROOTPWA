@@ -38,7 +38,7 @@
 #include "massDepFitCache.h"
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
-#include "massDepFitLikeli.h"
+#include "massDepFitFunction.h"
 #include "massDepFitModel.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
@@ -49,7 +49,7 @@ const unsigned int rpwa::massDepFit::minimizerRoot::maxNmbOfFunctionCalls = 2000
 const bool         rpwa::massDepFit::minimizerRoot::runHesse              = true;
 
 
-rpwa::massDepFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::massDepFit::likelihood& fitFunction)
+rpwa::massDepFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::massDepFit::function& fitFunction)
 	: _fitFunction(fitFunction)
 {
 }
@@ -77,7 +77,7 @@ rpwa::massDepFit::minimizerRoot::functionAdaptor::DoEval(const double* par) cons
 
 
 rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fitModel,
-                                               const rpwa::massDepFit::likelihood& fitFunction,
+                                               const rpwa::massDepFit::function& fitFunction,
                                                const std::vector<std::string>& freeParameters,
                                                const std::string minimizerType[],
                                                const int minimizerStrategy,

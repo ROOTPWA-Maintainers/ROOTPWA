@@ -55,7 +55,7 @@ namespace rpwa {
 	namespace massDepFit {
 
 		class cache;
-		class likelihood;
+		class function;
 		class model;
 		class parameters;
 
@@ -74,7 +74,7 @@ namespace rpwa {
 
 			bool init(rpwa::massDepFit::model& fitModel,
 			          rpwa::massDepFit::parameters& fitParameters,
-			          rpwa::massDepFit::likelihood& L);
+			          rpwa::massDepFit::function& fitFunction);
 
 			bool updateConfig(libconfig::Setting* configRoot,
 			                  const rpwa::massDepFit::model& fitModel,

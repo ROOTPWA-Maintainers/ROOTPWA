@@ -38,7 +38,7 @@
 #include "massDepFitCache.h"
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
-#include "massDepFitLikeli.h"
+#include "massDepFitFunction.h"
 #include "massDepFitMinimizerRoot.h"
 #include "massDepFitModel.h"
 #include "massDepFitParameters.h"
@@ -116,7 +116,7 @@ main(int    argc,
 	bool              debug              = false;
 	bool              quiet              = false;
 
-	rpwa::massDepFit::likelihood::useCovarianceMatrix doCov = rpwa::massDepFit::likelihood::useCovarianceMatrixDefault;
+	rpwa::massDepFit::function::useCovarianceMatrix doCov = rpwa::massDepFit::function::useCovarianceMatrixDefault;
 
 	extern char* optarg;
 	extern int   optind;
@@ -153,9 +153,9 @@ main(int    argc,
 		case 'C':
 			{
 				int cov = atoi(optarg);
-				if      (cov == 1) { doCov = rpwa::massDepFit::likelihood::useDiagnalElementsOnly;        }
-				else if (cov == 2) { doCov = rpwa::massDepFit::likelihood::useComplexDiagnalElementsOnly; }
-				else if (cov == 3) { doCov = rpwa::massDepFit::likelihood::useFullCovarianceMatrix;       }
+				if      (cov == 1) { doCov = rpwa::massDepFit::function::useDiagnalElementsOnly;        }
+				else if (cov == 2) { doCov = rpwa::massDepFit::function::useComplexDiagnalElementsOnly; }
+				else if (cov == 3) { doCov = rpwa::massDepFit::function::useFullCovarianceMatrix;       }
 				else               { usage(progName, 1); }
 			}
 			break;
@@ -198,7 +198,7 @@ main(int    argc,
 	mdepFit.setDebug(debug);
 
 	rpwa::massDepFit::model compset(doBranching);
-	rpwa::massDepFit::likelihood L(doProdAmp, doCov);
+	rpwa::massDepFit::function fitFunction(doProdAmp, doCov);
 
 	libconfig::Config configFile;
 	if(not rpwa::parseLibConfigFile(configFileName, configFile, debug)) {
@@ -214,8 +214,8 @@ main(int    argc,
 		return 1;
 	}
 
-	// set-up fit model and likelihood
-	if(not mdepFit.init(compset, fitParameters, L)) {
+	// set-up fit model and fit function
+	if(not mdepFit.init(compset, fitParameters, fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -229,10 +229,10 @@ main(int    argc,
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
-		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(L.DoEval(fitParameters, cache)) << std::endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction.DoEval(fitParameters, cache)) << std::endl;
 	} else {
 		rpwa::massDepFit::minimizerRoot minimizer(compset,
-		                                          L,
+		                                          fitFunction,
 		                                          mdepFit.getFreeParameters(),
 		                                          minimizerType,
 		                                          minimizerStrategy,
@@ -255,13 +255,13 @@ main(int    argc,
 
 		double chi2 = 0.;
 		if(success) {
-			chi2 = L.DoEval(fitParameters, cache);
+			chi2 = fitFunction.DoEval(fitParameters, cache);
 		} else {
-			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(L.DoEval(fitParameters, cache)) << std::endl;
+			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(fitFunction.DoEval(fitParameters, cache)) << std::endl;
 		}
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
-		const unsigned int nrDataPoints = L.NDataPoints();
+		const unsigned int nrDataPoints = fitFunction.NDataPoints();
 		const unsigned int nrFree = minimizer.NFree();
 		const unsigned int ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
