@@ -44,13 +44,16 @@ namespace rpwa {
 
 			cache(const size_t maxWaves,
 			      const size_t maxComponents,
+			      const size_t maxChannels,
 			      const size_t maxBins,
 			      const size_t maxMassBins);
 			virtual ~cache() {}
 
+			std::complex<double> getCoupling(const size_t idxComponent, const size_t idxChannel, const size_t idxBin, const size_t idxMassBin) const { return _couplings[idxComponent][idxChannel][idxBin][idxMassBin]; }
 			std::complex<double> getComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin) const { return _components[idxComponent][idxBin][idxMassBin]; }
 			std::complex<double> getProdAmp(const size_t idxWave, const size_t idxBin, const size_t idxMassBin) const { return _prodAmps[idxWave][idxBin][idxMassBin]; }
 
+			void setCoupling(const size_t idxComponent, const size_t idxChannel, const size_t idxBin, const size_t idxMassBin, const std::complex<double> coupling);
 			void setComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin, const std::complex<double> component);
 			void setProdAmp(const size_t idxWave, const size_t idxBin, const size_t idxMassBin, const std::complex<double> prodAmp);
 
@@ -58,6 +61,7 @@ namespace rpwa {
 
 		private:
 
+			boost::multi_array<std::complex<double>, 4> _couplings;
 			boost::multi_array<std::complex<double>, 3> _components;
 			boost::multi_array<std::complex<double>, 3> _prodAmps;
 

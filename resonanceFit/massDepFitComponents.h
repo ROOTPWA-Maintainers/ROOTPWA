@@ -162,6 +162,7 @@ namespace rpwa {
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const = 0;
 
 			std::complex<double> getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
+			                                           rpwa::massDepFit::cache& cache,
 			                                           const size_t idxChannel,
 			                                           const size_t idxBin,
 			                                           const double mass,
@@ -374,11 +375,19 @@ rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
 inline
 std::complex<double>
 rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
+                                                   rpwa::massDepFit::cache& cache,
                                                    const size_t idxChannel,
                                                    const size_t idxBin,
                                                    const double mass,
                                                    const size_t idxMass) const
 {
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		const std::complex<double> couplingPhaseSpace = cache.getCoupling(_id, idxChannel, idxBin, idxMass);
+		if (couplingPhaseSpace != 0.) {
+			return couplingPhaseSpace;
+		}
+	}
+
 	const std::complex<double> coupling = fitParameters.getCoupling(_id, _channelsCoupling[idxChannel], idxBin);
 	const std::complex<double> branching = fitParameters.getBranching(_id, _channelsBranching[idxChannel]);
 
@@ -386,6 +395,10 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::param
 	const double phaseSpace = channelPhaseSpace.getPhaseSpace(idxBin, mass, idxMass);
 
 	const std::complex<double> couplingPhaseSpace = coupling * branching * phaseSpace;
+
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		cache.setCoupling(_id, idxChannel, idxBin, idxMass, couplingPhaseSpace);
+	}
 
 	return couplingPhaseSpace;
 }
