@@ -22,12 +22,12 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      implementation of likelihood for resonance fit
+//      implementation of function to minimize for the resonance fit
 //
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitLikeli.h"
+#include "massDepFitFunction.h"
 
 #include "massDepFitCache.h"
 #include "massDepFitModel.h"
@@ -35,8 +35,8 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::likelihood::likelihood(const bool fitProductionAmplitudes,
-                                         const rpwa::massDepFit::likelihood::useCovarianceMatrix useCovariance)
+rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
+                                     const rpwa::massDepFit::function::useCovarianceMatrix useCovariance)
 	: _fitProductionAmplitudes(fitProductionAmplitudes),
 	  _useCovariance(useCovariance)
 {
@@ -52,7 +52,7 @@ rpwa::massDepFit::likelihood::likelihood(const bool fitProductionAmplitudes,
 	assert(_useCovariance != useCovarianceMatrixDefault);
 
 	std::ostringstream output;
-	output << "created 'likelihood' object for a fit to the ";
+	output << "created 'function' object for a fit to the ";
 	if (fitProductionAmplitudes) {
 		output << "production amplitudes";
 	} else {
@@ -73,22 +73,22 @@ rpwa::massDepFit::likelihood::likelihood(const bool fitProductionAmplitudes,
 }
 
 
-rpwa::massDepFit::likelihood*
-rpwa::massDepFit::likelihood::Clone() const
+rpwa::massDepFit::function*
+rpwa::massDepFit::function::Clone() const
 {
-	return new likelihood(*this);
+	return new rpwa::massDepFit::function(*this);
 }
 
 
 unsigned int
-rpwa::massDepFit::likelihood::NDim() const
+rpwa::massDepFit::function::NDim() const
 {
 	return _compset->getNrParameters();
 }
 
 
 unsigned int
-rpwa::massDepFit::likelihood::NDataPoints() const
+rpwa::massDepFit::function::NDataPoints() const
 {
 	unsigned int nrPts(0);
 
@@ -124,13 +124,13 @@ rpwa::massDepFit::likelihood::NDataPoints() const
 
 
 bool
-rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
-                                   const std::vector<double>& massBinCenters,
-                                   const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-                                   const boost::multi_array<double, 6>& productionAmplitudesCovariance,
-                                   const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
-                                   const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
-                                   const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
+rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
+                                 const std::vector<double>& massBinCenters,
+                                 const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+                                 const boost::multi_array<double, 6>& productionAmplitudesCovariance,
+                                 const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+                                 const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
+                                 const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
 {
 	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
 		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
@@ -379,7 +379,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 
 
 double
-rpwa::massDepFit::likelihood::DoEval(const double* par) const
+rpwa::massDepFit::function::DoEval(const double* par) const
 {
 #if __cplusplus >= 201103L
 	// in C++11 we can use a static variable per thread so that the
@@ -414,8 +414,8 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const
 
 
 double
-rpwa::massDepFit::likelihood::DoEval(const rpwa::massDepFit::parameters& fitParameters,
-                                     rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::DoEval(const rpwa::massDepFit::parameters& fitParameters,
+                                   rpwa::massDepFit::cache& cache) const
 {
 	if(_fitProductionAmplitudes) {
 		return DoEvalProductionAmplitudes(fitParameters, cache);
@@ -426,8 +426,8 @@ rpwa::massDepFit::likelihood::DoEval(const rpwa::massDepFit::parameters& fitPara
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
-                                                         rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
+                                                       rpwa::massDepFit::cache& cache) const
 {
 	double chi2=0;
 
@@ -476,8 +476,8 @@ rpwa::massDepFit::likelihood::DoEvalProductionAmplitudes(const rpwa::massDepFit:
 
 
 double
-rpwa::massDepFit::likelihood::DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-                                                      rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+                                                    rpwa::massDepFit::cache& cache) const
 {
 	double chi2=0;
 

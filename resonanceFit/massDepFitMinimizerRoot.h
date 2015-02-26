@@ -46,7 +46,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class likelihood;
+		class function;
 		class model;
 
 		class minimizerRoot : public rpwa::massDepFit::minimizer {
@@ -57,7 +57,7 @@ namespace rpwa {
 
 			public:
 
-				functionAdaptor(const rpwa::massDepFit::likelihood& fitFunction);
+				functionAdaptor(const rpwa::massDepFit::function& fitFunction);
 				virtual ~functionAdaptor() {}
 
 				virtual rpwa::massDepFit::minimizerRoot::functionAdaptor* Clone() const;
@@ -68,14 +68,14 @@ namespace rpwa {
 
 			private:
 
-				const rpwa::massDepFit::likelihood& _fitFunction;
+				const rpwa::massDepFit::function& _fitFunction;
 
 			};
 
 		public:
 
 			minimizerRoot(const rpwa::massDepFit::model& fitModel,
-			              const rpwa::massDepFit::likelihood& fitFunction,
+			              const rpwa::massDepFit::function& fitFunction,
 			              const std::vector<std::string>& freeParameters,
 			              const std::string minimizerType[],
 			              const int minimizerStrategy,

@@ -60,7 +60,7 @@
 #include "libConfigUtils.hpp"
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
-#include "massDepFitLikeli.h"
+#include "massDepFitFunction.h"
 #include "massDepFitModel.h"
 #include "reportingUtils.hpp"
 
@@ -586,7 +586,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
 bool
 rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
                                    rpwa::massDepFit::parameters& fitParameters,
-                                   rpwa::massDepFit::likelihood& L)
+                                   rpwa::massDepFit::function& fitFunction)
 {
 	if(not fitModel.init(_waveNames,
 	                     _anchorWaveName,
@@ -595,14 +595,14 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 		return false;
 	}
 
-	if(not L.init(&fitModel,
-	              _massBinCenters,
-	              _inProductionAmplitudes,
-	              _inProductionAmplitudesCovariance,
-	              _inSpinDensityMatrices,
-	              _inSpinDensityCovarianceMatrices,
-	              _wavePairMassBinLimits)) {
-		printErr << "error while initializing the likelihood calculator." << std::endl;
+	if(not fitFunction.init(&fitModel,
+	                        _massBinCenters,
+	                        _inProductionAmplitudes,
+	                        _inProductionAmplitudesCovariance,
+	                        _inSpinDensityMatrices,
+	                        _inSpinDensityCovarianceMatrices,
+	                        _wavePairMassBinLimits)) {
+		printErr << "error while initializing the function to minimize." << std::endl;
 		return false;
 	}
 
