@@ -1740,7 +1740,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxChannel = compChannel[idxComponents].second;
 
 			std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, _massBinCenters[idxMass], idxMass);
-			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
+			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
 			if(fitModel.getFsmd() != NULL) {
 				prodAmp *= fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass);
 			}
