@@ -59,6 +59,7 @@ set(SOURCES
 	massDepFitComponents.cc
 	massDepFitFsmd.cc
 	massDepFitLikeli.cc
+	massDepFitMinimizerRoot.cc
 	massDepFitModel.cc
 	massDepFitParameters.cc
 	parameterSpace.cc
