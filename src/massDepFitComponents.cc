@@ -506,12 +506,15 @@ rpwa::massDepFit::component::importBranchings(const double* par,
                                               rpwa::massDepFit::parameters& fitParameters)
 {
 	// branching with idx 0 is always real and fixed to 1
-	fitParameters.setBranching(getId(), 0, std::complex<double>(1., 0.));
+	std::complex<double> branching(1., 0.);
+	fitParameters.setBranching(getId(), 0, branching);
 
 	size_t counter=0;
 	for(size_t idxBranching=1; idxBranching<_nrBranchings; ++idxBranching) {
-		fitParameters.setBranching(getId(), idxBranching, std::complex<double>(par[counter], par[counter+1]));
+		branching = std::complex<double>(par[counter], par[counter+1]);
 		counter += 2;
+
+		fitParameters.setBranching(getId(), idxBranching, branching);
 	}
 
 	return counter;
