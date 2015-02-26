@@ -61,13 +61,15 @@ namespace rpwa {
 
 		public:
 
-			channel(const std::string& waveName,
+			channel(const size_t waveIdx,
+			        const std::string& waveName,
 			        const size_t nrBins,
 			        const std::vector<double>& massBinCenters,
 			        const boost::multi_array<double, 2>& phaseSpace);
 			channel(const rpwa::massDepFit::channel& ch);
 			~channel();
 
+			const size_t getWaveIdx() const { return _waveIdx; }
 			const std::string& getWaveName() const { return _waveName; }
 
 			bool isAnchor() const { return _anchor; }
@@ -81,7 +83,8 @@ namespace rpwa {
 
 		private:
 
-			std::string _waveName;
+			const size_t _waveIdx;
+			const std::string _waveName;
 
 			bool _anchor;
 

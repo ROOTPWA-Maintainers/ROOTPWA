@@ -38,11 +38,13 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::channel::channel(const std::string& waveName,
+rpwa::massDepFit::channel::channel(const size_t waveIdx,
+                                   const std::string& waveName,
                                    const size_t nrBins,
                                    const std::vector<double>& massBinCenters,
                                    const boost::multi_array<double, 2>& phaseSpace)
-	: _waveName(waveName),
+	: _waveIdx(waveIdx),
+	  _waveName(waveName),
 	  _anchor(false),
 	  _nrBins(nrBins),
 	  _massBinCenters(massBinCenters),
@@ -57,7 +59,8 @@ rpwa::massDepFit::channel::channel(const std::string& waveName,
 
 
 rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
-	: _waveName(ch._waveName),
+	: _waveIdx(ch._waveIdx),
+	  _waveName(ch._waveName),
 	  _anchor(ch._anchor),
 	  _nrBins(ch._nrBins),
 	  _massBinCenters(ch._massBinCenters),
@@ -326,7 +329,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
-		_channels.push_back(rpwa::massDepFit::channel(waveName, nrBins, massBinCenters, view));
+		_channels.push_back(rpwa::massDepFit::channel(it->second, waveName, nrBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
 	}
