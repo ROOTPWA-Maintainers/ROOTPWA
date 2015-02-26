@@ -483,18 +483,17 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 	size_t counter=0;
 	for(size_t idxCoupling=0; idxCoupling<_nrCouplings; ++idxCoupling) {
 		rpwa::massDepFit::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
-		if(channel.isAnchor()) {
-			const size_t nrBins = channel.getNrBins();
-			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				fitParameters.setCoupling(getId(), idxCoupling, idxBin, std::complex<double>(par[counter], 0.));
+		const size_t nrBins = channel.getNrBins();
+		for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+			std::complex<double> coupling;
+			if(channel.isAnchor()) {
+				coupling = std::complex<double>(par[counter], 0.);
 				counter += 1;
-			}
-		} else {
-			const size_t nrBins = channel.getNrBins();
-			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				fitParameters.setCoupling(getId(), idxCoupling, idxBin, std::complex<double>(par[counter], par[counter+1]));
+			} else {
+				coupling = std::complex<double>(par[counter], par[counter+1]);
 				counter += 2;
 			}
+			fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);
 		}
 	}
 
