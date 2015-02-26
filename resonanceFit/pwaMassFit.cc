@@ -470,6 +470,7 @@ main(int    argc,
 	}
 
 	rpwa::massDepFit::cache cache(mdepFit.getNrWaves(),
+	                              compset.getNrComponents()+1,           // nr components + final-state mass-dependence
 	                              mdepFit.getNrBins(),
 	                              mdepFit.getNrMassBins());
 

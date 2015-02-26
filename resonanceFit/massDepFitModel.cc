@@ -266,7 +266,7 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _components[idxComponent]->val(fitParameters, idxBin, mass, idxMass) * _components[idxComponent]->getCouplingPhaseSpace(fitParameters, idxChannel, idxBin, mass, idxMass);
+		prodAmp += _components[idxComponent]->val(fitParameters, cache, idxBin, mass, idxMass) * _components[idxComponent]->getCouplingPhaseSpace(fitParameters, idxChannel, idxBin, mass, idxMass);
 	}
 
 	if(_fsmd != NULL) {
