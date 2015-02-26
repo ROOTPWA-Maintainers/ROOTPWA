@@ -1609,7 +1609,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			++point;
 			const double mass = _massBinCenters[idxMass];
 
-			graph.SetPoint(point, mass, pow(fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass), 2.));
+			graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, _massBinCenters[idxMass], idxMass)));
 		}
 
 		outFile->cd();
@@ -1719,7 +1719,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 		double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
 		if(fitModel.getFsmd() != NULL) {
-			ps *= pow(fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass), 2);
+			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, _massBinCenters[idxMass], idxMass));
 		}
 		phaseSpace->SetPoint(point, mass, ps);
 		maxP = std::max(maxP, ps);
@@ -1742,7 +1742,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, _massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, _massBinCenters[idxMass], idxMass);
 			if(fitModel.getFsmd() != NULL) {
-				prodAmp *= fitModel.getFsmd()->val(fitParameters, _massBinCenters[idxMass], idxMass);
+				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, _massBinCenters[idxMass], idxMass);
 			}
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));

@@ -37,6 +37,7 @@
 #include <TFormula.h>
 
 #include "libConfigUtils.hpp"
+#include "massDepFitCache.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
 
@@ -44,7 +45,6 @@
 rpwa::massDepFit::fsmd::fsmd(const size_t id)
 	: _id(id),
 	  _function(NULL),
-	  _functionFixed(false),
 	  _nrParameters(0)
 {
 }
@@ -140,8 +140,6 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		return false;
 	}
 
-	_functionFixed = true;
-
 	_nrParameters = _function->GetNpar();
 
 	_parametersFixed.resize(_nrParameters);
@@ -161,23 +159,6 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		_parametersLimitUpper[idxParameter] = configFsmdUpper[idxParameter];
 		_parametersLimitedUpper[idxParameter] = true;
 		_parametersStep[idxParameter] = 0.0001;
-
-		if(not _parametersFixed[idxParameter]) {
-			_functionFixed = false;
-		}
-	}
-
-	// if this is final-state mass-dependence with no parameters at all, or
-	// with all parameters fixed, pre-calculate the value for each mass bin
-	_values.clear();
-	if(_functionFixed) {
-		const size_t nrMassBins = massBinCenters.size();
-
-		_values.resize(nrMassBins);
-
-		for(size_t idxMassBin=0; idxMassBin<nrMassBins; ++idxMassBin) {
-			_values[idxMassBin] = val(fitParameters, massBinCenters[idxMassBin], std::numeric_limits<size_t>::max());
-		}
 	}
 
 	if(debug) {
@@ -226,30 +207,50 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 
 size_t
 rpwa::massDepFit::fsmd::importParameters(const double* par,
-                                         rpwa::massDepFit::parameters& fitParameters)
+                                         rpwa::massDepFit::parameters& fitParameters,
+                                         rpwa::massDepFit::cache& cache)
 {
+	bool invalidateCache = false;
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		fitParameters.setParameter(_id, idxParameter, par[idxParameter]);
+		if (fitParameters.getParameter(_id, idxParameter) != par[idxParameter]) {
+			fitParameters.setParameter(_id, idxParameter, par[idxParameter]);
+			invalidateCache = true;
+		}
+	}
+
+	if (invalidateCache) {
+		cache.setComponent(_id, 0, std::numeric_limits<size_t>::max(), 0.);
+		cache.setProdAmp(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 	}
 
 	return _nrParameters;
 }
 
 
-double
+std::complex<double>
 rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
+                            rpwa::massDepFit::cache& cache,
                             const double mass,
                             const size_t idxMass) const
 {
-	if(_functionFixed && idxMass != std::numeric_limits<size_t>::max()) {
-		return _values[idxMass];
-	}
-
 	if(not _function) {
 		return 1.;
 	}
 
-	return _function->EvalPar(&mass, fitParameters.getParameters(_id));
+	if(idxMass != std::numeric_limits<size_t>::max()) {
+		const std::complex<double> fsmd = cache.getComponent(_id, 0, idxMass);
+		if (fsmd != 0.) {
+			return fsmd;
+		}
+	}
+
+	const std::complex<double> fsmd = _function->EvalPar(&mass, fitParameters.getParameters(_id));
+
+	if(idxMass != std::numeric_limits<size_t>::max()) {
+		cache.setComponent(_id, 0, idxMass, fsmd);
+	}
+
+	return fsmd;
 }
 
 
