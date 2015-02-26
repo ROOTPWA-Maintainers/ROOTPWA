@@ -70,13 +70,12 @@ rpwa::massDepFit::parameters::resize(const size_t maxComponents,
 	// two, but for simplicity's sake that's the way it is)
 	assert(branchingsSize[0] == couplingsSize[0]);
 	assert(branchingsSize[0] == parametersSize[0]);
-	assert(couplingsSize[0] == parametersSize[0]);
 
 	// check that the same number of channels is present
 	assert(branchingsSize[1] == couplingsSize[1]);
 
-	const size_t newComponents = std::max(maxComponents, couplingsSize[0]);
-	const size_t newChannels   = std::max(maxChannels,   couplingsSize[1]);
+	const size_t newComponents = std::max(maxComponents, branchingsSize[0]);
+	const size_t newChannels   = std::max(maxChannels,   branchingsSize[1]);
 	const size_t newParameters = std::max(maxParameters, parametersSize[1]);
 	const size_t newBins       = std::max(maxBins,       couplingsSize[2]);
 
@@ -89,9 +88,19 @@ rpwa::massDepFit::parameters::resize(const size_t maxComponents,
 std::ostream&
 rpwa::massDepFit::parameters::print(std::ostream& out) const
 {
-	out << "branchings: " << *(_branchings.shape()) << " components, " << *(_branchings.shape()+1) << " channels" << std::endl;
-	out << "couplings: " << *(_couplings.shape()) << " components, " << *(_couplings.shape()+1) << " channels, " << *(_couplings.shape()+2) << " bins" << std::endl;
-	out << "parameters: " << *(_parameters.shape()) << " components, " << *(_parameters.shape()+1) << " parameters" << std::endl;
+	out << "branchings: "
+	    << *(_branchings.shape()) << " components, "
+	    << *(_branchings.shape()+1) << " channels"
+	    << std::endl;
+	out << "couplings: "
+	    << *(_couplings.shape()) << " components, "
+	    << *(_couplings.shape()+1) << " channels, "
+	    << *(_couplings.shape()+2) << " bins"
+	    << std::endl;
+	out << "parameters: "
+	    << *(_parameters.shape()) << " components, "
+	    << *(_parameters.shape()+1) << " parameters"
+	    << std::endl;
 
 	return out;
 }
