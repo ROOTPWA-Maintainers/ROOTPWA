@@ -31,6 +31,7 @@
 #ifndef MASSDEPFITFSMD_HH
 #define MASSDEPFITFSMD_HH
 
+#include <complex>
 #include <iostream>
 #include <limits>
 #include <vector>
@@ -49,6 +50,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class cache;
 		class parameters;
 
 		class fsmd {
@@ -70,7 +72,8 @@ namespace rpwa {
 
 			size_t getNrParameters() const { return _nrParameters; }
 			size_t importParameters(const double* par,
-			                        rpwa::massDepFit::parameters& fitParameters);
+			                        rpwa::massDepFit::parameters& fitParameters,
+			                        rpwa::massDepFit::cache& cache);
 
 			bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
 			double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
@@ -79,9 +82,10 @@ namespace rpwa {
 			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
 			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
-			double val(const rpwa::massDepFit::parameters& fitParameters,
-			           const double mass,
-			           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                         rpwa::massDepFit::cache& cache,
+			                         const double mass,
+			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			std::ostream& print(std::ostream& out = std::cout) const;
 
@@ -90,8 +94,6 @@ namespace rpwa {
 			const size_t _id;
 
 			TFormula* _function;
-
-			bool _functionFixed;
 
 			size_t _nrParameters;
 
@@ -102,8 +104,6 @@ namespace rpwa {
 			std::vector<bool> _parametersLimitedUpper;
 			std::vector<std::string> _parametersName;
 			std::vector<double> _parametersStep;
-
-			std::vector<double> _values;
 		};
 
 	} // end namespace massDepFit

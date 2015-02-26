@@ -100,11 +100,35 @@ rpwa::massDepFit::cache::setProdAmp(const size_t idxWave,
                                     const size_t idxMassBin,
                                     const std::complex<double> prodAmp)
 {
-	if (idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
+	if (idxWave == std::numeric_limits<size_t>::max() && idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_prodAmps.shape()) ; ++idx) {
+			for (size_t jdx=0; jdx<*(_prodAmps.shape()+1) ; ++jdx) {
+				for (size_t kdx=0; kdx<*(_prodAmps.shape()+2) ; ++kdx) {
+					_prodAmps[idx][jdx][kdx] = prodAmp;
+				}
+			}
+		}
+	} else if (idxWave == std::numeric_limits<size_t>::max() && idxBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_prodAmps.shape()) ; ++idx) {
+			for (size_t jdx=0; jdx<*(_prodAmps.shape()+1) ; ++jdx) {
+				_prodAmps[idx][jdx][idxMassBin] = prodAmp;
+			}
+		}
+	} else if (idxWave == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_prodAmps.shape()) ; ++idx) {
+			for (size_t jdx=0; jdx<*(_prodAmps.shape()+2) ; ++jdx) {
+				_prodAmps[idx][idxBin][jdx] = prodAmp;
+			}
+		}
+	} else if (idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
 		for (size_t idx=0; idx<*(_prodAmps.shape()+1) ; ++idx) {
 			for (size_t jdx=0; jdx<*(_prodAmps.shape()+2) ; ++jdx) {
 				_prodAmps[idxWave][idx][jdx] = prodAmp;
 			}
+		}
+	} else if (idxWave == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_prodAmps.shape()) ; ++idx) {
+			_prodAmps[idx][idxBin][idxMassBin] = prodAmp;
 		}
 	} else if (idxBin == std::numeric_limits<size_t>::max()) {
 		for (size_t idx=0; idx<*(_prodAmps.shape()+1) ; ++idx) {

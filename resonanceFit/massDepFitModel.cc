@@ -235,7 +235,7 @@ rpwa::massDepFit::model::importParameters(const double* par,
 
 	// final-state mass-dependence
 	if(_fsmd != NULL) {
-		parcount += _fsmd->importParameters(&par[parcount], parameters);
+		parcount += _fsmd->importParameters(&par[parcount], parameters, cache);
 	}
 }
 
@@ -270,7 +270,7 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 	}
 
 	if(_fsmd != NULL) {
-		prodAmp *= _fsmd->val(fitParameters, mass, idxMass);
+		prodAmp *= _fsmd->val(fitParameters, cache, mass, idxMass);
 	}
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
