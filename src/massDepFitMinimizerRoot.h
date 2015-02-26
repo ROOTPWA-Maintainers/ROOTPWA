@@ -87,7 +87,7 @@ namespace rpwa {
 
 			bool minimize(rpwa::massDepFit::parameters& fitParameters,
 			              rpwa::massDepFit::parameters& fitParametersError,
-			              rpwa::massDepFit::cache& cache) const;
+			              rpwa::massDepFit::cache& cache);
 
 		private:
 
