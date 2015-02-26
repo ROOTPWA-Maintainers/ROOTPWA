@@ -27,11 +27,6 @@
 //-------------------------------------------------------------------------
 
 
-#include <boost/tokenizer.hpp>
-
-#include <Math/Minimizer.h>
-#include <Math/Factory.h>
-#include <Minuit2/Minuit2Minimizer.h>
 #include <TFile.h>
 #include <TROOT.h>
 #include <TStopwatch.h>
@@ -44,6 +39,7 @@
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
 #include "massDepFitLikeli.h"
+#include "massDepFitMinimizerRoot.h"
 #include "massDepFitModel.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
@@ -88,247 +84,6 @@ usage(const std::string& progName,
 }
 
 
-// changes status of variables (fixed/released)
-// * couplings are always free
-// * additional parameters can be freed with freeParameters
-// * branchings also have to be freed explicitely
-// * fixed values from config remain fixed
-bool
-releasePars(ROOT::Math::Minimizer* minimizer,
-            const rpwa::massDepFit::model& compset,
-            const rpwa::massDepFit::parameters& fitParameters,
-            const std::string& freeParameters)
-{
-	// tokenize freeParameters string (default deparators also include '*')
-	boost::char_separator<char> separators(" ,\t\n");
-	boost::tokenizer<boost::char_separator<char> > tokenizeFreeParameters(freeParameters, separators);
-
-	// reset minimizer
-	minimizer->Clear();
-
-	size_t parcount=0;
-	// first add all couplings
-	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-		for(size_t idxChannel=0; idxChannel<comp->getNrChannels(); ++idxChannel) {
-			// if branchings are used, not every channel has its own coupling
-			if(idxChannel != comp->getChannelIdxCoupling(idxChannel)) {
-				continue;
-			}
-
-			const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
-			for(size_t idxBin=0; idxBin<channel.getNrBins(); ++idxBin) {
-				std::ostringstream prefixName;
-				prefixName << "coupling__bin"
-				           << idxBin
-				           << "__"
-				           << comp->getName()
-				           << "__";
-				if(compset.useBranchings() && comp->getNrChannels() > 1) {
-					const std::string waveQN = channel.getWaveName().substr(0, 7);
-					prefixName << waveQN;
-				} else {
-					prefixName << channel.getWaveName();
-				}
-
-				const std::complex<double> parameter = fitParameters.getCoupling(idxComponent, idxChannel, idxBin);
-
-				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
-				minimizer->SetVariable(parcount,
-				                       prefixName.str() + "__real",
-				                       parameter.real(),
-				                       0.1);
-				++parcount;
-
-				if(not channel.isAnchor()) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
-					minimizer->SetVariable(parcount,
-					                       prefixName.str() + "__imag",
-					                       parameter.imag(),
-					                       0.1);
-					++parcount;
-				}
-			}
-		} // end loop over channels
-	} // end loop over components
-
-	// second eventually add all branchings
-	if(compset.useBranchings()) {
-		for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
-			const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-			// branching with idxChannel 0 is always real and fixed to 1
-			for(size_t idxChannel=1; idxChannel<comp->getNrChannels(); ++idxChannel) {
-				// if branchings are used, not every channel has its own coupling
-				if(idxChannel != comp->getChannelIdxBranching(idxChannel)) {
-					continue;
-				}
-
-				const rpwa::massDepFit::channel& channel = comp->getChannel(idxChannel);
-				const std::string waveDecay = channel.getWaveName().substr(7);
-				std::ostringstream prefixName;
-				prefixName << "branching__"
-				           << comp->getName()
-				           << "__"
-				           << waveDecay;
-
-				bool free = false;
-				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
-				   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching")!=tokenizeFreeParameters.end() ) {
-					free = true;
-				}
-				bool fix = not free;
-
-				const std::complex<double> parameter = fitParameters.getBranching(idxComponent, idxChannel);
-
-				if (fix) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << std::endl;
-					minimizer->SetFixedVariable(parcount,
-					                            prefixName.str() + "__real",
-					                            parameter.real());
-					++parcount;
-
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
-					minimizer->SetFixedVariable(parcount,
-					                            prefixName.str() + "__imag",
-					                            parameter.imag());
-					++parcount;
-				} else {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
-					minimizer->SetVariable(parcount,
-					                       prefixName.str() + "__real",
-					                       parameter.real(),
-					                       0.1);
-					++parcount;
-
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
-					minimizer->SetVariable(parcount,
-					                       prefixName.str() + "__imag",
-					                       parameter.imag(),
-					                       0.1);
-					++parcount;
-				}
-			} // end loop over channels
-		} // end loop over components
-	}
-
-	// third add parameters of the components, i.e. mass and width
-	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
-			const std::string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
-
-			bool free = false;
-			if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
-			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getName())!=tokenizeFreeParameters.end()
-			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getParameterName(idxParameter))!=tokenizeFreeParameters.end()
-			   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), comp->getName() + "__" + comp->getParameterName(idxParameter))!=tokenizeFreeParameters.end()) {
-				free = true;
-			}
-			bool fix = not free;
-			if(comp->getParameterFixed(idxParameter)) {
-				fix = true;
-			}
-
-			const double parameter = fitParameters.getParameter(idxComponent, idxParameter);
-
-			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << parameter << std::endl;
-				minimizer->SetFixedVariable(parcount,
-				                            name,
-				                            parameter);
-			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
-				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
-				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << std::endl;
-				minimizer->SetLimitedVariable(parcount,
-				                              name,
-				                              parameter,
-				                              comp->getParameterStep(idxParameter),
-				                              comp->getParameterLimitLower(idxParameter),
-				                              comp->getParameterLimitUpper(idxParameter));
-			} else if(comp->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
-				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << std::endl;
-				minimizer->SetLowerLimitedVariable(parcount,
-				                                   name,
-				                                   parameter,
-				                                   comp->getParameterStep(idxParameter),
-				                                   comp->getParameterLimitLower(idxParameter));
-			} else if(comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
-				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << std::endl;
-				minimizer->SetUpperLimitedVariable(parcount,
-				                                   name,
-				                                   parameter,
-				                                   comp->getParameterStep(idxParameter),
-				                                   comp->getParameterLimitUpper(idxParameter));
-			} else {
-				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter << std::endl;
-				minimizer->SetVariable(parcount,
-				                       name,
-				                       parameter,
-				                       comp->getParameterStep(idxParameter));
-			}
-			++parcount;
-		}
-	} // end loop over components
-
-	// set parameters for final-state mass-dependence
-	if(compset.getFsmd() != NULL) {
-		const rpwa::massDepFit::fsmd* fsmd = compset.getFsmd();
-		for(size_t idxParameter=0; idxParameter<fsmd->getNrParameters(); ++idxParameter) {
-			std::ostringstream name;
-			name << "PSP__" << idxParameter;
-
-			const bool fix = fsmd->getParameterFixed(idxParameter);
-
-			const double parameter = fitParameters.getParameter(compset.getNrComponents(), idxParameter);
-
-			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << parameter << std::endl;
-				minimizer->SetFixedVariable(parcount,
-				                            name.str(),
-				                            parameter);
-			} else if(fsmd->getParameterLimitedLower(idxParameter) && fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
-				          << " (limited between " << fsmd->getParameterLimitLower(idxParameter)
-				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
-				minimizer->SetLimitedVariable(parcount,
-				                              name.str(),
-				                              parameter,
-				                              fsmd->getParameterStep(idxParameter),
-				                              fsmd->getParameterLimitLower(idxParameter),
-				                              fsmd->getParameterLimitUpper(idxParameter));
-			} else if(fsmd->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
-				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << std::endl;
-				minimizer->SetLowerLimitedVariable(parcount,
-				                                   name.str(),
-				                                   parameter,
-				                                   fsmd->getParameterStep(idxParameter),
-				                                   fsmd->getParameterLimitLower(idxParameter));
-			} else if(fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
-				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
-				minimizer->SetUpperLimitedVariable(parcount,
-				                                   name.str(),
-				                                   parameter,
-				                                   fsmd->getParameterStep(idxParameter),
-				                                   fsmd->getParameterLimitUpper(idxParameter));
-			} else {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter << std::endl;
-				minimizer->SetVariable(parcount,
-				                       name.str(),
-				                       parameter,
-				                       fsmd->getParameterStep(idxParameter));
-			}
-			++parcount;
-		}
-	}
-
-	return true;
-}
-
 int
 main(int    argc,
      char** argv)
@@ -346,10 +101,6 @@ main(int    argc,
 	// internal parameters
 	const std::string  valTreeName           = "pwa";
 	const std::string  valBranchName         = "fitResult_v2";
-	const unsigned int maxNmbOfIterations    = 20000;
-	const unsigned int maxNmbOfFunctionCalls = 2000000;
-	const bool         runHesse              = true;
-	const bool         runMinos              = false;
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
@@ -480,27 +231,15 @@ main(int    argc,
 
 		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(L.DoEval(fitParameters, cache)) << std::endl;
 	} else {
-		// setup minimizer
-		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
-		          << "using algorithm '" << minimizerType[1] << "'" << std::endl;
-		std::auto_ptr<ROOT::Math::Minimizer> minimizer(ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]));
-		if(minimizer.get() == NULL) {
-			printErr << "could not create minimizer. exiting." << std::endl;
-			return 1;
-		}
-		minimizer->SetFunction        (L);
-		minimizer->SetStrategy        (minimizerStrategy);
-		minimizer->SetTolerance       (minimizerTolerance);
-		minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
-		minimizer->SetMaxIterations   (maxNmbOfIterations);
-		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
+		rpwa::massDepFit::minimizerRoot minimizer(compset,
+		                                          L,
+		                                          mdepFit.getFreeParameters(),
+		                                          minimizerType,
+		                                          minimizerStrategy,
+		                                          minimizerTolerance,
+		                                          quiet);
 
-		// special for Minuit2
-		if(dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(minimizer.get())) {
-#if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-			((ROOT::Minuit2::Minuit2Minimizer*)minimizer.get())->SetStorageLevel(0);
-#endif
-		}
+		TStopwatch stopwatch;
 
 		// also extract errors from the fit
 		rpwa::massDepFit::parameters fitParametersError(compset.getNrComponents()+1,           // nr components + final-state mass-dependence
@@ -508,89 +247,11 @@ main(int    argc,
 		                                                compset.getMaxParametersInComponent(),
 		                                                mdepFit.getNrBins());
 
-		// keep list of parameters to free
-		const std::vector<std::string> freeParameters = mdepFit.getFreeParameters();
-		const size_t nrSteps = freeParameters.size();
+		stopwatch.Start();
+		const bool success = minimizer.minimize(fitParameters, fitParametersError, cache);
+		stopwatch.Stop();
 
-		bool success = true;
-		for(size_t step=0; step<nrSteps; ++step) {
-			// set startvalues
-			if(not releasePars(minimizer.get(), compset, fitParameters, freeParameters[step])) {
-				printErr << "error while setting start parameters for step " << step << "." << std::endl;
-				return 1;
-			}
-
-			// keep track of the time spend in the fit
-			TStopwatch stopwatch;
-
-			printInfo << "performing minimization step " << step << ": '" << freeParameters[step] << "' (" << minimizer->NFree() << " free parameters)." << std::endl;
-			stopwatch.Start();
-			success &= minimizer->Minimize();
-			stopwatch.Stop();
-
-			if(not success) {
-				printWarn << "minimization failed." << std::endl;
-			} else {
-				printInfo << "minimization successful." << std::endl;
-			}
-			printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
-
-			// copy current parameters from minimizer
-			compset.importParameters(minimizer->Errors(), fitParametersError, cache);
-			compset.importParameters(minimizer->X(), fitParameters, cache);
-		}
-
-		if(runHesse) {
-			TStopwatch stopwatch;
-
-			printInfo << "calculating Hessian matrix." << std::endl;
-			stopwatch.Start();
-			success &= minimizer->Hesse();
-			stopwatch.Stop();
-
-			if(not success) {
-				printWarn << "calculation of Hessian matrix failed." << std::endl;
-			} else {
-				printInfo << "calculation of Hessian matrix successful." << std::endl;
-			}
-			printInfo << "calculating Hessian matrix took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
-
-			// copy current parameters from minimizer
-			compset.importParameters(minimizer->Errors(), fitParametersError, cache);
-			compset.importParameters(minimizer->X(), fitParameters, cache);
-		}
-
-		printInfo << "minimizer status summary:" << std::endl
-		          << "    total number of parameters .......................... " << minimizer->NDim()             << std::endl
-		          << "    number of free parameters ........................... " << minimizer->NFree()            << std::endl
-		          << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << std::endl
-		          << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << std::endl
-		          << "    minimizer status .................................... " << minimizer->Status()           << std::endl
-		          << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << std::endl
-		          << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << std::endl
-		          << "    estimated distance to minimum ....................... " << minimizer->Edm()              << std::endl
-		          << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << std::endl
-		          << "    minimizer strategy .................................. " << minimizer->Strategy()         << std::endl
-		          << "    absolute tolerance .................................. " << minimizer->Tolerance()        << std::endl;
-
-		// print results
-		std::ostringstream output;
-		const unsigned int nmbPar = L.NDim();
-		for(unsigned int i = 0; i<nmbPar; ++i) {
-			output << "    parameter [" << std::setw(3) << i << "] ";
-			output << minimizer->VariableName(i) << " " ;
-			output << rpwa::maxPrecisionAlign(minimizer->X()[i]) << " +- " << rpwa::maxPrecisionAlign(minimizer->Errors()[i]);
-
-			if(runMinos) {  // does not work for all parameters
-				double minosErrLow, minosErrUp;
-				if(minimizer->GetMinosError(i, minosErrLow, minosErrUp)) {
-					output << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]";
-				}
-			}
-			output << std::endl;
-		}
-		printInfo << "minimization result:" << std::endl
-		          << output.str();
+		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 		double chi2 = 0.;
 		if(success) {
@@ -601,7 +262,7 @@ main(int    argc,
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
 		const unsigned int nrDataPoints = L.NDataPoints();
-		const unsigned int nrFree = minimizer->NFree();
+		const unsigned int nrFree = minimizer.NFree();
 		const unsigned int ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
 
