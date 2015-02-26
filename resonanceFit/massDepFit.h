@@ -45,11 +45,6 @@
 namespace libconfig {
 	class Setting;
 }
-namespace ROOT {
-	namespace Math {
-		class Minimizer;
-	}
-}
 class TFile;
 class TTree;
 
@@ -84,7 +79,7 @@ namespace rpwa {
 			bool updateConfig(libconfig::Setting* configRoot,
 			                  const rpwa::massDepFit::model& fitModel,
 			                  const rpwa::massDepFit::parameters& fitParameters,
-			                  const ROOT::Math::Minimizer* minimizer,
+			                  const rpwa::massDepFit::parameters& fitParametersError,
 			                  const double chi2,
 			                  const int ndf,
 			                  const double chi2red) const;
@@ -129,15 +124,15 @@ namespace rpwa {
 			bool updateConfigModel(const libconfig::Setting* configModel,
 			                       const rpwa::massDepFit::model& fitModel,
 			                       const rpwa::massDepFit::parameters& fitParameters,
-			                       const ROOT::Math::Minimizer* minimizer) const;
+			                       const rpwa::massDepFit::parameters& fitParametersError) const;
 			bool updateConfigModelComponents(const libconfig::Setting* configComponents,
 			                                 const rpwa::massDepFit::model& fitModel,
 			                                 const rpwa::massDepFit::parameters& fitParameters,
-			                                 const ROOT::Math::Minimizer* minimizer) const;
+			                                 const rpwa::massDepFit::parameters& fitParametersError) const;
 			bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
 			                           const rpwa::massDepFit::model& fitModel,
 			                           const rpwa::massDepFit::parameters& fitParameters,
-			                           const ROOT::Math::Minimizer* minimizer) const;
+			                           const rpwa::massDepFit::parameters& fitParametersError) const;
 
 			bool readInFiles(const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");

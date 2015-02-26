@@ -33,7 +33,6 @@
 
 #include <boost/assign/std/vector.hpp>
 
-#include <Math/Minimizer.h>
 #include <TFormula.h>
 
 #include "libConfigUtils.hpp"
@@ -173,7 +172,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 bool
 rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
                                const rpwa::massDepFit::parameters& fitParameters,
-                               const ROOT::Math::Minimizer* minimizer,
+                               const rpwa::massDepFit::parameters& fitParametersError,
                                const bool debug) const
 {
 	if(debug) {
@@ -185,16 +184,7 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		configFsmdValue[idxParameter] = fitParameters.getParameter(_id, idxParameter);
-
-		std::ostringstream sName;
-		sName << "PSP__" << idxParameter;
-		const int varIndex = minimizer->VariableIndex(sName.str());
-		if(varIndex == -1) {
-			printErr << "variable '" << sName.str() << "' used to extract the error for one parameter "
-			         << "of the final-state mass-dependence not known to the minimizer." << std::endl;
-			return false;
-		}
-		configFsmdError[idxParameter] = minimizer->Errors()[varIndex];
+		configFsmdError[idxParameter] = fitParametersError.getParameter(_id, idxParameter);
 	}
 
 	if(debug) {

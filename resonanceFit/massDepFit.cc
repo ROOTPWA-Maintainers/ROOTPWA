@@ -40,8 +40,6 @@
 #include <boost/assign/std/vector.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <Math/Minimizer.h>
-#include <Math/Factory.h>
 #include <TTree.h>
 #include <TFile.h>
 #include <TGraph.h>
@@ -615,7 +613,7 @@ bool
 rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
                                            const rpwa::massDepFit::model& fitModel,
                                            const rpwa::massDepFit::parameters& fitParameters,
-                                           const ROOT::Math::Minimizer* minimizer,
+                                           const rpwa::massDepFit::parameters& fitParametersError,
                                            const double chi2,
                                            const int ndf,
                                            const double chi2red) const
@@ -625,7 +623,7 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 	}
 
 	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
-	if(not updateConfigModel(configModel, fitModel, fitParameters, minimizer)) {
+	if(not updateConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while updating 'model' section of configuration file." << std::endl;
 		return false;
 	}
@@ -660,7 +658,7 @@ bool
 rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* configModel,
                                                 const rpwa::massDepFit::model& fitModel,
                                                 const rpwa::massDepFit::parameters& fitParameters,
-                                                const ROOT::Math::Minimizer* minimizer) const
+                                                const rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(_debug) {
 		printDebug << "updating fit model in configuration file." << std::endl;
@@ -673,14 +671,14 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* config
 
 	// update information of the individual components
 	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
-	if(not updateConfigModelComponents(configComponents, fitModel, fitParameters, minimizer)) {
+	if(not updateConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while updating 'components' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
 	}
 
 	// update information of the final-state mass-dependence
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, minimizer)) {
+	if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
 	}
@@ -693,7 +691,7 @@ bool
 rpwa::massDepFit::massDepFit::updateConfigModelComponents(const libconfig::Setting* configComponents,
                                                           const rpwa::massDepFit::model& fitModel,
                                                           const rpwa::massDepFit::parameters& fitParameters,
-                                                          const ROOT::Math::Minimizer* minimizer) const
+                                                          const rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << std::endl;
@@ -734,7 +732,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const libconfig::Setti
 			return false;
 		}
 
-		if(not component->update(configComponent, fitParameters, minimizer, fitModel.useBranchings(), _debug)) {
+		if(not component->update(configComponent, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
 			printErr << "error while updating component '" << name << "'." << std::endl;
 			return false;
 		}
@@ -748,7 +746,7 @@ bool
 rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* configFsmd,
                                                     const rpwa::massDepFit::model& fitModel,
                                                     const rpwa::massDepFit::parameters& fitParameters,
-                                                    const ROOT::Math::Minimizer* minimizer) const
+                                                    const rpwa::massDepFit::parameters& fitParametersError) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -764,7 +762,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* co
 		printDebug << "updating final-state mass-dependence in configuration file." << std::endl;
 	}
 
-	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, minimizer, _debug)) {
+	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, fitParametersError, _debug)) {
 		printErr << "error while updating final-state mass-dependence." << std::endl;
 		return false;
 	}

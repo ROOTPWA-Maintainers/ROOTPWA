@@ -48,11 +48,6 @@
 namespace libconfig {
 	class Setting;
 }
-namespace ROOT {
-	namespace Math {
-		class Minimizer;
-	}
-}
 
 namespace rpwa {
 
@@ -124,7 +119,7 @@ namespace rpwa {
 
 			virtual bool update(const libconfig::Setting* configComponent,
 			                    const rpwa::massDepFit::parameters& fitParameters,
-			                    const ROOT::Math::Minimizer* minimizer,
+			                    const rpwa::massDepFit::parameters& fitParametersError,
 			                    const bool useBranchings,
 			                    const bool debug) const;
 
