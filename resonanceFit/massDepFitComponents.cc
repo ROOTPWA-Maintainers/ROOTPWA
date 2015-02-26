@@ -480,7 +480,8 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 
 size_t
 rpwa::massDepFit::component::importCouplings(const double* par,
-                                             rpwa::massDepFit::parameters& fitParameters)
+                                             rpwa::massDepFit::parameters& fitParameters,
+                                             rpwa::massDepFit::cache& cache)
 {
 	size_t counter=0;
 	for(size_t idxCoupling=0; idxCoupling<_nrCouplings; ++idxCoupling) {
@@ -495,7 +496,16 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 				coupling = std::complex<double>(par[counter], par[counter+1]);
 				counter += 2;
 			}
-			fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);
+			if (fitParameters.getCoupling(getId(), idxCoupling, idxBin) != coupling) {
+				fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);
+
+				// invalidate the cache
+				for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+					if (_channelsFromCoupling[idxCoupling] == _channelsCoupling[idxChannel]) {
+						cache.setProdAmp(_channels[idxChannel].getWaveIdx(), idxBin, std::numeric_limits<size_t>::max(), 0.);
+					}
+				}
+			}
 		}
 	}
 
@@ -505,18 +515,33 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 
 size_t
 rpwa::massDepFit::component::importBranchings(const double* par,
-                                              rpwa::massDepFit::parameters& fitParameters)
+                                              rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::cache& cache)
 {
 	// branching with idx 0 is always real and fixed to 1
 	std::complex<double> branching(1., 0.);
-	fitParameters.setBranching(getId(), 0, branching);
+	if (fitParameters.getBranching(getId(), 0) != branching) {
+		fitParameters.setBranching(getId(), 0, branching);
+
+		// invalidate the cache
+		cache.setProdAmp(_channels[0].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+	}
 
 	size_t counter=0;
 	for(size_t idxBranching=1; idxBranching<_nrBranchings; ++idxBranching) {
 		branching = std::complex<double>(par[counter], par[counter+1]);
 		counter += 2;
 
-		fitParameters.setBranching(getId(), idxBranching, branching);
+		if (fitParameters.getBranching(getId(), idxBranching) != branching) {
+			fitParameters.setBranching(getId(), idxBranching, branching);
+
+			// invalidate the cache
+			for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+				if (_channelsFromBranching[idxBranching] == _channelsBranching[idxChannel]) {
+					cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+				}
+			}
+		}
 	}
 
 	return counter;
@@ -525,10 +550,21 @@ rpwa::massDepFit::component::importBranchings(const double* par,
 
 size_t
 rpwa::massDepFit::component::importParameters(const double* par,
-                                              rpwa::massDepFit::parameters& fitParameters)
+                                              rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::cache& cache)
 {
+	bool invalidateCache = false;
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		fitParameters.setParameter(getId(), idxParameter, par[idxParameter]);
+		if (fitParameters.getParameter(getId(), idxParameter) != par[idxParameter]) {
+			fitParameters.setParameter(getId(), idxParameter, par[idxParameter]);
+			invalidateCache = true;
+		}
+	}
+
+	if (invalidateCache) {
+		for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+			cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+		}
 	}
 
 	return _nrParameters;

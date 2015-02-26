@@ -47,6 +47,7 @@ include_directories(
 # source files that are compiled into library
 set(SOURCES
 	massDepFit.cc
+	massDepFitCache.cc
 	massDepFitComponents.cc
 	massDepFitFsmd.cc
 	massDepFitLikeli.cc

@@ -40,6 +40,7 @@
 #include "fileUtils.hpp"
 #include "libConfigUtils.hpp"
 #include "massDepFit.h"
+#include "massDepFitCache.h"
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
 #include "massDepFitLikeli.h"
@@ -468,10 +469,14 @@ main(int    argc,
 		return 1;
 	}
 
+	rpwa::massDepFit::cache cache(mdepFit.getNrWaves(),
+	                              mdepFit.getNrBins(),
+	                              mdepFit.getNrMassBins());
+
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
-		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(L.DoEval(fitParameters)) << std::endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(L.DoEval(fitParameters, cache)) << std::endl;
 	} else {
 		// setup minimizer
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
@@ -523,7 +528,7 @@ main(int    argc,
 			printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
-			compset.importParameters(minimizer->X(), fitParameters);
+			compset.importParameters(minimizer->X(), fitParameters, cache);
 		}
 
 		if(runHesse) {
@@ -542,7 +547,7 @@ main(int    argc,
 			printInfo << "calculating Hessian matrix took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
-			compset.importParameters(minimizer->X(), fitParameters);
+			compset.importParameters(minimizer->X(), fitParameters, cache);
 		}
 
 		printInfo << "minimizer status summary:" << std::endl
@@ -579,9 +584,9 @@ main(int    argc,
 
 		double chi2 = 0.;
 		if(success) {
-			chi2 = L.DoEval(fitParameters);
+			chi2 = L.DoEval(fitParameters, cache);
 		} else {
-			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(L.DoEval(fitParameters)) << std::endl;
+			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(L.DoEval(fitParameters, cache)) << std::endl;
 		}
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
@@ -624,7 +629,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(compset, fitParameters, outFile.get(), rangePlotting)) {
+	if(not mdepFit.createPlots(compset, fitParameters, cache, outFile.get(), rangePlotting)) {
 		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}

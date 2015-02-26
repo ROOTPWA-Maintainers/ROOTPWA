@@ -59,6 +59,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class cache;
 		class likelihood;
 		class model;
 		class parameters;
@@ -91,6 +92,7 @@ namespace rpwa {
 // FIXME: make private
 			bool createPlots(const rpwa::massDepFit::model& fitModel,
 			                 const rpwa::massDepFit::parameters& fitParameters,
+			                 rpwa::massDepFit::cache& cache,
 			                 TFile* outFile,
 			                 const bool rangePlotting) const;
 
@@ -174,12 +176,14 @@ namespace rpwa {
 
 			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
 			                     const rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,
 			                     const bool rangePlotting,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
 			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
 			                         const rpwa::massDepFit::parameters& fitParameters,
+			                         rpwa::massDepFit::cache& cache,
 			                         TDirectory* outDirectory,
 			                         const bool rangePlotting,
 			                         const size_t idxWave,
