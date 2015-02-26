@@ -122,7 +122,7 @@ rpwa::massDepFit::minimizerRoot::NFree()
 bool
 rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParameters,
                                           rpwa::massDepFit::parameters& fitParametersError,
-                                          rpwa::massDepFit::cache& cache) const
+                                          rpwa::massDepFit::cache& cache)
 {
 	// keep list of parameters to free
 	const size_t nrSteps = _freeParameters.size();

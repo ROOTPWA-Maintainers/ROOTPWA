@@ -45,7 +45,7 @@ namespace rpwa {
 
 			virtual bool minimize(rpwa::massDepFit::parameters& fitParameters,
 			                      rpwa::massDepFit::parameters& fitParametersError,
-			                      rpwa::massDepFit::cache& cache) const = 0;
+			                      rpwa::massDepFit::cache& cache) = 0;
 
 		};
 
