@@ -381,7 +381,18 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 double
 rpwa::massDepFit::likelihood::DoEval(const double* par) const
 {
-	// import parameters (couplings, branchings, resonance parameters, ...)
+#if __cplusplus >= 201103L
+	// in C++11 we can use a static variable per thread so that the
+	// parameters are kept over function calls and we can implement some
+	// caching
+	thread_local rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                                                        _compset->getMaxChannelsInComponent(),
+	                                                        _compset->getMaxParametersInComponent(),
+	                                                        _nrBins);
+	thread_local rpwa::massDepFit::cache cache(_nrWaves,
+	                                           _nrBins,
+	                                           _nrMassBins);
+#else
 	rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                           _compset->getMaxChannelsInComponent(),
 	                                           _compset->getMaxParametersInComponent(),
@@ -389,7 +400,9 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const
 	rpwa::massDepFit::cache cache(_nrWaves,
 	                              _nrBins,
 	                              _nrMassBins);
+#endif
 
+	// import parameters (couplings, branchings, resonance parameters, ...)
 	_compset->importParameters(par, fitParameters, cache);
 
 	return DoEval(fitParameters, cache);
