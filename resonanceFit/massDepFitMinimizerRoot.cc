@@ -65,14 +65,14 @@ rpwa::massDepFit::minimizerRoot::functionAdaptor::Clone() const
 unsigned int
 rpwa::massDepFit::minimizerRoot::functionAdaptor::NDim() const
 {
-	return _fitFunction.NDim();
+	return _fitFunction.getNrParameters();
 }
 
 
 double
 rpwa::massDepFit::minimizerRoot::functionAdaptor::DoEval(const double* par) const
 {
-	return _fitFunction.DoEval(par);
+	return _fitFunction.chiSquare(par);
 }
 
 
