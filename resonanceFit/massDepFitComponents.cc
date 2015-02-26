@@ -82,6 +82,16 @@ rpwa::massDepFit::channel::~channel()
 }
 
 
+#if __cplusplus < 201103L
+rpwa::massDepFit::channel&
+rpwa::massDepFit::channel::operator=(rpwa::massDepFit::channel& other)
+{
+	std::swap(*this, other);
+	return *this;
+}
+#endif
+
+
 rpwa::massDepFit::component::component(const size_t id,
                                        const std::string& name,
                                        const size_t nrParameters)
