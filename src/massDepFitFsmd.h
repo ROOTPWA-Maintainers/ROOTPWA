@@ -39,11 +39,6 @@
 namespace libconfig {
 	class Setting;
 }
-namespace ROOT {
-	namespace Math {
-		class Minimizer;
-	}
-}
 class TFormula;
 
 namespace rpwa {
@@ -67,7 +62,7 @@ namespace rpwa {
 
 			bool update(const libconfig::Setting* configComponent,
 			            const rpwa::massDepFit::parameters& fitParameters,
-			            const ROOT::Math::Minimizer* minimizer,
+			            const rpwa::massDepFit::parameters& fitParametersError,
 			            const bool debug) const;
 
 			size_t getNrParameters() const { return _nrParameters; }

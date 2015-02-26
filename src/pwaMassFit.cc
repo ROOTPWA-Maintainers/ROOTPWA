@@ -502,6 +502,12 @@ main(int    argc,
 #endif
 		}
 
+		// also extract errors from the fit
+		rpwa::massDepFit::parameters fitParametersError(compset.getNrComponents()+1,           // nr components + final-state mass-dependence
+		                                                compset.getMaxChannelsInComponent(),
+		                                                compset.getMaxParametersInComponent(),
+		                                                mdepFit.getNrBins());
+
 		// keep list of parameters to free
 		const std::vector<std::string> freeParameters = mdepFit.getFreeParameters();
 		const size_t nrSteps = freeParameters.size();
@@ -530,6 +536,7 @@ main(int    argc,
 			printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
+			compset.importParameters(minimizer->Errors(), fitParametersError, cache);
 			compset.importParameters(minimizer->X(), fitParameters, cache);
 		}
 
@@ -549,6 +556,7 @@ main(int    argc,
 			printInfo << "calculating Hessian matrix took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
 			// copy current parameters from minimizer
+			compset.importParameters(minimizer->Errors(), fitParametersError, cache);
 			compset.importParameters(minimizer->X(), fitParameters, cache);
 		}
 
@@ -600,7 +608,7 @@ main(int    argc,
 		double chi2red = chi2/(double)ndf;
 		printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(chi2red) << std::endl;
 
-		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, minimizer.get(), chi2, ndf, chi2red)) {
+		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf, chi2red)) {
 			printErr << "error while updating configuration file." << std::endl;
 			return 1;
 		}

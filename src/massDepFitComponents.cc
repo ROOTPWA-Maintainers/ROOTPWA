@@ -31,8 +31,6 @@
 
 #include <boost/assign/std/vector.hpp>
 
-#include <Math/Minimizer.h>
-
 #include "libConfigUtils.hpp"
 #include "physUtils.hpp"
 #include "reportingUtils.hpp"
@@ -357,7 +355,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 bool
 rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
                                     const rpwa::massDepFit::parameters& fitParameters,
-                                    const ROOT::Math::Minimizer* minimizer,
+                                    const rpwa::massDepFit::parameters& fitParametersError,
                                     const bool useBranchings,
                                     const bool debug) const
 {
@@ -383,14 +381,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			configParameter->add("error", libconfig::Setting::TypeFloat);
 		}
 
-		const std::string varName = getName() + "__" + _parametersName[idxParameter];
-		const int varIndex = minimizer->VariableIndex(varName);
-		if(varIndex == -1) {
-			printErr << "variable '" << varName << "' used to extract the error for the parameter '"
-			         << _parametersName[idxParameter] << "' of '" << getName() << "' not known to the minimizer." << std::endl;
-			return false;
-		}
-		(*configParameter)["error"] = minimizer->Errors()[varIndex];
+		(*configParameter)["error"] = fitParametersError.getParameter(getId(), idxParameter);
 	}
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
