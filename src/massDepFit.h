@@ -97,6 +97,10 @@ namespace rpwa {
 // FIXME: get rid
 			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
 
+			size_t getNrBins() const { return _nrBins; }
+			size_t getNrMassBins() const { return _nrMassBins; }
+			size_t getNrWaves() const { return _nrWaves; }
+
 			static void setDebug(bool debug) { _debug = debug; }
 
 		private:
