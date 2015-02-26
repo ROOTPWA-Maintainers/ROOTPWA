@@ -320,6 +320,8 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 			const std::complex<double> branching(branchingReal, branchingImag);
 			fitParameters.setBranching(getId(), _nrBranchings, branching);
+
+			_channelsFromBranching.push_back(_channels.size());
 			++_nrBranchings;
 		} else {
 			assert(branchingIndex == 0);

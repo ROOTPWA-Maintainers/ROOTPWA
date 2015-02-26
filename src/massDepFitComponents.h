@@ -173,6 +173,7 @@ namespace rpwa {
 			std::vector<size_t> _channelsCoupling;
 			std::vector<size_t> _channelsFromCoupling;
 			std::vector<size_t> _channelsBranching;
+			std::vector<size_t> _channelsFromBranching;
 
 			const size_t _nrParameters;
 			size_t _nrCouplings;
