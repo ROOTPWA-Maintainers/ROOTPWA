@@ -156,6 +156,7 @@ namespace rpwa {
 			virtual double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const = 0;
@@ -212,6 +213,7 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -237,6 +239,7 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -270,6 +273,7 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -300,6 +304,7 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -332,6 +337,7 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
 			                                 const size_t idxBin,
 			                                 const double m,
 			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;

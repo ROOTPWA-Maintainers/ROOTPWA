@@ -390,6 +390,7 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const
 	                                                        _compset->getMaxParametersInComponent(),
 	                                                        _nrBins);
 	thread_local rpwa::massDepFit::cache cache(_nrWaves,
+	                                           _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                           _nrBins,
 	                                           _nrMassBins);
 #else
@@ -398,6 +399,7 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const
 	                                           _compset->getMaxParametersInComponent(),
 	                                           _nrBins);
 	rpwa::massDepFit::cache cache(_nrWaves,
+	                              _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                              _nrBins,
 	                              _nrMassBins);
 #endif

@@ -43,18 +43,22 @@ namespace rpwa {
 		public:
 
 			cache(const size_t maxWaves,
+			      const size_t maxComponents,
 			      const size_t maxBins,
 			      const size_t maxMassBins);
 			virtual ~cache() {}
 
+			std::complex<double> getComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin) const { return _components[idxComponent][idxBin][idxMassBin]; }
 			std::complex<double> getProdAmp(const size_t idxWave, const size_t idxBin, const size_t idxMassBin) const { return _prodAmps[idxWave][idxBin][idxMassBin]; }
 
+			void setComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin, const std::complex<double> component);
 			void setProdAmp(const size_t idxWave, const size_t idxBin, const size_t idxMassBin, const std::complex<double> prodAmp);
 
 			std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
+			boost::multi_array<std::complex<double>, 3> _components;
 			boost::multi_array<std::complex<double>, 3> _prodAmps;
 
 		};

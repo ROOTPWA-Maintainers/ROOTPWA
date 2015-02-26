@@ -30,10 +30,38 @@
 
 
 rpwa::massDepFit::cache::cache(const size_t maxWaves,
+                               const size_t maxComponents,
                                const size_t maxBins,
                                const size_t maxMassBins)
-	: _prodAmps(boost::extents[maxWaves][maxBins][maxMassBins])
+	: _components(boost::extents[maxComponents][maxBins][maxMassBins]),
+	  _prodAmps(boost::extents[maxWaves][maxBins][maxMassBins])
 {
+}
+
+
+void
+rpwa::massDepFit::cache::setComponent(const size_t idxComponent,
+                                      const size_t idxBin,
+                                      const size_t idxMassBin,
+                                      const std::complex<double> component)
+{
+	if (idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_components.shape()+1) ; ++idx) {
+			for (size_t jdx=0; jdx<*(_components.shape()+2) ; ++jdx) {
+				_components[idxComponent][idx][jdx] = component;
+			}
+		}
+	} else if (idxBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_components.shape()+1) ; ++idx) {
+			_components[idxComponent][idx][idxMassBin] = component;
+		}
+	} else if (idxMassBin == std::numeric_limits<size_t>::max()) {
+		for (size_t idx=0; idx<*(_components.shape()+2) ; ++idx) {
+			_components[idxComponent][idxBin][idx] = component;
+		}
+	} else {
+		_components[idxComponent][idxBin][idxMassBin] = component;
+	}
 }
 
 
@@ -66,6 +94,11 @@ rpwa::massDepFit::cache::setProdAmp(const size_t idxWave,
 std::ostream&
 rpwa::massDepFit::cache::print(std::ostream& out) const
 {
+	out << "cache for component values: "
+	    << *(_components.shape()) << " components, "
+	    << *(_components.shape()+1) << " bins, "
+	    << *(_components.shape()+2) << " mass bins"
+	    << std::endl;
 	out << "cache for production amplitudes: "
 	    << *(_prodAmps.shape()) << " waves, "
 	    << *(_prodAmps.shape()+1) << " bins, "
