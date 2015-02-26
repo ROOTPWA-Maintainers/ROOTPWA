@@ -73,56 +73,6 @@ rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
 }
 
 
-rpwa::massDepFit::function*
-rpwa::massDepFit::function::Clone() const
-{
-	return new rpwa::massDepFit::function(*this);
-}
-
-
-unsigned int
-rpwa::massDepFit::function::NDim() const
-{
-	return _compset->getNrParameters();
-}
-
-
-unsigned int
-rpwa::massDepFit::function::NDataPoints() const
-{
-	unsigned int nrPts(0);
-
-	if(_fitProductionAmplitudes) {
-		// calculate data points:
-		// * production amplitudes in general are complex numbers
-		// * for the anchor wave it might be real
-		// * remember (Re,Im) => factor 2
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
-			if(idxWave != _idxAnchorWave) {
-				nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
-			}
-		}
-	} else {
-		// calculate data points:
-		// * diagonal elements are real numbers
-		// * off-diagonal elements are complex numbers
-		// * remember (Re,Im) => factor 2
-		// * diagonal elements are only checked once, off-diagonal elements with
-		//   the two different combinations (i,j) and (j,i)
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-				nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
-			}
-		}
-	}
-
-	nrPts *= _nrBins;
-
-	return nrPts;
-}
-
-
 bool
 rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
                                  const std::vector<double>& massBinCenters,
@@ -378,8 +328,62 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 }
 
 
+size_t
+rpwa::massDepFit::function::getNrParameters() const
+{
+	return _compset->getNrParameters();
+}
+
+
+size_t
+rpwa::massDepFit::function::getNrDataPoints() const
+{
+	size_t nrPts(0);
+
+	if(_fitProductionAmplitudes) {
+		// calculate data points:
+		// * production amplitudes in general are complex numbers
+		// * for the anchor wave it might be real
+		// * remember (Re,Im) => factor 2
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
+			if(idxWave != _idxAnchorWave) {
+				nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
+			}
+		}
+	} else {
+		// calculate data points:
+		// * diagonal elements are real numbers
+		// * off-diagonal elements are complex numbers
+		// * remember (Re,Im) => factor 2
+		// * diagonal elements are only checked once, off-diagonal elements with
+		//   the two different combinations (i,j) and (j,i)
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+				nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
+			}
+		}
+	}
+
+	nrPts *= _nrBins;
+
+	return nrPts;
+}
+
+
 double
-rpwa::massDepFit::function::DoEval(const double* par) const
+rpwa::massDepFit::function::chiSquare(const std::vector<double>& par) const
+{
+#if __cplusplus >= 201103L
+	return chiSquare(par.data());
+#else
+	return chiSquare(&par[0]);
+#endif
+}
+
+
+double
+rpwa::massDepFit::function::chiSquare(const double* par) const
 {
 #if __cplusplus >= 201103L
 	// in C++11 we can use a static variable per thread so that the
@@ -409,25 +413,47 @@ rpwa::massDepFit::function::DoEval(const double* par) const
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_compset->importParameters(par, fitParameters, cache);
 
-	return DoEval(fitParameters, cache);
+	return chiSquare(fitParameters, cache);
 }
 
 
 double
-rpwa::massDepFit::function::DoEval(const rpwa::massDepFit::parameters& fitParameters,
-                                   rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::chiSquare(const rpwa::massDepFit::parameters& fitParameters,
+                                      rpwa::massDepFit::cache& cache) const
 {
 	if(_fitProductionAmplitudes) {
-		return DoEvalProductionAmplitudes(fitParameters, cache);
+		return chiSquareProductionAmplitudes(fitParameters, cache);
 	} else {
-		return DoEvalSpinDensityMatrix(fitParameters, cache);
+		return chiSquareSpinDensityMatrix(fitParameters, cache);
 	}
 }
 
 
 double
-rpwa::massDepFit::function::DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
-                                                       rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::logLikelihood(const std::vector<double>& par) const
+{
+	return -0.5 * chiSquare(par);
+}
+
+
+double
+rpwa::massDepFit::function::logLikelihood(const double* par) const
+{
+	return -0.5 * chiSquare(par);
+}
+
+
+double
+rpwa::massDepFit::function::logLikelihood(const rpwa::massDepFit::parameters& fitParameters,
+                                          rpwa::massDepFit::cache& cache) const
+{
+	return -0.5 * chiSquare(fitParameters, cache);
+}
+
+
+double
+rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
+                                                          rpwa::massDepFit::cache& cache) const
 {
 	double chi2=0;
 
@@ -476,8 +502,8 @@ rpwa::massDepFit::function::DoEvalProductionAmplitudes(const rpwa::massDepFit::p
 
 
 double
-rpwa::massDepFit::function::DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-                                                    rpwa::massDepFit::cache& cache) const
+rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+                                                       rpwa::massDepFit::cache& cache) const
 {
 	double chi2=0;
 

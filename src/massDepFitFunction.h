@@ -40,7 +40,6 @@
 
 #include <boost/multi_array.hpp>
 
-#include <Math/IFunction.h>
 #include <TMatrixT.h>
 
 namespace rpwa {
@@ -51,7 +50,7 @@ namespace rpwa {
 		class model;
 		class parameters;
 
-		class function : public ROOT::Math::IBaseFunctionMultiDim {
+		class function {
 
 		public:
 
@@ -64,17 +63,7 @@ namespace rpwa {
 
 			function(const bool fitProductionAmplitudes,
 			         const rpwa::massDepFit::function::useCovarianceMatrix useCovariance);
-			virtual ~function() {}
-
-			virtual rpwa::massDepFit::function* Clone() const;
-
-			virtual unsigned int NDim() const;
-
-			virtual double DoEval(const double* par) const;
-			virtual double DoEval(const rpwa::massDepFit::parameters& fitParameters,
-			                      rpwa::massDepFit::cache& cache) const;
-
-			unsigned int NDataPoints() const;
+			~function() {}
 
 			bool init(rpwa::massDepFit::model* compset,
 			          const std::vector<double>& massBinCenters,
@@ -84,12 +73,25 @@ namespace rpwa {
 			          const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
 
+			size_t getNrParameters() const;
+			size_t getNrDataPoints() const;
+
+			double chiSquare(const std::vector<double>& par) const;
+			double chiSquare(const double* par) const;
+			double chiSquare(const rpwa::massDepFit::parameters& fitParameters,
+			                 rpwa::massDepFit::cache& cache) const;
+
+			double logLikelihood(const std::vector<double>& par) const;
+			double logLikelihood(const double* par) const;
+			double logLikelihood(const rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::cache& cache) const;
+
 		private:
 
-			double DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
+			double chiSquareProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
+			                                     rpwa::massDepFit::cache& cache) const;
+			double chiSquareSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
 			                                  rpwa::massDepFit::cache& cache) const;
-			double DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-			                               rpwa::massDepFit::cache& cache) const;
 
 			rpwa::massDepFit::model* _compset;
 

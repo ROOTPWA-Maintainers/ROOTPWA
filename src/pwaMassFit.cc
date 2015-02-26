@@ -229,7 +229,7 @@ main(int    argc,
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
-		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction.DoEval(fitParameters, cache)) << std::endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction.chiSquare(fitParameters, cache)) << std::endl;
 	} else {
 		rpwa::massDepFit::minimizerRoot minimizer(compset,
 		                                          fitFunction,
@@ -255,13 +255,13 @@ main(int    argc,
 
 		double chi2 = 0.;
 		if(success) {
-			chi2 = fitFunction.DoEval(fitParameters, cache);
+			chi2 = fitFunction.chiSquare(fitParameters, cache);
 		} else {
-			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(fitFunction.DoEval(fitParameters, cache)) << std::endl;
+			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(fitFunction.chiSquare(fitParameters, cache)) << std::endl;
 		}
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
-		const unsigned int nrDataPoints = fitFunction.NDataPoints();
+		const unsigned int nrDataPoints = fitFunction.getNrDataPoints();
 		const unsigned int nrFree = minimizer.NFree();
 		const unsigned int ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
