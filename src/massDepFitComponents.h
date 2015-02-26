@@ -42,6 +42,7 @@
 
 #include <Math/Interpolator.h>
 
+#include "massDepFitCache.h"
 #include "massDepFitParameters.h"
 
 namespace libconfig {
@@ -133,15 +134,18 @@ namespace rpwa {
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t importCouplings(const double* par,
-			                       rpwa::massDepFit::parameters& fitParameters);
+			                       rpwa::massDepFit::parameters& fitParameters,
+			                       rpwa::massDepFit::cache& cache);
 
 			size_t getNrBranchings() const { return _nrBranchings; }
 			size_t importBranchings(const double* par,
-			                        rpwa::massDepFit::parameters& fitParameters);
+			                        rpwa::massDepFit::parameters& fitParameters,
+			                        rpwa::massDepFit::cache& cache);
 
 			size_t getNrParameters() const { return _nrParameters; }
 			virtual size_t importParameters(const double* par,
-			                                rpwa::massDepFit::parameters& fitParameters);
+			                                rpwa::massDepFit::parameters& fitParameters,
+			                                rpwa::massDepFit::cache& cache);
 
 			virtual bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
 			virtual double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }

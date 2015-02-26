@@ -47,6 +47,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class cache;
 		class model;
 		class parameters;
 
@@ -70,7 +71,8 @@ namespace rpwa {
 			virtual unsigned int NDim() const;
 
 			virtual double DoEval(const double* par) const;
-			virtual double DoEval(const rpwa::massDepFit::parameters& fitParameters) const;
+			virtual double DoEval(const rpwa::massDepFit::parameters& fitParameters,
+			                      rpwa::massDepFit::cache& cache) const;
 
 			unsigned int NDataPoints() const;
 
@@ -84,8 +86,10 @@ namespace rpwa {
 
 		private:
 
-			double DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters) const;
-			double DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters) const;
+			double DoEvalProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
+			                                  rpwa::massDepFit::cache& cache) const;
+			double DoEvalSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+			                               rpwa::massDepFit::cache& cache) const;
 
 			rpwa::massDepFit::model* _compset;
 

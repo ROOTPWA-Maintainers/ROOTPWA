@@ -41,6 +41,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
+		class cache;
 		class component;
 		class fsmd;
 		class parameters;
@@ -59,7 +60,9 @@ namespace rpwa {
 			          const std::string& anchorComponentName);
 
 			size_t getNrParameters() const { return _nrParameters; }
-			void importParameters(const double* par, rpwa::massDepFit::parameters& parameters) const;
+			void importParameters(const double* par,
+			                      rpwa::massDepFit::parameters& parameters,
+			                      rpwa::massDepFit::cache& cache) const;
 
 			size_t getNrComponents() const { return _components.size(); }
 			const rpwa::massDepFit::component* getComponent(size_t idxComponent) const { return _components[idxComponent]; }
@@ -77,27 +80,32 @@ namespace rpwa {
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idxWave) const { return _waveComponentChannel[idxWave]; }
 
 			std::complex<double> productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
+			                                         rpwa::massDepFit::cache& cache,
 			                                         const size_t idxWave,
 			                                         const size_t idxBin,
 			                                         const double mass,
 			                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double intensity(const rpwa::massDepFit::parameters& fitParameters,
+			                 rpwa::massDepFit::cache& cache,
 			                 const size_t idxWave,
 			                 const size_t idxBin,
 			                 const double mass,
 			                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double phaseAbsolute(const rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::cache& cache,
 			                     const size_t idxWave,
 			                     const size_t idxBin,
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			std::complex<double> spinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
+			                                       rpwa::massDepFit::cache& cache,
 			                                       const size_t idxWave,
 			                                       const size_t jdxWave,
 			                                       const size_t idxBin,
 			                                       const double mass,
 			                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 			double phase(const rpwa::massDepFit::parameters& fitParameters,
+			             rpwa::massDepFit::cache& cache,
 			             const size_t idxWave,
 			             const size_t jdxWave,
 			             const size_t idxBin,

@@ -55,6 +55,7 @@ set(SOURCES
 	pwaLikelihood.cc
 	pwaPlotter.cc
 	massDepFit.cc
+	massDepFitCache.cc
 	massDepFitComponents.cc
 	massDepFitFsmd.cc
 	massDepFitLikeli.cc

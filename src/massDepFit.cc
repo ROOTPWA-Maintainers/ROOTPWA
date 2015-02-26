@@ -1563,6 +1563,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 bool
 rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitModel,
                                           const rpwa::massDepFit::parameters& fitParameters,
+                                          rpwa::massDepFit::cache& cache,
                                           TFile* outFile,
                                           const bool rangePlotting) const
 {
@@ -1581,7 +1582,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWave(fitModel, fitParameters, outDirectory, rangePlotting, idxWave, idxBin)) {
+			if(not createPlotsWave(fitModel, fitParameters, cache, outDirectory, rangePlotting, idxWave, idxBin)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
 				return false;
 			}
@@ -1589,7 +1590,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
-				if(not createPlotsWavePair(fitModel, fitParameters, outDirectory, rangePlotting, idxWave, jdxWave, idxBin)) {
+				if(not createPlotsWavePair(fitModel, fitParameters, cache, outDirectory, rangePlotting, idxWave, jdxWave, idxBin)) {
 					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
 					return false;
 				}
@@ -1626,6 +1627,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 bool
 rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fitModel,
                                               const rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::cache& cache,
                                               TDirectory* outDirectory,
                                               const bool rangePlotting,
                                               const size_t idxWave,
@@ -1729,7 +1731,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 		++pointLimit;
 
-		const double intensity = fitModel.intensity(fitParameters, idxWave, idxBin, _massBinCenters[idxMass], idxMass);
+		const double intensity = fitModel.intensity(fitParameters, cache, idxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		fit->SetPoint(pointLimit, mass, intensity);
 		maxIE = std::max(maxIE, intensity);
 
@@ -1764,6 +1766,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 bool
 rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
                                                   const rpwa::massDepFit::parameters& fitParameters,
+                                                  rpwa::massDepFit::cache& cache,
                                                   TDirectory* outDirectory,
                                                   const bool rangePlotting,
                                                   const size_t idxWave,
@@ -1923,7 +1926,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 		}
 
-		phaseFitAll.SetPoint(point, mass, fitModel.phase(fitParameters, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
+		phaseFitAll.SetPoint(point, mass, fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1932,7 +1935,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		}
 		++pointLimit;
 
-		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass);
+		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, _massBinCenters[idxMass], idxMass);
 		realFit->SetPoint(pointLimit, mass, element.real());
 		imagFit->SetPoint(pointLimit, mass, element.imag());
 	}
