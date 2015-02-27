@@ -413,7 +413,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		const rpwa::massDepFit::channel* channel = NULL;
 		size_t channelIdx = 0;
 		for(size_t idxChannel=0; idxChannel<getNrChannels(); ++idxChannel) {
-			if(getChannelWaveName(idxChannel) == waveName) {
+			if(getChannel(idxChannel).getWaveName() == waveName) {
 				channel = &getChannel(idxChannel);
 				channelIdx = idxChannel;
 				break;
