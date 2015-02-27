@@ -306,6 +306,10 @@ main(int    argc,
 		TRandom3 random(startValSeed);
 		for(unsigned int i = 0; i < params.size(); ++i)
 		{
+			if(L.parThreshold(i) > massBinCenter) {
+				printErr << "thresholds are not implemented for fits with NLopt. Aborting..." << endl;
+				return 1;
+			}
 			params[i] = random.Uniform(defaultStartValue, sqrtNmbEvts);
 			if(random.Rndm() > 0.5) {
 				params[i] *= -1.;
