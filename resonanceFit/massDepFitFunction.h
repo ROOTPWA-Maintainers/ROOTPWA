@@ -41,6 +41,7 @@
 #include <boost/multi_array.hpp>
 
 #include <TMatrixT.h>
+#include <TVectorT.h>
 
 namespace rpwa {
 

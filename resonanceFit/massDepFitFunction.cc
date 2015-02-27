@@ -467,7 +467,7 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 			const std::complex<double> anchorFit = _compset->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
-			TMatrixT<double> prodAmpDiffMat(2*_nrWaves - 1, 1);
+			TVectorT<double> prodAmpDiffVect(2*_nrWaves - 1);
 
 			// sum over the contributions to chi2
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
@@ -483,17 +483,13 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 				const std::complex<double> prodAmpDiff = prodAmpFit - _productionAmplitudes[idxBin][idxMass][idxWave];
 
 				const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
-				prodAmpDiffMat(row + 0, 0) = prodAmpDiff.real();
+				prodAmpDiffVect(row + 0) = prodAmpDiff.real();
 				if(idxWave != _idxAnchorWave) {
-					prodAmpDiffMat(row + 1, 0) = prodAmpDiff.imag();
+					prodAmpDiffVect(row + 1) = prodAmpDiff.imag();
 				}
 			} // end loop over idxWave
 
-			const TMatrixT<double> prodAmpDiffMatT(TMatrixT<double>::kTransposed, prodAmpDiffMat);
-
-			const TMatrixT<double> dChi2Mat(prodAmpDiffMatT * _productionAmplitudesCovMatInv[idxBin][idxMass] * prodAmpDiffMat);
-
-			chi2 += dChi2Mat(0, 0);
+			chi2 += _productionAmplitudesCovMatInv[idxBin][idxMass].Similarity(prodAmpDiffVect);
 		} // end loop over mass-bins
 	} // end loop over bins
 
