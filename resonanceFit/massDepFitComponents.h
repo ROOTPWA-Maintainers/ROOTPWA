@@ -127,7 +127,6 @@ namespace rpwa {
 			const std::vector<channel>& getChannels() const { return _channels; }
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
-			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 			size_t getChannelIdxCoupling(const size_t i) const { return _channelsCoupling[i]; }
 			size_t getChannelIdxBranching(const size_t i) const { return _channelsBranching[i]; }
 

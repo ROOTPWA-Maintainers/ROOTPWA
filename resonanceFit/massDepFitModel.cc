@@ -158,7 +158,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 			// loop over channels of component and see if wave is there
 			const size_t nrChannels = _components[idxComponent]->getNrChannels();
 			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-				if(_components[idxComponent]->getChannelWaveName(idxChannel) == _waveNames[idxWave]) {
+				if(_components[idxComponent]->getChannel(idxChannel).getWaveName() == _waveNames[idxWave]) {
 					_waveComponentChannel[idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
 
 					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _components[idxComponent]->getName()) {
@@ -200,7 +200,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 
 		const size_t nrChannels = _components[idxComponent]->getNrChannels();
 		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannelWaveName(idxChannel)
+			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannel(idxChannel).getWaveName()
 			       << (_components[idxComponent]->getChannel(idxChannel).isAnchor() ? " (anchor)" : "") << std::endl;
 		}
 	}
