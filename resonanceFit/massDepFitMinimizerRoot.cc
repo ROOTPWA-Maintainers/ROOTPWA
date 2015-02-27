@@ -90,9 +90,7 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 	// setup minimizer
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 	          << "using algorithm '" << minimizerType[1] << "'" << std::endl;
-std::cout << _minimizer.get() << std::endl;
 	_minimizer.reset(ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]));
-std::cout << _minimizer.get() << std::endl;
 	if(_minimizer.get() == NULL) {
 		printErr << "could not create minimizer. exiting." << std::endl;
 		throw;
