@@ -93,7 +93,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -N -n normfile"
-	     << " [-a normfile] -r rank [-t # -m # -q -h]" << endl
+	     << " [-a normfile] -r rank [-t # -m # -q -z -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -117,6 +117,7 @@ usage(const string& progName,
 	     << "        -m #       absolute likelihood tolerance (default: 0.001)" << endl
 	     << "        -C         use half-Cauchy priors (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
+	     << "        -z         save space by not saving integral and covariance matrices (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -164,10 +165,11 @@ main(int    argc,
 	double       likelihoodTolerance = 1e-6;                   // tolerance of likelihood function
 	bool         cauchy              = false;
 	bool         quiet               = false;
+	bool         saveSpace           = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:C:qh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:C:qzh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -224,6 +226,9 @@ main(int    argc,
 		case 'q':
 			quiet = true;
 			break;
+		case 'z':
+			saveSpace = true;
+			break;
 		case 'h':
 			usage(progName);
 			break;
@@ -258,6 +263,7 @@ main(int    argc,
 	     << "    relative parameter tolerance.................... "  << minimizerTolerance << endl
 	     << "    absolute likelihood tolerance................... "  << likelihoodTolerance << endl
 	     << "    using half-Cauchy priors........................ "  << yesNo(cauchy) << endl
+	     << "    saving integral and covariance matrices......... "  << yesNo(not saveSpace) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -420,12 +426,16 @@ main(int    argc,
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 				L.buildProdAmpArrays(&params[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(0, 0);          // nlopt does not calculate the covariance matrix, so do not save it
-				L.CovarianceMatrixAnalytically(&params[0], fitParCovMatrix);
+				complexMatrix normIntegral(0, 0);  // normalization integral over full phase space without acceptance
+				complexMatrix accIntegral (0, 0);  // normalization integral over full phase space with acceptance
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 				vector<double> phaseSpaceIntegral;
-				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+				if(not saveSpace) {
+					L.CovarianceMatrixAnalytically(&params[0], fitParCovMatrix);
+					normIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
+					accIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+					L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+				}
 				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
 
 				cout << "filling fitResult:" << endl
