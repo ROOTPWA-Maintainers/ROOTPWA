@@ -243,6 +243,9 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		if(readCouplings) {
+			// new coupling, so this should be the last coupling up to now
+			assert(couplingIndex == _nrCouplings);
+
 			boost::assign::insert(mandatoryArguments)
 			                     ("couplings", libconfig::Setting::TypeList);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
@@ -281,7 +284,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 				configCoupling->lookupValue("coupling_Im", couplingImag);
 
 				const std::complex<double> coupling(couplingReal, couplingImag);
-				fitParameters.setCoupling(getId(), _nrCouplings, idxCoupling, coupling);
+				fitParameters.setCoupling(getId(), couplingIndex, idxCoupling, coupling);
 			}
 
 			_channelsFromCoupling.push_back(_channels.size());
@@ -289,6 +292,9 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		if(readBranching) {
+			// new branching, so this should be the last branching up to now
+			assert(branchingIndex == _nrBranchings);
+
 			boost::assign::insert(mandatoryArguments)
 			                     ("branching", libconfig::Setting::TypeGroup);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
@@ -327,21 +333,21 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			}
 
 			const std::complex<double> branching(branchingReal, branchingImag);
-			fitParameters.setBranching(getId(), _nrBranchings, branching);
+			fitParameters.setBranching(getId(), branchingIndex, branching);
 
 			_channelsFromBranching.push_back(_channels.size());
 			++_nrBranchings;
-		} else {
-			assert(branchingIndex == 0);
-			assert(_nrBranchings == 0);
-
-			fitParameters.setBranching(getId(), _nrBranchings, std::complex<double>(1., 0.));
 		}
 
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
 		_channels.push_back(rpwa::massDepFit::channel(it->second, waveName, nrBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
+	}
+
+	// if no branchings are read at all make sure that there is one equal to 1.
+	if (_nrBranchings == 0) {
+		fitParameters.setBranching(getId(), 0, std::complex<double>(1., 0.));
 	}
 
 	if(debug) {
@@ -497,6 +503,7 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 				coupling = std::complex<double>(par[counter], par[counter+1]);
 				counter += 2;
 			}
+
 			if (fitParameters.getCoupling(getId(), idxCoupling, idxBin) != coupling) {
 				fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);
 
