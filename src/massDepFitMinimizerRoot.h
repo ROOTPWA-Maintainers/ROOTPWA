@@ -30,6 +30,7 @@
 #define MASSDEPFITMINIMIZERROOT_HH
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <Math/IFunction.h>
