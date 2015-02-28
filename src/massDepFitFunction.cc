@@ -119,9 +119,12 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		}
 	}
 
-	// do some stuff specific to the fit to the production amplitudes
 	if(_fitProductionAmplitudes) {
-		// test that the anchor wave is non-zero over the complete fit range
+		// do some stuff specific to the fit to the production amplitudes
+
+		// get a list of waves that are zero (those have to be excluded
+		// form the inversion of the covariance matrix below) and test
+		// that the anchor wave is non-zero over the complete fit range
 		bool zeroAnchorWave = false;
 		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_nrMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
@@ -188,15 +191,13 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 				TMatrixT<double> reducedCovMat(matrixSize - 1, matrixSize - 1);
 
 				if(realAnchorWave) {
-					size_t idxSkip=0;
-					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+					for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
 						if(idxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
 							++idxSkip;
 							continue;
 						}
 
-						size_t jdxSkip=0;
-						for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+						for(size_t jdxWave=0, jdxSkip=0; jdxWave<_nrWaves; ++jdxWave) {
 							if(jdxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
 								++jdxSkip;
 								continue;
@@ -221,15 +222,13 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					TMatrixT<double> covariance(matrixSize, matrixSize);
 					TMatrixT<double> jacobian(matrixSize - 1, matrixSize);
 
-					size_t idxSkip=0;
-					for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+					for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
 						if(idxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
 							++idxSkip;
 							continue;
 						}
 
-						size_t jdxSkip=0;
-						for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+						for(size_t jdxWave=0, jdxSkip=0; jdxWave<_nrWaves; ++jdxWave) {
 							if(jdxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
 								++jdxSkip;
 								continue;
@@ -277,15 +276,13 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 				// import covariance matrix of production amplitudes
 				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves - 1, 2*_nrWaves - 1);
 
-				size_t idxSkip=0;
-				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+				for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
 					if(idxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
 						++idxSkip;
 						continue;
 					}
 
-					size_t jdxSkip=0;
-					for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+					for(size_t jdxWave=0, jdxSkip=0; jdxWave<_nrWaves; ++jdxWave) {
 						if(jdxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
 							++jdxSkip;
 							continue;
