@@ -345,6 +345,14 @@ main(int    argc,
 	} else {
 		printWarn << "minimization failed." << endl;
 	}
+	std::vector<double> correctParams = L.CorrectParamSigns(&params[0]);
+	double newLikelihood = L.DoEval(&correctParams[0]);
+	if(likeli != newLikelihood) {
+		printErr << "Flipping signs according to sign conventions changed the likelihood (from " << likeli << " to " << newLikelihood << ")." << endl;
+		throw;
+	} else {
+		printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+	}
 
 	// ---------------------------------------------------------------------------
 	// print results
@@ -354,7 +362,7 @@ main(int    argc,
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(12) << L.parName(parIndex) << " = ";
-		cout << setw(12) << maxPrecisionAlign(params[parIndex]) << " +- "
+		cout << setw(12) << maxPrecisionAlign(correctParams[parIndex]) << " +- "
 		     << setw(12) << "[not available]";
 		cout << endl;
 	}
@@ -428,14 +436,14 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(&params[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(0, 0);          // nlopt does not calculate the covariance matrix, so do not save it
 				complexMatrix normIntegral(0, 0);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (0, 0);  // normalization integral over full phase space with acceptance
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				vector<double> phaseSpaceIntegral;
 				if(not saveSpace) {
-					L.CovarianceMatrixAnalytically(&params[0], fitParCovMatrix);
+					L.CovarianceMatrixAnalytically(&correctParams[0], fitParCovMatrix);
 					normIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 					accIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 					L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);

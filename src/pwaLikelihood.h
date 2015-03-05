@@ -123,6 +123,8 @@ namespace rpwa {
 		/// calculates covariance matrix of function at point defined by par
 		virtual void CovarianceMatrixAnalytically(const double*     par,
 							                      TMatrixT<double>& covMatrix) const;
+		/// flips the signs of the paramaters according to conventions (anchor wave and flat wave amplitudes are real and positive)
+		virtual std::vector<double> CorrectParamSigns(const double* in) const;
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
