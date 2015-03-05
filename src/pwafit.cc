@@ -543,6 +543,7 @@ main(int    argc,
 	// print results
 	printInfo << "minimization result:" << endl;
 	vector<unsigned int> parIndices = L.orderedParIndices();
+	const double inverseOfSqrtTwo = 1. / sqrt(2.);
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
@@ -551,7 +552,7 @@ main(int    argc,
 			cout << correctParams[parIndex] << " (fixed)" << endl;
 		else {
 			cout << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
-			     << setw(12) << maxPrecisionAlign(minimizer->Errors()[parIndex]);
+			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[parIndex]);
 			if (runMinos) {
 				double minosErrLow = 0;
 				double minosErrUp  = 0;
