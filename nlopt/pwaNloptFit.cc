@@ -301,6 +301,7 @@ main(int    argc,
 	optimizer.set_lower_bounds(-2.*sqrtNmbEvts);
 	optimizer.set_upper_bounds(2.*sqrtNmbEvts);
 
+	unsigned int maxParNameLength = 0;
 	vector<double>params(nmbPar, defaultStartValue);
 	if(not useFixedStartValues) {
 		TRandom3 random(startValSeed);
@@ -310,12 +311,16 @@ main(int    argc,
 				printErr << "thresholds are not implemented for fits with NLopt. Aborting..." << endl;
 				return 1;
 			}
+			const string& parName = L.parName(i);
+			if(parName.length() > maxParNameLength) {
+				maxParNameLength = parName.length();
+			}
 			params[i] = random.Uniform(defaultStartValue, sqrtNmbEvts);
 			if(random.Rndm() > 0.5) {
 				params[i] *= -1.;
 			}
-			cout << "    setting parameter [" << setw(3) << i << "] = "
-			     << maxPrecisionAlign(params[i]) << endl;
+			cout << "    setting parameter [" << setw(3) << i << "] "
+			     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(params[i]) << endl;
 		}
 	}
 
@@ -357,14 +362,16 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
+	TMatrixT<double> fitParCovMatrix(0, 0);
+	L.CovarianceMatrixAnalytically(&correctParams[0], fitParCovMatrix);
 	vector<unsigned int> parIndices = L.orderedParIndices();
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(12) << L.parName(parIndex) << " = ";
-		cout << setw(12) << maxPrecisionAlign(correctParams[parIndex]) << " +- "
-		     << setw(12) << "[not available]";
-		cout << endl;
+		     << setw(maxParNameLength) << L.parName(parIndex) << " = "
+		     << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
+		     << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)))
+		     << endl;
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
@@ -437,16 +444,16 @@ main(int    argc,
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
-				TMatrixT<double> fitParCovMatrix(0, 0);          // nlopt does not calculate the covariance matrix, so do not save it
 				complexMatrix normIntegral(0, 0);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (0, 0);  // normalization integral over full phase space with acceptance
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				vector<double> phaseSpaceIntegral;
 				if(not saveSpace) {
-					L.CovarianceMatrixAnalytically(&correctParams[0], fitParCovMatrix);
 					normIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 					accIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 					L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+				} else {
+					fitParCovMatrix = TMatrixT<double>(0, 0);
 				}
 				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
 
