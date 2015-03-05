@@ -71,7 +71,7 @@ double rpwaNloptFunc(unsigned n, const double* x, double* gradient, void* func_d
 	pwaLikelihood<complex<double> >* L = (pwaLikelihood<complex<double> >*)func_data;
 	if(n != L->nmbPars()) {
 		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
-		throw;
+		return 1;
 	}
 	double likeli;
 	if(gradient) {
@@ -349,7 +349,7 @@ main(int    argc,
 	double newLikelihood = L.DoEval(&correctParams[0]);
 	if(likeli != newLikelihood) {
 		printErr << "Flipping signs according to sign conventions changed the likelihood (from " << likeli << " to " << newLikelihood << ")." << endl;
-		throw;
+		return 1;
 	} else {
 		printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
 	}
