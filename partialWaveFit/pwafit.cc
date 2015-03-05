@@ -341,7 +341,7 @@ main(int    argc,
 	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
 	if (not minimizer) {
 		printErr << "could not create minimizer. exiting." << endl;
-		throw;
+		return 1;
 	}
 
 	// special for Minuit2
@@ -475,7 +475,7 @@ main(int    argc,
 			}
 			if (not success) {
 				printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
-				throw;
+				return 1;
 			}
 		}
 		// cleanup
@@ -527,7 +527,7 @@ main(int    argc,
 		double newLikelihood = L.DoEval(&correctParams[0]);
 		if(minimizer->MinValue() != newLikelihood) {
 			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
-			throw;
+			return 1;
 		} else {
 			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
 		}
