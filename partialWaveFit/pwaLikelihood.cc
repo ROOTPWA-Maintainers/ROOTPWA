@@ -264,6 +264,33 @@ pwaLikelihood<complexT>::FdF
 		           << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
 }
 
+template<typename complexT>
+std::vector<double>
+pwaLikelihood<complexT>::CorrectParamSigns(const double* in) const
+{
+	// build complex production amplitudes from function parameters taking into account rank restrictions
+	std::vector<double> returnParams(_nmbPars);
+	value_type    prodAmpFlat;
+	ampsArrayType prodAmps;
+	copyFromParArray(in, prodAmps, prodAmpFlat);
+
+	if (prodAmpFlat < 0) {
+		prodAmpFlat *= -1;  // flip sign of flat wave if it is negative
+	}
+
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+					prodAmps[iRank][iRefl][iWave] *= -1;	// flip sign of coherent waves if anchorwave is negative
+				}
+			}
+		}
+	}
+	copyToParArray(prodAmps, prodAmpFlat, &returnParams[0]);
+	return returnParams;
+}
+
 
 template<typename complexT>
 double
@@ -1224,10 +1251,10 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 template<typename complexT>
 void
 pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
-                                             vector<complex<double> >& prodAmps,
-                                             vector<pair<int, int> >&  parIndices,
-                                             vector<string>&           prodAmpNames,
-                                             const bool                withFlat) const
+                                            vector<complex<double> >& prodAmps,
+                                            vector<pair<int, int> >&  parIndices,
+                                            vector<string>&           prodAmpNames,
+                                            const bool                withFlat) const
 {
 	prodAmps.clear();
 	parIndices.clear();
@@ -1235,7 +1262,6 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 	unsigned int parIndex = 0;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
-			bool flipSign = false;
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				double re, im;
 				if (iWave < iRank)  // zero production amplitude
@@ -1243,24 +1269,12 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 				else if (iWave == iRank) {  // real production amplitude
 					parIndices.push_back(make_pair(parIndex, -1));
 					im = 0;
-					if (inPar[parIndex] >= 0) {
-						re = inPar[parIndex];
-					}
-					else {
-						re = -inPar[parIndex];
-						flipSign = true;
-					}
+					re = inPar[parIndex];
 					++parIndex;
 				} else {  // complex production amplitude
 					parIndices.push_back(make_pair(parIndex, parIndex + 1));
-					if (flipSign) {
-						re = -inPar[parIndex];
-						im = -inPar[parIndex + 1];
-					}
-					else {
-						re = inPar[parIndex];
-						im = inPar[parIndex + 1];
-					}
+					re = inPar[parIndex];
+					im = inPar[parIndex + 1];
 					parIndex += 2;
 				}
 				prodAmps.push_back(complex<double>(re, im));
@@ -1271,16 +1285,9 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 		}
 	}
 	if (withFlat) {
-		if (inPar[parIndex] >= 0) {
-			prodAmps.push_back(complex<double>(inPar[parIndex], 0));
-			parIndices.push_back(make_pair(parIndex, -1));
-			prodAmpNames.push_back("V_flat");
-		}
-		else {
-			prodAmps.push_back(complex<double>(-inPar[parIndex], 0));
-			parIndices.push_back(make_pair(parIndex, -1));
-			prodAmpNames.push_back("V_flat");
-		}
+		prodAmps.push_back(complex<double>(inPar[parIndex], 0));
+		parIndices.push_back(make_pair(parIndex, -1));
+		prodAmpNames.push_back("V_flat");
 	}
 }
 

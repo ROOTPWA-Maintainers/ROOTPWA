@@ -490,6 +490,7 @@ main(int    argc,
 	// find minimum of likelihood function
 	bool converged = false;
 	bool hasHesse  = false;
+	std::vector<double> correctParams;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
@@ -504,10 +505,6 @@ main(int    argc,
 		timer.Print();
 		converged = success;
 		printInfo << *minimizer;
-		// printInfo << "covariance matrix:" <<endl;
-		// for(unsigned int i = 0; i < nmbPar; ++i)
-		// 	for(unsigned int j = 0; j < nmbPar; ++j)
-		// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
@@ -526,6 +523,14 @@ main(int    argc,
 			// 	for(unsigned int j = 0; j < nmbPar; ++j)
 			// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
 		}
+		correctParams = L.CorrectParamSigns(minimizer->X());
+		double newLikelihood = L.DoEval(&correctParams[0]);
+		if(minimizer->MinValue() != newLikelihood) {
+			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
+			throw;
+		} else {
+			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -537,9 +542,9 @@ main(int    argc,
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(maxParNameLength) << L.parName(parIndex) << " = ";
 		if (parIsFixed[parIndex])
-			cout << minimizer->X()[parIndex] << " (fixed)" << endl;
+			cout << correctParams[parIndex] << " (fixed)" << endl;
 		else {
-			cout << setw(12) << maxPrecisionAlign(minimizer->X()     [parIndex]) << " +- "
+			cout << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
 			     << setw(12) << maxPrecisionAlign(minimizer->Errors()[parIndex]);
 			if (runMinos) {
 				double minosErrLow = 0;
@@ -586,7 +591,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
