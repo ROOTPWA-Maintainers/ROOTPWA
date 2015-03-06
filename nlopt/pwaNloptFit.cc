@@ -362,8 +362,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	TMatrixT<double> fitParCovMatrix(0, 0);
-	L.CovarianceMatrixAnalytically(&correctParams[0], fitParCovMatrix);
+	TMatrixT<double> fitParCovMatrix = L.CovarianceMatrixAnalytically(&correctParams[0]);
 	vector<unsigned int> parIndices = L.orderedParIndices();
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];

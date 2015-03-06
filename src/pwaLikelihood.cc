@@ -441,15 +441,12 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 	return gradient[derivativeIndex];
 }
 
-// calculate Covariance matrix with respect to parameters
+// calculate Hessian with respect to parameters
 template<typename complexT>
-void
-pwaLikelihood<complexT>::CovarianceMatrixAnalytically
-(const double*     par,              // parameter array; reduced by rank conditions
- TMatrixT<double>& covMatrix) const  // covariance matrix
+TMatrixT<double>
+pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parameter array; reduced by rank conditions
 {
-	covMatrix.ResizeTo(0, _nmbPars-1, 0, _nmbPars-1);
-
+	TMatrixT<double> hessian(_nmbPars, _nmbPars);
 	// build complex production amplitudes from function parameters taking into account rank restrictions
 	value_type    prodAmpFlat;
 	ampsArrayType prodAmps;
@@ -577,21 +574,21 @@ pwaLikelihood<complexT>::CovarianceMatrixAnalytically
 							i2 = get<1>(parIndices2);
 
 							if (r1 >= 0 && r2 >= 0){ // real/real derivative
-								covMatrix[r1][r2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
+								hessian[r1][r2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
 								if(r1 == r2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									covMatrix[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
-									covMatrix[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+									hessian[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+									hessian[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
 								}
 							}
 							if (r1 >= 0 && i2 >= 0){ // real/imaginary derivative
-								covMatrix[r1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
-								covMatrix[i2][r1] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessian[r1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessian[i2][r1] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
 							}
 							if (i1 >= 0 && i2 >= 0){ // imaginary/imaginary derivative
-								covMatrix[i1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
+								hessian[i1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
 								if(i1 == i2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									covMatrix[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
-									covMatrix[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+									hessian[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+									hessian[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
 								}
 							}
 						}
@@ -600,10 +597,34 @@ pwaLikelihood<complexT>::CovarianceMatrixAnalytically
 			}
 		}
 	}
-	covMatrix[_nmbPars - 1][_nmbPars - 1] = 0.5 * hesseFlat; // enter flat/flat term
+	hessian[_nmbPars - 1][_nmbPars - 1] = 0.5 * hesseFlat; // enter flat/flat term
+	return hessian;
+}
+
+/// calculates covariance matrix of function at point defined by par
+template<typename complexT>
+TMatrixT<double>
+pwaLikelihood<complexT>::CovarianceMatrixAnalytically
+(const double* par) const
+{
+	TMatrixT<double> covMatrix = HessianAnalytically(par);
 	covMatrix.Invert(); // invert hesse matrix to retrieve covariance matrix
 	covMatrix *= .5;
+	return covMatrix;
 }
+
+
+/// calculates covariance matrix of function at point defined by par
+template<typename complexT>
+TMatrixT<double>
+pwaLikelihood<complexT>::CovarianceMatrixAnalytically
+(TMatrixT<double> hessian) const
+{
+	hessian.Invert(); // invert hesse matrix to retrieve covariance matrix
+	hessian *= .5;
+	return hessian;
+}
+
 
 // calculate derivatives with respect to parameters
 template<typename complexT>
