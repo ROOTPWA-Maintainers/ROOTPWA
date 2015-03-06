@@ -120,11 +120,14 @@ namespace rpwa {
 		/// calculates gradient (vector of partial derivatives) of function at point defined by par
 		virtual void Gradient(const double* par,
 							  double*       gradient) const;
+		/// calculates Hessian of function at point defined by par
+		virtual TMatrixT<double> HessianAnalytically(const double* par) const;
 		/// calculates covariance matrix of function at point defined by par
-		virtual void CovarianceMatrixAnalytically(const double*     par,
-							                      TMatrixT<double>& covMatrix) const;
+		TMatrixT<double> CovarianceMatrixAnalytically(const double* par) const;
+		/// turns hessian into covariance matrix
+		TMatrixT<double> CovarianceMatrixAnalytically(TMatrixT<double> hessian) const;
 		/// flips the signs of the paramaters according to conventions (anchor wave and flat wave amplitudes are real and positive)
-		virtual std::vector<double> CorrectParamSigns(const double* in) const;
+		std::vector<double> CorrectParamSigns(const double* in) const;
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
