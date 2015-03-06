@@ -46,6 +46,7 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom3.h"
+#include "TVectorT.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "TStopwatch.h"
@@ -536,6 +537,17 @@ main(int    argc,
 			return 1;
 		} else {
 			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+		}
+		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+		TVectorT<double> eigenvalues;
+		hessian.EigenVectors(eigenvalues);
+		for(int i=0; i<eigenvalues.GetNrows(); i++) {
+			if (not quiet) {
+				cout << "	" << eigenvalues[i] << endl;
+			}
+			if (eigenvalues[i] <= 0.) {
+				printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+			}
 		}
 	}
 

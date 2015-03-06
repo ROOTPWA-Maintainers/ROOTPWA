@@ -46,6 +46,7 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom3.h"
+#include "TVectorT.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "TStopwatch.h"
@@ -358,11 +359,23 @@ main(int    argc,
 	} else {
 		printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
 	}
+	TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+	TMatrixT<double> fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
+	printInfo << "hessian eigenvalues:" << endl;
+	TVectorT<double> eigenvalues;
+	hessian.EigenVectors(eigenvalues);
+	for(int i=0; i<eigenvalues.GetNrows(); i++) {
+		if (not quiet) {
+			cout << "	" << eigenvalues[i] << endl;
+		}
+		if (eigenvalues[i] <= 0.) {
+			printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+		}
+	}
 
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	TMatrixT<double> fitParCovMatrix = L.CovarianceMatrixAnalytically(&correctParams[0]);
 	vector<unsigned int> parIndices = L.orderedParIndices();
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
