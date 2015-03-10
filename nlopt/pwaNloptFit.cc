@@ -299,8 +299,6 @@ main(int    argc,
 
 	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
 	optimizer.set_min_objective(&rpwaNloptFunc, &L);
-	optimizer.set_lower_bounds(-2.*sqrtNmbEvts);
-	optimizer.set_upper_bounds(2.*sqrtNmbEvts);
 
 	unsigned int maxParNameLength = 0;
 	vector<double>params(nmbPar, defaultStartValue);
