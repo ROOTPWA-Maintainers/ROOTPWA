@@ -344,11 +344,6 @@ main(int    argc,
 	if(result < 0) {
 		converged = false;
 	}
-	if(converged) {
-		printSucc << "minimization succeeded." << endl;
-	} else {
-		printWarn << "minimization failed." << endl;
-	}
 	std::vector<double> correctParams = L.CorrectParamSigns(&params[0]);
 	double newLikelihood = L.DoEval(&correctParams[0]);
 	if(likeli != newLikelihood) {
@@ -371,8 +366,14 @@ main(int    argc,
 			}
 			if (eigenvalues[i] <= 0.) {
 				printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+				converged = false;
 			}
 		}
+	}
+	if(converged) {
+		printSucc << "minimization succeeded." << endl;
+	} else {
+		printWarn << "minimization failed." << endl;
 	}
 
 	// ---------------------------------------------------------------------------
