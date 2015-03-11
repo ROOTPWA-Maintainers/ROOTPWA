@@ -269,10 +269,15 @@ namespace rpwa {
 	inline
 	TMatrixT<double>
 	fitResult::prodAmpCov(const unsigned int prodAmpIndex) const {
+		TMatrixT<double> cov(2, 2);
+		if(not _covMatrixValid) {
+			printWarn << "no valid covariance matrix to return, return 0-matrix." << std::endl;
+			cov = 0.;
+			return cov;
+		}
 		// get parameter indices
 		const int i = _fitParCovMatrixIndices[prodAmpIndex].first;
 		const int j = _fitParCovMatrixIndices[prodAmpIndex].second;
-		TMatrixT<double> cov(2, 2);
 		cov[0][0] = _fitParCovMatrix[i][i];
 		if (j >= 0) {
 			cov[0][1] = _fitParCovMatrix[i][j];
