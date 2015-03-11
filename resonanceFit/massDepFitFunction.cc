@@ -138,7 +138,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][0] == 0.);
 					zeroThisWave &= (_productionAmplitudesCovariance[idxBin][idxMass][idxWave][idxWave][1][1] == 0.);
 
-					if(zeroThisWave) {
+					if(zeroThisWave || idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
 						zeroWaves[idxBin][idxMass].push_back(idxWave);
 					}
 
@@ -186,9 +186,17 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+				// determine whether the anchor wave should be used in the current bin
+				bool skipAnchor = false;
+				for (std::vector<size_t>::const_iterator it=zeroWaves[idxBin][idxMass].begin(); it!=zeroWaves[idxBin][idxMass].end(); ++it) {
+					if (*it == _idxAnchorWave) {
+						skipAnchor = true;
+					}
+				}
+
 				// import covariance matrix of production amplitudes
-				const size_t matrixSize = 2 * (_nrWaves - zeroWaves[idxBin][idxMass].size());
-				TMatrixT<double> reducedCovMat(matrixSize - 1, matrixSize - 1);
+				const size_t matrixSize = 2 * (_nrWaves - zeroWaves[idxBin][idxMass].size()) - (skipAnchor ? 0 : 1);
+				TMatrixT<double> reducedCovMat(matrixSize, matrixSize);
 
 				if(realAnchorWave) {
 					for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
@@ -203,24 +211,24 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 								continue;
 							}
 
-							const Int_t row = 2*(idxWave-idxSkip) + (idxWave>_idxAnchorWave ? -1 : 0);
-							const Int_t col = 2*(jdxWave-jdxSkip) + (jdxWave>_idxAnchorWave ? -1 : 0);
+							const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
+							const Int_t colSkip = 2*(jdxWave-jdxSkip) + ((jdxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 
-							reducedCovMat(row + 0, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
+							reducedCovMat(rowSkip + 0, colSkip + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][0];
 							if(jdxWave != _idxAnchorWave) {
-								reducedCovMat(row + 0, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
+								reducedCovMat(rowSkip + 0, colSkip + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][0][1];
 							}
 							if(idxWave != _idxAnchorWave) {
-								reducedCovMat(row + 1, col + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
+								reducedCovMat(rowSkip + 1, colSkip + 0) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][0];
 							}
 							if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
-								reducedCovMat(row + 1, col + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
+								reducedCovMat(rowSkip + 1, colSkip + 1) = _productionAmplitudesCovariance[idxBin][idxMass][idxWave][jdxWave][1][1];
 							}
 						}
 					}
 				} else {
-					TMatrixT<double> covariance(matrixSize, matrixSize);
-					TMatrixT<double> jacobian(matrixSize - 1, matrixSize);
+					TMatrixT<double> covariance(matrixSize + (skipAnchor ? 0 : 1), matrixSize + (skipAnchor ? 0 : 1));
+					TMatrixT<double> jacobian(matrixSize, matrixSize + (skipAnchor ? 0 : 1));
 
 					for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
 						if(idxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
@@ -246,22 +254,22 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 							const double xi1 = _productionAmplitudes[idxBin][idxMass][idxWave].real();
 							const double xi2 = _productionAmplitudes[idxBin][idxMass][idxWave].imag();
 
-							const Int_t row = 2*(idxWave-idxSkip) + (idxWave>_idxAnchorWave ? -1 : 0);
+							const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 							if(idxWave == _idxAnchorWave && jdxWave == _idxAnchorWave) {
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 0) = xa1 / n;
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 1) = xa2 / n;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) = xa1 / n;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) = xa2 / n;
 							} else if(jdxWave == _idxAnchorWave) {
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 0) = xi1 / n - xa1 * (xi1*xa1 + xi2*xa2) / n3;
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 1) = xi2 / n - xa2 * (xi1*xa1 + xi2*xa2) / n3;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) = xi1 / n - xa1 * (xi1*xa1 + xi2*xa2) / n3;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) = xi2 / n - xa2 * (xi1*xa1 + xi2*xa2) / n3;
 								if(idxWave != _idxAnchorWave) {
-									jacobian(row + 1, 2*(jdxWave-jdxSkip) + 0) =   xi2 / n - xa1 * (xi2*xa1 - xi1*xa2) / n3;
-									jacobian(row + 1, 2*(jdxWave-jdxSkip) + 1) = - xi1 / n - xa2 * (xi2*xa1 - xi1*xa2) / n3;
+									jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 0) =   xi2 / n - xa1 * (xi2*xa1 - xi1*xa2) / n3;
+									jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 1) = - xi1 / n - xa2 * (xi2*xa1 - xi1*xa2) / n3;
 								}
 							} else if(idxWave == jdxWave) {
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 0) =   xa1 / n;
-								jacobian(row + 0, 2*(jdxWave-jdxSkip) + 1) =   xa2 / n;
-								jacobian(row + 1, 2*(jdxWave-jdxSkip) + 0) = - xa2 / n;
-								jacobian(row + 1, 2*(jdxWave-jdxSkip) + 1) =   xa1 / n;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) =   xa1 / n;
+								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) =   xa2 / n;
+								jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 0) = - xa2 / n;
+								jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 1) =   xa1 / n;
 							}
 						}
 					}
@@ -294,16 +302,18 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 						const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
 						const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
+						const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
+						const Int_t colSkip = 2*(jdxWave-jdxSkip) + ((jdxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 
-						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = reducedCovMat(row - 2*idxSkip + 0, col - 2*jdxSkip + 0);
+						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = reducedCovMat(rowSkip + 0, colSkip + 0);
 						if(jdxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = reducedCovMat(row - 2*idxSkip + 0, col - 2*jdxSkip + 1);
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = reducedCovMat(rowSkip + 0, colSkip + 1);
 						}
 						if(idxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = reducedCovMat(row - 2*idxSkip + 1, col - 2*jdxSkip + 0);
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = reducedCovMat(rowSkip + 1, colSkip + 0);
 						}
 						if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = reducedCovMat(row - 2*idxSkip + 1, col - 2*jdxSkip + 1);
+							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = reducedCovMat(rowSkip + 1, colSkip + 1);
 						}
 					}
 				}
@@ -338,7 +348,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 						zeroThisWave &= (_spinDensityCovarianceMatrices[idxBin][idxMass][idxWave][jdxWave][1][1] == 0.);
 					}
 
-					if(zeroThisWave) {
+					if(zeroThisWave || idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
 						zeroWaves[idxBin][idxMass].push_back(idxWave);
 					}
 				}
