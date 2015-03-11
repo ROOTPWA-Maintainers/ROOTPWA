@@ -78,7 +78,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
+	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -H -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -116,6 +116,7 @@ usage(const string& progName,
 #else
 	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
 #endif
+	     << "        -H         check analytical Hessian eigenvalues (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -204,11 +205,12 @@ main(int    argc,
 	bool         saveMinimizerMemory = true;
 #endif
 	bool         cudaEnabled         = false;                  // if true CUDA kernels are activated
+	bool         checkHessian        = false;                  // if true checks analytical Hessian eigenvalues
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecHqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -276,6 +278,9 @@ main(int    argc,
 			cudaEnabled = true;
 #endif
 			break;
+		case 'H':
+			checkHessian = true;
+			break;
 		case 'q':
 			quiet = true;
 			break;
@@ -316,6 +321,7 @@ main(int    argc,
 	     << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
 	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
+	     << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -412,6 +418,7 @@ main(int    argc,
 	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
 	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
+	unsigned int fixedPars = 0;
 	{
 		// use local instance of random number generator so that other
 		// code has no chance of tampering with gRandom and thus cannot
@@ -432,6 +439,7 @@ main(int    argc,
 				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
 					success = false;
 				parIsFixed[i] = true;
+				fixedPars++;
 			}
 		}
 		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
@@ -498,13 +506,56 @@ main(int    argc,
 		timer.Start();
 		bool success = minimizer->Minimize();
 		timer.Stop();
-		if (success)
+		converged = success;
+		correctParams = L.CorrectParamSigns(minimizer->X());
+		double newLikelihood = L.DoEval(&correctParams[0]);
+		if(minimizer->MinValue() != newLikelihood) {
+			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
+			return 1;
+		} else {
+			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+		}
+		if (checkHessian) {
+			// analytically calculate Hessian
+			TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+			// create reduced hessian without fixed parameters
+			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
+			vector<unsigned int> parIndices  = L.orderedParIndices();
+			unsigned int iReduced = 0;
+			for(unsigned int i = 0; i < nmbPar; i++) {
+				unsigned int jReduced = 0;
+				if (not parIsFixed[parIndices[i]]) {
+					for(unsigned int j = 0; j < nmbPar; j++) {
+						if (not parIsFixed[parIndices[j]]) {
+							reducedHessian[iReduced][jReduced] = hessian[i][j];
+							jReduced++;
+						}
+					}
+					iReduced++;
+				}
+			}
+			// create and check Hessian eigenvalues
+			if (not quiet) {
+				printInfo << "analytical Hessian eigenvalues:" << endl;
+			}
+			TVectorT<double> eigenvalues;
+			reducedHessian.EigenVectors(eigenvalues);
+			for(int i=0; i<eigenvalues.GetNrows(); i++) {
+				if (not quiet) {
+					cout << "	" << eigenvalues[i] << endl;
+				}
+				if (eigenvalues[i] <= 0.) {
+					printWarn << "eigenvalue " << i << " of hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+					converged = false;
+				}
+			}
+		}
+		if (converged)
 			printInfo << "minimization finished successfully. " << flush;
 		else
 			printWarn << "minimization failed. " << flush;
 		cout << "used " << flush;
 		timer.Print();
-		converged = success;
 		printInfo << *minimizer;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
@@ -523,25 +574,6 @@ main(int    argc,
 			// for(unsigned int i = 0; i < nmbPar; ++i)
 			// 	for(unsigned int j = 0; j < nmbPar; ++j)
 			// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
-		}
-		correctParams = L.CorrectParamSigns(minimizer->X());
-		double newLikelihood = L.DoEval(&correctParams[0]);
-		if(minimizer->MinValue() != newLikelihood) {
-			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
-			return 1;
-		} else {
-			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
-		}
-		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
-		TVectorT<double> eigenvalues;
-		hessian.EigenVectors(eigenvalues);
-		for(int i=0; i<eigenvalues.GetNrows(); i++) {
-			if (not quiet) {
-				cout << "	" << eigenvalues[i] << endl;
-			}
-			if (eigenvalues[i] <= 0.) {
-				printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
-			}
 		}
 	}
 
