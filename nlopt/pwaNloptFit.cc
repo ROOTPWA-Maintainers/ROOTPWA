@@ -357,15 +357,17 @@ main(int    argc,
 		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
 		fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
-		printInfo << "hessian eigenvalues:" << endl;
 		TVectorT<double> eigenvalues;
 		hessian.EigenVectors(eigenvalues);
+		if (not quiet) {
+			printInfo << "analytical Hessian eigenvalues:" << endl;
+		}
 		for(int i=0; i<eigenvalues.GetNrows(); i++) {
 			if (not quiet) {
 				cout << "	" << eigenvalues[i] << endl;
 			}
 			if (eigenvalues[i] <= 0.) {
-				printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+				printWarn << "eigenvalue " << i << " of Hessian is non-positive (" << eigenvalues[i] << ")." << endl;
 				converged = false;
 			}
 		}
