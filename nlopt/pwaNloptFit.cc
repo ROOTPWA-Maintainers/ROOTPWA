@@ -357,17 +357,21 @@ main(int    argc,
 	} else {
 		printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
 	}
-	TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
-	TMatrixT<double> fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
-	printInfo << "hessian eigenvalues:" << endl;
-	TVectorT<double> eigenvalues;
-	hessian.EigenVectors(eigenvalues);
-	for(int i=0; i<eigenvalues.GetNrows(); i++) {
-		if (not quiet) {
-			cout << "	" << eigenvalues[i] << endl;
-		}
-		if (eigenvalues[i] <= 0.) {
-			printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+	TMatrixT<double> fitParCovMatrix(0, 0);
+	if(not saveSpace) {
+		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
+		fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
+		printInfo << "hessian eigenvalues:" << endl;
+		TVectorT<double> eigenvalues;
+		hessian.EigenVectors(eigenvalues);
+		for(int i=0; i<eigenvalues.GetNrows(); i++) {
+			if (not quiet) {
+				cout << "	" << eigenvalues[i] << endl;
+			}
+			if (eigenvalues[i] <= 0.) {
+				printWarn << "eigenvalue " << i << " of hessian is non-positive." << endl;
+			}
 		}
 	}
 
@@ -379,9 +383,13 @@ main(int    argc,
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(maxParNameLength) << L.parName(parIndex) << " = "
-		     << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
-		     << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)))
-		     << endl;
+		     << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- ";
+		if(not saveSpace) {
+			cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
+		} else {
+			cout << setw(12) << "[not available]";
+		}
+		cout << endl;
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
@@ -462,8 +470,6 @@ main(int    argc,
 					normIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 					accIntegral.resizeTo(nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 					L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
-				} else {
-					fitParCovMatrix = TMatrixT<double>(0, 0);
 				}
 				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
 
