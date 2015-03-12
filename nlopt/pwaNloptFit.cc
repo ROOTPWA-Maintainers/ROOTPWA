@@ -353,6 +353,7 @@ main(int    argc,
 		printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
 	}
 	TMatrixT<double> fitParCovMatrix(0, 0);
+	bool hasHessian = false;
 	if(not saveSpace) {
 		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
@@ -371,6 +372,7 @@ main(int    argc,
 				converged = false;
 			}
 		}
+		if(converged) hasHessian = true;
 	}
 	if(converged) {
 		printSucc << "minimization succeeded." << endl;
@@ -498,7 +500,7 @@ main(int    argc,
 				             accIntegral,
 				             phaseSpaceIntegral,
 				             converged,
-				             false);
+				             hasHessian);
 				//printDebug << *result;
 			}
 
