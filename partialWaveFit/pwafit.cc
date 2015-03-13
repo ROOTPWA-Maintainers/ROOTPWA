@@ -570,10 +570,6 @@ main(int    argc,
 			timer.Print();
 			hasHesse = success;
 			printInfo << *minimizer;
-			// printInfo << "covariance matrix:" <<endl;
-			// for(unsigned int i = 0; i < nmbPar; ++i)
-			// 	for(unsigned int j = 0; j < nmbPar; ++j)
-			// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
 		}
 	}
 
