@@ -568,13 +568,15 @@ main(int    argc,
 			timer.Start();
 			success = minimizer->Hesse();
 			timer.Stop();
-			if (success)
+			if (success) {
 				printInfo << "successfully calculated Hessian matrix. " << flush;
-			else
+				hasHesse = true;
+			} else {
 				printWarn << "calculation of Hessian matrix failed. " << flush;
+				converged = false;
+			}
 			cout << "used " << flush;
 			timer.Print();
-			hasHesse = success;
 			printInfo << *minimizer;
 		}
 	}
