@@ -725,6 +725,14 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		++waveIndex;
 	}
+	// If some waves were skipped above, the arrays are too large, and the
+	// integrate() method thinks there are more waves than there actually
+	// are. Calling resize() with a value smaller than the current size
+	// does not trigger a reallocation, so all pointers stay valid.
+	_waveNames.resize(waveIndex);
+	_waveDescriptions.resize(waveIndex);
+	ampTrees.resize(waveIndex-waveIndexOffset);
+	ampTreeLeafs.resize(waveIndex-waveIndexOffset);
 	return nmbAmps;
 }
 
