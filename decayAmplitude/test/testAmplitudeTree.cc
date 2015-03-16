@@ -58,9 +58,11 @@ main(int argc, char** argv)
 	const unsigned int nmbIncohSubAmps = 3;
 	gRandom->SetSeed(123456789);
 
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 
 	if (1) {
 		TFile*               outFile      = TFile::Open("testAmplitudeTree.root", "RECREATE");

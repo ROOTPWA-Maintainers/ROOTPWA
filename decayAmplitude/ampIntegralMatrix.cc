@@ -622,9 +622,11 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
 	unsigned long nmbAmps = 0;
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 	unsigned int             waveIndex = waveIndexOffset;
 	vector<TTree*>           trees;
 	vector<waveDescription*> waveDescs;
