@@ -79,10 +79,6 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
-	// force loading predefined std::complex dictionary
-	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
-	//gROOT->ProcessLine("#include <complex>");
-
 	// parse command line options
 	const string progName        = argv[0];
 	string       outFileName     = "./norm.int";

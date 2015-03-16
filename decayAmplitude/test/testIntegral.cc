@@ -119,8 +119,10 @@ main(int    argc,
 		ampIntegralMatrix integral2(integral);
 		integral2.writeAscii("testIntegral2.int");
 		// root I/O
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 		// force loading predefined std::complex dictionary
 		gROOT->ProcessLine("#include <complex>");
+#endif
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
 			printInfo << "writing integral to 'testIntegral.root'" << endl;

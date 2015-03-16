@@ -44,11 +44,13 @@ int main(int argc, char** argv)
 	string inputFileName  = "input.root";
 	bool recalculateHash = false;
 
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// if the following line is missing, there are error messages of the sort
 	// "Warning in <TClass::TClass>: no dictionary for class TVector3 is available",
 	// no idea why. Probably there is a correct way of ensuring that the dictionaries
 	// are loaded, but I do not know it (yet). KB
 	gROOT->ProcessLine("#include <complex>");
+#endif
 
 	extern char* optarg;
 	int c;

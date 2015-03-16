@@ -622,9 +622,11 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
 	unsigned long nmbAmps = 0;
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 	unsigned int             waveIndex = waveIndexOffset;
 	vector<TTree*>           trees;
 	vector<waveDescription*> waveDescs;
@@ -723,6 +725,14 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		++waveIndex;
 	}
+	// If some waves were skipped above, the arrays are too large, and the
+	// integrate() method thinks there are more waves than there actually
+	// are. Calling resize() with a value smaller than the current size
+	// does not trigger a reallocation, so all pointers stay valid.
+	_waveNames.resize(waveIndex);
+	_waveDescriptions.resize(waveIndex);
+	ampTrees.resize(waveIndex-waveIndexOffset);
+	ampTreeLeafs.resize(waveIndex-waveIndexOffset);
 	return nmbAmps;
 }
 
