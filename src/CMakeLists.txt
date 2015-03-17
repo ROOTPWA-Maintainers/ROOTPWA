@@ -92,6 +92,7 @@ make_shared_library(
 
 # executables
 make_executable(pwafit            pwafit.cc            ${THIS_LIB} "${UTILITIES_LIBS}")
+make_executable(eigenvectorLikelihoodSlices            eigenvectorLikelihoodSlices.cc            ${THIS_LIB} "${UTILITIES_LIBS}")
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
 make_executable(pwaMassFit        pwaMassFit.cc        ${THIS_LIB} "${UTILITIES_LIBS}" "${Libconfig_LIBS}")
