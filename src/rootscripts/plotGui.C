@@ -31,12 +31,12 @@ using namespace std;
 class MyMainFrame : public TGMainFrame {
 
 	private:
-		TGListBox           *fListBox;
-		TGListBox           *fListBox2;
-		TGCheckButton       *fCheckMulti;
-		TList               *fSelected;
-		TTree               *fTree;
-		std::vector<std::string> fwavenames;
+		TGListBox           *_listBox;
+		TGListBox           *_listBox2;
+		TGCheckButton       *_checkMulti;
+		TList               *_selected;
+		TTree               *_tree;
+		std::vector<std::string> _wavenames;
 
 	public:
 		MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree);
@@ -65,7 +65,7 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
 {
 
 	// analyze tree
-	fTree=tree;
+	_tree=tree;
 	//tree->Print();
 	fitResult* res=0;//new fitResult();
 	string branchname("fitResult_v2");
@@ -81,33 +81,33 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
 
 
 
-	fwavenames=res->waveNames();
+	_wavenames=res->waveNames();
 
 
 
 	// Create main frame
 
-	fListBox = new TGListBox(this, 89);
-	fListBox2 = new TGListBox(this, 88);
-	fSelected = new TList;
+	_listBox = new TGListBox(this, 89);
+	_listBox2 = new TGListBox(this, 88);
+	_selected = new TList;
 
-	for (int i = 0; i < fwavenames.size(); ++i) {
-		cout << fwavenames[i] << endl;
-		fListBox->AddEntry(fwavenames[i].c_str(), i);
-		fListBox2->AddEntry(fwavenames[i].c_str(), i);
+	for (unsigned int i = 0; i < _wavenames.size(); ++i) {
+		cout << _wavenames[i] << endl;
+		_listBox->AddEntry(_wavenames[i].c_str(), i);
+		_listBox2->AddEntry(_wavenames[i].c_str(), i);
 	}
-	fListBox->Resize(400,250);
-	fListBox2->Resize(400,250);
+	_listBox->Resize(400,250);
+	_listBox2->Resize(400,250);
 
-	AddFrame(fListBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
-	AddFrame(fListBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
+	AddFrame(_listBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+	AddFrame(_listBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
 
 
 
-	fCheckMulti = new TGCheckButton(this, "&Mutliple selection", 10);
-	AddFrame(fCheckMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft,
+	_checkMulti = new TGCheckButton(this, "&Mutliple selection", 10);
+	AddFrame(_checkMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft,
 				5, 5, 5, 5));
-	fCheckMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()");
+	_checkMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()");
 	// Create a horizontal frame containing button(s)
 	TGHorizontalFrame *hframe = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
 	TGTextButton *show = new TGTextButton(hframe, "&Show");
@@ -128,17 +128,17 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
 
 	// Map main frame
 	MapWindow();
-	fListBox->Select(0);
-	fListBox2->Select(0);
+	_listBox->Select(0);
+	_listBox2->Select(0);
 }
 
 MyMainFrame::~MyMainFrame()
 {
 	// Clean up main frame...
 	Cleanup();
-	if (fSelected) {
-		fSelected->Delete();
-		delete fSelected;
+	if (_selected) {
+		_selected->Delete();
+		delete _selected;
 	}
 }
 
@@ -159,12 +159,12 @@ void MyMainFrame::HandleButtons()
 void MyMainFrame::PrintSelected()
 {
 	// Writes selected entries in TList if multiselection.
-	string w1=fwavenames[fListBox->GetSelected()];
-	string w2=fwavenames[fListBox2->GetSelected()];
+	string w1=_wavenames[_listBox->GetSelected()];
+	string w2=_wavenames[_listBox2->GetSelected()];
 	cout << w1 << endl;
 	cout << w2 << endl;
 	// Produce plots
-	unsigned int n=fTree->GetEntries();
+	unsigned int n=_tree->GetEntries();
 
 	Int_t colour=1;
 	double binwidth=0.060;
@@ -232,12 +232,12 @@ void MyMainFrame::PrintSelected()
 
 
 	fitResult* result=0;
-	fTree->SetBranchAddress("fitResult_v2",&result);
+	_tree->SetBranchAddress("fitResult_v2",&result);
 
 
 
 	for(unsigned int i=0;i<n;++i){
-		fTree->GetEntry(i);
+		_tree->GetEntry(i);
 
 		if(!result->converged())continue;
 		if(!result->hasHessian())continue;
