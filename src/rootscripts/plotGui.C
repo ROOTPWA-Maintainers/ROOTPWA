@@ -1,11 +1,8 @@
-//
-// Author: Ilka Antcheva   1/12/2006
 
-// This macro gives an example of how to create a list box
-// and how to set and use its multiple selection feature.
-// To run it do either:
-// .x listBox.C
-// .x listBox.C++
+#include <string>
+#include <vector>
+#include <iostream>
+#include <limits>
 
 #include <TApplication.h>
 #include <TGClient.h>
@@ -18,12 +15,9 @@
 #include <TCanvas.h>
 #include <TGraphErrors.h>
 
-#include "fitResult.h"
-#include <string>
-#include <vector>
-#include <iostream>
-#include <limits>
-//#include <stringstream>
+#include <fitResult.h>
+#include <reportingUtils.hpp>
+
 
 using namespace rpwa;
 using namespace std;
@@ -35,11 +29,12 @@ class MyMainFrame : public TGMainFrame {
 		TGListBox           *_listBox2;
 		TGCheckButton       *_checkMulti;
 		TList               *_selected;
-		TTree               *_tree;
 		std::vector<std::string> _wavenames;
+		std::vector<const rpwa::fitResult*> _fitResults;
+		const double _binWidth;
 
 	public:
-		MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree);
+		MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree, const double& binWidth);
 		virtual ~MyMainFrame();
 		void DoExit();
 		void DoSelect();
@@ -60,33 +55,43 @@ void MyMainFrame::DoExit()
 	gApplication->Terminate(0);
 }
 
-MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
-	TGMainFrame(p, w, h)
+MyMainFrame::MyMainFrame(const TGWindow *p,
+                         UInt_t w,
+                         UInt_t h,
+                         TTree* tree,
+                         const double& binWidth) :
+	TGMainFrame(p, w, h),
+	_binWidth(binWidth)
 {
 
-	// analyze tree
-	_tree=tree;
-	//tree->Print();
-	fitResult* res=0;//new fitResult();
-	string branchname("fitResult_v2");
-	if(tree->FindBranch(branchname.c_str())==NULL){
-		cerr << "Invalid branch ."<<branchname<<endl;
-		throw;
+	{
+		fitResult* res = 0;//new fitResult();
+		string branchname = "fitResult_v2";
+		if(tree->FindBranch(branchname.c_str()) == 0){
+			cerr << "Invalid branch ." << branchname << endl;
+			throw;
+		}
+		tree->SetBranchAddress(branchname.c_str(),&res);
+		long entries = tree->GetEntries();
+		if(entries < 1) {
+			cerr << "Tree has no entries" << endl;
+			throw;
+		}
+		cout << "Entries: " << entries << endl;
+		_fitResults.resize(entries, 0);
+		for(long i = 0; i < entries; ++i) {
+			cout << "loading result " << i << " of " << entries << "... " << std::flush;
+			tree->GetEntry(i);
+			_fitResults[i] = new rpwa::fitResult(*res);
+			cout << "done!" << endl;
+		}
 	}
 
-	tree->SetBranchAddress(branchname.c_str(),&res);
-	cout << "Entries: " <<tree->GetEntries() << endl;
-	tree->GetEntry(1);
 	// get list of waves
-
-
-
-	_wavenames=res->waveNames();
-
-
+	_wavenames = _fitResults[0]->waveNames();
+	cout << _wavenames << endl;
 
 	// Create main frame
-
 	_listBox = new TGListBox(this, 89);
 	_listBox2 = new TGListBox(this, 88);
 	_selected = new TList;
@@ -102,11 +107,8 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree) :
 	AddFrame(_listBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
 	AddFrame(_listBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
 
-
-
 	_checkMulti = new TGCheckButton(this, "&Mutliple selection", 10);
-	AddFrame(_checkMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft,
-				5, 5, 5, 5));
+	AddFrame(_checkMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft, 5, 5, 5, 5));
 	_checkMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()");
 	// Create a horizontal frame containing button(s)
 	TGHorizontalFrame *hframe = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
@@ -164,12 +166,11 @@ void MyMainFrame::PrintSelected()
 	cout << w1 << endl;
 	cout << w2 << endl;
 	// Produce plots
-	unsigned int n=_tree->GetEntries();
+	unsigned int nFitResults = _fitResults.size();
 
 	Int_t colour=1;
-	double binwidth=0.060;
 
-	TGraphErrors* gph = new TGraphErrors(n);
+	TGraphErrors* gph = new TGraphErrors(nFitResults);
 	stringstream graphName;
 	graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
 	cout << "creating graph   " << graphName.str() << endl;
@@ -187,7 +188,7 @@ void MyMainFrame::PrintSelected()
 	gphM1->SetMarkerColor(3);
 	gphM1->SetLineColor(3);
 
-	TGraphErrors* gRe = new TGraphErrors(n);
+	TGraphErrors* gRe = new TGraphErrors(nFitResults);
 	graphName.str("");
 	graphName.clear();
 	graphName << "RE_"<<w1<<"---"<<""<<w2;
@@ -199,7 +200,7 @@ void MyMainFrame::PrintSelected()
 	gRe->SetMarkerColor(colour);
 	gRe->SetLineColor(colour);
 
-	TGraphErrors* gIm = new TGraphErrors(n);
+	TGraphErrors* gIm = new TGraphErrors(nFitResults);
 	graphName.str("");
 	graphName.clear();
 	graphName << "IM_"<<w1<<"---"<<""<<w2;
@@ -211,7 +212,7 @@ void MyMainFrame::PrintSelected()
 	gIm->SetMarkerColor(colour);
 	gIm->SetLineColor(colour);
 
-	TGraphErrors* g1 = new TGraphErrors(n);
+	TGraphErrors* g1 = new TGraphErrors(nFitResults);
 	graphName.str("");
 	graphName.clear();
 	graphName<<"g"<<w1;
@@ -219,7 +220,7 @@ void MyMainFrame::PrintSelected()
 	g1->SetTitle(graphName.str().c_str());
 	g1->SetMarkerStyle(21);
 	g1->SetMarkerSize(0.5);
-	TGraphErrors* g2 = new TGraphErrors(n);
+	TGraphErrors* g2 = new TGraphErrors(nFitResults);
 	graphName.str("");
 	graphName.clear();
 	graphName<<"g"<<w2;
@@ -228,41 +229,29 @@ void MyMainFrame::PrintSelected()
 	g2->SetMarkerStyle(21);
 	g2->SetMarkerSize(0.5);
 
+	for(unsigned int i = 0; i < nFitResults; ++i){
+		const fitResult* result = _fitResults[i];
 
-
-
-	fitResult* result=0;
-	_tree->SetBranchAddress("fitResult_v2",&result);
-
-
-
-	for(unsigned int i=0;i<n;++i){
-		_tree->GetEntry(i);
-
-		if(!result->converged())continue;
-		if(!result->hasHessian())continue;
+		if(not result->converged()) {
+			continue;
+		}
 
 		double intensity1=result->intensity(w1.c_str());
-		if((numeric_limits<double>::has_infinity && intensity1 == numeric_limits<double>::infinity()) || intensity1!=intensity1)continue;
+		if((numeric_limits<double>::has_infinity and intensity1 == numeric_limits<double>::infinity()) or intensity1!=intensity1) {
+			continue;
+		}
 
-		g1->SetPoint(i,
-				result->massBinCenter()*0.001,
-				intensity1);
-		g1->SetPointError(i,
-				binwidth*0.5,
-				result->intensityErr(w1.c_str()));
+		g1->SetPoint(i, result->massBinCenter()*0.001, intensity1);
+		g1->SetPointError(i, _binWidth*0.5, result->intensityErr(w1.c_str()));
 
 		double intensity2=result->intensity(w2.c_str());
-		if((numeric_limits<double>::has_infinity && intensity2 == numeric_limits<double>::infinity()) || intensity2!=intensity2)continue;
+		if((numeric_limits<double>::has_infinity and intensity2 == numeric_limits<double>::infinity()) or intensity2!=intensity2) {
+			continue;
+		}
 
-		g2->SetPoint(i,
-				result->massBinCenter()*0.001,
-				intensity2);
+		g2->SetPoint(i, result->massBinCenter()*0.001, intensity2);
 
-		g2->SetPointError(i,
-				binwidth*0.5,
-				result->intensityErr(w2.c_str()));
-
+		g2->SetPointError(i, _binWidth*0.5, result->intensityErr(w2.c_str()));
 
 		double ph=result->phase(w1.c_str(),w2.c_str());
 		double pherr=result->phaseErr(w1.c_str(),w2.c_str());
@@ -279,54 +268,29 @@ void MyMainFrame::PrintSelected()
 			else if(diff3<diff1 && diff3<diff2)ph-=360;
 		}
 
-
-
-		gph->SetPoint(i,
-				result->massBinCenter()*0.001,
-				ph);
-		gph->SetPointError(i,
-				binwidth*0.5,
-				pherr);
+		gph->SetPoint(i, result->massBinCenter()*0.001, ph);
+		gph->SetPointError(i, _binWidth*0.5, pherr);
 
 		// add point +- 360 degree
-		gphP1->SetPoint(i,
-				result->massBinCenter()*0.001,
-				ph+360);
-		gphP1->SetPointError(i,
-				binwidth*0.5,
-				pherr);
+		gphP1->SetPoint(i, result->massBinCenter()*0.001, ph+360);
+		gphP1->SetPointError(i, _binWidth*0.5, pherr);
 
-		gphM1->SetPoint(i,
-				result->massBinCenter()*0.001,
-				ph-360);
-		gphM1->SetPointError(i,
-				binwidth*0.5,
-				pherr);
+		gphM1->SetPoint(i, result->massBinCenter()*0.001, ph-360);
+		gphM1->SetPointError(i, _binWidth*0.5, pherr);
 
 		unsigned int wi1=result->waveIndex(w1);
 		unsigned int wi2=result->waveIndex(w2);
 		complex<double> rho=result->spinDensityMatrixElem(wi1,wi2);
 		TMatrixT<double> rhoCov=result->spinDensityMatrixElemCov(wi1,wi2);
-		gRe->SetPoint(i,
-				result->massBinCenter()*0.001,
-				rho.real());
-		gRe->SetPointError(i,
-				binwidth*0.5,
-				sqrt(rhoCov[0][0]));
+		gRe->SetPoint(i, result->massBinCenter()*0.001, rho.real());
+		gRe->SetPointError(i, _binWidth*0.5, sqrt(rhoCov[0][0]));
 
+		gIm->SetPoint(i, result->massBinCenter()*0.001, rho.imag());
 
-		gIm->SetPoint(i,
-				result->massBinCenter()*0.001,
-				rho.imag());
-
-		gIm->SetPointError(i,
-				binwidth*0.5,
-				sqrt(rhoCov[1][1]));
+		gIm->SetPointError(i, _binWidth*0.5, sqrt(rhoCov[1][1]));
 	}// end loop over bins
 
-
 	// plot graphs
-
 	TCanvas*c=new TCanvas("c","c",10,10,1200,800);
 	c->Divide(2,3);
 	c->cd(1);
@@ -358,11 +322,11 @@ void MyMainFrame::PrintSelected()
 
 }
 
-void plotGui(TString infilename)
+void plotGui(const std::string& infilename, const double binWidth = 0.03)
 {
 
 	// load fitResult tree
-	TFile* infile=TFile::Open(infilename,"READ");
+	TFile* infile=TFile::Open(infilename.c_str(),"READ");
 	if(infile==NULL){
 		cerr << "File " << infilename << " not found!"<< endl;
 		return;
@@ -374,5 +338,5 @@ void plotGui(TString infilename)
 	}
 
 	// Popup the GUI...
-	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa);
+	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth);
 }
