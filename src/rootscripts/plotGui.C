@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <limits>
 
 #include <TApplication.h>
@@ -22,6 +23,42 @@
 using namespace rpwa;
 using namespace std;
 
+vector<string>
+readWaveList(const string& waveListFileName)
+{
+	printInfo << "reading amplitude names and thresholds from wave list file "
+	          << "'" << waveListFileName << "'." << endl;
+	ifstream waveListFile(waveListFileName.c_str());
+	if (not waveListFile) {
+		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+		throw;
+	}
+	vector<string> waveNames;
+	unsigned int         countWave = 0;
+	unsigned int         lineNmb   = 0;
+	string               line;
+	while (getline(waveListFile, line)) {
+		if (line[0] == '#')  // comments start with #
+			continue;
+		stringstream lineStream;
+		lineStream.str(line);
+		string waveName;
+		if (lineStream >> waveName) {
+			double threshold;
+			// !!! it would be safer to make the threshold value in the wave list file mandatory
+			if (not (lineStream >> threshold))
+				threshold = 0;
+			waveNames.push_back(waveName);
+			++countWave;
+		} else
+			printWarn << "cannot parse line '" << line << "' in wave list file "
+			          << "'" << waveListFileName << "'" << endl;
+		++lineNmb;
+	}
+	waveListFile.close();
+	return waveNames;
+}
+
 class MyMainFrame : public TGMainFrame {
 
 	private:
@@ -29,12 +66,18 @@ class MyMainFrame : public TGMainFrame {
 		TGListBox           *_listBox2;
 		TGCheckButton       *_checkMulti;
 		TList               *_selected;
-		std::vector<std::string> _wavenames;
+		std::vector<std::string> _waveNames;
 		std::vector<const rpwa::fitResult*> _fitResults;
 		const double _binWidth;
 
 	public:
-		MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h, TTree* tree, const double& binWidth);
+		MyMainFrame(const TGWindow *p,
+		            UInt_t w,
+		            UInt_t h,
+		            TTree* tree,
+		            const double& binWidth,
+		            const double& intensityThreshold,
+		            const string& waveListFileName);
 		virtual ~MyMainFrame();
 		void DoExit();
 		void DoSelect();
@@ -59,7 +102,9 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
                          UInt_t w,
                          UInt_t h,
                          TTree* tree,
-                         const double& binWidth) :
+                         const double& binWidth,
+                         const double& intensityThreshold,
+                         const string& waveListFileName) :
 	TGMainFrame(p, w, h),
 	_binWidth(binWidth)
 {
@@ -77,7 +122,7 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 			cerr << "Tree has no entries" << endl;
 			throw;
 		}
-		cout << "Entries: " << entries << endl;
+		cout << "Mass bins: " << entries << endl;
 		_fitResults.resize(entries, 0);
 		for(long i = 0; i < entries; ++i) {
 			cout << "loading result " << i << " of " << entries << "... " << std::flush;
@@ -87,19 +132,55 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		}
 	}
 
+	vector<string> whitelistedWaves;
+	if(waveListFileName != "") {
+		cout << "reading wave whitelist '" << waveListFileName << "'." << endl;
+		whitelistedWaves = readWaveList(waveListFileName);
+		cout << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
+	}
+
 	// get list of waves
-	_wavenames = _fitResults[0]->waveNames();
-	cout << _wavenames << endl;
+	_waveNames = _fitResults[0]->waveNames();
+	if(intensityThreshold > 0.) {
+		cout << "found threshold (" << intensityThreshold << "), starting with " << _waveNames.size() << " waves." << endl;
+		vector<string> wavesToBeRemoved;
+		for(unsigned int i = 0; i < _waveNames.size(); ++i) {
+			const string& waveName = _waveNames[i];
+			if(whitelistedWaves.size() > 0 and std::find(whitelistedWaves.begin(), whitelistedWaves.end(), waveName) == whitelistedWaves.end()) {
+				wavesToBeRemoved.push_back(waveName);
+				continue;
+			}
+			bool aboveThreshold = false;
+			cout << "checking wave " << waveName << " (" << i+1 << "/" << _waveNames.size() << ")" << endl;
+			for(unsigned int bin_i = 0; bin_i < _fitResults.size(); ++bin_i) {
+				const double intensity = _fitResults[bin_i]->intensity(waveName.c_str());
+				cout << "intensity[" << bin_i+1 << "/" << _fitResults.size() << "] = " << intensity << endl;
+				if(intensity >= intensityThreshold) {
+					aboveThreshold = true;
+					cout <<"accepted!"<<endl;
+					break;
+				}
+			}
+			if(not aboveThreshold) {
+				wavesToBeRemoved.push_back(waveName);
+			}
+		}
+		for(unsigned int i = 0; i < wavesToBeRemoved.size(); ++i) {
+			_waveNames.erase(std::find(_waveNames.begin(), _waveNames.end(), wavesToBeRemoved[i]));
+		}
+		cout << "after thresholding, " << _waveNames.size() << " waves are left." << endl;
+	}
+
 
 	// Create main frame
 	_listBox = new TGListBox(this, 89);
 	_listBox2 = new TGListBox(this, 88);
 	_selected = new TList;
 
-	for (unsigned int i = 0; i < _wavenames.size(); ++i) {
-		cout << _wavenames[i] << endl;
-		_listBox->AddEntry(_wavenames[i].c_str(), i);
-		_listBox2->AddEntry(_wavenames[i].c_str(), i);
+	for (unsigned int i = 0; i < _waveNames.size(); ++i) {
+		cout << _waveNames[i] << endl;
+		_listBox->AddEntry(_waveNames[i].c_str(), i);
+		_listBox2->AddEntry(_waveNames[i].c_str(), i);
 	}
 	_listBox->Resize(400,250);
 	_listBox2->Resize(400,250);
@@ -161,8 +242,8 @@ void MyMainFrame::HandleButtons()
 void MyMainFrame::PrintSelected()
 {
 	// Writes selected entries in TList if multiselection.
-	string w1=_wavenames[_listBox->GetSelected()];
-	string w2=_wavenames[_listBox2->GetSelected()];
+	string w1=_waveNames[_listBox->GetSelected()];
+	string w2=_waveNames[_listBox2->GetSelected()];
 	cout << w1 << endl;
 	cout << w2 << endl;
 	// Produce plots
@@ -236,7 +317,7 @@ void MyMainFrame::PrintSelected()
 			continue;
 		}
 
-		double intensity1=result->intensity(w1.c_str());
+		const double intensity1=result->intensity(w1.c_str());
 		if((numeric_limits<double>::has_infinity and intensity1 == numeric_limits<double>::infinity()) or intensity1!=intensity1) {
 			continue;
 		}
@@ -244,17 +325,16 @@ void MyMainFrame::PrintSelected()
 		g1->SetPoint(i, result->massBinCenter()*0.001, intensity1);
 		g1->SetPointError(i, _binWidth*0.5, result->intensityErr(w1.c_str()));
 
-		double intensity2=result->intensity(w2.c_str());
+		const double intensity2=result->intensity(w2.c_str());
 		if((numeric_limits<double>::has_infinity and intensity2 == numeric_limits<double>::infinity()) or intensity2!=intensity2) {
 			continue;
 		}
 
 		g2->SetPoint(i, result->massBinCenter()*0.001, intensity2);
-
 		g2->SetPointError(i, _binWidth*0.5, result->intensityErr(w2.c_str()));
 
 		double ph=result->phase(w1.c_str(),w2.c_str());
-		double pherr=result->phaseErr(w1.c_str(),w2.c_str());
+		const double pherr=result->phaseErr(w1.c_str(),w2.c_str());
 		// check if we should make a transformation by 2pi
 		// this is needed because of cyclical variable phi
 		if(i>11){
@@ -284,9 +364,7 @@ void MyMainFrame::PrintSelected()
 		TMatrixT<double> rhoCov=result->spinDensityMatrixElemCov(wi1,wi2);
 		gRe->SetPoint(i, result->massBinCenter()*0.001, rho.real());
 		gRe->SetPointError(i, _binWidth*0.5, sqrt(rhoCov[0][0]));
-
 		gIm->SetPoint(i, result->massBinCenter()*0.001, rho.imag());
-
 		gIm->SetPointError(i, _binWidth*0.5, sqrt(rhoCov[1][1]));
 	}// end loop over bins
 
@@ -322,7 +400,9 @@ void MyMainFrame::PrintSelected()
 
 }
 
-void plotGui(const std::string& infilename, const double binWidth = 0.03)
+void plotGui(const std::string& infilename,
+             const double binWidth = 0.03,
+             const double intensityThreshold = -1.)
 {
 
 	// load fitResult tree
@@ -338,5 +418,5 @@ void plotGui(const std::string& infilename, const double binWidth = 0.03)
 	}
 
 	// Popup the GUI...
-	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth);
+	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth, intensityThreshold, "");
 }
