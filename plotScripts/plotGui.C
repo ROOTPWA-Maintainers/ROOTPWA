@@ -63,7 +63,7 @@ readWaveList(const string& waveListFileName)
 }
 
 
-class MyMainFrame : public TGMainFrame {
+class plotGuiMainFrame : public TGMainFrame {
 
 	private:
 		TGListBox*          _listBox1;
@@ -76,14 +76,14 @@ class MyMainFrame : public TGMainFrame {
 		TCanvas* _currentCanvas;
 
 	public:
-		MyMainFrame(const TGWindow *p,
+		plotGuiMainFrame(const TGWindow *p,
 		            UInt_t w,
 		            UInt_t h,
 		            TTree* tree,
 		            const double& binWidth,
 		            const double& intensityThreshold,
 		            const string& waveListFileName);
-		virtual ~MyMainFrame();
+		virtual ~plotGuiMainFrame();
 		void DoExit();
 		void DoSelect();
 		void ActiveCanvasClosed();
@@ -92,15 +92,15 @@ class MyMainFrame : public TGMainFrame {
 
 		static bool _debug;
 
-		ClassDef(MyMainFrame, 0)
+		ClassDef(plotGuiMainFrame, 0)
 
 };
 
 
-bool MyMainFrame::_debug = false;
+bool plotGuiMainFrame::_debug = false;
 
 
-void MyMainFrame::DoSelect()
+void plotGuiMainFrame::DoSelect()
 {
 	if(_debug) {
 		printDebug << "Slot DoSelect()" << endl;
@@ -108,7 +108,7 @@ void MyMainFrame::DoSelect()
 }
 
 
-void MyMainFrame::DoExit()
+void plotGuiMainFrame::DoExit()
 {
 	if(_debug) {
 		printDebug << "Slot DoExit()" << endl;
@@ -117,7 +117,7 @@ void MyMainFrame::DoExit()
 }
 
 
-MyMainFrame::MyMainFrame(const TGWindow *p,
+plotGuiMainFrame::plotGuiMainFrame(const TGWindow *p,
                          UInt_t w,
                          UInt_t h,
                          TTree* tree,
@@ -228,10 +228,10 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 	TGHorizontalFrame *hframe = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
 	TGTextButton *show = new TGTextButton(hframe, "&Show");
 	show->SetToolTipText("Click here to print the selection you made");
-	show->Connect("Pressed()", "MyMainFrame", this, "PrintSelected()");
+	show->Connect("Pressed()", "plotGuiMainFrame", this, "PrintSelected()");
 	hframe->AddFrame(show, new TGLayoutHints(kLHintsExpandX, 5, 5, 3, 4));
 	TGTextButton *exit = new TGTextButton(hframe, "&Exit ");
-	exit->Connect("Pressed()", "MyMainFrame", this, "DoExit()");
+	exit->Connect("Pressed()", "plotGuiMainFrame", this, "DoExit()");
 	hframe->AddFrame(exit, new TGLayoutHints(kLHintsExpandX, 5, 5, 3, 4));
 	AddFrame(hframe, new TGLayoutHints(kLHintsExpandX, 2, 2, 5, 1));
 
@@ -249,17 +249,17 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 }
 
 
-MyMainFrame::~MyMainFrame()
+plotGuiMainFrame::~plotGuiMainFrame()
 {
 	// Clean up main frame...
 	Cleanup();
 }
 
 
-void MyMainFrame::HandleButtons() { }
+void plotGuiMainFrame::HandleButtons() { }
 
 
-void MyMainFrame::ActiveCanvasClosed() {
+void plotGuiMainFrame::ActiveCanvasClosed() {
 	if(_debug) {
 		printDebug << "canvas closed" << endl;
 	}
@@ -267,7 +267,7 @@ void MyMainFrame::ActiveCanvasClosed() {
 }
 
 
-void MyMainFrame::PrintSelected()
+void plotGuiMainFrame::PrintSelected()
 {
 	// Writes selected entries in TList if multiselection.
 
@@ -420,7 +420,7 @@ void MyMainFrame::PrintSelected()
 		stringstream sstr;
 		sstr << "plotGui_c" << _canvasCounter++;
 		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1200, 800);
-		_currentCanvas->Connect("Closed()", "MyMainFrame", this, "ActiveCanvasClosed()");
+		_currentCanvas->Connect("Closed()", "plotGuiMainFrame", this, "ActiveCanvasClosed()");
 	} else {
 		_currentCanvas->Clear();
 	}
@@ -479,5 +479,5 @@ void plotGui(const std::string& inFileName,
 	}
 
 	// Popup the GUI...
-	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth, intensityThreshold, whiteListFileName);
+	new plotGuiMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth, intensityThreshold, whiteListFileName);
 }
