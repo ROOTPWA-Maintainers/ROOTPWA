@@ -25,6 +25,7 @@
 using namespace rpwa;
 using namespace std;
 
+
 set<string>
 readWaveList(const string& waveListFileName)
 {
@@ -61,16 +62,18 @@ readWaveList(const string& waveListFileName)
 	return waveNames;
 }
 
+
 class MyMainFrame : public TGMainFrame {
 
 	private:
-		TGListBox           *_listBox;
-		TGListBox           *_listBox2;
-		TGCheckButton       *_checkMulti;
-		TList               *_selected;
+		TGListBox*          _listBox1;
+		TGListBox*          _listBox2;
+		TGCheckButton*      _checkDrawNewCanvas;
 		std::vector<std::string> _waveNames;
 		std::vector<const rpwa::fitResult*> _fitResults;
 		const double _binWidth;
+		unsigned int _canvasCounter;
+		TCanvas* _currentCanvas;
 
 	public:
 		MyMainFrame(const TGWindow *p,
@@ -83,22 +86,27 @@ class MyMainFrame : public TGMainFrame {
 		virtual ~MyMainFrame();
 		void DoExit();
 		void DoSelect();
+		void ActiveCanvasClosed();
 		void HandleButtons();
 		void PrintSelected();
 
 		ClassDef(MyMainFrame, 0)
+
 };
+
 
 void MyMainFrame::DoSelect()
 {
 	Printf("Slot DoSelect()");
 }
 
+
 void MyMainFrame::DoExit()
 {
 	Printf("Slot DoExit()");
 	gApplication->Terminate(0);
 }
+
 
 MyMainFrame::MyMainFrame(const TGWindow *p,
                          UInt_t w,
@@ -108,7 +116,9 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
                          const double& intensityThreshold,
                          const string& waveListFileName) :
 	TGMainFrame(p, w, h),
-	_binWidth(binWidth)
+	_binWidth(binWidth),
+	_canvasCounter(0),
+	_currentCanvas(0)
 {
 
 	{
@@ -134,68 +144,68 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		}
 	}
 
-	// get list of waves
-	set<string> whitelistedWaves;
-	if(waveListFileName != "") {
-		cout << "reading wave whitelist '" << waveListFileName << "'." << endl;
-		whitelistedWaves = readWaveList(waveListFileName);
-		cout << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
-	}
-	set<string> waveNameCollector;
-	for(unsigned int i = 0; i < _fitResults.size(); ++i) {
-		const vector<string>& waveNames = _fitResults[i]->waveNames();
-		waveNameCollector.insert(waveNames.begin(), waveNames.end());
-	}
-	vector<string> tentativeWaveNames(waveNameCollector.size());
-	std::copy(waveNameCollector.begin(), waveNameCollector.end(), tentativeWaveNames.begin());
-	if(intensityThreshold > 0.) {
-		for(unsigned int i = 0; i < tentativeWaveNames.size(); ++i) {
-			const string& waveName = tentativeWaveNames[i];
-			for(unsigned int bin_i = 0; bin_i < _fitResults.size(); ++bin_i) {
-				const double intensity = _fitResults[bin_i]->intensity(waveName.c_str());
-				if(intensity >= intensityThreshold) {
-					whitelistedWaves.insert(waveName);
-					break;
+	{
+		// get list of waves
+		set<string> whitelistedWaves;
+		if(waveListFileName != "") {
+			cout << "reading wave whitelist '" << waveListFileName << "'." << endl;
+			whitelistedWaves = readWaveList(waveListFileName);
+			cout << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
+		}
+		set<string> waveNameCollector;
+		for(unsigned int i = 0; i < _fitResults.size(); ++i) {
+			const vector<string>& waveNames = _fitResults[i]->waveNames();
+			waveNameCollector.insert(waveNames.begin(), waveNames.end());
+		}
+		vector<string> tentativeWaveNames(waveNameCollector.size());
+		std::copy(waveNameCollector.begin(), waveNameCollector.end(), tentativeWaveNames.begin());
+		if(intensityThreshold > 0.) {
+			for(unsigned int i = 0; i < tentativeWaveNames.size(); ++i) {
+				const string& waveName = tentativeWaveNames[i];
+				for(unsigned int bin_i = 0; bin_i < _fitResults.size(); ++bin_i) {
+					const double intensity = _fitResults[bin_i]->intensity(waveName.c_str());
+					if(intensity >= intensityThreshold) {
+						whitelistedWaves.insert(waveName);
+						break;
+					}
 				}
 			}
 		}
-	}
-	if(whitelistedWaves.empty()) {
-		if(waveListFileName != "" or intensityThreshold > 0) {
-			cout << "thresholds and/or wave white-list did not leave any waves to plot. Aborting..." << endl;
-			throw;
-		}
-		_waveNames = tentativeWaveNames;
-	} else {
-		for(set<string>::const_iterator it = whitelistedWaves.begin(); it != whitelistedWaves.end(); ++it) {
-			if(std::find(tentativeWaveNames.begin(), tentativeWaveNames.end(), *it) != tentativeWaveNames.end()) {
-				_waveNames.push_back(*it);
-			} else {
-				cout << "WARNING: could not find white listed wave '" << *it << "' in any of the fit result files." << endl;
+		if(whitelistedWaves.empty()) {
+			if(waveListFileName != "" or intensityThreshold > 0) {
+				cout << "thresholds and/or wave white-list did not leave any waves to plot. Aborting..." << endl;
+				throw;
+			}
+			_waveNames = tentativeWaveNames;
+		} else {
+			for(set<string>::const_iterator it = whitelistedWaves.begin(); it != whitelistedWaves.end(); ++it) {
+				if(std::find(tentativeWaveNames.begin(), tentativeWaveNames.end(), *it) != tentativeWaveNames.end()) {
+					_waveNames.push_back(*it);
+				} else {
+					cout << "WARNING: could not find white listed wave '" << *it << "' in any of the fit result files." << endl;
+				}
 			}
 		}
 	}
 	cout << "ending up with " << _waveNames.size() << " waves to plot." << endl;
 
 	// Create main frame
-	_listBox = new TGListBox(this, 89);
+	_listBox1 = new TGListBox(this, 89);
 	_listBox2 = new TGListBox(this, 88);
-	_selected = new TList;
 
 	for (unsigned int i = 0; i < _waveNames.size(); ++i) {
 		cout << _waveNames[i] << endl;
-		_listBox->AddEntry(_waveNames[i].c_str(), i);
+		_listBox1->AddEntry(_waveNames[i].c_str(), i);
 		_listBox2->AddEntry(_waveNames[i].c_str(), i);
 	}
-	_listBox->Resize(400,250);
+	_listBox1->Resize(400,250);
 	_listBox2->Resize(400,250);
 
-	AddFrame(_listBox, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
+	AddFrame(_listBox1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
 	AddFrame(_listBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
 
-	_checkMulti = new TGCheckButton(this, "&Mutliple selection", 10);
-	AddFrame(_checkMulti, new TGLayoutHints(kLHintsTop | kLHintsLeft, 5, 5, 5, 5));
-	_checkMulti->Connect("Clicked()", "MyMainFrame", this, "HandleButtons()");
+	_checkDrawNewCanvas = new TGCheckButton(this, "&Draw in new canvas", 11);
+	AddFrame(_checkDrawNewCanvas, new TGLayoutHints(kLHintsTop | kLHintsRight, 5, 5, 5, 5));
 	// Create a horizontal frame containing button(s)
 	TGHorizontalFrame *hframe = new TGHorizontalFrame(this, 400, 20, kFixedWidth);
 	TGTextButton *show = new TGTextButton(hframe, "&Show");
@@ -216,31 +226,24 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 
 	// Map main frame
 	MapWindow();
-	_listBox->Select(0);
+	_listBox1->Select(0);
 	_listBox2->Select(0);
 }
+
 
 MyMainFrame::~MyMainFrame()
 {
 	// Clean up main frame...
 	Cleanup();
-	if (_selected) {
-		_selected->Delete();
-		delete _selected;
-	}
 }
 
-void MyMainFrame::HandleButtons()
-{
-	// Handle check button.
-	Int_t id;
-	TGButton *btn = (TGButton *) gTQSender;
-	id = btn->WidgetId();
 
-	printf("HandleButton: id = %d\n", id);
+void MyMainFrame::HandleButtons() { }
 
-	//if (id == 10)
-	//   fListBox->SetMultipleSelections(fCheckMulti->GetState());
+
+void MyMainFrame::ActiveCanvasClosed() {
+	cout << "canvas closed" << endl;
+	_currentCanvas = 0;
 }
 
 
@@ -248,10 +251,19 @@ void MyMainFrame::PrintSelected()
 {
 	// Writes selected entries in TList if multiselection.
 
-	string w1=_waveNames.at(_listBox->GetSelected());
-	string w2=_waveNames.at(_listBox2->GetSelected());
-	cout << w1 << endl;
-	cout << w2 << endl;
+	string w1 = "";
+	string w2 = "";
+	try {
+		w1 = _waveNames.at(_listBox1->GetSelected());
+		w2 = _waveNames.at(_listBox2->GetSelected());
+	} catch (std::out_of_range) {
+		cout << "selection lists seem to be corrupted." << endl;
+		cout << "   _listBox1->GetSelected() = " << _listBox1->GetSelected() << endl;
+		cout << "   _listBox2->GetSelected() = " << _listBox2->GetSelected() << endl;
+		cout << "    _waveNames.size()       = " << _waveNames.size()        << endl;
+		return;
+	}
+
 	// Produce plots
 	unsigned int nFitResults = _fitResults.size();
 
@@ -375,9 +387,20 @@ void MyMainFrame::PrintSelected()
 	}// end loop over bins
 
 	// plot graphs
-	TCanvas*c=new TCanvas("c","c",10,10,1200,800);
-	c->Divide(2,3);
-	c->cd(1);
+	if(not _currentCanvas or _checkDrawNewCanvas->IsOn()) {
+		if(_currentCanvas) {
+			_currentCanvas->Disconnect("Closed()", this, "ActiveCanvasClosed()");
+		}
+		stringstream sstr;
+		sstr << "plotGui_c" << _canvasCounter++;
+		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1200, 800);
+		_currentCanvas->Connect("Closed()", "MyMainFrame", this, "ActiveCanvasClosed()");
+	} else {
+		_currentCanvas->Clear();
+	}
+	_currentCanvas->Divide(2,3);
+	_currentCanvas->cd(1);
+
 	gph->Draw("AP");
 	gph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	gph->GetYaxis()->SetTitle("Phase difference");
@@ -386,23 +409,28 @@ void MyMainFrame::PrintSelected()
 	gphP1->Draw("PSAME");
 	gphM1->Draw("PSAME");
 
-	c->cd(3);
+	_currentCanvas->cd(3);
 	g1->Draw("AP");
 	g1->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g1->GetYaxis()->SetTitle("Intensity");
-	c->cd(5);
+
+	_currentCanvas->cd(5);
 	g2->Draw("AP");
 	g2->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g2->GetYaxis()->SetTitle("Intensity");
 
-	c->cd(2);
+	_currentCanvas->cd(2);
 	gRe->Draw("AP");
 	gRe->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	gRe->GetYaxis()->SetTitle("Re(#rho_{ij})");
-	c->cd(4);
+
+	_currentCanvas->cd(4);
 	gIm->Draw("AP");
 	gIm->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	gIm->GetYaxis()->SetTitle("Im(#rho_{ij})");
+
+	_currentCanvas->Draw();
+	_currentCanvas->Update();
 
 }
 
