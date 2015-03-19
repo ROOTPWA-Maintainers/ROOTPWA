@@ -1,9 +1,11 @@
 
-#include <string>
-#include <vector>
+#include <limits>
 #include <iostream>
 #include <fstream>
-#include <limits>
+#include <sstream>
+#include <string>
+#include <set>
+#include <vector>
 
 #include <TApplication.h>
 #include <TGClient.h>
@@ -23,7 +25,7 @@
 using namespace rpwa;
 using namespace std;
 
-vector<string>
+set<string>
 readWaveList(const string& waveListFileName)
 {
 	printInfo << "reading amplitude names and thresholds from wave list file "
@@ -33,7 +35,7 @@ readWaveList(const string& waveListFileName)
 		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
 		throw;
 	}
-	vector<string> waveNames;
+	set<string> waveNames;
 	unsigned int         countWave = 0;
 	unsigned int         lineNmb   = 0;
 	string               line;
@@ -48,7 +50,7 @@ readWaveList(const string& waveListFileName)
 			// !!! it would be safer to make the threshold value in the wave list file mandatory
 			if (not (lineStream >> threshold))
 				threshold = 0;
-			waveNames.push_back(waveName);
+			waveNames.insert(waveName);
 			++countWave;
 		} else
 			printWarn << "cannot parse line '" << line << "' in wave list file "
@@ -132,45 +134,48 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		}
 	}
 
-	vector<string> whitelistedWaves;
+	// get list of waves
+	set<string> whitelistedWaves;
 	if(waveListFileName != "") {
 		cout << "reading wave whitelist '" << waveListFileName << "'." << endl;
 		whitelistedWaves = readWaveList(waveListFileName);
 		cout << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
 	}
-
-	// get list of waves
-	_waveNames = _fitResults[0]->waveNames();
+	set<string> waveNameCollector;
+	for(unsigned int i = 0; i < _fitResults.size(); ++i) {
+		const vector<string>& waveNames = _fitResults[i]->waveNames();
+		waveNameCollector.insert(waveNames.begin(), waveNames.end());
+	}
+	vector<string> tentativeWaveNames(waveNameCollector.size());
+	std::copy(waveNameCollector.begin(), waveNameCollector.end(), tentativeWaveNames.begin());
 	if(intensityThreshold > 0.) {
-		cout << "found threshold (" << intensityThreshold << "), starting with " << _waveNames.size() << " waves." << endl;
-		vector<string> wavesToBeRemoved;
-		for(unsigned int i = 0; i < _waveNames.size(); ++i) {
-			const string& waveName = _waveNames[i];
-			if(whitelistedWaves.size() > 0 and std::find(whitelistedWaves.begin(), whitelistedWaves.end(), waveName) == whitelistedWaves.end()) {
-				wavesToBeRemoved.push_back(waveName);
-				continue;
-			}
-			bool aboveThreshold = false;
-			cout << "checking wave " << waveName << " (" << i+1 << "/" << _waveNames.size() << ")" << endl;
+		for(unsigned int i = 0; i < tentativeWaveNames.size(); ++i) {
+			const string& waveName = tentativeWaveNames[i];
 			for(unsigned int bin_i = 0; bin_i < _fitResults.size(); ++bin_i) {
 				const double intensity = _fitResults[bin_i]->intensity(waveName.c_str());
-				cout << "intensity[" << bin_i+1 << "/" << _fitResults.size() << "] = " << intensity << endl;
 				if(intensity >= intensityThreshold) {
-					aboveThreshold = true;
-					cout <<"accepted!"<<endl;
+					whitelistedWaves.insert(waveName);
 					break;
 				}
 			}
-			if(not aboveThreshold) {
-				wavesToBeRemoved.push_back(waveName);
+		}
+	}
+	if(whitelistedWaves.empty()) {
+		if(waveListFileName != "" or intensityThreshold > 0) {
+			cout << "thresholds and/or wave white-list did not leave any waves to plot. Aborting..." << endl;
+			throw;
+		}
+		_waveNames = tentativeWaveNames;
+	} else {
+		for(set<string>::const_iterator it = whitelistedWaves.begin(); it != whitelistedWaves.end(); ++it) {
+			if(std::find(tentativeWaveNames.begin(), tentativeWaveNames.end(), *it) != tentativeWaveNames.end()) {
+				_waveNames.push_back(*it);
+			} else {
+				cout << "WARNING: could not find white listed wave '" << *it << "' in any of the fit result files." << endl;
 			}
 		}
-		for(unsigned int i = 0; i < wavesToBeRemoved.size(); ++i) {
-			_waveNames.erase(std::find(_waveNames.begin(), _waveNames.end(), wavesToBeRemoved[i]));
-		}
-		cout << "after thresholding, " << _waveNames.size() << " waves are left." << endl;
 	}
-
+	cout << "ending up with " << _waveNames.size() << " waves to plot." << endl;
 
 	// Create main frame
 	_listBox = new TGListBox(this, 89);
@@ -242,8 +247,9 @@ void MyMainFrame::HandleButtons()
 void MyMainFrame::PrintSelected()
 {
 	// Writes selected entries in TList if multiselection.
-	string w1=_waveNames[_listBox->GetSelected()];
-	string w2=_waveNames[_listBox2->GetSelected()];
+
+	string w1=_waveNames.at(_listBox->GetSelected());
+	string w2=_waveNames.at(_listBox2->GetSelected());
 	cout << w1 << endl;
 	cout << w2 << endl;
 	// Produce plots
@@ -401,8 +407,9 @@ void MyMainFrame::PrintSelected()
 }
 
 void plotGui(const std::string& infilename,
-             const double binWidth = 0.03,
-             const double intensityThreshold = -1.)
+             const double& binWidth = 0.03,
+             const double& intensityThreshold = -1.,
+             const string& whiteListFileName = "")
 {
 
 	// load fitResult tree
@@ -418,5 +425,5 @@ void plotGui(const std::string& infilename,
 	}
 
 	// Popup the GUI...
-	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth, intensityThreshold, "");
+	new MyMainFrame(gClient->GetRoot(), 20, 20, pwa, binWidth, intensityThreshold, whiteListFileName);
 }
