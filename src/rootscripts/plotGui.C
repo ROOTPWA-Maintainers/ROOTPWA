@@ -33,7 +33,7 @@ readWaveList(const string& waveListFileName)
 	          << "'" << waveListFileName << "'." << endl;
 	ifstream waveListFile(waveListFileName.c_str());
 	if (not waveListFile) {
-		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
 		throw;
 	}
 	set<string> waveNames;
@@ -90,20 +90,29 @@ class MyMainFrame : public TGMainFrame {
 		void HandleButtons();
 		void PrintSelected();
 
+		static bool _debug;
+
 		ClassDef(MyMainFrame, 0)
 
 };
 
 
+bool MyMainFrame::_debug = false;
+
+
 void MyMainFrame::DoSelect()
 {
-	Printf("Slot DoSelect()");
+	if(_debug) {
+		printDebug << "Slot DoSelect()" << endl;
+	}
 }
 
 
 void MyMainFrame::DoExit()
 {
-	Printf("Slot DoExit()");
+	if(_debug) {
+		printDebug << "Slot DoExit()" << endl;
+	}
 	gApplication->Terminate(0);
 }
 
@@ -125,19 +134,19 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		fitResult* res = 0;//new fitResult();
 		string branchname = "fitResult_v2";
 		if(tree->FindBranch(branchname.c_str()) == 0){
-			cerr << "Invalid branch ." << branchname << endl;
+			printErr << "invalid branch '" << branchname << "'. Aborting..." << endl;
 			throw;
 		}
 		tree->SetBranchAddress(branchname.c_str(),&res);
 		long entries = tree->GetEntries();
 		if(entries < 1) {
-			cerr << "Tree has no entries" << endl;
+			printErr << "tree has no entries. Aborting..." << endl;
 			throw;
 		}
-		cout << "Mass bins: " << entries << endl;
+		printInfo << "Mass bins: " << entries << endl;
 		_fitResults.resize(entries, 0);
 		for(long i = 0; i < entries; ++i) {
-			cout << "loading result " << i << " of " << entries << "... " << std::flush;
+			printInfo << "loading result " << i << " of " << entries << "... " << std::flush;
 			tree->GetEntry(i);
 			_fitResults[i] = new rpwa::fitResult(*res);
 			cout << "done!" << endl;
@@ -148,9 +157,9 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		// get list of waves
 		set<string> whitelistedWaves;
 		if(waveListFileName != "") {
-			cout << "reading wave whitelist '" << waveListFileName << "'." << endl;
+			printInfo << "reading wave whitelist '" << waveListFileName << "'." << endl;
 			whitelistedWaves = readWaveList(waveListFileName);
-			cout << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
+			printInfo << "found " << whitelistedWaves.size() << " white-listed waves." << endl;
 		}
 		set<string> waveNameCollector;
 		for(unsigned int i = 0; i < _fitResults.size(); ++i) {
@@ -159,9 +168,14 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 		}
 		vector<string> tentativeWaveNames(waveNameCollector.size());
 		std::copy(waveNameCollector.begin(), waveNameCollector.end(), tentativeWaveNames.begin());
+		printInfo << "found " << tentativeWaveNames.size() << " waves in input fit results." << endl;
 		if(intensityThreshold > 0.) {
+			printInfo << "checking thresholds for " << tentativeWaveNames.size() << " waves." << endl;
 			for(unsigned int i = 0; i < tentativeWaveNames.size(); ++i) {
 				const string& waveName = tentativeWaveNames[i];
+				if(_debug) {
+					printDebug << "checking if intensity is above threshold for wave '" << waveName << "'." << endl;
+				}
 				for(unsigned int bin_i = 0; bin_i < _fitResults.size(); ++bin_i) {
 					const double intensity = _fitResults[bin_i]->intensity(waveName.c_str());
 					if(intensity >= intensityThreshold) {
@@ -170,31 +184,35 @@ MyMainFrame::MyMainFrame(const TGWindow *p,
 					}
 				}
 			}
+			printInfo << "thresholds checked." << endl;
 		}
 		if(whitelistedWaves.empty()) {
 			if(waveListFileName != "" or intensityThreshold > 0) {
-				cout << "thresholds and/or wave white-list did not leave any waves to plot. Aborting..." << endl;
+				printErr << "thresholds and/or wave white-list did not leave any waves to plot. Aborting..." << endl;
 				throw;
 			}
+			printInfo << "all waves will be added to the selection list." << endl;
 			_waveNames = tentativeWaveNames;
 		} else {
 			for(set<string>::const_iterator it = whitelistedWaves.begin(); it != whitelistedWaves.end(); ++it) {
 				if(std::find(tentativeWaveNames.begin(), tentativeWaveNames.end(), *it) != tentativeWaveNames.end()) {
 					_waveNames.push_back(*it);
 				} else {
-					cout << "WARNING: could not find white listed wave '" << *it << "' in any of the fit result files." << endl;
+					printWarn << "could not find white listed wave '" << *it << "' in any of the fit result files." << endl;
 				}
 			}
 		}
 	}
-	cout << "ending up with " << _waveNames.size() << " waves to plot." << endl;
+	printInfo << "ending up with " << _waveNames.size() << " waves to plot." << endl;
 
 	// Create main frame
 	_listBox1 = new TGListBox(this, 89);
 	_listBox2 = new TGListBox(this, 88);
 
 	for (unsigned int i = 0; i < _waveNames.size(); ++i) {
-		cout << _waveNames[i] << endl;
+		if(_debug) {
+			printDebug << _waveNames[i] << endl;
+		}
 		_listBox1->AddEntry(_waveNames[i].c_str(), i);
 		_listBox2->AddEntry(_waveNames[i].c_str(), i);
 	}
@@ -242,7 +260,9 @@ void MyMainFrame::HandleButtons() { }
 
 
 void MyMainFrame::ActiveCanvasClosed() {
-	cout << "canvas closed" << endl;
+	if(_debug) {
+		printDebug << "canvas closed" << endl;
+	}
 	_currentCanvas = 0;
 }
 
@@ -257,10 +277,10 @@ void MyMainFrame::PrintSelected()
 		w1 = _waveNames.at(_listBox1->GetSelected());
 		w2 = _waveNames.at(_listBox2->GetSelected());
 	} catch (std::out_of_range) {
-		cout << "selection lists seem to be corrupted." << endl;
-		cout << "   _listBox1->GetSelected() = " << _listBox1->GetSelected() << endl;
-		cout << "   _listBox2->GetSelected() = " << _listBox2->GetSelected() << endl;
-		cout << "    _waveNames.size()       = " << _waveNames.size()        << endl;
+		printErr << "selection lists seem to be corrupted." << endl;
+		cout     << "   _listBox1->GetSelected() = " << _listBox1->GetSelected() << endl;
+		cout     << "   _listBox2->GetSelected() = " << _listBox2->GetSelected() << endl;
+		cout     << "    _waveNames.size()       = " << _waveNames.size()        << endl;
 		return;
 	}
 
@@ -272,7 +292,9 @@ void MyMainFrame::PrintSelected()
 	TGraphErrors* gph = new TGraphErrors(nFitResults);
 	stringstream graphName;
 	graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
-	cout << "creating graph   " << graphName.str() << endl;
+	if(_debug) {
+		printDebug << "creating graph   " << graphName.str() << endl;
+	}
 	gph->SetName (graphName.str().c_str());
 	gph->SetTitle(graphName.str().c_str());
 	gph->SetMarkerStyle(21);
@@ -291,7 +313,9 @@ void MyMainFrame::PrintSelected()
 	graphName.str("");
 	graphName.clear();
 	graphName << "RE_"<<w1<<"---"<<""<<w2;
-	cout << "creating graph   " << graphName.str() << endl;
+	if(_debug) {
+		printDebug << "creating graph   " << graphName.str() << endl;
+	}
 	gRe->SetName (graphName.str().c_str());
 	gRe->SetTitle(graphName.str().c_str());
 	gRe->SetMarkerStyle(21);
@@ -303,7 +327,9 @@ void MyMainFrame::PrintSelected()
 	graphName.str("");
 	graphName.clear();
 	graphName << "IM_"<<w1<<"---"<<""<<w2;
-	cout << "creating graph   " << graphName.str() << endl;
+	if(_debug) {
+		printDebug << "creating graph   " << graphName.str() << endl;
+	}
 	gIm->SetName (graphName.str().c_str());
 	gIm->SetTitle(graphName.str().c_str());
 	gIm->SetMarkerStyle(21);
@@ -434,21 +460,21 @@ void MyMainFrame::PrintSelected()
 
 }
 
-void plotGui(const std::string& infilename,
+void plotGui(const std::string& inFileName,
              const double& binWidth = 0.03,
              const double& intensityThreshold = -1.,
              const string& whiteListFileName = "")
 {
 
-	// load fitResult tree
-	TFile* infile=TFile::Open(infilename.c_str(),"READ");
+	printInfo << "opening file '" << inFileName << "'." << endl;
+	TFile* infile=TFile::Open(inFileName.c_str(),"READ");
 	if(infile==NULL){
-		cerr << "File " << infilename << " not found!"<< endl;
+		printErr << "file '" << inFileName << " not found. Aborting..."<< endl;
 		return;
 	}
 	TTree* pwa=(TTree*)infile->FindObjectAny("pwa");
 	if(pwa==NULL){
-		cerr << "Tree not found!"<< endl;
+		printErr << "tree not found in input file '" << inFileName << "'. Aborting..."<< endl;
 		return;
 	}
 
