@@ -475,6 +475,46 @@ namespace rpwa {
 		return (unsigned int)(logVal / log(10)) + 1;
 	}
 
+	// creates a string from the first n elements
+	template<typename T>
+	inline
+	std::string
+	firstEntriesToString (const T& vec, unsigned int n)
+	{
+		unsigned int len = std::min(n, (unsigned int) vec.size());
+		std::stringstream ss;
+		ss << "{";
+		for (unsigned int i = 0; i < len; ++i) {
+			if(i != 0) ss << ", ";
+			ss << vec[i];
+		}
+		if(vec.size() > len) {
+			ss << ", ...";
+		}
+		ss << "}";
+		return ss.str();
+	}
+
+	// creates a string from the first n elements
+	template<typename T>
+	inline
+	std::string
+	firstEntriesToStringMaxPrecision (const T& vec, unsigned int n)
+	{
+		unsigned int len = std::min(n, (unsigned int) vec.size());
+		std::stringstream ss;
+		ss << "{";
+		for (unsigned int i = 0; i < len; ++i) {
+			if(i != 0) ss << ", ";
+			ss << maxPrecisionDouble(vec[i]);
+		}
+		if(vec.size() > len) {
+			ss << ", ...";
+		}
+		ss << "}";
+		return ss.str();
+	}
+
 
 }  // namespace rpwa
 

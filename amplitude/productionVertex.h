@@ -39,8 +39,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "TVector3.h"
-
+#include "typedefs.h"
 #include "interactionVertex.h"
 
 
@@ -57,22 +56,22 @@ namespace rpwa {
 	class productionVertex : public interactionVertex {
 
 	public:
-  
+
 		productionVertex();
 		virtual ~productionVertex();
 
 		// production specific accessors
-		virtual const TLorentzVector& referenceLzVec() const = 0;  ///< returns Lorentz-vector that defines z-axis for angular distributions
-		virtual const particlePtr&    XParticle     () const = 0;  ///< returns X particle
+		virtual const ParVector<LorentzVector>& referenceLzVecs() const = 0;  ///< returns Lorentz vectors for a number of events that defines z-axis for angular distributions
+		virtual const particlePtr&              XParticle      () const = 0;  ///< returns X particle
 
-		virtual std::complex<double> productionAmp() const { return 1; }  ///< returns production amplitude
-    
+		virtual ParVector<Complex> productionAmps() const;  ///< returns production amplitudes all events stored in particles
+
 		virtual void setXFlavorQN() = 0;  ///< general interface to set flavor quantum numbers of X (baryon nmb., S, C, B) based on production mechanism
 
-		virtual bool initKinematicsData(const TClonesArray& names)   = 0;  ///< general interface to initialize input data format
-		virtual bool readKinematicsData(const TClonesArray& momenta) = 0;  ///< general interface to read input data
+		virtual bool initKinematicsData(const TClonesArray& names                        ) = 0;  ///< general interface to initialize input data format
+		virtual bool readKinematicsData(const std::vector<std::vector<Vector3> >& momenta) = 0;  ///< general interface to read multiple input data events
 
-		virtual bool revertMomenta() = 0;  ///< general interface to reset momenta to the values of last event read
+		virtual bool revertMomenta() = 0;  ///< general interface to reset momenta to the values of last read event block
 
 		virtual std::string name() const { return "productionVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 

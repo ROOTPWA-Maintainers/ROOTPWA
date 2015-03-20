@@ -245,7 +245,7 @@ isobarDecayTopology::checkConsistency() const
 }
 
 
-const TLorentzVector&
+const ParVector<LorentzVector>&
 isobarDecayTopology::calcIsobarLzVec()
 {
 	// loop over isobar decay vertices and propagate Lorentz-vectors from final-state particles up to X-system
@@ -254,9 +254,9 @@ isobarDecayTopology::calcIsobarLzVec()
 			printDebug << "calculating Lorentz-vector of parent isobar '"
 			           << _isobarVertices[i]->parent()->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
-		_isobarVertices[i]->calcParentLzVec();
+		_isobarVertices[i]->calcParentLzVecs();
 	}
-	return XIsobarDecayVertex()->parent()->lzVec();
+	return XIsobarDecayVertex()->parent()->lzVecs();
 }
 
 

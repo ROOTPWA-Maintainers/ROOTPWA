@@ -23,6 +23,7 @@
 #include <iomanip>
 #include <fstream>
 #include <limits>
+#include <vector>
 
 #include "TVector3.h"
 #include "TH1D.h"
@@ -34,9 +35,11 @@
 #include "TFile.h"
 
 #include "randomNumberGenerator.h"
+#include "arrayUtils.hpp"
 #include "reportingUtils.hpp"
 #include "physUtils.hpp"
 #include "diffractivePhaseSpace.h"
+
 
 using namespace std;
 using namespace rpwa;
@@ -130,14 +133,14 @@ diffractivePhaseSpace::event()
 	}
 
 	_vertex = _beamAndVertexGenerator->getVertex();
-	_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
+	_beam.particle.setLzVecs(makeParVector(make_vector_1(LorentzVector(_beamAndVertexGenerator->getBeam()))));
 
 	if(not _pickerFunction) {
 		printErr << "mass- and t'-picker function has not been set. Aborting..." << endl;
 		throw;
 	}
 
-	const TLorentzVector& beamLorentzVector = _beam.particle.lzVec();
+	const TLorentzVector& beamLorentzVector = (TLorentzVector) _beam.particle.lzVecs()[0];
 
 	const double xMassMax = _pickerFunction->massRange().second;
 	const TLorentzVector targetLab(0, 0, 0, _target.targetParticle.mass());
@@ -206,10 +209,10 @@ diffractivePhaseSpace::event()
 		                                           xMomLab * xCosThetaLab,
 		                                           xEnergyLab);
 		// rotate according to beam tilt
-		TVector3 beamDir = _beam.particle.momentum().Unit();
+		TVector3 beamDir = beamLorentzVector.Vect().Unit();
 		xSystemLab.RotateUz(beamDir);
 		// calculate the recoil proton properties
-		_target.recoilParticle.setLzVec((beamLorentzVector + targetLab) - xSystemLab); // targetLab
+		_target.recoilParticle.setLzVecs(makeParVector(make_vector_1(LorentzVector((beamLorentzVector + targetLab) - xSystemLab)))); // targetLab
 
 		do {
 			// generate n-body phase space for X system
@@ -243,7 +246,7 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 	for(unsigned int i = 0; i < daughters.size(); ++i) {
-		_decayProducts[i].setLzVec(daughters[i]);
+		_decayProducts[i].setLzVecs(makeParVector(make_vector_1(LorentzVector(daughters[i]))));
 	}
 
 	return attempts;

@@ -31,14 +31,19 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
 #include "physUtils.hpp"
+#include "timeUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"
 #include "phaseSpaceIntegral.h"
 #include "massDependence.h"
 
+#ifdef USE_CUDA
+#include "massDependence_cuda.h"
+#endif
 
 using namespace std;
 using namespace boost::numeric::ublas;
@@ -58,166 +63,283 @@ massDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
-flatMassDependence::amp(const isobarDecayVertex&)
+ParVector<Complex>
+flatMassDependence::amp(const isobarDecayVertex& v)
 {
 	if (_debug)
 		printDebug << name() << " = 1" << endl;
-	return 1;
+	ParVector<Complex> result(v.parent()->numEvents(), 1);
+	return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 flatRangeMassDependence::amp(const isobarDecayVertex& v)
 {
-	complex<double> amp = 0.;
-
 	const particlePtr& parent = v.parent();
-	if (fabs(parent->lzVec().M() - parent->mass()) < parent->width()/2.)
-		amp = 1.;
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
 
-	if (_debug)
-		printDebug << name() << " M = " << parent->lzVec().M()
-		                     << ", M0 = " << parent->mass()
-		                     << ", G0 = " << parent->width()
-		                     << ", amp = " << amp << endl;
+#ifdef USE_CUDA
+	ParVector<Complex> result(parentVec.size());
+	thrust_massDependence_flatRangeMassDependence_amp(parentVec, result, parent->mass(), parent->width());
+#else
+	ParVector<Complex> result(parentVec.size(), 0);
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+		if (fabs(parentVec[i].M() - parent->mass()) < parent->width()/2.) {
+			result[i] = 1.;
+		}
+	}
+#endif
 
-	return amp;
+	if(_debug) {
+		for(unsigned int i = 0; i < 3 && i < result.size(); ++i) {
+			printDebug << name() << " M = " << parentVec[i].M()
+								 << ", M0 = " << parent->mass()
+								 << ", G0 = " << parent->width()
+								 << ", amp = " << result[i] << endl;
+		}
+	}
+
+	return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 	const particlePtr& daughter1 = v.daughter1();
 	const particlePtr& daughter2 = v.daughter2();
 
-	complex<double> bw;
-	if(daughter1->isStable() and daughter2->isStable()) {
+//	if(daughter1->isStable() and daughter2->isStable()) {
 
-		// get Breit-Wigner parameters
-		const double       M      = parent->lzVec().M();         // parent mass
-		const double       m1     = daughter1->lzVec().M();  // daughter 1 mass
-		const double       m2     = daughter2->lzVec().M();  // daughter 2 mass
-		const double       q      = breakupMomentum(M,  m1, m2);
-		const double       M0     = parent->mass();              // resonance peak position
-		const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
-		// !NOTE! the following is incorrect but this is how it was done in PWA2000
-		const double       q0     = sqrt(fabs(q02));
-		const double       Gamma0 = parent->width();             // resonance peak width
-		const unsigned int L      = v.L();
+		const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+		const ParVector<LorentzVector>& daughter1Vec = daughter1->lzVecs();
+		const ParVector<LorentzVector>& daughter2Vec = daughter2->lzVecs();
 
-		bw = breitWigner(M, M0, Gamma0, L, q, q0);
-		if (_debug)
-			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-			           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
-			           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
-			           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
-	} else {
+		if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << endl;
+			throw;
+		}
 
-		bw = (*phaseSpaceIntegral::instance())(v);
+		ParVector<Complex> result(parentVec.size());
 
-	}
+#ifdef USE_CUDA
+		thrust_massDependence_relativisticBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+				result, parent->mass(), parent->width(), v.L());
+#else
+		const unsigned int size = result.size();
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < size; ++i) {
 
-	return bw;
+			// get Breit-Wigner parameters
+			const double       M      = parentVec[i].M();     // parent mass
+			const double       m1     = daughter1Vec[i].M();  // daughter 1 mass
+			const double       m2     = daughter2Vec[i].M();  // daughter 2 mass
+			const double       q      = breakupMomentum(M,  m1, m2);
+			const double       M0     = parent->mass();              // resonance peak position
+			const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
+			// !NOTE! the following is incorrect but this is how it was done in PWA2000
+			const double       q0     = sqrt(fabs(q02));
+			const double       Gamma0 = parent->width();             // resonance peak width
+			const unsigned int L      = v.L();
+
+			Complex bw = breitWigner<Complex>(M, M0, Gamma0, L, q, q0);
+			result[i] = bw;
+
+			if (_debug) {
+				#pragma omp critical
+				printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+						   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
+						   << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
+						   << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+			}
+
+		}
+#endif
+
+		return result;
+
+//	} else {
+//
+//		std::vector<Complex> bw = (*phaseSpaceIntegral::instance())(v);
+//		return bw;
+//
+//	}
+
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 constWidthBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
 	// get Breit-Wigner parameters
-	const double M      = parent->lzVec().M();  // parent mass
-	const double M0     = parent->mass();       // resonance peak position
-	const double Gamma0 = parent->width();      // resonance peak width
+	const double M0     = parent->mass();  // resonance peak position
+	const double Gamma0 = parent->width(); // resonance peak width
 
-	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
-	const double          A  = M0 * Gamma0;
-	const double          B  = M0 * M0 - M * M;
-	const complex<double> bw = (A / (B * B + A * A)) * complex<double>(B, A);
-	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
-		           << maxPrecisionDouble(bw) << endl;
-	return bw;
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+
+	ParVector<Complex> result(parentVec.size());
+
+#ifdef USE_CUDA
+	thrust_massDependence_constWidthBreitWigner_amp(parentVec, result, M0, Gamma0);
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		// get Breit-Wigner parameters
+		const double M = parentVec[i].M();  // parent mass
+
+		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+		const double          A  = M0 * Gamma0;
+		const double          B  = M0 * M0 - M * M;
+		const Complex bw = (A / (B * B + A * A)) * Complex(B, A);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		result[i] = bw;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
+					   << maxPrecisionDouble(bw) << endl;
+
+	}
+#endif
+
+	return result;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 rhoBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	// get Breit-Wigner parameters
-	const double M      = parent->lzVec().M();         // parent mass
-	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
-	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
-	const double q2     = breakupMomentumSquared(M,  m1, m2);
-	const double q      = sqrt(q2);
-	const double M0     = parent->mass();              // resonance peak position
-	const double q02    = breakupMomentumSquared(M0, m1, m2);
-	const double q0     = sqrt(q02);
-	const double Gamma0 = parent->width();             // resonance peak width
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
-	const double F      = 2 * q2 / (q02 + q2);
-	const double Gamma  = Gamma0 * (M0 / M) * (q / q0) * F;
-	// in the original publication the width reads
-	// Gamma = Gamma0 * (q / q0) * F
+	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
 
-	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-	const double          A  = M0 * Gamma0 * sqrt(F);
-	// in the original publication A reads
-	// A = sqrt(M0 * Gamma0 * (m / q0) * F)
-	const double          B  = M0 * M0 - M * M;
-	const double          C  = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
-	// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
-		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
-		           << "= " << maxPrecisionDouble(bw) << endl;
-	return bw;
+	ParVector<Complex> result(parentVec.size());
+
+#ifdef USE_CUDA
+	thrust_massDependence_rhoBreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+			result, parent->mass(), parent->width());
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		// get Breit-Wigner parameters
+		const double M      = parentVec[i].M();         // parent mass
+		const double m1     = daughter1Vec[i].M();  // daughter 1 mass
+		const double m2     = daughter2Vec[i].M();  // daughter 2 mass
+		const double q2     = breakupMomentumSquared(M,  m1, m2);
+		const double q      = sqrt(q2);
+		const double M0     = parent->mass();              // resonance peak position
+		const double q02    = breakupMomentumSquared(M0, m1, m2);
+		const double q0     = sqrt(q02);
+		const double Gamma0 = parent->width();             // resonance peak width
+
+		const double F      = 2 * q2 / (q02 + q2);
+		const double Gamma  = Gamma0 * (M0 / M) * (q / q0) * F;
+		// in the original publication the width reads
+		// Gamma = Gamma0 * (q / q0) * F
+
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double  A  = M0 * Gamma0 * sqrt(F);
+		// in the original publication A reads
+		// A = sqrt(M0 * Gamma0 * (m / q0) * F)
+		const double  B  = M0 * M0 - M * M;
+		const double  C  = M0 * Gamma;
+		const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
+		// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
+		result[i] = bw;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+					   << "= " << maxPrecisionDouble(bw) << endl;
+
+	}
+#endif
+
+	return result;
+
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 f0980BreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	// get Breit-Wigner parameters
-	const double M      = parent->lzVec().M();         // parent mass
-	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
-	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
-	const double q      = breakupMomentum(M,  m1, m2);
-	const double M0     = parent->mass();              // resonance peak position
-	const double q0     = breakupMomentum(M0, m1, m2);
-	const double Gamma0 = parent->width();             // resonance peak width
+	const ParVector<LorentzVector>& parentVec = parent->lzVecs();
+	const ParVector<LorentzVector>& daughter1Vec = v.daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = v.daughter2()->lzVecs();
 
-	const double Gamma  = Gamma0 * (q / q0);
+	if(parentVec.size() != daughter1Vec.size() || parentVec.size() != daughter2Vec.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
 
-	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-	const double          C  = M0 * Gamma;
-	const double          A  = C * M / q;
-	const double          B  = M0 * M0 - M * M;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
-	// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
-		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
-		           << "= " << maxPrecisionDouble(bw) << endl;
-	return bw;
+	ParVector<Complex> result(parentVec.size());
+
+#ifdef USE_CUDA
+	thrust_massDependence_f0980BreitWigner_amp(parentVec, daughter1Vec, daughter2Vec,
+			result, parent->mass(), parent->width());
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		// get Breit-Wigner parameters
+		const double M      = parentVec[i].M();         // parent mass
+		const double m1     = daughter1Vec[i].M();  // daughter 1 mass
+		const double m2     = daughter2Vec[i].M();  // daughter 2 mass
+		const double q      = breakupMomentum(M,  m1, m2);
+		const double M0     = parent->mass();              // resonance peak position
+		const double q0     = breakupMomentum(M0, m1, m2);
+		const double Gamma0 = parent->width();             // resonance peak width
+
+		const double Gamma  = Gamma0 * (q / q0);
+
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double  C  = M0 * Gamma;
+		const double  A  = C * M / q;
+		const double  B  = M0 * M0 - M * M;
+		const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
+		// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
+		result[i] = bw;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+					   << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+					   << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+					   << "= " << maxPrecisionDouble(bw) << endl;
+
+	}
+#endif
+
+	return result;
+
 }
 
 
@@ -225,11 +347,17 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	: massDependence(),
 	  _T       (2, 2),
-	  _a       (2, matrix<complex<double> >(2, 2)),
-	  _c       (5, matrix<complex<double> >(2, 2)),
+	  _a       (2, matrix<Complex>(2, 2)),
+	  _c       (5, matrix<Complex>(2, 2)),
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
+
+#ifdef USE_CUDA
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported when using CUDA" << endl;
+	throw;
+#endif
+
 	const double f[2] = {0.1968, -0.0154};  // AMP Table 1, M solution: f_1^1 and f_2^1
 
 	_a[0](0, 0) =  0.1131;  // AMP Table 1, M solution: f_2^2
@@ -275,62 +403,84 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }
 
-
-complex<double>
+ParVector<Complex>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
-	const complex<double> imag(0, 1);
 
-	double mass = v.parent()->lzVec().M();
-	double s    = mass * mass;
-	if (fabs(s - _sP(0, 1)) < 1e-6) {
-		mass += 1e-6;
-		s     = mass * mass;
+#ifdef USE_CUDA
+	printErr << "piPiSWaveAuMorganPenningtonM is currently not supported when using CUDA" << endl;
+	throw;
+#else
+
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
+
+	ParVector<Complex> result(parentVec.size());
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int k = 0; k < size; ++k) {
+
+		const Complex imag(0, 1);
+
+		double mass = parentVec[k].M();
+		double s    = mass * mass;
+		if (fabs(s - _sP(0, 1)) < 1e-6) {
+			mass += 1e-6;
+			s     = mass * mass;
+		}
+
+		const Complex qPiPi   = breakupMomentumComplex<Complex>(mass, _piChargedMass,   _piChargedMass  );
+		const Complex qPi0Pi0 = breakupMomentumComplex<Complex>(mass, _piNeutralMass,   _piNeutralMass  );
+		const Complex qKK     = breakupMomentumComplex<Complex>(mass, _kaonChargedMass, _kaonChargedMass);
+		const Complex qK0K0   = breakupMomentumComplex<Complex>(mass, _kaonNeutralMass, _kaonNeutralMass);
+		Complex       qKmKm   = breakupMomentumComplex<Complex>(mass, _kaonMeanMass,    _kaonMeanMass   );
+
+		matrix<Complex> rho(2, 2);
+		if (_vesSheet) {
+			if (qKmKm.imag() > 0)
+				qKmKm *= -1;
+			rho(0, 0) = (2. * qPiPi) / mass;
+			rho(1, 1) = (2. * qKmKm) / mass;
+		} else {
+			rho(0, 0) = ((2. * qPiPi) / mass + (2. * qPi0Pi0) / mass) / 2.;
+			rho(1, 1) = ((2. * qKK)   / mass + (2. * qK0K0)   / mass) / 2.;
+		}
+		rho(0, 1) = rho(1, 0) = 0;
+
+		const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
+
+		matrix<Complex> M(zero_matrix<Complex>(2, 2));
+		for (unsigned int i = 0; i < _sP.size2(); ++i) {
+			const Complex fa = 1. / (s - _sP(0, i));
+			M += fa * _a[i];
+		}
+		for (unsigned int i = 0; i < _c.size(); ++i) {
+			const Complex sc = pow(scale, (int)i);
+			M += sc *_c[i];
+		}
+
+		// modification: off-diagonal terms set to 0
+		M(0, 1) = 0;
+		M(1, 0) = 0;
+
+		invertMatrix<Complex>(M - imag * rho, _T);
+		const Complex amp = _T(0, 0);
+		result[k] = amp;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+					   << maxPrecisionDouble(amp) << endl;
+
 	}
+	printTimeDiff(timeBefore, "EPL: piPiSWaveAuMorganPenningtonM::amp");
 
-	const complex<double> qPiPi   = breakupMomentumComplex(mass, _piChargedMass,   _piChargedMass  );
-	const complex<double> qPi0Pi0 = breakupMomentumComplex(mass, _piNeutralMass,   _piNeutralMass  );
-	const complex<double> qKK     = breakupMomentumComplex(mass, _kaonChargedMass, _kaonChargedMass);
-	const complex<double> qK0K0   = breakupMomentumComplex(mass, _kaonNeutralMass, _kaonNeutralMass);
-	complex<double>       qKmKm   = breakupMomentumComplex(mass, _kaonMeanMass,    _kaonMeanMass   );
+	return result;
 
-	matrix<complex<double> > rho(2, 2);
-	if (_vesSheet) {
-		if (qKmKm.imag() > 0)
-			qKmKm *= -1;
-		rho(0, 0) = (2. * qPiPi) / mass;
-		rho(1, 1) = (2. * qKmKm) / mass;
-	} else {
-		rho(0, 0) = ((2. * qPiPi) / mass + (2. * qPi0Pi0) / mass) / 2.;
-		rho(1, 1) = ((2. * qKK)   / mass + (2. * qK0K0)   / mass) / 2.;
-	}
-	rho(0, 1) = rho(1, 0) = 0;
+#endif
 
-	const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
-
-	matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
-	for (unsigned int i = 0; i < _sP.size2(); ++i) {
-		const complex<double> fa = 1. / (s - _sP(0, i));
-		M += fa * _a[i];
-	}
-	for (unsigned int i = 0; i < _c.size(); ++i) {
-		const complex<double> sc = pow(scale, (int)i);
-		M += sc *_c[i];
-	}
-
-	// modification: off-diagonal terms set to 0
-	M(0, 1) = 0;
-	M(1, 0) = 0;
-
-	invertMatrix<complex<double> >(M - imag * rho, _T);
-	const complex<double> amp = _T(0, 0);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
-		           << maxPrecisionDouble(amp) << endl;
-
-	return amp;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
@@ -340,35 +490,57 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 }
 
 
-complex<double>
+ParVector<Complex>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-	const double M = v.parent()->lzVec().M();
+	const double  f0Mass  = 0.9837;  // [GeV]
+	const double  f0Width = 0.0376;  // [GeV]
+	const Complex coupling(-0.3743, 0.3197);
 
-	const double          f0Mass  = 0.9837;  // [GeV]
-	const double          f0Width = 0.0376;  // [GeV]
-	const complex<double> coupling(-0.3743, 0.3197);
+	const ParVector<Complex> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
-	complex<double> bw = 0;
-	if (M > 2 * _piChargedMass) {
-		const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
-		const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
-		const double Gamma = f0Width * (q / q0);
-		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
-		const double C     = f0Mass * Gamma;
-		const double A     = C * (M / q);
-		const double B     = f0Mass * f0Mass - M * M;
-		bw = (A / (B * B + C * C)) * complex<double>(B, C);
+	if(parentVec.size() != ampM.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
 	}
 
-	const complex<double> amp = ampM - coupling * bw;
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
-		           << maxPrecisionDouble(amp) << endl;
+	ParVector<Complex> result(parentVec.size());
 
-	return amp;
+#ifdef USE_CUDA
+	thrust_massDependence_piPiSWaveAuMorganPenningtonVes_amp(
+			parentVec, ampM, result, _piChargedMass, f0Mass, f0Width, coupling);
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		const double M = parentVec[i].M();
+
+		Complex bw = 0;
+		if (M > 2 * _piChargedMass) {
+			const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
+			const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
+			const double Gamma = f0Width * (q / q0);
+			// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+			const double C     = f0Mass * Gamma;
+			const double A     = C * (M / q);
+			const double B     = f0Mass * f0Mass - M * M;
+			bw = (A / (B * B + C * C)) * Complex(B, C);
+		}
+
+		const Complex amp = ampM[i] - coupling * bw;
+		result[i] = amp;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
+					   << maxPrecisionDouble(amp) << endl;
+	}
+#endif
+
+	return result;
 }
 
 
@@ -392,12 +564,11 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-complex<double>
+ParVector<Complex>
 rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
 
-	// get Breit-Wigner parameters
-	const double M   = v.parent()->lzVec().M();                 // parent mass
+	const ParVector<LorentzVector>& parentVec = v.parent()->lzVecs();
 
 	// rho' parameters
 	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
@@ -405,27 +576,44 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
 	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
 
-	// const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
-	// const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
+	ParVector<Complex> result(parentVec.size());
 
-	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
-	const double          A1  = M01 * Gamma01;
-	const double          B1  = M01 * M01 - M * M;
-	const complex<double> bw1 = (A1 / (B1 * B1 + A1 * A1)) * complex<double>(B1, A1);
-	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+#ifdef USE_CUDA
+	thrust_massDependence_rhoPrimeMassDep_amp(parentVec, result, M01, Gamma01, M02, Gamma02);
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
-	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
-	const double          A2  = M02 * Gamma02;
-	const double          B2  = M02 * M02 - M * M;
-	const complex<double> bw2 = (A2 / (B2 * B2 + A2 * A2)) * complex<double>(B2, A2);
-	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+		// get Breit-Wigner parameters
+		const double M  = parentVec[i].M();                 // parent mass
 
-	const complex<double> bw = (4 * bw1 - 3 * bw2) / 7;
+		// const Complex bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
+		// const Complex bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
 
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
-		           << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
+		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+		const double  A1  = M01 * Gamma01;
+		const double  B1  = M01 * M01 - M * M;
+		const Complex bw1 = (A1 / (B1 * B1 + A1 * A1)) * Complex(B1, A1);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
 
-	return bw;
+		// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+		const double  A2  = M02 * Gamma02;
+		const double  B2  = M02 * M02 - M * M;
+		const Complex bw2 = (A2 / (B2 * B2 + A2 * A2)) * Complex(B2, A2);
+		// const Complex bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+
+		const Complex bw = (4.0 * bw1 - 3.0 * bw2) / 7.0;
+		result[i] = bw;
+
+		if (_debug)
+			#pragma omp critical
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
+					   << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
+
+	}
+#endif
+
+	return result;
 
 }

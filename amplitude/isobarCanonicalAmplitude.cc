@@ -33,13 +33,17 @@
 
 #include <algorithm>
 
-#include "TLorentzRotation.h"
-#include "TMath.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "spinUtils.hpp"
+#include "typedefs.h"
 #include "dFunction.hpp"
+#include "spinUtils.hpp"
+#include "timeUtils.hpp"
 #include "isobarCanonicalAmplitude.h"
 
+#ifdef USE_CUDA
+#include "isobarCanonicalAmplitude_cuda.h"
+#endif
 
 using namespace std;
 using namespace boost;
@@ -82,9 +86,9 @@ isobarCanonicalAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
-	const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
+	const ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -98,8 +102,20 @@ isobarCanonicalAmplitude::transformDaughters() const
 		if (_debug)
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " daughter RF" << endl;
-		// coordinate system does not change so this is just a simple Lorentz=boost
-		const TVector3 rfBoost = -vertex->parent()->lzVec().BoostVector();
+
+		const ParVector<LorentzVector>& parentVec = vertex->parent()->lzVecs();
+		ParVector<Vector3> rfBoost(parentVec.size());
+
+#ifdef USE_CUDA
+		thrust_isobarCanonicalAmplitude_transformDaughters(parentVec, rfBoost);
+#else
+		const unsigned int size = rfBoost.size();
+		#pragma omp parallel for
+		for(unsigned int k = 0; k < size; ++k) {
+			rfBoost[k] = - parentVec[k].BoostVector();
+		}
+#endif
+
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
 		decayTopologyGraphType::edgeIterator iEd, iEdEnd;
@@ -115,7 +131,7 @@ isobarCanonicalAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-complex<double>
+ParVector<Complex>
 isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                 const bool                  topVertex) const
 {
@@ -127,6 +143,8 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
+	int numEvents = parent->numEvents();
+
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
 	const int    m1        = daughter1->spinProj();
@@ -136,29 +154,26 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int    mS        = m1 + m2;
 	const double ssClebsch = clebschGordanCoeff<double>(s1, m1, s2, m2, S, mS, _debug);
 	if (ssClebsch == 0)
-		return 0;
-
-	// calulate barrier factor
-	const int    L  = vertex->L();
-	const double q  = daughter1->lzVec().Vect().Mag();
-	const double bf = barrierFactor(L, q, _debug);
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate Breit-Wigner
-	const complex<double> bw = vertex->massDepAmplitude();
+	const ParVector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
 	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)
 																		 // helicity amplitude lacks a factor of 1 / sqrt(4 pi)
 
-	// sum over all possible spin projections of L
 	const int       J     = parent->J();
 	const int       M     = parent->spinProj();
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
-	const double    phi   = daughter1->lzVec().Phi();  // use daughter1 as analyzer
-	const double    theta = daughter1->lzVec().Theta();
-	complex<double> amp	  = 0;
+
+	ParVector<Complex> amp(numEvents, 0);
+
+	// sum over all possible spin projections of L
+	const int L  = vertex->L();
 	for (int mL = -L; mL <= L; mL += 2) {
+
 		// calculate Clebsch-Gordan coefficient for L-S coupling
 		double LSClebsch;
 		if (_useReflectivityBasis and topVertex) {
@@ -176,16 +191,48 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 			}
 		} else
 			LSClebsch = clebschGordanCoeff<double>(L, mL, S, mS, J, M, _debug);
+
 		if (LSClebsch == 0)
 			continue;
+
 		// multiply spherical harmonic
-		amp += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
+#ifdef USE_CUDA
+		thrust_isobarCanonicalAmplitude_twoBodyDecayAmplitude_1(daughter1->lzVecs(), amp, L, mL, LSClebsch);
+#else
+		const unsigned int size = amp.size();
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < size; ++i) {
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
+			amp[i] += LSClebsch * sphericalHarmonic<Complex>(L, mL, theta, phi, _debug);
+		}
+#endif
+
 	}
 
-	// calculate decay amplitude
-	amp *= norm * ssClebsch * bf * bw;
+#ifdef USE_CUDA
+	thrust_isobarCanonicalAmplitude_twoBodyDecayAmplitude_2(daughter1->lzVecs(), bw, amp, L, norm, ssClebsch);
+#else
+	const unsigned int size = amp.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
 
-	if (_debug)
-		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+		// calulate barrier factor
+		const double q  = daughter1->lzVecs()[i].Vect().Mag();
+		const double bf = barrierFactor(L, q, _debug);
+
+		// calculate decay amplitude
+		amp[i] *= norm * ssClebsch * bf * bw[i];
+
+	}
+#endif
+
+	if (_debug) {
+		printDebug << "two-body decay amplitude = ";
+		for(unsigned int i = 0; i < amp.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(amp[i]);
+		}
+		printDebug << endl;
+	}
 	return amp;
 }

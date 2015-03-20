@@ -35,10 +35,16 @@
 
 #include <sstream>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "reportingUtilsRoot.hpp"
 #include "spinUtils.hpp"
+#include "timeUtils.hpp"
 #include "isobarDecayVertex.h"
 
+#ifdef USE_CUDA
+#include "isobarDecayVertex_cuda.h"
+#endif
 
 using namespace std;
 using namespace rpwa;
@@ -157,16 +163,36 @@ isobarDecayVertex::addOutParticle(const particlePtr&)
 }
 
 
-const TLorentzVector&
-isobarDecayVertex::calcParentLzVec()
+const ParVector<LorentzVector>&
+isobarDecayVertex::calcParentLzVecs()
 {
 	if (_debug)
-		printDebug << "calculating Lorentz-vector of parent particle " << parent()->name()
-		           << " before = " << parent()->lzVec() << " GeV, " << flush;
-	parent()->setLzVec(daughter1()->lzVec() + daughter2()->lzVec());
+		printDebug << "calculating Lorentz vectors of parent particle " << parent()->name()
+		           << " before = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV, " << flush;
+
+	ParVector<LorentzVector>&       parentVec    = parent()->mutableLzVecs();  // mutable!!!
+	const ParVector<LorentzVector>& daughter1Vec = daughter1()->lzVecs();
+	const ParVector<LorentzVector>& daughter2Vec = daughter2()->lzVecs();
+
+	const size_t numEvents = daughter1Vec.size();  // parentVec does not have correct size
+	if (daughter2Vec.size() != numEvents) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	parentVec.resize(numEvents);
+
+#ifdef USE_CUDA
+	thrust_isobarDecayVertex_calcParentLzVecs(daughter1Vec, daughter2Vec, parentVec);
+#else
+	#pragma omp parallel for
+	for(size_t i = 0; i < numEvents; ++i)
+		parentVec[i] = daughter1Vec[i] + daughter2Vec[i];
+#endif
+
 	if (_debug)
-		cout << "after = " << parent()->lzVec() << " GeV" << endl;
-	return parent()->lzVec();
+		cout << "after = " << firstEntriesToString(parent()->lzVecs(), 3) << " GeV" << endl;
+	return parent()->lzVecs();
 }
 
 

@@ -32,14 +32,17 @@
 
 
 #include <algorithm>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "TLorentzRotation.h"
-#include "TMath.h"
-
+#include "typedefs.h"
 #include "spinUtils.hpp"
+#include "timeUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
+#ifdef USE_CUDA
+#include "isobarHelicityAmplitude_cuda.h"
+#endif
 
 using namespace std;
 using namespace boost;
@@ -63,26 +66,41 @@ isobarHelicityAmplitude::~isobarHelicityAmplitude()
 { }
 
 
-TLorentzRotation
-isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
+ParVector<LorentzRotation>
+isobarHelicityAmplitude::hfTransform(const ParVector<LorentzVector>& daughterLv)
 {
-	TLorentzVector daughter = daughterLv;
-	const TVector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
-	const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
-	// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
-	TRotation rot1;
-	rot1.RotateZ(piHalf - yHfAxis.Phi());
-	rot1.RotateX(yHfAxis.Theta() - piHalf);
-	daughter *= rot1;
-	// rotate about yHfAxis so that daughter momentum is along z-axis
-	TRotation rot2;
-	rot2.RotateY(-signum(daughter.X()) * daughter.Theta());
-	daughter *= rot2;
-	// boost to daughter RF
-	rot1.Transform(rot2);
-	TLorentzRotation hfTransform(rot1);
-	hfTransform.Boost(-daughter.BoostVector());
-	return hfTransform;
+	ParVector<LorentzRotation> result(daughterLv.size());
+
+#ifdef USE_CUDA
+	thrust_isobarHelicityAmplitude_hfTransform(daughterLv, result);
+#else
+	const unsigned int size = daughterLv.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		LorentzVector daughter = daughterLv[i];
+		const Vector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
+		const Vector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
+		// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
+		Rotation rot1;
+		rot1.RotateZ(piHalf - yHfAxis.Phi());
+		rot1.RotateX(yHfAxis.Theta() - piHalf);
+		daughter *= rot1;
+		// rotate about yHfAxis so that daughter momentum is along z-axis
+		Rotation rot2;
+		rot2.RotateY(-signum(daughter.X()) * daughter.Theta());
+		daughter *= rot2;
+		// boost to daughter RF
+		rot1.Transform(rot2);
+		LorentzRotation hfTransform(rot1);
+		hfTransform.Boost(-daughter.BoostVector());
+		result[i] = hfTransform;
+
+	}
+#endif
+
+	return result;
+
 }
 
 
@@ -105,9 +123,9 @@ isobarHelicityAmplitude::transformDaughters() const
 	// calculate Lorentz-transformations into the correct frames for the
 	// daughters in the decay vertices
 	// 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
-	const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv  = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv     = _decay->XParticle()->lzVecs();
+	const ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
@@ -121,7 +139,9 @@ isobarHelicityAmplitude::transformDaughters() const
 		if (_debug)
 			printDebug << "transforming all child particles of vertex " << *vertex
 			           << " into " << vertex->parent()->name() << " helicity RF" << endl;
-		const TLorentzRotation hfTrans = hfTransform(vertex->parent()->lzVec());
+
+		const ParVector<LorentzRotation> hfTrans = hfTransform(vertex->parent()->lzVecs());
+
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
 		decayTopologyGraphType::edgeIterator iEd, iEdEnd;
@@ -137,7 +157,7 @@ isobarHelicityAmplitude::transformDaughters() const
 
 
 // assumes that daughters were transformed into parent RF
-complex<double>
+ParVector<Complex>
 isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                                                const bool                  topVertex) const
 {
@@ -149,6 +169,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
+	unsigned int numEvents = parent->numEvents();
+
 	// calculate Clebsch-Gordan coefficient for L-S coupling
 	const int    L         = vertex->L();
 	const int    S         = vertex->S();
@@ -158,41 +180,81 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    lambda    = lambda1 - lambda2;
 	const double lsClebsch = clebschGordanCoeff<double>(L, 0, S, lambda, J, lambda, _debug);
 	if (lsClebsch == 0)
-		return 0;
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
 	const int    s2        = daughter2->J();
 	const double ssClebsch = clebschGordanCoeff<double>(s1, lambda1, s2, -lambda2, S, lambda, _debug);
 	if (ssClebsch == 0)
-		return 0;
+		return ParVector<Complex>(numEvents, 0);
 
 	// calculate D-function
 	const int       Lambda = parent->spinProj();
 	const int       P      = parent->P();
 	const int       refl   = parent->reflectivity();
-	const double    phi    = daughter1->lzVec().Phi();  // use daughter1 as analyzer
-	const double    theta  = daughter1->lzVec().Theta();
-	complex<double> DFunc;
-	if (topVertex and _useReflectivityBasis)
-		DFunc = DFunctionReflConj<complex<double> >(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
-	else
-		DFunc = DFunctionConj<complex<double> >(J, Lambda, lambda, phi, theta, 0, _debug);
 
-	// calulate barrier factor
-	const double q  = daughter1->lzVec().Vect().Mag();
-	const double bf = barrierFactor(L, q, _debug);
+	ParVector<Complex> DFunc(numEvents);
+	if (topVertex and _useReflectivityBasis) {
+
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_1(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
+#else
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < numEvents; ++i) {
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
+			DFunc[i] = DFunctionReflConj<Complex>(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
+		}
+#endif
+
+	} else {
+
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_2(daughter1->lzVecs(), DFunc, J, Lambda, lambda, P, refl);
+#else
+		#pragma omp parallel for
+		for(unsigned int i = 0; i < numEvents; ++i) {
+			double phi = daughter1->lzVecs()[i].Phi(); // use daughter1 as analyzer
+			double theta = daughter1->lzVecs()[i].Theta();
+			DFunc[i] = DFunctionConj<Complex>(J, Lambda, lambda, phi, theta, 0, _debug);
+		}
+#endif
+
+	}
 
 	// calculate Breit-Wigner
-	const complex<double> bw = vertex->massDepAmplitude();
+	const ParVector<Complex> bw = vertex->massDepAmplitudes();
 
 	// calculate normalization factor
-	const double norm = angMomNormFactor(L, _debug);
+	const double norm = angMomNormFactor<double>(L, _debug);
 
 	// calculate decay amplitude
-	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
-	
-	if (_debug)
-		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+	ParVector<Complex> amp(numEvents);
+
+#ifdef USE_CUDA
+		thrust_isobarHelicityAmplitude_twoBodyDecayAmplitude_3(daughter1->lzVecs(), DFunc, bw, amp, L, norm, lsClebsch, ssClebsch);
+#else
+	const unsigned int size = amp.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		// calulate barrier factor
+		const double q  = daughter1->lzVecs()[i].Vect().Mag();
+		const double bf = barrierFactor(L, q, _debug);
+
+		amp[i] = norm * DFunc[i] * lsClebsch * ssClebsch * bf * bw[i];
+
+	}
+#endif
+
+	if (_debug) {
+		printDebug << "two-body decay amplitude = ";
+		for(unsigned int i = 0; i < amp.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(amp[i]);
+		}
+		printDebug << endl;
+	}
+
 	return amp;
 }

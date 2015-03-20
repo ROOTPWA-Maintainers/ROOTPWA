@@ -39,36 +39,99 @@
 #include <vector>
 #include <limits>
 
+#include "cudaUtils.hpp"
 #include "reportingUtils.hpp"
 
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#endif
 
 namespace rpwa {
 
 	template<typename T>
 	class factorialCached {
-	
+
 	public:
-			
-		static factorialCached& instance() { return _instance; }  ///< get singleton instance
-		T operator ()(const unsigned int n)                       ///< returns n!
+
+		struct cacheType {
+			int numEntries;
+			T* entries;
+		};
+
+		HOST_DEVICE
+		static T calcFactorial(unsigned int n)
 		{
-			const unsigned int cacheSize = _cache.size();
-			if (n >= cacheSize) {
-				_cache.resize(n + 1);
-				for (unsigned int i = cacheSize; i <= n; ++i) {
-					// check for overflow
-					if ((std::numeric_limits<T>::max() / (T)i) < _cache[i - 1]) {
-						printErr << "target data type too small to hold " << i << "! "
-						         << "(" << i - 1 << "! = " << _cache[i - 1] << " * " << i << " > "
-						         << std::numeric_limits<T>::max() << "). aborting." << std::endl;
-						throw;
-					}
-					_cache[i] = ((T)i) * _cache[i - 1];
-				}
+			T result = 1;
+			for(int i = 1; i <= n; ++i)
+			{
+				result *= i;
+			}
+			return result;
+		}
+
+		static void initCache()
+		{
+			if (_debug)
+				printDebug << "adding ";
+			if (_cache.size() > 0)
+				return;
+			_cache.clear();
+			_cache.push_back(1);
+			unsigned int i = 1;
+			while((std::numeric_limits<T>::max() / (T)i) > _cache[i - 1]) {
+				T newValue = ((T)i) * _cache[i - 1];
+				if (_debug)
+					std::cout << i << "! = " << newValue << "  ";
+				_cache.push_back(newValue);
+				++i;
+			}
+			if (_debug)
+				std::cout << " to factorial cache" << std::endl;
+#ifdef USE_CUDA
+
+			// copy entries to device
+			T* entries;
+			cudaMalloc((void**)&entries, sizeof(T) * _cache.size());
+			cudaMemcpy(entries, &(_cache[0]), sizeof(T) * _cache.size(), cudaMemcpyHostToDevice);
+
+			// fill cache struct
+			cacheType cudaCache;
+			cudaCache.numEntries = _cache.size();
+			cudaCache.entries = entries;
+
+			// copy cache struct to device
+			cudaMalloc((void**)&_cudaCache, sizeof(cacheType));
+			cudaMemcpy(&_cudaCache, &cudaCache, sizeof(cacheType), cudaMemcpyHostToDevice);
+
+#endif
+		}
+
+		HOST_DEVICE
+		static T calculate(const unsigned int n, const cacheType* cudaCacheData = NULL)  ///< returns n!
+		{
+#ifdef __CUDA_ARCH__
+			if (cudaCacheData == NULL || n >= cudaCacheData->numEntries)
+				return T();
+			return cudaCacheData->entries[n];
+#else
+			if (_cache.size() == 0)
+				initCache();
+			if (n >= _cache.size()) {
+				printErr << "cannot calculate factorial of " << n << ": value out of range" << std::endl;
+				throw;
 			}
 			return _cache[n];
+#endif
 		}
-    
+
+#ifdef USE_CUDA
+		static const cacheType* getCudaCache() { return _cudaCache; }
+#endif
+
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
 
 	private:
 
@@ -77,22 +140,43 @@ namespace rpwa {
 		factorialCached (const factorialCached&);
 		factorialCached& operator =(const factorialCached&);
 
-		static factorialCached _instance;  ///< singleton instance
- 		static std::vector<T>  _cache;     ///< cache for already calculated values
+ 		static std::vector<T> _cache;     ///< cache for already calculated values
+#ifdef USE_CUDA
+ 		static cacheType*     _cudaCache; ///< cache for already calculated values in device memory
+#endif
+		static bool           _debug;     ///< if set to true, debug messages are printed
 
 	};
 
-
-	template<typename T> factorialCached<T> factorialCached<T>::_instance;
-	template<typename T> std::vector<T>     factorialCached<T>::_cache(1, 1);
+	template<typename T> std::vector<T>     factorialCached<T>::_cache;
+#ifdef USE_CUDA
+	template<typename T> typename factorialCached<T>::cacheType* factorialCached<T>::_cudaCache = NULL;
+#endif
+	template<typename T> bool               factorialCached<T>::_debug = false;
 
 
 	template<typename T>
 	inline
+	void
+	initFactorial()  ///< Initializes the cache containing all needed factorial values
+	{ return factorialCached<T>::initCache();	}
+
+#ifdef USE_CUDA
+	template<typename T>
+	inline
+	const typename factorialCached<T>::cacheType*
+	getFactorialCudaCache() ///< Returns the device version of the cache
+	{ return factorialCached<T>::getCudaCache(); }
+#endif
+
+
+	template<typename T>
+	HOST_DEVICE
+	inline
 	T
-	factorial(const unsigned int n)  ///< returns factorial of n
-	{ return factorialCached<T>::instance()(n);	}
-	
+	factorial(const unsigned int n, const typename factorialCached<T>::cacheType* cudaCacheData = NULL)  ///< returns factorial of n
+	{ return factorialCached<T>::calculate(n, cudaCacheData);	}
+
 
 }  // namespace rpwa
 

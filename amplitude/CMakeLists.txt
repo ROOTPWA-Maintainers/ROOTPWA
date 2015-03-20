@@ -39,6 +39,7 @@ message(STATUS ">>> Setting up 'amplitude' directory.")
 set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
 	SYSTEM ${Boost_INCLUDE_DIRS}
+	SYSTEM ${CUDA_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
@@ -48,6 +49,7 @@ set(INCLUDE_DIRECTORIES
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
+set(CUDA_VERSION 6500)
 
 # source files that are compiled into library
 set(SOURCES
@@ -75,7 +77,20 @@ set(SOURCES
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
 	)
-
+	
+# source files that are compiled into cudalibrary
+if(USE_CUDA)
+	set(SOURCES_CUDA
+		thrustVector.cu
+		particle_cuda.cu
+		leptoProductionVertex_cuda.cu
+		isobarDecayVertex_cuda.cu
+		massDependence_cuda.cu
+		isobarAmplitude_cuda.cu
+		isobarHelicityAmplitude_cuda.cu
+		isobarCanonicalAmplitude_cuda.cu
+		)
+endif()
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
@@ -90,7 +105,18 @@ root_generate_dictionary(
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
-
+# cuda library
+if(USE_CUDA)
+	set(THIS_LIB_CUDA "RootPwaAmpCuda")
+	cuda_add_library(
+	#make_shared_library(
+		"${THIS_LIB_CUDA}"
+		"${SOURCES_CUDA}"
+		SHARED)
+else()
+	set(THIS_LIB_CUDA "")	
+endif()
+	
 # library
 set(THIS_LIB "RootPwaAmp")
 make_shared_library(
@@ -100,6 +126,7 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	"${ROOTPWA_NBPSGEN_LIBS}"
+	"${THIS_LIB_CUDA}"
 	)
 
 

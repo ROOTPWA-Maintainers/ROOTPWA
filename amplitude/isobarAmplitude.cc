@@ -34,21 +34,24 @@
 #include <algorithm>
 #include <cassert>
 
-#include "TLorentzRotation.h"
-#include "TMath.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "conversionUtils.hpp"
 #include "factorial.hpp"
 #include "isobarAmplitude.h"
+#include "timeUtils.hpp"
+#include "typedefs.h"
 
-  
+#ifdef USE_CUDA
+#include "isobarAmplitude_cuda.h"
+#endif
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
 
 
 bool isobarAmplitude::_debug = false;
-
 
 isobarAmplitude::isobarAmplitude()
 	: _decay               (),
@@ -115,69 +118,136 @@ isobarAmplitude::init()
 // at the moment it is not possible to fix the helicity state of
 // final state particles for cases where the amplitudes for the
 // different helicity states have to be added incoherently
-complex<double>
+ParVector<Complex>
 isobarAmplitude::amplitude() const
 {
+	//int numEvents = _decay->XIsobarDecayVertex()->parent()->numEvents();
+	int numEvents = _decay->fsParticles().at(0)->numEvents();
+
 	const unsigned int nmbSymTerms = _symTermMaps.size();
 	if (nmbSymTerms < 1) {
 		printErr << "array of symmetrization terms is empty. make sure isobarAmplitude::init() "
 		         << "was called. cannot calculate amplitude. returning 0." << endl;
-		return 0;
+		return ParVector<Complex>(numEvents, 0);
 	}
 	// loop over all symmetrization terms; assumes that init() was called before
-	complex<double> amp = 0;
-	for (unsigned int i = 0; i < nmbSymTerms; ++i)
-		amp += _symTermMaps[i].factor * symTermAmp(_symTermMaps[i].fsPartPermMap);
+
+	ParVector<Complex> amp(numEvents);
+
+	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
+
+		ParVector<Complex> permAmp = symTermAmp(_symTermMaps[i].fsPartPermMap);
+
+		if(amp.size() != permAmp.size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+
+#ifdef USE_CUDA
+		thrust_isobarAmplitude_amplitude(permAmp, amp, _symTermMaps[i].factor);
+#else
+		const unsigned int size = amp.size();
+		#pragma omp parallel for
+		for(unsigned int k = 0; k < size; ++k) {
+			amp[k] += permAmp[k] * _symTermMaps[i].factor;
+		}
+#endif
+
+	}
 	return amp;
 }
 
 
-TLorentzRotation
-isobarAmplitude::gjTransform(const TLorentzVector& beamLv,  // beam Lorentz-vector
-                             const TLorentzVector& XLv)     // X  Lorentz-vector
+ParVector<LorentzRotation>
+isobarAmplitude::gjTransform(const ParVector<LorentzVector>& beamLv,  // beam Lorentz-vector
+                             const ParVector<LorentzVector>& XLv)     // X  Lorentz-vector
 {
-	TLorentzVector beam    = beamLv;
-	TLorentzVector X       = XLv;
-	const TVector3 yGjAxis = beam.Vect().Cross(X.Vect());  // y-axis of Gottfried-Jackson frame
-	// rotate so that yGjAxis becomes parallel to y-axis and beam momentum ends up in (x, z)-plane
-	TRotation rot1;
-	rot1.RotateZ(piHalf - yGjAxis.Phi());
-	rot1.RotateX(yGjAxis.Theta() - piHalf);
-	beam *= rot1;
-	X    *= rot1;
-	// boost to X RF
-	TLorentzRotation boost;
-	boost.Boost(-X.BoostVector());
-	beam *= boost;
-	// rotate about yGjAxis so that beam momentum is along z-axis
-	TRotation rot2;
-	rot2.RotateY(-signum(beam.X()) * beam.Theta());
-	// construct total transformation
-	TLorentzRotation gjTransform(rot1);
-	gjTransform.Transform(boost);
-	gjTransform.Transform(rot2);
-	return gjTransform;
+
+	if(beamLv.size() != XLv.size()) {
+		printErr << "size of per-event-data vectors does not match. aborting." << endl;
+		throw;
+	}
+
+	ParVector<LorentzRotation> result(beamLv.size());
+#ifdef USE_CUDA
+	thrust_isobarAmplitude_gjTransform(beamLv, XLv, result);
+#else
+	const unsigned int size = result.size();
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < size; ++i) {
+
+		LorentzVector beam    = beamLv[i];
+		LorentzVector X       = XLv[i];
+		const Vector3 yGjAxis = beam.Vect().Cross(X.Vect());  // y-axis of Gottfried-Jackson frame
+		// rotate so that yGjAxis becomes parallel to y-axis and beam momentum ends up in (x, z)-plane
+		Rotation rot1;
+		rot1.RotateZ(piHalf - yGjAxis.Phi());
+		rot1.RotateX(yGjAxis.Theta() - piHalf);
+		beam *= rot1;
+		X    *= rot1;
+		// boost to X RF
+		LorentzRotation boost;
+		boost.Boost(-X.BoostVector());
+		beam *= boost;
+		// rotate about yGjAxis so that beam momentum is along z-axis
+		Rotation rot2;
+		rot2.RotateY(-signum(beam.X()) * beam.Theta());
+		// construct total transformation
+		LorentzRotation gjTransform(rot1);
+		gjTransform.Transform(boost);
+		gjTransform.Transform(rot2);
+		result[i] = gjTransform;
+
+	}
+#endif
+
+	return result;
 }
 
+static
+void
+parallelLorentzRotationInvert(ParVector<LorentzRotation>& lzRot)
+{
+#ifdef USE_CUDA
+	thrust_isobarAmplitude_parallelLorentzRotationInvert(lzRot);
+#else
+	#pragma omp parallel for
+	for(unsigned int i = 0; i < lzRot.size(); ++i)
+		lzRot[i].Invert();
+#endif
+}
 
 void
 isobarAmplitude::spaceInvertDecay() const
 {
 	if (_debug)
 		printDebug << "space inverting final state momenta." << endl;
+
 	// transform final state particles into X rest frame
-	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
-	const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>& beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>& XLv    = _decay->XParticle()->lzVecs();
+	ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
+
 	// perform parity transformation on final state particles in X rest frame
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const particlePtr&    part     = _decay->fsParticles()[i];
-		const TLorentzVector& fsPartLv = part->lzVec();
-		part->setLzVec(TLorentzVector(-fsPartLv.Vect(), fsPartLv.E()));
+		const particlePtr& p  = _decay->fsParticles()[i];
+
+#ifdef USE_CUDA
+		thrust_isobarAmplitude_spaceInvertDecay(p->mutableLzVecs());
+#else
+		#pragma omp parallel for
+		for(unsigned int k = 0; k < p->numEvents(); ++k) {
+			const LorentzVector& v = p->lzVecs()[k];
+			p->mutableLzVecs()[k].SetXYZT(-v.X(), -v.Y(), -v.Z(), v.E());
+		}
+#endif
+
 	}
+
 	// transform final state particles back to lab frame
-	_decay->transformFsParticles(gjTrans.Inverse());
+	parallelLorentzRotationInvert(gjTrans);
+	_decay->transformFsParticles(gjTrans);
 }
 
 
@@ -187,18 +257,30 @@ isobarAmplitude::reflectDecay() const
 	if (_debug)
 		printDebug << "reflecting final state momenta through production plane." << endl;
 	// transform final state particles into X rest frame
-	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
-	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
-	const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+	const ParVector<LorentzVector>&  beamLv = _decay->productionVertex()->referenceLzVecs();
+	const ParVector<LorentzVector>&  XLv    = _decay->XParticle()->lzVecs();
+	ParVector<LorentzRotation> gjTrans = gjTransform(beamLv, XLv);
 	_decay->transformFsParticles(gjTrans);
+
 	// reflect final state particles through production plane
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const particlePtr&    part     = _decay->fsParticles()[i];
-		const TLorentzVector& fsPartLv = part->lzVec();
-		part->setLzVec(TLorentzVector(fsPartLv.X(), -fsPartLv.Y(), fsPartLv.Z(), fsPartLv.E()));
+		const particlePtr& p  = _decay->fsParticles()[i];
+
+#ifdef USE_CUDA
+		thrust_isobarAmplitude_reflectDecay(p->mutableLzVecs());
+#else
+		#pragma omp parallel for
+		for(unsigned int k = 0; k < p->numEvents(); ++k) {
+			const LorentzVector& v = p->lzVecs()[k];
+			p->mutableLzVecs()[k].SetXYZT(v.X(), -v.Y(), v.Z(), v.E());
+		}
+#endif
+
 	}
+
 	// transform final state particles back to lab frame
-	_decay->transformFsParticles(gjTrans.Inverse());
+	parallelLorentzRotationInvert(gjTrans);
+	_decay->transformFsParticles(gjTrans);
 }
 
 
@@ -210,62 +292,101 @@ isobarAmplitude::reflectDecay() const
 //     additional speed can be gained by checking that daughter
 //     amplitudes are not zero before calculating the remaining parts
 //     of the amplitude
-complex<double>
+ParVector<Complex>
 isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,           // current vertex
                                           const bool                  topVertex) const  // switches special treatment of X decay vertex; needed for reflectivity basis
 {
 	const particlePtr& parent    = vertex->parent();
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
-	complex<double>    ampSum    = 0;
+
+	int numEvents = parent->numEvents();
+
+	ParVector<Complex> ampSum(numEvents, 0);
+
 	for (int lambda1 = -daughter1->J(); lambda1 <= +daughter1->J(); lambda1 += 2) {
+
 		// calculate decay amplitude for daughter 1
 		daughter1->setSpinProj(lambda1);
 		const isobarDecayVertexPtr& daughter1Vertex =
 			dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
-		complex<double> daughter1Amp = 0;
+
+		ParVector<Complex> daughter1Amp;
 		if (daughter1Vertex) {
 			daughter1Amp = twoBodyDecayAmplitudeSum(daughter1Vertex, false);
 		} else
-			daughter1Amp = 1;
+			daughter1Amp = ParVector<Complex>(numEvents, 1);
+
 		for (int lambda2 = -daughter2->J(); lambda2 <= +daughter2->J(); lambda2 += 2) {
+
 			// calculate decay amplitude for daughter 2
 			daughter2->setSpinProj(lambda2);
 			const isobarDecayVertexPtr& daughter2Vertex =
 				dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
-			complex<double> daughter2Amp = 0;
+
+			ParVector<Complex> daughter2Amp;
 			if (daughter2Vertex) {
 				daughter2Amp = twoBodyDecayAmplitudeSum(daughter2Vertex, false);
 			} else
-				daughter2Amp = 1;
-			complex<double> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
-			complex<double> amp       = parentAmp * daughter1Amp * daughter2Amp;
-			if (_debug)
+				daughter2Amp = ParVector<Complex>(numEvents, 1);
+
+			ParVector<Complex> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
+
+			if(ampSum.size() != parentAmp.size() || ampSum.size() != daughter1Amp.size() || ampSum.size() != daughter2Amp.size()) {
+				printErr << "ampSum.size() = " << ampSum.size() << endl;
+				printErr << "parentAmp.size() = " << parentAmp.size() << endl;
+				printErr << "daughter1Amp.size() = " << daughter1Amp.size() << endl;
+				printErr << "daughter2Amp.size() = " << daughter2Amp.size() << endl;
+				printErr << "size of per-event-data vectors does not match. aborting." << endl;
+				throw;
+			}
+
+#ifdef USE_CUDA
+			thrust_isobarAmplitude_twoBodyDecayAmplitudeSum(parentAmp, daughter1Amp, daughter2Amp, ampSum);
+#else
+			const unsigned int size = ampSum.size();
+			#pragma omp parallel for
+			for(unsigned int i = 0; i < size; ++i) {
+				ampSum[i] += parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
+			}
+#endif
+
+			if (_debug) {
 				printDebug << "amplitude term for : "
-				           << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
-				           << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "
-				           << daughter2->name() << " [lambda = " << spinQn(lambda2           ) << "] = "
-				           << "parent amp. = " << maxPrecisionDouble(parentAmp)
-				           << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp)
-				           << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
-				           << maxPrecisionDouble(amp) << endl;
-			ampSum += amp;
+						   << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
+						   << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "
+						   << daughter2->name() << " [lambda = " << spinQn(lambda2           ) << "] = " << endl;
+				for(unsigned int i = 0; i < 3 && i < ampSum.size(); ++i) {
+					Complex amp = parentAmp[i] * daughter1Amp[i] * daughter2Amp[i];
+					printDebug << "  [" << i << "] parent amp. = " << maxPrecisionDouble(parentAmp[i])
+							   << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp[i])
+							   << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp[i]) << " = "
+							   << maxPrecisionDouble(amp) << endl;
+				}
+			}
+
 		}
 	}
-	if (_debug)
-		printDebug << "decay amplitude for " << *vertex << " = " << maxPrecisionDouble(ampSum) << endl;
+	if (_debug) {
+		printDebug << "decay amplitude for " << *vertex << " = ";
+		for(unsigned int i = 0; i < ampSum.size() && i < 3; ++i) {
+			printDebug << maxPrecisionDouble(ampSum[i]);
+		}
+		printDebug << endl;
+	}
 	return ampSum;
 }
 
 
-complex<double>
+ParVector<Complex>
 isobarAmplitude::symTermAmp(const vector<unsigned int>& fsPartPermMap) const
 {
 	// (re)set final state momenta
 	if (not _decay->revertMomenta(fsPartPermMap)) {
 		printErr << "problems reverting momenta in decay topology. cannot calculate amplitude. "
 		         << "returning 0." << endl;
-		return 0;
+		int numEvents = _decay->fsParticles().at(0)->numEvents();
+		return ParVector<Complex>(numEvents, 0);
 	}
 	// transform daughters into their respective RFs
 	transformDaughters();
@@ -327,17 +448,17 @@ isobarAmplitude::initSymTermMaps()
 		_symTermMaps.clear();
 	}
 	for(unsigned int iso_i = 0; iso_i < nmbIsoSymTerms; ++iso_i) {
-			complex<double> isoFactor = isoSymTermMaps[iso_i].factor;
+			Complex isoFactor = isoSymTermMaps[iso_i].factor;
 			vector<unsigned int> isoSymTermMap = isoSymTermMaps[iso_i].fsPartPermMap;
 		for(unsigned int bose_i = 0; bose_i < nmbBoseSymTerms; ++bose_i) {
-			complex<double> boseFactor = boseSymTermMaps[bose_i].factor;
+			Complex boseFactor = boseSymTermMaps[bose_i].factor;
 			vector<unsigned int> boseSymTermMap = boseSymTermMaps[bose_i].fsPartPermMap;
 			vector<unsigned int> newSymTermMap(isoSymTermMap.size(), 0);
 			assert(isoSymTermMap.size() == boseSymTermMap.size());
 			for(unsigned int i = 0; i < boseSymTermMap.size(); ++i) {
 				newSymTermMap[i] = boseSymTermMap[isoSymTermMap[i]];
 			}
-			complex<double> newFactor = isoFactor * boseFactor;
+			Complex newFactor = isoFactor * boseFactor;
 			_symTermMaps.push_back(symTermMap(newFactor, newSymTermMap));
 		}
 	}

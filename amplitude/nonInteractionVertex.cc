@@ -1,11 +1,10 @@
-
-#include "nonInteractionVertex.h"
-
-#include<TClass.h>
-#include<TClonesArray.h>
+#include "TClass.h"
+#include "TClonesArray.h"
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
+#include "nonInteractionVertex.h"
+
 
 using namespace rpwa;
 using namespace std;
@@ -77,12 +76,10 @@ nonInteractionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-nonInteractionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+nonInteractionVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
-	_XParticleCache   = TVector3();
-
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != 1) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected 1). "
@@ -90,18 +87,11 @@ nonInteractionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		return false;
 	}
 
-	TVector3* XParticleMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
-	if (XParticleMom) {
-		if (_debug) {
-			printDebug << "setting momentum of beam particle '" << XParticle()->name()
-			           << "' to " << *XParticleMom << " GeV" << endl;
-		}
-		XParticle()->setMomentum(*XParticleMom);
-		_XParticleCache = XParticle()->momentum();
-	} else {
-		printWarn << "production kinematics data entry [0] is not of type TVector3. "
-		          << "cannot read beam particle momentum." << endl;
-		return false;
+	copyToParVector(_XParticleCache, prodKinMomenta[0]);
+
+	if (_debug) {
+		printDebug << "setting momentum of beam particle '" << XParticle()->name()
+				   << "' to " << firstEntriesToString(_XParticleCache, 3) << " GeV" << endl;
 	}
 
 	return true;
@@ -112,9 +102,10 @@ bool
 nonInteractionVertex::revertMomenta()
 {
 	if (_debug) {
-		printDebug << "resetting XParticle momentum to " << _XParticleCache << " GeV" << endl;
+		printDebug << "resetting XParticle momentum to "
+				   << firstEntriesToString(_XParticleCache, 3) << " GeV" << endl;
 	}
-	XParticle()->setMomentum(_XParticleCache);
+	XParticle()->setMomenta(_XParticleCache);
 	return true;
 }
 

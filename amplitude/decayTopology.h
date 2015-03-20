@@ -48,18 +48,15 @@
 #include <vector>
 #include <map>
 
-#include "TLorentzRotation.h"
 
+#include "typedefs.h"
 #include "particle.h"
 #include "productionVertex.h"
 #include "interactionVertex.h"
 #include "fsVertex.h"
 #include "decayGraph.hpp"
 
-
 class TClonesArray;
-class TVector3;
-
 
 namespace rpwa {
 
@@ -70,9 +67,9 @@ namespace rpwa {
 
 
 	class decayTopology : public decayTopologyGraphType {
-	
+
 	public:
-			
+
 		decayTopology();
 		decayTopology(const productionVertexPtr&               productionVertex,
 		              const std::vector<interactionVertexPtr>& decayVertices,
@@ -89,7 +86,7 @@ namespace rpwa {
 		{ return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
 
 		virtual void clear();  ///< deletes all information
-    
+
 		unsigned int nmbDecayVertices() const { return _decayVertices.size(); }  ///< returns number of decay vertices
 		unsigned int nmbFsParticles  () const { return _fsParticles.size();   }  ///< returns number of final-state particles
 		std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final-state particles
@@ -105,7 +102,7 @@ namespace rpwa {
 		const productionVertexPtr&  productionVertex() const { return _prodVertex;                     }  ///< returns production vertex
 		const interactionVertexPtr& XDecayVertex    () const { return _decayVertices[0];               }  ///< returns X-decay vertex
 
-		void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final-state particles
+		void transformFsParticles(const ParVector<LorentzRotation>& lorentzTransforms);  ///< applies Lorentz transformations to Lorentz vectors stored in all final-state particles
 
 		bool isVertex          (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is a vertex in this topology
 		bool isParticle        (const particlePtr&          part) const;  ///< returns whether given particle is a particle in this topology
@@ -132,10 +129,8 @@ namespace rpwa {
 		bool initKinematicsData(const TClonesArray& prodKinParticles,
 		                        const TClonesArray& decayKinParticles);  ///< initializes input data
 
-		bool readKinematicsData(const TClonesArray& prodKinMomenta,
-		                        const TClonesArray& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
-
-		void fillKinematicsDataCache();  ///< copies kinematics data into cache; needed for Bose symmetrization
+		bool readKinematicsData(const std::vector<std::vector<Vector3> >& prodKinMomenta,
+		                        const std::vector<std::vector<Vector3> >& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& fsPartPermMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
@@ -175,12 +170,12 @@ namespace rpwa {
 		std::vector<particlePtr>          _fsParticles;    ///< array of final-state particles; ordered depth-first
 
 		std::map<unsigned int, unsigned int> _fsDataPartIndexMap;  ///< final-state particle indices in input data array
-		std::vector<TVector3>                _fsDataPartMomCache;  ///< caches final-state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-    
+		std::vector<ParVector<Vector3> >     _fsDataPartMomCache;  ///< caches final-state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
+
 
 	inline
 	decayTopologyPtr

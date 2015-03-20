@@ -30,10 +30,12 @@
 //
 //-------------------------------------------------------------------------
 
+#include <vector>
 
 #include "TVector3.h"
 #include "TLorentzRotation.h"
 
+#include "arrayUtils.hpp"
 #include "spinUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
@@ -43,7 +45,6 @@
 
 using namespace std;
 using namespace rpwa;
-
 
 int
 main(int argc, char** argv)
@@ -79,10 +80,10 @@ main(int argc, char** argv)
 
 	// test construction of particles
 	if (0) {
-		TVector3 mom;
-		mom = TVector3(1, 2, 3);
+		ParVector<Vector3> mom;
+		copyToParVector(mom, make_vector_1(Vector3(1, 2, 3)));
 		const particle p1("pi+", true, 0,  0, 0, mom);
-		mom = TVector3(2, 3, 4);
+		copyToParVector(mom, make_vector_1(Vector3(2, 3, 4)));
 		const particle p2("pi-", true, 1, -1, 0, mom);
 		particle p3 = p2;
 		p3.setName("X+");

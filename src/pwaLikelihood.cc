@@ -48,10 +48,10 @@
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
 #include "fileUtils.hpp"
-#ifdef USE_CUDA
-#include "complex.cuh"
-#include "likelihoodInterface.cuh"
-#endif
+// #ifdef USE_CUDA
+// #include "complex.cuh"
+// #include "likelihoodInterface.cuh"
+// #endif
 #include "amplitudeTreeLeaf.h"
 #include "pwaLikelihood.h"
 
@@ -75,9 +75,9 @@ pwaLikelihood<complexT>::pwaLikelihood()
 	  _nmbWaves         (0),
 	  _nmbWavesReflMax  (0),
 	  _nmbPars          (0),
-#ifdef USE_CUDA
-	  _cudaEnabled      (false),
-#endif
+// #ifdef USE_CUDA
+// 	  _cudaEnabled      (false),
+// #endif
 	  _useNormalizedAmps(true),
 	  _numbAccEvents    (0)
 {
@@ -250,13 +250,13 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 	TStopwatch timer;
 	timer.Start();
 	value_type logLikelihood = 0;
-#ifdef USE_CUDA
-	if (_cudaEnabled) {
-		logLikelihood = cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihood
-			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
-			 prodAmps.num_elements(), prodAmpFlat, _rank);
-	} else
-#endif
+// #ifdef USE_CUDA
+// 	if (_cudaEnabled) {
+// 		logLikelihood = cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihood
+// 			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
+// 			 prodAmps.num_elements(), prodAmpFlat, _rank);
+// 	} else
+// #endif
 	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
@@ -412,15 +412,15 @@ pwaLikelihood<complexT>::Gradient
 	// loop over events and calculate derivatives with respect to parameters
 	TStopwatch timer;
 	timer.Start();
-#ifdef USE_CUDA
-	if (_cudaEnabled) {
-		cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihoodDeriv
-			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
-			 prodAmps.num_elements(), prodAmpFlat, _rank,
-			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
-			 derivativeFlat);
-	} else
-#endif
+// #ifdef USE_CUDA
+// 	if (_cudaEnabled) {
+// 		cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihoodDeriv
+// 			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
+// 			 prodAmps.num_elements(), prodAmpFlat, _rank,
+// 			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
+// 			 derivativeFlat);
+// 	} else
+// #endif
 	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
 		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
@@ -513,25 +513,25 @@ pwaLikelihood<complexT>::nmbWaves(const int reflectivity) const
 
 template<typename complexT>
 void
-#ifdef USE_CUDA
-pwaLikelihood<complexT>::enableCuda(const bool enableCuda)
-{
-	_cudaEnabled = enableCuda;
-}
-#else
+// #ifdef USE_CUDA
+// pwaLikelihood<complexT>::enableCuda(const bool enableCuda)
+// {
+// 	_cudaEnabled = enableCuda;
+// }
+// #else
 pwaLikelihood<complexT>::enableCuda(const bool) { }
-#endif
+//#endif
 
 
 template<typename complexT>
 bool
 pwaLikelihood<complexT>::cudaEnabled() const
 {
-#ifdef USE_CUDA
-	return _cudaEnabled;
-#else
+// #ifdef USE_CUDA
+// 	return _cudaEnabled;
+// #else
 	return false;
-#endif
+//#endif
 }
 
 
@@ -550,12 +550,12 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
 	buildParDataStruct(rank);
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName, useRootAmps);
-#ifdef USE_CUDA
-	if (_cudaEnabled)
-		cuda::likelihoodInterface<cuda::complex<value_type> >::init
-			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
-			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
-#endif
+// #ifdef USE_CUDA
+// 	if (_cudaEnabled)
+// 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
+// 			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
+// 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
+// #endif
 }
 
 
@@ -1127,9 +1127,9 @@ pwaLikelihood<complexT>::print(ostream& out) const
 	    << "number of negative reflectivity waves ... " << _nmbWavesRefl[0]   << endl
 	    << "number of function parameters ........... " << _nmbPars           << endl
 	    << "print debug messages .................... " << _debug             << endl
-#ifdef USE_CUDA
+/*#ifdef USE_CUDA
 	    << "use CUDA kernels ........................ " << _cudaEnabled       << endl
-#endif	  
+#endif	 */ 
 	    << "use normalized amplitudes ............... " << _useNormalizedAmps << endl
 	    << "list of waves: " << endl;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)

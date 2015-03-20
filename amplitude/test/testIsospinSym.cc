@@ -57,10 +57,10 @@ using namespace rpwa;
 
 
 long int
-calcNewAmps(const string&             rootInFileName,
-            const string&             keyFileName,
-            vector<complex<double> >& amps,
-            const long int            maxNmbEvents)
+calcNewAmps(const string&    rootInFileName,
+            const string&    keyFileName,
+            vector<Complex>& amps,
+            const long int   maxNmbEvents)
 {
 	waveDescription    waveDesc;
 	isobarAmplitudePtr amp;
@@ -127,8 +127,48 @@ calcNewAmps(const string&             rootInFileName,
 			continue;
 		}
 
-		if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-			amps.push_back((*amp)());
+		const unsigned int numProdMomenta = prodKinMomenta->GetEntriesFast();
+		const unsigned int numDecayMomenta = decayKinMomenta->GetEntriesFast();
+
+		vector<vector<Vector3> > prodMomenta(numProdMomenta, vector<Vector3>(1));
+		vector<vector<Vector3> > decayMomenta(numDecayMomenta, vector<Vector3>(1));
+
+		bool success = true;
+
+		for (unsigned int i = 0; i < numProdMomenta; ++i) {
+			const TVector3* mom = dynamic_cast<TVector3*>((*prodKinMomenta)[i]);
+			if (not mom) {
+				printWarn << "production kinematics data entry [" << i << "] is not of type TVector3. "
+						  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+						  << "skipping." << endl;
+				success = false;
+				continue;
+			}
+			prodMomenta[i][0] = *mom;
+		}
+		for (unsigned int i = 0; i < numDecayMomenta; ++i) {
+			const TVector3* mom = dynamic_cast<TVector3*>((*decayKinMomenta)[i]);
+			if (not mom) {
+				printWarn << "decay kinematics data entry [" << i << "] is not of type TVector3. "
+						  << "cannot read decay kinematics momentum for particle '" << i << "'. "
+						  << "skipping." << endl;
+				success = false;
+				continue;
+			}
+			decayMomenta[i][0] = *mom;
+		}
+
+		if(!success) {
+			continue;
+		}
+
+		if (topo->readKinematicsData(prodMomenta, decayMomenta)) {
+			const ParVector<Complex> ampResult = (*amp)();
+			if(ampResult.size() != 1) {
+				cout << "ERROR: wrong vector size. aborting!" << endl;
+				return 0;
+			}
+			amps.push_back(ampResult[0]);
 			if ((amps.back().real() == 0) or (amps.back().imag() == 0))
 				printWarn << "event " << eventIndex << ": " << amps.back() << endl;
 			// topo->productionVertex()->productionAmp();
@@ -257,7 +297,7 @@ main(int argc, char** argv)
 
 	timer.Reset();
 	timer.Start();
-	vector<complex<double> > newAmps;
+	vector<Complex> newAmps;
 	calcNewAmps(rootInFileName, newKeyFileName, newAmps, maxNmbEvents);
 	timer.Stop();
 	printSucc << "read " << newAmps.size() << " events from file(s) "

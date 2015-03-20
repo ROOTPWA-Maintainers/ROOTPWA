@@ -37,18 +37,21 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
-#include "TVector3.h"
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "diffractiveDissVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
+
+using boost::numeric_cast;
 
 
 bool diffractiveDissVertex::_debug = false;
@@ -148,10 +151,15 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 }
 
 
-complex<double>
-diffractiveDissVertex::productionAmp() const
+ParVector<Complex>
+diffractiveDissVertex::productionAmps() const
 {
-	return 1;
+	size_t numEvents = _beamMomCache.size();
+	if (numEvents == 0) {
+		printErr << "no data to calculate production amplitude. aborting." << endl;
+		throw;
+	}
+	return ParVector<Complex>(numEvents, 1);
 }
 
 
@@ -179,15 +187,15 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		          << "' and not TObjString." << endl;
 		return false;
 	}
-	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
-	if (_nmbProdKinPart < 1) {
+	_nmbProdKinPart = numeric_cast<size_t>(prodKinPartNames.GetEntriesFast());
+	if (_nmbProdKinPart > 3) {
 		printWarn << "array of production kinematics particle names has wrong size: "
 		          << _nmbProdKinPart << ". need at least beam (index 0); recoil (index 1) and "
 		          << "target (index 2) are optional." << endl;
 		return false;
 	}
 
-	// beam at index 0
+	// beam at index 0 (mandatory)
 	bool success = true;
 	const string beamName = ((TObjString*)prodKinPartNames[0])->GetString().Data();
 	if (beamName != beam()->name()) {
@@ -224,14 +232,14 @@ diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 
 
 bool
-diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+diffractiveDissVertex::readKinematicsData(const vector<vector<Vector3> >& prodKinMomenta)
 {
-	_beamMomCache   = TVector3();
-	_recoilMomCache = TVector3();
-	_targetMomCache = TVector3();
+	_beamMomCache.clear();
+	_recoilMomCache.clear();
+	_targetMomCache.clear();
 
 	// check production vertex data
-	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
+	const size_t nmbProdKinMom = prodKinMomenta.size();
 	if (nmbProdKinMom != _nmbProdKinPart) {
 		printWarn << "array of production kinematics particle momenta has wrong size: "
 		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
@@ -240,53 +248,39 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	}
 
 	// set beam
-	bool      success = true;
-	TVector3* beamMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
-	if (beamMom) {
-		if (_debug)
-			printDebug << "setting momentum of beam particle '" << beam()->name()
-			           << "' to " << *beamMom << " GeV" << endl;
-		beam()->setMomentum(*beamMom);
-		_beamMomCache = beam()->momentum();
-	} else {
-		printWarn << "production kinematics data entry [0] is not of type TVector3. "
-		          << "cannot read beam particle momentum." << endl;
-		success = false;
+	copyToParVector(_beamMomCache, prodKinMomenta[0]);
+	if (_debug) {
+		printDebug << "setting momentum of beam particle '" << beam()->name()
+				   << "' to " << firstEntriesToString(_beamMomCache, 3) << " GeV" << endl;
 	}
 
 	// set recoil (optional)
 	if (_nmbProdKinPart >= 2) {
-		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
-		if (recoilMom) {
-			if (_debug)
-				printDebug << "setting momentum of recoil particle '" << recoil()->name()
-				           << "' to " << *recoilMom << " GeV" << endl;
-			recoil()->setMomentum(*recoilMom);
-			_recoilMomCache = recoil()->momentum();
-		} else {
-			printWarn << "production kinematics data entry [1] is not of type TVector3. "
-			          << "cannot read recoil particle momentum." << endl;
-			success = false;
+		if(prodKinMomenta[0].size() != prodKinMomenta[1].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+		copyToParVector(_recoilMomCache, prodKinMomenta[1]);
+		if (_debug) {
+			printDebug << "setting momentum of recoil particle '" << recoil()->name()
+					   << "' to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl;
 		}
 	}
 
 	// set target (optional); if not defined fixed target is assumed
 	if (_nmbProdKinPart >= 3) {
-		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
-		if (targetMom) {
-			if (_debug)
-				printDebug << "setting momentum of target particle '" << target()->name()
-				           << "' to " << *targetMom << " GeV" << endl;
-			target()->setMomentum(*targetMom);
-			_targetMomCache = target()->momentum();
-		} else {
-			printWarn << "production kinematics data entry [2] is not of type TVector3. "
-			          << "cannot read target particle momentum." << endl;
-			success = false;
+		if(prodKinMomenta[0].size() != prodKinMomenta[2].size()) {
+			printErr << "size of per-event-data vectors does not match. aborting." << std::endl;
+			throw;
+		}
+		copyToParVector(_targetMomCache, prodKinMomenta[2]);
+		if (_debug) {
+			printDebug << "setting momentum of target particle '" << target()->name()
+					   << "' to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
 		}
 	}
 
-	return success;
+	return true;
 }
 
 
@@ -294,13 +288,13 @@ bool
 diffractiveDissVertex::revertMomenta()
 {
 	if (_debug) {
-		printDebug << "resetting beam momentum to "       << _beamMomCache   << " GeV" << endl
-		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
-		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+		printDebug << "resetting beam momentum to "       << firstEntriesToString(_beamMomCache, 3)   << " GeV" << endl
+		           << "    resetting recoil momentum to " << firstEntriesToString(_recoilMomCache, 3) << " GeV" << endl
+		           << "    resetting target momentum to " << firstEntriesToString(_targetMomCache, 3) << " GeV" << endl;
 	}
-	beam  ()->setMomentum(_beamMomCache  );
-	recoil()->setMomentum(_recoilMomCache);
-	target()->setMomentum(_targetMomCache);
+	beam  ()->setMomenta(_beamMomCache  );
+	recoil()->setMomenta(_recoilMomCache);
+	target()->setMomenta(_targetMomCache);
 	return true;
 }
 

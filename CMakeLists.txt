@@ -41,7 +41,8 @@ set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displ
 
 
 option(DEBUG_OUTPUT "en/disable debug output" OFF)
-
+option(ENABLE_CUDA "enable CUDA support if available" OFF)
+option(ENABLE_OMP "enable OpenMP support if available" OFF)
 
 # define project
 message(STATUS "")
@@ -94,6 +95,11 @@ endif()
 # set common compiler flags
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+if(ENABLE_OMP)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
+endif()
 # set additional flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 # -march=native switch was removed, because is caused trouble in heterogeneous environments
@@ -251,55 +257,60 @@ add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
-set(CUDA_SHADER_MODELS "20")
-find_package(CUDA 5.5)
-set_package_properties(CUDA
-	PROPERTIES
-	DESCRIPTION "nvidia GPGPU framework"
-	URL "http://developer.nvidia.com/category/zone/cuda-zone"
-	PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
-	TYPE OPTIONAL
-	)
-if(NOT CUDA_FOUND)
-	set(USE_CUDA OFF)
-	message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
+if(NOT ENABLE_CUDA)
+  set(USE_CUDA OFF)
+  message(STATUS "Cuda is disabled. No CUDA components will be generated.")
 else()
-	message(STATUS "Found CUDA version ${CUDA_VERSION}")
-	message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
-	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
-	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
+  set(CUDA_SHADER_MODELS "20")
+  find_package(CUDA 6.5)
+  set_package_properties(CUDA
+	  PROPERTIES
+	  DESCRIPTION "nvidia GPGPU framework"
+	  URL "http://developer.nvidia.com/category/zone/cuda-zone"
+	  PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
+	  TYPE OPTIONAL
+	  )
+  if(NOT CUDA_FOUND)
+	  set(USE_CUDA OFF)
+	  message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
+  else()
+	  message(STATUS "Found CUDA version ${CUDA_VERSION}")
+	  message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
+	  message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
+	  message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
 
-	if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
-		# use default path for CUDA samples, if not defined by user
-		set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
-	endif()
-	# find include directory
-	find_file(CUDA_SAMPLES_INC_DIR
-		        NAMES inc
-            PATHS $ENV{CUDA_SAMPLES_ROOT_DIR}/common
-            NO_DEFAULT_PATH)
-	if(NOT CUDA_SAMPLES_INC_DIR)
-		set(USE_CUDA OFF)
-		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
-			"Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
-	else()
-		set(USE_CUDA ON)
-		message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
-		message(STATUS "Enabling compilation of CUDA components.")
-		# define for which shader models code is generated
-		message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
-		foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
-			list(APPEND CUDA_NVCC_FLAGS
-					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
-		endforeach()
-		unset(_SHADER_MODEL)
-		#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
-		# set some global switches
-		set(CUDA_BUILD_CUBIN     OFF)
-		set(CUDA_BUILD_EMULATION OFF)
-		set(CUDA_VERBOSE_BUILD   OFF)
-		# enable CUDA code in other parts of the project
-		add_definitions(-DUSE_CUDA)
+	  if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
+		  # use default path for CUDA samples, if not defined by user
+		  set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
+	  endif()
+	  # find include directory
+	  find_file(CUDA_SAMPLES_INC_DIR
+			  NAMES inc
+	      PATHS $ENV{CUDA_SAMPLES_ROOT_DIR}/common
+	      NO_DEFAULT_PATH)
+	  if(NOT CUDA_SAMPLES_INC_DIR)
+		  set(USE_CUDA OFF)
+		  message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
+			  "Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
+	  else()
+		  set(USE_CUDA ON)
+		  message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
+		  message(STATUS "Enabling compilation of CUDA components.")
+		  # define for which shader models code is generated
+		  message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+		  foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
+			  list(APPEND CUDA_NVCC_FLAGS
+					  "--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+		  endforeach()
+		  unset(_SHADER_MODEL)
+		  #list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+		  # set some global switches
+		  set(CUDA_BUILD_CUBIN     OFF)
+		  set(CUDA_BUILD_EMULATION OFF)
+		  set(CUDA_VERBOSE_BUILD   OFF)
+		  # enable CUDA code in other parts of the project
+		  add_definitions(-DUSE_CUDA)
+    endif()
   endif()
 endif()
 add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
@@ -524,7 +535,7 @@ if(USE_CUDA)
 		${CMAKE_SOURCE_DIR}/cuda
 		)
 	set(CUDACODE_LIBS
-		RootPwaCuda
+#		RootPwaCuda
 		)
 else()
 	set(CUDACODE_INCLUDE_DIR)
@@ -539,7 +550,7 @@ add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
-	add_subdirectory(cuda)
+#	add_subdirectory(cuda)
 endif()
 
 # RootPwaAmp

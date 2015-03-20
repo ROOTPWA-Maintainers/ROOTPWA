@@ -37,6 +37,9 @@
 #define ISOBARDECAYVERTEX_H
 
 
+#include <vector>
+
+#include "typedefs.h"
 #include "interactionVertex.h"
 #include "massDependence.h"
 
@@ -51,7 +54,7 @@ namespace rpwa {
 	class isobarDecayVertex : public interactionVertex {
 
 	public:
-  
+
 		isobarDecayVertex(const particlePtr&       parent,
 		                  const particlePtr&       daughter1,
 		                  const particlePtr&       daughter2,
@@ -60,7 +63,7 @@ namespace rpwa {
 		                  const massDependencePtr& massDep = massDependencePtr());  ///< force vertex to have exactly one incoming (parent) and two outgoing particles (daughters)
 		isobarDecayVertex(const isobarDecayVertex& vert);
 		virtual ~isobarDecayVertex();
-		
+
 		isobarDecayVertex& operator =(const isobarDecayVertex& vert);
 		isobarDecayVertexPtr clone(const bool cloneInParticles  = false,
 		                           const bool cloneOutParticles = false) const  ///< creates copy of isobar decay vertex; must not be virtual
@@ -77,26 +80,26 @@ namespace rpwa {
 		inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
 		inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
 
-		const TLorentzVector& calcParentLzVec();  ///< (re)calculates parent Lorentz-vector from daughter Lorentz-vectors
+		const ParVector<LorentzVector>& calcParentLzVecs();  ///< (re)calculates array of parent Lorentz vectors from array of daughter Lorentz vectors
 
 		int calcParentCharge   ();  ///< sets parent charge to sum of daughter charges
 		int calcParentBaryonNmb();  ///< sets parent baryon number to sum of daughter baryon numbers
-    
+
 		inline unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
 		inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
-		inline std::complex<double>     massDepAmplitude() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
-		inline const massDependencePtr& massDependence  () const { return _massDep;             }  ///< returns mass-dependence
-		inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }    ///< sets mass dependence
+		inline ParVector<Complex>       massDepAmplitudes() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitudes for all stored events
+		inline const massDependencePtr& massDependence   () const { return _massDep;             }  ///< returns mass-dependence
+		inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }               ///< sets mass dependence
 
-		bool checkConsistency();  ///< checks quantum decomposition of in-particle to outparticles
+		bool checkConsistency();  ///< checks whether quantum numbers of in- and outgoing particles obeys conservation laws
 
 		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
-		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
+		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers stored in vertex
 
 		virtual std::string name() const { return "isobarDecayVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
@@ -121,7 +124,7 @@ namespace rpwa {
 		                           const int          daughter1Qn,
 		                           const int          daughter2Qn,
 		                           const std::string& qnName = "");  ///< checks consistency of an additive quantum number
-    
+
 		unsigned int _L;  ///< relative orbital angular momentum between the two daughters * 2 (!!!)
 		unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
 

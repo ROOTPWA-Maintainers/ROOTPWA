@@ -17,6 +17,7 @@
 #include"mathUtils.hpp"
 #include"nBodyPhaseSpaceGen.h"
 #include"physUtils.hpp"
+#include"timeUtils.hpp"
 #include"waveDescription.h"
 
 using namespace std;
@@ -34,7 +35,7 @@ phaseSpaceIntegral* phaseSpaceIntegral::instance()
 }
 
 
-complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
+ParVector<Complex> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
 
 	map<const isobarDecayVertex*, string>::iterator name_it = _vertexToSubwaveName.find(&vertex);
 	if(name_it == _vertexToSubwaveName.end()) {
@@ -50,11 +51,20 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 
 	// get Breit-Wigner parameters
 	const particlePtr& parent = vertex.parent();
-	const double       M      = vertex.parent()->lzVec().M();    // parent mass
-	const double       M0     = parent->mass();                  // resonance peak position
-	const double       Gamma0 = parent->width();                 // resonance peak width
+	const ParVector<LorentzVector>& parentVec = vertex.parent()->lzVecs();
+	const double M0     = parent->mass();                  // resonance peak position
+	const double Gamma0 = parent->width();                 // resonance peak width
 
-	return _subwaveNameToIntegral[waveName](M, M0, Gamma0);
+	ParVector<Complex> result(parentVec.size(), 0);
+	// !! EVENT PARALLEL LOOP
+	boost::posix_time::ptime timeBefore = boost::posix_time::microsec_clock::local_time();
+	for(unsigned int i = 0; i < result.size(); ++i) {
+		const double M = parentVec[i].M();    // parent mass
+		result[i] = _subwaveNameToIntegral[waveName](M, M0, Gamma0);
+	}
+	printTimeDiff(timeBefore, "EPL: phaseSpaceIntegral::operator()");
+
+	return result;
 
 }
 
@@ -174,7 +184,7 @@ integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
 }
 
 
-complex<double> integralTableContainer::operator()(double M, double M0, double Gamma0) {
+Complex integralTableContainer::operator()(double M, double M0, double Gamma0) {
 
 	if(not _init) {
 		printErr << "trying to use uninitialized integralTableContainer. Aborting..." << endl;
@@ -186,7 +196,7 @@ complex<double> integralTableContainer::operator()(double M, double M0, double G
 	const double A = M0 * Gamma0;
 	const double B = M0 * M0 - M * M;
 	const double C = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
+	const Complex bw = (A / (B * B + C * C)) * Complex(B, C);
 
 	return bw;
 	// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
@@ -247,6 +257,7 @@ double integralTableContainer::getInt0(const double& M0) {
 
 integralTablePoint integralTableContainer::evalInt(const double& M, const unsigned int& nEvents) const {
 
+	/*
 	printInfo << "calculating integral for " << _subWaveName
 	          << " at mother mass = " << M << "GeV with "
 	          << nEvents << " events." << endl;
@@ -328,6 +339,9 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 
 	printSucc << "calculated integral: " << integral << endl;
 	return integralTablePoint(M, integral, error);
+	*/
+
+	return integralTablePoint();
 }
 
 

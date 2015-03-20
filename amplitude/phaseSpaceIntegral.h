@@ -35,7 +35,7 @@ namespace rpwa {
 		integralTableContainer(const isobarDecayVertex& vertex);
 		~integralTableContainer() { }
 
-		std::complex<double> operator()(double M, double M0, double Gamma0);
+		Complex operator()(double M, double M0, double Gamma0);
 
 		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex);
 		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex,
@@ -85,7 +85,7 @@ namespace rpwa {
 	  public:
 
 		static phaseSpaceIntegral* instance();
-		std::complex<double> operator()(const isobarDecayVertex& vertex);
+		ParVector<Complex> operator()(const isobarDecayVertex& vertex);
 
 	  private:
 

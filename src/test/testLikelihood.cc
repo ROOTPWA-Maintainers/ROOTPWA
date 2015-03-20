@@ -165,10 +165,10 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-#ifdef USE_CUDA
-	//L.enableCuda(false);
-	L.enableCuda(true);
-#endif  
+// #ifdef USE_CUDA
+// 	//L.enableCuda(false);
+// 	L.enableCuda(true);
+// #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
 		cout << L << endl;

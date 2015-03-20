@@ -326,7 +326,7 @@ int main() {
 				const double       Gamma0 = 0.425;             // resonance peak width
 				const unsigned int L      = 0;
 
-				const std::complex<double> bw = rpwa::breitWigner(M, M0, Gamma0, L, q, q0);
+				const std::complex<double> bw = rpwa::breitWigner<std::complex<double> >(M, M0, Gamma0, L, q, q0);
 
 //				std::cout<<"x="<<x<<" y="<<y<<" z="<<bw<<std::endl;
 
