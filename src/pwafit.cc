@@ -46,6 +46,7 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom3.h"
+#include "TVectorT.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 #include "TStopwatch.h"
@@ -77,7 +78,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
+	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -H -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -119,6 +120,7 @@ usage(const string& progName,
 #else
 	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
 #endif
+	     << "        -H         check analytical Hessian eigenvalues (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -205,11 +207,12 @@ main(int    argc,
 	bool         saveMinimizerMemory = true;
 #endif
 	bool         cudaEnabled         = false;                  // if true CUDA kernels are activated
+	bool         checkHessian        = false;                  // if true checks analytical Hessian eigenvalues
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:ecHqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -279,6 +282,9 @@ main(int    argc,
 			cudaEnabled = true;
 #endif
 			break;
+		case 'H':
+			checkHessian = true;
+			break;
 		case 'q':
 			quiet = true;
 			break;
@@ -319,6 +325,7 @@ main(int    argc,
 	     << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
 	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
+	     << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -345,7 +352,7 @@ main(int    argc,
 	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
 	if (not minimizer) {
 		printErr << "could not create minimizer. exiting." << endl;
-		throw;
+		return 1;
 	}
 
 	// special for Minuit2
@@ -415,6 +422,7 @@ main(int    argc,
 	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
 	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
+	unsigned int fixedPars = 0;
 	{
 		// use local instance of random number generator so that other
 		// code has no chance of tampering with gRandom and thus cannot
@@ -435,6 +443,7 @@ main(int    argc,
 				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
 					success = false;
 				parIsFixed[i] = true;
+				fixedPars++;
 			}
 		}
 		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
@@ -481,7 +490,7 @@ main(int    argc,
 			}
 			if (not success) {
 				printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
-				throw;
+				return 1;
 			}
 		}
 		// cleanup
@@ -496,41 +505,79 @@ main(int    argc,
 	// find minimum of likelihood function
 	bool converged = false;
 	bool hasHesse  = false;
+	std::vector<double> correctParams;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
 		timer.Start();
 		bool success = minimizer->Minimize();
 		timer.Stop();
-		if (success)
+		converged = success;
+		correctParams = L.CorrectParamSigns(minimizer->X());
+		double newLikelihood = L.DoEval(&correctParams[0]);
+		if(minimizer->MinValue() != newLikelihood) {
+			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
+			return 1;
+		} else {
+			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+		}
+		if (checkHessian) {
+			// analytically calculate Hessian
+			TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+			// create reduced hessian without fixed parameters
+			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
+			vector<unsigned int> parIndices  = L.orderedParIndices();
+			unsigned int iReduced = 0;
+			for(unsigned int i = 0; i < nmbPar; i++) {
+				unsigned int jReduced = 0;
+				if (not parIsFixed[parIndices[i]]) {
+					for(unsigned int j = 0; j < nmbPar; j++) {
+						if (not parIsFixed[parIndices[j]]) {
+							reducedHessian[iReduced][jReduced] = hessian[i][j];
+							jReduced++;
+						}
+					}
+					iReduced++;
+				}
+			}
+			// create and check Hessian eigenvalues
+			if (not quiet) {
+				printInfo << "analytical Hessian eigenvalues:" << endl;
+			}
+			TVectorT<double> eigenvalues;
+			reducedHessian.EigenVectors(eigenvalues);
+			for(int i=0; i<eigenvalues.GetNrows(); i++) {
+				if (not quiet) {
+					cout << "	" << eigenvalues[i] << endl;
+				}
+				if (eigenvalues[i] <= 0.) {
+					printWarn << "eigenvalue " << i << " of hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+					converged = false;
+				}
+			}
+		}
+		if (converged)
 			printInfo << "minimization finished successfully. " << flush;
 		else
 			printWarn << "minimization failed. " << flush;
 		cout << "used " << flush;
 		timer.Print();
-		converged = success;
 		printInfo << *minimizer;
-		// printInfo << "covariance matrix:" <<endl;
-		// for(unsigned int i = 0; i < nmbPar; ++i)
-		// 	for(unsigned int j = 0; j < nmbPar; ++j)
-		// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
 			success = minimizer->Hesse();
 			timer.Stop();
-			if (success)
+			if (success) {
 				printInfo << "successfully calculated Hessian matrix. " << flush;
-			else
+				hasHesse = true;
+			} else {
 				printWarn << "calculation of Hessian matrix failed. " << flush;
+				converged = false;
+			}
 			cout << "used " << flush;
 			timer.Print();
-			hasHesse = success;
 			printInfo << *minimizer;
-			// printInfo << "covariance matrix:" <<endl;
-			// for(unsigned int i = 0; i < nmbPar; ++i)
-			// 	for(unsigned int j = 0; j < nmbPar; ++j)
-			// 		cout << "    [" << i << "][" << j << "] = " << minimizer->CovMatrix(i, j) << endl;
 		}
 	}
 
@@ -538,15 +585,16 @@ main(int    argc,
 	// print results
 	printInfo << "minimization result:" << endl;
 	vector<unsigned int> parIndices = L.orderedParIndices();
+	const double inverseOfSqrtTwo = 1. / sqrt(2.);
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(maxParNameLength) << L.parName(parIndex) << " = ";
 		if (parIsFixed[parIndex])
-			cout << minimizer->X()[parIndex] << " (fixed)" << endl;
+			cout << correctParams[parIndex] << " (fixed)" << endl;
 		else {
-			cout << setw(12) << maxPrecisionAlign(minimizer->X()     [parIndex]) << " +- "
-			     << setw(12) << maxPrecisionAlign(minimizer->Errors()[parIndex]);
+			cout << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
+			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[parIndex]);
 			if (runMinos) {
 				double minosErrLow = 0;
 				double minosErrUp  = 0;
@@ -592,7 +640,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)

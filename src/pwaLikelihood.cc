@@ -66,6 +66,28 @@ using namespace boost::accumulators;
 
 
 template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
+template<typename complexT> const double pwaLikelihood<complexT>::_cauchyWidth;
+
+
+namespace {
+
+	double cauchyFunction(const double& x, const double gamma)
+	{
+		if(x < 0.) {
+			printWarn << "got negative argument." << endl;
+		}
+		return 1. / (1+((x*x)/(gamma*gamma)));
+	}
+
+	double cauchyFunctionDerivative(const double& x, const double& gamma)
+	{
+		if(x < 0.) {
+			printWarn << "got negative argument." << endl;
+		}
+		return (-2. * x * gamma * gamma) / ((gamma*gamma + x*x) * (gamma*gamma + x*x));
+	}
+
+}
 
 
 template<typename complexT>
@@ -75,6 +97,7 @@ pwaLikelihood<complexT>::pwaLikelihood()
 	  _nmbWaves         (0),
 	  _nmbWavesReflMax  (0),
 	  _nmbPars          (0),
+	  _priorType        (pwaLikelihood::FLAT),
 #ifdef USE_CUDA
 	  _cudaEnabled      (false),
 #endif
@@ -202,12 +225,33 @@ pwaLikelihood<complexT>::FdF
 	timer.Stop();
 	_funcCallInfo[FDF].normTime(timer.RealTime());
 
+	double priorValue = 0.;
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+						const double cauchyFunctionValue = cauchyFunction(r, _cauchyWidth);
+						const double factor = (1./(r*cauchyFunctionValue)) * cauchyFunctionDerivative(r, _cauchyWidth);
+						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+						priorValue -= log(cauchyFunctionValue);
+						derivatives[iRank][iRefl][iWave] -= derivative;
+					}
+				}
+			}
+	}
+
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
 	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
 
 	// set function return value
 	funcVal = sum(logLikelihoodAcc) + nmbEvt * sum(normFactorAcc);
+	funcVal += priorValue;
 
 	// log total consumed time
 	timerTot.Stop();
@@ -217,6 +261,33 @@ pwaLikelihood<complexT>::FdF
 		printDebug << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
 		           << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
 		           << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
+}
+
+template<typename complexT>
+std::vector<double>
+pwaLikelihood<complexT>::CorrectParamSigns(const double* in) const
+{
+	// build complex production amplitudes from function parameters taking into account rank restrictions
+	std::vector<double> returnParams(_nmbPars);
+	value_type    prodAmpFlat;
+	ampsArrayType prodAmps;
+	copyFromParArray(in, prodAmps, prodAmpFlat);
+
+	if (prodAmpFlat < 0) {
+		prodAmpFlat *= -1;  // flip sign of flat wave if it is negative
+	}
+
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+					prodAmps[iRank][iRefl][iWave] *= -1;	// flip sign of coherent waves if anchorwave is negative
+				}
+			}
+		}
+	}
+	copyToParArray(prodAmps, prodAmpFlat, &returnParams[0]);
+	return returnParams;
 }
 
 
@@ -317,7 +388,22 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 		           << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
 		           << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
 
-	return funcVal;
+	double priorValue = 0.;
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						priorValue -= log(cauchyFunction(abs(prodAmps[iRank][iRefl][iWave]), _cauchyWidth));
+						}
+				}
+			}
+	}
+
+	return funcVal + priorValue;
 
 #endif  // USE_FDF
 }
@@ -353,6 +439,190 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 	double gradient[_nmbPars];
 	FdF(par, logLikelihood, gradient);
 	return gradient[derivativeIndex];
+}
+
+// calculate Hessian with respect to parameters
+template<typename complexT>
+TMatrixT<double>
+pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parameter array; reduced by rank conditions
+{
+	TMatrixT<double> hessian(_nmbPars, _nmbPars);
+	// build complex production amplitudes from function parameters taking into account rank restrictions
+	value_type    prodAmpFlat;
+	ampsArrayType prodAmps;
+	copyFromParArray(par, prodAmps, prodAmpFlat);
+
+	// create array of likelihood hessian w.r.t. real and imaginary
+	// parts of the production amplitudes
+	boost::array<typename ampsArrayType::index, 7> hesseArrayShape     = {{ _rank, 2, _nmbWavesReflMax, _rank, 2, _nmbWavesReflMax, 3 }};
+	boost::array<typename ampsArrayType::index, 3> derivArrayShape     = {{ _rank, 2, _nmbWavesReflMax }};
+	boost::multi_array<double, 7>                                            hesse(hesseArrayShape); // hesse matrix array
+	multi_array<accumulator_set<double, stats<tag::sum(compensated)> >, 7>   hesseAcc(hesseArrayShape); // accumulator for event loop
+	boost::multi_array<complexT, 3>                                          flatTerms(derivArrayShape); // array for terms where we first derive w.r.t to
+	                                                                                                     // a non-flat term and then w.r.t. the flat wave
+	multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3> flatTermsAcc(derivArrayShape); // accumulator for the event loop
+	value_type                                                               hesseFlat = 0; // term in hessian where we derive twice w.r.t. the flat wave
+	accumulator_set<value_type, stats<tag::sum(compensated)> >               hesseFlatAcc; // accumulator for the event loop
+	const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+
+	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+		accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
+		boost::multi_array<complexT, 3> derivativeTerm(hesseArrayShape);  // likelihood derivative term without normalization
+		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+				accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) { // coherent sum over waves
+					ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
+				}
+				const complexT ampProdSum = sum(ampProdAcc);
+				likelihoodAcc(norm(ampProdSum));
+				// set derivative term that is independent on derivative wave index
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+					// amplitude sums for current rank and for waves with same reflectivity
+					derivativeTerm[iRank][iRefl][iWave] = ampProdSum;
+				}
+			}
+			// loop again over waves for current rank and multiply with complex conjugate
+			// of decay amplitude of the wave with the derivative wave index
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {
+					derivativeTerm[iRank][iRefl][jWave] *= conj(_decayAmps[iEvt][iRefl][jWave]);
+				}
+			}
+		}  // end loop over rank
+		likelihoodAcc(prodAmpFlat2);
+		const value_type normConst = sum(likelihoodAcc); // normConst is the normalization constant (absolute square of prodAmps * decayAmps summed over all ranks/reflectivities) for each event
+		const value_type normConst2 = normConst * normConst; // normConst squared
+		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+					flatTermsAcc[iRank][iRefl][iWave](4 * prodAmpFlat * derivativeTerm[iRank][iRefl][iWave] / normConst2); // calculate terms where we first derive w.r.t. real/imag part
+					                                                                                                       // of a prodAmp and then w.r.t. the flat wave
+					for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
+						for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
+							for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
+								complexT uPrime = conj(_decayAmps[iEvt][jRefl][jWave]) * _decayAmps[iEvt][iRefl][iWave];
+								// last array index 0 indicates derivative w.r.t. real part of first prodAmp and real part of the second prodAmp
+								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](4 * derivativeTerm[jRank][jRefl][jWave].real() * derivativeTerm[iRank][iRefl][iWave].real() / normConst2);
+								// last array index 1 indicates derivative w.r.t. real part of first prodAmp and imaginary part of the second prodAmp
+								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](4 * derivativeTerm[jRank][jRefl][jWave].imag() * derivativeTerm[iRank][iRefl][iWave].real() / normConst2);
+								// last array index 2 indicates derivative w.r.t. imaginary part of first prodAmp and imaginary part of the second prodAmp
+								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](4 * derivativeTerm[jRank][jRefl][jWave].imag() * derivativeTerm[iRank][iRefl][iWave].imag() / normConst2);
+								if(iRank == jRank and iRefl == jRefl) {
+									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](-2 * uPrime.real() / normConst);
+									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](-2 * uPrime.imag() / normConst);
+									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](-2 * uPrime.real() / normConst);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		hesseFlatAcc(-(2 * normConst - 4 * prodAmpFlat2) / normConst2);
+	}  // end loop over events
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				flatTerms[iRank][iRefl][iWave] = sum(flatTermsAcc[iRank][iRefl][iWave]);
+				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
+					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave){
+							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0]);
+							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1]);
+							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2]);
+						}
+					}
+				}
+			}
+		}
+	}
+	hesseFlat = sum(hesseFlatAcc) + 2 * _totAcc; // calculate 2nd flat wave derivative
+
+	const value_type nmbEvt      = (_useNormalizedAmps) ? 1 : _nmbEvents;
+	const value_type twiceNmbEvt = 2 * nmbEvt;
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
+					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
+							if(iRank == jRank and iRefl == jRefl) {
+								const complexT I = _accMatrix[iRefl][iWave][jRefl][jWave];
+								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0] += I.real() * twiceNmbEvt;
+								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1] += I.imag() * twiceNmbEvt;
+								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2] += I.real() * twiceNmbEvt;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
+					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
+							tuple<int, int> parIndices1 = _prodAmpToFuncParMap[iRank][iRefl][iWave];
+							tuple<int, int> parIndices2 = _prodAmpToFuncParMap[jRank][jRefl][jWave];
+							int r1, i1, r2, i2;
+							r1 = get<0>(parIndices1);
+							i1 = get<1>(parIndices1);
+							r2 = get<0>(parIndices2);
+							i2 = get<1>(parIndices2);
+
+							if (r1 >= 0 && r2 >= 0){ // real/real derivative
+								hessian[r1][r2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
+								if(r1 == r2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
+									hessian[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+									hessian[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+								}
+							}
+							if (r1 >= 0 && i2 >= 0){ // real/imaginary derivative
+								hessian[r1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessian[i2][r1] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+							}
+							if (i1 >= 0 && i2 >= 0){ // imaginary/imaginary derivative
+								hessian[i1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
+								if(i1 == i2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
+									hessian[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+									hessian[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	hessian[_nmbPars - 1][_nmbPars - 1] = 0.5 * hesseFlat; // enter flat/flat term
+	return hessian;
+}
+
+/// calculates covariance matrix of function at point defined by par
+template<typename complexT>
+TMatrixT<double>
+pwaLikelihood<complexT>::CovarianceMatrixAnalytically
+(const double* par) const
+{
+	TMatrixT<double> covMatrix = HessianAnalytically(par);
+	covMatrix.Invert(); // invert hesse matrix to retrieve covariance matrix
+	covMatrix *= .5;
+	return covMatrix;
+}
+
+
+/// calculates covariance matrix of function at point defined by par
+template<typename complexT>
+TMatrixT<double>
+pwaLikelihood<complexT>::CovarianceMatrixAnalytically
+(TMatrixT<double> hessian) const
+{
+	hessian.Invert(); // invert hesse matrix to retrieve covariance matrix
+	hessian *= .5;
+	return hessian;
 }
 
 
@@ -485,6 +755,23 @@ pwaLikelihood<complexT>::Gradient
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
+
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
+						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+						derivatives[iRank][iRefl][iWave] -= derivative;
+					}
+				}
+			}
+	}
 
 	// set return gradient values
 	copyToParArray(derivatives, derivativeFlat, gradient);
@@ -991,25 +1278,25 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 template<typename complexT>
 void
 pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
-                                             vector<complex<double> >& prodAmps,
-                                             vector<pair<int, int> >&  parIndices,
-                                             vector<string>&           prodAmpNames,
-                                             const bool                withFlat) const
+                                            vector<complex<double> >& prodAmps,
+                                            vector<pair<int, int> >&  parIndices,
+                                            vector<string>&           prodAmpNames,
+                                            const bool                withFlat) const
 {
 	prodAmps.clear();
 	parIndices.clear();
 	prodAmpNames.clear();
 	unsigned int parIndex = 0;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				double re, im;
 				if (iWave < iRank)  // zero production amplitude
 					continue;
 				else if (iWave == iRank) {  // real production amplitude
 					parIndices.push_back(make_pair(parIndex, -1));
-					re = inPar[parIndex];
 					im = 0;
+					re = inPar[parIndex];
 					++parIndex;
 				} else {  // complex production amplitude
 					parIndices.push_back(make_pair(parIndex, parIndex + 1));
@@ -1022,6 +1309,8 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 				prodAmpName << "V" << iRank << "_" << _waveNames[iRefl][iWave];
 				prodAmpNames.push_back(prodAmpName.str());
 			}
+		}
+	}
 	if (withFlat) {
 		prodAmps.push_back(complex<double>(inPar[parIndex], 0));
 		parIndices.push_back(make_pair(parIndex, -1));
