@@ -658,6 +658,8 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 	if (   (massDepType == "BreitWigner")
 	    or (massDepType == ""))  // default mass dependence
 		massDep = createRelativisticBreitWigner();
+	else if (massDepType == "constWidthBreitWigner")
+		massDep = createConstWidthBreitWigner();
 	else if (massDepType == "flat")
 		massDep = createFlatMassDependence();
 	else if (massDepType == "flatRange")
