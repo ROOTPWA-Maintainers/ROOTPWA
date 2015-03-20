@@ -96,7 +96,6 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 		   const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
 		   const string&      branchName    = "fitResult_v2")
 {
-	const double intensityThr      = 0;            // threshold for total intensity in mass bin
 	const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
 	vector<pair<string, TVirtualPad*> > wavePads;  // return value
 
@@ -121,16 +120,11 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 				totIntensity += binIntensity;
 				for (unsigned iwave = 0; iwave < massBin->waveNames().size(); iwave++){
 					wavelist[massBin->waveNames()[iwave]]++;
-					// found a new wave when the specific counter is 1
-					if (wavelist[massBin->waveNames()[iwave]] == 1){
-
-					}
 					// calculate the total wave intensities
 					// warning, several fit results per bin and wave name lead to a wrong calculation
-					if (binIntensity > intensityThr) {
-						totIntensities[massBin->waveNames()[iwave]]+=massBin->intensity(iwave);
-						if (iwave == 0)
-							++nmbBinsAboveThr;
+					totIntensities[massBin->waveNames()[iwave]]+=massBin->intensity(iwave);
+					if (iwave == 0) {
+						++nmbBinsAboveThr;
 					}
 				}
 			}
