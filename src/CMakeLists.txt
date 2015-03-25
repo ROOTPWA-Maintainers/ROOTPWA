@@ -105,6 +105,7 @@ make_executable(pwaMassFit                   pwaMassFit.cc                  ${TH
 make_executable(stripIntegralsFromFitResult  stripIntegralsFromFitResult.cc ${ROOTPWA_LIBS} ${UTILITIES_LIBS})
 make_executable(addIntegralsToFitResult      addIntegralsToFitResult.cc     ${ROOTPWA_LIBS} ${UTILITIES_LIBS})
 make_executable(compareFitResultsIntegrals   compareFitResultsIntegrals.cc  ${ROOTPWA_LIBS} ${UTILITIES_LIBS})
+make_executable(likelihoodPointCalculator   likelihoodPointCalculator.cc    ${ROOTPWA_LIBS} ${UTILITIES_LIBS})
 
 # build tests
 add_subdirectory(test)
