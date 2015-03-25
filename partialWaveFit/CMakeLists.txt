@@ -85,8 +85,9 @@ make_shared_library(
 
 
 # executables
-make_executable(pwafit  pwafit.cc   ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(pwaplot pwaplots.cc ${THIS_LIB})
+make_executable(pwafit                      pwafit.cc                       ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(pwaplot                     pwaplots.cc                     ${THIS_LIB})
+make_executable(likelihoodPointCalculator   likelihoodPointCalculator.cc    ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 
 
 # build tests
