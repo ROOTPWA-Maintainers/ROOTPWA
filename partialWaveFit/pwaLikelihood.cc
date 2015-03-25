@@ -865,9 +865,11 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				  amps.push_back(amp);
 				}
 			}
-			if (firstWave)
+			if (firstWave) {
 				nmbEvents = _nmbEvents = amps.size();
-			else {
+				_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
+				firstWave = false;
+			} else {
 				nmbEvents = amps.size();
 				if (nmbEvents != _nmbEvents)
 					printWarn << "size mismatch in amplitude files: this file contains " << nmbEvents
@@ -877,7 +879,6 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 
 			// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 			// this index scheme ensures a more linear memory access pattern in the likelihood function
-			_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 				_decayAmps[iEvt][iRefl][iWave] = amps[iEvt];
 			if (_debug)
