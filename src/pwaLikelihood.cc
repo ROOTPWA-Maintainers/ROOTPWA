@@ -1095,7 +1095,6 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 	printInfo << "loading amplitude data from " << ((useRootAmps) ? ".root" : ".amp")
 	          << " files" << endl;
 	// loop over amplitudes and read in data
-	unsigned int nmbEvents = 0;
 	bool         firstWave = true;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
@@ -1103,7 +1102,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			const complexT   normInt = _normMatrix[iRefl][iWave][iRefl][iWave];
 			vector<complexT> amps;
 			if (!firstWave)  // number of events is known except for first wave that is read in
-				amps.reserve(nmbEvents);
+				amps.reserve(_nmbEvents);
 			// read decay amplitudes
 			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -1160,24 +1159,26 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				  amps.push_back(amp);
 				}
 			}
+
+			unsigned int nmbEvents = amps.size();
 			if (firstWave) {
-				nmbEvents = _nmbEvents = amps.size();
+				_nmbEvents = nmbEvents;
 				_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
 				firstWave = false;
 			} else {
-				nmbEvents = amps.size();
 				if (nmbEvents != _nmbEvents)
 					printWarn << "size mismatch in amplitude files: this file contains " << nmbEvents
 					          << " events, previous file had " << _nmbEvents << " events." << endl;
-				nmbEvents = _nmbEvents;
+				// make sure not to store more events than _decayAmps can keep
+				nmbEvents = std::min(nmbEvents, _nmbEvents);
 			}
 
 			// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 			// this index scheme ensures a more linear memory access pattern in the likelihood function
-			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
+			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt)
 				_decayAmps[iEvt][iRefl][iWave] = amps[iEvt];
 			if (_debug)
-				printDebug << "read " << _nmbEvents << " events from file "
+				printDebug << "read " << nmbEvents << " events from file "
 				           << "'" << _waveNames[iRefl][iWave] << "'" << endl;
 		}
 	printInfo << "loaded decay amplitudes for " << _nmbEvents << " events into memory" << endl;
