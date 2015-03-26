@@ -37,9 +37,9 @@ string rpwa::amplitudeMetadata::recalculateHash(const bool& printProgress) const
 		printWarn << "input tree not found in metadata." << endl;
 		return "";
 	}
-	if(_amplitudeTree->SetBranchAddress(objectBaseName().c_str(), &ampTreeLeaf) < 0)
+	if(_amplitudeTree->SetBranchAddress(rpwa::amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf) < 0)
 	{
-		printWarn << "could not set address for branch '" << objectBaseName() << "'." << endl;
+		printWarn << "could not set address for branch '" << rpwa::amplitudeMetadata::amplitudeLeafName << "'." << endl;
 		return "";
 	}
 	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_amplitudeTree->GetEntries(), cout, "") : 0;
