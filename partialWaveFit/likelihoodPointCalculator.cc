@@ -73,10 +73,9 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -w wavelist -f fitResultFile [-d amplitude directory -R -N -n normfile"
+	     << " -f fitResultFile [-d amplitude directory -R -N -n normfile"
 	     << " [-a normfile] -r rank [-q -h]" << endl
 	     << "    where:" << endl
-	     << "        -w file    path to wavelist file" << endl
 	     << "        -f file    path to fit result file with parameters" << endl
 	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
@@ -118,7 +117,6 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const string progName            = argv[0];
-	string       waveListFileName    = "";                     // wavelist filename
 	string       fitResultFileName   = "";
 	bool         cauchyPriors        = false;
 	string       ampDirName          = ".";                    // decay amplitude directory name
@@ -133,11 +131,8 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "w:f:Cd:RNn:a:A:r:qh")) != -1)
+	while ((c = getopt(argc, argv, "f:Cd:RNn:a:A:r:qh")) != -1)
 		switch (c) {
-		case 'w':
-			waveListFileName = optarg;
-			break;
 		case 'f':
 			fitResultFileName = optarg;
 			break;
@@ -183,14 +178,10 @@ main(int    argc,
 		printWarn << "using default acceptance normalization integral file "
 		          << "'" << accIntFileName << "'" << endl;
 	}
-	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
-		usage(progName, 1);
-	}
+
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << endl;
-	cout << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
-	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
+	cout << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
 	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
 	     << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
 	     << "    path to file with normalization integral ... '" << normIntFileName  << "'" << endl
@@ -199,33 +190,6 @@ main(int    argc,
 	     << "    rank of spin density matrix .................... "  << rank                    << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
-	// ---------------------------------------------------------------------------
-	// setup likelihood function
-	printInfo << "creating and setting up likelihood function" << endl;
-	pwaLikelihood<complex<double> > L;
-	if (quiet)
-		L.setQuiet();
-	L.useNormalizedAmps(useNormalizedAmps);
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
-	       ampDirName, numbAccEvents, useRootAmps);
-	if (not quiet)
-		cout << L << endl;
-	const unsigned int nmbPar  = L.NDim();
-
-	if(cauchyPriors) {
-		L.setPriorType(L.HALF_CAUCHY);
-	}
-
-	printInfo << "using prior: ";
-	switch(L.priorType())
-	{
-		case pwaLikelihood<complex<double> >::FLAT:
-			cout << "flat" << endl;
-			break;
-		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
-			cout << "half-cauchy" << endl;
-			break;
-	}
 
 	TFile* fitResultFile = TFile::Open(fitResultFileName.c_str(), "READ");
 	if(not fitResultFile) {
@@ -249,9 +213,52 @@ main(int    argc,
 	}
 	fitResultTree->GetEntry(0);
 
-	printInfo << "production amplitudes in fit result file: ";
+	char tempFileName[] = "XXXXXX";
+	close(mkstemp(tempFileName));
+	ofstream waveListFile(tempFileName);
+	string waveListFileName(tempFileName);
+
+	for(unsigned int i = 0; i < result->nmbWaves(); ++i) {
+		const string& waveName(result->waveName(i).Data());
+		if(waveName != "flat") {
+			waveListFile << waveName << "\n";
+		}
+	}
+	waveListFile.close();
+
+	printInfo << "production amplitudes in fit result file: " << endl;
 	for(unsigned int i = 0; i < result->nmbProdAmps(); ++i) {
 		cout << "    " << result->prodAmpName(i) << endl;
+	}
+
+	// ---------------------------------------------------------------------------
+	// setup likelihood function
+	printInfo << "creating and setting up likelihood function" << endl;
+	pwaLikelihood<complex<double> > L;
+	if (quiet)
+		L.setQuiet();
+	L.useNormalizedAmps(useNormalizedAmps);
+	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	       ampDirName, numbAccEvents, useRootAmps);
+	remove(waveListFileName.c_str());
+	waveListFileName = "";
+	if (not quiet)
+		cout << L << endl;
+	const unsigned int nmbPar  = L.NDim();
+
+	if(cauchyPriors) {
+		L.setPriorType(L.HALF_CAUCHY);
+	}
+
+	printInfo << "using prior: ";
+	switch(L.priorType())
+	{
+		case pwaLikelihood<complex<double> >::FLAT:
+			cout << "flat" << endl;
+			break;
+		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
+			cout << "half-cauchy" << endl;
+			break;
 	}
 
 	double* pars = new double[nmbPar];
