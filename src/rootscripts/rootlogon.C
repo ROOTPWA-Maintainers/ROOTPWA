@@ -39,6 +39,7 @@
 	gSystem->Load("libRootPwa.so");
 	gSystem->AddIncludePath("-I$ROOTPWA/src");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
+	gSystem->AddIncludePath("-I$BOOST_ROOT");
 
 	gROOT->ProcessLine(".L loadFitResult.C+");
 	gROOT->ProcessLine(".L plotAllIntensities.C+");
