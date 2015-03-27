@@ -276,7 +276,7 @@ void plotGuiMainFrame::PrintSelected()
 	try {
 		w1 = _waveNames.at(_listBox1->GetSelected());
 		w2 = _waveNames.at(_listBox2->GetSelected());
-	} catch (std::out_of_range) {
+	} catch (std::out_of_range&) {
 		printErr << "selection lists seem to be corrupted." << endl;
 		cout     << "   _listBox1->GetSelected() = " << _listBox1->GetSelected() << endl;
 		cout     << "   _listBox2->GetSelected() = " << _listBox2->GetSelected() << endl;
@@ -361,24 +361,45 @@ void plotGuiMainFrame::PrintSelected()
 			continue;
 		}
 
-		const double intensity1=result->intensity(w1.c_str());
+		int wi1 = result->waveIndex(w1);
+		int wi2 = result->waveIndex(w2);
+		double intensity1 = 0.;
+		double intensity2 = 0.;
+		double intensityErr1 = 0.;
+		double intensityErr2 = 0.;
+		double ph = 0.;
+		double phErr = 0.;
+		complex<double> rho(0., 0.);
+		TMatrixT<double> rhoCov(2, 2);
+		if(wi1 >= 0) {
+			intensity1 = result->intensity(w1.c_str());
+			intensityErr1 = result->intensityErr(w1.c_str());
+		}
+		if(wi2 >= 0) {
+			intensity2 = result->intensity(w2.c_str());
+			intensityErr2 = result->intensityErr(w2.c_str());
+		}
+		if(wi1 >= 0 and wi2 >= 0) {
+			ph = result->phase(w1.c_str(), w2.c_str());
+			phErr = result->phaseErr(w1.c_str(), w2.c_str());
+			rho = result->spinDensityMatrixElem(wi1, wi2);
+			rhoCov = result->spinDensityMatrixElemCov(wi1, wi2);
+		}
+
 		if((numeric_limits<double>::has_infinity and intensity1 == numeric_limits<double>::infinity()) or intensity1!=intensity1) {
 			continue;
 		}
 
 		g1->SetPoint(i, result->massBinCenter()*0.001, intensity1);
-		g1->SetPointError(i, _binWidth*0.5, result->intensityErr(w1.c_str()));
+		g1->SetPointError(i, _binWidth*0.5, intensityErr1);
 
-		const double intensity2=result->intensity(w2.c_str());
 		if((numeric_limits<double>::has_infinity and intensity2 == numeric_limits<double>::infinity()) or intensity2!=intensity2) {
 			continue;
 		}
 
 		g2->SetPoint(i, result->massBinCenter()*0.001, intensity2);
-		g2->SetPointError(i, _binWidth*0.5, result->intensityErr(w2.c_str()));
+		g2->SetPointError(i, _binWidth*0.5, intensityErr2);
 
-		double ph=result->phase(w1.c_str(),w2.c_str());
-		const double pherr=result->phaseErr(w1.c_str(),w2.c_str());
 		// check if we should make a transformation by 2pi
 		// this is needed because of cyclical variable phi
 		if(i>11){
@@ -393,19 +414,15 @@ void plotGuiMainFrame::PrintSelected()
 		}
 
 		gph->SetPoint(i, result->massBinCenter()*0.001, ph);
-		gph->SetPointError(i, _binWidth*0.5, pherr);
+		gph->SetPointError(i, _binWidth*0.5, phErr);
 
 		// add point +- 360 degree
 		gphP1->SetPoint(i, result->massBinCenter()*0.001, ph+360);
-		gphP1->SetPointError(i, _binWidth*0.5, pherr);
+		gphP1->SetPointError(i, _binWidth*0.5, phErr);
 
 		gphM1->SetPoint(i, result->massBinCenter()*0.001, ph-360);
-		gphM1->SetPointError(i, _binWidth*0.5, pherr);
+		gphM1->SetPointError(i, _binWidth*0.5, phErr);
 
-		unsigned int wi1=result->waveIndex(w1);
-		unsigned int wi2=result->waveIndex(w2);
-		complex<double> rho=result->spinDensityMatrixElem(wi1,wi2);
-		TMatrixT<double> rhoCov=result->spinDensityMatrixElemCov(wi1,wi2);
 		gRe->SetPoint(i, result->massBinCenter()*0.001, rho.real());
 		gRe->SetPointError(i, _binWidth*0.5, sqrt(rhoCov[0][0]));
 		gIm->SetPoint(i, result->massBinCenter()*0.001, rho.imag());
