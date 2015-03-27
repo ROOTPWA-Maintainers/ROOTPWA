@@ -9,12 +9,16 @@ ROOT = pyRootPwa.ROOT
 
 
 def saveFileManager(fileManagerObject, path):
-	try:
-		pickle.dump(fileManagerObject, open(path, "wb"))
-	except:
-		pyRootPwa.utils.printErr("error saving file manager.")
-		raise
-	return True
+	if not os.path.isfile(path):
+		try:
+			pickle.dump(fileManagerObject, open(path, "wb"))
+		except:
+			pyRootPwa.utils.printErr("error saving file manager.")
+			return False
+		return True
+	else:
+		pyRootPwa.utils.printErr("cannot open file manager file '" + path + "'. File already exists.")
+		return False
 
 
 def loadFileManager(path):
