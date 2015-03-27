@@ -33,8 +33,12 @@
 
 
 {
+  gSystem->AddIncludePath("-I$ROOTPWA/amplitude");
   gSystem->AddIncludePath("-I$ROOTPWA/tools");
   gSystem->AddIncludePath("-I$ROOTPWA/generators");
+  gSystem->AddIncludePath("-I$ROOTPWA/utilities");
+  gSystem->AddIncludePath("-I$ROOTPWA/src");
+  gSystem->AddIncludePath("-I$BOOST_ROOT");
 
   gSystem->Load("libGX11TTF.so");
   gSystem->Load("libRootPwa.so");

@@ -142,8 +142,8 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
 			xErr[j] = 0;
 			const double val    = trees[i]->GetV1()[j];
 			const double valErr = trees[i]->GetV2()[j];
-			y   [j] = (isnan(val))    ? 0 : val;
-			yErr[j] = (isnan(valErr)) ? 0 : valErr;
+			y   [j] = (std::isnan(val))    ? 0 : val;
+			yErr[j] = (std::isnan(valErr)) ? 0 : valErr;
 		}
 		TGraphErrors* g = new TGraphErrors(nmbBins,
 		                                   &(*(x.begin())),      // mass
