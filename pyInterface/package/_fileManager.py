@@ -351,6 +351,22 @@ class fileManager:
 		return result
 
 
+	def __repr__(self):
+		retStr = "keyfiles:\n"
+		for waveName in self.keyFiles:
+			retStr += waveName + " >> " + self.keyFiles[waveName] + "\n"
+		retStr += "\ndatafiles:\n"
+		for eventsType in self.dataFiles:
+			for dataFile in self.dataFiles[eventsType]:
+				retStr += "eventsType [" + str(eventsType) + "], bin [" + str(dataFile.binningMap) + "] >> " + dataFile.dataFileName + "\n"
+		retStr += "\nampfiles:\n"
+		for eventsType in self.dataFiles:
+			for binID in self.getBinIDList():
+				for waveName in self.keyFiles:
+					retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "], wavename [" + waveName + "] >> " + self.getAmplitudeFilePath(binID, waveName, eventsType) + "\n"
+		return retStr
+
+
 	def isFilePerDirLimitReached(self):
 		return len(self.binList) * len(self.keyFiles) * len(self.dataFiles) > self.limitFilesInDir and not self.limitFilesInDir == -1
 
