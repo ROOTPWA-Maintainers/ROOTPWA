@@ -61,7 +61,7 @@ class rootPwaConfig:
 			self.keyDirectory    = self.getPathFromConfig("general", "keyFileDirectory" , configDir + "/keyfiles")
 			self.ampDirectory    = self.getPathFromConfig("general", "ampFileDirectory" , configDir + "/amps")
 
-			if self.config.has_option('amplitudes', 'limitFilesPerDir'):
+			if self.config.has_option('general', 'limitFilesPerDir'):
 				self.limitFilesPerDir                   = self.config.get('general', 'limitFilesPerDir')
 			else:
 				self.limitFilesPerDir                   = -1

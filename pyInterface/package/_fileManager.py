@@ -257,12 +257,12 @@ class fileManager:
 			for waveName in self.keyFiles:
 				for eventsType in self.dataFiles:
 					if overLimit:
-						fileCount += 1
 						subDir = fileCount/self.limitFilesInDir
 						fullDir = self.amplitudeDirectory + "/" + str(subDir)
 						if not fullDir in dirSet:
 							dirSet.append(fullDir)
 						amplitudeFiles[(binID, waveName, eventsType)] = str(subDir) + "/" + waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+						fileCount += 1
 					elif not overLimit:
 						amplitudeFiles[(binID, waveName, eventsType)] = waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
 
