@@ -238,18 +238,18 @@ $\mathcal{T}_{\tilde{a}}^{\tilde{r} \tilde{\refl}}$ and
 $\mathcal{T}_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}$
 are
 \begin{align}
-  -\dmd{\ln \mathcal{L}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  -\dmd{\ln \mathcal{L}}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
   &= \dpd{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}
     \rBrk{-\sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}} + \dpd{A_I}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}} \\
   &= \sum_{i = 1}^{N} \frac{1}{A_{D_i}^2}\, \dpd{A_{D_i}}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}\, \dpd{A_{D_i}}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}
-    - \sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dmd{A_{D_i}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
-    + \dmd{A_I}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+    - \sum_{i = 1}^{N} \frac{1}{A_{D_i}}\, \dmd{A_{D_i}}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+    + \dmd{A_I}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
 \end{align}
 Using \cref{eq:likelihood_function_sum_term_re_deriv} we know the
 first-derivative terms in the equation above and can calculate the
 second derivatives with \cref{eq:likelihood_function_par_deriv}:
 \begin{align}
-  \dmd{A_z}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  \dmd{A_z}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
   &= \dpd{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}
     \rBrk{2 \sum_b^{N^{\tilde{\refl}}_\text{waves}} \sBrk{x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{b \tilde{a}}
     - y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{b \tilde{a}}}} \\
@@ -259,7 +259,8 @@ second derivatives with \cref{eq:likelihood_function_par_deriv}:
 Therefore
 \begin{align}
   \label{eq:likelihood_function_re_re_deriv}
-  -\dmd{\ln \mathcal{L}}{2}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}
+  \begin{split}
+  -\dmd{\ln \mathcal{L}}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
   = &\sum_{i = 1}^{N} \frac{4}{A_{D_i}^2}
   \rBrk[4]{\sum_b^{N^{\doubletilde{\refl}}_\text{waves}}
   \underbrace{\sBrk{x_b^{\doubletilde{r} \doubletilde{\refl}}\, u^{\doubletilde{\refl}}_{b \doubletilde{a}, i}
@@ -271,4 +272,65 @@ Therefore
     = \Re\sBrk{\mathcal{T}_b^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{b \tilde{a}, i}}}} \\
   &+ 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\,
   \rBrk[4]{-\sum_{i = 1}^{N} \frac{u^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}, i}}{A_{D_i}} + U^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}}}
+  \end{split}
+\end{align}
+Similarly
+\begin{align}
+  \label{eq:likelihood_function_sum_term_im_im_deriv}
+  \dmd{A_z}{2}{{y_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  &= 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\, u^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}} \\
+  \label{eq:likelihood_function_sum_term_re_im_deriv}
+  \dmd{A_z}{2}{{y_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  &= -2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\, v^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}} \\
+  \label{eq:likelihood_function_sum_term_im_re_deriv}
+  \dmd{A_z}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  &= 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\, v^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}}
+\end{align}
+and so
+\begin{align}
+  \label{eq:likelihood_function_im_im_deriv}
+  \begin{split}
+  -\dmd{\ln \mathcal{L}}{2}{{y_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  = &\sum_{i = 1}^{N} \frac{4}{A_{D_i}^2}
+  \rBrk[4]{\sum_b^{N^{\doubletilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{y_b^{\doubletilde{r} \doubletilde{\refl}}\, u^{\doubletilde{\refl}}_{b \doubletilde{a}, i}
+    + x_b^{\doubletilde{r} \doubletilde{\refl}}\, v^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}_{%
+     = \Im\sBrk{\mathcal{T}_b^{\doubletilde{r} \doubletilde{\refl}}\, D^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}}
+  \rBrk[4]{\sum_b^{N^{\tilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{y_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{b \tilde{a}, i}
+    + x_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{b \tilde{a}, i}}}_{%
+    = \Im\sBrk{\mathcal{T}_b^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{b \tilde{a}, i}}}} \\
+  &+ 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\,
+  \rBrk[4]{-\sum_{i = 1}^{N} \frac{u^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}, i}}{A_{D_i}} + U^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}}}
+  \end{split} \\
+  \label{eq:likelihood_function_re_im_deriv}
+  \begin{split}
+  -\dmd{\ln \mathcal{L}}{2}{{y_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{x_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  = &\sum_{i = 1}^{N} \frac{4}{A_{D_i}^2}
+  \rBrk[4]{\sum_b^{N^{\doubletilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{y_b^{\doubletilde{r} \doubletilde{\refl}}\, u^{\doubletilde{\refl}}_{b \doubletilde{a}, i}
+    + x_b^{\doubletilde{r} \doubletilde{\refl}}\, v^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}_{%
+     = \Im\sBrk{\mathcal{T}_b^{\doubletilde{r} \doubletilde{\refl}}\, D^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}}
+  \rBrk[4]{\sum_b^{N^{\tilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{x_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{b \tilde{a}, i}
+    - y_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{b \tilde{a}, i}}}_{%
+    = \Re\sBrk{\mathcal{T}_b^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{b \tilde{a}, i}}}} \\
+  &- 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\,
+  \rBrk[4]{-\sum_{i = 1}^{N} \frac{v^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}, i}}{A_{D_i}} + V^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}}}
+  \end{split} \\
+  \label{eq:likelihood_function_im_re_deriv}
+  \begin{split}
+  -\dmd{\ln \mathcal{L}}{2}{{x_{\doubletilde{a}}^{\doubletilde{r} \doubletilde{\refl}}}}{}{{y_{\tilde{a}}^{\tilde{r} \tilde{\refl}}}}{}
+  = &\sum_{i = 1}^{N} \frac{4}{A_{D_i}^2}
+  \rBrk[4]{\sum_b^{N^{\doubletilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{x_b^{\doubletilde{r} \doubletilde{\refl}}\, u^{\doubletilde{\refl}}_{b \doubletilde{a}, i}
+    - y_b^{\doubletilde{r} \doubletilde{\refl}}\, v^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}_{%
+     = \Re\sBrk{\mathcal{T}_b^{\doubletilde{r} \doubletilde{\refl}}\, D^{\doubletilde{\refl}}_{b \doubletilde{a}, i}}}}
+  \rBrk[4]{\sum_b^{N^{\tilde{\refl}}_\text{waves}}
+  \underbrace{\sBrk{y_b^{\tilde{r} \tilde{\refl}}\, u^{\tilde{\refl}}_{b \tilde{a}, i}
+    + x_b^{\tilde{r} \tilde{\refl}}\, v^{\tilde{\refl}}_{b \tilde{a}, i}}}_{%
+    = \Im\sBrk{\mathcal{T}_b^{\tilde{r} \tilde{\refl}}\, D^{\tilde{\refl}}_{b \tilde{a}, i}}}} \\
+  &+ 2 \delta_{\tilde{r} \doubletilde{r}}\, \delta_{\tilde{\refl} \doubletilde{\refl}}\,
+  \rBrk[4]{-\sum_{i = 1}^{N} \frac{v^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}, i}}{A_{D_i}} + V^{\tilde{\refl}}_{\doubletilde{a} \tilde{a}}}
+  \end{split}
 \end{align}
