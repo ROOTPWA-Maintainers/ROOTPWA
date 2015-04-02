@@ -229,7 +229,7 @@ namespace rpwa {
 		unsigned int _nmbPars;          // number of function parameters
 
 		priorEnum _priorType;
-		static const double _cauchyWidth = 0.5;
+		static const double _cauchyWidth;
 
 	#ifdef USE_CUDA
 		bool        _cudaEnabled;        // if true CUDA kernels are used for some calculations

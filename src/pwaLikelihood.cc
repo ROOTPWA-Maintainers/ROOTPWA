@@ -65,8 +65,8 @@ using namespace boost;
 using namespace boost::accumulators;
 
 
+template<typename complexT> const double pwaLikelihood<complexT>::_cauchyWidth = 0.5;
 template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
-template<typename complexT> const double pwaLikelihood<complexT>::_cauchyWidth;
 
 
 namespace {
