@@ -508,7 +508,7 @@ main(int    argc,
 		timer.Stop();
 		converged = success;
 		correctParams = L.CorrectParamSigns(minimizer->X());
-		double newLikelihood = L.DoEval(&correctParams[0]);
+		double newLikelihood = L.DoEval(correctParams.data());
 		if(minimizer->MinValue() != newLikelihood) {
 			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
 			return 1;
@@ -517,7 +517,7 @@ main(int    argc,
 		}
 		if (checkHessian) {
 			// analytically calculate Hessian
-			TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+			TMatrixT<double> hessian = L.HessianAnalytically(correctParams.data());
 			// create reduced hessian without fixed parameters
 			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
 			vector<unsigned int> parIndices  = L.orderedParIndices();
@@ -634,7 +634,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
