@@ -482,11 +482,7 @@ rpwa::massDepFit::function::getNrDataPoints() const
 double
 rpwa::massDepFit::function::chiSquare(const std::vector<double>& par) const
 {
-#if __cplusplus >= 201103L
 	return chiSquare(par.data());
-#else
-	return chiSquare(&par[0]);
-#endif
 }
 
 

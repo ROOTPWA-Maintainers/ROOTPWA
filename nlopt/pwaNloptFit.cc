@@ -344,8 +344,8 @@ main(int    argc,
 	if(result < 0) {
 		converged = false;
 	}
-	std::vector<double> correctParams = L.CorrectParamSigns(&params[0]);
-	double newLikelihood = L.DoEval(&correctParams[0]);
+	std::vector<double> correctParams = L.CorrectParamSigns(params.data());
+	double newLikelihood = L.DoEval(correctParams.data());
 	if(likeli != newLikelihood) {
 		printErr << "Flipping signs according to sign conventions changed the likelihood (from " << likeli << " to " << newLikelihood << ")." << endl;
 		return 1;
@@ -355,7 +355,7 @@ main(int    argc,
 	TMatrixT<double> fitParCovMatrix(0, 0);
 	bool hasHessian = false;
 	if(not saveSpace) {
-		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+		TMatrixT<double> hessian = L.HessianAnalytically(correctParams.data());
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
 		fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
 		TVectorT<double> eigenvalues;
@@ -466,7 +466,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				complexMatrix normIntegral(0, 0);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (0, 0);  // normalization integral over full phase space with acceptance
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()

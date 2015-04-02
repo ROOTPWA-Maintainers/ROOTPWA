@@ -285,7 +285,7 @@ main(int    argc,
 		printInfo << "setting parameter[" << i << "] (name: '" << parName << "') = " << pars[i] << endl;
 	}
 
-	TMatrixT<double> hessian = L.HessianAnalytically(&pars[0]);
+	TMatrixT<double> hessian = L.HessianAnalytically(pars.data());
 	TVectorT<double> eigenvalues;
 	hessian.EigenVectors(eigenvalues);
 	if (not quiet) {

@@ -247,7 +247,7 @@ pwaLikelihood<complexT>::FdF
 
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
-	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
+	copyToParArray(derivatives, derivativeFlat, _derivCache.data());
 
 	// set function return value
 	funcVal = sum(logLikelihoodAcc) + nmbEvt * sum(normFactorAcc);
@@ -286,7 +286,7 @@ pwaLikelihood<complexT>::CorrectParamSigns(const double* in) const
 			}
 		}
 	}
-	copyToParArray(prodAmps, prodAmpFlat, &returnParams[0]);
+	copyToParArray(prodAmps, prodAmpFlat, returnParams.data());
 	return returnParams;
 }
 
@@ -775,7 +775,7 @@ pwaLikelihood<complexT>::Gradient
 
 	// set return gradient values
 	copyToParArray(derivatives, derivativeFlat, gradient);
-	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
+	copyToParArray(derivatives, derivativeFlat, _derivCache.data());
 
 	// log total consumed time
 	timerTot.Stop();

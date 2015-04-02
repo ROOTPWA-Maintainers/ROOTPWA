@@ -321,12 +321,12 @@ main(int    argc,
 	}
 
 	TMatrixT<double> covMatrixMinuit = result->fitParCovMatrix();
-	TMatrixT<double> covMatrixAna = L.CovarianceMatrixAnalytically(&pars[0]);
+	TMatrixT<double> covMatrixAna = L.CovarianceMatrixAnalytically(pars.data());
 	TVectorT<double> eigenvaluesMinuit;
 	TMatrixT<double> eigenvectorsMinuit = covMatrixMinuit.EigenVectors(eigenvaluesMinuit);
 	TVectorT<double> eigenvaluesAna;
 	TMatrixT<double> eigenvectorsAna = covMatrixAna.EigenVectors(eigenvaluesAna);
-	double maximum = L.DoEval(&pars[0]);
+	double maximum = L.DoEval(pars.data());
 
 	const unsigned int nmbGraphs = nmbPar;
 	TFile* outFile = new TFile(outputFileName.c_str(), "RECREATE");
@@ -351,7 +351,7 @@ main(int    argc,
 
 		for(int p = -50; p < 50; p++) {
 			std::vector<double> newPars = getParsForPoint(eigenvector, pars, eigenvaluesMinuit[par], p);
-			const double likeli = L.DoEval(&newPars[0]) - maximum;
+			const double likeli = L.DoEval(newPars.data()) - maximum;
 			graphLikeli.SetPoint(p + 50, p / 50. * std::sqrt(eigenvaluesMinuit[par]), likeli);
 		}
 
@@ -372,7 +372,7 @@ main(int    argc,
 		cnvs.Write();
 	}
 	printInfo << "Setting Minuit line color to blue, analytical solution to red." << endl;
-	printInfo << "Likelihood at maximum is " << setprecision(10) << L.DoEval(&pars[0]) << endl;
+	printInfo << "Likelihood at maximum is " << setprecision(10) << L.DoEval(pars.data()) << endl;
 	outFile->Close();
 	printSucc << "Slices successfully written to file '" << outputFileName <<"'." << endl;
 

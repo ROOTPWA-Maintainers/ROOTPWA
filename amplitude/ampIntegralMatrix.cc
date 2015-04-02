@@ -345,7 +345,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 		bool ampBinEof = false;
 		for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
 			amps[waveIndex].resize(1);  // no subamps supported in .amp files
-			binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
+			binAmpFiles[waveIndex]->read((char*)amps[waveIndex].data(), sizeof(complex<double>));
 			if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
 				success = false;
 				printWarn << "unexpected EOF while reading binary amplitude '"
