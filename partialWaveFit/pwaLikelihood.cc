@@ -447,6 +447,12 @@ template<typename complexT>
 TMatrixT<double>
 pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parameter array; reduced by rank conditions
 {
+	++(_funcCallInfo[HESSIAN].nmbCalls);
+
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
+
 	TMatrixT<double> hessian(_nmbPars, _nmbPars);
 	// build complex production amplitudes from function parameters taking into account rank restrictions
 	value_type    prodAmpFlat;
@@ -465,6 +471,10 @@ pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parame
 	value_type                                                               hesseFlat = 0; // term in hessian where we derive twice w.r.t. the flat wave
 	accumulator_set<value_type, stats<tag::sum(compensated)> >               hesseFlatAcc; // accumulator for the event loop
 	const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+
+	// log time for calculation of second derivatives of likelhood
+	TStopwatch timer;
+	timer.Start();
 
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 		accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
@@ -540,6 +550,12 @@ pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parame
 	}
 	hesseFlat = sum(hesseFlatAcc) + 2 * _totAcc; // calculate 2nd flat wave derivative
 
+	// log time for calculation of second derivatives of likelhood
+	timer.Stop();
+	_funcCallInfo[HESSIAN].funcTime(timer.RealTime());
+
+	// log time for calculation of second derivatives of normalization
+	timer.Start();
 	const value_type nmbEvt      = (_useNormalizedAmps) ? 1 : _nmbEvents;
 	const value_type twiceNmbEvt = 2 * nmbEvt;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
@@ -560,6 +576,11 @@ pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parame
 			}
 		}
 	}
+
+	// log time for calculation of second derivatives of normalization
+	timer.Stop();
+	_funcCallInfo[HESSIAN].normTime(timer.RealTime());
+
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
@@ -599,6 +620,11 @@ pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parame
 		}
 	}
 	hessian[_nmbPars - 1][_nmbPars - 1] = 0.5 * hesseFlat; // enter flat/flat term
+
+	// log total consumed time
+	timerTot.Stop();
+	_funcCallInfo[HESSIAN].totalTime(timerTot.RealTime());
+
 	return hessian;
 }
 
@@ -1439,7 +1465,7 @@ template<typename complexT>
 ostream&
 pwaLikelihood<complexT>::printFuncInfo(ostream& out) const
 {
-	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative"};
+	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative", "HessianAnalytically"};
 	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
 		if (_funcCallInfo[i].nmbCalls > 0)
 			out << "    " << _funcCallInfo[i].nmbCalls

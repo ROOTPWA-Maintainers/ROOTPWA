@@ -87,7 +87,8 @@ namespace rpwa {
 			GRADIENT             = 1,
 			DOEVAL               = 2,
 			DODERIVATIVE         = 3,
-			NMB_FUNCTIONCALLENUM = 4
+			HESSIAN              = 4,
+			NMB_FUNCTIONCALLENUM = 5
 		};
 
 		struct functionCallInfo {
