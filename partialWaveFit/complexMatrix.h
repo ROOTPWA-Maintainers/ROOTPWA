@@ -66,6 +66,9 @@ namespace rpwa {
 		unsigned int nRows() const { return _matrix.size1(); }
 		unsigned int nCols() const { return _matrix.size2(); }
 
+		bool operator==(const complexMatrix& rhs) const;
+		bool equalToPrecision(const complexMatrix& rhs, const double& precision = 1e-16, const bool& verbose = false) const;
+
 		virtual void Print(const Option_t* = "") const { std::cout << _matrix << std::endl; }
 
 		complexMatrix t() const; // return transpose matrix

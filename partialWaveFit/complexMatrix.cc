@@ -40,6 +40,59 @@ complexMatrix::~complexMatrix() {
 }
 
 
+bool complexMatrix::operator==(const complexMatrix& rhs) const
+{
+	if(this->nCols() != rhs.nCols() or this->nRows() != rhs.nRows()) {
+		return false;
+	}
+	for(unsigned int i = 0; i < this->nCols(); ++i) {
+		for(unsigned int j = 0; j < this->nRows(); ++j) {
+			if(this->get(i, j) != rhs.get(i, j)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+
+bool complexMatrix::equalToPrecision(const complexMatrix& rhs, const double& precision, const bool& verbose) const
+{
+	bool success = true;
+	if(this->nCols() != rhs.nCols() or this->nRows() != rhs.nRows()) {
+		if(verbose) {
+			printDebug << "dimension mismatch." << endl;
+		}
+		return false;
+	}
+	for(unsigned int i = 0; i < this->nCols(); ++i) {
+		for(unsigned int j = 0; j < this->nRows(); ++j) {
+			if(fabs(this->get(i,j).real() - rhs.get(i,j).real()) > precision) {
+				if(verbose) {
+					printDebug << "real part of element (" << i << ", " << j << ") above precision ("
+					           << "abs(" << this->get(i,j).real() << " - " << rhs.get(i,j).real() << ") = "
+					           << fabs(this->get(i,j).real() - rhs.get(i,j).real()) << " > " << precision << ")." << endl;
+					success = false;
+				} else {
+					return false;
+				}
+			}
+			if(fabs(this->get(i,j).imag() - rhs.get(i,j).imag()) > precision) {
+				if(verbose) {
+					printDebug << "imaginary part of element (" << i << ", " << j << ") above precision ("
+					           << "abs(" << this->get(i,j).imag() << " - " << rhs.get(i,j).imag() << ") = "
+					           << fabs(this->get(i,j).imag() - rhs.get(i,j).imag()) << " > " << precision << ")." << endl;
+					success = false;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+	return success;
+}
+
+
 complexMatrix complexMatrix::t() const
 {
 	return complexMatrix(bnu::trans(_matrix));

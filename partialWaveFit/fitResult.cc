@@ -215,11 +215,28 @@ fitResult::evidenceComponents() const
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
 	const double l   = -logLikelihood();// - intensity(".*");
-	const double det = thrCovMatrix.Determinant();
+	double logDet = thrCovMatrix.Determinant();
 	const double d   = (double)thrCovMatrix.GetNcols();
 
+	if(std::isinf(logDet)) {
+		printWarn << "found infinite determinant of covariance matrix, trying to calculate log(det) directly..." << endl;
+		logDet = 0.;
+		TVectorT<double> eigenvalues;
+		thrCovMatrix.EigenVectors(eigenvalues);
+		for(int i = 0; i < eigenvalues.GetNrows(); ++i) {
+			logDet += TMath::Log(eigenvalues[i]);
+		}
+		if(std::isinf(logDet) or std::isnan(logDet)) {
+			printWarn << "calculation failed, log(det) = " << logDet << "." << endl;
+		} else {
+			printSucc << "calculation succeeded, log(det) = " << logDet << "." << endl;
+		}
+	} else {
+		logDet = TMath::Log(logDet);
+	}
+
 	// parameter-volume after observing data
-	const double lvad = 0.5 * (d * 1.837877066 + TMath::Log(det));
+	const double lvad = 0.5 * (d * 1.837877066 + logDet);
 
 	// parameter volume prior to observing the data
 	// n-Sphere:
@@ -396,6 +413,9 @@ double
 fitResult::intensity(const char* waveNamePattern) const
 {
 	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
+	if(waveIndices.size() == 1) {
+		return intensity(waveIndices[0]);
+	}
 	double               intensity   = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
@@ -445,8 +465,12 @@ fitResult::intensityErr(const char* waveNamePattern) const
 	// get amplitudes that correspond to wave name pattern
 	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
 	const unsigned int         nmbAmps        = prodAmpIndices.size();
-	if (not _covMatrixValid or (nmbAmps == 0))
-		return 0;
+	if (not _covMatrixValid or (nmbAmps == 0)) {
+		return 0.;
+	}
+	if(nmbAmps == 1) {
+		return intensityErr(prodAmpIndices[0]);
+	}
 	// build Jacobian for intensity, which is a 1 x 2n matrix composed of n sub-Jacobians:
 	// J = (JA_0, ..., JA_{n - 1}), where n is the number of production amplitudes
 	TMatrixT<double> jacobian(1, 2 * nmbAmps);

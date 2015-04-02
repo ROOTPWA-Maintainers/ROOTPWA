@@ -405,7 +405,27 @@ if(GIT_FOUND)
 endif()
 
 
-# setup doxygen (optional)
+# setup nlopt
+message(STATUS "")
+message(STATUS ">>> Setting up NLopt.")
+find_package(Nlopt)
+set_package_properties(NLopt
+	PROPERTIES
+	DESCRIPTION "Library for nonlinear optimization."
+	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt/"
+	TYPE OPTIONAL
+)
+
+if(NOT Nlopt_FOUND)
+	set(USE_NLOPT OFF)
+	message(STATUS "Cannot find NLopt installation. No NLopt components will be generated.")
+else()
+	set(USE_NLOPT ON)
+endif()
+add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
+
+
+# setup doxygen
 message(STATUS "")
 message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)
@@ -613,6 +633,10 @@ if(COMPILE_SANDBOX)
 	add_subdirectory(sandBox)
 endif()
 add_feature_info(sandBox COMPILE_SANDBOX "The sandBox feature provides untested code that is under development.")
+
+if(USE_NLOPT)
+	add_subdirectory(nlopt)
+endif()
 
 
 # print package and feature summary

@@ -46,6 +46,7 @@
 #include "Math/IFunction.h"
 #include "TFile.h"
 #include "TH1.h"
+#include "TMatrixT.h"
 
 #include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
@@ -99,6 +100,11 @@ namespace rpwa {
 			timeAccType  totalTime;  // total execution time of function
 		};
 
+		enum priorEnum {
+			FLAT,
+			HALF_CAUCHY
+		};
+
 		pwaLikelihood();
 		~pwaLikelihood();
 
@@ -114,6 +120,14 @@ namespace rpwa {
 		/// calculates gradient (vector of partial derivatives) of function at point defined by par
 		virtual void Gradient(const double* par,
 							  double*       gradient) const;
+		/// calculates Hessian of function at point defined by par
+		virtual TMatrixT<double> HessianAnalytically(const double* par) const;
+		/// calculates covariance matrix of function at point defined by par
+		TMatrixT<double> CovarianceMatrixAnalytically(const double* par) const;
+		/// turns hessian into covariance matrix
+		TMatrixT<double> CovarianceMatrixAnalytically(TMatrixT<double> hessian) const;
+		/// flips the signs of the paramaters according to conventions (anchor wave and flat wave amplitudes are real and positive)
+		std::vector<double> CorrectParamSigns(const double* in) const;
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
@@ -142,6 +156,8 @@ namespace rpwa {
 		void        enableCuda       (const bool enableCuda = true);
 		bool        cudaEnabled      () const;
 		void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
+		void        setPriorType(const priorEnum& priorType = pwaLikelihood::FLAT) { _priorType = priorType; }
+		priorEnum   priorType() const { return _priorType; }
 		static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
 		// operations
@@ -211,6 +227,9 @@ namespace rpwa {
 		unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves
 		unsigned int _nmbWavesReflMax;  // maximum of number of negative and positive reflectivity waves
 		unsigned int _nmbPars;          // number of function parameters
+
+		priorEnum _priorType;
+		static const double _cauchyWidth;
 
 	#ifdef USE_CUDA
 		bool        _cudaEnabled;        // if true CUDA kernels are used for some calculations
