@@ -77,8 +77,8 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -H -q -h]" << endl
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -s seed -x [start value] -N -n normfile"
+	     << " -a normfile -A # normalisation events -r rank -M minimizer -m algorithm -g strategy -t # -e -c -H -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -97,7 +97,7 @@ usage(const string& progName,
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
+	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
 	     << "        -M name    minimizer (default: Minuit2)" << endl
 	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
@@ -111,9 +111,9 @@ usage(const string& progName,
 	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: on)" << endl
+	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: 0)" << endl
 #else
-	     << "        -e         set minimizer storage level to 1 [not supported; ROOT version too low]" << endl
+	     << "        -e         set minimizer storage level to 1 [not supported and not required; ROOT version too low to switch off minimizer storage]" << endl
 #endif
 #ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
