@@ -499,16 +499,16 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// find minimum of likelihood function
-	bool converged = false;
-	bool hasHesse  = false;
+	bool converged  = false;
+	bool hasHessian = false;
 	std::vector<double> correctParams;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
 		timer.Start();
-		bool success = minimizer->Minimize();
+		converged = minimizer->Minimize();
 		timer.Stop();
-		converged = success;
+
 		correctParams = L.CorrectParamSigns(minimizer->X());
 		const double newLikelihood = L.DoEval(correctParams.data());
 		if(minimizer->MinValue() != newLikelihood) {
@@ -563,11 +563,10 @@ main(int    argc,
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
-			success = minimizer->Hesse();
+			hasHessian = minimizer->Hesse();
 			timer.Stop();
-			if (success) {
+			if (hasHessian) {
 				printInfo << "successfully calculated Hessian matrix. " << flush;
-				hasHesse = true;
 			} else {
 				printWarn << "calculation of Hessian matrix failed. " << flush;
 				converged = false;
@@ -676,7 +675,7 @@ main(int    argc,
 				             accIntegral,
 				             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 				             converged,
-				             hasHesse);
+				             hasHessian);
 				//printDebug << *result;
 			}
 
