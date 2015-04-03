@@ -63,6 +63,7 @@ set(SOURCES
 	massDepFitModel.cc
 	massDepFitParameters.cc
 	parameterSpace.cc
+	partialWaveFitHelper.cc
 	)
 
 
