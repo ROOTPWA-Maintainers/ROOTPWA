@@ -57,7 +57,7 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
-
+#include "partialWaveFitHelper.h"
 #include "amplitudeTreeLeaf.h"
 
 
@@ -75,34 +75,28 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist -i fitResultFile [-d amplitude directory -R -N -n normfile"
-	     << " [-a normfile] -r rank [-t # -T treename -B branchname -f -q -h]" << endl
+	     << " [-d amplitude directory -R] -i infile [-o outfile -N -n normfile"
+	     << " -a normfile -A # normalisation events -C -q -h]" << endl
 	     << "    where:" << endl
-	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
-	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
-	     << "        -w file    path to wavelist file" << endl
-	     << "        -i file    path to fit result input file with parameters" << endl
-	     << "        -o file    path to fit result output file" << endl
-	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
 #else
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
 #endif
+	     << "        -i file    path to input file" << endl
+	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
-	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -t #       minimizer tolerance (default: 0.001)" << endl
-	     << "        -T name    tree name (default: 'pwa')" << endl
-	     << "        -B name    branch name (default: 'fitResult_v2')" << endl
+	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
+	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
 }
+
 
 int
 main(int    argc,
@@ -118,49 +112,29 @@ main(int    argc,
 	gROOT->ProcessLine("#include <complex>");
 
 	// ---------------------------------------------------------------------------
+	// internal parameters
+	const string       valTreeName           = "pwa";
+	const string       valBranchName         = "fitResult_v2";
+
+	// ---------------------------------------------------------------------------
 	// parse command line options
 	const string progName            = argv[0];
-	double       massBinMin          = 0;                      // [MeV/c^2]
-	double       massBinMax          = 0;                      // [MeV/c^2]
-	string       waveListFileName    = "";                     // wavelist filename
-	string       fitResultFileName   = "";                     // fit result filename
-	string       outputFileName      = "fitResult.root";       // output filename
-	string       treeName            = "pwa";                  // fit result tree name
-	string       branchName          = "fitResult_v2";         // fit result tree branch name
-	bool         cauchyPriors        = false;
 	string       ampDirName          = ".";                    // decay amplitude directory name
 	bool         useRootAmps         = false;                  // if true .root amplitude files are read
-	//bool         useRootAmps         = true;                 // if true .root amplitude files are read
+	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
+	string       inFileName          = "";                     // input filename
+	string       outFileName         = "fitresult.root";       // output filename
 	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
 	string       normIntFileName     = "";                     // file with normalization integrals
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
-	unsigned int rank                = 1;                      // rank of fit
-	double       minimizerTolerance  = 0.001;                  // minimizer tolerance
+	bool         cauchyPriors        = false;
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:i:o:Cd:RNn:a:A:r:t:T:B:qh")) != -1)
+	while ((c = getopt(argc, argv, "d:Ri:o:Nn:a:A:Cqh")) != -1)
 		switch (c) {
-		case 'l':
-			massBinMin = atof(optarg);
-			break;
-		case 'u':
-			massBinMax = atof(optarg);
-			break;
-		case 'w':
-			waveListFileName = optarg;
-			break;
-		case 'i':
-			fitResultFileName = optarg;
-			break;
-		case 'o':
-			outputFileName = optarg;
-			break;
-		case 'C':
-			cauchyPriors = true;
-			break;
 		case 'd':
 			ampDirName = optarg;
 			break;
@@ -168,6 +142,12 @@ main(int    argc,
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
 #endif
+			break;
+		case 'i':
+			inFileName = optarg;
+			break;
+		case 'o':
+			outFileName = optarg;
 			break;
 		case 'N':
 			useNormalizedAmps = true;
@@ -181,17 +161,8 @@ main(int    argc,
 		case 'A':
 			numbAccEvents = atoi(optarg);
 			break;
-		case 'r':
-			rank = atoi(optarg);
-			break;
-		case 't':
-			minimizerTolerance = atof(optarg);
-			break;
-		case 'T':
-			treeName = optarg;
-			break;
-		case 'B':
-			branchName = optarg;
+		case 'C':
+			cauchyPriors = true;
 			break;
 		case 'q':
 			quiet = true;
@@ -209,23 +180,57 @@ main(int    argc,
 		printWarn << "using default acceptance normalization integral file "
 		          << "'" << accIntFileName << "'" << endl;
 	}
-	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
+	if (inFileName.length() <= 1) {
+		printErr << "no input file name specified. aborting." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << endl;
-	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
-	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
-	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
-	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
+	cout << "    path to amplitude directory .................... '" << ampDirName               << "'" << endl
+	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)       << endl
+	     << "    path to input file ............................. '" << inFileName               << "'" << endl
+	     << "    path to output file ............................ '" << outFileName              << "'" << endl
 	     << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
-	     << "    path to file with normalization integral ....... '" << normIntFileName  << "'" << endl
-	     << "    path to file with acceptance integral .......... '" << accIntFileName   << "'" << endl
-	     << "    number of acceptance norm. events .............. "  << numbAccEvents    << endl
-	     << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
-	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
+	     << "        path to file with normalization integral ... '" << normIntFileName          << "'" << endl
+	     << "        path to file with acceptance integral ...... '" << accIntFileName           << "'" << endl
+	     << "        number of acceptance norm. events .......... "  << numbAccEvents            << endl
+	     << "    use half-Cauchy priors ......................... '" << yesNo(cauchyPriors)      << "'" << endl
+	     << "    quiet .......................................... '" << yesNo(quiet)             << "'" << endl;
+
+	TFile* inFile = TFile::Open(inFileName.c_str(), "READ");
+	if(not inFile || inFile->IsZombie()) {
+		printErr << "could not open input file '" << inFileName << "'. aborting." << endl;
+		return 1;
+	}
+
+	TTree* inTree = 0;
+	inFile->GetObject(valTreeName.c_str(), inTree);
+	if(not inTree) {
+		printErr << "could not find result tree '" << valTreeName << "' in input file '" << inFileName << "'. aborting." << endl;
+		return 1;
+	}
+
+	fitResult* result = 0;
+	inTree->SetBranchAddress(valBranchName.c_str(), &result);
+
+	if(inTree->GetEntries() != 1) {
+		printErr << "result tree '" << valTreeName << "' has more than one entry, NOT IMPLEMENTED." << endl;
+		return 1;
+	}
+	inTree->GetEntry(0);
+
+	// create temporary file to store the wavelist
+	char tempFileName[] = "XXXXXX";
+	close(mkstemp(tempFileName));
+	const string waveListFileName(tempFileName);
+	ofstream waveListFile(waveListFileName.c_str());
+	rpwa::partialWaveFitHelper::extractWaveList(*result, waveListFile);
+	waveListFile.close();
+
+	printInfo << "parameters extracted from input fit result" << endl;
+	cout << "    mass bin centered at ........................... "  << result->massBinCenter() << " MeV/c^2" << endl
+	     << "    path to temporary wave list file ............... '" << waveListFileName        << "'" << endl
+	     << "    rank of spin density matrix .................... "  << result->rank()          << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
@@ -234,132 +239,112 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	if (cauchyPriors)
+		L.setPriorType(L.HALF_CAUCHY);
+	L.init(result->rank(), waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
+	remove(waveListFileName.c_str());
 	if (not quiet)
 		cout << L << endl;
-	const unsigned int nmbPar  = L.NDim();
+	const unsigned int nmbPar = L.NDim();
 
-	if(cauchyPriors) {
-		L.setPriorType(L.HALF_CAUCHY);
+	unsigned int maxParNameLength = 0;  // maximum length of parameter names
+	for(unsigned int i = 0; i < nmbPar; ++i) {
+		const string& parName = L.parName(i);
+		if (parName.length() > maxParNameLength)
+			maxParNameLength = parName.length();
 	}
-
-	printInfo << "using prior: ";
-	switch(L.priorType())
-	{
-		case pwaLikelihood<complex<double> >::FLAT:
-			cout << "flat" << endl;
-			break;
-		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
-			cout << "half-cauchy" << endl;
-			break;
-	}
-
-	TFile* fitResultFile = TFile::Open(fitResultFileName.c_str(), "READ");
-	if(not fitResultFile) {
-		printErr << "could not open fit result file '" << fitResultFileName << "'. Aborting..." << endl;
-		return 1;
-	}
-
-	TTree* fitResultTree = 0;
-	fitResultFile->GetObject(treeName.c_str(), fitResultTree);
-	fitResultTree = fitResultTree->CloneTree();
-	if(not fitResultTree) {
-		printErr << "could not find result tree in fit result file '" << fitResultFileName << "'. Aborting..." << endl;
-		return 1;
-	}
-
-	fitResult* result = 0;
-	fitResultTree->SetBranchAddress(branchName.c_str(), &result);
-
-	if(fitResultTree->GetEntries() != 1) {
-		printErr << "result tree has more than one entry, NOT IMPLEMENTED" << endl;
-		return 1;
-	}
-	fitResultTree->GetEntry(0);
-
 	std::vector<double> pars(nmbPar);
 	for(unsigned int i = 0; i < nmbPar; ++i) {
-		const string parName = L.parName(i);
+		const string& parName = L.parName(i);
 		pars[i] = result->fitParameter(parName);
-		printInfo << "setting parameter[" << i << "] (name: '" << parName << "') = " << pars[i] << endl;
+		printInfo << "setting parameter [" << setw(3) << i << "] " << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(pars[i]) << endl;
 	}
 
-	TMatrixT<double> hessian = L.HessianAnalytically(pars.data());
+	// analytically calculate Hessian
+	const TMatrixT<double> hessian = L.HessianAnalytically(pars.data());
+	// create and check Hessian eigenvalues
 	TVectorT<double> eigenvalues;
 	hessian.EigenVectors(eigenvalues);
 	if (not quiet) {
-		printInfo << "analytical Hessian eigenvalues:" << endl;
+		printInfo << "eigenvalues of (analytic) Hessian:" << endl;
 	}
-	for(int i=0; i<eigenvalues.GetNrows(); i++) {
+	for(int i=0; i<eigenvalues.GetNrows(); ++i) {
 		if (not quiet) {
-			cout << "	" << eigenvalues[i] << endl;
+			cout << "    " << maxPrecision(eigenvalues[i]) << endl;
 		}
 		if (eigenvalues[i] <= 0.) {
-			printWarn << "eigenvalue " << i << " of Hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+			printWarn << "eigenvalue " << i << " of Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
 		}
 	}
 	const TMatrixT<double> covMatrix = L.CovarianceMatrixAnalytically(hessian);
 	if (not quiet) {
-		printInfo << "analytical covariance matrix:" << endl;
+		printInfo << "(analytic) covariance matrix:" << endl;
 		covMatrix.Print();
 	}
-	TMatrixT<double> oldCovMatrix = result->fitParCovMatrix();
 
-	printInfo << "writing result to '" << outputFileName << "'" << endl;
+	const TMatrixT<double> oldCovMatrix = result->fitParCovMatrix();
 	if(oldCovMatrix.GetNcols() > 0 and oldCovMatrix.GetNrows() > 0) {
-		printWarn << "fit result file already has a valid covariance matrix." << endl;
+		printWarn << "fit result from input already has a covariance matrix. it will be overwritten." << endl;
 	}
+
+	printInfo << "writing result to '" << outFileName << "'" << endl;
 	// open output file and create tree for writing
-	TFile* outFile = new TFile(outputFileName.c_str(), "UPDATE");
-	if ((not outFile) or outFile->IsZombie())
-		printWarn << "cannot open output file '" << outputFileName << "'. "
-				  << "no results will be written." << endl;
-	else {
-		TTree* tree = new TTree(treeName.c_str(), treeName.c_str());
-		fitResult newResult;
-		const unsigned int& nmbEvents = result->nmbEvents();
-		const unsigned int& normNmbEvents = result->normNmbEvents();
-		const double& massBinCenter = result->massBinCenter();
-		const double& logLikelihood = result->logLikelihood();
-		const int& rank = result->rank();
-		const vector<TComplex> prodAmpsTComplex = result->prodAmps();
-		const unsigned int nmbProdAmps = prodAmpsTComplex.size();
-		vector<complex<double> > prodAmps(nmbProdAmps);
+	TFile* outFile = new TFile(outFileName.c_str(), "NEW");
+	if ((not outFile) or outFile->IsZombie()) {
+		printErr << "cannot open output file '" << outFileName << "'. "
+		         << "no results will be written." << endl;
+		return 1;
+	} else {
+		TTree* tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
+		fitResult* newResult = new fitResult();
+		tree->Branch(valBranchName.c_str(), &newResult);
+
+		const unsigned int             nmbEvents              = result->nmbEvents();
+		const unsigned int             normNmbEvents          = result->normNmbEvents();
+		const double                   massBinCenter          = result->massBinCenter();
+		const double                   logLikelihood          = result->logLikelihood();
+		const int                      rank                   = result->rank();
+
+		const vector<TComplex>&        prodAmpsTComplex       = result->prodAmps();
+		const unsigned int             nmbProdAmps            = prodAmpsTComplex.size();
+		vector<complex<double> >       prodAmps(nmbProdAmps);
 		for(unsigned int i = 0; i < nmbProdAmps; ++i) {
 			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
 		}
-		const vector<string>& prodAmpNames = result->prodAmpNames();
+
+		const vector<string>&          prodAmpNames           = result->prodAmpNames();
+
 		const vector<pair<int, int> >& fitParCovMatrixIndices = result->fitParCovIndices();
-		complexMatrix normIntegral = result->normIntegralMatrix();
-		complexMatrix accIntegral = result->acceptedNormIntegralMatrix();
-		vector<double> phaseSpaceIntegral = result->phaseSpaceIntegralVector();
-		const bool& converged = result->converged();
-		const bool& hasHesse = result->hasHessian();
-		newResult.fill(
-			nmbEvents,
-			normNmbEvents,
-			massBinCenter,
-			logLikelihood,
-			rank,
-			prodAmps,
-			prodAmpNames,
-			covMatrix,
-			fitParCovMatrixIndices,
-			normIntegral,
-			accIntegral,
-			phaseSpaceIntegral,
-			converged,
-			hasHesse
-		);
-		tree->Branch(branchName.c_str(), &newResult);
+		const complexMatrix&           normIntegral           = result->normIntegralMatrix();
+		const complexMatrix&           accIntegral            = result->acceptedNormIntegralMatrix();
+		const vector<double>&          phaseSpaceIntegral     = result->phaseSpaceIntegralVector();
+		const bool                     converged              = result->converged();
+		const bool                     hasHessian             = result->hasHessian();
+		newResult->fill(nmbEvents,
+		                normNmbEvents,
+		                massBinCenter,
+		                logLikelihood,
+		                rank,
+		                prodAmps,
+		                prodAmpNames,
+		                covMatrix,
+		                fitParCovMatrixIndices,
+		                normIntegral,
+		                accIntegral,
+		                phaseSpaceIntegral,
+		                converged,
+		                hasHessian);
+
+		// write result to file
 		tree->Fill();
 		tree->Write();
 		outFile->Close();
-		printSucc << "covariance matrix successfully added to output file '" << outputFileName <<"'." << endl;
+
+		printSucc << "covariance matrix successfully added to output file '" << outFileName << "'." << endl;
 	}
 
-	fitResultFile->Close();
+	inFile->Close();
 
 	return 0;
 }
