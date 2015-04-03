@@ -76,7 +76,7 @@ namespace {
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
 		}
-		return 1. / (1+((x*x)/(gamma*gamma)));
+		return 1. / (1. + ((x*x) / (gamma*gamma)));
 	}
 
 	double cauchyFunctionDerivative(const double& x, const double& gamma)
@@ -84,7 +84,7 @@ namespace {
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
 		}
-		return (-2. * x * gamma * gamma) / ((gamma*gamma + x*x) * (gamma*gamma + x*x));
+		return (-2. * x * gamma*gamma) / ((gamma*gamma + x*x) * (gamma*gamma + x*x));
 	}
 
 }
@@ -97,11 +97,11 @@ pwaLikelihood<complexT>::pwaLikelihood()
 	  _nmbWaves         (0),
 	  _nmbWavesReflMax  (0),
 	  _nmbPars          (0),
-	  _priorType        (pwaLikelihood::FLAT),
 #ifdef USE_CUDA
 	  _cudaEnabled      (false),
 #endif
 	  _useNormalizedAmps(true),
+	  _priorType        (FLAT),
 	  _numbAccEvents    (0)
 {
 	_nmbWavesRefl[0] = 0;
@@ -281,7 +281,7 @@ pwaLikelihood<complexT>::CorrectParamSigns(const double* in) const
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
-					prodAmps[iRank][iRefl][iWave] *= -1;	// flip sign of coherent waves if anchorwave is negative
+					prodAmps[iRank][iRefl][iWave] *= -1;  // flip sign of coherent waves if anchorwave is negative
 				}
 			}
 		}
@@ -412,7 +412,7 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 template<typename complexT>
 double
 pwaLikelihood<complexT>::DoDerivative(const double* par,
-                                       unsigned int  derivativeIndex) const
+                                      unsigned int  derivativeIndex) const
 {
 	++(_funcCallInfo[DODERIVATIVE].nmbCalls);
 
@@ -851,12 +851,12 @@ pwaLikelihood<complexT>::cudaEnabled() const
 template<typename complexT>
 void
 pwaLikelihood<complexT>::init(const unsigned int rank,
-                               const std::string& waveListFileName,
-                               const std::string& normIntFileName,
-                               const std::string& accIntFileName,
-                               const std::string& ampDirName,
-                               const unsigned int numbAccEvents,
-                               const bool         useRootAmps)
+                              const std::string& waveListFileName,
+                              const std::string& normIntFileName,
+                              const std::string& accIntFileName,
+                              const std::string& ampDirName,
+                              const unsigned int numbAccEvents,
+                              const bool         useRootAmps)
 {
 	_numbAccEvents = numbAccEvents;
 	readWaveList(waveListFileName);
@@ -1005,7 +1005,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 template<typename complexT>
 void
 pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
-                                                normMatrixArrayType&     reorderedMatrix) const
+                                               normMatrixArrayType&     reorderedMatrix) const
 {
 	// create reordered matrix
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
@@ -1033,7 +1033,7 @@ pwaLikelihood<complexT>::readIntegrals
 	if (normIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
-			printErr << "could open normalization integral file '" << normIntFileName << "'. "
+			printErr << "could not open normalization integral file '" << normIntFileName << "'. "
 			         << "aborting." << endl;
 			throw;
 		}
@@ -1064,7 +1064,7 @@ pwaLikelihood<complexT>::readIntegrals
 	if (accIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
-			printErr << "could open normalization integral file '" << accIntFileName << "'. "
+			printErr << "could not open normalization integral file '" << accIntFileName << "'. "
 			         << "aborting." << endl;
 			throw;
 		}
@@ -1107,8 +1107,8 @@ pwaLikelihood<complexT>::readIntegrals
 template<typename complexT>
 void
 pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
-                                              const bool    useRootAmps,
-                                              const string& ampLeafName)
+                                             const bool    useRootAmps,
+                                             const string& ampLeafName)
 {
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
@@ -1323,8 +1323,8 @@ pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 					continue;
 				else if (iWave == iRank) {  // real production amplitude
 					parIndices.push_back(make_pair(parIndex, -1));
-					im = 0;
 					re = inPar[parIndex];
+					im = 0;
 					++parIndex;
 				} else {  // complex production amplitude
 					parIndices.push_back(make_pair(parIndex, parIndex + 1));

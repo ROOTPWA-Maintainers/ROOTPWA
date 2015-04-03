@@ -137,7 +137,7 @@ fitResult::variedProdAmps() {
 
 /// \brief calculates the model evidence using Rafters occam factor method
 ///
-/// \f[  \ln P(\mathrm{Data}|M_k)\approx \ln P(\mathrm{Data}|A_{\mathrm{ML}}^k,M_k) + \ln{\frac{\sqrt{(2\pi)^d|\mathbf{C}_{A|D}|}}{\sum_i\frac{\pi}{\Psi_{ii}}}} \f]
+/// \f[ \ln P(\mathrm{Data}|M_k)\approx \ln P(\mathrm{Data}|A_{\mathrm{ML}}^k,M_k) + \ln{\frac{\sqrt{(2\pi)^d|\mathbf{C}_{A|D}|}}{\sum_i\frac{\pi}{\Psi_{ii}}}} \f]
 /// This uses a flat prior in each parameter (see note on Model Selection) such
 /// that no single wave can have more than the total intensity measured
 double
@@ -214,9 +214,9 @@ fitResult::evidenceComponents() const
 	}
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
-	const double l   = -logLikelihood();// - intensity(".*");
-	double logDet = thrCovMatrix.Determinant();
-	const double d   = (double)thrCovMatrix.GetNcols();
+	const double l      = -logLikelihood();// - intensity(".*");
+	double       logDet = thrCovMatrix.Determinant();
+	const double d      = (double)thrCovMatrix.GetNcols();
 
 	if(std::isinf(logDet)) {
 		printWarn << "found infinite determinant of covariance matrix, trying to calculate log(det) directly..." << endl;
@@ -241,7 +241,7 @@ fitResult::evidenceComponents() const
 	// parameter volume prior to observing the data
 	// n-Sphere:
 	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
-		- ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
+	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
@@ -416,7 +416,7 @@ fitResult::intensity(const char* waveNamePattern) const
 	if(waveIndices.size() == 1) {
 		return intensity(waveIndices[0]);
 	}
-	double               intensity   = 0;
+	double intensity = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
 		// cout << "    contribution from " << _waveNames[waveIndices[i]]
@@ -666,12 +666,12 @@ fitResult::reset()
 void
 fitResult::fill
 (const unsigned int              nmbEvents,               // number of events in bin
- const unsigned int              normNmbEvents,	          // number of events to normalize to
- const double                    massBinCenter,	          // center value of mass bin
- const double                    logLikelihood,	          // log(likelihood) at maximum
- const int                       rank,		                // rank of fit
- const vector<complex<double> >& prodAmps,	              // production amplitudes
- const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
+ const unsigned int              normNmbEvents,           // number of events to normalize to
+ const double                    massBinCenter,           // center value of mass bin
+ const double                    logLikelihood,           // log(likelihood) at maximum
+ const int                       rank,                    // rank of fit
+ const vector<complex<double> >& prodAmps,                // production amplitudes
+ const vector<string>&           prodAmpNames,            // names of production amplitudes used in fit
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
  const complexMatrix&            normIntegral,            // normalization integral matrix
