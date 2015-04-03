@@ -468,8 +468,10 @@ main(int    argc,
 				if (startVal == 0) {
 					cout << "    read start value 0 for parameter " << parName << ". "
 					     << "using default start value." << endl;
-					startVal = (useFixedStartValues) ? defaultStartValue
-						: random.Uniform(defaultStartValue, sqrtNmbEvts);
+					startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+					if(random.Rndm() > 0.5) {
+						startVal *= -1.;
+					}
 				}
 				cout << "    setting parameter [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
