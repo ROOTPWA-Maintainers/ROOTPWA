@@ -100,11 +100,7 @@ usage(const string& progName,
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
-#else
-	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
-#endif
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
 	     << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
@@ -187,9 +183,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
-#endif
 			break;
 		case 'o':
 			outFileName = optarg;

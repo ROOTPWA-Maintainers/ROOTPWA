@@ -85,11 +85,7 @@ usage(const string& progName,
 	     << "        -o file    path to fit result output file" << endl
 	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
-#else
-	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
-#endif
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
@@ -167,9 +163,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
-#endif
 			break;
 		case 'N':
 			useNormalizedAmps = true;
