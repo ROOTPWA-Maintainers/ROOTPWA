@@ -446,8 +446,8 @@ main(int    argc,
 				fixedPars++;
 			}
 		}
-		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
-		vector<unsigned int> parIndices  = L.orderedParIndices();
+		const double               sqrtNmbEvts = sqrt((double)nmbEvts);
+		const vector<unsigned int> parIndices  = L.orderedParIndices();
 		for (unsigned int i = 0; i < parIndices.size(); ++i) {
 			const unsigned int parIndex = parIndices[i];
 			double             startVal;
@@ -514,24 +514,25 @@ main(int    argc,
 		timer.Stop();
 		converged = success;
 		correctParams = L.CorrectParamSigns(minimizer->X());
-		double newLikelihood = L.DoEval(correctParams.data());
+		const double newLikelihood = L.DoEval(correctParams.data());
 		if(minimizer->MinValue() != newLikelihood) {
-			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
+			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << maxPrecisionAlign(minimizer->MinValue()) << " to " << maxPrecisionAlign(newLikelihood) << ")." << endl;
 			return 1;
 		} else {
-			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+			printInfo << "Likelihood unchanged at " << maxPrecisionAlign(newLikelihood) << " by flipping signs according to conventions." << endl;
 		}
+
 		if (checkHessian) {
 			// analytically calculate Hessian
 			TMatrixT<double> hessian = L.HessianAnalytically(correctParams.data());
 			// create reduced hessian without fixed parameters
 			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
-			vector<unsigned int> parIndices  = L.orderedParIndices();
+			const vector<unsigned int> parIndices = L.orderedParIndices();
 			unsigned int iReduced = 0;
-			for(unsigned int i = 0; i < nmbPar; i++) {
+			for(unsigned int i = 0; i < nmbPar; ++i) {
 				unsigned int jReduced = 0;
 				if (not parIsFixed[parIndices[i]]) {
-					for(unsigned int j = 0; j < nmbPar; j++) {
+					for(unsigned int j = 0; j < nmbPar; ++j) {
 						if (not parIsFixed[parIndices[j]]) {
 							reducedHessian[iReduced][jReduced] = hessian[i][j];
 							jReduced++;
@@ -541,17 +542,17 @@ main(int    argc,
 				}
 			}
 			// create and check Hessian eigenvalues
-			if (not quiet) {
-				printInfo << "analytical Hessian eigenvalues:" << endl;
-			}
 			TVectorT<double> eigenvalues;
 			reducedHessian.EigenVectors(eigenvalues);
-			for(int i=0; i<eigenvalues.GetNrows(); i++) {
+			if (not quiet) {
+				printInfo << "eigenvalues of (analytic) Hessian:" << endl;
+			}
+			for(int i=0; i<eigenvalues.GetNrows(); ++i) {
 				if (not quiet) {
-					cout << "	" << eigenvalues[i] << endl;
+					cout << "    " << maxPrecisionAlign(eigenvalues[i]) << endl;
 				}
 				if (eigenvalues[i] <= 0.) {
-					printWarn << "eigenvalue " << i << " of hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+					printWarn << "eigenvalue " << i << " of (analytic) Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
 					converged = false;
 				}
 			}
@@ -584,7 +585,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	vector<unsigned int> parIndices = L.orderedParIndices();
+	const vector<unsigned int> parIndices = L.orderedParIndices();
 	const double inverseOfSqrtTwo = 1. / sqrt(2.);
 	for (unsigned int i = 0; i< parIndices.size(); ++i) {
 		const unsigned int parIndex = parIndices[i];
@@ -593,7 +594,7 @@ main(int    argc,
 		if (parIsFixed[parIndex])
 			cout << correctParams[parIndex] << " (fixed)" << endl;
 		else {
-			cout << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
+			cout << setw(12) << maxPrecisionAlign(correctParams[parIndex]) << " +- "
 			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[parIndex]);
 			if (runMinos) {
 				double minosErrLow = 0;
@@ -675,9 +676,9 @@ main(int    argc,
 				             prodAmpNames,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
-				             normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+				             normIntegral,
 				             accIntegral,
-				             phaseSpaceIntegral,
+				             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 				             converged,
 				             hasHesse);
 				//printDebug << *result;
