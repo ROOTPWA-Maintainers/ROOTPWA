@@ -55,7 +55,7 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
-
+#include "partialWaveFitHelper.h"
 #include "amplitudeTreeLeaf.h"
 
 
@@ -73,22 +73,21 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -f fitResultFile [-d amplitude directory -R -N -n normfile"
-	     << " [-a normfile] -r rank [-q -h]" << endl
+	     << " [-d amplitude directory -R] -f fitResultFile [-N -n normfile"
+	     << " -a normfile -A # normalisation events -C -q -h]" << endl
 	     << "    where:" << endl
-	     << "        -f file    path to fit result file with parameters" << endl
-	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
 #else
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
 #endif
+	     << "        -f file    path to fit result file with parameters" << endl
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
-	     << "        -r #       rank of spin density matrix (default: 1)" << endl
+	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
+	     << "        -C         use half-Cauchy priors" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -117,28 +116,21 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const string progName            = argv[0];
-	string       fitResultFileName   = "";
-	bool         cauchyPriors        = false;
 	string       ampDirName          = ".";                    // decay amplitude directory name
 	bool         useRootAmps         = false;                  // if true .root amplitude files are read
 	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
+	string       inFileName          = "";                     // input filename
 	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
 	string       normIntFileName     = "";                     // file with normalization integrals
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
-	unsigned int rank                = 1;                      // rank of fit
+	bool         cauchyPriors        = false;
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "f:Cd:RNn:a:A:r:qh")) != -1)
+	while ((c = getopt(argc, argv, "d:Rf:Nn:a:A:Cqh")) != -1)
 		switch (c) {
-		case 'f':
-			fitResultFileName = optarg;
-			break;
-		case 'C':
-			cauchyPriors = true;
-			break;
 		case 'd':
 			ampDirName = optarg;
 			break;
@@ -146,6 +138,9 @@ main(int    argc,
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
 #endif
+			break;
+		case 'f':
+			inFileName = optarg;
 			break;
 		case 'N':
 			useNormalizedAmps = true;
@@ -159,8 +154,8 @@ main(int    argc,
 		case 'A':
 			numbAccEvents = atoi(optarg);
 			break;
-		case 'r':
-			rank = atoi(optarg);
+		case 'C':
+			cauchyPriors = true;
 			break;
 		case 'q':
 			quiet = true;
@@ -178,58 +173,56 @@ main(int    argc,
 		printWarn << "using default acceptance normalization integral file "
 		          << "'" << accIntFileName << "'" << endl;
 	}
-
+	if (inFileName.length() <= 1) {
+		printErr << "no input file name specified. aborting." << endl;
+		usage(progName, 1);
+	}
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << endl;
-	cout << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
-	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
+	cout << "    path to amplitude directory .................... '" << ampDirName               << "'" << endl
+	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)       << endl
+	     << "    path to input file ............................. '" << inFileName               << "'" << endl
 	     << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
-	     << "    path to file with normalization integral ... '" << normIntFileName  << "'" << endl
-	     << "    path to file with acceptance integral ...... '" << accIntFileName   << "'" << endl
-	     << "    number of acceptance norm. events .......... "  << numbAccEvents    << endl
-	     << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
+	     << "        path to file with normalization integral ... '" << normIntFileName          << "'" << endl
+	     << "        path to file with acceptance integral ...... '" << accIntFileName           << "'" << endl
+	     << "        number of acceptance norm. events .......... "  << numbAccEvents            << endl
+	     << "    use half-Cauchy priors ......................... '" << yesNo(cauchyPriors)      << "'" << endl
+	     << "    quiet .......................................... '" << yesNo(quiet)             << "'" << endl;
 
-
-	TFile* fitResultFile = TFile::Open(fitResultFileName.c_str(), "READ");
-	if(not fitResultFile) {
-		printErr << "could not open fit result file '" << fitResultFileName << "'. Aborting..." << endl;
+	TFile* inFile = TFile::Open(inFileName.c_str(), "READ");
+	if(not inFile || inFile->IsZombie()) {
+		printErr << "could not open input file '" << inFileName << "'. aborting." << endl;
 		return 1;
 	}
 
-	TTree* fitResultTree = 0;
-	fitResultFile->GetObject("pwa", fitResultTree);
-	if(not fitResultTree) {
-		printErr << "could not find result tree in fit result file '" << fitResultFileName << "'. Aborting..." << endl;
+	TTree* inTree = 0;
+	inFile->GetObject(valTreeName.c_str(), inTree);
+	if(not inTree) {
+		printErr << "could not find result tree '" << valTreeName << "' in input file '" << inFileName << "'. aborting." << endl;
 		return 1;
 	}
 
 	fitResult* result = 0;
-	fitResultTree->SetBranchAddress("fitResult_v2", &result);
+	inTree->SetBranchAddress(valBranchName.c_str(), &result);
 
-	if(fitResultTree->GetEntries() != 1) {
-		printErr << "result tree has more than one entry, NOT IMPLEMENTED" << endl;
+	if(inTree->GetEntries() != 1) {
+		printErr << "result tree '" << valTreeName << "' has more than one entry, NOT IMPLEMENTED." << endl;
 		return 1;
 	}
-	fitResultTree->GetEntry(0);
+	inTree->GetEntry(0);
 
+	// create temporary file to store the wavelist
 	char tempFileName[] = "XXXXXX";
 	close(mkstemp(tempFileName));
-	ofstream waveListFile(tempFileName);
-	string waveListFileName(tempFileName);
-
-	for(unsigned int i = 0; i < result->nmbWaves(); ++i) {
-		const string& waveName(result->waveName(i).Data());
-		if(waveName != "flat") {
-			waveListFile << waveName << "\n";
-		}
-	}
+	const string waveListFileName(tempFileName);
+	ofstream waveListFile(waveListFileName.c_str());
+	rpwa::partialWaveFitHelper::extractWaveList(*result, waveListFile);
 	waveListFile.close();
 
-	printInfo << "production amplitudes in fit result file: " << endl;
-	for(unsigned int i = 0; i < result->nmbProdAmps(); ++i) {
-		cout << "    " << result->prodAmpName(i) << endl;
-	}
+	printInfo << "parameters extracted from input fit result" << endl;
+	cout << "    mass bin centered at ........................... "  << result->massBinCenter() << " MeV/c^2" << endl
+	     << "    path to temporary wave list file ............... '" << waveListFileName        << "'" << endl
+	     << "    rank of spin density matrix .................... "  << result->rank()          << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
@@ -238,38 +231,32 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	if (cauchyPriors)
+		L.setPriorType(L.HALF_CAUCHY);
+	L.init(result->rank(), waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	remove(waveListFileName.c_str());
-	waveListFileName = "";
 	if (not quiet)
 		cout << L << endl;
-	const unsigned int nmbPar  = L.NDim();
+	const unsigned int nmbPar = L.NDim();
 
-	if(cauchyPriors) {
-		L.setPriorType(L.HALF_CAUCHY);
-	}
-
-	printInfo << "using prior: ";
-	switch(L.priorType())
-	{
-		case pwaLikelihood<complex<double> >::FLAT:
-			cout << "flat" << endl;
-			break;
-		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
-			cout << "half-cauchy" << endl;
-			break;
-	}
-
-	double* pars = new double[nmbPar];
+	unsigned int maxParNameLength = 0;  // maximum length of parameter names
 	for(unsigned int i = 0; i < nmbPar; ++i) {
-		const string parName = L.parName(i);
-		pars[i] = result->fitParameter(parName);
-		printInfo << "setting parameter[" << i << "] (name: '" << parName << "') = " << pars[i] << endl;
+		const string& parName = L.parName(i);
+		if (parName.length() > maxParNameLength)
+			maxParNameLength = parName.length();
 	}
+	std::vector<double> pars(nmbPar);
+	for(unsigned int i = 0; i < nmbPar; ++i) {
+		const string& parName = L.parName(i);
+		pars[i] = result->fitParameter(parName);
+		printInfo << "setting parameter [" << setw(3) << i << "] " << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(pars[i]) << endl;
+	}
+
+	const double likelihood = L.DoEval(pars.data());
 
 	cout << endl;
-	printSucc << "Likelihood is " << setprecision(10) << L.DoEval(pars) << endl;
+	printSucc << "likelihood is " << maxPrecisionAlign(likelihood) << "." << endl;
 	cout << endl;
 
 	return 0;
