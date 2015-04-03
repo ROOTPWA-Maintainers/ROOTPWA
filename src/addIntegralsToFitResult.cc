@@ -47,7 +47,10 @@ using namespace std;
 using namespace rpwa;
 
 
-ampIntegralMatrix readIntegralMatrix(const string& intFileName, const string& integralTKeyName = "integral") {
+ampIntegralMatrix
+readIntegralMatrix(const string& intFileName,
+                   const string& integralTKeyName = "integral")
+{
 	printInfo << "loading normalization integral from '" << intFileName << "'" << endl;
 	ampIntegralMatrix integral;
 	const string normIntFileExt  = extensionFromPath(intFileName);
@@ -55,7 +58,7 @@ ampIntegralMatrix readIntegralMatrix(const string& intFileName, const string& in
 	if (normIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
-			printErr << "could open normalization integral file '" << intFileName << "'. "
+			printErr << "could not open normalization integral file '" << intFileName << "'. "
 			         << "aborting." << endl;
 			throw;
 		}
@@ -91,7 +94,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -i inuptFile -o outputFile -n PSIntFile [-a ACCIntFile -f]" << endl
+	     << " -i inputFile -o outputFile -n PSIntFile -a ACCIntFile [-f -h]" << endl
 	     << "    where:" << endl
 	     << "        -i         input fit result file" << endl
 	     << "        -o         output fit result file" << endl
@@ -152,8 +155,8 @@ main(int    argc,
 		}
 
 	TFile* inputFile = TFile::Open(inputFileName.c_str(), "READ");
-	if(not inputFile) {
-		printErr << "could not open input file '" << inputFileName << "'. Aborting..." << endl;
+	if(not inputFile || inputFile->IsZombie()) {
+		printErr << "could not open input file '" << inputFileName << "'. aborting." << endl;
 		return 1;
 	}
 
@@ -161,15 +164,15 @@ main(int    argc,
 	ampIntegralMatrix providedAccIntegral = readIntegralMatrix(acceptedIntegralFileName);
 
 	TFile* outputFile = TFile::Open(outputFileName.c_str(), "NEW");
-	if(not outputFile) {
-		printErr << "could not open output file '" << outputFileName << "'. Aborting..." << endl;
+	if(not outputFile || outputFile->IsZombie()) {
+		printErr << "could not open output file '" << outputFileName << "'. aborting." << endl;
 		return 1;
 	}
 
 	TTree* inResultTree = 0;
 	inputFile->GetObject(treeName.c_str(), inResultTree);
 	if(not inResultTree) {
-		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. Aborting..." << endl;
+		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. aborting." << endl;
 		return 1;
 	}
 
@@ -183,35 +186,37 @@ main(int    argc,
 
 	for(long i = 0; i < inResultTree->GetEntries(); ++i) {
 		inResultTree->GetEntry(i);
-		const unsigned int& nmbEvents = inResult->nmbEvents();
-		const unsigned int& normNmbEvents = inResult->normNmbEvents();
-		const double& massBinCenter = inResult->massBinCenter();
-		const double& logLikelihood = inResult->logLikelihood();
-		const int& rank = inResult->rank();
-		const vector<TComplex> prodAmpsTComplex = inResult->prodAmps();
-		const unsigned int nmbProdAmps = prodAmpsTComplex.size();
-		vector<complex<double> > prodAmps(nmbProdAmps);
+		const unsigned int             nmbEvents              = inResult->nmbEvents();
+		const unsigned int             normNmbEvents          = inResult->normNmbEvents();
+		const double                   massBinCenter          = inResult->massBinCenter();
+		const double                   logLikelihood          = inResult->logLikelihood();
+		const int                      rank                   = inResult->rank();
+
+		const vector<TComplex>&        prodAmpsTComplex       = inResult->prodAmps();
+		const unsigned int             nmbProdAmps            = prodAmpsTComplex.size();
+		vector<complex<double> >       prodAmps(nmbProdAmps);
 		for(unsigned int i = 0; i < nmbProdAmps; ++i) {
 			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
 		}
-		const vector<string>& prodAmpNames = inResult->prodAmpNames();
-		const TMatrixT<double> fitParCovMatrix = inResult->fitParCovMatrix();
+
+		const vector<string>&          prodAmpNames           = inResult->prodAmpNames();
+		const TMatrixT<double>&        fitParCovMatrix        = inResult->fitParCovMatrix();
 		const vector<pair<int, int> >& fitParCovMatrixIndices = inResult->fitParCovIndices();
-		complexMatrix normIntegral = inResult->normIntegralMatrix();
-		complexMatrix accIntegral = inResult->acceptedNormIntegralMatrix();
-		vector<double> phaseSpaceIntegral = inResult->phaseSpaceIntegralVector();
-		const bool& converged = inResult->converged();
-		const bool& hasHesse = inResult->hasHessian();
+		complexMatrix                  normIntegral           = inResult->normIntegralMatrix();
+		complexMatrix                  accIntegral            = inResult->acceptedNormIntegralMatrix();
+		vector<double>                 phaseSpaceIntegral     = inResult->phaseSpaceIntegralVector();
+		const bool                     converged              = inResult->converged();
+		const bool                     hasHessian             = inResult->hasHessian();
 
 		if(normIntegral.nCols() != 0 or normIntegral.nRows() != 0 or
 		   accIntegral.nCols() != 0 or accIntegral.nRows() != 0 or
 		   not phaseSpaceIntegral.empty())
 		{
-			printWarn << "input file already has integral matrices.";
+			printWarn << "input file already has integral matrices. ";
 			if(forceIntegralReplacement) {
-				cout << "Replacing anyway..." << endl;
+				cout << "replacing anyway." << endl;
 			} else {
-				cout << "Aborting..." << endl;
+				cout << "aborting." << endl;
 				return 1;
 			}
 		}
@@ -223,15 +228,15 @@ main(int    argc,
 			const double totalAcceptance = (double)providedAccIntegral.nmbEvents() / (double)providedNormIntegral.nmbEvents();
 			providedAccIntegral.setNmbEvents(providedNormIntegral.nmbEvents());
 			for(unsigned int waveIndex_i = 0; waveIndex_i < nmbWaves - 1; ++waveIndex_i) {
-				const string& waveName_i(inResult->waveName(waveIndex_i).Data());
+				const string waveName_i(inResult->waveName(waveIndex_i));
 				if(waveName_i == "flat") {
-					printErr << "encountered flat wave prematurely. Aborting..." << endl;
+					printErr << "encountered flat wave prematurely. aborting." << endl;
 					return 1;
 				}
 				for(unsigned int waveIndex_j = 0; waveIndex_j < nmbWaves - 1; ++waveIndex_j) {
-					const string& waveName_j(inResult->waveName(waveIndex_j).Data());
+					const string waveName_j(inResult->waveName(waveIndex_j));
 					if(waveName_j == "flat") {
-						printErr << "encountered flat wave prematurely. Aborting..." << endl;
+						printErr << "encountered flat wave prematurely. aborting." << endl;
 						return 1;
 					}
 					normIntegral.set(waveIndex_i, waveIndex_j, providedNormIntegral.element(waveName_i, waveName_j));
@@ -276,7 +281,8 @@ main(int    argc,
 		                accIntegral,
 		                phaseSpaceIntegral,
 		                converged,
-		                hasHesse);
+		                hasHessian);
+
 		outResultTree->Fill();
 
 	}
