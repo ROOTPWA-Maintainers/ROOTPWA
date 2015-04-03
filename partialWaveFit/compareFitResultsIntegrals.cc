@@ -56,7 +56,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l inuptFileLeft -r inputFileRight" << endl
+	     << " -l inputFileLeft -r inputFileRight [-h]" << endl
 	     << "    where:" << endl
 	     << "        -l         input fit result file left" << endl
 	     << "        -r         output fit result file" << endl
@@ -104,28 +104,28 @@ main(int    argc,
 		}
 
 	TFile* inputFileLeft = TFile::Open(inputFileNameLeft.c_str(), "READ");
-	if(not inputFileLeft) {
-		printErr << "could not open input file '" << inputFileNameLeft << "'. Aborting..." << endl;
+	if(not inputFileLeft || inputFileLeft->IsZombie()) {
+		printErr << "could not open input file '" << inputFileNameLeft << "'. aborting." << endl;
 		return 1;
 	}
 
 	TFile* inputFileRight = TFile::Open(inputFileNameRight.c_str(), "READ");
-	if(not inputFileRight) {
-		printErr << "could not open input file '" << inputFileNameRight << "'. Aborting..." << endl;
+	if(not inputFileRight || inputFileRight->IsZombie()) {
+		printErr << "could not open input file '" << inputFileNameRight << "'. aborting." << endl;
 		return 1;
 	}
 
 	TTree* inResultTreeLeft = 0;
 	inputFileLeft->GetObject(treeName.c_str(), inResultTreeLeft);
 	if(not inResultTreeLeft) {
-		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileLeft << "'. Aborting..." << endl;
+		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileLeft << "'. aborting." << endl;
 		return 1;
 	}
 
 	TTree* inResultTreeRight = 0;
 	inputFileRight->GetObject(treeName.c_str(), inResultTreeRight);
 	if(not inResultTreeRight) {
-		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileRight << "'. Aborting..." << endl;
+		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileRight << "'. aborting." << endl;
 		return 1;
 	}
 
@@ -136,7 +136,7 @@ main(int    argc,
 	inResultTreeRight->SetBranchAddress(branchName.c_str(), &inResultRight);
 
 	if(inResultTreeLeft->GetEntries() != inResultTreeRight->GetEntries()) {
-		printErr << "not the same number of entries in input TTrees. Aborting..." << endl;
+		printErr << "not the same number of entries in input TTrees. aborting." << endl;
 		return 1;
 	}
 
