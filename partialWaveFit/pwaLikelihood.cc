@@ -445,7 +445,7 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 // calculate Hessian with respect to parameters
 template<typename complexT>
 TMatrixT<double>
-pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parameter array; reduced by rank conditions
+pwaLikelihood<complexT>::Hessian(const double* par) const  // parameter array; reduced by rank conditions
 {
 	++(_funcCallInfo[HESSIAN].nmbCalls);
 
@@ -631,10 +631,9 @@ pwaLikelihood<complexT>::HessianAnalytically(const double* par) const  // parame
 /// calculates covariance matrix of function at point defined by par
 template<typename complexT>
 TMatrixT<double>
-pwaLikelihood<complexT>::CovarianceMatrixAnalytically
-(const double* par) const
+pwaLikelihood<complexT>::CovarianceMatrix(const double* par) const
 {
-	TMatrixT<double> covMatrix = HessianAnalytically(par);
+	TMatrixT<double> covMatrix = Hessian(par);
 	covMatrix.Invert(); // invert hesse matrix to retrieve covariance matrix
 	covMatrix *= .5;
 	return covMatrix;
@@ -644,8 +643,7 @@ pwaLikelihood<complexT>::CovarianceMatrixAnalytically
 /// calculates covariance matrix of function at point defined by par
 template<typename complexT>
 TMatrixT<double>
-pwaLikelihood<complexT>::CovarianceMatrixAnalytically
-(TMatrixT<double> hessian) const
+pwaLikelihood<complexT>::CovarianceMatrix(TMatrixT<double> hessian) const
 {
 	hessian.Invert(); // invert hesse matrix to retrieve covariance matrix
 	hessian *= .5;
@@ -1465,7 +1463,7 @@ template<typename complexT>
 ostream&
 pwaLikelihood<complexT>::printFuncInfo(ostream& out) const
 {
-	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative", "HessianAnalytically"};
+	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative", "Hessian"};
 	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
 		if (_funcCallInfo[i].nmbCalls > 0)
 			out << "    " << _funcCallInfo[i].nmbCalls

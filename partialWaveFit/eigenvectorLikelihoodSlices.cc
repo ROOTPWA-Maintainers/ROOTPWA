@@ -321,7 +321,7 @@ main(int    argc,
 	TVectorT<double> eigenvaluesMinuit;
 	const TMatrixT<double> eigenvectorsMinuit = covMatrixMinuit.EigenVectors(eigenvaluesMinuit);
 
-	const TMatrixT<double> covMatrixAna = L.CovarianceMatrixAnalytically(pars.data());
+	const TMatrixT<double> covMatrixAna = L.CovarianceMatrix(pars.data());
 	TVectorT<double> eigenvaluesAna;
 	const TMatrixT<double> eigenvectorsAna = covMatrixAna.EigenVectors(eigenvaluesAna);
 

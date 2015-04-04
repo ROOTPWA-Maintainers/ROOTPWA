@@ -351,9 +351,9 @@ main(int    argc,
 	TMatrixT<double> fitParCovMatrix(0, 0);
 	bool hasHessian = false;
 	if(not saveSpace) {
-		TMatrixT<double> hessian = L.HessianAnalytically(correctParams.data());
+		TMatrixT<double> hessian = L.Hessian(correctParams.data());
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
-		fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
+		fitParCovMatrix = L.CovarianceMatrix(hessian);
 		TVectorT<double> eigenvalues;
 		hessian.EigenVectors(eigenvalues);
 		if (not quiet) {
