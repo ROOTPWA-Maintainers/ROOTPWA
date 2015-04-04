@@ -524,7 +524,7 @@ main(int    argc,
 
 		if (checkHessian) {
 			// analytically calculate Hessian
-			TMatrixT<double> hessian = L.HessianAnalytically(correctParams.data());
+			TMatrixT<double> hessian = L.Hessian(correctParams.data());
 			// create reduced hessian without fixed parameters
 			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
 			const vector<unsigned int> parIndices = L.orderedParIndices();

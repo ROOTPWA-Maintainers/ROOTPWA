@@ -122,11 +122,11 @@ namespace rpwa {
 		virtual void Gradient(const double* par,
 		                      double*       gradient) const;
 		/// calculates Hessian of function at point defined by par
-		virtual TMatrixT<double> HessianAnalytically(const double* par) const;
+		virtual TMatrixT<double> Hessian(const double* par) const;
 		/// calculates covariance matrix of function at point defined by par
-		TMatrixT<double> CovarianceMatrixAnalytically(const double* par) const;
+		TMatrixT<double> CovarianceMatrix(const double* par) const;
 		/// turns hessian into covariance matrix
-		TMatrixT<double> CovarianceMatrixAnalytically(TMatrixT<double> hessian) const;
+		TMatrixT<double> CovarianceMatrix(TMatrixT<double> hessian) const;
 		/// flips the signs of the paramaters according to conventions (anchor wave and flat wave amplitudes are real and positive)
 		std::vector<double> CorrectParamSigns(const double* in) const;
 

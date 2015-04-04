@@ -262,7 +262,7 @@ main(int    argc,
 	}
 
 	// analytically calculate Hessian
-	const TMatrixT<double> hessian = L.HessianAnalytically(pars.data());
+	const TMatrixT<double> hessian = L.Hessian(pars.data());
 	// create and check Hessian eigenvalues
 	TVectorT<double> eigenvalues;
 	hessian.EigenVectors(eigenvalues);
@@ -277,7 +277,7 @@ main(int    argc,
 			printWarn << "eigenvalue " << i << " of Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
 		}
 	}
-	const TMatrixT<double> covMatrix = L.CovarianceMatrixAnalytically(hessian);
+	const TMatrixT<double> covMatrix = L.CovarianceMatrix(hessian);
 	if (not quiet) {
 		printInfo << "(analytic) covariance matrix:" << endl;
 		covMatrix.Print();
