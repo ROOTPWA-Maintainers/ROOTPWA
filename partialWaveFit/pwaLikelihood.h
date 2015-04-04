@@ -114,26 +114,29 @@ namespace rpwa {
 		virtual pwaLikelihood* Clone() const { return new pwaLikelihood(*this); }
 		/// returns total number of function parameters (= dimension of the function)
 		virtual unsigned int NDim() const { return nmbPars(); }
+		/// calculates gradient (vector of partial derivatives) of function at point defined by par
+		virtual void Gradient(const double* par,
+		                      double*       gradient) const;
 		/// optimized method to evaluate function value and derivative at a point defined by par at the same time
 		virtual void FdF(const double* par,
 		                 double&       funcVal,
 		                 double*       gradient) const;
-		/// calculates gradient (vector of partial derivatives) of function at point defined by par
-		virtual void Gradient(const double* par,
-		                      double*       gradient) const;
-		/// calculates Hessian of function at point defined by par
-		virtual TMatrixT<double> Hessian(const double* par) const;
-		/// calculates covariance matrix of function at point defined by par
-		TMatrixT<double> CovarianceMatrix(const double* par) const;
-		/// turns hessian into covariance matrix
-		TMatrixT<double> CovarianceMatrix(TMatrixT<double> hessian) const;
-		/// flips the signs of the paramaters according to conventions (anchor wave and flat wave amplitudes are real and positive)
-		std::vector<double> CorrectParamSigns(const double* in) const;
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
 		virtual double DoDerivative(const double* par,
 		                            unsigned int  derivativeIndex) const;
+
+		/// calculates Hessian of function at point defined by par
+		virtual TMatrixT<double> Hessian(const double* par) const;
+
+		/// calculates covariance matrix of function at point defined by par
+		TMatrixT<double> CovarianceMatrix(const double* par) const;
+		/// turns hessian into covariance matrix
+		TMatrixT<double> CovarianceMatrix(TMatrixT<double> hessian) const;
+
+		/// flips the signs of the paramaters according to conventions (amplitudes of each anchor wave and the flat wave are real and positive)
+		std::vector<double> CorrectParamSigns(const double* par) const;
 
 		unsigned int             nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
 		unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
