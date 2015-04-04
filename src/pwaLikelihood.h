@@ -133,7 +133,7 @@ namespace rpwa {
 		/// calculates covariance matrix of function at point defined by par
 		TMatrixT<double> CovarianceMatrix(const double* par) const;
 		/// turns hessian into covariance matrix
-		TMatrixT<double> CovarianceMatrix(TMatrixT<double> hessian) const;
+		TMatrixT<double> CovarianceMatrix(const TMatrixT<double>& hessian) const;
 
 		/// flips the signs of the paramaters according to conventions (amplitudes of each anchor wave and the flat wave are real and positive)
 		std::vector<double> CorrectParamSigns(const double* par) const;

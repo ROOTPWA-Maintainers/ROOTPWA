@@ -766,21 +766,19 @@ template<typename complexT>
 TMatrixT<double>
 pwaLikelihood<complexT>::CovarianceMatrix(const double* par) const
 {
-	TMatrixT<double> covMatrix = Hessian(par);
-	covMatrix.Invert(); // invert hesse matrix to retrieve covariance matrix
-	covMatrix *= .5;
-	return covMatrix;
+	const TMatrixT<double> hessian = Hessian(par);
+	return CovarianceMatrix(hessian);
 }
 
 
 /// turns hessian into covariance matrix
 template<typename complexT>
 TMatrixT<double>
-pwaLikelihood<complexT>::CovarianceMatrix(TMatrixT<double> hessian) const
+pwaLikelihood<complexT>::CovarianceMatrix(const TMatrixT<double>& hessian) const
 {
-	hessian.Invert(); // invert hesse matrix to retrieve covariance matrix
-	hessian *= .5;
-	return hessian;
+	TMatrixT<double> covariance(TMatrixT<double>::kInverted, hessian);
+	covariance *= 0.5;
+	return covariance;
 }
 
 
