@@ -128,7 +128,7 @@ namespace rpwa {
 		                            unsigned int  derivativeIndex) const;
 
 		/// calculates Hessian of function at point defined by par
-		virtual TMatrixT<double> Hessian(const double* par) const;
+		TMatrixT<double> Hessian(const double* par) const;
 
 		/// calculates covariance matrix of function at point defined by par
 		TMatrixT<double> CovarianceMatrix(const double* par) const;
