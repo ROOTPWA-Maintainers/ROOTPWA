@@ -400,11 +400,10 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 			samePar = false;
 			break;
 		}
+	timerTot.Stop();
+	_funcCallInfo[DODERIVATIVE].totalTime(timerTot.RealTime());
 	if (samePar) {
 		//cout << "using cached derivative! " << endl;
-		timerTot.Stop();
-		_funcCallInfo[DODERIVATIVE].totalTime(timerTot.RealTime());
-		_funcCallInfo[DODERIVATIVE].funcTime (sum(_funcCallInfo[DODERIVATIVE].totalTime));
 		return _derivCache[derivativeIndex];
 	}
 	// call FdF
@@ -437,12 +436,11 @@ pwaLikelihood<complexT>::Gradient
 			samePar = false;
 			break;
 		}
+	timerTot.Stop();
+	_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
 	if (samePar) {
 		for (unsigned int i = 0; i < _nmbPars ; ++i)
 			gradient[i] = _derivCache[i];
-		timerTot.Stop();
-		_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
-		_funcCallInfo[GRADIENT].funcTime (sum(_funcCallInfo[GRADIENT].totalTime));
 		return;
 	}
 	// call FdF
