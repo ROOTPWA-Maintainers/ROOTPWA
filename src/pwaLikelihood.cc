@@ -263,33 +263,6 @@ pwaLikelihood<complexT>::FdF
 		           << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
 }
 
-template<typename complexT>
-std::vector<double>
-pwaLikelihood<complexT>::CorrectParamSigns(const double* in) const
-{
-	// build complex production amplitudes from function parameters taking into account rank restrictions
-	std::vector<double> returnParams(_nmbPars);
-	value_type    prodAmpFlat;
-	ampsArrayType prodAmps;
-	copyFromParArray(in, prodAmps, prodAmpFlat);
-
-	if (prodAmpFlat < 0) {
-		prodAmpFlat *= -1;  // flip sign of flat wave if it is negative
-	}
-
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
-					prodAmps[iRank][iRefl][iWave] *= -1;  // flip sign of coherent waves if anchorwave is negative
-				}
-			}
-		}
-	}
-	copyToParArray(prodAmps, prodAmpFlat, returnParams.data());
-	return returnParams;
-}
-
 
 template<typename complexT>
 double
@@ -440,6 +413,166 @@ pwaLikelihood<complexT>::DoDerivative(const double* par,
 	FdF(par, logLikelihood, gradient);
 	return gradient[derivativeIndex];
 }
+
+
+// calculate derivatives with respect to parameters
+template<typename complexT>
+void
+pwaLikelihood<complexT>::Gradient
+(const double* par,             // parameter array; reduced by rank conditions
+ double*       gradient) const  // array of derivatives
+{
+	++(_funcCallInfo[GRADIENT].nmbCalls);
+
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
+
+#ifdef USE_FDF
+
+	// check whether parameter is in cache
+	bool samePar = true;
+	for (unsigned int i = 0; i < _nmbPars; ++i)
+		if (_parCache[i] != par[i]) {
+			samePar = false;
+			break;
+		}
+	if (samePar) {
+		for (unsigned int i = 0; i < _nmbPars ; ++i)
+			gradient[i] = _derivCache[i];
+		timerTot.Stop();
+		_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
+		_funcCallInfo[GRADIENT].funcTime (sum(_funcCallInfo[GRADIENT].totalTime));
+		return;
+	}
+	// call FdF
+	double logLikelihood;
+	FdF(par, logLikelihood, gradient);
+
+#else  // USE_FDF
+
+	// copy arguments into parameter cache
+	for (unsigned int i = 0; i < _nmbPars; ++i)
+		_parCache[i] = par[i];
+
+	// build complex production amplitudes from function parameters taking into account rank restrictions
+	value_type    prodAmpFlat;
+	ampsArrayType prodAmps;
+	copyFromParArray(par, prodAmps, prodAmpFlat);
+
+	// create array of likelihood derivative w.r.t. real and imaginary
+	// parts of the production amplitudes
+	// !NOTE! although stored as and constructed from complex values,
+	// the dL themselves are _not_ well defined complex numbers!
+	value_type                                     derivativeFlat = 0;
+	boost::array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
+	ampsArrayType                                  derivatives(derivShape);
+
+	// loop over events and calculate derivatives with respect to parameters
+	TStopwatch timer;
+	timer.Start();
+#ifdef USE_CUDA
+	if (_cudaEnabled) {
+		cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihoodDeriv
+			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
+			 prodAmps.num_elements(), prodAmpFlat, _rank,
+			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
+			 derivativeFlat);
+	} else
+#endif
+	{
+		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
+		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
+			derivativesAcc(derivShape);
+		const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+			accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
+			ampsArrayType derivative(derivShape);  // likelihood derivatives for this event
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
+						ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
+					const complexT ampProdSum = sum(ampProdAcc);
+					likelihoodAcc(norm(ampProdSum));
+					// set derivative term that is independent on derivative wave index
+					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+						// amplitude sums for current rank and for waves with same reflectivity
+						derivative[iRank][iRefl][jWave] = ampProdSum;
+				}
+				// loop again over waves for current rank and multiply with complex conjugate
+				// of decay amplitude of the wave with the derivative wave index
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+						derivative[iRank][iRefl][jWave] *= conj(_decayAmps[iEvt][iRefl][jWave]);
+			}  // end loop over rank
+			likelihoodAcc(prodAmpFlat2);
+			// incorporate factor 2 / sigma
+			const value_type factor = 2. / sum(likelihoodAcc);
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+						derivativesAcc[iRank][iRefl][jWave](-factor * derivative[iRank][iRefl][jWave]);
+			derivativeFlatAcc(-factor * prodAmpFlat);
+		}  // end loop over events
+		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+					derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
+		derivativeFlat = sum(derivativeFlatAcc);
+	}
+	// log time needed for gradient calculation
+	timer.Stop();
+	_funcCallInfo[GRADIENT].funcTime(timer.RealTime());
+
+	// normalize derivatives w.r.t. parameters
+	timer.Start();
+	const value_type nmbEvt      = (_useNormalizedAmps) ? 1 : _nmbEvents;
+	const value_type twiceNmbEvt = 2 * nmbEvt;
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				accumulator_set<complexT, stats<tag::sum(compensated)> > normFactorDerivAcc;
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
+					const complexT I = _accMatrix[iRefl][iWave][iRefl][jWave];
+					normFactorDerivAcc(prodAmps[iRank][iRefl][jWave] * conj(I));
+				}
+				derivatives[iRank][iRefl][iWave] += sum(normFactorDerivAcc) * twiceNmbEvt;  // account for 2 * nmbEvents
+			}
+	// take care of flat wave
+	derivativeFlat += prodAmpFlat * twiceNmbEvt * _totAcc;
+	// log time needed for normalization
+	timer.Stop();
+	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
+
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
+						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
+						derivatives[iRank][iRefl][iWave] -= derivative;
+					}
+				}
+			}
+	}
+
+	// set return gradient values
+	copyToParArray(derivatives, derivativeFlat, gradient);
+	copyToParArray(derivatives, derivativeFlat, _derivCache.data());
+
+	// log total consumed time
+	timerTot.Stop();
+	_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
+
+#endif  // USE_FDF
+}
+
 
 // calculate Hessian with respect to parameters
 template<typename complexT>
@@ -627,6 +760,7 @@ pwaLikelihood<complexT>::Hessian(const double* par) const  // parameter array; r
 	return hessian;
 }
 
+
 /// calculates covariance matrix of function at point defined by par
 template<typename complexT>
 TMatrixT<double>
@@ -639,7 +773,7 @@ pwaLikelihood<complexT>::CovarianceMatrix(const double* par) const
 }
 
 
-/// calculates covariance matrix of function at point defined by par
+/// turns hessian into covariance matrix
 template<typename complexT>
 TMatrixT<double>
 pwaLikelihood<complexT>::CovarianceMatrix(TMatrixT<double> hessian) const
@@ -650,162 +784,31 @@ pwaLikelihood<complexT>::CovarianceMatrix(TMatrixT<double> hessian) const
 }
 
 
-// calculate derivatives with respect to parameters
 template<typename complexT>
-void
-pwaLikelihood<complexT>::Gradient
-(const double* par,             // parameter array; reduced by rank conditions
- double*       gradient) const  // array of derivatives
+std::vector<double>
+pwaLikelihood<complexT>::CorrectParamSigns(const double* par) const
 {
-	++(_funcCallInfo[GRADIENT].nmbCalls);
-
-	// timer for total time
-	TStopwatch timerTot;
-	timerTot.Start();
-
-#ifdef USE_FDF
-
-	// check whether parameter is in cache
-	bool samePar = true;
-	for (unsigned int i = 0; i < _nmbPars; ++i)
-		if (_parCache[i] != par[i]) {
-			samePar = false;
-			break;
-		}
-	if (samePar) {
-		for (unsigned int i = 0; i < _nmbPars ; ++i)
-			gradient[i] = _derivCache[i];
-		timerTot.Stop();
-		_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
-		_funcCallInfo[GRADIENT].funcTime (sum(_funcCallInfo[GRADIENT].totalTime));
-		return;
-	}
-	// call FdF
-	double logLikelihood;
-	FdF(par, logLikelihood, gradient);
-
-#else  // USE_FDF
-
-	// copy arguments into parameter cache
-	for (unsigned int i = 0; i < _nmbPars; ++i)
-		_parCache[i] = par[i];
-
 	// build complex production amplitudes from function parameters taking into account rank restrictions
+	std::vector<double> returnParams(_nmbPars);
 	value_type    prodAmpFlat;
 	ampsArrayType prodAmps;
 	copyFromParArray(par, prodAmps, prodAmpFlat);
 
-	// create array of likelihood derivative w.r.t. real and imaginary
-	// parts of the production amplitudes
-	// !NOTE! although stored as and constructed from complex values,
-	// the dL themselves are _not_ well defined complex numbers!
-	value_type                                     derivativeFlat = 0;
-	boost::array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
-	ampsArrayType                                  derivatives(derivShape);
-
-	// loop over events and calculate derivatives with respect to parameters
-	TStopwatch timer;
-	timer.Start();
-#ifdef USE_CUDA
-	if (_cudaEnabled) {
-		cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihoodDeriv
-			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
-			 prodAmps.num_elements(), prodAmpFlat, _rank,
-			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
-			 derivativeFlat);
-	} else
-#endif
-	{
-		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
-		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
-			derivativesAcc(derivShape);
-		const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
-		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-			accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
-			ampsArrayType derivative(derivShape);  // likelihood derivatives for this event
-			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
-						ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
-					const complexT ampProdSum = sum(ampProdAcc);
-					likelihoodAcc(norm(ampProdSum));
-					// set derivative term that is independent on derivative wave index
-					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						// amplitude sums for current rank and for waves with same reflectivity
-						derivative[iRank][iRefl][jWave] = ampProdSum;
-				}
-				// loop again over waves for current rank and multiply with complex conjugate
-				// of decay amplitude of the wave with the derivative wave index
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						derivative[iRank][iRefl][jWave] *= conj(_decayAmps[iEvt][iRefl][jWave]);
-			}  // end loop over rank
-			likelihoodAcc(prodAmpFlat2);
-			// incorporate factor 2 / sigma
-			const value_type factor = 2. / sum(likelihoodAcc);
-			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						derivativesAcc[iRank][iRefl][jWave](-factor * derivative[iRank][iRefl][jWave]);
-			derivativeFlatAcc(-factor * prodAmpFlat);
-		}  // end loop over events
-		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-					derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
-		derivativeFlat = sum(derivativeFlatAcc);
-	}
-	// log time needed for gradient calculation
-	timer.Stop();
-	_funcCallInfo[GRADIENT].funcTime(timer.RealTime());
-
-	// normalize derivatives w.r.t. parameters
-	timer.Start();
-	const value_type nmbEvt      = (_useNormalizedAmps) ? 1 : _nmbEvents;
-	const value_type twiceNmbEvt = 2 * nmbEvt;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				accumulator_set<complexT, stats<tag::sum(compensated)> > normFactorDerivAcc;
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
-					const complexT I = _accMatrix[iRefl][iWave][iRefl][jWave];
-					normFactorDerivAcc(prodAmps[iRank][iRefl][jWave] * conj(I));
-				}
-				derivatives[iRank][iRefl][iWave] += sum(normFactorDerivAcc) * twiceNmbEvt;  // account for 2 * nmbEvents
-			}
-	// take care of flat wave
-	derivativeFlat += prodAmpFlat * twiceNmbEvt * _totAcc;
-	// log time needed for normalization
-	timer.Stop();
-	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
-
-	switch(_priorType)
-	{
-		case FLAT:
-			break;
-		case HALF_CAUCHY:
-			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
-						const double r = abs(prodAmps[iRank][iRefl][iWave]);
-						const double factor = (1./(r*cauchyFunction(r, _cauchyWidth))) * cauchyFunctionDerivative(r, _cauchyWidth);
-						complexT derivative(factor*prodAmps[iRank][iRefl][iWave].real(), factor*prodAmps[iRank][iRefl][iWave].imag());
-						derivatives[iRank][iRefl][iWave] -= derivative;
-					}
-				}
-			}
+	if (prodAmpFlat < 0) {
+		prodAmpFlat *= -1;  // flip sign of flat wave if it is negative
 	}
 
-	// set return gradient values
-	copyToParArray(derivatives, derivativeFlat, gradient);
-	copyToParArray(derivatives, derivativeFlat, _derivCache.data());
-
-	// log total consumed time
-	timerTot.Stop();
-	_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
-
-#endif  // USE_FDF
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+					prodAmps[iRank][iRefl][iWave] *= -1;  // flip sign of coherent waves if anchorwave is negative
+				}
+			}
+		}
+	}
+	copyToParArray(prodAmps, prodAmpFlat, returnParams.data());
+	return returnParams;
 }
 
 
