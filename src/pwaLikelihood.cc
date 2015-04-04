@@ -787,7 +787,6 @@ std::vector<double>
 pwaLikelihood<complexT>::CorrectParamSigns(const double* par) const
 {
 	// build complex production amplitudes from function parameters taking into account rank restrictions
-	std::vector<double> returnParams(_nmbPars);
 	value_type    prodAmpFlat;
 	ampsArrayType prodAmps;
 	copyFromParArray(par, prodAmps, prodAmpFlat);
@@ -798,13 +797,15 @@ pwaLikelihood<complexT>::CorrectParamSigns(const double* par) const
 
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-			if (prodAmps[iRank][iRefl][0].real() < 0 and prodAmps[iRank][iRefl][0].imag() == 0) {
+			if (prodAmps[iRank][iRefl][iRank].real() < 0 and prodAmps[iRank][iRefl][iRank].imag() == 0) {
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					prodAmps[iRank][iRefl][iWave] *= -1;  // flip sign of coherent waves if anchorwave is negative
 				}
 			}
 		}
 	}
+
+	std::vector<double> returnParams(_nmbPars);
 	copyToParArray(prodAmps, prodAmpFlat, returnParams.data());
 	return returnParams;
 }
