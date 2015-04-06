@@ -750,36 +750,40 @@ pwaLikelihood<complexT>::Hessian
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				tuple<int, int> parIndices1 = _prodAmpToFuncParMap[iRank][iRefl][iWave];
+				const int r1 = get<0>(parIndices1);
+				const int i1 = get<1>(parIndices1);
+
+				if (r1 < 0)
+					continue;
+
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-							tuple<int, int> parIndices1 = _prodAmpToFuncParMap[iRank][iRefl][iWave];
 							tuple<int, int> parIndices2 = _prodAmpToFuncParMap[jRank][jRefl][jWave];
-							const int r1 = get<0>(parIndices1);
-							const int i1 = get<1>(parIndices1);
 							const int r2 = get<0>(parIndices2);
 							const int i2 = get<1>(parIndices2);
 
-							if (r1 >= 0 && r2 >= 0){  // real/real derivative
-								hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
-								if(r1 == r2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessianMatrix[r1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].real();
-									hessianMatrix[_nmbPars - 1][r1] = flatTerms[iRank][iRefl][iWave].real();
-								}
-							}
-							if (r1 >= 0 && i2 >= 0){  // real/imaginary derivative
+							if (r2 < 0)
+								continue;
+
+							hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
+							if (i2 >= 0) // real/imaginary derivative
 								hessianMatrix[r1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
-								hessianMatrix[i2][r1] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
-							}
-							if (i1 >= 0 && i2 >= 0){  // imaginary/imaginary derivative
+							if (i1 >= 0) // imaginary/real derivative
+								hessianMatrix[i1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+							if (i1 >= 0 && i2 >= 0) // imaginary/imaginary derivative
 								hessianMatrix[i1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
-								if(i1 == i2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessianMatrix[i1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].imag();
-									hessianMatrix[_nmbPars - 1][i1] = flatTerms[iRank][iRefl][iWave].imag();
-								}
-							}
 						}
 					}
+				}
+
+				// second derivatives w.r.t. flat wave
+				hessianMatrix[r1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].real();
+				hessianMatrix[_nmbPars - 1][r1] = flatTerms[iRank][iRefl][iWave].real();
+				if (i1 >= 0) {
+					hessianMatrix[i1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].imag();
+					hessianMatrix[_nmbPars - 1][i1] = flatTerms[iRank][iRefl][iWave].imag();
 				}
 			}
 		}
