@@ -722,19 +722,19 @@ pwaLikelihood<complexT>::Hessian
 							if (r1 >= 0 && r2 >= 0){  // real/real derivative
 								hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
 								if(r1 == r2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessianMatrix[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
-									hessianMatrix[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+									hessianMatrix[r1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].real();
+									hessianMatrix[_nmbPars - 1][r1] = flatTerms[iRank][iRefl][iWave].real();
 								}
 							}
 							if (r1 >= 0 && i2 >= 0){  // real/imaginary derivative
-								hessianMatrix[r1][i2] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
-								hessianMatrix[i2][r1] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessianMatrix[r1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessianMatrix[i2][r1] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
 							}
 							if (i1 >= 0 && i2 >= 0){  // imaginary/imaginary derivative
-								hessianMatrix[i1][i2] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
+								hessianMatrix[i1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
 								if(i1 == i2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessianMatrix[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
-									hessianMatrix[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+									hessianMatrix[i1][_nmbPars - 1] = flatTerms[iRank][iRefl][iWave].imag();
+									hessianMatrix[_nmbPars - 1][i1] = flatTerms[iRank][iRefl][iWave].imag();
 								}
 							}
 						}
@@ -743,7 +743,7 @@ pwaLikelihood<complexT>::Hessian
 			}
 		}
 	}
-	hessianMatrix[_nmbPars - 1][_nmbPars - 1] = 0.5 * hessianFlat;  // enter flat/flat term
+	hessianMatrix[_nmbPars - 1][_nmbPars - 1] = hessianFlat;  // enter flat/flat term
 
 	// log total consumed time
 	timerTot.Stop();
@@ -769,7 +769,6 @@ TMatrixT<double>
 pwaLikelihood<complexT>::CovarianceMatrix(const TMatrixT<double>& hessian) const
 {
 	TMatrixT<double> covariance(TMatrixT<double>::kInverted, hessian);
-	covariance *= 0.5;
 	return covariance;
 }
 
