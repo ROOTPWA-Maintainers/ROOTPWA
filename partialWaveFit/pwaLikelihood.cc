@@ -588,134 +588,124 @@ pwaLikelihood<complexT>::Hessian
 	TStopwatch timerTot;
 	timerTot.Start();
 
-	TMatrixT<double> hessian(_nmbPars, _nmbPars);
 	// build complex production amplitudes from function parameters taking into account rank restrictions
 	value_type    prodAmpFlat;
 	ampsArrayType prodAmps;
 	copyFromParArray(par, prodAmps, prodAmpFlat);
-
-	// create array of likelihood hessian w.r.t. real and imaginary
-	// parts of the production amplitudes
-	boost::array<typename ampsArrayType::index, 7> hesseArrayShape     = {{ _rank, 2, _nmbWavesReflMax, _rank, 2, _nmbWavesReflMax, 3 }};
-	boost::array<typename ampsArrayType::index, 3> derivArrayShape     = {{ _rank, 2, _nmbWavesReflMax }};
-	boost::multi_array<double, 7>                                            hesse(hesseArrayShape); // hesse matrix array
-	multi_array<accumulator_set<double, stats<tag::sum(compensated)> >, 7>   hesseAcc(hesseArrayShape); // accumulator for event loop
-	boost::multi_array<complexT, 3>                                          flatTerms(derivArrayShape); // array for terms where we first derive w.r.t to
-	                                                                                                     // a non-flat term and then w.r.t. the flat wave
-	multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3> flatTermsAcc(derivArrayShape); // accumulator for the event loop
-	value_type                                                               hesseFlat = 0; // term in hessian where we derive twice w.r.t. the flat wave
-	accumulator_set<value_type, stats<tag::sum(compensated)> >               hesseFlatAcc; // accumulator for the event loop
 	const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
-	// log time for calculation of second derivatives of likelhood
+	// create array to store likelihood hessian w.r.t. real and imaginary
+	// parts of the production amplitudes
+	value_type                                     hessianFlat  = 0;       // term in Hessian matrix where we derive twice w.r.t. the flat wave
+	boost::array<typename ampsArrayType::index, 3> derivShape   = {{ _rank, 2, _nmbWavesReflMax }};
+	ampsArrayType                                  flatTerms(derivShape);  // array for terms where we first derive w.r.t to
+	                                                                       // a non-flat term and then w.r.t. the flat wave
+	boost::array<typename ampsArrayType::index, 7> hessianShape = {{ _rank, 2, _nmbWavesReflMax, _rank, 2, _nmbWavesReflMax, 3 }};
+	boost::multi_array<value_type, 7>              hessian(hessianShape);  // array to store components for Hessian matrix
+
+	// loop over events and calculate second derivatives with respect to
+	// parameters for the raw likelihood part
 	TStopwatch timer;
 	timer.Start();
-
+	accumulator_set<value_type, stats<tag::sum(compensated)> > hessianFlatAcc;
+	multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
+		flatTermsAcc(derivShape);
+	multi_array<accumulator_set<value_type, stats<tag::sum(compensated)> >, 7>
+		hessianAcc(hessianShape);
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 		accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
-		boost::multi_array<complexT, 3> derivativeTerm(hesseArrayShape);  // likelihood derivatives term without normalization
+		ampsArrayType derivative(derivShape);  // likelihood derivatives for this event
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) { // coherent sum over waves
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
 				}
 				const complexT ampProdSum = sum(ampProdAcc);
 				likelihoodAcc(norm(ampProdSum));
 				// set derivative term that is independent on derivative wave index
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 					// amplitude sums for current rank and for waves with same reflectivity
-					derivativeTerm[iRank][iRefl][iWave] = ampProdSum;
-				}
+					derivative[iRank][iRefl][iWave] = ampProdSum;
 			}
 			// loop again over waves for current rank and multiply with complex conjugate
 			// of decay amplitude of the wave with the derivative wave index
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-					derivativeTerm[iRank][iRefl][iWave] *= conj(_decayAmps[iEvt][iRefl][iWave]);
-				}
-			}
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+					derivative[iRank][iRefl][iWave] *= conj(_decayAmps[iEvt][iRefl][iWave]);
 		}  // end loop over rank
 		likelihoodAcc(prodAmpFlat2);
-		const value_type normConst = sum(likelihoodAcc); // normConst is the normalization constant (absolute square of prodAmps * decayAmps summed over all ranks/reflectivities) for each event
-		const value_type normConst2 = normConst * normConst; // normConst squared
+		// incorporate factor 2 / sigma
+		const value_type factor  = 2. / sum(likelihoodAcc);
+		const value_type factor2 = factor*factor;
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-					flatTermsAcc[iRank][iRefl][iWave](4 * prodAmpFlat * derivativeTerm[iRank][iRefl][iWave] / normConst2); // calculate terms where we first derive w.r.t. real/imag part
-					                                                                                                       // of a prodAmp and then w.r.t. the flat wave
 					for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 						for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
 							for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-								complexT uPrime = conj(_decayAmps[iEvt][jRefl][jWave]) * _decayAmps[iEvt][iRefl][iWave];
 								// last array index 0 indicates derivative w.r.t. real part of first prodAmp and real part of the second prodAmp
-								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](4 * derivativeTerm[jRank][jRefl][jWave].real() * derivativeTerm[iRank][iRefl][iWave].real() / normConst2);
+								hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](factor2 * derivative[jRank][jRefl][jWave].real() * derivative[iRank][iRefl][iWave].real());
 								// last array index 1 indicates derivative w.r.t. real part of first prodAmp and imaginary part of the second prodAmp
-								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](4 * derivativeTerm[jRank][jRefl][jWave].imag() * derivativeTerm[iRank][iRefl][iWave].real() / normConst2);
+								hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](factor2 * derivative[jRank][jRefl][jWave].imag() * derivative[iRank][iRefl][iWave].real());
 								// last array index 2 indicates derivative w.r.t. imaginary part of first prodAmp and imaginary part of the second prodAmp
-								hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](4 * derivativeTerm[jRank][jRefl][jWave].imag() * derivativeTerm[iRank][iRefl][iWave].imag() / normConst2);
+								hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](factor2 * derivative[jRank][jRefl][jWave].imag() * derivative[iRank][iRefl][iWave].imag());
 								if(iRank == jRank and iRefl == jRefl) {
-									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](-2 * uPrime.real() / normConst);
-									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](-2 * uPrime.imag() / normConst);
-									hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](-2 * uPrime.real() / normConst);
+									const complexT uPrime = conj(_decayAmps[iEvt][jRefl][jWave]) * _decayAmps[iEvt][iRefl][iWave];
+									hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0](-factor * uPrime.real());
+									hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1](-factor * uPrime.imag());
+									hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2](-factor * uPrime.real());
 								}
 							}
 						}
 					}
+					flatTermsAcc[iRank][iRefl][iWave](factor2 * prodAmpFlat * derivative[iRank][iRefl][iWave]);  // calculate terms where we first derive w.r.t. real/imag part
+					                                                                                             // of a prodAmp and then w.r.t. the flat wave
 				}
 			}
 		}
-		hesseFlatAcc(-(2 * normConst - 4 * prodAmpFlat2) / normConst2);
+		hessianFlatAcc(factor2 * prodAmpFlat2 - factor);
 	}  // end loop over events
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				flatTerms[iRank][iRefl][iWave] = sum(flatTermsAcc[iRank][iRefl][iWave]);
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave){
-							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0]);
-							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1]);
-							hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2] = sum(hesseAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2]);
+							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0]);
+							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1]);
+							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2]);
 						}
 					}
 				}
+				flatTerms[iRank][iRefl][iWave] = sum(flatTermsAcc[iRank][iRefl][iWave]);
 			}
 		}
 	}
-	hesseFlat = sum(hesseFlatAcc) + 2 * _totAcc; // calculate 2nd flat wave derivative
-
-	// log time for calculation of second derivatives of likelhood
+	hessianFlat = sum(hessianFlatAcc);
+	// log time needed for calculation of second derivatives of raw likelhood part
 	timer.Stop();
 	_funcCallInfo[HESSIAN].funcTime(timer.RealTime());
 
-	// log time for calculation of second derivatives of normalization
+	// normalize second derivatives w.r.t. parameters
 	timer.Start();
 	const value_type nmbEvt      = (_useNormalizedAmps) ? 1 : _nmbEvents;
 	const value_type twiceNmbEvt = 2 * nmbEvt;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
-			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
-					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
-						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-							if(iRank == jRank and iRefl == jRefl) {
-								const complexT I = _accMatrix[iRefl][iWave][jRefl][jWave];
-								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0] += I.real() * twiceNmbEvt;
-								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1] += I.imag() * twiceNmbEvt;
-								hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2] += I.real() * twiceNmbEvt;
-							}
-						}
-					}
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {
+					const complexT I = _accMatrix[iRefl][iWave][iRefl][jWave];
+					hessian[iRank][iRefl][iWave][iRank][iRefl][jWave][0] += I.real() * twiceNmbEvt;
+					hessian[iRank][iRefl][iWave][iRank][iRefl][jWave][1] += I.imag() * twiceNmbEvt;
+					hessian[iRank][iRefl][iWave][iRank][iRefl][jWave][2] += I.real() * twiceNmbEvt;
 				}
-			}
-		}
-	}
-
-	// log time for calculation of second derivatives of normalization
+	hessianFlat += twiceNmbEvt * _totAcc;
+	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[HESSIAN].normTime(timer.RealTime());
 
+	TMatrixT<double> hessianMatrix(_nmbPars, _nmbPars);
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
@@ -724,28 +714,27 @@ pwaLikelihood<complexT>::Hessian
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
 							bt::tuple<int, int> parIndices1 = _prodAmpToFuncParMap[iRank][iRefl][iWave];
 							bt::tuple<int, int> parIndices2 = _prodAmpToFuncParMap[jRank][jRefl][jWave];
-							int r1, i1, r2, i2;
-							r1 = get<0>(parIndices1);
-							i1 = get<1>(parIndices1);
-							r2 = get<0>(parIndices2);
-							i2 = get<1>(parIndices2);
+							const int r1 = get<0>(parIndices1);
+							const int i1 = get<1>(parIndices1);
+							const int r2 = get<0>(parIndices2);
+							const int i2 = get<1>(parIndices2);
 
-							if (r1 >= 0 && r2 >= 0){ // real/real derivative
-								hessian[r1][r2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
-								if(r1 == r2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessian[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
-									hessian[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+							if (r1 >= 0 && r2 >= 0){  // real/real derivative
+								hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
+								if(r1 == r2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
+									hessianMatrix[r1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
+									hessianMatrix[_nmbPars - 1][r1] = 0.5 * flatTerms[iRank][iRefl][iWave].real();
 								}
 							}
-							if (r1 >= 0 && i2 >= 0){ // real/imaginary derivative
-								hessian[r1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
-								hessian[i2][r1] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+							if (r1 >= 0 && i2 >= 0){  // real/imaginary derivative
+								hessianMatrix[r1][i2] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessianMatrix[i2][r1] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
 							}
-							if (i1 >= 0 && i2 >= 0){ // imaginary/imaginary derivative
-								hessian[i1][i2] = 0.5 * hesse[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
-								if(i1 == i2) { // enter flat term (if clause to be sure to only fill once for each prodAmp)
-									hessian[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
-									hessian[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+							if (i1 >= 0 && i2 >= 0){  // imaginary/imaginary derivative
+								hessianMatrix[i1][i2] = 0.5 * hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
+								if(i1 == i2) {  // enter flat term (if clause to be sure to only fill once for each prodAmp)
+									hessianMatrix[i1][_nmbPars - 1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
+									hessianMatrix[_nmbPars - 1][i1] = 0.5 * flatTerms[iRank][iRefl][iWave].imag();
 								}
 							}
 						}
@@ -754,13 +743,13 @@ pwaLikelihood<complexT>::Hessian
 			}
 		}
 	}
-	hessian[_nmbPars - 1][_nmbPars - 1] = 0.5 * hesseFlat; // enter flat/flat term
+	hessianMatrix[_nmbPars - 1][_nmbPars - 1] = 0.5 * hessianFlat;  // enter flat/flat term
 
 	// log total consumed time
 	timerTot.Stop();
 	_funcCallInfo[HESSIAN].totalTime(timerTot.RealTime());
 
-	return hessian;
+	return hessianMatrix;
 }
 
 
