@@ -71,7 +71,7 @@ template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
 
 namespace {
 
-	double cauchyFunction(const double& x, const double gamma)
+	double cauchyFunction(const double x, const double gamma)
 	{
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
@@ -79,12 +79,22 @@ namespace {
 		return 1. / (1. + ((x*x) / (gamma*gamma)));
 	}
 
-	double cauchyFunctionDerivative(const double& x, const double& gamma)
+	double cauchyFunctionDerivative(const double x, const double gamma)
 	{
 		if(x < 0.) {
 			printWarn << "got negative argument." << endl;
 		}
 		return (-2. * x * gamma*gamma) / ((gamma*gamma + x*x) * (gamma*gamma + x*x));
+	}
+
+	double cauchyFunctionSecondDerivative(const double x, const double gamma)
+	{
+		if(x < 0.) {
+			printWarn << "got negative argument." << endl;
+		}
+		const double x2 = x*x;
+		const double gamma2 = gamma*gamma;
+		return (6. * x2 * gamma2 - 2 * gamma2*gamma2) / ((gamma2 + x2) * (gamma2 + x2) + (gamma2 + x2));
 	}
 
 }
@@ -703,6 +713,38 @@ pwaLikelihood<complexT>::Hessian
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[HESSIAN].normTime(timer.RealTime());
+
+	switch(_priorType)
+	{
+		case FLAT:
+			break;
+		case HALF_CAUCHY:
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+						const double r = abs(prodAmps[iRank][iRefl][iWave]);
+
+						const double cauchyFunctionValue                 = cauchyFunction                (r, _cauchyWidth);
+						const double cauchyFunctionDerivativeValue       = cauchyFunctionDerivative      (r, _cauchyWidth);
+						const double cauchyFunctionSecondDerivativeValue = cauchyFunctionSecondDerivative(r, _cauchyWidth);
+
+						const double a1 = cauchyFunctionSecondDerivativeValue / (cauchyFunctionValue * r*r);
+						const double a2 = cauchyFunctionDerivativeValue*cauchyFunctionDerivativeValue / (cauchyFunctionValue*cauchyFunctionValue * r*r);
+						const double a3 = cauchyFunctionDerivativeValue / (cauchyFunctionValue * r);
+						const double a4 = cauchyFunctionDerivativeValue / (cauchyFunctionValue * r*r*r);
+						const double a124 = a1 - a2 - a4;
+
+						const double re = prodAmps[iRank][iRefl][iWave].real();
+						const double im = prodAmps[iRank][iRefl][iWave].imag();
+
+						hessian[iRank][iRefl][iWave][iRank][iRefl][iWave][0] -= (a124) * re*re + a3;
+						hessian[iRank][iRefl][iWave][iRank][iRefl][iWave][1] -= (a124) * re*im;
+						hessian[iRank][iRefl][iWave][iRank][iRefl][iWave][2] -= (a124) * im*im + a3;
+					}
+				}
+			}
+			break;
+	}
 
 	TMatrixT<double> hessianMatrix(_nmbPars, _nmbPars);
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
