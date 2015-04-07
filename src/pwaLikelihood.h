@@ -143,8 +143,6 @@ namespace rpwa {
 		unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
 		unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
 		unsigned int             nmbParsFixed()                                    const { return _nmbParsFixed;            }  ///< returns number of fixed parameters
-		// std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
-		std::vector<std::string> waveNames   ()                                    const;                                      ///< returns vector with all wave names ordered like in input wave list
 		std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
 		double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
 		bool                     parFixed    (const unsigned int parIndex)         const { return _parFixed[parIndex];      }  ///< returns whether likelihood parameter at parIndex is fixed due to mass threshold
@@ -191,8 +189,6 @@ namespace rpwa {
 		std::ostream& printFuncInfo(std::ostream& out = std::cout) const;
 		friend std::ostream& operator << (std::ostream&         out,
 		                                  const pwaLikelihood& func) { return func.print(out); }
-
-		std::vector<unsigned int> orderedParIndices() const;  // helper function for backwards-compatibility
 
 
 	private:
@@ -250,7 +246,6 @@ namespace rpwa {
 
 		waveNameArrayType        _waveNames;            // wave names [reflectivity][wave index]
 		waveThrArrayType         _waveThresholds;       // mass thresholds of waves
-		waveToListMapType        _waveToWaveIndex;      // maps wave to its index in wave list
 		std::vector<std::string> _parNames;             // function parameter names
 		std::vector<double>      _parThresholds;        // mass thresholds of parameters
 		std::vector<bool>        _parFixed;             // parameter fixed due to mass thresholds
