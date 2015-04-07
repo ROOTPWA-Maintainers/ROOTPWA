@@ -977,7 +977,6 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 	}
 	vector<string>       waveNames     [2];
 	vector<double>       waveThresholds[2];
-	vector<unsigned int> waveIndices   [2];
 	unsigned int         countWave = 0;
 	unsigned int         lineNmb   = 0;
 	string               line;
@@ -999,12 +998,10 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 				++_nmbWavesRefl[1];  // positive reflectivity
 				waveNames     [1].push_back(waveName);
 				waveThresholds[1].push_back(threshold);
-				waveIndices   [1].push_back(countWave);
 			} else {
 				++_nmbWavesRefl[0];  // negative reflectivity
 				waveNames     [0].push_back(waveName);
 				waveThresholds[0].push_back(threshold);
-				waveIndices   [0].push_back(countWave);
 			}
 			++countWave;
 		} else
@@ -1019,12 +1016,10 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 	_nmbWavesReflMax = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
 	_waveNames.resize      (extents[2][_nmbWavesReflMax]);
 	_waveThresholds.resize (extents[2][_nmbWavesReflMax]);
-	_waveToWaveIndex.resize(extents[2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 			_waveNames      [iRefl][iWave] = waveNames     [iRefl][iWave];
 			_waveThresholds [iRefl][iWave] = waveThresholds[iRefl][iWave];
-			_waveToWaveIndex[iRefl][iWave] = waveIndices   [iRefl][iWave];
 		}
 }
 
@@ -1582,54 +1577,6 @@ pwaLikelihood<complexT>::printFuncInfo(ostream& out) const
 			    << "        return value calculation ... " << sum(_funcCallInfo[i].funcTime ) << " sec" << endl
 			    << "        normalization .............. " << sum(_funcCallInfo[i].normTime ) << " sec" << endl;
 	return out;
-}
-
-
-template<typename complexT>
-vector<unsigned int>
-pwaLikelihood<complexT>::orderedParIndices() const
-{
-	vector<unsigned int> orderedIndices;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex) {
-			unsigned int iRefl, iWave;
-			for (iRefl = 0; iRefl < 2; ++iRefl)
-				for (iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-					if (_waveToWaveIndex[iRefl][iWave] == waveIndex)
-						goto found;
-			printWarn << "indices are inconsistent. cannot find wave with index " << waveIndex
-			          << " in wave list" << endl;
-			continue;
-
-		found:
-
-			bt::tuple<int, int> parIndices = _prodAmpToFuncParMap[iRank][iRefl][iWave];
-			int                 parIndex   = bt::get<0>(parIndices);
-			if (parIndex >= 0)
-				orderedIndices.push_back(parIndex);
-			parIndex = bt::get<1>(parIndices);
-			if (parIndex >= 0)
-				orderedIndices.push_back(parIndex);
-		}
-	orderedIndices.push_back(_nmbPars - 1);  // flat wave
-	if (orderedIndices.size() != _nmbPars)
-		printWarn << "ordered list of parameter indices has inconsistent size "
-		          << "(" << orderedIndices.size() << " vs. " << _nmbPars << ")" << endl;
-	return orderedIndices;
-}
-
-
-template<typename complexT>
-vector<string>
-pwaLikelihood<complexT>::waveNames() const
-{
-	vector<string> names(_nmbWaves, "");
-	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			const unsigned int index = _waveToWaveIndex[iRefl][iWave];
-			names[index] = _waveNames[iRefl][iWave];
-		}
-	return names;
 }
 
 
