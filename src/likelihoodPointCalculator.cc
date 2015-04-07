@@ -233,7 +233,7 @@ main(int    argc,
 	L.useNormalizedAmps(useNormalizedAmps);
 	if (cauchyPriors)
 		L.setPriorType(L.HALF_CAUCHY);
-	L.init(result->rank(), waveListFileName, normIntFileName, accIntFileName,
+	L.init(result->rank(), result->massBinCenter(), waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	remove(waveListFileName.c_str());
 	if (not quiet)

@@ -330,6 +330,7 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
+	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	printInfo << "creating and setting up likelihood function" << endl;
 	pwaLikelihood<complex<double> > L;
 	if (quiet)
@@ -338,7 +339,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
 #endif
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	L.init(rank, massBinCenter, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
@@ -377,7 +378,6 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// read in fitResult with start values
 	printInfo << "reading start values from '" << startValFileName << "'" << endl;
-	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	fitResult*   startFitResult = NULL;
 	bool         startValValid  = false;
 	TFile*       startValFile   = NULL;
@@ -436,7 +436,7 @@ main(int    argc,
 			// workaround, because Minuit2Minimizer::SetVariable() expects
 			// that variables are set consecutively. how stupid is that?
 			// so we prepare variables here and set values below
-			if ((L.parThreshold(i) == 0) or (L.parThreshold(i) < massBinCenter)) {
+			if (not L.parFixed(i)) {
 				if (not minimizer->SetVariable(i, parName, 0, startValStep))
 					success = false;
 			} else {
@@ -467,8 +467,8 @@ main(int    argc,
 					startVal *= -1.;
 				}
 			}
-			// check if parameter needs to be fixed because of threshold
-			if ((L.parThreshold(parIndex) == 0) or (L.parThreshold(parIndex) < massBinCenter)) {
+			// check if parameter needs to be fixed
+			if (not L.parFixed(parIndex)) {
 				if (startVal == 0) {
 					cout << "    read start value 0 for parameter " << parName << ". "
 					     << "using default start value." << endl;

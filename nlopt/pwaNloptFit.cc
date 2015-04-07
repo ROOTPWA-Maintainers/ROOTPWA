@@ -269,19 +269,19 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
+	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	printInfo << "creating and setting up likelihood function" << endl;
 	pwaLikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	L.init(rank, massBinCenter, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 	const double sqrtNmbEvts = sqrt((double)nmbEvts);
-	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 
 	if (cauchy)
 		L.setPriorType(L.HALF_CAUCHY);
@@ -306,7 +306,7 @@ main(int    argc,
 		TRandom3 random(startValSeed);
 		for(unsigned int i = 0; i < params.size(); ++i)
 		{
-			if(L.parThreshold(i) > massBinCenter) {
+			if(L.parFixed(i)) {
 				printErr << "thresholds are not implemented for fits with NLopt. Aborting..." << endl;
 				return 1;
 			}

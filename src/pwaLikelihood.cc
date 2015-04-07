@@ -887,6 +887,7 @@ pwaLikelihood<complexT>::cudaEnabled() const
 template<typename complexT>
 void
 pwaLikelihood<complexT>::init(const unsigned int rank,
+                              const double       massBinCenter,
                               const std::string& waveListFileName,
                               const std::string& normIntFileName,
                               const std::string& accIntFileName,
@@ -896,7 +897,7 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
 {
 	_numbAccEvents = numbAccEvents;
 	readWaveList(waveListFileName);
-	buildParDataStruct(rank);
+	buildParDataStruct(rank, massBinCenter);
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName, useRootAmps);
 #ifdef USE_CUDA
@@ -975,7 +976,8 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 
 template<typename complexT>
 void
-pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
+pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
+                                            const double       massBinCenter)
 {
 	if ((_nmbWavesRefl[0] + _nmbWavesRefl[1] == 0) or (_waveThresholds.size() == 0)) {
 		printErr << "no wave info. was readWaveList() executed successfully? aborting.";
@@ -1004,6 +1006,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 	printInfo << "dimension of likelihood function is " << _nmbPars << "." << endl;
 	_parNames.resize     (_nmbPars, "");
 	_parThresholds.resize(_nmbPars, 0);
+	_parFixed.resize     (_nmbPars, 0);
 	_parCache.resize     (_nmbPars, 0);
 	_derivCache.resize   (_nmbPars, 0);
 	_prodAmpToFuncParMap.resize(extents[_rank][2][_nmbWavesReflMax]);
@@ -1019,14 +1022,17 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave] << "_RE";
 					_parNames     [parIndex]                  = parName.str();
 					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
+					_parFixed     [parIndex]                  = (_parThresholds[parIndex] == 0 || _parThresholds[parIndex] < massBinCenter) ? false : true;
 					_prodAmpToFuncParMap[iRank][iRefl][iWave] = make_tuple(parIndex, -1);
 					++parIndex;
 				} else {  // production amplitude is complex
 					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave];
 					_parNames     [parIndex]                  = parName.str() + "_RE";
 					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
+					_parFixed     [parIndex]                  = (_parThresholds[parIndex] == 0 || _parThresholds[parIndex] < massBinCenter) ? false : true;
 					_parNames     [parIndex + 1]              = parName.str() + "_IM";
 					_parThresholds[parIndex + 1]              = _waveThresholds[iRefl][iWave];
+					_parFixed     [parIndex + 1]              = (_parThresholds[parIndex + 1] == 0 || _parThresholds[parIndex + 1] < massBinCenter) ? false : true;
 					_prodAmpToFuncParMap[iRank][iRefl][iWave] = make_tuple(parIndex, parIndex + 1);
 					parIndex += 2;
 				}
@@ -1034,6 +1040,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 	// flat wave
 	_parNames     [parIndex] = "V_flat";
 	_parThresholds[parIndex] = 0;
+	_parFixed     [parIndex] = false;
 }
 
 
