@@ -259,9 +259,26 @@ main(int    argc,
 
 	// analytically calculate Hessian
 	const TMatrixT<double> hessian = L.Hessian(pars.data());
+	// create reduced hessian without fixed parameters
+	TMatrixT<double> reducedHessian(nmbPar - L.nmbParsFixed(), nmbPar - L.nmbParsFixed());
+	{
+		unsigned int iReduced = 0;
+		for(unsigned int i = 0; i < nmbPar; ++i) {
+			unsigned int jReduced = 0;
+			if (not L.parFixed(i)) {
+				for(unsigned int j = 0; j < nmbPar; ++j) {
+					if (not L.parFixed(j)) {
+						reducedHessian[iReduced][jReduced] = hessian[i][j];
+						jReduced++;
+					}
+				}
+				iReduced++;
+			}
+		}
+	}
 	// create and check Hessian eigenvalues
 	TVectorT<double> eigenvalues;
-	hessian.EigenVectors(eigenvalues);
+	reducedHessian.EigenVectors(eigenvalues);
 	if (not quiet) {
 		printInfo << "eigenvalues of (analytic) Hessian:" << endl;
 	}

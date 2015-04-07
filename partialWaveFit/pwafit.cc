@@ -418,7 +418,6 @@ main(int    argc,
 	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
 	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
-	unsigned int fixedPars = 0;
 	{
 		// use local instance of random number generator so that other
 		// code has no chance of tampering with gRandom and thus cannot
@@ -439,7 +438,6 @@ main(int    argc,
 				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
 					success = false;
 				parIsFixed[i] = true;
-				fixedPars++;
 			}
 		}
 		const double               sqrtNmbEvts = sqrt((double)nmbEvts);
@@ -522,14 +520,13 @@ main(int    argc,
 			// analytically calculate Hessian
 			TMatrixT<double> hessian = L.Hessian(correctParams.data());
 			// create reduced hessian without fixed parameters
-			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
-			const vector<unsigned int> parIndices = L.orderedParIndices();
+			TMatrixT<double> reducedHessian(nmbPar - L.nmbParsFixed(), nmbPar - L.nmbParsFixed());
 			unsigned int iReduced = 0;
 			for(unsigned int i = 0; i < nmbPar; ++i) {
 				unsigned int jReduced = 0;
-				if (not parIsFixed[parIndices[i]]) {
+				if (not L.parFixed(i)) {
 					for(unsigned int j = 0; j < nmbPar; ++j) {
-						if (not parIsFixed[parIndices[j]]) {
+						if (not L.parFixed(j)) {
 							reducedHessian[iReduced][jReduced] = hessian[i][j];
 							jReduced++;
 						}
