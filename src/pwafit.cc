@@ -421,52 +421,35 @@ main(int    argc,
 	printInfo << "setting start values for " << nmbPar << " parameters" << endl
 	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
-	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
 	{
-		// use local instance of random number generator so that other
-		// code has no chance of tampering with gRandom and thus cannot
-		// affect the reproducability of the start values
-		TRandom3 random(startValSeed);
-		bool     success = true;
 		for (unsigned int i = 0; i < nmbPar; ++i) {
 			const string parName = L.parName(i);
 			if (parName.length() > maxParNameLength)
 				maxParNameLength = parName.length();
-			// workaround, because Minuit2Minimizer::SetVariable() expects
-			// that variables are set consecutively. how stupid is that?
-			// so we prepare variables here and set values below
-			if (not L.parFixed(i)) {
-				if (not minimizer->SetVariable(i, parName, 0, startValStep))
-					success = false;
-			} else {
-				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
-					success = false;
-				parIsFixed[i] = true;
-			}
 		}
-		const double               sqrtNmbEvts = sqrt((double)nmbEvts);
-		const vector<unsigned int> parIndices  = L.orderedParIndices();
-		for (unsigned int i = 0; i < parIndices.size(); ++i) {
-			const unsigned int parIndex = parIndices[i];
-			double             startVal;
-			const string       parName = minimizer->VariableName(parIndex);
-			if (parName != L.parName(parIndex)) {
-				printWarn << "parameter name in minimizer and likelihood is inconsistent "
-				          << "(" << parName << " vs. " << L.parName(parIndex) << ")" << endl;
-				success = false;
-			}
+		// use local instance of random number generator so that other
+		// code has no chance of tampering with gRandom and thus cannot
+		// affect the reproducability of the start values
+		TRandom3     random(startValSeed);
+		const double sqrtNmbEvts = sqrt((double)nmbEvts);
+		bool         success     = true;
+		for (unsigned int i = 0; i < nmbPar; ++i) {
+			const string parName = L.parName(i);
+
+			double startVal;
 			if (startValValid) {
 				// get parameter value from fitResult
 				assert(startFitResult);
-				startVal = startFitResult->fitParameter(parName.c_str());
+				startVal = startFitResult->fitParameter(parName);
 			} else {
 				startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
 				if(random.Rndm() > 0.5) {
 					startVal *= -1.;
 				}
 			}
+
 			// check if parameter needs to be fixed
-			if (not L.parFixed(parIndex)) {
+			if (not L.parFixed(i)) {
 				if (startVal == 0) {
 					cout << "    read start value 0 for parameter " << parName << ". "
 					     << "using default start value." << endl;
@@ -477,19 +460,18 @@ main(int    argc,
 				}
 				cout << "    setting parameter [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-				if (not minimizer->SetVariableValue(parIndex, startVal))
+				if (not minimizer->SetVariable(i, parName, startVal, startValStep))
 					success = false;
 			} else {
 				cout << "    fixing parameter  [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = 0" << endl;
-				if (not minimizer->SetVariableValue(parIndex, 0.))  // fix this parameter to 0
+				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
 					success = false;
-				parIsFixed[parIndex] = true;
 			}
-			if (not success) {
-				printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
-				return 1;
-			}
+		}
+		if (not success) {
+			printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
+			return 1;
 		}
 		// cleanup
 		if(startValFile) {
@@ -581,21 +563,19 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	const vector<unsigned int> parIndices = L.orderedParIndices();
 	const double inverseOfSqrtTwo = 1. / sqrt(2.);
-	for (unsigned int i = 0; i< parIndices.size(); ++i) {
-		const unsigned int parIndex = parIndices[i];
+	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(parIndex) << " = ";
-		if (parIsFixed[parIndex])
-			cout << correctParams[parIndex] << " (fixed)" << endl;
+		     << setw(maxParNameLength) << L.parName(i) << " = ";
+		if (L.parFixed(i))
+			cout << correctParams[i] << " (fixed)" << endl;
 		else {
-			cout << setw(12) << maxPrecisionAlign(correctParams[parIndex]) << " +- "
-			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[parIndex]);
+			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- "
+			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[i]);
 			if (runMinos) {
 				double minosErrLow = 0;
 				double minosErrUp  = 0;
-				const bool success = minimizer->GetMinosError(parIndex, minosErrLow, minosErrUp);
+				const bool success = minimizer->GetMinosError(i, minosErrLow, minosErrUp);
 				if (success)
 					cout << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]" << endl;
 			} else
