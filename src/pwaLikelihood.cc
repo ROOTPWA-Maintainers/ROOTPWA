@@ -756,6 +756,9 @@ pwaLikelihood<complexT>::Hessian
 
 				if (r1 < 0)
 					continue;
+				if (_parFixed[r1])
+					continue;
+				assert(i1 < 0 || not _parFixed[i1]);
 
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
@@ -766,6 +769,9 @@ pwaLikelihood<complexT>::Hessian
 
 							if (r2 < 0)
 								continue;
+							if (_parFixed[r2])
+								continue;
+							assert(i2 < 0 || not _parFixed[i2]);
 
 							hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
 							if (i2 >= 0) // real/imaginary derivative
