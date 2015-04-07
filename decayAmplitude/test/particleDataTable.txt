@@ -1,1 +1,1 @@
-../particleDataTable.txt
+../../particleData/particleDataTable.txt
