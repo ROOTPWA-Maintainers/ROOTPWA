@@ -142,6 +142,7 @@ namespace rpwa {
 		unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
 		unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
 		unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
+		unsigned int             nmbParsFixed()                                    const { return _nmbParsFixed;            }  ///< returns number of fixed parameters
 		// std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
 		std::vector<std::string> waveNames   ()                                    const;                                      ///< returns vector with all wave names ordered like in input wave list
 		std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
@@ -234,6 +235,7 @@ namespace rpwa {
 		unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves
 		unsigned int _nmbWavesReflMax;  // maximum of number of negative and positive reflectivity waves
 		unsigned int _nmbPars;          // number of function parameters
+		unsigned int _nmbParsFixed;     // number of fixed function parameters
 
 	#ifdef USE_CUDA
 		bool                _cudaEnabled;        // if true CUDA kernels are used for some calculations
