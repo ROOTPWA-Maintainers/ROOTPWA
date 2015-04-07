@@ -820,7 +820,55 @@ template<typename complexT>
 TMatrixT<double>
 pwaLikelihood<complexT>::CovarianceMatrix(const TMatrixT<double>& hessian) const
 {
-	TMatrixT<double> covariance(TMatrixT<double>::kInverted, hessian);
+	// reduce Hessian matrix by removing the rows and columns corresponding
+	// to fixed parameters
+	TMatrixT<double> hessianRed(_nmbPars - _nmbParsFixed, _nmbPars - _nmbParsFixed);
+	{
+		unsigned int iSkip = 0;
+		for (unsigned int i = 0; i < _nmbPars; ++i) {
+			if (_parFixed[i]) {
+				iSkip++;
+				continue;
+			}
+
+			unsigned int jSkip = 0;
+			for (unsigned int j = 0; j < _nmbPars; ++j) {
+				if (_parFixed[j]) {
+					jSkip++;
+					continue;
+				}
+
+				hessianRed[i - iSkip][j - jSkip] = hessian[i][j];
+			}
+		}
+	}
+
+	// invert Hessian to get covariance matrix
+	TMatrixT<double> covarianceRed(TMatrixT<double>::kInverted, hessianRed);
+
+	// blow up covariance matrix by adding the rows and columns corresponding
+	// to fixed parameters
+	TMatrixT<double> covariance(_nmbPars, _nmbPars);
+	{
+		unsigned int iSkip = 0;
+		for (unsigned int i = 0; i < _nmbPars; ++i) {
+			if (_parFixed[i]) {
+				iSkip++;
+				continue;
+			}
+
+			unsigned int jSkip = 0;
+			for (unsigned int j = 0; j < _nmbPars; ++j) {
+				if (_parFixed[j]) {
+					jSkip++;
+					continue;
+				}
+
+				covariance[i][j] = covarianceRed[i - iSkip][j - jSkip];
+			}
+		}
+	}
+
 	return covariance;
 }
 
