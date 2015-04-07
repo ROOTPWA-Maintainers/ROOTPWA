@@ -169,7 +169,7 @@ main(int    argc,
 	//L.enableCuda(false);
 	L.enableCuda(true);
 #endif
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
+	L.init(rank, 0, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
 		cout << L << endl;
 

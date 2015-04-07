@@ -146,6 +146,7 @@ namespace rpwa {
 		std::vector<std::string> waveNames   ()                                    const;                                      ///< returns vector with all wave names ordered like in input wave list
 		std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
 		double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
+		bool                     parFixed    (const unsigned int parIndex)         const { return _parFixed[parIndex];      }  ///< returns whether likelihood parameter at parIndex is fixed due to mass threshold
 
 		double dLcache(const unsigned int i) const { return _derivCache[i]; }
 		unsigned int ncalls(const functionCallEnum func = FDF) const
@@ -166,6 +167,7 @@ namespace rpwa {
 
 		// operations
 		void init(const unsigned int rank,
+		          const double       massBinCenter,
 		          const std::string& waveListFileName,
 		          const std::string& normIntFileName,
 		          const std::string& accIntFileName,
@@ -196,7 +198,8 @@ namespace rpwa {
 
 		// helper functions
 		void readWaveList       (const std::string& waveListFileName);  ///< reads wave names and thresholds from wave list file
-		void buildParDataStruct (const unsigned int rank);              ///< builds parameter data structures
+		void buildParDataStruct (const unsigned int rank,
+		                         const double       massBinCenter);     ///< builds parameter data structures
 		void readIntegrals      (const std::string& normIntFileName,
 		                         const std::string& accIntFileName,
 		                         const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
@@ -248,6 +251,7 @@ namespace rpwa {
 		waveToListMapType        _waveToWaveIndex;      // maps wave to its index in wave list
 		std::vector<std::string> _parNames;             // function parameter names
 		std::vector<double>      _parThresholds;        // mass thresholds of parameters
+		std::vector<bool>        _parFixed;             // parameter fixed due to mass thresholds
 		ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices
 		                                                // of its real and imginary part in the parameter
 		                                                // array; negative indices mean that the parameter
