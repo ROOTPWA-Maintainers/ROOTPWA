@@ -36,7 +36,9 @@
 	// set include paths
 	gSystem->AddIncludePath("-I$ROOTPWA/decayAmplitude");
 	gSystem->AddIncludePath("-I$ROOTPWA/generators");
+	gSystem->AddIncludePath("-I$ROOTPWA/nBodyPhaseSpace");
 	gSystem->AddIncludePath("-I$ROOTPWA/partialWaveFit");
+	gSystem->AddIncludePath("-I$ROOTPWA/particleData");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 	gSystem->AddIncludePath("-I$BOOST_ROOT");
 	gSystem->AddIncludePath("-I$LIBCONFIG/include");
@@ -55,5 +57,5 @@
 	// gSystem->Load("libGX11TTF");  // doesn't exist on Mac; for what is this needed?
 	gSystem->Load("libRootPwaPartialWaveFit");
 	gSystem->Load("libRootPwaDecayAmplitude");
-	gSystem->Load("libRootPwaGen");
+	gSystem->Load("libRootPwaGenerators");
 }
