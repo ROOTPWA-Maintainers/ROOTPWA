@@ -54,6 +54,7 @@
 #endif
 #include "amplitudeTreeLeaf.h"
 #include "pwaLikelihood.h"
+#include "partialWaveFitHelper.h"
 
 
 // #define USE_FDF
@@ -994,7 +995,7 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 			if (_debug)
 				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
 				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-			if (getReflectivity(waveName) > 0) {
+			if (partialWaveFitHelper::getReflectivity(waveName) > 0) {
 				++_nmbWavesRefl[1];  // positive reflectivity
 				waveNames     [1].push_back(waveName);
 				waveThresholds[1].push_back(threshold);
@@ -1447,44 +1448,6 @@ pwaLikelihood<complexT>::clear()
 	_decayAmps.resize(extents[0][0][0]);
 }
 
-
-// depends on naming convention for waves!!!
-// VR_IGJPCMEIso....
-template<typename complexT>
-int
-pwaLikelihood<complexT>::getReflectivity(const string& name)
-{
-	size_t waveNamePos = 0;  // position at which the wave name starts
-	// check whether name is a production amplitude (parameter) or a wave name
-	if (name[0] == 'V') {
-		waveNamePos = name.find("_");
-		if (waveNamePos == string::npos) {
-			printErr << "cannot parse parameter/wave name '" << name << "'. "
-			         << "appears to be parameter name, but does not contain '_'. Aborting..." << endl;
-			throw;
-		}
-		waveNamePos += 1;
-	}
-
-	int refl = 0;
-	if (name.substr(waveNamePos) != "flat") {
-		if (name[waveNamePos + 6] == '-')
-			refl= -1;
-		else if (name[waveNamePos + 6] == '+')
-			refl= +1;
-		else {
-			printErr << "cannot parse parameter/wave name '" << name << "'. "
-			         << "cannot not determine reflectivity. Aborting..." << endl;
-			throw;
-		}
-	}
-
-	if (_debug)
-		printDebug << "extracted reflectivity = " << refl << " from parameter/wave name "
-		           << "'" << name << "' (char position " << waveNamePos + 6 << ")" << endl;
-
-	return refl;
-}
 
 // copy values from array that corresponds to the function parameters
 // to structure that corresponds to the complex production amplitudes
