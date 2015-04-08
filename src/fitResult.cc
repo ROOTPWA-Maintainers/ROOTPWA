@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <set>
 
+#include <boost/multi_array.hpp>
+
 #include "Math/SpecFuncMathCore.h"
 #include "Math/ProbFuncMathCore.h"
 #include "TDecompChol.h"
@@ -253,9 +255,60 @@ fitResult::evidenceComponents() const
 	const double lvad = 0.5 * (d * 1.837877066 + logDet);
 
 	// parameter volume prior to observing the data
+	double logDetAcc = 0;
+	{
+		// keep list of required waves for each reflectivity and rank
+		boost::multi_array<vector<int>, 2> waves(boost::extents[2][_rank]);
+
+		// loop over production amplitudes and extract combinations of
+		// rank and reflectivity
+		for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+			// skip thresholded production amplitudes
+			if (thrProdAmpIndices.count(i) > 0)
+				continue;
+
+			const string waveName = string(waveNameForProdAmp(i));
+			const int waveI = waveIndex(waveName);
+			assert(waveI >= 0);
+			assert(thrWaveIndices.count(waveI) == 0);
+
+			// skip flat wave (handled below)
+			if (waveName == "flat")
+				continue;
+
+			const int rank = rankOfProdAmp(i);
+			assert(rank >= 0 && rank < _rank);
+
+			const int refl = partialWaveFitHelper::getReflectivity(waveName);
+			assert(refl == -1 || refl == +1);
+
+			if (refl > 0)
+				waves[1][rank].push_back(waveI);
+			else
+				waves[0][rank].push_back(waveI);
+		}
+
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			for (int iRank = 0; iRank < _rank; ++iRank) {
+				const unsigned int dim = waves[iRefl][iRank].size();
+				complexMatrix sub(dim, dim);
+
+				for(unsigned int i = 0; i < dim; ++i)
+					for(unsigned int j = 0; j < dim; ++j)
+						sub.set(i, j, acceptedNormIntegral(waves[iRefl][iRank][i], waves[iRefl][iRank][j]));
+
+				logDetAcc += TMath::Log(sub.determinant().real());
+			}
+		}
+
+		// parameter volume for flat wave correlates with overall acceptance
+		const int idxFlat = waveIndex("flat");
+		assert(idxFlat != -1);
+		logDetAcc += TMath::Log(acceptedNormIntegral(idxFlat, idxFlat).real());
+	}
 	// n-Sphere:
 	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
-	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
+	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * logDetAcc;
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
