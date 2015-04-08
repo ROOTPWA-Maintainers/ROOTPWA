@@ -155,6 +155,19 @@ fitResult::evidence() const
 std::vector<double>
 fitResult::evidenceComponents() const
 {
+	// make sure evidence can be calculated, i.e.:
+	// - covariance matrix exists
+	// - accepted normalisation integral exists
+	if (fitParCovMatrix().GetNcols() == 0 || fitParCovMatrix().GetNrows() == 0
+	    || acceptedNormIntegralMatrix().nCols() == 0 || acceptedNormIntegralMatrix().nRows() == 0) {
+		std::vector<double> retval;
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		return retval;
+	}
+
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
 	set<unsigned int> thrProdAmpIndices;
