@@ -41,6 +41,7 @@
 #include "ampIntegralMatrix.h"
 #include "fileUtils.hpp"
 #include "fitResult.h"
+#include "partialWaveFitHelper.h"
 #include "reportingUtilsEnvironment.h"
 
 using namespace std;
@@ -239,8 +240,13 @@ main(int    argc,
 						printErr << "encountered flat wave prematurely. Aborting..." << endl;
 						return 1;
 					}
-					normIntegral.set(waveIndex_i, waveIndex_j, providedNormIntegral.element(waveName_i, waveName_j));
-					accIntegral.set(waveIndex_i, waveIndex_j, providedAccIntegral.element(waveName_i, waveName_j));
+					if (partialWaveFitHelper::getReflectivity(waveName_i) == partialWaveFitHelper::getReflectivity(waveName_j)) {
+						normIntegral.set(waveIndex_i, waveIndex_j, providedNormIntegral.element(waveName_i, waveName_j));
+						accIntegral.set (waveIndex_i, waveIndex_j, providedAccIntegral.element (waveName_i, waveName_j));
+					} else {
+						normIntegral.set(waveIndex_i, waveIndex_j, 0);
+						accIntegral.set (waveIndex_i, waveIndex_j, 0);
+					}
 				}
 			}
 			for(unsigned int i = 0; i < phaseSpaceIntegral.size() - 1; ++i) {

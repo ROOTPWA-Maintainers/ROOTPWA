@@ -1113,12 +1113,11 @@ pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const complex<double> val = integral.element(_waveNames[iRefl][iWave],
-					                                             _waveNames[jRefl][jWave]);
-					reorderedMatrix[iRefl][iWave][jRefl][jWave] = complexT(val.real(), val.imag());
-				}
+			for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {
+				const complex<double> val = integral.element(_waveNames[iRefl][iWave],
+				                                             _waveNames[iRefl][jWave]);
+				reorderedMatrix[iRefl][iWave][iRefl][jWave] = complexT(val.real(), val.imag());
+			}
 }
 
 
@@ -1390,15 +1389,15 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 	}
 	// set unused entries to 0
 	for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
-		normMatrix.set(_nmbWaves, i, complexT(0., 0.));
-		normMatrix.set(i, _nmbWaves, complexT(0., 0.));
-		accMatrix.set(_nmbWaves, i, complexT(0., 0.));
-		accMatrix.set(i, _nmbWaves, complexT(0., 0.));
+		normMatrix.set(_nmbWaves, i, 0);
+		normMatrix.set(i, _nmbWaves, 0);
+		accMatrix.set (_nmbWaves, i, 0);
+		accMatrix.set (i, _nmbWaves, 0);
 	}
 	// add flat
-	normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
-	accMatrix.set (_nmbWaves, _nmbWaves, complexT(_totAcc,0));
-	phaseSpaceIntegral[_nmbWaves] = 1;
+	normMatrix.set(_nmbWaves, _nmbWaves, 1.);
+	accMatrix.set (_nmbWaves, _nmbWaves, _totAcc);
+	phaseSpaceIntegral[_nmbWaves] = 1.;
 }
 
 
