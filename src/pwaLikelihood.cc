@@ -1460,28 +1460,39 @@ pwaLikelihood<complexT>::clear()
 // VR_IGJPCMEIso....
 template<typename complexT>
 int
-pwaLikelihood<complexT>::getReflectivity(const TString& waveName)
+pwaLikelihood<complexT>::getReflectivity(const string& name)
 {
-	int refl = 0;
-	unsigned int reflIndex = 6;  // position of reflectivity in wave
-	// check whether it is parameter or wave name
-	if (waveName[0] == 'V')
-		reflIndex = 9;
-	if (waveName[reflIndex] == '-')
-		refl= -1;
-	else if (waveName[reflIndex] == '+')
-		refl= +1;
-	else {
-		printErr << "cannot parse parameter/wave name '" << waveName << "'. "
-		         << "cannot not determine reflectivity. Aborting..." << endl;
-		throw;
+	size_t waveNamePos = 0;  // position at which the wave name starts
+	// check whether name is a production amplitude (parameter) or a wave name
+	if (name[0] == 'V') {
+		waveNamePos = name.find("_");
+		if (waveNamePos == string::npos) {
+			printErr << "cannot parse parameter/wave name '" << name << "'. "
+			         << "appears to be parameter name, but does not contain '_'. Aborting..." << endl;
+			throw;
+		}
+		waveNamePos += 1;
 	}
+
+	int refl = 0;
+	if (name.substr(waveNamePos) != "flat") {
+		if (name[waveNamePos + 6] == '-')
+			refl= -1;
+		else if (name[waveNamePos + 6] == '+')
+			refl= +1;
+		else {
+			printErr << "cannot parse parameter/wave name '" << name << "'. "
+			         << "cannot not determine reflectivity. Aborting..." << endl;
+			throw;
+		}
+	}
+
 	if (_debug)
-		printDebug << "extracted reflectivity = " << refl << " from parameter name "
-		           << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
+		printDebug << "extracted reflectivity = " << refl << " from parameter/wave name "
+		           << "'" << name << "' (char position " << waveNamePos + 6 << ")" << endl;
+
 	return refl;
 }
-
 
 // copy values from array that corresponds to the function parameters
 // to structure that corresponds to the complex production amplitudes
