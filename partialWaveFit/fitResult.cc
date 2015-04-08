@@ -45,6 +45,7 @@
 #include "TRandom3.h"
 
 #include "fitResult.h"
+#include "partialWaveFitHelper.h"
 
 
 using namespace std;
@@ -281,6 +282,13 @@ complex<double>
 fitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
                                  const unsigned int waveIndexB) const
 {
+	// spin density matrix element is 0 if the two waves have different
+	// reflectivities
+	if (partialWaveFitHelper::getReflectivity(_waveNames[waveIndexA])
+	    != partialWaveFitHelper::getReflectivity(_waveNames[waveIndexB])) {
+		return 0;
+	}
+
 	// get pairs of amplitude indices with the same rank for waves A and B
 	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
 		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
@@ -363,6 +371,14 @@ TMatrixT<double>
 fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
                                     const unsigned int waveIndexB) const
 {
+	// spin density matrix element is 0 if the two waves have different
+	// reflectivities
+	if (partialWaveFitHelper::getReflectivity(_waveNames[waveIndexA])
+	    != partialWaveFitHelper::getReflectivity(_waveNames[waveIndexB])) {
+		TMatrixT<double> spinDensCov(2, 2);
+		return spinDensCov;
+	}
+
 	// get pairs of amplitude indices with the same rank for waves A and B
 	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
 		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
