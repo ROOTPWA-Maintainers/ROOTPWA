@@ -40,6 +40,8 @@ namespace rpwa {
 
 		void extractWaveList(const rpwa::fitResult& fitResult, std::ostream& waveList);
 
+		int getReflectivity(const std::string& name);
+
 
 	}  // namespace partialWaveFitHelper
 

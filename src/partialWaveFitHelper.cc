@@ -52,3 +52,37 @@ rpwa::partialWaveFitHelper::extractWaveList(const rpwa::fitResult& result,
 		}
 	}
 }
+
+
+// depends on naming convention for waves!!!
+// VR_IGJPCMEIso....
+int
+rpwa::partialWaveFitHelper::getReflectivity(const std::string& name)
+{
+	size_t waveNamePos = 0;  // position at which the wave name starts
+	// check whether name is a production amplitude (parameter) or a wave name
+	if (name[0] == 'V') {
+		waveNamePos = name.find("_");
+		if (waveNamePos == std::string::npos) {
+			printErr << "cannot parse parameter/wave name '" << name << "'. "
+			         << "appears to be parameter name, but does not contain '_'. Aborting..." << std::endl;
+			throw;
+		}
+		waveNamePos += 1;
+	}
+
+	int refl = 0;
+	if (name.substr(waveNamePos) != "flat") {
+		if (name[waveNamePos + 6] == '-')
+			refl= -1;
+		else if (name[waveNamePos + 6] == '+')
+			refl= +1;
+		else {
+			printErr << "cannot parse parameter/wave name '" << name << "'. "
+			         << "cannot not determine reflectivity. Aborting..." << std::endl;
+			throw;
+		}
+	}
+
+	return refl;
+}
