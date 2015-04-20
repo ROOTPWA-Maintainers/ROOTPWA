@@ -333,7 +333,7 @@ main(int    argc,
 		const complexMatrix&           accIntegral            = result->acceptedNormIntegralMatrix();
 		const vector<double>&          phaseSpaceIntegral     = result->phaseSpaceIntegralVector();
 		const bool                     converged              = result->converged();
-		const bool                     hasHessian             = result->hasHessian();
+		const bool                     hasHessian             = true;
 		newResult->fill(nmbEvents,
 		                normNmbEvents,
 		                massBinCenter,
