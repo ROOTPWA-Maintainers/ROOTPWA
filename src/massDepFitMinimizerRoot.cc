@@ -195,7 +195,7 @@ bool
 rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::parameters& fitParameters,
                                                 const std::string& freeParameters) const
 {
-	// tokenize freeParameters string (default deparators also include '*')
+	// tokenize freeParameters string (default separators also include '*')
 	boost::char_separator<char> separators(" ,\t\n");
 	boost::tokenizer<boost::char_separator<char> > tokenizeFreeParameters(freeParameters, separators);
 
