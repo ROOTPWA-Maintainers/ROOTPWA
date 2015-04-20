@@ -72,7 +72,7 @@ plot4(const unsigned int nmbTrees,             // number of fitResult trees
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
-			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			printErr << "null pointer to tree[" << i << "]. Aborting..." << endl;
 			return;
 		}
 

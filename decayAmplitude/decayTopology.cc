@@ -563,11 +563,11 @@ decayTopology::addDecay(const decayTopology& topo)
 void decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
 {
 	if (not productionVertex) {
-		printErr << "null pointer for production vertex. aborting." << endl;
+		printErr << "null pointer for production vertex. Aborting..." << endl;
 		throw;
 	}
 	if (not productionVertex->XParticle()) {
-		printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
+		printErr << "null pointer for particle[0] coming out of production vertex. Aborting..." << endl;
 		throw;
 	}
 	name() = "\"" + productionVertex->XParticle()->qnSummary() + "\"";
@@ -859,22 +859,22 @@ decayTopology::constructDecay(const productionVertexPtr&          productionVert
 		printDebug << "constructing decay topology with " << nmbDecayVert   << " decay vertices and "
 		           << nmbFsPart << " final-state particles" << endl;
 	if (nmbFsPart < 1) {
-		printErr << "cannot construct decay topology without final-state particles. aborting." << endl;
+		printErr << "cannot construct decay topology without final-state particles. Aborting..." << endl;
 		throw;
 	}
 	if (nmbDecayVert < 1) {
 		printWarn << "need at least production and X-decay vertex "
-		          << "to construct decay topology. aborting." << endl;
+		          << "to construct decay topology. Aborting..." << endl;
 		throw;
 	}
 
 	// create graph node for production vertex and store pointer
 	if (not productionVertex) {
-		printErr << "null pointer for production vertex. aborting." << endl;
+		printErr << "null pointer for production vertex. Aborting..." << endl;
 		throw;
 	}
 	if (not productionVertex->XParticle()) {
-		printErr << "null pointer for X particle coming out of production vertex. aborting." << endl;
+		printErr << "null pointer for X particle coming out of production vertex. Aborting..." << endl;
 		throw;
 	}
 	name() = "\"" + productionVertex->XParticle()->qnSummary() + "\"";
@@ -883,7 +883,7 @@ decayTopology::constructDecay(const productionVertexPtr&          productionVert
 	// create graph nodes for interaction vertices and store pointers
 	for (unsigned int i = 0; i < nmbDecayVert; ++i) {
 		if (not decayVertices[i]) {
-			printErr << "null pointer for decay vertex[" << i << "]. aborting." << endl;
+			printErr << "null pointer for decay vertex[" << i << "]. Aborting..." << endl;
 			throw;
 		}
 		addVertex(decayVertices[i]);
@@ -891,7 +891,7 @@ decayTopology::constructDecay(const productionVertexPtr&          productionVert
 	// create final-state nodes and vertices
 	for (unsigned int i = 0; i < nmbFsPart; ++i) {
 		if (not fsParticles[i]) {
-			printErr << "null pointer for final-state particle[" << i << "]. aborting." << endl;
+			printErr << "null pointer for final-state particle[" << i << "]. Aborting..." << endl;
 			throw;
 		}
 		const fsVertexPtr& fsVert = createFsVertex(fsParticles[i]);
@@ -919,7 +919,7 @@ decayTopology::constructDecay(const productionVertexPtr&          productionVert
 	}
 	// check that topology makes sense
 	if (performTopologyCheck and not checkTopology()) {
-		printErr << "topology has problems that need to be fixed. aborting." << endl;
+		printErr << "topology has problems that need to be fixed. Aborting..." << endl;
 		throw;
 	}
 	return *this;
@@ -980,7 +980,7 @@ decayTopology::buildInternalData()
 		success = false;
 	}
 	if (not success) {
-		printErr << "cannot construct decay topology from graph '" << name() << "'. aborting." << endl;
+		printErr << "cannot construct decay topology from graph '" << name() << "'. Aborting..." << endl;
 		throw;
 	}
 	// find interaction vertices

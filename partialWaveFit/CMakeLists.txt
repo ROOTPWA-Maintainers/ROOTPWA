@@ -55,6 +55,7 @@ set(SOURCES
 	pwaLikelihood.cc
 	pwaPlotter.cc
 	parameterSpace.cc
+	partialWaveFitHelper.cc
 	)
 
 

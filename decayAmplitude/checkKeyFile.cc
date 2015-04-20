@@ -349,7 +349,7 @@ main(int    argc,
 
 	// get key file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one key file to process. aborting." << endl;;
+		printErr << "you need to specify at least one key file to process. Aborting..." << endl;;
 		usage(progName, 1);
 	}
 	vector<string> keyFileNames;
@@ -380,7 +380,7 @@ main(int    argc,
 		else if (fileExt == "evt")
 			evtFileNames.push_back(dataFileName);
 		else {
-			printErr << "specified input files is neither a .root nor a .evt file. aborting.";
+			printErr << "specified input files is neither a .root nor a .evt file. Aborting...";
 			usage(progName, 1);
 		}
 		vector<TTree*> inTrees;
@@ -388,7 +388,7 @@ main(int    argc,
 		                         rootFileNames, evtFileNames,
 		                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
 		                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
-			printErr << "problems opening input file(s). aborting." << endl;
+			printErr << "problems opening input file(s). Aborting..." << endl;
 			exit(1);
 		}
 		inTree = inTrees[0];

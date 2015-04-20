@@ -56,7 +56,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l inuptFileLeft -r inputFileRight" << endl
+	     << " -l inputFileLeft -r inputFileRight [-h]" << endl
 	     << "    where:" << endl
 	     << "        -l         input fit result file left" << endl
 	     << "        -r         output fit result file" << endl
@@ -75,9 +75,11 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 
 	const string treeName = "pwa";
 	const string branchName = "fitResult_v2";
@@ -102,13 +104,13 @@ main(int    argc,
 		}
 
 	TFile* inputFileLeft = TFile::Open(inputFileNameLeft.c_str(), "READ");
-	if(not inputFileLeft) {
+	if(not inputFileLeft || inputFileLeft->IsZombie()) {
 		printErr << "could not open input file '" << inputFileNameLeft << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TFile* inputFileRight = TFile::Open(inputFileNameRight.c_str(), "READ");
-	if(not inputFileRight) {
+	if(not inputFileRight || inputFileRight->IsZombie()) {
 		printErr << "could not open input file '" << inputFileNameRight << "'. Aborting..." << endl;
 		return 1;
 	}

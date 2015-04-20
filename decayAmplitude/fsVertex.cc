@@ -47,7 +47,7 @@ fsVertex::fsVertex(const particlePtr& fsParticle)
 	: interactionVertex()
 {
 	if (not fsParticle) {
-		printErr << "null pointer to final state particle. aborting." << endl;
+		printErr << "null pointer to final state particle. Aborting..." << endl;
 		throw;
 	}
 	interactionVertex::addInParticle(fsParticle);

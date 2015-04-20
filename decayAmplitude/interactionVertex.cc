@@ -116,7 +116,7 @@ bool
 interactionVertex::addInParticle(const particlePtr& part)
 {
 	if (not part) {
-		printErr << "trying to add null pointer to incoming particles. aborting." << endl;
+		printErr << "trying to add null pointer to incoming particles. Aborting..." << endl;
 		throw;
 	}
 	if (_debug)
@@ -130,7 +130,7 @@ bool
 interactionVertex::addOutParticle(const particlePtr& part)
 {
 	if (not part) {
-		printErr << "trying to add null pointer to outgoing particles. aborting." << endl;
+		printErr << "trying to add null pointer to outgoing particles. Aborting..." << endl;
 		throw;
 	}
 	if (_debug)

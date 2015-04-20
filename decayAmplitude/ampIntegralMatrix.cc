@@ -127,7 +127,7 @@ ampIntegralMatrix::operator +=(const ampIntegralMatrix& integral)
 	if (not hasIdenticalWaveSet(integral)) {
 		printErr << "cannot add " << *this << endl
 		         << "and " << integral << endl
-		         << "because the two integral matrices have different wave sets. aborting." << endl;
+		         << "because the two integral matrices have different wave sets. Aborting..." << endl;
 		throw;
 	}
 	for (unsigned int i = 0; i < _nmbWaves; ++i) {
@@ -147,7 +147,7 @@ ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
 	if (not hasIdenticalWaveSet(integral)) {
 		printErr << "cannot subtract " << integral << endl
 		         << "from " << *this << endl
-		         << "because the two integral matrices have different wave sets. aborting." << endl;
+		         << "because the two integral matrices have different wave sets. Aborting..." << endl;
 		throw;
 	}
 	for (unsigned int i = 0; i < _nmbWaves; ++i) {
@@ -198,7 +198,7 @@ ampIntegralMatrix::waveIndex(const string& waveName) const
 {
 	waveNameToIndexMapIterator entry = _waveNameToIndexMap.find(waveName);
 	if (entry == _waveNameToIndexMap.end()) {
-		printErr << "cannot find wave '" << waveName << "' in integral matrix. aborting." << endl;
+		printErr << "cannot find wave '" << waveName << "' in integral matrix. Aborting..." << endl;
 		throw;
 	}
 	return entry->second;
@@ -211,7 +211,7 @@ ampIntegralMatrix::waveName(const unsigned int waveIndex) const
 	if (waveIndex < _waveNames.size())
 		return _waveNames[waveIndex];
 	else {
-		printErr << "wave index " << waveIndex << " is out of range. aborting." << endl;
+		printErr << "wave index " << waveIndex << " is out of range. Aborting..." << endl;
 		throw;
 	}
 }
@@ -343,7 +343,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 		bool ampBinEof = false;
 		for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
 			amps[waveIndex].resize(1);  // no subamps supported in .amp files
-			binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
+			binAmpFiles[waveIndex]->read((char*)amps[waveIndex].data(), sizeof(complex<double>));
 			if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
 				success = false;
 				printWarn << "unexpected EOF while reading binary amplitude '"
@@ -363,7 +363,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 			if (nmbSubAmps < 1) {
 				printErr << "amplitude object for wave '" << _waveNames[waveIndex] << "' "
 				         << "does not contain any amplitude values "
-				         << "at event " << iEvent << " of total " << _nmbEvents << ". aborting." << endl;
+				         << "at event " << iEvent << " of total " << _nmbEvents << ". Aborting..." << endl;
 				throw;
 			}
 			// get all incoherent subamps
@@ -382,7 +382,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 					         << _waveNames[waveIndexI] << "' = " << nmbSubAmps
 					         << " differs from that of wave '" << _waveNames[waveIndexJ] << "' = "
 					         << amps[waveIndexJ].size()
-					         << " at event " << iEvent << " of total " << _nmbEvents << ". aborting. "
+					         << " at event " << iEvent << " of total " << _nmbEvents << ". Aborting... "
 					         << "be sure to use only .root amplitude files, "
 					         << "if your channel has sub-amplitudes." << endl;
 					throw;

@@ -130,7 +130,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
               const std::string& branchName    = "fitResult_v2")  // fitResult branch name
 	;/*{
 	   if (!trees[0]) {
-	   printErr << "null pointer to tree[" << 0 << "]. aborting." << endl;
+	   printErr << "null pointer to tree[" << 0 << "]. Aborting..." << endl;
 	   return 0;
 	   }
 	   // get wave index (assumes same wave set in all trees)
@@ -142,7 +142,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 	   return plotIntensity(nmbTrees, trees, index, saveEps, graphColors, drawLegend,  graphTitle,
 	   drawOption, normalization, yAxisRangeMax, selectExpr, branchName);
 	   printErr << "cannot find wave '" << waveName << "' "
-	   << "in tree '" << trees[0]->GetName() << "'. aborting." << endl;
+	   << "in tree '" << trees[0]->GetName() << "'. Aborting..." << endl;
 	   return 0;
 	   }*/
 

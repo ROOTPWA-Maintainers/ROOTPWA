@@ -58,7 +58,6 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
-
 #include "amplitudeTreeLeaf.h"
 
 
@@ -93,18 +92,14 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -N -n normfile"
-	     << " [-a normfile] -r rank [-t # -m # -q -z -h]" << endl
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -s seed -x [startvalue] -N -n normfile"
+	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -q -z -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
-#else
-	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
-#endif
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
 	     << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
@@ -112,10 +107,10 @@ usage(const string& progName,
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
+	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -t #       relative parameter tolerance (default: 0.001)" << endl
-	     << "        -m #       absolute likelihood tolerance (default: 0.001)" << endl
+	     << "        -t #       relative parameter tolerance (default: 0.0001)" << endl
+	     << "        -m #       absolute likelihood tolerance (default: 0.000001)" << endl
 	     << "        -C         use half-Cauchy priors (default: false)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -z         save space by not saving integral and covariance matrices (default: false)" << endl
@@ -134,9 +129,11 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 
 	// ---------------------------------------------------------------------------
 	// internal parameters
@@ -162,7 +159,7 @@ main(int    argc,
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
 	unsigned int rank                = 1;                      // rank of fit
-	double       minimizerTolerance  = 1e-4;                  // minimizer tolerance
+	double       minimizerTolerance  = 1e-4;                   // minimizer tolerance
 	double       likelihoodTolerance = 1e-6;                   // tolerance of likelihood function
 	bool         cauchy              = false;
 	bool         quiet               = false;
@@ -185,9 +182,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
-#endif
 			break;
 		case 'o':
 			outFileName = optarg;
@@ -244,7 +239,7 @@ main(int    argc,
 		          << "'" << accIntFileName << "'" << endl;
 	}
 	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
+		printErr << "no wavelist file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
@@ -253,7 +248,8 @@ main(int    argc,
 	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
 	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
 	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
-	     << "    path to output file ............................ '" << outFileName      << "'" << endl;
+	     << "    path to output file ............................ '" << outFileName      << "'" << endl
+	     << "    seed for random start values ................... "  << startValSeed            << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
 	cout << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
@@ -269,19 +265,19 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
+	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	printInfo << "creating and setting up likelihood function" << endl;
 	pwaLikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	L.init(rank, massBinCenter, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 	const double sqrtNmbEvts = sqrt((double)nmbEvts);
-	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 
 	if (cauchy)
 		L.setPriorType(L.HALF_CAUCHY);
@@ -306,7 +302,7 @@ main(int    argc,
 		TRandom3 random(startValSeed);
 		for(unsigned int i = 0; i < params.size(); ++i)
 		{
-			if(L.parThreshold(i) > massBinCenter) {
+			if(L.parFixed(i)) {
 				printErr << "thresholds are not implemented for fits with NLopt. Aborting..." << endl;
 				return 1;
 			}
@@ -344,8 +340,8 @@ main(int    argc,
 	if(result < 0) {
 		converged = false;
 	}
-	std::vector<double> correctParams = L.CorrectParamSigns(&params[0]);
-	double newLikelihood = L.DoEval(&correctParams[0]);
+	std::vector<double> correctParams = L.CorrectParamSigns(params.data());
+	double newLikelihood = L.DoEval(correctParams.data());
 	if(likeli != newLikelihood) {
 		printErr << "Flipping signs according to sign conventions changed the likelihood (from " << likeli << " to " << newLikelihood << ")." << endl;
 		return 1;
@@ -355,20 +351,20 @@ main(int    argc,
 	TMatrixT<double> fitParCovMatrix(0, 0);
 	bool hasHessian = false;
 	if(not saveSpace) {
-		TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+		TMatrixT<double> hessian = L.Hessian(correctParams.data());
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
-		fitParCovMatrix = L.CovarianceMatrixAnalytically(hessian);
+		fitParCovMatrix = L.CovarianceMatrix(hessian);
 		TVectorT<double> eigenvalues;
 		hessian.EigenVectors(eigenvalues);
 		if (not quiet) {
 			printInfo << "analytical Hessian eigenvalues:" << endl;
 		}
-		for(int i=0; i<eigenvalues.GetNrows(); i++) {
+		for(int i=0; i<eigenvalues.GetNrows(); ++i) {
 			if (not quiet) {
-				cout << "	" << eigenvalues[i] << endl;
+				cout << "    " << maxPrecisionAlign(eigenvalues[i]) << endl;
 			}
 			if (eigenvalues[i] <= 0.) {
-				printWarn << "eigenvalue " << i << " of Hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+				printWarn << "eigenvalue " << i << " of (analytic) Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
 				converged = false;
 			}
 		}
@@ -383,12 +379,10 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	vector<unsigned int> parIndices = L.orderedParIndices();
-	for (unsigned int i = 0; i< parIndices.size(); ++i) {
-		const unsigned int parIndex = parIndices[i];
+	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(parIndex) << " = "
-		     << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- ";
+		     << setw(maxParNameLength) << L.parName(i) << " = "
+		     << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
 		if(not saveSpace) {
 			cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
 		} else {
@@ -466,7 +460,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				complexMatrix normIntegral(0, 0);  // normalization integral over full phase space without acceptance
 				complexMatrix accIntegral (0, 0);  // normalization integral over full phase space with acceptance
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
@@ -496,9 +490,9 @@ main(int    argc,
 				             prodAmpNames,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
-				             normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+				             normIntegral,
 				             accIntegral,
-				             phaseSpaceIntegral,
+				             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 				             converged,
 				             hasHessian);
 				//printDebug << *result;

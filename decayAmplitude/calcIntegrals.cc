@@ -120,7 +120,7 @@ main(int    argc,
 
 	// get input file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one amplitude file to process. aborting." << endl;;
+		printErr << "you need to specify at least one amplitude file to process. Aborting..." << endl;;
 		usage(progName, 1);
 	}
 	vector<string> rootAmpFileNames;
@@ -137,7 +137,7 @@ main(int    argc,
 			          << "skipping." << endl;
 	}
 	if ((rootAmpFileNames.size() == 0) and (binAmpFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .amp file. aborting.";
+		printErr << "none of the specified input files is a .root or .amp file. Aborting...";
 		usage(progName, 1);
 	}
 
@@ -152,7 +152,7 @@ main(int    argc,
 	if (outFileExt == "root") {
 		TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 		if (not outFile) {
-			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
+			printErr << "cannot open output file '" << outFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 		const int nmbBytes = integral.Write(integralName.c_str());
@@ -168,7 +168,7 @@ main(int    argc,
 		integral.writeAscii(outFileName);
 	else {
 		printErr << "output file '" << outFileName << "' should be either a .root or a .int file. "
-		         << "aborting.";
+		         << "Aborting...";
 		exit(1);
 	}
 

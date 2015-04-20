@@ -98,7 +98,7 @@ namespace rpwa {
 
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
-		          const unsigned int                        normNmbEvents,	         // number of events to normalize to
+		          const unsigned int                        normNmbEvents,           // number of events to normalize to
 		          const double                              massBinCenter,           // center value of mass bin
 		          const double                              logLikelihood,           // log(likelihood) at maximum
 		          const int                                 rank,                    // rank of fit
@@ -214,7 +214,7 @@ namespace rpwa {
 		inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
 		inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
 		inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
-		inline std::ostream& printAmpsGenPW   (std::ostream& out = std::cout) const;  ///< prints all amplitudes in format used for genpw	(rank 1 only at the moment)
+		inline std::ostream& printAmpsGenPW   (std::ostream& out = std::cout) const;  ///< prints all amplitudes in format used for genpw (rank 1 only at the moment)
 
 		virtual inline std::ostream& print(std::ostream& out = std::cout) const;
 		friend std::ostream& operator << (std::ostream&    out,

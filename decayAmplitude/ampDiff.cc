@@ -133,7 +133,7 @@ main(int    argc,
 
 	// get amplitude file names
 	if (argc - optind != 2) {
-		printErr << "you have to specify two amplitude files. aborting." << endl;;
+		printErr << "you have to specify two amplitude files. Aborting..." << endl;;
 		usage(progName, 1);
 	}
 	ampFileNames[0] = argv[optind++];
@@ -146,7 +146,7 @@ main(int    argc,
 	for (unsigned int i = 0; i < 2; ++i) {
 		ampFiles[i].open(ampFileNames[i].c_str());
 		if (not ampFiles[i]) {
-			printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. aborting." << endl;
+			printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. Aborting..." << endl;
 			exit(1);
 		}
 	}

@@ -143,7 +143,7 @@ main(int    argc,
 		printWarn << "using default acceptance normalization integral file '" << accIntFileName << "'." << endl;
 	}
 	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified! aborting!" << endl;
+		printErr << "no wavelist file specified! Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
@@ -169,7 +169,7 @@ main(int    argc,
 	//L.enableCuda(false);
 	L.enableCuda(true);
 #endif
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
+	L.init(rank, 0, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
 		cout << L << endl;
 

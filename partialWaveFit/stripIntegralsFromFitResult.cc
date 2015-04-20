@@ -54,7 +54,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -i inuptFile -o outputFile [-c]" << endl
+	     << " -i inputFile -o outputFile [-c -h]" << endl
 	     << "    where:" << endl
 	     << "        -i         input fit result file" << endl
 	     << "        -o         output fit result file" << endl
@@ -74,9 +74,11 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
+#endif
 
 	const string treeName = "pwa";
 	const string branchName = "fitResult_v2";
@@ -105,13 +107,13 @@ main(int    argc,
 		}
 
 	TFile* inputFile = TFile::Open(inputFileName.c_str(), "READ");
-	if(not inputFile) {
+	if(not inputFile || inputFile->IsZombie()) {
 		printErr << "could not open input file '" << inputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TFile* outputFile = TFile::Open(outputFileName.c_str(), "NEW");
-	if(not outputFile) {
+	if(not outputFile || outputFile->IsZombie()) {
 		printErr << "could not open output file '" << outputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
@@ -133,24 +135,29 @@ main(int    argc,
 
 	for(long i = 0; i < inResultTree->GetEntries(); ++i) {
 		inResultTree->GetEntry(i);
-		const unsigned int& nmbEvents = inResult->nmbEvents();
-		const unsigned int& normNmbEvents = inResult->normNmbEvents();
-		const double& massBinCenter = inResult->massBinCenter();
-		const double& logLikelihood = inResult->logLikelihood();
-		const int& rank = inResult->rank();
-		const vector<TComplex> prodAmpsTComplex = inResult->prodAmps();
-		const unsigned int nmbProdAmps = prodAmpsTComplex.size();
-		vector<complex<double> > prodAmps(nmbProdAmps);
+		const unsigned int             nmbEvents              = inResult->nmbEvents();
+		const unsigned int             normNmbEvents          = inResult->normNmbEvents();
+		const double                   massBinCenter          = inResult->massBinCenter();
+		const double                   logLikelihood          = inResult->logLikelihood();
+		const int                      rank                   = inResult->rank();
+
+		const vector<TComplex>&        prodAmpsTComplex       = inResult->prodAmps();
+		const unsigned int             nmbProdAmps            = prodAmpsTComplex.size();
+		vector<complex<double> >       prodAmps(nmbProdAmps);
 		for(unsigned int i = 0; i < nmbProdAmps; ++i) {
 			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
 		}
-		const vector<string>& prodAmpNames = inResult->prodAmpNames();
+
+		const vector<string>&          prodAmpNames           = inResult->prodAmpNames();
+
 		const vector<pair<int, int> >& fitParCovMatrixIndices = inResult->fitParCovIndices();
-		const complexMatrix normIntegral(0, 0);
-		const complexMatrix accIntegral(0, 0);
-		const vector<double> phaseSpaceIntegral;
-		const bool& converged = inResult->converged();
-		const bool& hasHesse = inResult->hasHessian();
+
+		const complexMatrix            normIntegral(0, 0);
+		const complexMatrix            accIntegral(0, 0);
+		const vector<double>           phaseSpaceIntegral;
+
+		const bool                     converged              = inResult->converged();
+		const bool                     hasHessian             = inResult->hasHessian();
 
 		outResult->reset();
 		outResult->fill(nmbEvents,
@@ -166,7 +173,7 @@ main(int    argc,
 		                accIntegral,
 		                phaseSpaceIntegral,
 		                converged,
-		                hasHesse);
+		                hasHessian);
 
 		outResultTree->Fill();
 

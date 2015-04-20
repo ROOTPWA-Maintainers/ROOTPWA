@@ -324,7 +324,7 @@ main(int argc, char** argv)
 				                         rootFileNames, evtFileNames,
 				                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
 				                         decayKinPartNamesObjName, decayKinMomentaLeafName, true)) {
-					printErr << "problems opening input files. aborting." << endl;
+					printErr << "problems opening input files. Aborting..." << endl;
 					exit(1);
 				}
 			}
@@ -342,7 +342,7 @@ main(int argc, char** argv)
 
 			// loop over events
 			if (not topo->initKinematicsData(*prodKinPartNames, *decayKinPartNames)) {
-				printErr << "problems initializing input data. aborting." << endl;
+				printErr << "problems initializing input data. Aborting..." << endl;
 				exit(1);
 			}
 			const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)

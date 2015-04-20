@@ -583,7 +583,7 @@ waveSetGenerator::findBoseSymDecays() const
 		const size_t               nmbBoseSymVertIds = boseSymVertIds.size();
 		if (nmbBoseSymVertIds > 1) {
 			printErr << "the code has not yet been tested for decay topologies with "
-			         << nmbBoseSymVertIds << " Bose-symmetric decay vertices. aborting." << endl;
+			         << nmbBoseSymVertIds << " Bose-symmetric decay vertices. Aborting..." << endl;
 			throw;
 		}
 		if (nmbBoseSymVertIds != 1)
@@ -667,7 +667,7 @@ waveSetGenerator::findBoseSymDecays() const
 				if (   not waveIndicesToRemove.insert(i).second
 				    or not waveIndicesToKeep.insert(waveIndex).second) {
 					printErr << "wave[" << i << "]([" << waveIndex << "]) was tagged for "
-					         << "removal(for keeping) twice. this should never happen. aborting." << endl;
+					         << "removal(for keeping) twice. this should never happen. Aborting..." << endl;
 					throw;
 				}
 				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*symTopo, true)
@@ -676,7 +676,7 @@ waveSetGenerator::findBoseSymDecays() const
 				if (   not waveIndicesToRemove.insert(waveIndex).second
 				    or not waveIndicesToKeep.insert(i).second) {
 					printErr << "wave[" << waveIndex << "]([" << i << "]) was tagged for "
-					         << "removal(for keeping) twice. this should never happen. aborting." << endl;
+					         << "removal(for keeping) twice. this should never happen. Aborting..." << endl;
 					throw;
 				}
 				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*topo, true)

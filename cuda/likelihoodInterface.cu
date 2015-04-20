@@ -200,7 +200,7 @@ likelihoodInterface<complexT>::loadDecayAmps
  const bool         reshuffleArray)   // if set devcay amplitude array is reshuffled from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
 {
 	if (not decayAmps) {
-		printErr << "null pointer to decay amplitudes. aborting." << endl;
+		printErr << "null pointer to decay amplitudes. Aborting..." << endl;
 		throw;
 	}
 	if (not _cudaInitialized) {
@@ -370,7 +370,7 @@ likelihoodInterface<complexT>::logLikelihood
  const unsigned int rank)         // rank of spin-density matrix
 {
 	if (not prodAmps) {
-		printErr << "null pointer to production amplitudes. aborting." << endl;
+		printErr << "null pointer to production amplitudes. Aborting..." << endl;
 		throw;
 	}
 	
@@ -431,11 +431,11 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
  value_type&        derivativeFlat)  // log likelihood derivative of flat wave
 {
 	if (not prodAmps) {
-		printErr << "null pointer to production amplitudes. aborting." << endl;
+		printErr << "null pointer to production amplitudes. Aborting..." << endl;
 		throw;
 	}
 	if (not derivatives) {
-		printErr << "null pointer to derivatives array. aborting." << endl;
+		printErr << "null pointer to derivatives array. Aborting..." << endl;
 		throw;
 	}
 

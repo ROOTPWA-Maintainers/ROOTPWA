@@ -19,7 +19,7 @@ nonInteractionVertex::nonInteractionVertex(const particlePtr& XParticle)
 	  _XParticleCache()
 {
 	if (not XParticle) {
-		printErr << "null pointer to XParticle. aborting." << endl;
+		printErr << "null pointer to XParticle. Aborting..." << endl;
 		throw;
 	}
 	interactionVertex::addOutParticle(XParticle);

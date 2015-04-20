@@ -253,7 +253,7 @@ namespace rpwa {
 			// check input parameters
 			if (_useCache and ((j1 >= _maxJ) or (j2 >= _maxJ) or (J >= _maxJ))) {
 				printErr << "spins are too large. maximum allowed spin is "
-				         << spinQn(_maxJ - 1) << ". aborting." << std::endl;
+				         << spinQn(_maxJ - 1) << ". Aborting..." << std::endl;
 				throw;
 			}
 			if (   not spinAndProjAreCompatible(j1, m1)

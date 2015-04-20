@@ -70,43 +70,6 @@ namespace rpwa {
 
 	template<typename T>
 	inline
-	const T*
-	toArray(const std::vector<T>& vec)  ///< returns underlying array of vector
-	{
-		return &(*(vec.begin()));
-	}
-
-	template<typename T>
-	inline
-	T*
-	toArray(std::vector<T>& vec)  ///< returns underlying array of vector
-	{
-		return &(*(vec.begin()));
-	}
-
-	template<typename T>
-	inline
-	const T*
-	toArray(std::size_t&          size,
-	        const std::vector<T>& vec)  ///< returns underlying array of vector and its size
-	{
-		size = vec.size();
-		return &(*(vec.begin()));
-	}
-
-	template<typename T>
-	inline
-	T*
-	toArray(std::size_t&    size,
-	        std::vector<T>& vec)  ///< returns underlying array of vector and its size
-	{
-		size = vec.size();
-		return &(*(vec.begin()));
-	}
-
-
-	template<typename T>
-	inline
 	std::string
 	toString(const T& fromValue)  ///< converts any type into string that has output stream operator defined
 	{

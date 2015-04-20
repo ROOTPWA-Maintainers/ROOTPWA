@@ -77,8 +77,8 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -H -q -h]" << endl
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -s seed -x [start value] -N -n normfile"
+	     << " -a normfile -A # normalisation events -r rank -M minimizer -m algorithm -g strategy -t # -e -c -H -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -93,7 +93,7 @@ usage(const string& progName,
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
+	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
 	     << "        -M name    minimizer (default: Minuit2)" << endl
 	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
@@ -107,9 +107,9 @@ usage(const string& progName,
 	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: on)" << endl
+	     << "        -e         set minimizer storage level to 1 (only available for Minuit2, default: 0)" << endl
 #else
-	     << "        -e         set minimizer storage level to 1 [not supported; ROOT version too low]" << endl
+	     << "        -e         set minimizer storage level to 1 [not supported and not required; ROOT version too low to switch off minimizer storage]" << endl
 #endif
 #ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
@@ -298,7 +298,7 @@ main(int    argc,
 		          << "'" << accIntFileName << "'" << endl;
 	}
 	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
+		printErr << "no wavelist file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
@@ -326,6 +326,7 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
+	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	printInfo << "creating and setting up likelihood function" << endl;
 	pwaLikelihood<complex<double> > L;
 	if (quiet)
@@ -334,7 +335,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
 #endif
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	L.init(rank, massBinCenter, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
@@ -373,7 +374,6 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// read in fitResult with start values
 	printInfo << "reading start values from '" << startValFileName << "'" << endl;
-	const double massBinCenter  = (massBinMin + massBinMax) / 2;
 	fitResult*   startFitResult = NULL;
 	bool         startValValid  = false;
 	TFile*       startValFile   = NULL;
@@ -417,75 +417,57 @@ main(int    argc,
 	printInfo << "setting start values for " << nmbPar << " parameters" << endl
 	          << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
-	vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
-	unsigned int fixedPars = 0;
 	{
-		// use local instance of random number generator so that other
-		// code has no chance of tampering with gRandom and thus cannot
-		// affect the reproducability of the start values
-		TRandom3 random(startValSeed);
-		bool     success = true;
 		for (unsigned int i = 0; i < nmbPar; ++i) {
 			const string parName = L.parName(i);
 			if (parName.length() > maxParNameLength)
 				maxParNameLength = parName.length();
-			// workaround, because Minuit2Minimizer::SetVariable() expects
-			// that variables are set consecutively. how stupid is that?
-			// so we prepare variables here and set values below
-			if ((L.parThreshold(i) == 0) or (L.parThreshold(i) < massBinCenter)) {
-				if (not minimizer->SetVariable(i, parName, 0, startValStep))
-					success = false;
-			} else {
-				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
-					success = false;
-				parIsFixed[i] = true;
-				fixedPars++;
-			}
 		}
-		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
-		vector<unsigned int> parIndices  = L.orderedParIndices();
-		for (unsigned int i = 0; i < parIndices.size(); ++i) {
-			const unsigned int parIndex = parIndices[i];
-			double             startVal;
-			const string       parName = minimizer->VariableName(parIndex);
-			if (parName != L.parName(parIndex)) {
-				printWarn << "parameter name in minimizer and likelihood is inconsistent "
-				          << "(" << parName << " vs. " << L.parName(parIndex) << ")" << endl;
-				success = false;
-			}
+		// use local instance of random number generator so that other
+		// code has no chance of tampering with gRandom and thus cannot
+		// affect the reproducability of the start values
+		TRandom3     random(startValSeed);
+		const double sqrtNmbEvts = sqrt((double)nmbEvts);
+		bool         success     = true;
+		for (unsigned int i = 0; i < nmbPar; ++i) {
+			const string parName = L.parName(i);
+
+			double startVal;
 			if (startValValid) {
 				// get parameter value from fitResult
 				assert(startFitResult);
-				startVal = startFitResult->fitParameter(parName.c_str());
+				startVal = startFitResult->fitParameter(parName);
 			} else {
 				startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
 				if(random.Rndm() > 0.5) {
 					startVal *= -1.;
 				}
 			}
-			// check if parameter needs to be fixed because of threshold
-			if ((L.parThreshold(parIndex) == 0) or (L.parThreshold(parIndex) < massBinCenter)) {
+
+			// check if parameter needs to be fixed
+			if (not L.parFixed(i)) {
 				if (startVal == 0) {
 					cout << "    read start value 0 for parameter " << parName << ". "
 					     << "using default start value." << endl;
-					startVal = (useFixedStartValues) ? defaultStartValue
-						: random.Uniform(defaultStartValue, sqrtNmbEvts);
+					startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+					if(random.Rndm() > 0.5) {
+						startVal *= -1.;
+					}
 				}
 				cout << "    setting parameter [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-				if (not minimizer->SetVariableValue(parIndex, startVal))
+				if (not minimizer->SetVariable(i, parName, startVal, startValStep))
 					success = false;
 			} else {
 				cout << "    fixing parameter  [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = 0" << endl;
-				if (not minimizer->SetVariableValue(parIndex, 0.))  // fix this parameter to 0
+				if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
 					success = false;
-				parIsFixed[parIndex] = true;
 			}
-			if (not success) {
-				printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
-				return 1;
-			}
+		}
+		if (not success) {
+			printErr << "something went wrong when setting log likelihood parameters. Aborting..." << endl;
+			return 1;
 		}
 		// cleanup
 		if(startValFile) {
@@ -497,36 +479,36 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// find minimum of likelihood function
-	bool converged = false;
-	bool hasHesse  = false;
+	bool converged  = false;
+	bool hasHessian = false;
 	std::vector<double> correctParams;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
 		timer.Start();
-		bool success = minimizer->Minimize();
+		converged = minimizer->Minimize();
 		timer.Stop();
-		converged = success;
+
 		correctParams = L.CorrectParamSigns(minimizer->X());
-		double newLikelihood = L.DoEval(&correctParams[0]);
+		const double newLikelihood = L.DoEval(correctParams.data());
 		if(minimizer->MinValue() != newLikelihood) {
-			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << minimizer->MinValue() << " to " << newLikelihood << ")." << endl;
+			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << maxPrecisionAlign(minimizer->MinValue()) << " to " << maxPrecisionAlign(newLikelihood) << ")." << endl;
 			return 1;
 		} else {
-			printInfo << "Likelihood unchanged at " << newLikelihood << " by flipping signs according to conventions." << endl;
+			printInfo << "Likelihood unchanged at " << maxPrecisionAlign(newLikelihood) << " by flipping signs according to conventions." << endl;
 		}
+
 		if (checkHessian) {
 			// analytically calculate Hessian
-			TMatrixT<double> hessian = L.HessianAnalytically(&correctParams[0]);
+			TMatrixT<double> hessian = L.Hessian(correctParams.data());
 			// create reduced hessian without fixed parameters
-			TMatrixT<double> reducedHessian(nmbPar-fixedPars, nmbPar-fixedPars);
-			vector<unsigned int> parIndices  = L.orderedParIndices();
+			TMatrixT<double> reducedHessian(nmbPar - L.nmbParsFixed(), nmbPar - L.nmbParsFixed());
 			unsigned int iReduced = 0;
-			for(unsigned int i = 0; i < nmbPar; i++) {
+			for(unsigned int i = 0; i < nmbPar; ++i) {
 				unsigned int jReduced = 0;
-				if (not parIsFixed[parIndices[i]]) {
-					for(unsigned int j = 0; j < nmbPar; j++) {
-						if (not parIsFixed[parIndices[j]]) {
+				if (not L.parFixed(i)) {
+					for(unsigned int j = 0; j < nmbPar; ++j) {
+						if (not L.parFixed(j)) {
 							reducedHessian[iReduced][jReduced] = hessian[i][j];
 							jReduced++;
 						}
@@ -535,17 +517,17 @@ main(int    argc,
 				}
 			}
 			// create and check Hessian eigenvalues
-			if (not quiet) {
-				printInfo << "analytical Hessian eigenvalues:" << endl;
-			}
 			TVectorT<double> eigenvalues;
 			reducedHessian.EigenVectors(eigenvalues);
-			for(int i=0; i<eigenvalues.GetNrows(); i++) {
+			if (not quiet) {
+				printInfo << "eigenvalues of (analytic) Hessian:" << endl;
+			}
+			for(int i=0; i<eigenvalues.GetNrows(); ++i) {
 				if (not quiet) {
-					cout << "	" << eigenvalues[i] << endl;
+					cout << "    " << maxPrecisionAlign(eigenvalues[i]) << endl;
 				}
 				if (eigenvalues[i] <= 0.) {
-					printWarn << "eigenvalue " << i << " of hessian is non-positive (" << eigenvalues[i] << ")." << endl;
+					printWarn << "eigenvalue " << i << " of (analytic) Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
 					converged = false;
 				}
 			}
@@ -560,11 +542,10 @@ main(int    argc,
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
-			success = minimizer->Hesse();
+			hasHessian = minimizer->Hesse();
 			timer.Stop();
-			if (success) {
+			if (hasHessian) {
 				printInfo << "successfully calculated Hessian matrix. " << flush;
-				hasHesse = true;
 			} else {
 				printWarn << "calculation of Hessian matrix failed. " << flush;
 				converged = false;
@@ -578,21 +559,19 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	vector<unsigned int> parIndices = L.orderedParIndices();
 	const double inverseOfSqrtTwo = 1. / sqrt(2.);
-	for (unsigned int i = 0; i< parIndices.size(); ++i) {
-		const unsigned int parIndex = parIndices[i];
+	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(parIndex) << " = ";
-		if (parIsFixed[parIndex])
-			cout << correctParams[parIndex] << " (fixed)" << endl;
+		     << setw(maxParNameLength) << L.parName(i) << " = ";
+		if (L.parFixed(i))
+			cout << correctParams[i] << " (fixed)" << endl;
 		else {
-			cout << setw(12) << maxPrecisionAlign(correctParams      [parIndex]) << " +- "
-			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[parIndex]);
+			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- "
+			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[i]);
 			if (runMinos) {
 				double minosErrLow = 0;
 				double minosErrUp  = 0;
-				const bool success = minimizer->GetMinosError(parIndex, minosErrLow, minosErrUp);
+				const bool success = minimizer->GetMinosError(i, minosErrLow, minosErrUp);
 				if (success)
 					cout << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]" << endl;
 			} else
@@ -634,7 +613,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildProdAmpArrays(&correctParams[0], prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
@@ -669,11 +648,11 @@ main(int    argc,
 				             prodAmpNames,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
-				             normIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+				             normIntegral,
 				             accIntegral,
-				             phaseSpaceIntegral,
+				             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 				             converged,
-				             hasHesse);
+				             hasHessian);
 				//printDebug << *result;
 			}
 
