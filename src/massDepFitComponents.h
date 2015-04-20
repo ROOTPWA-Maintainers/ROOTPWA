@@ -65,9 +65,7 @@ namespace rpwa {
 			channel(const rpwa::massDepFit::channel& ch);
 			~channel();
 
-#if __cplusplus < 201103L
 			rpwa::massDepFit::channel& operator=(rpwa::massDepFit::channel& other);
-#endif
 
 			const size_t getWaveIdx() const { return _waveIdx; }
 			const std::string& getWaveName() const { return _waveName; }
