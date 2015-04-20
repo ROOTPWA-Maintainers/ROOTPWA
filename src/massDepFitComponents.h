@@ -145,6 +145,9 @@ namespace rpwa {
 			                                rpwa::massDepFit::parameters& fitParameters,
 			                                rpwa::massDepFit::cache& cache);
 
+			virtual bool getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
+			virtual bool getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
+
 			virtual bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
 			virtual double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
 			virtual bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
@@ -184,6 +187,9 @@ namespace rpwa {
 			size_t _nrBranchings;
 
 		protected:
+
+			std::vector<double> _parametersStart;
+			std::vector<double> _parametersError;
 
 			std::vector<bool> _parametersFixed;
 			std::vector<double> _parametersLimitLower;

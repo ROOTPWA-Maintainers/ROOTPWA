@@ -96,6 +96,8 @@ rpwa::massDepFit::component::component(const size_t id,
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
+	  _parametersStart(nrParameters),
+	  _parametersError(nrParameters),
 	  _parametersFixed(nrParameters),
 	  _parametersLimitLower(nrParameters),
 	  _parametersLimitedLower(nrParameters),
@@ -148,7 +150,13 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 		double parameter;
 		configParameter->lookupValue("val", parameter);
+		_parametersStart[idxParameter] = parameter;
 		fitParameters.setParameter(getId(), idxParameter, parameter);
+
+		double error;
+		if(configParameter->lookupValue("error", error)) {
+			_parametersError[idxParameter] = error;
+		}
 
 		bool fixed;
 		configParameter->lookupValue("fix", fixed);
