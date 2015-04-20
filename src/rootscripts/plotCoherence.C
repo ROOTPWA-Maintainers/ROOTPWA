@@ -67,7 +67,7 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
-			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			printErr << "null pointer to tree[" << i << "]. Aborting..." << endl;
 			return 0;
 		}
 	string waveNameA, waveNameB;

@@ -79,15 +79,15 @@ void
 isobarAmplitude::setDecayTopology(const isobarDecayTopologyPtr& decay)
 {
 	if (not decay) {
-		printErr << "null pointer to decay topology. aborting." << endl;
+		printErr << "null pointer to decay topology. Aborting..." << endl;
 		throw;
 	}
 	if (not decay->checkTopology()) {
-		printErr << "decay does not have the correct topology. aborting." << endl;
+		printErr << "decay does not have the correct topology. Aborting..." << endl;
 		throw;
 	}
 	if (not decay->checkConsistency()) {
-		printErr << "decay is not consistent. aborting." << endl;
+		printErr << "decay is not consistent. Aborting..." << endl;
 		throw;
 	}
 	_decay = decay;

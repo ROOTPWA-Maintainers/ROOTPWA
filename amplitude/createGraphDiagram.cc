@@ -106,7 +106,7 @@ main(int    argc,
 
 	// get input file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one key file to process. aborting." << endl;;
+		printErr << "you need to specify at least one key file to process. Aborting..." << endl;;
 		usage(progName, 1);
 	}
 	vector<string> keyFileNames;
@@ -119,7 +119,7 @@ main(int    argc,
 			          << "skipping." << endl;
 	}
 	if (keyFileNames.size() == 0) {
-		printErr << "none of the specified input files is a .key file. aborting.";
+		printErr << "none of the specified input files is a .key file. Aborting...";
 		usage(progName, 1);
 	}
 

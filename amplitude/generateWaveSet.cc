@@ -131,7 +131,7 @@ main(int    argc,
 			useDecays = true;
 		else {
 			printErr << "could not read particle decay modes from file '" << decayFileName << "'. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			exit(1);
 		}
 	}
@@ -159,7 +159,7 @@ main(int    argc,
 	waveSetGenerator waveSetGen;
 	waveSetGenerator::setDebug(debug);
 	if (not waveSetGen.setWaveSetParameters(keyFileName)) {
-		printErr << "could not initialize wave set generator. aborting." << endl;
+		printErr << "could not initialize wave set generator. Aborting..." << endl;
 		exit(1);
 	}
 

@@ -543,7 +543,7 @@ main()
 		    or not waveDesc.constructAmplitude(amplitude)) {
 			printErr << "problems constructing decay topology from key file content string:" << endl;
 			waveDesc.printKeyFileContent(cout, keyFileContent.str());
-			cout << "aborting." << endl;
+			cout << "Aborting..." << endl;
 			exit(1);
 		}
 		printInfo << *amplitude;

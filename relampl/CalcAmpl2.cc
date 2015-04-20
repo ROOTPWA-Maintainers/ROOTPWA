@@ -234,7 +234,7 @@ int lookupJ(const char* name) {
 	//	pdt.readFile("../amplitude/particleDataTable.txt");
 	particleProperties partProp;
 	if (not partProp.fillFromDataTable(name)) {
-		printErr << "canot find particle '" << name << "' in particle data table. aborting." << endl;
+		printErr << "canot find particle '" << name << "' in particle data table. Aborting..." << endl;
 		throw;
 	}
 	return (partProp.J()/2);
@@ -246,7 +246,7 @@ int lookupP(const char* name) {
 	//	pdt.readFile("../amplitude/particleDataTable.txt");
 	particleProperties partProp;
 	if (not partProp.fillFromDataTable(name)) {
-		printErr << "canot find particle '" << name << "' in particle data table. aborting." << endl;
+		printErr << "canot find particle '" << name << "' in particle data table. Aborting..." << endl;
 		throw;
 	}
 	return partProp.P();

@@ -302,7 +302,7 @@ main(int    argc,
 		          << "'" << accIntFileName << "'" << endl;
 	}
 	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
+		printErr << "no wavelist file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
@@ -470,7 +470,7 @@ main(int    argc,
 			}
 		}
 		if (not success) {
-			printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
+			printErr << "something went wrong when setting log likelihood parameters. Aborting..." << endl;
 			return 1;
 		}
 		// cleanup

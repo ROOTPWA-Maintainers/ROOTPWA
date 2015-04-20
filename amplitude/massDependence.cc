@@ -230,7 +230,7 @@ f0980Flatte::f0980Flatte()
 	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
 		if (not pdt.isInTable(partList[i])) {
 			printErr << "cannot find particle " << partList[i] << " in particle data table. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			throw;
 		}
 	_piChargedMass   = pdt.entry("pi+")->mass();
@@ -319,7 +319,7 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
 		if (not pdt.isInTable(partList[i])) {
 			printErr << "cannot find particle " << partList[i] << " in particle data table. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			throw;
 		}
 	_piChargedMass   = pdt.entry("pi+")->mass();

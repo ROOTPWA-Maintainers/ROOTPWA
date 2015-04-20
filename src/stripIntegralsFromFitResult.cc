@@ -106,20 +106,20 @@ main(int    argc,
 
 	TFile* inputFile = TFile::Open(inputFileName.c_str(), "READ");
 	if(not inputFile || inputFile->IsZombie()) {
-		printErr << "could not open input file '" << inputFileName << "'. aborting." << endl;
+		printErr << "could not open input file '" << inputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TFile* outputFile = TFile::Open(outputFileName.c_str(), "NEW");
 	if(not outputFile || outputFile->IsZombie()) {
-		printErr << "could not open output file '" << outputFileName << "'. aborting." << endl;
+		printErr << "could not open output file '" << outputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TTree* inResultTree = 0;
 	inputFile->GetObject(treeName.c_str(), inResultTree);
 	if(not inResultTree) {
-		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. aborting." << endl;
+		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 

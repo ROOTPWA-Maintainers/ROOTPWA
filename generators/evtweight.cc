@@ -283,13 +283,13 @@ main(int    argc,
 
 	// the mass bin has to be specified
 	if (massBinCenter == 0) {
-		printErr << "central mass of mass bin to be processed has to be different from 0. aborting." << endl;
+		printErr << "central mass of mass bin to be processed has to be different from 0. Aborting..." << endl;
 		usage(progName, 1);
 	}
 
 	// get input file names
 	if (optind != argc) {
-		printErr << "additional unhandled options encountered. aborting." << endl;
+		printErr << "additional unhandled options encountered. Aborting..." << endl;
 		usage(progName, 1);
 	}
 
@@ -300,21 +300,21 @@ main(int    argc,
 		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
 			printErr << "cannot open normalization integral file '" << intFileName << "'. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			exit(1);
 		}
 		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(intTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << intTKeyName << "' in file "
-			         << "'" << intFileName << "'. aborting." << endl;
+			         << "'" << intFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 		normInt = *integral;
 	} else {
 		if (not normInt.readAscii(intFileName)) {
 			printErr << "cannot read normalization integral from file '"
-			         << intFileName << "'. aborting." << endl;
+			         << intFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 	}
@@ -332,7 +332,7 @@ main(int    argc,
 		// open fit-result file
 		TFile* fitResultFile = TFile::Open(fitResultFileName.c_str(), "READ");
 		if (not fitResultFile or fitResultFile->IsZombie()) {
-			printErr << "cannot open fit-result file '" << fitResultFileName << "'. aborting." << endl;
+			printErr << "cannot open fit-result file '" << fitResultFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 		// find fit-result tree
@@ -340,7 +340,7 @@ main(int    argc,
 		fitResultFile->GetObject(fitResultTreeName.c_str(), fitResultTree);
 		if (not fitResultTree) {
 			printErr << "cannot find fit-result tree '" << fitResultTreeName << "' in file '"
-			         << fitResultFileName << "'. aborting." << endl;
+			         << fitResultFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 		// loop over fit results and the ones which are closest to the given mass-bin center

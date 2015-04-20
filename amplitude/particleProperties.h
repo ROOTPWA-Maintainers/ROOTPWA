@@ -304,7 +304,7 @@ namespace rpwa {
 			_charge = charge;
 		else {
 			printErr << "absolute value of charge " << charge << " is larger than 9. "
-			         << "aborting." << std::endl;
+			         << "Aborting..." << std::endl;
 			throw;
 		}
 	}

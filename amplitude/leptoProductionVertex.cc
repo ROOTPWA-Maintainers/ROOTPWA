@@ -72,15 +72,15 @@ leptoProductionVertex::leptoProductionVertex(const particlePtr& beamLepton,
 	  _targetMomCache         ()
 {
 	if (not beamLepton) {
-		printErr << "null pointer to beam lepton particle. aborting." << endl;
+		printErr << "null pointer to beam lepton particle. Aborting..." << endl;
 		throw;
 	}
 	if (not target) {
-		printErr << "null pointer to target particle. aborting." << endl;
+		printErr << "null pointer to target particle. Aborting..." << endl;
 		throw;
 	}
 	if (not XParticle) {
-		printErr << "null pointer to particle representing X system. aborting." << endl;
+		printErr << "null pointer to particle representing X system. Aborting..." << endl;
 		throw;
 	}
 	interactionVertex::addInParticle (beamLepton);

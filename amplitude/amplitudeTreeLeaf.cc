@@ -95,7 +95,7 @@ amplitudeTreeLeaf::operator +=(const amplitudeTreeLeaf& amp)
 		printErr << "cannot add " << *this << endl
 		         << "and " << amp << endl
 		         << "because the two amplitudes have different incoherent sub-amplitudes. "
-		         << "aborting." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
@@ -111,7 +111,7 @@ amplitudeTreeLeaf::operator -=(const amplitudeTreeLeaf& amp)
 		printErr << "cannot subtract " << amp << endl
 		         << "from " << *this << endl
 		         << "because the two amplitudes have different incoherent sub-amplitudes. "
-		         << "aborting." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
@@ -135,7 +135,7 @@ amplitudeTreeLeaf::incohSubAmpIndex(const string& subAmpLabel) const
 {
 	labelToIndexMapIterator entry = _labelToIndexMap.find(subAmpLabel);
 	if (entry == _labelToIndexMap.end()) {
-		printErr << "cannot find subamp '" << subAmpLabel << "'. aborting." << endl;
+		printErr << "cannot find subamp '" << subAmpLabel << "'. Aborting..." << endl;
 		throw;
 	}
 	return entry->second;
@@ -148,7 +148,7 @@ amplitudeTreeLeaf::incohSubAmpName(const unsigned int subAmpIndex) const
 	if (subAmpIndex < _incohSubAmpLabels.size())
 		return _incohSubAmpLabels[subAmpIndex];
 	else {
-		printErr << "subamp index " << subAmpIndex << " is out of range. aborting." << endl;
+		printErr << "subamp index " << subAmpIndex << " is out of range. Aborting..." << endl;
 		throw;
 	}
 }
@@ -167,7 +167,7 @@ amplitudeTreeLeaf::defineIncohSubAmps(const vector<string>& subAmpLabels)
 	uniqueLabels.erase(unique(uniqueLabels.begin(), uniqueLabels.end()), uniqueLabels.end());
 	if (uniqueLabels.size() < nmbSubAmps) {
 		printErr << "vector with subamp labels '" << subAmpLabels << "' contains dublicate entries. "
-		         << "aborting." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	_incohSubAmps.resize(nmbSubAmps, 0);

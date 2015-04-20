@@ -59,14 +59,14 @@ readIntegralMatrix(const string& intFileName,
 		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
 			printErr << "could not open normalization integral file '" << intFileName << "'. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			throw;
 		}
 		ampIntegralMatrix* integralPtr = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integralPtr);
 		if (not integralPtr) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << intFileName << "'. aborting." << endl;
+			         << "'" << intFileName << "'. Aborting..." << endl;
 			throw;
 		}
 		integral = *integralPtr;
@@ -77,7 +77,7 @@ readIntegralMatrix(const string& intFileName,
 			integral.readAscii(intFileName);
 	} else {
 		printErr << "unknown file type '" << intFileName << "'. "
-		         << "only .int and .root files are supported. aborting." << endl;
+		         << "only .int and .root files are supported. Aborting..." << endl;
 		throw;
 	}
 	return integral;
@@ -156,7 +156,7 @@ main(int    argc,
 
 	TFile* inputFile = TFile::Open(inputFileName.c_str(), "READ");
 	if(not inputFile || inputFile->IsZombie()) {
-		printErr << "could not open input file '" << inputFileName << "'. aborting." << endl;
+		printErr << "could not open input file '" << inputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
@@ -165,14 +165,14 @@ main(int    argc,
 
 	TFile* outputFile = TFile::Open(outputFileName.c_str(), "NEW");
 	if(not outputFile || outputFile->IsZombie()) {
-		printErr << "could not open output file '" << outputFileName << "'. aborting." << endl;
+		printErr << "could not open output file '" << outputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TTree* inResultTree = 0;
 	inputFile->GetObject(treeName.c_str(), inResultTree);
 	if(not inResultTree) {
-		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. aborting." << endl;
+		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
@@ -216,7 +216,7 @@ main(int    argc,
 			if(forceIntegralReplacement) {
 				cout << "replacing anyway." << endl;
 			} else {
-				cout << "aborting." << endl;
+				cout << "Aborting..." << endl;
 				return 1;
 			}
 		}
@@ -230,13 +230,13 @@ main(int    argc,
 			for(unsigned int waveIndex_i = 0; waveIndex_i < nmbWaves - 1; ++waveIndex_i) {
 				const string waveName_i(inResult->waveName(waveIndex_i));
 				if(waveName_i == "flat") {
-					printErr << "encountered flat wave prematurely. aborting." << endl;
+					printErr << "encountered flat wave prematurely. Aborting..." << endl;
 					return 1;
 				}
 				for(unsigned int waveIndex_j = 0; waveIndex_j < nmbWaves - 1; ++waveIndex_j) {
 					const string waveName_j(inResult->waveName(waveIndex_j));
 					if(waveName_j == "flat") {
-						printErr << "encountered flat wave prematurely. aborting." << endl;
+						printErr << "encountered flat wave prematurely. Aborting..." << endl;
 						return 1;
 					}
 					normIntegral.set(waveIndex_i, waveIndex_j, providedNormIntegral.element(waveName_i, waveName_j));

@@ -247,7 +247,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
 	printInfo << "creating output file '" << outFileName << "' ... " << endl;
 	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 	if (!outFile) {
-		printErr << "could not create output file. aborting..." << endl;
+		printErr << "could not create output file. Aborting....." << endl;
 		return;
 	}
 	cout << "    ... success" << endl;

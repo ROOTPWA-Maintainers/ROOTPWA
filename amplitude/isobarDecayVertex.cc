@@ -60,15 +60,15 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
 	  _massDep         (massDep)
 {
 	if (not parent) {
-		printErr << "null pointer to parent particle. aborting." << endl;
+		printErr << "null pointer to parent particle. Aborting..." << endl;
 		throw;
 	}
 	if (not daughter1) {
-		printErr << "null pointer to daughter 1 particle. aborting." << endl;
+		printErr << "null pointer to daughter 1 particle. Aborting..." << endl;
 		throw;
 	}
 	if (not daughter2) {
-		printErr << "null pointer to daughter 2 particle. aborting." << endl;
+		printErr << "null pointer to daughter 2 particle. Aborting..." << endl;
 		throw;
 	}
 	interactionVertex::addInParticle (parent);

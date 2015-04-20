@@ -156,7 +156,7 @@ main(int    argc,
 
 	// get input file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one data file to process. aborting." << endl;;
+		printErr << "you need to specify at least one data file to process. Aborting..." << endl;;
 		usage(progName, 1);
 	}
 	vector<string> rootFileNames;
@@ -173,7 +173,7 @@ main(int    argc,
 			          << "skipping." << endl;
 	}
 	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .evt file. aborting.";
+		printErr << "none of the specified input files is a .root or .evt file. Aborting...";
 		usage(progName, 1);
 	}
 
@@ -191,7 +191,7 @@ main(int    argc,
 	                         rootFileNames, evtFileNames,
 	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
 	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
-		printErr << "problems opening input file(s). aborting." << endl;
+		printErr << "problems opening input file(s). Aborting..." << endl;
 		exit(1);
 	}
 
@@ -200,7 +200,7 @@ main(int    argc,
 
 	// parse key file and create amplitude instance
 	if (keyFileName == "") {
-		printErr << "no key file specified. aborting." << endl;
+		printErr << "no key file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	waveDescription    waveDesc;
@@ -208,7 +208,7 @@ main(int    argc,
 	if (   not waveDesc.parseKeyFile(keyFileName)
 	    or not waveDesc.constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
-		         << "aborting." << endl;
+		         << "Aborting..." << endl;
 		exit(1);
 	}
 	printInfo << *amplitude;
@@ -223,7 +223,7 @@ main(int    argc,
 		writeRootFormat = false;
 	else {
 		printErr << "specified amplitude file '" << ampFileName << "' is neither a .root "
-		         << "nor a .amp file. aborting." << endl;
+		         << "nor a .amp file. Aborting..." << endl;
 		usage(progName);
 	}
 #endif
@@ -255,7 +255,7 @@ main(int    argc,
 		}
 	if (   (writeRootFormat and not ampFileRoot)
 	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
-		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
+		printErr << "cannot create amplitude file '" << ampFileName << "'. Aborting..." << endl;
 		exit(1);
 	}
 
