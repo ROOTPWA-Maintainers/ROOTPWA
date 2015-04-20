@@ -208,7 +208,7 @@ namespace rpwa {
 				const VPtr& vert = vertex(*iNd);
 				if (not vert) {
 					printErr << "encountered null vertex pointer for node " << *iNd
-					         << " in graph '" << name() << "'. aborting." << std::endl;
+					         << " in graph '" << name() << "'. Aborting..." << std::endl;
 					throw;
 				}
 				_vertexNodeMap[vert] = *iNd;
@@ -219,7 +219,7 @@ namespace rpwa {
 				const PPtr& part = particle(*iEd);
 				if (not part) {
 					printErr << "encountered null particle pointer for edge " << *iEd
-					         << " in graph '" << name() << "'. aborting." << std::endl;
+					         << " in graph '" << name() << "'. Aborting..." << std::endl;
 					throw;
 				}
 				_particleEdgeMap[part] = *iEd;
@@ -236,7 +236,7 @@ namespace rpwa {
 			const VPtr vert = vertex(nd);  // this must not be a reference
 			if (not vert) {
 				printErr << "encountered null vertex pointer for node " << nd
-				         << " in graph '" << name() << "'. aborting." << std::endl;
+				         << " in graph '" << name() << "'. Aborting..." << std::endl;
 				throw;
 			}
 			// clone vertex
@@ -256,7 +256,7 @@ namespace rpwa {
 			const PPtr part = particle(ed);  // this must not be a reference
 			if (not part) {
 				printErr << "encountered null particle pointer for edge " << ed
-				         << " while cloning graph '" << name() << "'. aborting." << std::endl;
+				         << " while cloning graph '" << name() << "'. Aborting..." << std::endl;
 				throw;
 			}
 			// clone particle
@@ -331,7 +331,7 @@ namespace rpwa {
 		addVertex(const VPtr& newVert)  ///< adds node to graph, creates edges according to particles in vertex, and stores vertex and particle pointers
 		{
 			if (not newVert) {
-				printErr << "null pointer to vertex. aborting." << std::endl;
+				printErr << "null pointer to vertex. Aborting..." << std::endl;
 				throw;
 			}
 			// create graph node for vertex and store pointer
@@ -346,7 +346,7 @@ namespace rpwa {
 				const PPtr& part = newVert->inParticles()[iInPart];
 				if (not part) {
 					printErr << "null pointer to incoming particle[" << iInPart << "] "
-					         << "in vertex " << *newVert << ". aborting."<< std::endl;
+					         << "in vertex " << *newVert << ". Aborting..."<< std::endl;
 					throw;
 				}
 				// match with outgoing particles of other vertices
@@ -369,7 +369,7 @@ namespace rpwa {
 									           << newNd << "] of graph '" << name() << "'" << std::endl;
 							} else {
 								printErr << "could not add edge for particle " << *part << " "
-								         << "to graph '" << name() << "'. aborting." << std::endl;
+								         << "to graph '" << name() << "'. Aborting..." << std::endl;
 								throw;
 							}
 						}
@@ -380,7 +380,7 @@ namespace rpwa {
 				const PPtr& part = newVert->outParticles()[iOutPart];
 				if (not part) {
 					printErr << "null pointer to outgoing particle[" << iOutPart << "] "
-					         << "in vertex " << *newVert << ". aborting."<< std::endl;
+					         << "in vertex " << *newVert << ". Aborting..."<< std::endl;
 					throw;
 				}
 				// match with incoming particles of other vertices
@@ -403,7 +403,7 @@ namespace rpwa {
 									           << newNd << "] of graph '" << name() << "'" << std::endl;
 							} else {
 								printErr << "could not add edge for particle " << *part << " "
-								         << "to graph '" << name() << "'. aborting." << std::endl;
+								         << "to graph '" << name() << "'. Aborting..." << std::endl;
 								throw;
 							}
 						}
@@ -461,13 +461,13 @@ namespace rpwa {
 		node(const VPtr& v) const  ///< gives node descriptor associated to vertex
 		{
 			if (not v) {
-				printErr << "null pointer for vertex. aborting." << std::endl;
+				printErr << "null pointer for vertex. Aborting..." << std::endl;
 				throw;
 			}
 			vertexNodeMapConstIt entry = _vertexNodeMap.find(v);
 			if (entry == _vertexNodeMap.end()) {
 				printErr << "vertex " << *v << " is not a node in graph '" << name() << "'. "
-				         << "aborting." << std::endl;
+				         << "Aborting..." << std::endl;
 				throw;
 			}
 			return entry->second;
@@ -479,13 +479,13 @@ namespace rpwa {
 		edge(const PPtr& p) const  ///< gives edge descriptor associated to particle
 		{
 			if (not p) {
-				printErr << "null pointer for particle. aborting." << std::endl;
+				printErr << "null pointer for particle. Aborting..." << std::endl;
 				throw;
 			}
 			particleEdgeMapConstIt entry = _particleEdgeMap.find(p);
 			if (entry == _particleEdgeMap.end()) {
 				printErr << *p << " is not an edge in graph '" << name() << "'. "
-				         << "aborting." << std::endl;
+				         << "Aborting..." << std::endl;
 				throw;
 			}
 			//!!! for some reason the edge descriptor stored in the map does not work correctly,
@@ -865,7 +865,7 @@ namespace rpwa {
 											           << *iToNode << "] of graph '" << name() << "'" << std::endl;
 									} else {
 										printErr << "could not add edge for particle " << *outPart << " "
-										         << "to graph '" << name() << "'. aborting." << std::endl;
+										         << "to graph '" << name() << "'. Aborting..." << std::endl;
 										throw;
 									}
 								}

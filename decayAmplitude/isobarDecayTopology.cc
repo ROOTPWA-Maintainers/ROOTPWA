@@ -155,7 +155,7 @@ isobarDecayTopology::constructDecay(const productionVertexPtr&          producti
 	if (performTopologyCheck and (nmbDecayVertices() != nmbVert)) {
 		printErr << "number of interaction vertices  = " << nmbDecayVertices()
 		         << " does not match number of vertices given in parameter array = " << nmbVert
-		         << ". aborting." << endl;
+		         << ". Aborting..." << endl;
 		throw;
 	}
 	return *this;
@@ -173,7 +173,7 @@ isobarDecayTopology::constructDecay(const productionVertexPtr&          producti
 	for (unsigned int i = 0; i < nmbVert; ++i) {
 		decayVertices[i] = dynamic_pointer_cast<isobarDecayVertex>(isobarDecayVertices[i]);
 		if (not decayVertices[i]) {
-			printErr << "interaction vertex[" << i << "] is not an isobarDecayVertex. aborting." << endl;
+			printErr << "interaction vertex[" << i << "] is not an isobarDecayVertex. Aborting..." << endl;
 			throw;
 		}
 	}
@@ -403,7 +403,7 @@ isobarDecayTopology::buildIsobarVertexArray()
 	}
 	if (not success) {
 		printErr << "incompatible topology. some interaction vertices are "
-		         << "not of type isobarDecayVertex. aborting." << endl;
+		         << "not of type isobarDecayVertex. Aborting..." << endl;
 		throw;
 	}
 }

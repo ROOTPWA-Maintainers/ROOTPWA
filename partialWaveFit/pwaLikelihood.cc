@@ -972,7 +972,7 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 	          << "'" << waveListFileName << "'." << endl;
 	ifstream waveListFile(waveListFileName.c_str());
 	if (not waveListFile) {
-		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
 		throw;
 	}
 	vector<string>       waveNames     [2];
@@ -1030,7 +1030,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
                                             const double       massBinCenter)
 {
 	if ((_nmbWavesRefl[0] + _nmbWavesRefl[1] == 0) or (_waveThresholds.size() == 0)) {
-		printErr << "no wave info. was readWaveList() executed successfully? aborting.";
+		printErr << "no wave info. was readWaveList() executed successfully? Aborting...";
 		throw;
 	}
 	_rank = rank;
@@ -1135,14 +1135,14 @@ pwaLikelihood<complexT>::readIntegrals
 		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
 			printErr << "could not open normalization integral file '" << normIntFileName << "'. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			throw;
 		}
 		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << normIntFileName << "'. aborting." << endl;
+			         << "'" << normIntFileName << "'. Aborting..." << endl;
 			throw;
 		}
 		reorderIntegralMatrix(*integral, _normMatrix);
@@ -1153,7 +1153,7 @@ pwaLikelihood<complexT>::readIntegrals
 			reorderIntegralMatrix(integral, _normMatrix);
 	} else {
 		printErr << "unknown file type '" << normIntFileName << "'. "
-		         << "only .int and .root files are supported. aborting." << endl;
+		         << "only .int and .root files are supported. Aborting..." << endl;
 		throw;
 	}
 
@@ -1163,14 +1163,14 @@ pwaLikelihood<complexT>::readIntegrals
 		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
 			printErr << "could not open normalization integral file '" << accIntFileName << "'. "
-			         << "aborting." << endl;
+			         << "Aborting..." << endl;
 			throw;
 		}
 		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << accIntFileName << "'. aborting." << endl;
+			         << "'" << accIntFileName << "'. Aborting..." << endl;
 			throw;
 		}
 		if (_numbAccEvents != 0) {
@@ -1209,7 +1209,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
 		printErr << "normalization integrals have to be loaded before loading the amplitudes. "
-		         << "aborting." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	clear();
@@ -1265,7 +1265,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
 				ifstream ampFile(ampFilePath.c_str());
 				if (not ampFile) {
-					printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
+					printErr << "cannot open amplitude file '" << ampFilePath << "'. Aborting..." << endl;
 					throw;
 				}
 				complexT amp;
@@ -1465,7 +1465,7 @@ pwaLikelihood<complexT>::getReflectivity(const TString& waveName)
 		refl= +1;
 	else {
 		printErr << "cannot parse parameter/wave name '" << waveName << "'. "
-		         << "cannot not determine reflectivity. aborting." << endl;
+		         << "cannot not determine reflectivity. Aborting..." << endl;
 		throw;
 	}
 	if (_debug)

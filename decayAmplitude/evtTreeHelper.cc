@@ -466,7 +466,7 @@ namespace rpwa {
 					         << "(" << nmbIsPartExpected << " expected); "
 					         << "decay kinematics: " << nmbFsPart << " particles "
 					         << "(" << nmbFsPartExpected << " expected). "
-					         << "check .evt file. aborting." << endl;
+					         << "check .evt file. Aborting..." << endl;
 					throw;
 				}
 				for (int i = 0; i < nmbIsPart; ++i) {
@@ -475,7 +475,7 @@ namespace rpwa {
 					if (name != nameExpected) {
 						printErr << "particle[" << i << "] name mismatch in production kinematics in event "
 						         << countEvents << ": '" << name << "', expected '" << nameExpected << "'. "
-						         << "check .evt file. aborting." << endl;
+						         << "check .evt file. Aborting..." << endl;
 						throw;
 					}
 				}
@@ -485,7 +485,7 @@ namespace rpwa {
 					if (name != nameExpected) {
 						printErr << "particle[" << i << "] name mismatch in decay kinematics in event "
 						         << countEvents << ": '" << name << "', expected '" << nameExpected << "'. "
-						         << "check .evt file. aborting." << endl;
+						         << "check .evt file. Aborting..." << endl;
 						throw;
 					}
 				}

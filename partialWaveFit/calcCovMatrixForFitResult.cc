@@ -177,7 +177,7 @@ main(int    argc,
 		          << "'" << accIntFileName << "'" << endl;
 	}
 	if (inFileName.length() <= 1) {
-		printErr << "no input file name specified. aborting." << endl;
+		printErr << "no input file name specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters
@@ -195,14 +195,14 @@ main(int    argc,
 
 	TFile* inFile = TFile::Open(inFileName.c_str(), "READ");
 	if(not inFile || inFile->IsZombie()) {
-		printErr << "could not open input file '" << inFileName << "'. aborting." << endl;
+		printErr << "could not open input file '" << inFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TTree* inTree = 0;
 	inFile->GetObject(valTreeName.c_str(), inTree);
 	if(not inTree) {
-		printErr << "could not find result tree '" << valTreeName << "' in input file '" << inFileName << "'. aborting." << endl;
+		printErr << "could not find result tree '" << valTreeName << "' in input file '" << inFileName << "'. Aborting..." << endl;
 		return 1;
 	}
 

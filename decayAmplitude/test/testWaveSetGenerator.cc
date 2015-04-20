@@ -125,7 +125,7 @@ main(int argc, char** argv)
 	if (1) {
 		waveSetGenerator waveSetGen;
 		if (not waveSetGen.setWaveSetParameters("testWaveSetGenerator.key")) {
-			cout << "could not initialize wave set generator. aborting." << endl;
+			cout << "could not initialize wave set generator. Aborting..." << endl;
 			exit(1);
 		}
 		const vector<string> isobarWhiteList = list_of("rho(770)")("a1(1260)");

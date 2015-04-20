@@ -63,12 +63,12 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 	for (unsigned int i = 0; i < 2; ++i) {
 		inFiles[i] = TFile::Open(inFileNames[i].c_str(), "READ");
 		if (!inFiles[i] || inFiles[i]->IsZombie()) {
-			cout << "cannot open file '" << inFileNames[i] << "'. aborting." << endl;
+			cout << "cannot open file '" << inFileNames[i] << "'. Aborting..." << endl;
 			throw;
 		}
 		inFiles[i]->GetObject(inTreeName.c_str(), inTrees[i]);
 		if (!inTrees[i]) {
-			cout << "cannot find tree '" << inTreeName << "'. aborting." << endl;
+			cout << "cannot find tree '" << inTreeName << "'. Aborting..." << endl;
 			throw;
 		}
 		// connect leafs
@@ -78,14 +78,14 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 	}
 	if (derivatives[0]->size() != derivatives[1]->size()) {
 		cout << "derivative arrays have different size: "
-		     << derivatives[0]->size() << " vs. " << derivatives[1]->size() << ". aborting." << endl;
+		     << derivatives[0]->size() << " vs. " << derivatives[1]->size() << ". Aborting..." << endl;
 		throw;
 	}
 
 	// create output file
 	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 	if (!outFile || outFile->IsZombie()) {
-		cout << "cannot open file '" << outFileName << "'. aborting." << endl;
+		cout << "cannot open file '" << outFileName << "'. Aborting..." << endl;
 		throw;
 	}
 

@@ -83,13 +83,13 @@ namespace rpwa {
 			// check input parameters
 			if (j >= (int)_maxJ) {
 				printErr << "J = " << 0.5 * j << " is too large. maximum allowed J is "
-				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
+				         << (_maxJ - 1) * 0.5 << ". Aborting..." << std::endl;
 				throw;
 			}
 			if ((j < 0) or (rpwa::abs(m) > j) or (rpwa::abs(n) > j)) {
 				printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
 				         << "_{M = " << 0.5 * m << ", M' = " << 0.5 * n << "}"
-				         << "(theta = " << maxPrecision(theta) << "). aborting." << std::endl;
+				         << "(theta = " << maxPrecision(theta) << "). Aborting..." << std::endl;
 				throw;
 			}
 

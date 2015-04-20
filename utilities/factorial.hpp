@@ -60,7 +60,7 @@ namespace rpwa {
 					if ((std::numeric_limits<T>::max() / (T)i) < _cache[i - 1]) {
 						printErr << "target data type too small to hold " << i << "! "
 						         << "(" << i - 1 << "! = " << _cache[i - 1] << " * " << i << " > "
-						         << std::numeric_limits<T>::max() << "). aborting." << std::endl;
+						         << std::numeric_limits<T>::max() << "). Aborting..." << std::endl;
 						throw;
 					}
 					_cache[i] = ((T)i) * _cache[i - 1];

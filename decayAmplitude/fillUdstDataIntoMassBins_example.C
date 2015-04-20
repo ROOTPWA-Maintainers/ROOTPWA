@@ -257,7 +257,7 @@ fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "fillUds
 	vector<TTree*> pwaDataTrees;
 	if (not createMassBinFiles(pwaDataFiles, pwaDataTrees, dirName, nmbMassBins, massBinWidth,
 	                           massRangeMin, pwaTreeName)) {
-		printErr << "there were problems creating the mass bin directories/files. aborting." << endl;
+		printErr << "there were problems creating the mass bin directories/files. Aborting..." << endl;
 		return;
 	}
 	printSucc << "created " << pwaDataFiles.size() << " directories/files" << endl;

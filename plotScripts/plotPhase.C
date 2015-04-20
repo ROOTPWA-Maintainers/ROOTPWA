@@ -66,7 +66,7 @@ plotPhase(const unsigned int nmbTrees,                       // number of fitRes
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
-			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			printErr << "null pointer to tree[" << i << "]. Aborting..." << endl;
 			return 0;
 		}
 	string waveNameA, waveNameB;
@@ -249,7 +249,7 @@ plotPhase(const unsigned int nmbTrees,             // number of fitResult trees
 	if ((indexA >= 0) && (indexB >= 0))
 		return plotPhase(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
 		                 graphTitle, drawOption, selectExpr, branchName);
-	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. aborting." << std::endl;
+	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. Aborting..." << std::endl;
 	return 0;
 }
 

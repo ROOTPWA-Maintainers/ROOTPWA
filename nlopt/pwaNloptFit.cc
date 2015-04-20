@@ -239,7 +239,7 @@ main(int    argc,
 		          << "'" << accIntFileName << "'" << endl;
 	}
 	if (waveListFileName.length() <= 1) {
-		printErr << "no wavelist file specified. aborting." << endl;
+		printErr << "no wavelist file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	// report parameters

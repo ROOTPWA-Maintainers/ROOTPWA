@@ -54,7 +54,7 @@ namespace rpwa {
 		const double mSum  = m1 + m2;
 		if (not allowSubThr and (M < mSum)) {
 			printErr << "mother mass " << M << " GeV/c^2 is smaller than sum of daughter masses "
-			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
+			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. Aborting..." << std::endl;
 			throw;
 		}
 		const double mDiff = m1 - m2;

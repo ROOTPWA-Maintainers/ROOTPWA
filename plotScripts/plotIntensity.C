@@ -70,7 +70,7 @@ plotIntensity(const unsigned int nmbTrees,                        // number of f
 
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
-			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			printErr << "null pointer to tree[" << i << "]. Aborting..." << endl;
 			return 0;
 		}
 	printInfo << "plotting wave intensity for wave '" << waveName;
@@ -232,7 +232,7 @@ plotIntensity(const unsigned int nmbTrees,                       // number of fi
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
-			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			printErr << "null pointer to tree[" << i << "]. Aborting..." << endl;
 			return 0;
 		}
 	string waveName;
