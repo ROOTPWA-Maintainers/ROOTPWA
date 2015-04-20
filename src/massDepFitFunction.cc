@@ -30,6 +30,7 @@
 #include "massDepFitFunction.h"
 
 #include "massDepFitCache.h"
+#include "massDepFitComponents.h"
 #include "massDepFitModel.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
@@ -537,6 +538,60 @@ rpwa::massDepFit::function::logLikelihood(const rpwa::massDepFit::parameters& fi
                                           rpwa::massDepFit::cache& cache) const
 {
 	return -0.5 * chiSquare(fitParameters, cache);
+}
+
+
+double
+rpwa::massDepFit::function::logPriorLikelihood(const std::vector<double>& par) const
+{
+	return logPriorLikelihood(par.data());
+}
+
+
+double
+rpwa::massDepFit::function::logPriorLikelihood(const double* par) const
+{
+	rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                                           _compset->getMaxChannelsInComponent(),
+	                                           _compset->getMaxParametersInComponent(),
+	                                           _nrBins);
+	rpwa::massDepFit::cache cache(_nrWaves,
+	                              _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                              _compset->getMaxChannelsInComponent(),
+	                              _nrBins,
+	                              _nrMassBins);
+
+	// import parameters (couplings, branchings, resonance parameters, ...)
+	_compset->importParameters(par, fitParameters, cache);
+
+	return logPriorLikelihood(fitParameters);
+}
+
+
+double
+rpwa::massDepFit::function::logPriorLikelihood(const rpwa::massDepFit::parameters& fitParameters) const
+{
+	double logPrior = 0;
+
+	const size_t nrComponents = _compset->getNrComponents();
+	for (size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
+		const rpwa::massDepFit::component* component = _compset->getComponent(idxComponent);
+
+		const size_t nrParameters = component->getNrParameters();
+		for (size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
+			// fixed parameters to no contribute to prior likelihood
+			if (component->getParameterFixed(idxParameter))
+				continue;
+
+			// parameters with 0 error are assumed to have a flat prior
+			if (component->getParameterError(idxParameter) == 0.0)
+				continue;
+
+			logPrior += -0.5 * std::pow((fitParameters.getParameter(idxComponent, idxParameter) - component->getParameterStart(idxParameter)) / component->getParameterError(idxParameter), 2.);
+		}
+	}
+
+	return logPrior;
 }
 
 
