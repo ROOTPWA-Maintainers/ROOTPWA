@@ -87,6 +87,10 @@ namespace rpwa {
 			double logLikelihood(const rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::cache& cache) const;
 
+			double logPriorLikelihood(const std::vector<double>& par) const;
+			double logPriorLikelihood(const double* par) const;
+			double logPriorLikelihood(const rpwa::massDepFit::parameters& fitParameters) const;
+
 		private:
 
 			double chiSquareProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
