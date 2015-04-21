@@ -777,7 +777,7 @@ pwaLikelihood<complexT>::Hessian
 							if (i2 >= 0) // real/imaginary derivative
 								hessianMatrix[r1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
 							if (i1 >= 0) // imaginary/real derivative
-								hessianMatrix[i1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
+								hessianMatrix[i1][r2] = hessian[jRank][jRefl][jWave][iRank][iRefl][iWave][1];
 							if (i1 >= 0 && i2 >= 0) // imaginary/imaginary derivative
 								hessianMatrix[i1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
 						}
