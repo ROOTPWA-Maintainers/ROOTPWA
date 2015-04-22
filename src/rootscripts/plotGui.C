@@ -88,7 +88,10 @@ class plotGuiMainFrame : public TGMainFrame {
 		void DoSelect();
 		void ActiveCanvasClosed();
 		void HandleButtons();
-		void PrintSelected();
+		void ListBoxSelectionChangedByMouse();
+		void ListBox1SelectionChangedByKeyboard(TGFrame* frame);
+		void ListBox2SelectionChangedByKeyboard(TGFrame* frame);
+		void PrintSelected(const int sel1 = -1, const int sel2 = -1);
 
 		static bool _debug;
 
@@ -222,6 +225,11 @@ plotGuiMainFrame::plotGuiMainFrame(const TGWindow *p,
 	AddFrame(_listBox1, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 5, 5, 5, 5));
 	AddFrame(_listBox2, new TGLayoutHints(kLHintsTop | kLHintsRight| kLHintsExpandX, 5, 5, 5, 5));
 
+	_listBox1->Connect("Selected(Int_t)", "plotGuiMainFrame", this, "ListBoxSelectionChangedByMouse()");
+	_listBox2->Connect("Selected(Int_t)", "plotGuiMainFrame", this, "ListBoxSelectionChangedByMouse()");
+	((TGLBContainer *)_listBox1->GetContainer())->Connect("CurrentChanged(TGFrame*)", "plotGuiMainFrame", this, "ListBox1SelectionChangedByKeyboard(TGFrame*)");
+	((TGLBContainer *)_listBox2->GetContainer())->Connect("CurrentChanged(TGFrame*)", "plotGuiMainFrame", this, "ListBox2SelectionChangedByKeyboard(TGFrame*)");
+
 	_checkDrawNewCanvas = new TGCheckButton(this, "&Draw in new canvas", 11);
 	AddFrame(_checkDrawNewCanvas, new TGLayoutHints(kLHintsTop | kLHintsRight, 5, 5, 5, 5));
 	// Create a horizontal frame containing button(s)
@@ -259,6 +267,25 @@ plotGuiMainFrame::~plotGuiMainFrame()
 void plotGuiMainFrame::HandleButtons() { }
 
 
+void plotGuiMainFrame::ListBox1SelectionChangedByKeyboard(TGFrame* frame) {
+	if(frame) {
+		PrintSelected(_listBox1->FindEntry(((TGTextLBEntry *)frame)->GetText()->Data())->EntryId());
+	}
+}
+
+
+void plotGuiMainFrame::ListBox2SelectionChangedByKeyboard(TGFrame* frame) {
+	if(frame) {
+		PrintSelected(-1, _listBox2->FindEntry(((TGTextLBEntry *)frame)->GetText()->Data())->EntryId());
+	}
+}
+
+
+void plotGuiMainFrame::ListBoxSelectionChangedByMouse() {
+	PrintSelected();
+}
+
+
 void plotGuiMainFrame::ActiveCanvasClosed() {
 	if(_debug) {
 		printDebug << "canvas closed" << endl;
@@ -267,21 +294,28 @@ void plotGuiMainFrame::ActiveCanvasClosed() {
 }
 
 
-void plotGuiMainFrame::PrintSelected()
+void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 {
 	// Writes selected entries in TList if multiselection.
 
 	string w1 = "";
 	string w2 = "";
-	try {
-		w1 = _waveNames.at(_listBox1->GetSelected());
-		w2 = _waveNames.at(_listBox2->GetSelected());
-	} catch (std::out_of_range&) {
-		printErr << "selection lists seem to be corrupted." << endl;
-		cout     << "   _listBox1->GetSelected() = " << _listBox1->GetSelected() << endl;
-		cout     << "   _listBox2->GetSelected() = " << _listBox2->GetSelected() << endl;
-		cout     << "    _waveNames.size()       = " << _waveNames.size()        << endl;
-		return;
+	{
+		int selectionList1 = sel1 < 0 ? _listBox1->GetSelected() : sel1;
+		int selectionList2 = sel2 < 0 ? _listBox2->GetSelected() : sel2;
+		try {
+			w1 = _waveNames.at(selectionList1);
+			w2 = _waveNames.at(selectionList2);
+		} catch (std::out_of_range&) {
+			printErr << "selection lists seem to be corrupted." << endl;
+			cout     << "   _listBox1->GetSelected() = " << selectionList1 << endl;
+			cout     << "   _listBox2->GetSelected() = " << selectionList2 << endl;
+			cout     << "    _waveNames.size()       = " << _waveNames.size()        << endl;
+			return;
+		}
+		if(_debug) {
+			printDebug << "PrintSelected called with list box entry ids (" << selectionList1 << ", " << selectionList2 << ")." << endl;
+		}
 	}
 
 	// Produce plots
@@ -436,13 +470,13 @@ void plotGuiMainFrame::PrintSelected()
 		}
 		stringstream sstr;
 		sstr << "plotGui_c" << _canvasCounter++;
-		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1200, 800);
+		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1600, 900);
 		_currentCanvas->Connect("Closed()", "plotGuiMainFrame", this, "ActiveCanvasClosed()");
 	} else {
 		_currentCanvas->Clear();
 	}
-	_currentCanvas->Divide(2,3);
-	_currentCanvas->cd(1);
+	_currentCanvas->Divide(2,2);
+	_currentCanvas->cd(3);
 
 	gph->Draw("AP");
 	gph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
@@ -452,25 +486,15 @@ void plotGuiMainFrame::PrintSelected()
 	gphP1->Draw("PSAME");
 	gphM1->Draw("PSAME");
 
-	_currentCanvas->cd(3);
+	_currentCanvas->cd(1);
 	g1->Draw("AP");
 	g1->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g1->GetYaxis()->SetTitle("Intensity");
 
-	_currentCanvas->cd(5);
+	_currentCanvas->cd(2);
 	g2->Draw("AP");
 	g2->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g2->GetYaxis()->SetTitle("Intensity");
-
-	_currentCanvas->cd(2);
-	gRe->Draw("AP");
-	gRe->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
-	gRe->GetYaxis()->SetTitle("Re(#rho_{ij})");
-
-	_currentCanvas->cd(4);
-	gIm->Draw("AP");
-	gIm->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
-	gIm->GetYaxis()->SetTitle("Im(#rho_{ij})");
 
 	_currentCanvas->Draw();
 	_currentCanvas->Update();
