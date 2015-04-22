@@ -470,13 +470,13 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 		}
 		stringstream sstr;
 		sstr << "plotGui_c" << _canvasCounter++;
-		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1200, 800);
+		_currentCanvas= new TCanvas(sstr.str().c_str(), sstr.str().c_str(), 10, 10, 1600, 900);
 		_currentCanvas->Connect("Closed()", "plotGuiMainFrame", this, "ActiveCanvasClosed()");
 	} else {
 		_currentCanvas->Clear();
 	}
-	_currentCanvas->Divide(2,3);
-	_currentCanvas->cd(1);
+	_currentCanvas->Divide(2,2);
+	_currentCanvas->cd(3);
 
 	gph->Draw("AP");
 	gph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
@@ -486,25 +486,15 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 	gphP1->Draw("PSAME");
 	gphM1->Draw("PSAME");
 
-	_currentCanvas->cd(3);
+	_currentCanvas->cd(1);
 	g1->Draw("AP");
 	g1->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g1->GetYaxis()->SetTitle("Intensity");
 
-	_currentCanvas->cd(5);
+	_currentCanvas->cd(2);
 	g2->Draw("AP");
 	g2->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
 	g2->GetYaxis()->SetTitle("Intensity");
-
-	_currentCanvas->cd(2);
-	gRe->Draw("AP");
-	gRe->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
-	gRe->GetYaxis()->SetTitle("Re(#rho_{ij})");
-
-	_currentCanvas->cd(4);
-	gIm->Draw("AP");
-	gIm->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
-	gIm->GetYaxis()->SetTitle("Im(#rho_{ij})");
 
 	_currentCanvas->Draw();
 	_currentCanvas->Update();
