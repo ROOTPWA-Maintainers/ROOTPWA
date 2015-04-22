@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <set>
 
+#include <boost/multi_array.hpp>
+
 #include "Math/SpecFuncMathCore.h"
 #include "Math/ProbFuncMathCore.h"
 #include "TDecompChol.h"
@@ -45,6 +47,7 @@
 #include "TRandom3.h"
 
 #include "fitResult.h"
+#include "partialWaveFitHelper.h"
 
 
 using namespace std;
@@ -154,6 +157,19 @@ fitResult::evidence() const
 std::vector<double>
 fitResult::evidenceComponents() const
 {
+	// make sure evidence can be calculated, i.e.:
+	// - covariance matrix exists
+	// - accepted normalisation integral exists
+	if (fitParCovMatrix().GetNcols() == 0 || fitParCovMatrix().GetNrows() == 0
+	    || acceptedNormIntegralMatrix().nCols() == 0 || acceptedNormIntegralMatrix().nRows() == 0) {
+		std::vector<double> retval;
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		retval.push_back(-numeric_limits<double>::infinity());
+		return retval;
+	}
+
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
 	set<unsigned int> thrProdAmpIndices;
@@ -239,9 +255,60 @@ fitResult::evidenceComponents() const
 	const double lvad = 0.5 * (d * 1.837877066 + logDet);
 
 	// parameter volume prior to observing the data
+	double logDetAcc = 0;
+	{
+		// keep list of required waves for each reflectivity and rank
+		boost::multi_array<vector<int>, 2> waves(boost::extents[2][_rank]);
+
+		// loop over production amplitudes and extract combinations of
+		// rank and reflectivity
+		for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+			// skip thresholded production amplitudes
+			if (thrProdAmpIndices.count(i) > 0)
+				continue;
+
+			const string waveName = string(waveNameForProdAmp(i));
+			const int waveI = waveIndex(waveName);
+			assert(waveI >= 0);
+			assert(thrWaveIndices.count(waveI) == 0);
+
+			// skip flat wave (handled below)
+			if (waveName == "flat")
+				continue;
+
+			const int rank = rankOfProdAmp(i);
+			assert(rank >= 0 && rank < _rank);
+
+			const int refl = partialWaveFitHelper::getReflectivity(waveName);
+			assert(refl == -1 || refl == +1);
+
+			if (refl > 0)
+				waves[1][rank].push_back(waveI);
+			else
+				waves[0][rank].push_back(waveI);
+		}
+
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+			for (int iRank = 0; iRank < _rank; ++iRank) {
+				const unsigned int dim = waves[iRefl][iRank].size();
+				complexMatrix sub(dim, dim);
+
+				for(unsigned int i = 0; i < dim; ++i)
+					for(unsigned int j = 0; j < dim; ++j)
+						sub.set(i, j, acceptedNormIntegral(waves[iRefl][iRank][i], waves[iRefl][iRank][j]));
+
+				logDetAcc += TMath::Log(sub.determinant().real());
+			}
+		}
+
+		// parameter volume for flat wave correlates with overall acceptance
+		const int idxFlat = waveIndex("flat");
+		assert(idxFlat != -1);
+		logDetAcc += TMath::Log(acceptedNormIntegral(idxFlat, idxFlat).real());
+	}
 	// n-Sphere:
 	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
-	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * TMath::Log(_acceptedNormIntegral.determinant().real());
+	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * logDetAcc;
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
@@ -281,6 +348,13 @@ complex<double>
 fitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
                                  const unsigned int waveIndexB) const
 {
+	// spin density matrix element is 0 if the two waves have different
+	// reflectivities
+	if (partialWaveFitHelper::getReflectivity(_waveNames[waveIndexA])
+	    != partialWaveFitHelper::getReflectivity(_waveNames[waveIndexB])) {
+		return 0;
+	}
+
 	// get pairs of amplitude indices with the same rank for waves A and B
 	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
 		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
@@ -363,6 +437,14 @@ TMatrixT<double>
 fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
                                     const unsigned int waveIndexB) const
 {
+	// spin density matrix element is 0 if the two waves have different
+	// reflectivities
+	if (partialWaveFitHelper::getReflectivity(_waveNames[waveIndexA])
+	    != partialWaveFitHelper::getReflectivity(_waveNames[waveIndexB])) {
+		TMatrixT<double> spinDensCov(2, 2);
+		return spinDensCov;
+	}
+
 	// get pairs of amplitude indices with the same rank for waves A and B
 	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
 		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);

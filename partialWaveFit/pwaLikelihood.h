@@ -206,7 +206,6 @@ namespace rpwa {
 
 
 		void clear();
-		static int getReflectivity(const TString& waveName);
 
 		void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
 		                           normMatrixArrayType&           reorderedMatrix) const;

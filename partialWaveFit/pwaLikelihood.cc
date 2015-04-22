@@ -54,6 +54,7 @@
 #endif
 #include "amplitudeTreeLeaf.h"
 #include "pwaLikelihood.h"
+#include "partialWaveFitHelper.h"
 
 
 // #define USE_FDF
@@ -994,7 +995,7 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 			if (_debug)
 				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
 				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-			if (getReflectivity(waveName) > 0) {
+			if (partialWaveFitHelper::getReflectivity(waveName) > 0) {
 				++_nmbWavesRefl[1];  // positive reflectivity
 				waveNames     [1].push_back(waveName);
 				waveThresholds[1].push_back(threshold);
@@ -1113,12 +1114,11 @@ pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const complex<double> val = integral.element(_waveNames[iRefl][iWave],
-					                                             _waveNames[jRefl][jWave]);
-					reorderedMatrix[iRefl][iWave][jRefl][jWave] = complexT(val.real(), val.imag());
-				}
+			for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {
+				const complex<double> val = integral.element(_waveNames[iRefl][iWave],
+				                                             _waveNames[iRefl][jWave]);
+				reorderedMatrix[iRefl][iWave][iRefl][jWave] = complexT(val.real(), val.imag());
+			}
 }
 
 
@@ -1381,15 +1381,15 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 	}
 	// set unused entries to 0
 	for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
-		normMatrix.set(_nmbWaves, i, complexT(0., 0.));
-		normMatrix.set(i, _nmbWaves, complexT(0., 0.));
-		accMatrix.set(_nmbWaves, i, complexT(0., 0.));
-		accMatrix.set(i, _nmbWaves, complexT(0., 0.));
+		normMatrix.set(_nmbWaves, i, 0);
+		normMatrix.set(i, _nmbWaves, 0);
+		accMatrix.set (_nmbWaves, i, 0);
+		accMatrix.set (i, _nmbWaves, 0);
 	}
 	// add flat
-	normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
-	accMatrix.set (_nmbWaves, _nmbWaves, complexT(_totAcc,0));
-	phaseSpaceIntegral[_nmbWaves] = 1;
+	normMatrix.set(_nmbWaves, _nmbWaves, 1.);
+	accMatrix.set (_nmbWaves, _nmbWaves, _totAcc);
+	phaseSpaceIntegral[_nmbWaves] = 1.;
 }
 
 
@@ -1445,33 +1445,6 @@ void
 pwaLikelihood<complexT>::clear()
 {
 	_decayAmps.resize(extents[0][0][0]);
-}
-
-
-// depends on naming convention for waves!!!
-// VR_IGJPCMEIso....
-template<typename complexT>
-int
-pwaLikelihood<complexT>::getReflectivity(const TString& waveName)
-{
-	int refl = 0;
-	unsigned int reflIndex = 6;  // position of reflectivity in wave
-	// check whether it is parameter or wave name
-	if (waveName[0] == 'V')
-		reflIndex = 9;
-	if (waveName[reflIndex] == '-')
-		refl= -1;
-	else if (waveName[reflIndex] == '+')
-		refl= +1;
-	else {
-		printErr << "cannot parse parameter/wave name '" << waveName << "'. "
-		         << "cannot not determine reflectivity. Aborting..." << endl;
-		throw;
-	}
-	if (_debug)
-		printDebug << "extracted reflectivity = " << refl << " from parameter name "
-		           << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
-	return refl;
 }
 
 
