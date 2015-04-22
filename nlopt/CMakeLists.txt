@@ -43,10 +43,10 @@ set(INCLUDE_DIRECTORIES
        ${UTILITIES_INCLUDE_DIR}
        ${AMPLITUDE_INCLUDE_DIR}
        ${ROOTPWA_INCLUDE_DIR}
-	   ${Nlopt_INCLUDE_DIR}
+	   ${NLopt_INCLUDE_DIR}
        ${CMAKE_CURRENT_SOURCE_DIR}
        )
 include_directories(${INCLUDE_DIRECTORIES})
 
 # executables
-make_executable(pwaNloptFit   pwaNloptFit.cc       ${ROOTPWA_LIBS} ${Nlopt_LIBS} ${UTILITIES_LIBS})
+make_executable(pwaNloptFit   pwaNloptFit.cc       ${ROOTPWA_LIBS} ${NLopt_LIBS} ${UTILITIES_LIBS})
