@@ -46,9 +46,9 @@ set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-	${Nlopt_INCLUDE_DIR}
+	${NLopt_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 # executables
-make_executable(pwaNloptFit   pwaNloptFit.cc       ${RPWA_PARTIALWAVEFIT_LIB} ${Nlopt_LIBS} ${RPWA_UTILITIES_LIB})
+make_executable(pwaNloptFit   pwaNloptFit.cc       ${RPWA_PARTIALWAVEFIT_LIB} ${NLopt_LIBS} ${RPWA_UTILITIES_LIB})

@@ -408,15 +408,14 @@ endif()
 # setup nlopt
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
-find_package(Nlopt)
+find_package(NLopt)
 set_package_properties(NLopt
 	PROPERTIES
-	DESCRIPTION "Library for nonlinear optimization."
-	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt/"
+	DESCRIPTION "Library for nonlinear optimization"
+	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
 	TYPE OPTIONAL
-)
-
-if(NOT Nlopt_FOUND)
+	)
+if(NOT NLopt_FOUND)
 	set(USE_NLOPT OFF)
 	message(STATUS "Cannot find NLopt installation. No NLopt components will be generated.")
 else()
