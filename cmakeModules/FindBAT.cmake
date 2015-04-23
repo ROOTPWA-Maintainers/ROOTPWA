@@ -3,7 +3,8 @@
 #// Description:
 #//      cmake module for finding BAT installation
 #//      BAT installation location is defined by environment variable
-#//      $BATINSTALLDIR
+#//      $BATINSTALLDIR. If this variable does not exist, bat-config is
+#//      searched in the path.
 #//
 #//      following variables are defined:
 #//      BAT_VERSION        - BAT version
@@ -30,6 +31,22 @@ set(BAT_LINKER_FLAGS "")
 
 
 set(BAT_ROOT_DIR $ENV{BATINSTALLDIR})
+
+# if the environment variable BATINSTALLDIR is empty, see whether there is
+# 'bat-config' somewhere in the path
+if(NOT BAT_ROOT_DIR)
+
+	find_program(_BAT_CONFIG_EXECUTABLE
+		bat-config)
+
+	if(_BAT_CONFIG_EXECUTABLE)
+		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --prefix
+			OUTPUT_VARIABLE BAT_ROOT_DIR
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+	endif()
+
+endif()
+
 if(BAT_ROOT_DIR)
 
 	set(BAT_FOUND TRUE)
@@ -58,50 +75,78 @@ if(BAT_ROOT_DIR)
 	endif()
 	unset(_BAT_LIBRARY_DIR)
 
-	set(_BAT_CONFIG_HEADER_FILE_NAME "${BAT_ROOT_DIR}/config.h")
-	if(NOT EXISTS "${_BAT_CONFIG_HEADER_FILE_NAME}")
-		set(BAT_FOUND FALSE)
-		set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT configuration '${_BAT_CONFIG_HEADER_FILE_NAME}' does not exist.")
-	else()
-		# parse version string
-		file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_VERSION
-			REGEX " VERSION ")
-		# there are two versions of the version string around,
-		# the first (and more recent) contains four parts of
-		# numbers divided by dots
-		string(REGEX REPLACE
-			"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\""
-			"\\1" BAT_VERSION "${_BAT_VERSION}")
-		if(BAT_VERSION STREQUAL _BAT_VERSION)
-			# otherwise try to extract the version from only
-			# three parts
-			string(REGEX REPLACE
-				"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\""
-				"\\1" BAT_VERSION "${_BAT_VERSION}")
-		endif()
-		if(BAT_VERSION STREQUAL _BAT_VERSION)
-			set(BAT_FOUND FALSE)
-			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract BAT version from version string '${_BAT_VERSION}'.")
-		endif()
-		unset(_BAT_VERSION)
+	# if 'bat-config' was already found above this will not change
+	# anything, if it was not yet searched then only look in BAT_ROOT_DIR
+	find_program(_BAT_CONFIG_EXECUTABLE
+		bat-config
+		PATHS ${BAT_ROOT_DIR}/bin
+		NO_DEFAULT_PATH)
 
-		# build with OpenMP support
-		file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_OPENMP
-			REGEX " THREAD_PARALLELIZATION ")
-		string(REGEX REPLACE
-			"#define THREAD_PARALLELIZATION ([01])"
-			"\\1" _BAT_OPENMP_STATUS "${_BAT_OPENMP}")
-		if(_BAT_OPENMP_STATUS STREQUAL _BAT_OPENMP)
-			set(BAT_FOUND FALSE)
-			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract whether BAT was build with threading support from string '${_BAT_OPENMP}'.")
-		endif()
-		if(_BAT_OPENMP_STATUS)
+	# prefer to extract the version from 'bat-config'
+	if(_BAT_CONFIG_EXECUTABLE)
+
+		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --version
+			OUTPUT_VARIABLE BAT_VERSION
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --libs
+			OUTPUT_VARIABLE _BAT_LDFLAGS
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		string(FIND ${_BAT_LDFLAGS} "-fopenmp" _BAT_OPENMP)
+		if(NOT _BAT_OPENMP EQUAL -1)
 			set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
 		endif()
+		unset(_BAT_LDFLAGS)
 		unset(_BAT_OPENMP)
-		unset(_BAT_OPENMP_STATUS)
+
+	else()
+
+		set(_BAT_CONFIG_HEADER_FILE_NAME "${BAT_ROOT_DIR}/config.h")
+		if(NOT EXISTS "${_BAT_CONFIG_HEADER_FILE_NAME}")
+			set(BAT_FOUND FALSE)
+			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT configuration '${_BAT_CONFIG_HEADER_FILE_NAME}' does not exist.")
+		else()
+			# parse version string
+			file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_VERSION
+				REGEX " VERSION ")
+			# there are two versions of the version string around,
+			# the first (and more recent) contains four parts of
+			# numbers divided by dots
+			string(REGEX REPLACE
+				"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\""
+				"\\1" BAT_VERSION "${_BAT_VERSION}")
+			if(BAT_VERSION STREQUAL _BAT_VERSION)
+				# otherwise try to extract the version from only
+				# three parts
+				string(REGEX REPLACE
+					"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\""
+					"\\1" BAT_VERSION "${_BAT_VERSION}")
+			endif()
+			if(BAT_VERSION STREQUAL _BAT_VERSION)
+				set(BAT_FOUND FALSE)
+				set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract BAT version from version string '${_BAT_VERSION}'.")
+			endif()
+			unset(_BAT_VERSION)
+
+			# build with OpenMP support
+			file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_OPENMP
+				REGEX " THREAD_PARALLELIZATION ")
+			string(REGEX REPLACE
+				"#define THREAD_PARALLELIZATION ([01])"
+				"\\1" _BAT_OPENMP_STATUS "${_BAT_OPENMP}")
+			if(_BAT_OPENMP_STATUS STREQUAL _BAT_OPENMP)
+				set(BAT_FOUND FALSE)
+				set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract whether BAT was build with threading support from string '${_BAT_OPENMP}'.")
+			endif()
+			if(_BAT_OPENMP_STATUS)
+				set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
+			endif()
+			unset(_BAT_OPENMP)
+			unset(_BAT_OPENMP_STATUS)
+		endif()
+		unset(_BAT_CONFIG_HEADER_FILE_NAME)
+
 	endif()
-	unset(_BAT_CONFIG_HEADER_FILE_NAME)
 
 	# compare version
 	if(BAT_FIND_VERSION_EXACT)
