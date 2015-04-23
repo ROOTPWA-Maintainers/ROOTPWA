@@ -37,6 +37,7 @@ void rpwa::printLibraryInfo()
 	printInfo << "this project was linked against" << std::endl
 	          << "    Boost version " << Boost_LIBRARY_VERSION << " in '" << Boost_INCLUDE_DIRS << "'"  << std::endl
 	          << "    libConfig version " << Libconfig_VERSION << " in '" << Libconfig_DIR << "'" << std::endl
+	          << "    yaml-cpp version " << YamlCpp_VERSION << " in '" << YamlCpp_DIR << "'" << std::endl
 	          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl;
 #ifdef USE_CUDA
 	std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;

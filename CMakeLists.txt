@@ -232,6 +232,19 @@ set_package_properties(Libconfig
 	)
 
 
+# setup yaml-cpp
+# environment variable $YAML_CPP is expected to point to yaml-cpp location
+message(STATUS "")
+message(STATUS ">>> Setting up yaml-cpp library.")
+find_package(YamlCpp 0.5 REQUIRED)
+set_package_properties(YamlCpp
+	PROPERTIES
+	DESCRIPTION "Simple C++ library for processing structured configuration files"
+	URL "https://github.com/jbeder/yaml-cpp"
+	TYPE REQUIRED
+	)
+
+
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
