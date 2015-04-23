@@ -448,6 +448,13 @@ function(root_generate_dictionary DICT_FILE)
 			message(STATUS "root_generate_dictionary will execute "
 				"'${RLIBMAP_EXECUTABLE} -o ${_MAP_FILE} -l ${_LIB_NAME} -c ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_LINKDEF}'")
 		endif()
+
+		# ignore compiler warnings concerning ignored qualifiers when
+		# compiling the ROOT dictionaries (this is required for
+		# 'Apple LLVM version 6.1.0')
+		set_source_files_properties(${DICT_FILE}
+		                            PROPERTIES
+		                            COMPILE_FLAGS "-Wno-ignored-qualifiers")
 	else()
 		string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1_rdict.pcm" _DICT_PCM "${_MAP_FILE}")
 		set(OUTPUT_FILES ${DICT_FILE} ${_DICT_PCM} ${_MAP_FILE})
