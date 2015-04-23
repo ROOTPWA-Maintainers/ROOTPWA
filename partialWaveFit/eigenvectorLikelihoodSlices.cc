@@ -353,6 +353,39 @@ main(int    argc,
 		printInfo << "analytic eigenvector [" << setw(3) << par << "]: " << eigenvectorAna << endl;
 		printInfo << "analytic eigenvalue  [" << setw(3) << par << "]: " << eigenvaluesAna[par] << endl;
 
+		// The idea here is to scan the logLikelihood function from the
+		// minimum in direction of the Eigenvectors.
+		//
+		// Around the minimum p the logLikelihood can be expanded as a
+		// Taylor series:
+		//
+		// -logL(p+dp) = -logL(p) + dp^T * grad(-logL(x))|x=p + 1/2 * dp^T * hesse(-logL(x))|x=p * dp
+		//
+		// The second summand should be equal to zero at the minimum.
+		// It is assumed that the Hessian matrix of -logL is the
+		// inverse of the covariance matrix
+		//
+		// hesse(-logL(x))|x=p = C^-1
+		//
+		// Eigenvectors of the covariance matrix then are also
+		// Eigenvectors of the Hessian matrix, albeit with inverse
+		// Eigenvalues. If e is an Eigenvector of the covariance matrix
+		// with Eigenvalue l
+		//
+		// C * e = l * e
+		//
+		// then
+		//
+		// hesse(-logL(x))|x=p * e = 1/l * e
+		//
+		// We now write dp = r * sqrt(l) * e where r in the following
+		// is varied between -1 and +1. For a logLikelihood behaving
+		// nicely we then should find the parabola
+		//
+		// -logL(p+dp) = -logL(p) + 1/2 * r^2
+		//
+		// This ideal parabola is drawn for a x between -sqrt(l) and
+		// +sqrt(l) using x = r * sqrt(l).
 		TGraph graphLikeli;
 		for(int p = -50; p <= 50; ++p) {
 			std::vector<double> newPars = getParsForPoint(eigenvectorMinuit, pars, eigenvaluesMinuit[par], p);
@@ -360,23 +393,30 @@ main(int    argc,
 			graphLikeli.SetPoint(p + 50, p / 50. * std::sqrt(eigenvaluesMinuit[par]), likeli);
 		}
 
-		std::stringstream minuitGaussFormula;
-		minuitGaussFormula << "1-TMath::Gaus(x, 0, TMath::Sqrt(" << (eigenvaluesMinuit[par]) << "))";
-		TF1 gaussMinuit("minuitGauss", minuitGaussFormula.str().c_str(), -100, 100);
+		const double lowerLimit = -1.2 * std::sqrt(eigenvaluesMinuit[par]);
+		const double upperLimit =  1.2 * std::sqrt(eigenvaluesMinuit[par]);
 
-		std::stringstream anaGaussFormula;
-		anaGaussFormula << "1-TMath::Gaus(x, 0, TMath::Sqrt(" << (eigenvaluesAna[par]) << "))";
-		TF1 gaussAna("analyticGauss", anaGaussFormula.str().c_str(), -100, 100);
+		std::stringstream minuitParabolaFormula;
+		// the magnitude of the eigenvector is 1. otherwise an
+		// additional factor '|eigenvector|^2' would be required
+		minuitParabolaFormula << "0.5 / " << eigenvaluesMinuit[par] << " * x*x";
+		TF1 parabolaMinuit("minuitParabola", minuitParabolaFormula.str().c_str(), lowerLimit, upperLimit);
+
+		std::stringstream anaParabolaFormula;
+		// the magnitude of the eigenvector is 1. otherwise an
+		// additional factor '|eigenvector|^2' would be required
+		anaParabolaFormula << "0.5 / " << eigenvaluesAna[par] << " * x*x";
+		TF1 parabolaAna("analyticParabola", anaParabolaFormula.str().c_str(), lowerLimit, upperLimit);
 
 		std::stringstream canvasName;
 		canvasName << "eigenvectorSlice" << par;
 		TCanvas cnvs(canvasName.str().c_str());
 		cnvs.cd();
 		graphLikeli.Draw("A*");
-		gaussMinuit.Draw("Lsame");
-		gaussMinuit.SetLineColor(kBlue);
-		gaussAna.Draw("Lsame");
-		gaussAna.SetLineColor(kRed);
+		parabolaMinuit.Draw("Lsame");
+		parabolaMinuit.SetLineColor(kBlue);
+		parabolaAna.Draw("Lsame");
+		parabolaAna.SetLineColor(kRed);
 		cnvs.Write();
 	}
 	outFile->Close();
