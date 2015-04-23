@@ -118,6 +118,15 @@ We use the _libconfig_ config file parser written by Mark A. Lindner available f
     > make && make install
 
 
+### yaml-cpp ###
+
+As YAML parser we use _yaml-cpp_ written by Jesse Beder available from <https://github.com/jbeder/yaml-cpp>. Version 0.5 or higher is required. Unfortunately there is no way to check the version in the current release, so please do this manually. Installation from source is quite simple (replace the three variables appropriately)
+
+    > cd ${YAML_CPP_BUILD}
+    > cmake ${YAML_CPP_SOURCE} -DCMAKE_INSTALL_PREFIX=${YAML_CPP_INSTALL} -DBUILD_SHARED_LIBS=ON
+    > make && make install
+
+
 ### Python (optional) ###
 
 In order to make scripting more powerful and flexible, some of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.

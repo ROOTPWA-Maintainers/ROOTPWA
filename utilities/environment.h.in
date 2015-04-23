@@ -12,6 +12,8 @@
 #cmakedefine Boost_INCLUDE_DIRS "@Boost_INCLUDE_DIRS@"
 #cmakedefine Libconfig_VERSION "@Libconfig_VERSION@"
 #cmakedefine Libconfig_DIR "@Libconfig_DIR@"
+#cmakedefine YamlCpp_VERSION "@YamlCpp_VERSION@"
+#cmakedefine YamlCpp_DIR "@YamlCpp_DIR@"
 #cmakedefine ROOTSYS "@ROOTSYS@"
 #cmakedefine CUDA_VERSION "@CUDA_VERSION@"
 #cmakedefine CUDA_LIB_DIRS "@CUDA_LIB_DIRS@"
@@ -61,6 +63,12 @@
 #endif
 #ifndef Libconfig_DIR
 #define Libconfig_DIR "undefined"
+#endif
+#ifndef YamlCpp_VERSION
+#define YamlCpp_VERSION "undefined"
+#endif
+#ifndef YamlCpp_DIR
+#define YamlCpp_DIR "undefined"
 #endif
 #ifndef ROOTSYS
 #define ROOTSYS "undefined"

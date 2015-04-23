@@ -59,6 +59,8 @@ ADD_CUSTOM_TARGET(
 	                 -D Boost_INCLUDE_DIRS=${Boost_INCLUDE_DIRS}
 	                 -D Libconfig_VERSION=${Libconfig_VERSION}
 	                 -D Libconfig_DIR=${Libconfig_DIR}
+	                 -D YamlCpp_VERSION=${YamlCpp_VERSION}
+	                 -D YamlCpp_DIR=${YamlCpp_DIR}
 	                 -D ROOTSYS=${ROOTSYS}
 	                 -D CUDA_VERSION=${CUDA_VERSION}
 	                 -D CUDA_LIB_DIRS=${CUDA_LIB_DIRS}
