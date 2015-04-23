@@ -148,6 +148,14 @@ if(DEBUG_OUTPUT)
 endif()
 
 
+# test whether thread_local is understood
+check_cxx_source_compiles("#include <iostream>
+int main() { thread_local int a = 1; std::cout << a << std::endl; }" COMPILER_PROVIDES_THREAD_LOCAL)
+if(COMPILER_PROVIDES_THREAD_LOCAL)
+       add_definitions(-DCOMPILER_PROVIDES_THREAD_LOCAL)
+endif()
+
+
 # redirect output files
 message(STATUS "")
 message(STATUS ">>> Setting up output paths.")

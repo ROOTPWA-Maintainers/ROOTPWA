@@ -490,7 +490,7 @@ rpwa::massDepFit::function::chiSquare(const std::vector<double>& par) const
 double
 rpwa::massDepFit::function::chiSquare(const double* par) const
 {
-#if __cplusplus >= 201103L
+#ifdef COMPILER_PROVIDES_THREAD_LOCAL
 	// in C++11 we can use a static variable per thread so that the
 	// parameters are kept over function calls and we can implement some
 	// caching
