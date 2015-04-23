@@ -26,6 +26,10 @@
 //-------------------------------------------------------------------------
 
 
+#ifndef PARTIALWAVEFITHELPER_HH
+#define PARTIALWAVEFITHELPER_HH
+
+
 #include <iostream>
 
 
@@ -47,3 +51,6 @@ namespace rpwa {
 
 
 }  // namespace rpwa
+
+
+#endif  // PARTIALWAVEFITHELPER_HH
