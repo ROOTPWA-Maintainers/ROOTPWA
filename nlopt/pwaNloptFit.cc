@@ -58,6 +58,7 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
+#include "partialWaveFitHelper.h"
 #include "amplitudeTreeLeaf.h"
 
 
@@ -355,7 +356,8 @@ main(int    argc,
 		fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
 		fitParCovMatrix = L.CovarianceMatrix(hessian);
 		TVectorT<double> eigenvalues;
-		hessian.EigenVectors(eigenvalues);
+		TMatrixT<double> eigenvectors;
+		rpwa::partialWaveFitHelper::getEigenvectors(L, hessian, eigenvectors, eigenvalues);
 		if (not quiet) {
 			printInfo << "analytical Hessian eigenvalues:" << endl;
 		}

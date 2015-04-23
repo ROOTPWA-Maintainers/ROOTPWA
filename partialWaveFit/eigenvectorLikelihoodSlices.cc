@@ -299,7 +299,8 @@ main(int    argc,
 	remove(waveListFileName.c_str());
 	if (not quiet)
 		cout << L << endl;
-	const unsigned int nmbPar = L.NDim();
+	const unsigned int nmbPar      = L.NDim();
+	const unsigned int nmbParFixed = L.nmbParsFixed();
 
 	unsigned int maxParNameLength = 0;  // maximum length of parameter names
 	for(unsigned int i = 0; i < nmbPar; ++i) {
@@ -319,14 +320,16 @@ main(int    argc,
 
 	const TMatrixT<double> covMatrixMinuit = result->fitParCovMatrix();
 	TVectorT<double> eigenvaluesMinuit;
-	const TMatrixT<double> eigenvectorsMinuit = covMatrixMinuit.EigenVectors(eigenvaluesMinuit);
+	TMatrixT<double> eigenvectorsMinuit;
+	rpwa::partialWaveFitHelper::getEigenvectors(L, covMatrixMinuit, eigenvectorsMinuit, eigenvaluesMinuit);
 
 	const TMatrixT<double> covMatrixAna = L.CovarianceMatrix(pars.data());
 	TVectorT<double> eigenvaluesAna;
-	const TMatrixT<double> eigenvectorsAna = covMatrixAna.EigenVectors(eigenvaluesAna);
+	TMatrixT<double> eigenvectorsAna;
+	rpwa::partialWaveFitHelper::getEigenvectors(L, covMatrixAna, eigenvectorsAna, eigenvaluesAna);
 
 	TFile* outFile = new TFile(outFileName.c_str(), "RECREATE");
-	for(unsigned int par = 0; par < nmbPar; ++par) {
+	for(unsigned int par = 0; par < nmbPar-nmbParFixed; ++par) {
 		std::vector<double> eigenvectorMinuit = getEigenvector(eigenvectorsMinuit, par);
 		if (not checkNorm(eigenvectorMinuit)) {
 			printWarn << "Minuit eigenvector " << par << " is not normalized. normalizing." << endl;

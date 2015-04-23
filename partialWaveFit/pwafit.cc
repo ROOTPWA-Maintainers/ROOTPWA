@@ -56,6 +56,7 @@
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
 #include "fitResult.h"
+#include "partialWaveFitHelper.h"
 #ifdef USE_CUDA
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
@@ -501,24 +502,10 @@ main(int    argc,
 		if (checkHessian) {
 			// analytically calculate Hessian
 			TMatrixT<double> hessian = L.Hessian(correctParams.data());
-			// create reduced hessian without fixed parameters
-			TMatrixT<double> reducedHessian(nmbPar - L.nmbParsFixed(), nmbPar - L.nmbParsFixed());
-			unsigned int iReduced = 0;
-			for(unsigned int i = 0; i < nmbPar; ++i) {
-				unsigned int jReduced = 0;
-				if (not L.parFixed(i)) {
-					for(unsigned int j = 0; j < nmbPar; ++j) {
-						if (not L.parFixed(j)) {
-							reducedHessian[iReduced][jReduced] = hessian[i][j];
-							jReduced++;
-						}
-					}
-					iReduced++;
-				}
-			}
 			// create and check Hessian eigenvalues
 			TVectorT<double> eigenvalues;
-			reducedHessian.EigenVectors(eigenvalues);
+			TMatrixT<double> eigenvectors;
+			rpwa::partialWaveFitHelper::getEigenvectors(L, hessian, eigenvectors, eigenvalues);
 			if (not quiet) {
 				printInfo << "eigenvalues of (analytic) Hessian:" << endl;
 			}
