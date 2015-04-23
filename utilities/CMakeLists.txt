@@ -62,6 +62,9 @@ ADD_CUSTOM_TARGET(
 	                 -D ROOTSYS=${ROOTSYS}
 	                 -D CUDA_VERSION=${CUDA_VERSION}
 	                 -D CUDA_LIB_DIRS=${CUDA_LIB_DIRS}
+	                 -D BAT_VERSION=${BAT_VERSION}
+	                 -D BAT_ROOT_DIR=${BAT_ROOT_DIR}
+	                 -D NLopt_DIR=${NLopt_DIR}
 	                 -D PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}
 	                 -D PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}
 	                 -P ${CMAKE_CURRENT_SOURCE_DIR}/environment.cmake

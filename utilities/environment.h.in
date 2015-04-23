@@ -15,6 +15,9 @@
 #cmakedefine ROOTSYS "@ROOTSYS@"
 #cmakedefine CUDA_VERSION "@CUDA_VERSION@"
 #cmakedefine CUDA_LIB_DIRS "@CUDA_LIB_DIRS@"
+#cmakedefine BAT_VERSION "@BAT_VERSION@"
+#cmakedefine BAT_ROOT_DIR "@BAT_ROOT_DIR@"
+#cmakedefine NLopt_DIR "@NLopt_DIR@"
 #cmakedefine PYTHONLIBS_VERSION_STRING "@PYTHONLIBS_VERSION_STRING@"
 #cmakedefine PYTHON_INCLUDE_DIRS "@PYTHON_INCLUDE_DIRS@"
 
@@ -67,6 +70,15 @@
 #endif
 #ifndef CUDA_LIB_DIRS
 #define CUDA_LIB_DIRS "undefined"
+#endif
+#ifndef BAT_VERSION
+#define BAT_VERSION "undefined"
+#endif
+#ifndef BAT_ROOT_DIR
+#define BAT_ROOT_DIR "undefined"
+#endif
+#ifndef NLopt_DIR
+#define NLopt_DIR "undefined"
 #endif
 #ifndef PYTHONLIBS_VERSION_STRING
 #define PYTHONLIBS_VERSION_STRING "undefined"

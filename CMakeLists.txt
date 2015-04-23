@@ -432,6 +432,7 @@ if(NOT NLopt_FOUND)
 	message(STATUS "Cannot find NLopt installation. No NLopt components will be generated.")
 else()
 	set(USE_NLOPT ON)
+	add_definitions(-DUSE_NLOPT)
 endif()
 add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
 

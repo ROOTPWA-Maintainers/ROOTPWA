@@ -41,6 +41,12 @@ void rpwa::printLibraryInfo()
 #ifdef USE_CUDA
 	std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
 #endif
+#ifdef USE_BAT
+	std::cout << "    BAT version " << BAT_VERSION << " in '" << BAT_ROOT_DIR << "'" << std::endl;
+#endif
+#ifdef USE_NLOPT
+	std::cout << "    NLopt in '" << NLopt_DIR << "'" << std::endl;
+#endif
 #ifdef USE_MPI
 	std::cout << "    MPI libraries; using Boost.MPI" << std::endl;
 #endif
