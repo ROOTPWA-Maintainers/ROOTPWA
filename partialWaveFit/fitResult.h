@@ -136,6 +136,7 @@ namespace rpwa {
 		int prodAmpIndex(const std::string& prodAmpName) const;  ///< returns production amplitude index corresponding to production amplitude name
 
 		double      fitParameter   (const std::string& parName  ) const;  ///< returns value of fit parameter with name
+		double      fitParameterErr(const std::string& parName  ) const;  ///< returns error of fit parameter with name
 		/// returns covariance of fit parameters at index A and B
 		double      fitParameterCov(const unsigned int parIndexA,
 		                            const unsigned int parIndexB) const { return _fitParCovMatrix[parIndexA][parIndexB]; }

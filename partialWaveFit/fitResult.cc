@@ -392,6 +392,29 @@ fitResult::fitParameter(const string& parName) const
 }
 
 
+/// returns fit parameter error by parameter name
+double
+fitResult::fitParameterErr(const string& parName) const
+{
+	// check if parameter corresponds to real or imaginary part of production amplitude
+	TString    name(parName);
+	const bool realPart = (name.Contains("RE") or name.Contains("flat"));
+	// find corresponding production amplitude
+	if (realPart)
+		name.ReplaceAll("_RE", "");
+	else
+		name.ReplaceAll("_IM", "");
+	const int index = prodAmpIndex(name.Data());
+	if (index >= 0) {
+		if (realPart)
+			return sqrt(prodAmpCov(index)[0][0]);
+		else
+			return sqrt(prodAmpCov(index)[1][1]);
+	}
+	return 0;  // not found
+}
+
+
 /// \brief constructs 2n x 2n covariance matrix of production amplitudes specified by index list
 // where n is the number of amplitudes
 // layout:
