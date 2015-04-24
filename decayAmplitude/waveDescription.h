@@ -44,16 +44,15 @@
 #include "TObject.h"
 
 #ifndef __CINT__
-#include "libconfig.h++"
-
 #include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
-#else
+#endif
+
+
 namespace libconfig {
 	class Config;
 	class Setting;
 }
-#endif
 
 
 namespace rpwa {
