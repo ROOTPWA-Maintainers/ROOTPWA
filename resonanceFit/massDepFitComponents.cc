@@ -676,6 +676,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
@@ -688,6 +689,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
+	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
 		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
@@ -891,6 +893,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
@@ -903,6 +906,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
+	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
 		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
@@ -1150,6 +1154,7 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (integralWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
@@ -1162,6 +1167,7 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
+	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
 		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
@@ -1273,6 +1279,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
 
 	out << "    mass threshold ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
@@ -1285,6 +1292,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
+	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
 	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
 		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
 	} else if(_parametersLimitedLower[1]) {
@@ -1418,6 +1426,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
 
 	out << "    mass threshold ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
 	} else if(_parametersLimitedLower[0]) {
@@ -1431,6 +1440,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 	for(size_t i=1; i<5; ++i) {
 		out << "    c" << i-1 << " ";
+		out << "start value: " << _parametersStart[i] << " +/- " << _parametersError[i] << " ";
 		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
 			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
 		} else if(_parametersLimitedLower[i]) {
@@ -1445,7 +1455,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 
-	out << "    for " << _tPrimeMeans.size() << " bins with mean t' values: " << _tPrimeMeans[0];
+	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
 	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
 		out << ", " << _tPrimeMeans[i];
 	}
