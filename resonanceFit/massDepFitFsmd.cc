@@ -60,6 +60,7 @@ rpwa::massDepFit::fsmd::~fsmd()
 bool
 rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
                              rpwa::massDepFit::parameters& fitParameters,
+                             rpwa::massDepFit::parameters& fitParametersError,
                              const std::vector<double>& massBinCenters,
                              const bool debug)
 {
@@ -149,9 +150,11 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	_parametersStep.resize(_nrParameters);
 
 	fitParameters.resize(_id+1, 0, _nrParameters, 0);
+	fitParametersError.resize(_id+1, 0, _nrParameters, 0);
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		fitParameters.setParameter(_id, idxParameter, configFsmdValue[idxParameter]);
+		fitParametersError.setParameter(_id, idxParameter, configFsmdError[idxParameter]);
 		_parametersFixed[idxParameter] = configFsmdFix[idxParameter];
 		_parametersLimitLower[idxParameter] = configFsmdLower[idxParameter];
 		_parametersLimitedLower[idxParameter] = true;

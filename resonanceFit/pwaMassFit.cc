@@ -211,7 +211,10 @@ main(int    argc,
 
 	// read configuration file
 	rpwa::massDepFit::parameters fitParameters;
-	if(not mdepFit.readConfig(&configRoot, compset, fitParameters, valTreeName, valBranchName)) {
+	rpwa::massDepFit::parameters fitParametersError;
+	double chi2;
+	unsigned int ndf;
+	if(not mdepFit.readConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -243,35 +246,28 @@ main(int    argc,
 
 		TStopwatch stopwatch;
 
-		// also extract errors from the fit
-		rpwa::massDepFit::parameters fitParametersError(compset.getNrComponents()+1,           // nr components + final-state mass-dependence
-		                                                compset.getMaxChannelsInComponent(),
-		                                                compset.getMaxParametersInComponent(),
-		                                                mdepFit.getNrBins());
-
 		stopwatch.Start();
 		const bool success = minimizer.minimize(fitParameters, fitParametersError, cache);
 		stopwatch.Stop();
 
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
-		double chi2 = 0.;
-		if(success) {
-			chi2 = fitFunction.chiSquare(fitParameters, cache);
-		} else {
-			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(fitFunction.chiSquare(fitParameters, cache)) << std::endl;
+		chi2 = fitFunction.chiSquare(fitParameters, cache);
+		if(not success) {
+			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
+			chi2 = 0.;
 		}
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
 		const unsigned int nrDataPoints = fitFunction.getNrDataPoints();
 		const unsigned int nrFree = minimizer.NFree();
-		const unsigned int ndf = nrDataPoints - nrFree;
+		ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
 
-		double chi2red = chi2/(double)ndf;
+		const double chi2red = chi2/(double)ndf;
 		printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(chi2red) << std::endl;
 
-		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf, chi2red)) {
+		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf)) {
 			printErr << "error while updating configuration file." << std::endl;
 			return 1;
 		}

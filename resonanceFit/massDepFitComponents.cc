@@ -114,6 +114,7 @@ rpwa::massDepFit::component::component(const size_t id,
 bool
 rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
                                   rpwa::massDepFit::parameters& fitParameters,
+                                  rpwa::massDepFit::parameters& fitParametersError,
                                   const size_t nrBins,
                                   const std::vector<double>& massBinCenters,
                                   const std::map<std::string, size_t>& waveIndices,
@@ -128,6 +129,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 	// resize fitParamters without affecting the number of channels first
 	// as this is not yet known
 	fitParameters.resize(_id+1, 0, _nrParameters, nrBins);
+	fitParametersError.resize(_id+1, 0, _nrParameters, nrBins);
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
@@ -158,6 +160,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		double error;
 		if(configParameter->lookupValue("error", error)) {
 			_parametersError[idxParameter] = error;
+			fitParametersError.setParameter(getId(), idxParameter, error);
 		}
 
 		bool fixed;
@@ -183,6 +186,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 	// resize fitParamters to the correct number of channels
 	fitParameters.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
+	fitParametersError.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
 
 	std::map<std::string, size_t> couplingsQN;
 	std::map<std::string, size_t> branchingDecay;
@@ -618,6 +622,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
 bool
 rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::parameters& fitParametersError,
                                               const size_t nrBins,
                                               const std::vector<double>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
@@ -629,7 +634,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 		printDebug << "starting initialization of 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -720,6 +725,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t 
 bool
 rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                                 rpwa::massDepFit::parameters& fitParameters,
+                                                rpwa::massDepFit::parameters& fitParametersError,
                                                 const size_t nrBins,
                                                 const std::vector<double>& massBinCenters,
                                                 const std::map<std::string, size_t>& waveIndices,
@@ -731,7 +737,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		printDebug << "starting initialization of 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -955,6 +961,7 @@ rpwa::massDepFit::integralWidthBreitWigner::~integralWidthBreitWigner()
 bool
 rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* configComponent,
                                                  rpwa::massDepFit::parameters& fitParameters,
+                                                 rpwa::massDepFit::parameters& fitParametersError,
                                                  const size_t nrBins,
                                                  const std::vector<double>& massBinCenters,
                                                  const std::map<std::string, size_t>& waveIndices,
@@ -966,7 +973,7 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 		printDebug << "starting initialization of 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1198,6 +1205,7 @@ rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
 bool
 rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::parameters& fitParametersError,
                                               const size_t nrBins,
                                               const std::vector<double>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
@@ -1209,7 +1217,7 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 		printDebug << "starting initialization of 'exponentialBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1340,6 +1348,7 @@ rpwa::massDepFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<do
 bool
 rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* configComponent,
                                                   rpwa::massDepFit::parameters& fitParameters,
+                                                  rpwa::massDepFit::parameters& fitParametersError,
                                                   const size_t nrBins,
                                                   const std::vector<double>& massBinCenters,
                                                   const std::map<std::string, size_t>& waveIndices,
@@ -1351,7 +1360,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 		printDebug << "starting initialization of 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}

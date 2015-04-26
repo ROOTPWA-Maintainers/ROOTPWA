@@ -69,6 +69,9 @@ namespace rpwa {
 			bool readConfig(const libconfig::Setting* configRoot,
 			                rpwa::massDepFit::model& fitModel,
 			                rpwa::massDepFit::parameters& fitParameters,
+			                rpwa::massDepFit::parameters& fitParametersError,
+			                double& chi2,
+			                unsigned int& ndf,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -80,8 +83,7 @@ namespace rpwa {
 			                  const rpwa::massDepFit::parameters& fitParameters,
 			                  const rpwa::massDepFit::parameters& fitParametersError,
 			                  const double chi2,
-			                  const int ndf,
-			                  const double chi2red) const;
+			                  const unsigned int ndf) const;
 
 // FIXME: make private
 			bool createPlots(const rpwa::massDepFit::model& fitModel,
@@ -103,6 +105,10 @@ namespace rpwa {
 
 			bool prepareMassLimits();
 
+			bool readConfigFitquality(const libconfig::Setting* configFitquality,
+			                          double& chi2,
+			                          unsigned int& ndf) const;
+
 			bool readConfigInput(const libconfig::Setting* configInput);
 			bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
 			bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
@@ -111,14 +117,21 @@ namespace rpwa {
 
 			bool readConfigModel(const libconfig::Setting* configRoot,
 			                     rpwa::massDepFit::model& fitModel,
-			                     rpwa::massDepFit::parameters& fitParameters);
+			                     rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::parameters& fitParametersError);
 			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 			bool readConfigModelComponents(const libconfig::Setting* configComponents,
 			                               rpwa::massDepFit::model& fitModel,
-			                               rpwa::massDepFit::parameters& fitParameters) const;
+			                               rpwa::massDepFit::parameters& fitParameters,
+			                               rpwa::massDepFit::parameters& fitParametersError) const;
 			bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
 			                         rpwa::massDepFit::model& fitModel,
-			                         rpwa::massDepFit::parameters& fitParameters)  const;
+			                         rpwa::massDepFit::parameters& fitParameters,
+			                         rpwa::massDepFit::parameters& fitParametersError) const;
+
+			bool updateConfigFitquality(libconfig::Setting* configFitquality,
+			                            const double chi2,
+			                            const unsigned int ndf) const;
 
 			bool updateConfigModel(const libconfig::Setting* configModel,
 			                       const rpwa::massDepFit::model& fitModel,

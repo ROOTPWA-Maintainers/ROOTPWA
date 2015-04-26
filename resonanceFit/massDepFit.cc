@@ -81,9 +81,24 @@ bool
 rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
                                          rpwa::massDepFit::model& fitModel,
                                          rpwa::massDepFit::parameters& fitParameters,
+                                         rpwa::massDepFit::parameters& fitParametersError,
+                                         double& chi2,
+                                         unsigned int& ndf,
                                          const std::string& valTreeName,
                                          const std::string& valBranchName)
 {
+	// fit result information
+	const libconfig::Setting* configFitquality = findLibConfigGroup(*configRoot, "fitquality", false);
+	if(configFitquality) {
+		if(not readConfigFitquality(configFitquality, chi2, ndf)) {
+			printErr << "error while reading 'fitquality' in configuration file." << std::endl;
+			return false;
+		}
+	} else {
+		chi2 = 0.;
+		ndf = 0;
+	}
+
 	// input section
 	const libconfig::Setting* configInput = findLibConfigGroup(*configRoot, "input");
 	if(not configInput) {
@@ -113,11 +128,37 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 		return false;
 	}
 
-	// set-up fit model (resonances, background, final-state mass dependence
-	if(not readConfigModel(configRoot, fitModel, fitParameters)) {
+	// set-up fit model (resonances, background, final-state mass dependence)
+	if(not readConfigModel(configRoot, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while reading fit model from configuration file." << std::endl;
 		return false;
 	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::readConfigFitquality(const libconfig::Setting* configFitquality,
+                                                   double& chi2,
+                                                   unsigned int& ndf) const
+{
+	if(not configFitquality) {
+		printErr << "'configFitquality' is not a pointer to a valid object." << std::endl;
+		return false;
+	}
+
+	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("chi2", libconfig::Setting::TypeFloat)
+	                     ("ndf", libconfig::Setting::TypeInt);
+	if(not checkIfAllVariablesAreThere(configFitquality, mandatoryArguments)) {
+		printErr << "'fitquality' does not contain all required variables." << std::endl;
+		return false;
+	}
+
+	configFitquality->lookupValue("chi2", chi2);
+	configFitquality->lookupValue("ndf", ndf);
 
 	return true;
 }
@@ -405,7 +446,8 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Set
 bool
 rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configRoot,
                                               rpwa::massDepFit::model& fitModel,
-                                              rpwa::massDepFit::parameters& fitParameters)
+                                              rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::parameters& fitParametersError)
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << std::endl;
@@ -427,14 +469,14 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configRo
 
 	// read information for the individual components
 	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
-	if(not readConfigModelComponents(configComponents, fitModel, fitParameters)) {
+	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while reading 'components' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
 	}
 
 	// get information for creating the final-state mass-dependence
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters)) {
+	if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
 	}
@@ -470,7 +512,8 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const libconfig::Setting
 bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting* configComponents,
                                                         rpwa::massDepFit::model& fitModel,
-                                                        rpwa::massDepFit::parameters& fitParameters) const
+                                                        rpwa::massDepFit::parameters& fitParameters,
+                                                        rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << std::endl;
@@ -533,7 +576,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
@@ -556,7 +599,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting
 bool
 rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* configFsmd,
                                                   rpwa::massDepFit::model& fitModel,
-                                                  rpwa::massDepFit::parameters& fitParameters) const
+                                                  rpwa::massDepFit::parameters& fitParameters,
+                                                  rpwa::massDepFit::parameters& fitParametersError) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -570,7 +614,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
 	}
 
 	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
-	if(not fsmd->init(configFsmd, fitParameters, _massBinCenters, _debug)) {
+	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _massBinCenters, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
@@ -608,14 +652,14 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 	return true;
 }
 
+
 bool
 rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
                                            const rpwa::massDepFit::model& fitModel,
                                            const rpwa::massDepFit::parameters& fitParameters,
                                            const rpwa::massDepFit::parameters& fitParametersError,
                                            const double chi2,
-                                           const int ndf,
-                                           const double chi2red) const
+                                           const unsigned int ndf) const
 {
 	if(_debug) {
 		printDebug << "updating configuration file." << std::endl;
@@ -633,6 +677,23 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 	} else {
 		configFitquality = &((*configRoot)["fitquality"]);
 	}
+	if(not updateConfigFitquality(configFitquality, chi2, ndf)) {
+		printErr << "error while updating 'fitquality' for result file." << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::updateConfigFitquality(libconfig::Setting* configFitquality,
+                                                     const double chi2,
+                                                     const unsigned int ndf) const
+{
+	if(_debug) {
+		printDebug << "updating 'fitquality'." << std::endl;
+	}
 
 	if(not configFitquality->exists("chi2")) {
 		configFitquality->add("chi2", libconfig::Setting::TypeFloat);
@@ -642,12 +703,12 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 	if(not configFitquality->exists("ndf")) {
 		configFitquality->add("ndf", libconfig::Setting::TypeInt);
 	}
-	(*configFitquality)["ndf"] = ndf;
+	(*configFitquality)["ndf"] = (int)ndf;
 
 	if(not configFitquality->exists("redchi2")) {
 		configFitquality->add("redchi2", libconfig::Setting::TypeFloat);
 	}
-	(*configFitquality)["redchi2"] = chi2red;
+	(*configFitquality)["redchi2"] = chi2/(double)ndf;
 
 	return true;
 }

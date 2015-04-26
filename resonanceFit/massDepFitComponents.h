@@ -110,6 +110,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -212,6 +213,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -238,6 +240,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -272,6 +275,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -303,6 +307,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -336,6 +341,7 @@ namespace rpwa {
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
