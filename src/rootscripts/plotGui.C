@@ -492,19 +492,6 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 			g2->SetPoint(i, result->massBinCenter()*0.001, intensity2);
 			g2->SetPointError(i, _binWidth*0.5, intensityErr2);
 
-			// check if we should make a transformation by 2pi
-			// this is needed because of cyclical variable phi
-			if(i>11){
-				double mpre;
-				double phpre;
-				gph->GetPoint(i-1,mpre,phpre);
-				double diff1=fabs(ph-phpre);
-				double diff2=fabs(ph+360-phpre);
-				double diff3=fabs(ph-360-phpre);
-				if(diff2<diff1 && diff2<diff3)ph+=360;
-				else if(diff3<diff1 && diff3<diff2)ph-=360;
-			}
-
 			gph->SetPoint(i, result->massBinCenter()*0.001, ph);
 			gph->SetPointError(i, _binWidth*0.5, phErr);
 
