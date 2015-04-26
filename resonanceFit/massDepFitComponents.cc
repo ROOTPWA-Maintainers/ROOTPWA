@@ -357,6 +357,11 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		_channels.push_back(rpwa::massDepFit::channel(it->second, waveName, nrBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
+
+		if (not readDecayChannel(decayChannel, idxDecayChannel, debug)) {
+			printErr << "error while reading extra information for decay channel at index " << idxDecayChannel << " for component '" << getName() << "'." << std::endl;
+			return false;
+		}
 	}
 
 	// if no branchings are read at all make sure that there is one equal to 1.
@@ -368,6 +373,15 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		printDebug << "finished initialization of 'component'." << std::endl;
 	}
 
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::component::readDecayChannel(const libconfig::Setting* decayChannel,
+                                              const size_t idxDecayChannel,
+                                              const bool debug)
+{
 	return true;
 }
 
@@ -679,82 +693,22 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		return false;
 	}
 
-	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
-	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
-		return false;
-	}
+	const size_t nrDecayChannels = getNrChannels();
 
 	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
-
-	const int nrDecayChannels = decayChannels->getLength();
 	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
-
-	_ratio.resize(nrDecayChannels + nrExtraDecayChannels);
-	_l.resize(nrDecayChannels + nrExtraDecayChannels);
-	_m1.resize(nrDecayChannels + nrExtraDecayChannels);
-	_m2.resize(nrDecayChannels + nrExtraDecayChannels);
-
-	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
-
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("mIsobar1", libconfig::Setting::TypeFloat)
-		                     ("mIsobar2", libconfig::Setting::TypeFloat)
-		                     ("relAngularMom", libconfig::Setting::TypeInt)
-		                     ("branchingRatio", libconfig::Setting::TypeFloat);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
-			return false;
-		}
-
-		double mIsobar1;
-		decayChannel->lookupValue("mIsobar1", mIsobar1);
-		_m1[idxDecayChannel] = mIsobar1;
-
-		double mIsobar2;
-		decayChannel->lookupValue("mIsobar2", mIsobar2);
-		_m2[idxDecayChannel] = mIsobar2;
-
-		int relAngularMom;
-		decayChannel->lookupValue("relAngularMom", relAngularMom);
-		_l[idxDecayChannel] = relAngularMom;
-
-		double branchingRatio;
-		decayChannel->lookupValue("branchingRatio", branchingRatio);
-		_ratio[idxDecayChannel] = branchingRatio;
-	}
-
 	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
-
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("mIsobar1", libconfig::Setting::TypeFloat)
-		                     ("mIsobar2", libconfig::Setting::TypeFloat)
-		                     ("relAngularMom", libconfig::Setting::TypeInt)
-		                     ("branchingRatio", libconfig::Setting::TypeFloat);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
+			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
 			return false;
 		}
+	}
 
-		double mIsobar1;
-		decayChannel->lookupValue("mIsobar1", mIsobar1);
-		_m1[nrDecayChannels + idxExtraDecayChannel] = mIsobar1;
-
-		double mIsobar2;
-		decayChannel->lookupValue("mIsobar2", mIsobar2);
-		_m2[nrDecayChannels + idxExtraDecayChannel] = mIsobar2;
-
-		int relAngularMom;
-		decayChannel->lookupValue("relAngularMom", relAngularMom);
-		_l[nrDecayChannels + idxExtraDecayChannel] = relAngularMom;
-
-		double branchingRatio;
-		decayChannel->lookupValue("branchingRatio", branchingRatio);
-		_ratio[nrDecayChannels + idxExtraDecayChannel] = branchingRatio;
+	assert(_ratio.size() == _m1.size() && _ratio.size() == _m2.size() && _ratio.size() == _l.size());
+	if (_ratio.size() != nrDecayChannels + nrExtraDecayChannels) {
+		printErr << "inconsistent vector size for decay channel information of component '" << getName() << "'." << std::endl;
+		return false;
 	}
 
 	if(nrDecayChannels + nrExtraDecayChannels > 1) {
@@ -773,6 +727,53 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 		print(printDebug);
 		printDebug << "finished initialization of 'dynamicWidthBreitWigner'." << std::endl;
 	}
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::dynamicWidthBreitWigner::readDecayChannel(const libconfig::Setting* decayChannel,
+                                                            const size_t idxDecayChannel,
+                                                            const bool debug)
+{
+	if(debug) {
+		printDebug << "start initializing of decay channel at index " << idxDecayChannel << " in 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+	}
+
+	// make sure there are no holes in the vectors
+	assert(_ratio.size() == _m1.size() && _ratio.size() == _m2.size() && _ratio.size() == _l.size());
+	if (_ratio.size() != idxDecayChannel) {
+		printErr << "wrong index for decay channel to read for component '" << getName() << "', got " << idxDecayChannel << ", expected " << _ratio.size() << "." << std::endl;
+		return false;
+	}
+
+	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("mIsobar1", libconfig::Setting::TypeFloat)
+	                     ("mIsobar2", libconfig::Setting::TypeFloat)
+	                     ("relAngularMom", libconfig::Setting::TypeInt)
+	                     ("branchingRatio", libconfig::Setting::TypeFloat);
+	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
+		return false;
+	}
+
+	double mIsobar1;
+	decayChannel->lookupValue("mIsobar1", mIsobar1);
+	_m1.push_back(mIsobar1);
+
+	double mIsobar2;
+	decayChannel->lookupValue("mIsobar2", mIsobar2);
+	_m2.push_back(mIsobar2);
+
+	int relAngularMom;
+	decayChannel->lookupValue("relAngularMom", relAngularMom);
+	_l.push_back(relAngularMom);
+
+	double branchingRatio;
+	decayChannel->lookupValue("branchingRatio", branchingRatio);
+	_ratio.push_back(branchingRatio);
+
 	return true;
 }
 
@@ -915,126 +916,22 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 		return false;
 	}
 
-	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
-	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
-		return false;
-	}
+	const size_t nrDecayChannels = getNrChannels();
 
 	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
-
-	const int nrDecayChannels = decayChannels->getLength();
 	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
-
-	_ratio.resize(nrDecayChannels + nrExtraDecayChannels);
-	_interpolator.resize(nrDecayChannels + nrExtraDecayChannels, NULL);
-
-	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
-
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("integral", libconfig::Setting::TypeList)
-		                     ("branchingRatio", libconfig::Setting::TypeFloat);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
-			return false;
-		}
-
-		const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
-
-		const int nrValues = integrals->getLength();
-
-		std::vector<double> masses;
-		std::vector<double> values;
-
-		for(int idx=0; idx<nrValues; ++idx) {
-			const libconfig::Setting* integral = &((*integrals)[idx]);
-			if (integral->getType() != libconfig::Setting::TypeArray) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-			if (integral->getLength() != 2) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-			if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-
-			if (masses.size() > 0 && masses.back() > (double)((*integral)[0])) {
-				printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
-				return false;
-			}
-
-			masses.push_back((*integral)[0]);
-			values.push_back((*integral)[1]);
-		}
-
-		_masses[idxDecayChannel] = masses;
-		_values[idxDecayChannel] = values;
-
-		assert(_interpolator[idxDecayChannel] == NULL); // huh, init called twice?
-		_interpolator[idxDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
-
-		double branchingRatio;
-		decayChannel->lookupValue("branchingRatio", branchingRatio);
-		_ratio[idxDecayChannel] = branchingRatio;
-	}
-
 	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
-
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("integral", libconfig::Setting::TypeList)
-		                     ("branchingRatio", libconfig::Setting::TypeFloat);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
+			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
 			return false;
 		}
+	}
 
-		const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
-
-		const int nrValues = integrals->getLength();
-
-		std::vector<double> masses;
-		std::vector<double> values;
-
-		for(int idx=0; idx<nrValues; ++idx) {
-			const libconfig::Setting* integral = &((*integrals)[idx]);
-			if (integral->getType() != libconfig::Setting::TypeArray) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-			if (integral->getLength() != 2) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-			if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
-				printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-				return false;
-			}
-
-			if (masses.size() > 0 && masses.back() > (double)((*integral)[0])) {
-				printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
-				return false;
-			}
-
-			masses.push_back((*integral)[0]);
-			values.push_back((*integral)[1]);
-		}
-
-		_masses[idxDecayChannel] = masses;
-		_values[idxDecayChannel] = values;
-
-		assert(_interpolator[nrDecayChannels + idxExtraDecayChannel] == NULL); // huh, init called twice?
-		_interpolator[nrDecayChannels + idxExtraDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
-
-		double branchingRatio;
-		decayChannel->lookupValue("branchingRatio", branchingRatio);
-		_ratio[nrDecayChannels + idxExtraDecayChannel] = branchingRatio;
+	assert(_ratio.size() == _masses.size() && _ratio.size() == _values.size() && _ratio.size() == _interpolator.size());
+	if (_ratio.size() != nrDecayChannels + nrExtraDecayChannels) {
+		printErr << "inconsistent vector size for decay channel information of component '" << getName() << "'." << std::endl;
+		return false;
 	}
 
 	if(nrDecayChannels + nrExtraDecayChannels > 1) {
@@ -1053,6 +950,76 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 		print(printDebug);
 		printDebug << "finished initialization of 'integralWidthBreitWigner'." << std::endl;
 	}
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Setting* decayChannel,
+                                                             const size_t idxDecayChannel,
+                                                             const bool debug)
+{
+	if(debug) {
+		printDebug << "start initializing of decay channel at index " << idxDecayChannel << " in 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+	}
+
+	// make sure there are no holes in the vectors
+	assert(_ratio.size() == _masses.size() && _ratio.size() == _values.size() && _ratio.size() == _interpolator.size());
+	if (_ratio.size() != idxDecayChannel) {
+		printErr << "wrong index for decay channel to read for component '" << getName() << "', got " << idxDecayChannel << ", expected " << _ratio.size() << "." << std::endl;
+		return false;
+	}
+
+	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("integral", libconfig::Setting::TypeList)
+	                     ("branchingRatio", libconfig::Setting::TypeFloat);
+	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
+		return false;
+	}
+
+	const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
+
+	const int nrValues = integrals->getLength();
+	std::vector<double> masses;
+	std::vector<double> values;
+
+	for(int idx=0; idx<nrValues; ++idx) {
+		const libconfig::Setting* integral = &((*integrals)[idx]);
+		if (integral->getType() != libconfig::Setting::TypeArray) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if (integral->getLength() != 2) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+
+		const double mass = (*integral)[0];
+		const double val = (*integral)[1];
+
+		if (masses.size() > 0 && masses.back() > mass) {
+			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
+			return false;
+		}
+
+		masses.push_back(mass);
+		values.push_back(val);
+	}
+
+	_masses.push_back(masses);
+	_values.push_back(values);
+	_interpolator.push_back(new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR));
+
+	double branchingRatio;
+	decayChannel->lookupValue("branchingRatio", branchingRatio);
+	_ratio.push_back(branchingRatio);
+
 	return true;
 }
 

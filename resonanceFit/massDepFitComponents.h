@@ -119,6 +119,9 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			                              const size_t idxDecayChannel,
+			                              const bool debug);
 
 			virtual bool update(const libconfig::Setting* configComponent,
 			                    const rpwa::massDepFit::parameters& fitParameters,
@@ -250,6 +253,9 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			                              const size_t idxDecayChannel,
+			                              const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -285,6 +291,9 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			                              const size_t idxDecayChannel,
+			                              const bool debug);
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
