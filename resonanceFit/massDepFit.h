@@ -73,7 +73,6 @@ namespace rpwa {
 			                const std::string& valBranchName = "fitResult_v2");
 
 			bool init(rpwa::massDepFit::model& fitModel,
-			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::function& fitFunction);
 
 			bool updateConfig(libconfig::Setting* configRoot,

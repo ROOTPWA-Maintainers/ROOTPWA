@@ -217,7 +217,7 @@ main(int    argc,
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(compset, fitParameters, fitFunction)) {
+	if(not mdepFit.init(compset, fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
