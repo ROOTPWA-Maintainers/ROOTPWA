@@ -390,10 +390,6 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		}
 
 		libconfig::Setting* configParameter = &((*configComponent)[_parametersName[idxParameter]]);
-		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << std::endl;
-			return false;
-		}
 
 		(*configParameter)["val"] = fitParameters.getParameter(getId(), idxParameter);
 
@@ -405,89 +401,28 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 	}
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
-	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
-		return false;
-	}
-
-	const int nrDecayChannels = decayChannels->getLength();
-	if(nrDecayChannels < 0 || static_cast<size_t>(nrDecayChannels) != getNrChannels()) {
-		printErr << "number of decay channels in configuration file and fit model does not match." << std::endl;
-		return false;
-	}
-
-	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+	const size_t nrDecayChannels = getNrChannels();
+	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("amp", libconfig::Setting::TypeString);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
-			return false;
-		}
-
-		std::string waveName;
-		decayChannel->lookupValue("amp", waveName);
-
-		const rpwa::massDepFit::channel* channel = NULL;
-		size_t channelIdx = 0;
-		for(size_t idxChannel=0; idxChannel<getNrChannels(); ++idxChannel) {
-			if(getChannel(idxChannel).getWaveName() == waveName) {
-				channel = &getChannel(idxChannel);
-				channelIdx = idxChannel;
-				break;
-			}
-		}
-		if(not channel) {
-			printErr << "could not find channel '" << waveName << "' for component '" << getName() << "'." << std::endl;
-			return false;
-		}
-
-		if(channelIdx == _channelsCoupling[channelIdx]) {
-			boost::assign::insert(mandatoryArguments)
-			                     ("couplings", libconfig::Setting::TypeList);
-			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
-				return false;
-			}
-
+		if(idxDecayChannel == getChannelIdxCoupling(idxDecayChannel)) {
 			const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
-			if(not configCouplings) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
-				return false;
-			}
+			const size_t nrBins = getChannel(idxDecayChannel).getNrBins();
+			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+				const libconfig::Setting* configCoupling = &((*configCouplings)[idxBin]);
 
-			const int nrCouplings = configCouplings->getLength();
-			if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != channel->getNrBins()) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has only " << nrCouplings << " couplings, not " << channel->getNrBins() << "." << std::endl;
-				return false;
-			}
-
-			for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
-				const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
-
-				(*configCoupling)["coupling_Re"] = fitParameters.getCoupling(getId(), channelIdx, idxCoupling).real();
-				(*configCoupling)["coupling_Im"] = fitParameters.getCoupling(getId(), channelIdx, idxCoupling).imag();
+				(*configCoupling)["coupling_Re"] = fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).real();
+				(*configCoupling)["coupling_Im"] = fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).imag();
 			}
 		}
 
-		if(useBranchings && nrDecayChannels > 1 && channelIdx == _channelsBranching[channelIdx]) {
-			boost::assign::insert(mandatoryArguments)
-			                     ("branching", libconfig::Setting::TypeGroup);
-			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
-				return false;
-			}
+		if(useBranchings && nrDecayChannels > 1) {
+			if(idxDecayChannel == getChannelIdxBranching(idxDecayChannel)) {
+				const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
 
-			const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
-			if(not configBranching) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no branching." << std::endl;
-				return false;
+				(*configBranching)["branching_Re"] = fitParameters.getBranching(getId(), idxDecayChannel).real();
+				(*configBranching)["branching_Im"] = fitParameters.getBranching(getId(), idxDecayChannel).imag();
 			}
-
-			(*configBranching)["branching_Re"] = fitParameters.getBranching(getId(), _channelsBranching[channelIdx]).real();
-			(*configBranching)["branching_Im"] = fitParameters.getBranching(getId(), _channelsBranching[channelIdx]).imag();
 		}
 	}
 

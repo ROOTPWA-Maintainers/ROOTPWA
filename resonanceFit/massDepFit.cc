@@ -779,42 +779,11 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const libconfig::Setti
 		return false;
 	}
 
-	const int nrComponents = configComponents->getLength();
-	if(nrComponents < 0 || static_cast<size_t>(nrComponents) != fitModel.getNrComponents()) {
-		printErr << "number of components in configuration file and fit model does not match." << std::endl;
-		return false;
-	}
-
-	printInfo << "updating " << nrComponents << " components in configuration file." << std::endl;
-
-	for(int idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+	const size_t nrComponents = fitModel.getNrComponents();
+	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 		const libconfig::Setting* configComponent = &((*configComponents)[idxComponent]);
-
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", libconfig::Setting::TypeString);
-		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "'components' list in 'model' section in configuration file contains errors." << std::endl;
-			return false;
-		}
-
-		std::string name;
-		configComponent->lookupValue("name", name);
-
-		const rpwa::massDepFit::component* component = NULL;
-		for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
-			if(fitModel.getComponent(idx)->getName() == name) {
-				component = fitModel.getComponent(idx);
-				break;
-			}
-		}
-		if(not component) {
-			printErr << "could not find component '" << name << "' in fit model." << std::endl;
-			return false;
-		}
-
-		if(not component->update(configComponent, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
-			printErr << "error while updating component '" << name << "'." << std::endl;
+		if(not fitModel.getComponent(idxComponent)->update(configComponent, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
+			printErr << "error while updating component at index " << idxComponent << " for result file." << std::endl;
 			return false;
 		}
 	}
