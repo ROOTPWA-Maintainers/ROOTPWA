@@ -92,9 +92,11 @@ rpwa::massDepFit::channel::operator=(rpwa::massDepFit::channel& other)
 
 rpwa::massDepFit::component::component(const size_t id,
                                        const std::string& name,
+                                       const std::string& type,
                                        const size_t nrParameters)
 	: _id(id),
 	  _name(name),
+	  _type(type),
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
@@ -609,7 +611,7 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 
 rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
                                                                const std::string& name)
-	: component(id, name, 2)
+	: component(id, name, "fixedWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -712,7 +714,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
                                                                    const std::string& name)
-	: component(id, name, 2)
+	: component(id, name, "dynamicWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -937,7 +939,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
                                                                      const std::string& name)
-	: component(id, name, 2)
+	: component(id, name, "integralWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -1192,7 +1194,7 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
-	: component(id, name, 2)
+	: component(id, name, "exponentialBackground", 2)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "g";
@@ -1320,7 +1322,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const size_t id,
                                                                        const std::string& name)
-	: component(id, name, 5)
+	: component(id, name, "tPrimeDependentBackground", 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";

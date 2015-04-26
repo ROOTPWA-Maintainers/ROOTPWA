@@ -102,11 +102,13 @@ namespace rpwa {
 
 			component(const size_t id,
 			          const std::string& name,
+			          const std::string& type,
 			          const size_t nrParameters);
 			virtual ~component() {};
 
 			size_t getId() const { return _id; }
 			const std::string& getName() const { return _name; }
+			const std::string& getType() const { return _type; }
 
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
@@ -178,6 +180,7 @@ namespace rpwa {
 
 			const size_t _id;
 			const std::string _name;
+			const std::string _type;
 
 			std::vector<channel> _channels;
 			std::vector<size_t> _channelsCoupling;
