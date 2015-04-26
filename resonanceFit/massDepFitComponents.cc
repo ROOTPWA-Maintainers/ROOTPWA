@@ -972,6 +972,9 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 			values.push_back((*integral)[1]);
 		}
 
+		_masses[idxDecayChannel] = masses;
+		_values[idxDecayChannel] = values;
+
 		assert(_interpolator[idxDecayChannel] == NULL); // huh, init called twice?
 		_interpolator[idxDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);
 
@@ -1022,6 +1025,9 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 			masses.push_back((*integral)[0]);
 			values.push_back((*integral)[1]);
 		}
+
+		_masses[idxDecayChannel] = masses;
+		_values[idxDecayChannel] = values;
 
 		assert(_interpolator[nrDecayChannels + idxExtraDecayChannel] == NULL); // huh, init called twice?
 		_interpolator[nrDecayChannels + idxExtraDecayChannel] = new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR);

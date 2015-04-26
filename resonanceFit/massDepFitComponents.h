@@ -296,8 +296,10 @@ namespace rpwa {
 
 		private:
 
-			std::vector<double> _ratio;
+			std::vector<std::vector<double> > _masses;
+			std::vector<std::vector<double> > _values;
 			std::vector<ROOT::Math::Interpolator*> _interpolator;
+			std::vector<double> _ratio;
 
 		};
 
