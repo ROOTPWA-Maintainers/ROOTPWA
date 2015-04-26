@@ -70,8 +70,8 @@ class plotGuiMainFrame : public TGMainFrame {
 		TGListBox*          _listBox1;
 		TGListBox*          _listBox2;
 		TGCheckButton*      _checkDrawNewCanvas;
-		std::vector<std::string> _waveNames;
-		std::vector<std::vector<const rpwa::fitResult*> > _fitResults;
+		vector<string> _waveNames;
+		vector<vector<const rpwa::fitResult*> > _fitResults;
 		const double _binWidth;
 		unsigned int _canvasCounter;
 		TCanvas* _currentCanvas;
@@ -130,7 +130,7 @@ plotGuiMainFrame::plotGuiMainFrame(const TGWindow *p,
                          const double& intensityThreshold,
                          const string& waveListFileName) :
 	TGMainFrame(p, w, h),
-	_fitResults(trees.size(), std::vector<const rpwa::fitResult*>()),
+	_fitResults(trees.size(), vector<const rpwa::fitResult*>()),
 	_binWidth(binWidth),
 	_canvasCounter(0),
 	_currentCanvas(0)
@@ -154,7 +154,7 @@ plotGuiMainFrame::plotGuiMainFrame(const TGWindow *p,
 		printInfo << "Mass bins: " << entries << endl;
 		_fitResults[treeIndex].resize(entries, 0);
 		for(long i = 0; i < entries; ++i) {
-			printInfo << "loading result " << i << " of " << entries << "... " << std::flush;
+			printInfo << "loading result " << i << " of " << entries << "... " << flush;
 			trees[treeIndex]->GetEntry(i);
 			_fitResults[treeIndex][i] = new rpwa::fitResult(*res);
 			cout << "done!" << endl;
@@ -566,7 +566,7 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 
 }
 
-void plotGui(const vector<std::string>& inFileNames,
+void plotGui(const vector<string>& inFileNames,
              const double& binWidth = 0.03,
              const double& intensityThreshold = -1.,
              const string& whiteListFileName = "")
@@ -592,11 +592,11 @@ void plotGui(const vector<std::string>& inFileNames,
 	new plotGuiMainFrame(gClient->GetRoot(), 20, 20, trees, binWidth, intensityThreshold, whiteListFileName);
 }
 
-void plotGui(const std::string& inFileName,
+void plotGui(const string& inFileName,
              const double& binWidth = 0.03,
              const double& intensityThreshold = -1.,
              const string& whiteListFileName = "")
 {
-	const std::vector<string> fileNames(1, inFileName);
+	const vector<string> fileNames(1, inFileName);
 	plotGui(fileNames, binWidth, intensityThreshold, whiteListFileName);
 }
