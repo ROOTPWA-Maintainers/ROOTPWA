@@ -129,7 +129,12 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 	}
 
 	// set-up fit model (resonances, background, final-state mass dependence)
-	if(not readConfigModel(configRoot, fitModel, fitParameters, fitParametersError)) {
+	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	if(not configModel) {
+		printErr << "'model' does not exist in configuration file." << std::endl;
+		return false;
+	}
+	if(not readConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while reading fit model from configuration file." << std::endl;
 		return false;
 	}
@@ -196,16 +201,27 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 
 	// get information for plotting of systematic error
 	const libconfig::Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
-	if(not readConfigInputSystematics(configInputSystematics)) {
-		printErr << "error while reading 'systematics' in section '" << configInput->getName() << "' in configuration file." << std::endl;
-		return false;
+	if(configInputSystematics) {
+		if(not readConfigInputSystematics(configInputSystematics)) {
+			printErr << "error while reading 'systematics' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+			return false;
+		}
+	} else {
+		_sysPlotting = false;
 	}
 
 	// get information for which parameters to release in which order
 	const libconfig::Setting* configInputFreeParameters = findLibConfigArray(*configInput, "freeparameters", false);
-	if(not readConfigInputFreeParameters(configInputFreeParameters)) {
-		printErr << "error while reading 'freeparameters' in section '" << configInput->getName() << "' in configuration file." << std::endl;
-		return false;
+	if(configInputFreeParameters) {
+		if(not readConfigInputFreeParameters(configInputFreeParameters)) {
+			printErr << "error while reading 'freeparameters' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+			return false;
+		}
+	} else {
+		_freeParameters.clear();
+		_freeParameters.push_back("branching");
+		_freeParameters.push_back("branching mass m0");
+		_freeParameters.push_back("*");
 	}
 
 	return true;
@@ -365,11 +381,9 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const libconfig::Setting* con
 bool
 rpwa::massDepFit::massDepFit::readConfigInputSystematics(const libconfig::Setting* configInputSystematics)
 {
-	// configInputSystematics might actually be a NULL pointer, in this
-	// systematics is not plotted
 	if(not configInputSystematics) {
-		_sysPlotting = false;
-		return true;
+		printErr << "'configInputSystematics' is not a pointer to a valid object." << std::endl;
+		return false;
 	}
 
 	const int nrSystematics = configInputSystematics->getLength();
@@ -407,11 +421,8 @@ bool
 rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters)
 {
 	if(not configInputFreeParameters) {
-		_freeParameters.clear();
-		_freeParameters.push_back("branching");
-		_freeParameters.push_back("branching mass m0");
-		_freeParameters.push_back("*");
-		return true;
+		printErr << "'configInputFreeParameters' is not a pointer to a valid object." << std::endl;
+		return false;
 	}
 
 	_freeParameters.clear();
@@ -444,24 +455,26 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Set
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configRoot,
+rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configModel,
                                               rpwa::massDepFit::model& fitModel,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError)
 {
-	if(_debug) {
-		printDebug << "reading fit model from configuration file." << std::endl;
-	}
-
-	// get components section of configuration file
-	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
 	if(not configModel) {
 		printErr << "error while reading 'model' section in configuration file." << std::endl;
 		return false;
 	}
 
+	if(_debug) {
+		printDebug << "reading fit model from configuration file." << std::endl;
+	}
+
 	// get information about anchor wave
 	const libconfig::Setting* configAnchorWave = findLibConfigGroup(*configModel, "anchorwave");
+	if(not configAnchorWave) {
+		printErr << "'anchorwave' does not exist in 'model'." << std::endl;
+		return false;
+	}
 	if(not readConfigModelAnchorWave(configAnchorWave)) {
 		printErr << "error while reading 'anchorwave' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
@@ -469,6 +482,10 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configRo
 
 	// read information for the individual components
 	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
+	if(not configComponents) {
+		printErr << "'components' does not exist in 'model'." << std::endl;
+		return false;
+	}
 	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
 		printErr << "error while reading 'components' in section '" << configModel->getName() << "' in configuration file." << std::endl;
 		return false;
@@ -476,9 +493,13 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configRo
 
 	// get information for creating the final-state mass-dependence
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
-		return false;
+	if(configFsmd) {
+		if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
+			printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "not using final-state mass dependence." << std::endl;
 	}
 
 	return true;
@@ -602,11 +623,9 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
                                                   rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::parameters& fitParametersError) const
 {
-	// configFsmd might actually be a NULL pointer, in this the final-state
-	// mass-dependence is not read
 	if(not configFsmd) {
-		printInfo << "not using final-state mass dependence." << std::endl;
-		return true;
+		printErr << "'configFsmd' is not a pointer to a valid object." << std::endl;
+		return false;
 	}
 
 	if(_debug) {
@@ -665,12 +684,6 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 		printDebug << "updating configuration file." << std::endl;
 	}
 
-	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
-	if(not updateConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'model' section of configuration file." << std::endl;
-		return false;
-	}
-
 	libconfig::Setting* configFitquality = NULL;
 	if(not configRoot->exists("fitquality")) {
 		configFitquality = &(configRoot->add("fitquality", libconfig::Setting::TypeGroup));
@@ -679,6 +692,12 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 	}
 	if(not updateConfigFitquality(configFitquality, chi2, ndf)) {
 		printErr << "error while updating 'fitquality' for result file." << std::endl;
+		return false;
+	}
+
+	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	if(not updateConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
+		printErr << "error while updating 'model' section of configuration file." << std::endl;
 		return false;
 	}
 
@@ -720,13 +739,13 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* config
                                                 const rpwa::massDepFit::parameters& fitParameters,
                                                 const rpwa::massDepFit::parameters& fitParametersError) const
 {
-	if(_debug) {
-		printDebug << "updating fit model in configuration file." << std::endl;
-	}
-
 	if(not configModel) {
 		printErr << "error while updating 'model' section in configuration file." << std::endl;
 		return false;
+	}
+
+	if(_debug) {
+		printDebug << "updating fit model in configuration file." << std::endl;
 	}
 
 	// update information of the individual components
@@ -738,9 +757,11 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* config
 
 	// update information of the final-state mass-dependence
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
-		return false;
+	if(fitModel.getFsmd() != NULL) {
+		if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
+			printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+			return false;
+		}
 	}
 
 	return true;
@@ -808,18 +829,18 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* co
                                                     const rpwa::massDepFit::parameters& fitParameters,
                                                     const rpwa::massDepFit::parameters& fitParametersError) const
 {
-	// configFsmd might actually be a NULL pointer, in this the final-state
-	// mass-dependence is not read
 	if(not configFsmd) {
-		if(fitModel.getFsmd() != NULL) {
-			printErr << "no section 'finalStateMassDependence' in configuration file, but final-state mass-dependence exists." << std::endl;
-			return false;
-		}
-		return true;
+		printErr << "'configFsmd' is not a pointer to a valid object." << std::endl;
+		return false;
 	}
 
 	if(_debug) {
 		printDebug << "updating final-state mass-dependence in configuration file." << std::endl;
+	}
+
+	if(not fitModel.getFsmd()) {
+		printErr << "updating of 'finalStateMassDependence' requested, but there is no final-state mass-dependence." << std::endl;
+		return false;
 	}
 
 	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, fitParametersError, _debug)) {

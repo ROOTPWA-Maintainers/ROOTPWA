@@ -115,7 +115,7 @@ namespace rpwa {
 			bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
 			bool readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters);
 
-			bool readConfigModel(const libconfig::Setting* configRoot,
+			bool readConfigModel(const libconfig::Setting* configModel,
 			                     rpwa::massDepFit::model& fitModel,
 			                     rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::parameters& fitParametersError);
