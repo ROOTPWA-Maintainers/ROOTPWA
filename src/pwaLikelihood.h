@@ -157,12 +157,14 @@ namespace rpwa {
 		//const integral& normInt() const { return _normInt; }
 
 		// modifiers
-		void        enableCuda       (const bool      enableCuda = true);
-		bool        cudaEnabled      () const;
-		void        useNormalizedAmps(const bool      useNorm    = true) { _useNormalizedAmps = useNorm;   }
-		void        setPriorType     (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
-		priorEnum   priorType        () const                            { return _priorType;              }
-		static void setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
+		void          enableCuda       (const bool      enableCuda = true);
+		bool          cudaEnabled      () const;
+		void          useNormalizedAmps(const bool      useNorm    = true) { _useNormalizedAmps = useNorm;   }
+		void          setPriorType     (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
+		priorEnum     priorType        () const                            { return _priorType;              }
+		void          setCauchyWidth   (const double&   cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
+		const double& cauchyWidth      ()                                  { return _cauchyWidth;            }
+		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
 		void init(const unsigned int rank,
@@ -237,7 +239,7 @@ namespace rpwa {
 	#endif
 		bool                _useNormalizedAmps;  // if true normalized amplitudes are used
 		priorEnum           _priorType;          // which prior to apply to parameters
-		static const double _cauchyWidth;        // width for the half-Cauchy prior
+		double              _cauchyWidth;        // width for the half-Cauchy prior
 		static bool         _debug;              // if true debug messages are printed
 
 		unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
