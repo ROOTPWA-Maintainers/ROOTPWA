@@ -291,7 +291,7 @@ main(int    argc,
 	}
 
 	if(debug) {
-		printDebug << "name of output ROOT file: '" << confFileName << "'." << std::endl;
+		printDebug << "name of output ROOT file: '" << rootFileName << "'." << std::endl;
 	}
 	std::auto_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
 	if(outFile.get() == NULL || outFile->IsZombie()) {

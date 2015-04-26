@@ -140,7 +140,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << std::endl;
+			printErr << "component '" << getName() << "' does not define parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 			return false;
 		}
 
@@ -150,7 +150,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		                     ("fix", libconfig::Setting::TypeBoolean);
 
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "the '" << _parametersName[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			printErr << "'" << _parametersName[idxParameter] << "' of component '" << getName() << "' does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -199,7 +199,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		boost::assign::insert(mandatoryArguments)
 		                     ("amp", libconfig::Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -263,7 +263,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			boost::assign::insert(mandatoryArguments)
 			                     ("couplings", libconfig::Setting::TypeList);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 				return false;
 			}
 
@@ -287,7 +287,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 				                     ("coupling_Re", libconfig::Setting::TypeFloat)
 				                     ("coupling_Im", libconfig::Setting::TypeFloat);
 				if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
-					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
+					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required variables." << std::endl;
 					return false;
 				}
 
@@ -312,7 +312,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			boost::assign::insert(mandatoryArguments)
 			                     ("branching", libconfig::Setting::TypeGroup);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 				return false;
 			}
 
@@ -327,7 +327,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			                     ("branching_Re", libconfig::Setting::TypeFloat)
 			                     ("branching_Im", libconfig::Setting::TypeFloat);
 			if(not checkIfAllVariablesAreThere(configBranching, mandatoryArguments)) {
-				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required fields." << std::endl;
+				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required variables." << std::endl;
 				return false;
 			}
 

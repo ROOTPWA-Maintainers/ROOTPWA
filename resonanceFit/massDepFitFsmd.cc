@@ -179,7 +179,7 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
                                const bool debug) const
 {
 	if(debug) {
-		printDebug << "starting updating of final-state mass-dependence." << std::endl;
+		printDebug << "updating final-state mass-dependence." << std::endl;
 	}
 
 	const libconfig::Setting& configFsmdValue = (*configFsmd)["val"];
@@ -188,10 +188,6 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		configFsmdValue[idxParameter] = fitParameters.getParameter(_id, idxParameter);
 		configFsmdError[idxParameter] = fitParametersError.getParameter(_id, idxParameter);
-	}
-
-	if(debug) {
-		printDebug << "finished updating of final-state mass-dependence." << std::endl;
 	}
 
 	return true;

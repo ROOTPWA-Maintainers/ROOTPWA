@@ -102,11 +102,11 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 	// input section
 	const libconfig::Setting* configInput = findLibConfigGroup(*configRoot, "input");
 	if(not configInput) {
-		printErr << "'input' section in configuration file does not exist." << std::endl;
+		printErr << "'input' does not exist in configuration file." << std::endl;
 		return false;
 	}
 	if(not readConfigInput(configInput)) {
-		printErr << "error while reading 'input' section from configuration file." << std::endl;
+		printErr << "error while reading 'input' in configuration file." << std::endl;
 		return false;
 	}
 
@@ -135,7 +135,7 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 		return false;
 	}
 	if(not readConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while reading fit model from configuration file." << std::endl;
+		printErr << "error while reading 'model' in configuration file." << std::endl;
 		return false;
 	}
 
@@ -180,22 +180,22 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	// get information about fit results from mass-independent
 	const libconfig::Setting* configInputFitResults = findLibConfigList(*configInput, "fitresults");
 	if(not configInputFitResults) {
-		printErr << "'fitresults' list does not exist in section '" << configInput->getName() << "' in configuration file." << std::endl;
+		printErr << "'fitresults' does not exist in 'input'." << std::endl;
 		return false;
 	}
 	if(not readConfigInputFitResults(configInputFitResults)) {
-		printErr << "error while reading 'fitresults' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+		printErr << "error while reading 'fitresults' in 'input'." << std::endl;
 		return false;
 	}
 
 	// get information about waves to be used in the fit
 	const libconfig::Setting* configInputWaves = findLibConfigList(*configInput, "waves");
 	if(not configInputWaves) {
-		printErr << "'waves' list does not exist in section '" << configInput->getName() << "' in configuration file." << std::endl;
+		printErr << "'waves' does not exist in 'input'." << std::endl;
 		return false;
 	}
 	if(not readConfigInputWaves(configInputWaves)) {
-		printErr << "error while reading 'waves' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+		printErr << "error while reading 'waves' in 'input'." << std::endl;
 		return false;
 	}
 
@@ -203,7 +203,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	const libconfig::Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
 	if(configInputSystematics) {
 		if(not readConfigInputSystematics(configInputSystematics)) {
-			printErr << "error while reading 'systematics' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+			printErr << "error while reading 'systematics' in 'input'." << std::endl;
 			return false;
 		}
 	} else {
@@ -214,7 +214,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	const libconfig::Setting* configInputFreeParameters = findLibConfigArray(*configInput, "freeparameters", false);
 	if(configInputFreeParameters) {
 		if(not readConfigInputFreeParameters(configInputFreeParameters)) {
-			printErr << "error while reading 'freeparameters' in section '" << configInput->getName() << "' in configuration file." << std::endl;
+			printErr << "error while reading 'freeparameters' in 'input'." << std::endl;
 			return false;
 		}
 	} else {
@@ -252,7 +252,7 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const libconfig::Setting
 		                     ("name", libconfig::Setting::TypeString)
 		                     ("tPrimeMean", libconfig::Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
-			printErr << "'fitresults' list in 'input' section in configuration file contains errors." << std::endl;
+			printErr << "'fitresults' entry at index " << idxFitResult << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -331,7 +331,7 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const libconfig::Setting* con
 		boost::assign::insert(mandatoryArguments)
 		                     ("name", libconfig::Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
-			printErr << "'waves' list in 'input' section in configuration file contains errors." << std::endl;
+			printErr << "'waves' entry at index " << idxWave << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -430,23 +430,21 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Set
 	const int nrItems = configInputFreeParameters->getLength();
 
 	if(_debug) {
-		printDebug << "going to extract " << nrItems << " items from '" << configInputFreeParameters->getName() << "'." << std::endl;
+		printDebug << "going to extract " << nrItems << " items from 'freeparameters'." << std::endl;
 	}
 
 	for(int idxItem=0; idxItem<nrItems; ++idxItem) {
 		const libconfig::Setting& item = (*configInputFreeParameters)[idxItem];
 
 		if(item.getType() != libconfig::Setting::TypeString) {
-			printErr << "'" << configInputFreeParameters->getName() << "' must be array of strings." << std::endl;
+			printErr << "'freeparameters' entry at index " << idxItem << " is not a string." << std::endl;
 			return false;
 		}
 
 		const std::string name = item;
-
 		if(_debug) {
 			printDebug << idxItem << ": '" << name << "'." << std::endl;
 		}
-
 		_freeParameters.push_back(name);
 	}
 
@@ -461,7 +459,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
                                               rpwa::massDepFit::parameters& fitParametersError)
 {
 	if(not configModel) {
-		printErr << "error while reading 'model' section in configuration file." << std::endl;
+		printErr << "'configModel' is not a pointer to a valid object." << std::endl;
 		return false;
 	}
 
@@ -476,7 +474,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 		return false;
 	}
 	if(not readConfigModelAnchorWave(configAnchorWave)) {
-		printErr << "error while reading 'anchorwave' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+		printErr << "error while reading 'anchorwave' in 'model'." << std::endl;
 		return false;
 	}
 
@@ -487,7 +485,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 		return false;
 	}
 	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while reading 'components' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+		printErr << "error while reading 'components' in 'model'." << std::endl;
 		return false;
 	}
 
@@ -495,7 +493,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
 	if(configFsmd) {
 		if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
-			printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+			printErr << "error while reading 'finalStateMassDependence' in 'model'." << std::endl;
 			return false;
 		}
 	} else {
@@ -519,7 +517,7 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const libconfig::Setting
 	                     ("name", libconfig::Setting::TypeString)
 	                     ("resonance", libconfig::Setting::TypeString);
 	if(not checkIfAllVariablesAreThere(configAnchorWave, mandatoryArguments)) {
-		printErr << "'anchorwave' list in 'input' section in configuration file contains errors." << std::endl;
+		printErr << "'anchorwave' does not contain all required variables." << std::endl;
 		return false;
 	}
 
@@ -554,7 +552,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting
 		boost::assign::insert(mandatoryArguments)
 		                     ("name", libconfig::Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "'components' list in 'model' section in configuration file contains errors." << std::endl;
+			printErr << "'components' entry at index " << idxComponent << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -697,7 +695,7 @@ rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
 
 	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
 	if(not updateConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'model' section of configuration file." << std::endl;
+		printErr << "error while updating 'model' for result file." << std::endl;
 		return false;
 	}
 
@@ -740,18 +738,18 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* config
                                                 const rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(not configModel) {
-		printErr << "error while updating 'model' section in configuration file." << std::endl;
+		printErr << "'configModel' is not a pointer to a valid object." << std::endl;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "updating fit model in configuration file." << std::endl;
+		printDebug << "updating 'fitmodel'." << std::endl;
 	}
 
 	// update information of the individual components
 	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
 	if(not updateConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'components' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+		printErr << "error while updating 'components' for result file." << std::endl;
 		return false;
 	}
 
@@ -759,7 +757,7 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* config
 	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
 	if(fitModel.getFsmd() != NULL) {
 		if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
-			printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << std::endl;
+			printErr << "error while updating 'finalStateMassDependence' for result file." << std::endl;
 			return false;
 		}
 	}
@@ -777,6 +775,10 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const libconfig::Setti
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << std::endl;
 		return false;
+	}
+
+	if(_debug) {
+		printDebug << "updating 'components'." << std::endl;
 	}
 
 	const size_t nrComponents = fitModel.getNrComponents();
@@ -804,7 +806,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* co
 	}
 
 	if(_debug) {
-		printDebug << "updating final-state mass-dependence in configuration file." << std::endl;
+		printDebug << "updating 'finalStateMassDependence'." << std::endl;
 	}
 
 	if(not fitModel.getFsmd()) {
@@ -813,7 +815,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* co
 	}
 
 	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, fitParametersError, _debug)) {
-		printErr << "error while updating final-state mass-dependence." << std::endl;
+		printErr << "error while updating 'finalStateMassDependence' for result file." << std::endl;
 		return false;
 	}
 
