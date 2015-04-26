@@ -67,7 +67,6 @@ using namespace boost::accumulators;
 namespace bt = boost::tuples;
 
 
-template<typename complexT> const double pwaLikelihood<complexT>::_cauchyWidth = 0.5;
 template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
 
 
@@ -114,6 +113,7 @@ pwaLikelihood<complexT>::pwaLikelihood()
 #endif
 	  _useNormalizedAmps(true),
 	  _priorType        (FLAT),
+	  _cauchyWidth      (0.5),
 	  _numbAccEvents    (0)
 {
 	_nmbWavesRefl[0] = 0;
