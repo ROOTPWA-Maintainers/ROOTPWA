@@ -93,7 +93,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -s seed -x [startvalue] -N -n normfile"
-	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -q -z -h]" << endl
+	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -P -q -z -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -116,6 +116,7 @@ usage(const string& progName,
 	     << "        -t #       relative parameter tolerance (default: 0.0001)" << endl
 	     << "        -m #       absolute likelihood tolerance (default: 0.000001)" << endl
 	     << "        -C         use half-Cauchy priors (default: false)" << endl
+	     << "        -P         width of half-Cauchy priors (default: 0.5)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -z         save space by not saving integral and covariance matrices (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -164,12 +165,13 @@ main(int    argc,
 	double       minimizerTolerance  = 1e-4;                   // minimizer tolerance
 	double       likelihoodTolerance = 1e-6;                   // tolerance of likelihood function
 	bool         cauchy              = false;
+	double       cauchyWidth         = 0.5;
 	bool         quiet               = false;
 	bool         saveSpace           = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:Cqzh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:CP:qzh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -223,6 +225,9 @@ main(int    argc,
 		case 'C':
 			cauchy = true;
 			break;
+		case 'P':
+			cauchyWidth = atof(optarg);
+			break;
 		case 'q':
 			quiet = true;
 			break;
@@ -263,8 +268,11 @@ main(int    argc,
 	     << "    rank of spin density matrix .................... "  << rank                    << endl
 	     << "    relative parameter tolerance.................... "  << minimizerTolerance << endl
 	     << "    absolute likelihood tolerance................... "  << likelihoodTolerance << endl
-	     << "    using half-Cauchy priors........................ "  << yesNo(cauchy) << endl
-	     << "    saving integral and covariance matrices......... "  << yesNo(not saveSpace) << endl
+	     << "    using half-Cauchy priors........................ "  << yesNo(cauchy) << endl;
+	if(cauchy) {
+		cout << "    width of cauchy priors.......................... "  << cauchyWidth << endl;
+	}
+	cout << "    saving integral and covariance matrices......... "  << yesNo(not saveSpace) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
@@ -283,8 +291,10 @@ main(int    argc,
 	const unsigned int nmbEvts = L.nmbEvents();
 	const double sqrtNmbEvts = sqrt((double)nmbEvts);
 
-	if (cauchy)
+	if (cauchy) {
 		L.setPriorType(L.HALF_CAUCHY);
+		L.setCauchyWidth(cauchyWidth);
+	}
 
 	printInfo << "using prior: ";
 	switch(L.priorType())
@@ -293,7 +303,8 @@ main(int    argc,
 			cout << "flat" << endl;
 			break;
 		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
-			cout << "half-cauchy" << endl;
+			cout      << "half-cauchy" << endl;
+			printInfo << "cauchy width: " << L.cauchyWidth() << endl;
 			break;
 	}
 
