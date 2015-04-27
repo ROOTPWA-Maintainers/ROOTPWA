@@ -43,7 +43,7 @@ class TFhh {
 			J=0; lambda=0; nu=0; Nterms=0; LSt=0;
 		};
 
-		TFhh(Int_t, Int_t , Int_t, 
+		TFhh(Int_t, Int_t , Int_t,
 				Int_t, Int_t, Int_t, TLSAmpl**,
 				Int_t);
 
@@ -67,51 +67,6 @@ class TFhh {
 
 };
 
-class TJSS {
 
-	private:
-
-		Int_t JMother; Int_t etaJ;
-		Int_t SDecay1; Int_t eta1;
-		Int_t SDecay2; Int_t eta2;
-		Int_t Smin;
-		Int_t Smax;
-		Int_t Lmin;
-		Int_t Lmax;
-
-		Int_t NLSAmpl;
-		TLSAmpl* *LSAmplitudes;
-
-		Int_t NFhhAmpl;
-		TFhh* *FhhAmpl;
-
-		Int_t NFhhIdAmpl;
-		TFhh* *FhhIdAmpl;
-
-	public:
-
-		TJSS() {
-			JMother = 0;  etaJ = 1;
-			SDecay1 = 0;  eta1 = 1;
-			SDecay2 = 0;  eta2 = 1;
-			CalcAmpl();
-		};
-
-		TJSS(Int_t J,  Int_t eJ,
-				Int_t S1, Int_t e1,
-				Int_t S2, Int_t e2,
-				Int_t option) {
-			JMother = J;  etaJ=eJ;
-			SDecay1 = S1; eta1=e1;
-			SDecay2 = S2; eta2=e2;
-			CalcAmpl();
-			if (option>1) PrintHFILE();
-		};
-
-		Int_t CalcAmpl();
-		Int_t PrintHFILE();
-
-		//ClassDef(TJSS,1);
-};
 
 #endif

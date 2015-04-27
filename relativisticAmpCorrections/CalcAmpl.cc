@@ -2,6 +2,7 @@
 #include <string>
 #include <stdio.h>
 #include "TFhh.h"
+#include "TJSS.h"
 using namespace std;
 
 int main(int narg, char* carg[]) {
@@ -10,7 +11,7 @@ int main(int narg, char* carg[]) {
 		cout << endl
 			<< "This program requires 3 input strings for the mother and "<<endl
 			<< "the 2 decay particles, each of the form Jp," << endl
-			<< "where J is the spin of the particle and p = +/- its parity" 
+			<< "where J is the spin of the particle and p = +/- its parity"
 			<< endl
 			<< endl
 			<< "options that may follow the three Jp terms:" << endl
@@ -25,7 +26,7 @@ int main(int narg, char* carg[]) {
 		int nchar = sizeof(carg[oi])/sizeof(char);
 		if (nchar>1 && carg[oi][1]=='H') {
 			cout << "H option length:" << nchar << endl;
-			opt=2; 
+			opt=2;
 		}
 	}
 
@@ -51,8 +52,8 @@ int main(int narg, char* carg[]) {
 	if (pdecay2=='+') p2= 1;
 	else              p2=-1;
 
-	cout << jmother << "," << pm << "," 
-		<< jdecay1 << "," << p1 << "," 
+	cout << jmother << "," << pm << ","
+		<< jdecay1 << "," << p1 << ","
 		<< jdecay2 << "," << p2 << endl;
 
 	TJSS jss(jmother, pm, jdecay1, p1, jdecay2, p2, opt);
