@@ -6,6 +6,37 @@ import sys
 import pyRootPwa
 import pyRootPwa.core
 
+def readWaveList(waveListFileName):
+	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
+	                        + "'" + waveListFileName + "'.")
+	try:
+		with open(waveListFileName, 'r') as waveListFile:
+			waveNamesFromWavelist = []
+			waveThresholds = []
+			lineNmb = 0
+			for line in waveListFile:
+				if (line[0] == '#'):  # comments start with #
+					continue
+				line = line.replace('\n', '')
+				lineArray = line.split(" ")
+				if(len(lineArray) >= 1 and len(lineArray) <= 2):
+					waveName = lineArray[0]
+					if(len(lineArray) == 1):
+						threshold = 0
+					else:
+						threshold = lineArray[1]
+					waveNamesFromWavelist.append(waveName)
+					waveThresholds.append(float(threshold))
+				else:
+					pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
+					                        + "'" + waveListFileName + "'.")
+				lineNmb += 1
+	except IOError:
+		pyRootPwa.utils.printError("cannot open file '" + waveListFileName + "'. Aborting...")
+		sys.exit(1)
+	pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
+	return (waveNamesFromWavelist, waveThresholds)
+
 if __name__ == "__main__":
 
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
@@ -23,6 +54,7 @@ if __name__ == "__main__":
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
+	parser.add_argument("-w", type=str, metavar="wavelistFileName", default="", dest="wavelistFileName", help="path to wavelist file (default: none)")
 	args = parser.parse_args()
 
 	config = pyRootPwa.rootPwaConfig()
@@ -35,8 +67,14 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	waveList = []
+	if (not args.wavelistFileName==""):
+		(waveList, waveThresholds) = readWaveList(args.wavelistFileName)
+	if (len(waveList) == 0):
+		waveList = fileManager.getWaveNameList()
+
 	for binID in fileManager.getBinIDList():
-		for waveName in fileManager.getWaveNameList():
+		for waveName in waveList:
 			for eventsType in [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
 				dataFile = fileManager.getDataFile(binID, eventsType)
 				if not dataFile:
