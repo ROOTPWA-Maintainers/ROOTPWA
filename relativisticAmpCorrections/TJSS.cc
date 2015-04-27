@@ -113,190 +113,161 @@ void TJSS::CalcAmpl() {
 		MaxPsiPhi = _JMother;
 	}
 
-	long preloop = 1;
-	long NLSAmpl = 0;
+	for (long il = 0; il < NL; il++) {
 
-	while (preloop == 1 or preloop == 0) {
+		long L = fL[il];
 
-		if (preloop == 0) {
-			_LSAmplitudes = vector<TLSAmpl*>(NLSAmpl, 0);
-			NLSAmpl = 0;
-			if (_debugLevel >= 2) {
-				cout << endl << "*************" << endl;
-			}
+		long MaxPsiChi = _SDecay1 + _SDecay2;
+		if (L < MaxPsiChi) {
+			MaxPsiChi = L;
 		}
 
-		for (long il = 0; il < NL; il++) {
+		long MaxChiPhi = _JMother;
+		if (L < _JMother) {
+			MaxChiPhi = L;
+		}
 
-			long L = fL[il];
-
-			long MaxPsiChi = _SDecay1 + _SDecay2;
-			if (L < MaxPsiChi) {
-				MaxPsiChi = L;
+		// possible S in this case:
+		long SminL = _JMother - L;
+		if (SminL < 0) {
+			SminL = -SminL;
+		}
+		if (SminL < Smin) {
+			SminL = Smin;
+		}
+		long SmaxL = _JMother + L;
+		if (SmaxL > Smax) {
+			SmaxL = Smax;
+		}
+		for (long S_L = SminL; S_L <= SmaxL; S_L++) {
+			if (_debugLevel >= 2)
+				cout << "Amplitudes for L=" << L << " S=" << S_L
+				     << "  Rank scheme [ " << _SDecay1 + _SDecay2 << " "
+				     << L << " " << _JMother << "]" << endl;
+			long totalRank = _SDecay1 + _SDecay2 + L + _JMother;
+			long MaxDelta = S_L;
+			if (_JMother < S_L) {
+				MaxDelta = _JMother;
 			}
 
-			long MaxChiPhi = _JMother;
-			if (L < _JMother) {
-				MaxChiPhi = L;
+			long IndexContractions = (totalRank - 3) / 2;
+			if (evenContraction) {
+				IndexContractions = totalRank / 2;
+			}
+			if (_debugLevel >= 2) {
+				cout << IndexContractions << " Lorentz contractions." << endl;
 			}
 
-			// possible S in this case:
-			long SminL = _JMother - L;
-			if (SminL < 0) {
-				SminL = -SminL;
-			}
-			if (SminL < Smin) {
-				SminL = Smin;
-			}
-			long SmaxL = _JMother + L;
-			if (SmaxL > Smax) {
-				SmaxL = Smax;
-			}
-			for (long S_L = SminL; S_L <= SmaxL; S_L++) {
-				if (_debugLevel >= 2)
-					cout << "Amplitudes for L=" << L << " S=" << S_L
-					     << "  Rank scheme [ " << _SDecay1 + _SDecay2 << " "
-					     << L << " " << _JMother << "]" << endl;
-				long totalRank = _SDecay1 + _SDecay2 + L + _JMother;
-				long MaxDelta = S_L;
-				if (_JMother < S_L) {
-					MaxDelta = _JMother;
-				}
+			long MaxContractionNumber = 0;
 
-				long IndexContractions = (totalRank - 3) / 2;
-				if (evenContraction) {
-					IndexContractions = totalRank / 2;
-				}
-				if (_debugLevel >= 2) {
-					cout << IndexContractions << " Lorentz contractions." << endl;
-				}
+			for (long PsiInternal = 0; PsiInternal <= MaxPsiInternal; PsiInternal++) {
+				for (long cChiPhi = 0; cChiPhi <= MaxChiPhi; cChiPhi++) {
+					for (long cPsiChi = 0; cPsiChi <= MaxPsiChi; cPsiChi++) {
+						for (long cPsiPhi = 0; cPsiPhi <= MaxPsiPhi; cPsiPhi++) {
 
-				long MaxContractionNumber = 0;
+							if(initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cChiPhi, cPsiPhi, IndexContractions, evenContraction, L)) {
+								continue;
+							}
 
-				for (long PsiInternal = 0; PsiInternal <= MaxPsiInternal; PsiInternal++) {
-					for (long cChiPhi = 0; cChiPhi <= MaxChiPhi; cChiPhi++) {
-						for (long cPsiChi = 0; cPsiChi <= MaxPsiChi; cPsiChi++) {
-							for (long cPsiPhi = 0; cPsiPhi <= MaxPsiPhi; cPsiPhi++) {
-
-								if(initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cChiPhi, cPsiPhi, IndexContractions, evenContraction, L)) {
-									continue;
-								}
-
-								pair<long, long> rPair;
-								if(not getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cPsiPhi, evenContraction, rPair)) {
-									continue;
-								}
-								const long r_ome = rPair.first;
-								const long r_eps = rPair.second;
-								//
-								// Original ordering:
-								//
-								//for (long cPhiOmega=0; cPhiOmega<=r_ome; cPhiOmega++) {
-								//  for (long cChiOmega=0; cChiOmega<=r_ome-cPhiOmega;
-								//       cChiOmega++) {
-								//
-								// For agreement with paper:
-								//
-								// error found 14.10.07 "r_eps" replaced with "r_ome"
-								if (_debugLevel >= 3) {
-									cout << "{" << r_ome << "}";
-								}
-								for (long cChiOmega = 0; cChiOmega <= r_ome; cChiOmega++) {
-									for (long cPhiOmega = 0; cPhiOmega <= r_ome - cChiOmega; cPhiOmega++) {
-										const long cPhiEps = cPsiPhi - cPhiOmega;
-										const long cChiEps = cPsiChi - cChiOmega;
-										if (_debugLevel >= 3) {
-											cout << "[" << cPhiEps << cChiEps << r_eps << "]";
-										}
-										if ( (cPhiEps < 0) or (cChiEps < 0) or (cPhiEps + cChiEps > r_eps) ) {
-											continue;
-										} else if (_debugLevel >= 3) {
-											cout << "E+ OK" << endl;
-										}
+							pair<long, long> rPair;
+							if(not getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cPsiPhi, evenContraction, rPair)) {
+								continue;
+							}
+							const long r_ome = rPair.first;
+							const long r_eps = rPair.second;
+							//
+							// Original ordering:
+							//
+							//for (long cPhiOmega=0; cPhiOmega<=r_ome; cPhiOmega++) {
+							//  for (long cChiOmega=0; cChiOmega<=r_ome-cPhiOmega;
+							//       cChiOmega++) {
+							//
+							// For agreement with paper:
+							//
+							// error found 14.10.07 "r_eps" replaced with "r_ome"
+							if (_debugLevel >= 3) {
+								cout << "{" << r_ome << "}";
+							}
+							for (long cChiOmega = 0; cChiOmega <= r_ome; cChiOmega++) {
+								for (long cPhiOmega = 0; cPhiOmega <= r_ome - cChiOmega; cPhiOmega++) {
+									const long cPhiEps = cPsiPhi - cPhiOmega;
+									const long cChiEps = cPsiChi - cChiOmega;
+									if (_debugLevel >= 3) {
+										cout << "[" << cPhiEps << cChiEps << r_eps << "]";
+									}
+									if ( (cPhiEps < 0) or (cChiEps < 0) or (cPhiEps + cChiEps > r_eps) ) {
+										continue;
+									} else if (_debugLevel >= 3) {
+										cout << "E+ OK" << endl;
+									}
+									if (_debugLevel >= 2) {
+										cout << "Checking PsiInt="
+												<< PsiInternal
+												<< " cPsiChi=" << cPsiChi
+												<< " cChiPhi=" << cChiPhi
+												<< " cPsiPhi=" << cPsiPhi
+												<< endl << " cPhiOmega="
+												<< cPhiOmega
+												<< " cChiOmega="
+												<< cChiOmega << " cPhiEps="
+												<< cPhiEps << " cChiEps="
+												<< cChiEps << endl;
+										cout << "Contraction pattern " << getContractionPattern(cPsiPhi,
+										                                                        cPhiOmega,
+										                                                        cPhiEps,
+										                                                        PsiInternal,
+										                                                        cPsiChi,
+										                                                        cChiOmega,
+										                                                        cChiEps,
+										                                                        cChiPhi,
+										                                                        L)
+										     << endl;
+									}
+									for (long delta = 0; delta <= MaxDelta; delta++) {
 										if (_debugLevel >= 2) {
-											cout << "Checking PsiInt="
-													<< PsiInternal
-													<< " cPsiChi=" << cPsiChi
-													<< " cChiPhi=" << cChiPhi
-													<< " cPsiPhi=" << cPsiPhi
-													<< endl << " cPhiOmega="
-													<< cPhiOmega
-													<< " cChiOmega="
-													<< cChiOmega << " cPhiEps="
-													<< cPhiEps << " cChiEps="
-													<< cChiEps << endl;
-											cout << "Contraction pattern " << getContractionPattern(cPsiPhi,
-											                                                        cPhiOmega,
-											                                                        cPhiEps,
-											                                                        PsiInternal,
-											                                                        cPsiChi,
-											                                                        cChiOmega,
-											                                                        cChiEps,
-											                                                        cChiPhi,
-											                                                        L);
-											if (preloop) {
-												cout << " delta:";
-											} else {
-												cout << endl;
+											cout << " Constructing LS-Amplitude " << _LSAmplitudes.size() << endl;
+										}
+										unsigned int SameContr = 0;
+										for (SameContr = 0; SameContr < _LSAmplitudes.size(); SameContr++) {
+											if (_LSAmplitudes[SameContr]->CheckContraction(
+											    L, S_L, PsiInternal,
+											    cPsiChi, cChiPhi,
+											    cPsiPhi, cPhiOmega,
+											    cChiOmega, cPhiEps,
+											    cChiEps))
+											{
+												break;
 											}
 										}
-										for (long delta = 0; delta <= MaxDelta; delta++) {
-											if (preloop) {
-												if (_debugLevel >= 2) {
-													cout << " " << delta;
-												}
-												NLSAmpl++;
-											} else {
-												if (_debugLevel >= 2) {
-													cout << " Constructing LS-Amplitude " << NLSAmpl << endl;
-												}
-
-												long SameContr = 0;
-												for (SameContr = 0; SameContr < NLSAmpl; SameContr++) {
-													if (_LSAmplitudes[SameContr]->CheckContraction(
-													    L, S_L, PsiInternal,
-													    cPsiChi, cChiPhi,
-													    cPsiPhi, cPhiOmega,
-													    cChiOmega, cPhiEps,
-													    cChiEps))
-													{
-														break;
-													}
-												}
-												long ContractionNumber = 0;
-												if (SameContr < NLSAmpl) {
-													ContractionNumber = _LSAmplitudes[SameContr]->GetContraction();
-												} else {
-													ContractionNumber = MaxContractionNumber + 1;
-												}
-
-												_LSAmplitudes[NLSAmpl] =
-														new TLSAmpl(_SDecay1,
-																_SDecay2, L,
-																_JMother, delta,
-																S_L,
-																PsiInternal,
-																cPsiChi,
-																cChiPhi,
-																cPsiPhi,
-																cPhiOmega,
-																cChiOmega,
-																cPhiEps,
-																cChiEps,
-																ContractionNumber);
-
-												if (_LSAmplitudes[NLSAmpl]->GetNterms()) {
-													NLSAmpl++;
-													if (ContractionNumber > MaxContractionNumber) {
-														MaxContractionNumber++;
-													}
-												} else {
-													delete _LSAmplitudes[NLSAmpl];
-												}
-											}
+										long ContractionNumber = 0;
+										if (SameContr < _LSAmplitudes.size()) {
+											ContractionNumber = _LSAmplitudes[SameContr]->GetContraction();
+										} else {
+											ContractionNumber = MaxContractionNumber + 1;
 										}
-										if (_debugLevel >= 2 and preloop) {
-											cout << endl;
+
+										TLSAmpl* ampl =
+												new TLSAmpl(_SDecay1,
+														_SDecay2, L,
+														_JMother, delta,
+														S_L,
+														PsiInternal,
+														cPsiChi,
+														cChiPhi,
+														cPsiPhi,
+														cPhiOmega,
+														cChiOmega,
+														cPhiEps,
+														cChiEps,
+														ContractionNumber);
+
+										if (ampl->GetNterms()) {
+											if (ContractionNumber > MaxContractionNumber) {
+												MaxContractionNumber++;
+											}
+											_LSAmplitudes.push_back(ampl);
+										} else {
+											delete ampl;
 										}
 									}
 								}
@@ -306,15 +277,10 @@ void TJSS::CalcAmpl() {
 				}
 			}
 		}
-		if (preloop) {
-			if (_debugLevel) {
-				cout << NLSAmpl << " LS-Amplitudes to be evaluated." << endl;
-			}
-		}
-		preloop--;
 	}
+
 	if (_debugLevel) {
-		cout << NLSAmpl << " LS-Amplitudes found to be non-zero." << endl;
+		cout << _LSAmplitudes.size() << " LS-Amplitudes found to be non-zero." << endl;
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
 		cout << "+++ Helicity-coupling amplitudes +++" << endl;
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
@@ -334,6 +300,8 @@ void TJSS::CalcAmpl() {
 			TFhh* fhh = new TFhh(_JMother, _SDecay1, _SDecay2, lambda, nu, _LSAmplitudes, evenContraction);
 			if (fhh->GetNterms()) {
 				_FhhAmpl.push_back(fhh);
+			} else {
+				delete fhh;
 			}
 		}
 	}
