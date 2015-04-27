@@ -6,10 +6,10 @@
 
 using namespace std;
 
-long debugJSS = 9999;
+unsigned int TJSS::_debugLevel = 9999;
 
 long TJSS::CalcAmpl() {
-	if (debugJSS >= 2) {
+	if (_debugLevel >= 2) {
 		cout << "  Decay channel:   " << JMother;
 		if (etaJ > 0)
 			cout << "+  ->  ";
@@ -29,12 +29,12 @@ long TJSS::CalcAmpl() {
 	}
 
 	// range for coupled Spin
-	Smin = SDecay1 - SDecay2;
+	long Smin = SDecay1 - SDecay2;
 	if (Smin < 0)
 		Smin = -Smin;
-	Smax = SDecay1 + SDecay2;
+	long Smax = SDecay1 + SDecay2;
 
-	if (debugJSS >= 2) {
+	if (_debugLevel >= 2) {
 		cout << "possible S:";
 		long iS = Smin;
 		while (iS <= Smax) {
@@ -44,10 +44,10 @@ long TJSS::CalcAmpl() {
 	}
 	cout << endl;
 
-	long intr_parity = etaJ * eta1 * eta2;
+	const long intr_parity = etaJ * eta1 * eta2;
 
-	Lmax = JMother + Smax;
-	Lmin = Lmax;
+	long Lmax = JMother + Smax;
+	long Lmin = Lmax;
 	for (long iS = Smin; iS <= Smax; iS++) {
 		long Lm1 = JMother - iS;
 		if (Lm1 < 0)
@@ -56,7 +56,7 @@ long TJSS::CalcAmpl() {
 			Lmin = Lm1;
 	}
 
-	if (debugJSS >= 2)
+	if (_debugLevel >= 2)
 		cout << "possible L:";
 	long NL = 0;
 	long *fL = 0;
@@ -77,21 +77,21 @@ long TJSS::CalcAmpl() {
 		while (tL <= Lmax) {
 			if (tL >= Lmin) {
 				fL[NL] = tL;
-				if (debugJSS >= 2)
+				if (_debugLevel >= 2)
 					cout << " " << fL[NL];
 				NL++;
 			}
 			tL += 2;
 		}
 	}
-	if (debugJSS >= 2)
+	if (_debugLevel >= 2)
 		cout << endl;
 
 	long even_contraction = 1;
 	if ((SDecay1 + SDecay2 + testL - JMother) % 2)
 		even_contraction = 0;
 
-	if (debugJSS >= 2) {
+	if (_debugLevel >= 2) {
 		if (even_contraction)
 			cout << "contraction only with g~" << endl;
 		else
@@ -116,7 +116,7 @@ long TJSS::CalcAmpl() {
 		if (preloop == 0) {
 			LSAmplitudes = new TLSAmpl*[NLSAmpl];
 			NLSAmpl = 0;
-			if (debugJSS >= 2)
+			if (_debugLevel >= 2)
 				cout << endl << "*************" << endl;
 		}
 
@@ -142,7 +142,7 @@ long TJSS::CalcAmpl() {
 			if (SmaxL > Smax)
 				SmaxL = Smax;
 			for (long S_L = SminL; S_L <= SmaxL; S_L++) {
-				if (debugJSS >= 2)
+				if (_debugLevel >= 2)
 					cout << "Amplitudes for L=" << L << " S=" << S_L
 							<< "  Rank scheme [ " << SDecay1 + SDecay2 << " "
 							<< L << " " << JMother << "]" << endl;
@@ -154,7 +154,7 @@ long TJSS::CalcAmpl() {
 				long IndexContractions = (totalRank - 3) / 2;
 				if (even_contraction)
 					IndexContractions = totalRank / 2;
-				if (debugJSS >= 2)
+				if (_debugLevel >= 2)
 					cout << IndexContractions << " Lorentz contractions."
 							<< endl;
 
@@ -167,49 +167,49 @@ long TJSS::CalcAmpl() {
 								cPsiChi++) {
 							for (long cPsiPhi = 0; cPsiPhi <= MaxPsiPhi;
 									cPsiPhi++) {
-								if (debugJSS == 3)
+								if (_debugLevel == 3)
 									cout << "Checking " << PsiInternal << " "
 											<< cPsiChi << " " << cChiPhi << " "
 											<< cPsiPhi; // << endl;
 								if (PsiInternal + cPsiChi + cChiPhi + cPsiPhi
 										!= IndexContractions) {
-									if (debugJSS == 3)
+									if (_debugLevel == 3)
 										cout << " C-" << endl;
 									continue;
-								} else if (debugJSS == 3)
+								} else if (_debugLevel == 3)
 									cout << " C+";
 								if (even_contraction) {
 									if (2 * PsiInternal + cPsiChi + cPsiPhi
 											!= SDecay1 + SDecay2) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "S-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "S+";
 									if (cPsiChi + cChiPhi != L) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "L-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "L+";
 									if (cChiPhi + cPsiPhi != JMother) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "J-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "J+";
 								} else {
 									if (L - cPsiChi - cChiPhi > 1) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "L-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "L+";
 									if (JMother - cPsiPhi - cChiPhi > 1) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "J-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "J+";
 								}
 								long r_ome = SDecay1 - PsiInternal;
@@ -220,23 +220,23 @@ long TJSS::CalcAmpl() {
 											- 2 * PsiInternal - cPsiChi
 											- cPsiPhi;
 									if (PsiRest < 0 || PsiRest > 2) {
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "R-" << endl;
 										continue;
-									} else if (debugJSS == 3)
+									} else if (_debugLevel == 3)
 										cout << "R+";
 									if (PsiRest == 2) {
 										if (r_ome > 0)
 											r_ome--;
 										else {
-											if (debugJSS == 3)
+											if (_debugLevel == 3)
 												cout << "O-";
 											continue;
 										}
 										if (r_eps > 0)
 											r_eps--;
 										else {
-											if (debugJSS == 3)
+											if (_debugLevel == 3)
 												cout << "E-";
 											continue;
 										}
@@ -252,7 +252,7 @@ long TJSS::CalcAmpl() {
 								// For agreement with paper:
 								//
 								// error found 14.10.07 "r_eps" replaced with "r_ome"
-								if (debugJSS == 3)
+								if (_debugLevel == 3)
 									cout << "{" << r_ome << "}";
 								for (long cChiOmega = 0; cChiOmega <= r_ome;
 										cChiOmega++) {
@@ -261,18 +261,18 @@ long TJSS::CalcAmpl() {
 											cPhiOmega++) {
 										long cPhiEps = cPsiPhi - cPhiOmega;
 										long cChiEps = cPsiChi - cChiOmega;
-										if (debugJSS == 3)
+										if (_debugLevel == 3)
 											cout << "[" << cPhiEps << cChiEps
 													<< r_eps << "]";
 										if (cPhiEps < 0 || cChiEps < 0
 												|| cPhiEps + cChiEps > r_eps) {
 											continue;
-										} else if (debugJSS == 3)
+										} else if (_debugLevel == 3)
 											cout << "E+ OK" << endl;
 										//
 										//
 										//
-										if (debugJSS >= 2)
+										if (_debugLevel >= 2)
 											cout << "Checking PsiInt="
 													<< PsiInternal
 													<< " cPsiChi=" << cPsiChi
@@ -285,7 +285,7 @@ long TJSS::CalcAmpl() {
 													<< cPhiEps << " cChiEps="
 													<< cChiEps << endl;
 										long cc = 0;
-										if (debugJSS >= 2) {
+										if (_debugLevel >= 2) {
 											cout << "Contraction pattern ";
 											cc = cPsiPhi;
 											while (cc--)
@@ -345,11 +345,11 @@ long TJSS::CalcAmpl() {
 										for (long delta = 0; delta <= MaxDelta;
 												delta++) {
 											if (preloop) {
-												if (debugJSS >= 2)
+												if (_debugLevel >= 2)
 													cout << " " << delta;
 												NLSAmpl++;
 											} else {
-												if (debugJSS >= 2)
+												if (_debugLevel >= 2)
 													cout
 															<< " Constructing LS-Amplitude "
 															<< NLSAmpl << endl;
@@ -400,7 +400,7 @@ long TJSS::CalcAmpl() {
 												}
 											}
 										}
-										if (debugJSS >= 2 && preloop)
+										if (_debugLevel >= 2 && preloop)
 											cout << endl;
 									}
 								}
@@ -411,12 +411,12 @@ long TJSS::CalcAmpl() {
 			}
 		}
 		if (preloop) {
-			if (debugJSS)
+			if (_debugLevel)
 				cout << NLSAmpl << " LS-Amplitudes to be evaluated." << endl;
 		}
 		preloop--;
 	}
-	if (debugJSS) {
+	if (_debugLevel) {
 		cout << NLSAmpl << " LS-Amplitudes found to be non-zero." << endl;
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
 		cout << "+++ Helicity-coupling amplitudes +++" << endl;
@@ -440,14 +440,14 @@ long TJSS::CalcAmpl() {
 			}
 		}
 
-	if (debugJSS)
+	if (_debugLevel)
 		cout << NFhhAmpl << " non-zero helicity-coupling amplitudes" << endl;
 
 	NFhhIdAmpl = 0;
 	FhhIdAmpl = new TFhh*[(SDecay1 + 1) * (SDecay2 + 1)];
 
 	if (SDecay1 == SDecay2 && eta1 == eta2) {
-		if (debugJSS)
+		if (_debugLevel)
 			cout << endl << " for identical-particle decay:" << endl;
 		for (long ifhh = 0; ifhh < NFhhAmpl; ifhh++) {
 			FhhIdAmpl[ifhh] = 0;
@@ -490,6 +490,7 @@ long TJSS::CalcAmpl() {
 	return 0;
 }
 
+#if(0)
 long TJSS::PrintHFILE() {
 	char DecayName[10];
 	sprintf(DecayName, "%ld%ld%ld%c%c", JMother, SDecay1, SDecay2,
@@ -537,3 +538,4 @@ long TJSS::PrintHFILE() {
 
 	return 0;
 }
+#endif

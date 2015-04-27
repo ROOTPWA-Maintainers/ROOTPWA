@@ -9,25 +9,11 @@ int main(int narg, char* carg[]) {
 
 	if (narg < 4) {
 		cout << endl
-			<< "This program requires 3 input strings for the mother and "<<endl
-			<< "the 2 decay particles, each of the form Jp," << endl
-			<< "where J is the spin of the particle and p = +/- its parity"
-			<< endl
-			<< endl
-			<< "options that may follow the three Jp terms:" << endl
-			<< "-H     result output also in header file format" << endl
-			<< endl;
+		     << "This program requires 3 input strings for the mother and " << endl
+		     << "the 2 decay particles, each of the form Jp," << endl
+		     << "where J is the spin of the particle and p = +/- its parity" << endl;
 
 		return 0;
-	}
-
-	int opt=0;
-	for (int oi=4; oi<narg; oi++) {
-		int nchar = sizeof(carg[oi])/sizeof(char);
-		if (nchar>1 && carg[oi][1]=='H') {
-			cout << "H option length:" << nchar << endl;
-			opt=2;
-		}
 	}
 
 	int  jmother;
@@ -56,7 +42,9 @@ int main(int narg, char* carg[]) {
 		<< jdecay1 << "," << p1 << ","
 		<< jdecay2 << "," << p2 << endl;
 
-	TJSS jss(jmother, pm, jdecay1, p1, jdecay2, p2, opt);
+	TJSS jss(jmother, pm, jdecay1, p1, jdecay2, p2);
+	jss.CalcAmpl();
+
 
 }
 
