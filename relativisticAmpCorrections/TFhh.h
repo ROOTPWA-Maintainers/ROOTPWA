@@ -22,6 +22,8 @@
 #define Bool_t   bool
 #endif
 
+#include <vector>
+
 #include "TLSAmpl.h"
 
 class TFhh {
@@ -31,7 +33,7 @@ class TFhh {
 		Int_t J;
 		Int_t lambda;
 		Int_t nu;
-		Int_t even_contraction;
+		bool even_contraction;
 		Int_t Nterms;
 		TLSContrib* *LSt;
 		Int_t NNRterms;
@@ -43,9 +45,10 @@ class TFhh {
 			J=0; lambda=0; nu=0; Nterms=0; LSt=0;
 		};
 
-		TFhh(Int_t, Int_t , Int_t,
-				Int_t, Int_t, Int_t, TLSAmpl**,
-				Int_t);
+		TFhh(Int_t J_, Int_t S1, Int_t S2,
+				Int_t lambda_, Int_t nu_,
+				const std::vector<TLSAmpl*>& LSampl,
+				bool even_contr_);
 
 		TFhh(TFhh*, char);
 		TFhh(TFhh*, TFhh*);
@@ -56,7 +59,7 @@ class TFhh {
 		Int_t GetLambda() { return lambda;};
 		Int_t GetNu() { return nu;};
 		Int_t GetJ() {return J;};
-		Int_t GetEvenContr() {return even_contraction;};
+		bool GetEvenContr() {return even_contraction;};
 		TLSContrib** GetLStPtr() {return LSt;};
 		char* GetName() {return name_str;};
 

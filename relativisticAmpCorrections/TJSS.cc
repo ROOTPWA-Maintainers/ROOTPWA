@@ -93,13 +93,10 @@ void TJSS::CalcAmpl() {
 		cout << endl;
 	}
 
-	long even_contraction = 1;
-	if ((_SDecay1 + _SDecay2 + testL - _JMother) % 2) {
-		even_contraction = 0;
-	}
+	const bool evenContraction = not ((_SDecay1 + _SDecay2 + testL - _JMother) % 2);
 
 	if (_debugLevel >= 2) {
-		if (even_contraction) {
+		if (evenContraction) {
 			cout << "contraction only with g~" << endl;
 		} else {
 			cout << "contraction with eps*p and g~" << endl;
@@ -117,15 +114,13 @@ void TJSS::CalcAmpl() {
 	}
 
 	long preloop = 1;
-
-	_NLSAmpl = 0;
-	_LSAmplitudes = 0;
+	long NLSAmpl = 0;
 
 	while (preloop == 1 or preloop == 0) {
 
 		if (preloop == 0) {
-			_LSAmplitudes = new TLSAmpl*[_NLSAmpl];
-			_NLSAmpl = 0;
+			_LSAmplitudes = vector<TLSAmpl*>(NLSAmpl, 0);
+			NLSAmpl = 0;
 			if (_debugLevel >= 2) {
 				cout << endl << "*************" << endl;
 			}
@@ -169,7 +164,7 @@ void TJSS::CalcAmpl() {
 				}
 
 				long IndexContractions = (totalRank - 3) / 2;
-				if (even_contraction) {
+				if (evenContraction) {
 					IndexContractions = totalRank / 2;
 				}
 				if (_debugLevel >= 2) {
@@ -182,96 +177,17 @@ void TJSS::CalcAmpl() {
 					for (long cChiPhi = 0; cChiPhi <= MaxChiPhi; cChiPhi++) {
 						for (long cPsiChi = 0; cPsiChi <= MaxPsiChi; cPsiChi++) {
 							for (long cPsiPhi = 0; cPsiPhi <= MaxPsiPhi; cPsiPhi++) {
-								if (_debugLevel >= 3) {
-									cout << "Checking " << PsiInternal << " "
-									     << cPsiChi << " " << cChiPhi << " "
-									     << cPsiPhi; // << endl;
-								}
-								if ( (PsiInternal + cPsiChi + cChiPhi + cPsiPhi) != IndexContractions) {
-									if (_debugLevel >= 3) {
-										cout << " C-" << endl;
-									}
-									continue;
-								} else if (_debugLevel >= 3) {
-									cout << " C+";
-								}
-								if (even_contraction) {
-									if ( (2 * PsiInternal + cPsiChi + cPsiPhi) != _SDecay1 + _SDecay2) {
-										if (_debugLevel >= 3) {
-											cout << "S-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "S+";
-									}
-									if (cPsiChi + cChiPhi != L) {
-										if (_debugLevel >= 3) {
-											cout << "L-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "L+";
-									}
-									if (cChiPhi + cPsiPhi != _JMother) {
-										if (_debugLevel >= 3) {
-											cout << "J-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "J+";
-									}
-								} else {
-									if (L - cPsiChi - cChiPhi > 1) {
-										if (_debugLevel >= 3) {
-											cout << "L-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "L+";
-									}
-									if (_JMother - cPsiPhi - cChiPhi > 1) {
-										if (_debugLevel >= 3) {
-											cout << "J-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "J+";
-									}
-								}
-								long r_ome = _SDecay1 - PsiInternal;
-								long r_eps = _SDecay2 - PsiInternal;
 
-								if (!even_contraction) {
-									long PsiRest = _SDecay1 + _SDecay2 - 2 * PsiInternal - cPsiChi - cPsiPhi;
-									if (PsiRest < 0 or PsiRest > 2) {
-										if (_debugLevel >= 3) {
-											cout << "R-" << endl;
-										}
-										continue;
-									} else if (_debugLevel >= 3) {
-										cout << "R+";
-									}
-									if (PsiRest == 2) {
-										if (r_ome > 0) {
-											r_ome--;
-										}
-										else {
-											if (_debugLevel >= 3) {
-												cout << "O-";
-											}
-											continue;
-										}
-										if (r_eps > 0) {
-											r_eps--;
-										}
-										else {
-											if (_debugLevel >= 3) {
-												cout << "E-";
-											}
-											continue;
-										}
-									}
+								if(initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cChiPhi, cPsiPhi, IndexContractions, evenContraction, L)) {
+									continue;
 								}
+
+								pair<long, long> rPair;
+								if(not getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cPsiPhi, evenContraction, rPair)) {
+									continue;
+								}
+								const long r_ome = rPair.first;
+								const long r_eps = rPair.second;
 								//
 								// Original ordering:
 								//
@@ -309,8 +225,6 @@ void TJSS::CalcAmpl() {
 													<< cChiOmega << " cPhiEps="
 													<< cPhiEps << " cChiEps="
 													<< cChiEps << endl;
-										}
-										if (_debugLevel >= 2) {
 											cout << "Contraction pattern " << getContractionPattern(cPsiPhi,
 											                                                        cPhiOmega,
 											                                                        cPhiEps,
@@ -331,14 +245,14 @@ void TJSS::CalcAmpl() {
 												if (_debugLevel >= 2) {
 													cout << " " << delta;
 												}
-												_NLSAmpl++;
+												NLSAmpl++;
 											} else {
 												if (_debugLevel >= 2) {
-													cout << " Constructing LS-Amplitude " << _NLSAmpl << endl;
+													cout << " Constructing LS-Amplitude " << NLSAmpl << endl;
 												}
 
 												long SameContr = 0;
-												for (SameContr = 0; SameContr < _NLSAmpl; SameContr++) {
+												for (SameContr = 0; SameContr < NLSAmpl; SameContr++) {
 													if (_LSAmplitudes[SameContr]->CheckContraction(
 													    L, S_L, PsiInternal,
 													    cPsiChi, cChiPhi,
@@ -350,13 +264,13 @@ void TJSS::CalcAmpl() {
 													}
 												}
 												long ContractionNumber = 0;
-												if (SameContr < _NLSAmpl) {
+												if (SameContr < NLSAmpl) {
 													ContractionNumber = _LSAmplitudes[SameContr]->GetContraction();
 												} else {
 													ContractionNumber = MaxContractionNumber + 1;
 												}
 
-												_LSAmplitudes[_NLSAmpl] =
+												_LSAmplitudes[NLSAmpl] =
 														new TLSAmpl(_SDecay1,
 																_SDecay2, L,
 																_JMother, delta,
@@ -371,13 +285,13 @@ void TJSS::CalcAmpl() {
 																cChiEps,
 																ContractionNumber);
 
-												if (_LSAmplitudes[_NLSAmpl]->GetNterms()) {
-													_NLSAmpl++;
+												if (_LSAmplitudes[NLSAmpl]->GetNterms()) {
+													NLSAmpl++;
 													if (ContractionNumber > MaxContractionNumber) {
 														MaxContractionNumber++;
 													}
 												} else {
-													delete _LSAmplitudes[_NLSAmpl];
+													delete _LSAmplitudes[NLSAmpl];
 												}
 											}
 										}
@@ -394,20 +308,20 @@ void TJSS::CalcAmpl() {
 		}
 		if (preloop) {
 			if (_debugLevel) {
-				cout << _NLSAmpl << " LS-Amplitudes to be evaluated." << endl;
+				cout << NLSAmpl << " LS-Amplitudes to be evaluated." << endl;
 			}
 		}
 		preloop--;
 	}
 	if (_debugLevel) {
-		cout << _NLSAmpl << " LS-Amplitudes found to be non-zero." << endl;
+		cout << NLSAmpl << " LS-Amplitudes found to be non-zero." << endl;
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
 		cout << "+++ Helicity-coupling amplitudes +++" << endl;
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
 	}
 
-	_NFhhAmpl = 0;
-	_FhhAmpl = new TFhh*[(_SDecay1 + 1) * (_SDecay2 + 1)];
+	long NFhhAmpl = 0;
+	_FhhAmpl = vector<TFhh*>((_SDecay1 + 1) * (_SDecay2 + 1), 0);
 
 	for (long lambda = 0; lambda <= _SDecay1; lambda++) {
 		for (long nu = -_SDecay2; nu <= _SDecay2; nu++) {
@@ -415,18 +329,17 @@ void TJSS::CalcAmpl() {
 			if (lambda == 0 && nu < 0) {
 				continue;
 			}
-			_FhhAmpl[_NFhhAmpl] = new TFhh(_JMother, _SDecay1, _SDecay2, lambda, nu,
-			                               _NLSAmpl, _LSAmplitudes, even_contraction);
-			if (_FhhAmpl[_NFhhAmpl]->GetNterms()) {
-				_NFhhAmpl++;
+			_FhhAmpl[NFhhAmpl] = new TFhh(_JMother, _SDecay1, _SDecay2, lambda, nu, _LSAmplitudes, evenContraction);
+			if (_FhhAmpl[NFhhAmpl]->GetNterms()) {
+				NFhhAmpl++;
 			} else {
-				delete _FhhAmpl[_NFhhAmpl];
+				delete _FhhAmpl[NFhhAmpl];
 			}
 		}
 	}
 
 	if (_debugLevel) {
-		cout << _NFhhAmpl << " non-zero helicity-coupling amplitudes" << endl;
+		cout << NFhhAmpl << " non-zero helicity-coupling amplitudes" << endl;
 	}
 
 	_NFhhIdAmpl = 0;
@@ -436,7 +349,7 @@ void TJSS::CalcAmpl() {
 		if (_debugLevel) {
 			cout << endl << " for identical-particle decay:" << endl;
 		}
-		for (long ifhh = 0; ifhh < _NFhhAmpl; ifhh++) {
+		for (long ifhh = 0; ifhh < NFhhAmpl; ifhh++) {
 			_FhhIdAmpl[ifhh] = 0;
 			if (_FhhAmpl[ifhh]) {
 				if (_FhhAmpl[ifhh]->IsNuNu()) {
@@ -445,7 +358,7 @@ void TJSS::CalcAmpl() {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'm');
 				} else {
 					long found_partner = 0;
-					for (long jfhh = 0; jfhh < _NFhhAmpl; jfhh++) {
+					for (long jfhh = 0; jfhh < NFhhAmpl; jfhh++) {
 						if ( (_FhhAmpl[ifhh]->GetLambda() == _FhhAmpl[jfhh]->GetNu()) and
 						     (_FhhAmpl[ifhh]->GetNu() == _FhhAmpl[jfhh]->GetLambda()) )
 						{
@@ -463,17 +376,131 @@ void TJSS::CalcAmpl() {
 
 	}
 
-	cout << _NFhhAmpl << " amplitudes: non-relativistic limit" << endl;
-	for (long i = 0; i < _NFhhAmpl; i++) {
+	cout << NFhhAmpl << " amplitudes: non-relativistic limit" << endl;
+	for (long i = 0; i < NFhhAmpl; i++) {
 		_FhhAmpl[i]->NonRelLimit();
 	}
 
 	cout << "Check non-relativistic G's" << endl;
-	for (long i = 0; i < _NFhhAmpl; i++) {
+	for (long i = 0; i < NFhhAmpl; i++) {
 		_FhhAmpl[i]->PrintNRG();
 	}
 
 }
+
+
+bool TJSS::initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
+                                                           const long& cPsiChi,
+                                                           const long& cChiPhi,
+                                                           const long& cPsiPhi,
+                                                           const long& IndexContractions,
+                                                           const long& even_contraction,
+                                                           const long& L) const
+{
+	if (_debugLevel >= 3) {
+		cout << "Checking " << PsiInternal << " "
+		     << cPsiChi << " " << cChiPhi << " "
+		     << cPsiPhi; // << endl;
+	}
+	if ( (PsiInternal + cPsiChi + cChiPhi + cPsiPhi) != IndexContractions) {
+		if (_debugLevel >= 3) {
+			cout << " C-" << endl;
+		}
+		return true;
+	} else if (_debugLevel >= 3) {
+		cout << " C+";
+	}
+	if (even_contraction) {
+		if ( (2 * PsiInternal + cPsiChi + cPsiPhi) != _SDecay1 + _SDecay2) {
+			if (_debugLevel >= 3) {
+				cout << "S-" << endl;
+			}
+			return true;
+		} else if (_debugLevel >= 3) {
+			cout << "S+";
+		}
+		if (cPsiChi + cChiPhi != L) {
+			if (_debugLevel >= 3) {
+				cout << "L-" << endl;
+			}
+			return true;
+		} else if (_debugLevel >= 3) {
+			cout << "L+";
+		}
+		if (cChiPhi + cPsiPhi != _JMother) {
+			if (_debugLevel >= 3) {
+				cout << "J-" << endl;
+			}
+			return true;
+		} else if (_debugLevel >= 3) {
+			cout << "J+";
+		}
+	} else {
+		if (L - cPsiChi - cChiPhi > 1) {
+			if (_debugLevel >= 3) {
+				cout << "L-" << endl;
+			}
+			return true;
+		} else if (_debugLevel >= 3) {
+			cout << "L+";
+		}
+		if (_JMother - cPsiPhi - cChiPhi > 1) {
+			if (_debugLevel >= 3) {
+				cout << "J-" << endl;
+			}
+			return true;
+		} else if (_debugLevel >= 3) {
+			cout << "J+";
+		}
+	}
+	return false;
+}
+
+
+bool TJSS::getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
+                                                             const long& cPsiChi,
+                                                             const long& cPsiPhi,
+                                                             const bool& evenContraction,
+                                                             pair<long, long>& rPair) const
+{
+
+	long r_ome = _SDecay1 - PsiInternal;
+	long r_eps = _SDecay2 - PsiInternal;
+
+	if (!evenContraction) {
+		long PsiRest = _SDecay1 + _SDecay2 - 2 * PsiInternal - cPsiChi - cPsiPhi;
+		if (PsiRest < 0 or PsiRest > 2) {
+			if (_debugLevel >= 3) {
+				cout << "R-" << endl;
+			}
+			return false;
+		} else if (_debugLevel >= 3) {
+			cout << "R+";
+		}
+		if (PsiRest == 2) {
+			if (r_ome > 0) {
+				r_ome--;
+			} else {
+				if (_debugLevel >= 3) {
+					cout << "O-";
+				}
+				return false;
+			}
+			if (r_eps > 0) {
+				r_eps--;
+			} else {
+				if (_debugLevel >= 3) {
+					cout << "E-";
+				}
+				return false;
+			}
+		}
+	}
+	rPair.first = r_ome;
+	rPair.second = r_eps;
+	return true;
+}
+
 
 string TJSS::getContractionPattern(const long& cPsiPhi,
                                    const long& cPhiOmega,

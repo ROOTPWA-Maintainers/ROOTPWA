@@ -10,8 +10,8 @@ Int_t debugFhh=1;
 
 TFhh::TFhh(Int_t J_, Int_t S1, Int_t S2,
 		Int_t lambda_, Int_t nu_,
-		Int_t nLS, TLSAmpl* *LSampl,
-		Int_t even_contr_) {
+		const vector<TLSAmpl*>& LSampl,
+		bool even_contr_) {
 
 	J=J_;
 	lambda= lambda_;
@@ -23,7 +23,7 @@ TFhh::TFhh(Int_t J_, Int_t S1, Int_t S2,
 	name_str=new char[15];
 	sprintf(name_str, "F_%lld_%lld", lambda, nu);
 
-	for (Int_t iLS=0; iLS<nLS; iLS++) {
+	for (unsigned int iLS=0; iLS<LSampl.size(); iLS++) {
 		if (LSampl[iLS]->Getdelta() ==  delta ||
 				LSampl[iLS]->Getdelta() == -delta ) {
 			// cout << "iLS=" << iLS << ", delta=" << delta << endl;

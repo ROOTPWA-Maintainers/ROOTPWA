@@ -2,6 +2,8 @@
 #define TJSS_HH
 
 #include <string>
+#include <vector>
+#include <utility>
 
 #include "TLSAmpl.h"
 #include "TFhh.h"
@@ -19,10 +21,8 @@ class TJSS {
 		  _eta1(1),
 		  _SDecay2(0),
 		  _eta2(1),
-		  _NLSAmpl(0),
-		  _LSAmplitudes(0),
-		  _NFhhAmpl(0),
-		  _FhhAmpl(0),
+		  _LSAmplitudes(),
+		  _FhhAmpl(),
 		  _NFhhIdAmpl(0),
 		  _FhhIdAmpl(0) { }
 
@@ -35,16 +35,28 @@ class TJSS {
 		  _eta1(e1),
 		  _SDecay2(S2),
 		  _eta2(e2),
-		  _NLSAmpl(0),
-		  _LSAmplitudes(0),
-		  _NFhhAmpl(0),
-		  _FhhAmpl(0),
+		  _LSAmplitudes(),
+		  _FhhAmpl(),
 		  _NFhhIdAmpl(0),
 		  _FhhIdAmpl(0) { }
 
 	void CalcAmpl();
 
   private:
+
+	bool initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
+	                                                     const long& cPsiChi,
+	                                                     const long& cChiPhi,
+	                                                     const long& cPsiPhi,
+	                                                     const long& IndexContractions,
+	                                                     const long& even_contraction,
+	                                                     const long& L) const;
+
+	bool getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
+	                                                       const long& cPsiChi,
+	                                                       const long& cPsiPhi,
+	                                                       const bool& evenContraction,
+	                                                       std::pair<long, long>& rPair) const;
 
 	std::string getContractionPattern(const long& cPsiPhi,
 	                                  const long& cPhiOmega,
@@ -63,11 +75,8 @@ class TJSS {
 	long _SDecay2;
 	long _eta2;
 
-	long _NLSAmpl;
-	TLSAmpl* *_LSAmplitudes;
-
-	long _NFhhAmpl;
-	TFhh* *_FhhAmpl;
+	std::vector<TLSAmpl*> _LSAmplitudes;
+	std::vector<TFhh*> _FhhAmpl;
 
 	long _NFhhIdAmpl;
 	TFhh* *_FhhIdAmpl;
