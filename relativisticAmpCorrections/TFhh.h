@@ -11,65 +11,63 @@
 
   \author Jan.Friedrich@ph.tum.de
   */
-//
-// Uncomment the following line
-// if you want to work in CINT (root.cern.ch)
-//
-//#define __JCINT__
-#ifndef __JCINT__
-#define Int_t    long long
-#define Double_t double
-#define Bool_t   bool
-#endif
 
+#include <string>
 #include <vector>
 
 #include "TLSAmpl.h"
 
 class TFhh {
 
-	private:
-		char* name_str;
-		Int_t J;
-		Int_t lambda;
-		Int_t nu;
-		bool even_contraction;
-		Int_t Nterms;
-		TLSContrib* *LSt;
-		Int_t NNRterms;
-		TLSNonRel* *NRLSt;
+  public:
 
-	public:
+	TFhh()
+	: _J(0),
+	  _lambda(0),
+	  _nu(0),
+	  _nTerms(0),
+	  _LSt(0) { }
 
-		TFhh(){
-			J=0; lambda=0; nu=0; Nterms=0; LSt=0;
-		};
+	TFhh(const long& J_,
+	     const long& S1,
+	     const long& S2,
+	     const long& lambda_,
+	     const long& nu_,
+	     const std::vector<TLSAmpl*>& LSampl,
+	     const bool& even_contr_);
 
-		TFhh(Int_t J_, Int_t S1, Int_t S2,
-				Int_t lambda_, Int_t nu_,
-				const std::vector<TLSAmpl*>& LSampl,
-				bool even_contr_);
+	TFhh(TFhh*, char);
+	TFhh(TFhh*, TFhh*);
 
-		TFhh(TFhh*, char);
-		TFhh(TFhh*, TFhh*);
+	const long&        GetNterms()          const { return _nTerms; }
+	bool               IsNuNu()             const { return (_lambda ==  _nu); }
+	bool               IsNuMinusNu()        const { return (_lambda == -_nu); }
+	const long&        GetLambda()          const { return _lambda; }
+	const long&        GetNu()              const { return _nu;     }
+	const long&        GetJ()               const { return _J;      }
+	const bool&        GetEvenContraction() const { return _evenContraction;}
+	TLSContrib**       GetLStPtr()                { return _LSt; }
+	const std::string& GetName()            const { return _name_str; }
 
-		Int_t GetNterms() {return Nterms;};
-		Int_t IsNuNu()      { if (lambda== nu) return 1; return 0; };
-		Int_t IsNuMinusNu() { if (lambda==-nu) return 1; return 0; };
-		Int_t GetLambda() { return lambda;};
-		Int_t GetNu() { return nu;};
-		Int_t GetJ() {return J;};
-		bool GetEvenContr() {return even_contraction;};
-		TLSContrib** GetLStPtr() {return LSt;};
-		char* GetName() {return name_str;};
+	void NonRelLimit();
+	void PrintNRG() const;
+	void Print()    const;
 
-		Int_t NonRelLimit();
-		Int_t PrintNRG();
-		Int_t Print();
-		//ClassDef(THCTerm,1);
+  private:
+
+	std::string _name_str;
+	long _J;
+	long _lambda;
+	long _nu;
+	bool _evenContraction;
+	long _nTerms;
+	TLSContrib* *_LSt;
+	long _NNRterms;
+	TLSNonRel* *_NRLSt;
+
+	static unsigned int _debugLevel;
 
 };
-
 
 
 #endif

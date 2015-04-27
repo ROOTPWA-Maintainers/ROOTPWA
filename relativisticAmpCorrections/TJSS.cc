@@ -320,8 +320,10 @@ void TJSS::CalcAmpl() {
 		cout << "++++++++++++++++++++++++++++++++++++" << endl;
 	}
 
-	long NFhhAmpl = 0;
-	_FhhAmpl = vector<TFhh*>((_SDecay1 + 1) * (_SDecay2 + 1), 0);
+	if(not _FhhAmpl.empty()) {
+		cerr << "_FhhAmpl not empty. Aborting..." << endl;
+		throw;
+	}
 
 	for (long lambda = 0; lambda <= _SDecay1; lambda++) {
 		for (long nu = -_SDecay2; nu <= _SDecay2; nu++) {
@@ -329,28 +331,24 @@ void TJSS::CalcAmpl() {
 			if (lambda == 0 && nu < 0) {
 				continue;
 			}
-			_FhhAmpl[NFhhAmpl] = new TFhh(_JMother, _SDecay1, _SDecay2, lambda, nu, _LSAmplitudes, evenContraction);
-			if (_FhhAmpl[NFhhAmpl]->GetNterms()) {
-				NFhhAmpl++;
-			} else {
-				delete _FhhAmpl[NFhhAmpl];
+			TFhh* fhh = new TFhh(_JMother, _SDecay1, _SDecay2, lambda, nu, _LSAmplitudes, evenContraction);
+			if (fhh->GetNterms()) {
+				_FhhAmpl.push_back(fhh);
 			}
 		}
 	}
 
 	if (_debugLevel) {
-		cout << NFhhAmpl << " non-zero helicity-coupling amplitudes" << endl;
+		cout << _FhhAmpl.size() << " non-zero helicity-coupling amplitudes" << endl;
 	}
 
-	_NFhhIdAmpl = 0;
-	_FhhIdAmpl = new TFhh*[(_SDecay1 + 1) * (_SDecay2 + 1)];
+	_FhhIdAmpl = vector<TFhh*>((_SDecay1 + 1) * (_SDecay2 + 1), 0);
 
 	if (_SDecay1 == _SDecay2 && _eta1 == _eta2) {
 		if (_debugLevel) {
 			cout << endl << " for identical-particle decay:" << endl;
 		}
-		for (long ifhh = 0; ifhh < NFhhAmpl; ifhh++) {
-			_FhhIdAmpl[ifhh] = 0;
+		for (unsigned int ifhh = 0; ifhh < _FhhAmpl.size(); ifhh++) {
 			if (_FhhAmpl[ifhh]) {
 				if (_FhhAmpl[ifhh]->IsNuNu()) {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'i');
@@ -358,7 +356,7 @@ void TJSS::CalcAmpl() {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'm');
 				} else {
 					long found_partner = 0;
-					for (long jfhh = 0; jfhh < NFhhAmpl; jfhh++) {
+					for (unsigned int jfhh = 0; jfhh < _FhhAmpl.size(); jfhh++) {
 						if ( (_FhhAmpl[ifhh]->GetLambda() == _FhhAmpl[jfhh]->GetNu()) and
 						     (_FhhAmpl[ifhh]->GetNu() == _FhhAmpl[jfhh]->GetLambda()) )
 						{
@@ -376,13 +374,13 @@ void TJSS::CalcAmpl() {
 
 	}
 
-	cout << NFhhAmpl << " amplitudes: non-relativistic limit" << endl;
-	for (long i = 0; i < NFhhAmpl; i++) {
+	cout << _FhhAmpl.size() << " amplitudes: non-relativistic limit" << endl;
+	for (unsigned int i = 0; i < _FhhAmpl.size(); i++) {
 		_FhhAmpl[i]->NonRelLimit();
 	}
 
 	cout << "Check non-relativistic G's" << endl;
-	for (long i = 0; i < NFhhAmpl; i++) {
+	for (unsigned int i = 0; i < _FhhAmpl.size(); i++) {
 		_FhhAmpl[i]->PrintNRG();
 	}
 

@@ -23,7 +23,6 @@ class TJSS {
 		  _eta2(1),
 		  _LSAmplitudes(),
 		  _FhhAmpl(),
-		  _NFhhIdAmpl(0),
 		  _FhhIdAmpl(0) { }
 
 	TJSS(long J,  long eJ,
@@ -37,7 +36,6 @@ class TJSS {
 		  _eta2(e2),
 		  _LSAmplitudes(),
 		  _FhhAmpl(),
-		  _NFhhIdAmpl(0),
 		  _FhhIdAmpl(0) { }
 
 	void CalcAmpl();
@@ -77,9 +75,7 @@ class TJSS {
 
 	std::vector<TLSAmpl*> _LSAmplitudes;
 	std::vector<TFhh*> _FhhAmpl;
-
-	long _NFhhIdAmpl;
-	TFhh* *_FhhIdAmpl;
+	std::vector<TFhh*> _FhhIdAmpl;
 
 	static unsigned int _debugLevel;
 

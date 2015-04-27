@@ -1,198 +1,229 @@
+#include "TFhh.h"
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "TFhh.h"
+#include <sstream>
+
 using namespace std;
 
 extern ClebschGordanBox box;
 
-Int_t debugFhh=1;
 
-TFhh::TFhh(Int_t J_, Int_t S1, Int_t S2,
-		Int_t lambda_, Int_t nu_,
-		const vector<TLSAmpl*>& LSampl,
-		bool even_contr_) {
+unsigned int TFhh::_debugLevel = 1;
 
-	J=J_;
-	lambda= lambda_;
-	nu= nu_;
-	even_contraction = even_contr_;
-	Int_t delta=lambda-nu;
-	Nterms=0;
 
-	name_str=new char[15];
-	sprintf(name_str, "F_%lld_%lld", lambda, nu);
+TFhh::TFhh(const long& J,
+           const long& S1,
+           const long& S2,
+           const long& lambda,
+           const long& nu,
+           const vector<TLSAmpl*>& LSampl,
+           const bool& evenContraction)
+	: _J(J),
+	  _lambda(lambda),
+	  _nu(nu),
+	  _evenContraction(evenContraction),
+	  _nTerms(0)
+{
+	long delta = _lambda - _nu;
+	{
+		stringstream sstr;
+		sstr << "F_" << _lambda << "_" << _nu;
+		_name_str = sstr.str();
 
-	for (unsigned int iLS=0; iLS<LSampl.size(); iLS++) {
-		if (LSampl[iLS]->Getdelta() ==  delta ||
-				LSampl[iLS]->Getdelta() == -delta ) {
+	}
+
+	for (unsigned int iLS = 0; iLS < LSampl.size(); iLS++) {
+		if ( (LSampl[iLS]->Getdelta() == delta) or (LSampl[iLS]->Getdelta() == -delta) ) {
 			// cout << "iLS=" << iLS << ", delta=" << delta << endl;
-			TFracNum *CG3S = box.GetCG(LSampl[iLS]->GetS(), S1, S2);
-			TFracNum SpinCouplFac = CG3S[CGIndex(S1, lambda, S2, -nu)];
-			if (SpinCouplFac==TFracNum_Zero) {
-				if (debugFhh==2)
+			TFracNum* CG3S = box.GetCG(LSampl[iLS]->GetS(), S1, S2);
+			TFracNum SpinCouplFac = CG3S[CGIndex(S1, _lambda, S2, -_nu)];
+			if (SpinCouplFac == TFracNum_Zero) {
+				if (_debugLevel == 2) {
 					cout << "Clebsch-Gordan is zero" << endl;
-			}
-			else {
-				TLSContrib* *newPTR = new TLSContrib*[Nterms+1];
-				for (Int_t iC=0; iC<Nterms; iC++) newPTR[iC] = LSt[iC];
-				newPTR[Nterms] = new TLSContrib(LSampl[iLS], delta, SpinCouplFac);
+				}
+			} else {
+				TLSContrib* *newPTR = new TLSContrib*[_nTerms + 1];
+				for (long iC = 0; iC < _nTerms; iC++) {
+					newPTR[iC] = _LSt[iC];
+				}
+				newPTR[_nTerms] = new TLSContrib(LSampl[iLS], delta, SpinCouplFac);
 				// delete[] LSt;
-				Nterms++;
-				LSt=newPTR;
+				_nTerms++;
+				_LSt = newPTR;
 			}
 		}
 	}
-	if (debugFhh) Print();
-}
-
-TFhh::TFhh(TFhh *sFhh, char flag) {
-	if (flag != 'i' && flag !='m'){
-		cerr << "TFhh::TFhh unknown flag "<<flag<<endl;
-		return;
-	}
-	if (debugFhh)
-		cout << "Initializing from single Amplitude" << endl;
-	if ( ( flag =='i' && (sFhh->GetJ()) % 2      ) ||
-			( flag =='m' && (sFhh->GetJ()) % 2 == 0 )    ) {
-		cout << sFhh->GetName() << "[symm] = 0" << endl;
-		Nterms=0;
-	}
-	else {
-		name_str = new char[15];
-		sprintf(name_str, "%s[symm]", sFhh->GetName());
-		J        = sFhh->GetJ();
-		lambda   = sFhh->GetLambda();
-		nu       = sFhh->GetNu();
-		even_contraction = sFhh->GetEvenContr();
-		Nterms   = sFhh->GetNterms();
-		LSt      = sFhh->GetLStPtr();
+	if (_debugLevel) {
 		Print();
 	}
 }
 
-TFhh::TFhh(TFhh *sFhh, TFhh *xFhh) {
-	name_str = new char[15];
-	sprintf(name_str, "%s[symm]", sFhh->GetName());
-	J        = sFhh->GetJ();
-	lambda   = sFhh->GetLambda();
-	nu       = sFhh->GetNu();
-	even_contraction = sFhh->GetEvenContr();
-	Nterms=0;
-	LSt   =0;
-	if (J != xFhh->GetJ() || even_contraction != xFhh->GetEvenContr() ||
-			lambda != xFhh->GetNu() || nu != xFhh->GetLambda() ){
-		cerr << "TFhh::TFhh(TFhh *, TFhh*): Something is wrong,"    << endl
-			<< " source amplitudes for symmetrization do not match" << endl;
+TFhh::TFhh(TFhh *sFhh, char flag)
+	: _J(sFhh->GetJ()),
+	  _lambda(sFhh->GetLambda()),
+	  _nu(sFhh->GetNu()),
+	  _evenContraction(sFhh->GetEvenContraction()),
+	  _nTerms(sFhh->GetNterms()),
+	  _LSt(sFhh->GetLStPtr())
+{
+	if (flag != 'i' && flag != 'm') {
+		cerr << "TFhh::TFhh unknown flag " << flag << endl;
 		return;
+	}
+	if (_debugLevel) {
+		cout << "Initializing from single Amplitude" << endl;
+	}
+	if ( ( (flag == 'i') and ((sFhh->GetJ()) % 2)) or ((flag == 'm') and ((sFhh->GetJ()) % 2 == 0)) ) {
+		cout << sFhh->GetName() << "[symm] = 0" << endl;
+		_nTerms = 0;
+	} else {
+		{
+			stringstream sstr;
+			sstr << sFhh->GetName() << "[symm]";
+			_name_str = sstr.str();
+		}
+		if (_debugLevel) {
+			Print();
+		}
+	}
+}
+
+TFhh::TFhh(TFhh *sFhh, TFhh *xFhh)
+	: _J(sFhh->GetJ()),
+	  _lambda(sFhh->GetLambda()),
+	  _nu(sFhh->GetNu()),
+	  _evenContraction(sFhh->GetEvenContraction()),
+	  _nTerms(0),
+	  _LSt(0)
+{
+	{
+		stringstream sstr;
+		sstr << sFhh->GetName() << "[symm]";
+		_name_str = sstr.str();
+	}
+	if (_J != xFhh->GetJ() or _evenContraction != xFhh->GetEvenContraction()
+			or _lambda != xFhh->GetNu() or _nu != xFhh->GetLambda()) {
+		cerr << "TFhh::TFhh(TFhh *, TFhh*): Something is wrong," << endl
+				<< " source amplitudes for symmetrization do not match" << endl;
+		throw;
 	}
 
 	// Since some LS-terms cancel out, first a max-length array of
 	// LSContrib pointers is filled, and then squeezed to only
 	// non-zero contributions
 
-	Int_t Ns = sFhh->GetNterms();
-	Int_t Nx = xFhh->GetNterms();
-	Nterms = Ns + Nx;
-	TLSContrib* *pLSt = new TLSContrib*[Nterms];
+	const long& Ns = sFhh->GetNterms();
+	const long& Nx = xFhh->GetNterms();
+	_nTerms = Ns + Nx;
+	TLSContrib* *pLSt = new TLSContrib*[_nTerms];
 
-	Int_t prevterms=0;
+	long prevTerms = 0;
 
-	for (Int_t i=0; i<Nterms; i++) {
-		TLSContrib *to_be_added;
-		if (i<Ns) to_be_added = sFhh->GetLStPtr()[i];
-		else      to_be_added = xFhh->GetLStPtr()[i-Ns];
-		Int_t found_in_prevterm=0;
-		for (Int_t j=0; j<prevterms; j++) {
-			if ( pLSt[j]->SameParameter(to_be_added) ) {
-				found_in_prevterm=1;
-				if (i<Ns) pLSt[j]->Add(to_be_added, false);
-				else      pLSt[j]->Add(to_be_added, true);
+	for (long i = 0; i < _nTerms; i++) {
+		TLSContrib* toBeAdded;
+		if (i < Ns) {
+			toBeAdded = sFhh->GetLStPtr()[i];
+		} else {
+			toBeAdded = xFhh->GetLStPtr()[i - Ns];
+		}
+		long foundInPrevterm = 0;
+		for (long j = 0; j < prevTerms; j++) {
+			if (pLSt[j]->SameParameter(toBeAdded)) {
+				foundInPrevterm = 1;
+				if (i < Ns) {
+					pLSt[j]->Add(toBeAdded, false);
+				} else {
+					pLSt[j]->Add(toBeAdded, true);
+				}
 			}
 		}
-		if (!found_in_prevterm) {
-			if (i<Ns) pLSt[prevterms] = new TLSContrib(to_be_added, false);
-			else      pLSt[prevterms] = new TLSContrib(to_be_added, true);
-			prevterms++;
+		if (not foundInPrevterm) {
+			if (i < Ns) {
+				pLSt[prevTerms] = new TLSContrib(toBeAdded, false);
+			} else {
+				pLSt[prevTerms] = new TLSContrib(toBeAdded, true);
+			}
+			prevTerms++;
 		}
 	}
 
 	//
 	// Cancel zeros
 	//
-	Int_t non_zeros=0;
-	for (Int_t i=0; i<prevterms; i++) {
-		if ( pLSt[i]->GetNterms() != 0 ) non_zeros++;
+	_nTerms = 0;
+	for (long i = 0; i < prevTerms; i++) {
+		if (pLSt[i]->GetNterms() != 0) {
+			_nTerms++;
+		}
 	}
 
-	Nterms=non_zeros;
-
-	if (Nterms) {
-		LSt = new TLSContrib*[Nterms];
-		Int_t j=0;
-		for (Int_t i=0; i<prevterms; i++) {
-			if ( pLSt[i]->GetNterms() != 0 ) {
-				LSt[j]=new TLSContrib(pLSt[i], false);
+	if (_nTerms) {
+		_LSt = new TLSContrib*[_nTerms];
+		long j = 0;
+		for (long i = 0; i < prevTerms; i++) {
+			if (pLSt[i]->GetNterms() != 0) {
+				_LSt[j] = new TLSContrib(pLSt[i], false);
 				j++;
 			}
 		}
 	}
 	Print();
-
 }
 
-
-Int_t TFhh::NonRelLimit(){
-	NNRterms=0;
-	for (Int_t i=0; i<Nterms; i++){
-		if (! LSt[i]->IsPureRelativistic()) {
-			Int_t jfound=-1;
-			for (Int_t j=0; j<NNRterms; j++) {
-				if (NRLSt[j]->CheckJLS(LSt[i])){
-					jfound=j;
+void TFhh::NonRelLimit() {
+	_NNRterms = 0;
+	for (long i = 0; i < _nTerms; i++) {
+		if (not _LSt[i]->IsPureRelativistic()) {
+			long jfound = -1;
+			for (long j = 0; j < _NNRterms; j++) {
+				if (_NRLSt[j]->CheckJLS(_LSt[i])) {
+					jfound = j;
 					break;
 				}
 			}
 			if (jfound != -1) {
-				NRLSt[jfound]->Add(LSt[i]);
-			}
-			else {
-				NNRterms++;
-				TLSNonRel **newNRLS=new TLSNonRel*[NNRterms];
-				for (Int_t j=0; j<NNRterms-1; j++) {
-					newNRLS[j]=NRLSt[j];
+				_NRLSt[jfound]->Add(_LSt[i]);
+			} else {
+				_NNRterms++;
+				TLSNonRel **newNRLS = new TLSNonRel*[_NNRterms];
+				for (long j = 0; j < _NNRterms - 1; j++) {
+					newNRLS[j] = _NRLSt[j];
 				}
-				newNRLS[NNRterms-1] = new TLSNonRel(LSt[i]);
-				NRLSt=newNRLS;
+				newNRLS[_NNRterms - 1] = new TLSNonRel(_LSt[i]);
+				_NRLSt = newNRLS;
 			}
 		}
 	}
-	cout << name_str << " (NR) = "  << endl;
-	for (Int_t j=0; j<NNRterms; j++) {
-		cout << "LS=" << NRLSt[j]->GetL() << NRLSt[j]->GetS() << ": ";
-		NRLSt[j]->Print();
+	cout << _name_str << " (NR) = " << endl;
+	for (long j = 0; j < _NNRterms; j++) {
+		cout << "LS=" << _NRLSt[j]->GetL() << _NRLSt[j]->GetS() << ": ";
+		_NRLSt[j]->Print();
 	}
-	return 0;
 }
 
-Int_t TFhh::PrintNRG(){
-	cout << name_str << " (NR) = "  << endl;
-	for (Int_t j=0; j<NNRterms; j++) {
-		cout << "LS=" << NRLSt[j]->GetL() << NRLSt[j]->GetS() << " => ";
-		NRLSt[j]->PrintG();
+void TFhh::PrintNRG() const
+{
+	cout << _name_str << " (NR) = " << endl;
+	for (long j = 0; j < _NNRterms; j++) {
+		cout << "LS=" << _NRLSt[j]->GetL() << _NRLSt[j]->GetS() << " => ";
+		_NRLSt[j]->PrintG();
 	}
-	return 0;
 }
 
-
-Int_t
-TFhh::Print() {
-	cout << name_str << " =";
-	if (even_contraction) cout << endl;
-	else cout << " (iw)" << endl;
-	for (Int_t iLSt=0; iLSt<Nterms; iLSt++) {
-		LSt[iLSt]->Print();
+void TFhh::Print() const
+{
+	cout << _name_str << " =";
+	if (_evenContraction) {
+		cout << endl;
+	} else {
+		cout << " (iw)" << endl;
 	}
-	if (Nterms==0) cout << " 0" << endl;
-	return 0;
+	for (long iLSt = 0; iLSt < _nTerms; iLSt++) {
+		_LSt[iLSt]->Print();
+	}
+	if (_nTerms == 0) {
+		cout << " 0" << endl;
+	}
 }
