@@ -55,6 +55,7 @@ set(SOURCES
 	TSpinWaveFunction.cc
 	TLSAmpl.cc
 	TFhh.cc
+	TJSS.cc
 	)
 
 
@@ -68,4 +69,3 @@ make_shared_library(
 
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
-make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${RPWA_DECAYAMPLITUDE_LIB} ${RPWA_PARTICLEDATA_LIB})
