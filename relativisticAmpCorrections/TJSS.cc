@@ -316,7 +316,7 @@ void TJSS::CalcAmpl() {
 		if (_debugLevel) {
 			cout << endl << " for identical-particle decay:" << endl;
 		}
-		for (unsigned int ifhh = 0; ifhh < _FhhAmpl.size(); ifhh++) {
+		for (size_t ifhh = 0; ifhh < _FhhAmpl.size(); ifhh++) {
 			if (_FhhAmpl[ifhh]) {
 				if (_FhhAmpl[ifhh]->IsNuNu()) {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'i');
@@ -324,7 +324,7 @@ void TJSS::CalcAmpl() {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'm');
 				} else {
 					long found_partner = 0;
-					for (unsigned int jfhh = 0; jfhh < _FhhAmpl.size(); jfhh++) {
+					for (size_t jfhh = 0; jfhh < _FhhAmpl.size(); jfhh++) {
 						if ( (_FhhAmpl[ifhh]->GetLambda() == _FhhAmpl[jfhh]->GetNu()) and
 						     (_FhhAmpl[ifhh]->GetNu() == _FhhAmpl[jfhh]->GetLambda()) )
 						{
@@ -343,12 +343,12 @@ void TJSS::CalcAmpl() {
 	}
 
 	cout << _FhhAmpl.size() << " amplitudes: non-relativistic limit" << endl;
-	for (unsigned int i = 0; i < _FhhAmpl.size(); i++) {
+	for (size_t i = 0; i < _FhhAmpl.size(); i++) {
 		_FhhAmpl[i]->NonRelLimit();
 	}
 
 	cout << "Check non-relativistic G's" << endl;
-	for (unsigned int i = 0; i < _FhhAmpl.size(); i++) {
+	for (size_t i = 0; i < _FhhAmpl.size(); i++) {
 		_FhhAmpl[i]->PrintNRG();
 	}
 
