@@ -982,6 +982,11 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Se
 	const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
 
 	const int nrValues = integrals->getLength();
+	if(nrValues < 2) {
+		printErr << "phase-space integrals of component '" << getName() << "' has to contain at least two points." << std::endl;
+		return false;
+	}
+
 	std::vector<double> masses;
 	std::vector<double> values;
 
