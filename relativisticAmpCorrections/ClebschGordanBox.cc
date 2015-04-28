@@ -303,7 +303,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 	if (debugCG == 2) {
 		cout << "#############################################" << endl;
 		cout << " first row CG[" << minIndex << "]:" << endl;
-		CG[minIndex].Print();
+		cout << CG[minIndex];
 	}
 
 	for (long twom1 = -twoJ1; twom1 <= twoJ1; twom1 += 2) {
@@ -327,7 +327,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 					cout << "#############################################"
 							<< endl;
 					cout << "zero CG[" << i << "]:" << endl;
-					CG[i].Print();
+					cout << CG[i];
 				}
 			} else if (twom1 == mintwom1) {
 				CG[i] = CG[i + 1]
@@ -337,7 +337,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 					cout << "#############################################"
 							<< endl;
 					cout << " first row CG[" << i << "]:" << endl;
-					CG[i].Print();
+					cout << CG[i];
 				}
 			} else if (twom1 + twom2 != -twoJ) {
 				long Denom = (twoJ1 + twom1) * (twoJ1 - twom1 + 2);
@@ -348,9 +348,9 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 								Denom);
 				if (debugCG == 2) {
 					cout << "cgp:" << endl;
-					cgp.Print();
+					cout << cgp;
 					cout << "cgm:" << endl;
-					cgm.Print();
+					cout << cgm;
 				}
 
 				TFracNum cgmixed = cgp * cgm;
@@ -366,15 +366,15 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 								<< endl;
 						cout << " middle CG Works fine!!! CG[" << i << "]:"
 								<< endl;
-						CG[i].Print();
+						cout << CG[i];
 					}
 				} else {
 					if (debugCG == 2) {
 						cout << "2*J=" << twoJ << ",2*J1=" << twoJ1 << ",2*J2="
 								<< twoJ2 << ",2*m=" << twom << ",2*m1=" << twom1
 								<< ",2*m2=" << twom2 << endl;
-						cgp.Print();
-						cgm.Print();
+						cout << cgp;
+						cout << cgm;
 					}
 					return 0;
 				}
@@ -386,7 +386,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 					cout << "#############################################"
 							<< endl;
 					cout << " first row CG[" << i << "]:" << endl;
-					CG[i].Print();
+					cout << CG[i];
 				}
 			}
 		}
@@ -406,7 +406,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 			if (debugCG == 2) {
 				cout << "#############################################" << endl;
 				cout << "first line Simple setting: CG[" << i << "]:" << endl;
-				CG[i].Print();
+				cout << CG[i];
 			}
 		} else if (twom1 > mintwom1 && twom1 <= -mintwom1) {
 			long Denom = (twoJ - twom + 2) * (twoJ + twom);
@@ -417,11 +417,11 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 			TFracNum cgmixed = cg1 * cg2;
 			if (debugCG == 2) {
 				cout << "cg1:" << endl;
-				cg1.Print();
+				cout << cg1;
 				cout << "cg2:" << endl;
-				cg2.Print();
+				cout << cg2;
 				cout << "cgmixed:" << endl;
-				cgmixed.Print();
+				cout << cgmixed;
 			}
 			if (cgmixed.Sqrt()) {
 				cg1.Abs();
@@ -432,15 +432,15 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 							<< endl;
 					cout << " first line Works fine!!! CG[" << i << "]:"
 							<< endl;
-					CG[i].Print();
+					cout << CG[i];
 				}
 			} else {
 				if (debugCG == 2) {
 					cout << "2*J=" << twoJ << ",2*J1=" << twoJ1 << ",2*J2="
 							<< twoJ2 << ",2*m=" << twom << ",2*m1=" << twom1
 							<< ",2*m2=" << twom2 << endl;
-					cg1.Print();
-					cg2.Print();
+					cout << cg1;
+					cout << cg2;
 				}
 				return 0;
 			}
@@ -462,9 +462,9 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 					* TFracNum((twoJ1 + twom1) * (twoJ1 - twom1 + 2), Denom);
 			if (debugCG == 2) {
 				cout << "cg1:" << endl;
-				cg1.Print();
+				cout << cg1;
 				cout << "cg2:" << endl;
-				cg2.Print();
+				cout << cg2;
 			}
 			TFracNum cgmixed = cg1 * cg2;
 			if (cgmixed.Sqrt()) {
@@ -479,15 +479,15 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 							<< endl;
 					cout << "lower triangle Works fine!!! CG[" << i << "]:"
 							<< endl;
-					CG[i].Print();
+					cout << CG[i];
 				}
 			} else {
 				if (debugCG == 2) {
 					cout << "2*J=" << twoJ << ",2*J1=" << twoJ1 << ",2*J2="
 							<< twoJ2 << ",2*m=" << twom << ",2*m1=" << twom1
 							<< ",2*m2=" << twom2 << endl;
-					cg1.Print();
-					cg2.Print();
+					cout << cg1;
+					cout << cg2;
 				}
 				return 0;
 			}
