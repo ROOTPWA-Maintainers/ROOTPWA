@@ -16,6 +16,7 @@ ClebschGordanBox* ClebschGordanBox::instance()
 	return _instance;
 }
 
+// TODO: check if this can be deleted
 #if(0)
 TFracNum* ClebschGordanInteger(long J, long J1, long J2) {
 
