@@ -56,9 +56,9 @@ TSpinWaveFunction::TSpinWaveFunction(Int_t J_, char type_) {
 					if (mi[J*pzm+i]== 0) m0++;
 				}
 				if (type=='s' || type=='c')
-					coeff[pzm] = am0_to_J(J,MM,m0);
+					coeff[pzm] = TFracNum::am0_to_J(J,MM,m0);
 				if (type=='l')
-					coeff[pzm] = cm0_sub_ell_2(J,m0);
+					coeff[pzm] = TFracNum::cm0_sub_ell_2(J,m0);
 				if (debugSpinWave==2)
 					cout << " * sqrt("
 						<< coeff[pzm].FracString()

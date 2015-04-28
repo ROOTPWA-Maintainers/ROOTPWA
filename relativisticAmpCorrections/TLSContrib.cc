@@ -4,7 +4,9 @@
 
 using namespace std;
 
+
 bool TLSContrib::_debug = false;
+
 
 TLSContrib::TLSContrib(const TLSContrib* b, const bool& particleExchange)
 	: _J(b->_J),
@@ -22,7 +24,7 @@ TLSContrib::TLSContrib(const TLSContrib* b, const bool& particleExchange)
 		}
 	}
 }
-;
+
 
 TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
                        const long& delta,
@@ -38,7 +40,7 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 
 	const bool signReversal = (_delta < 0 and (_L + _S - _J) % 2);
 
-	_NormFactor = TFracNum_Zero;
+	_NormFactor = TFracNum::Zero;
 	if (_debug) {
 		cout << "(" << _J << ")" << _L << _S << "[" << _delta << "]" << endl;
 	}
@@ -79,9 +81,9 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 			cout << " -> Normfactor: " << _NormFactor.FracStringSqrt() << endl;
 		}
 	}
-	if (_NormFactor == TFracNum_Zero) {
+	if (_NormFactor == TFracNum::Zero) {
 		_pureRelativistic = true;
-		_NormFactor = TFracNum_One;
+		_NormFactor = TFracNum::One;
 	} else {
 		_pureRelativistic = false;
 		TFracNum NormInv = _NormFactor;
@@ -93,6 +95,7 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 		}
 	}
 }
+
 
 void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	if (_J != b->_J or _L != b->_L or _S != b->_S) {
@@ -108,7 +111,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 
 	for (size_t i = 0; i < _factors.size(); i++) {
-		_factors[i].squareOfPrefactor *= TFracNum_Quarter * _NormFactor;
+		_factors[i].squareOfPrefactor *= TFracNum::Quarter * _NormFactor;
 	}
 
 	for (size_t ib = 0; ib < b->GetNterms(); ib++) {
@@ -128,7 +131,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 			    ) )
 			{
 				termSummed = true;
-				TFracNum bterm = TFracNum_Quarter * b->_NormFactor * b->getFactors()[ib].squareOfPrefactor;
+				TFracNum bterm = TFracNum::Quarter * b->_NormFactor * b->getFactors()[ib].squareOfPrefactor;
 
 				if (_J % 2) {
 					bterm.FlipSign();
@@ -146,7 +149,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 		if (not termSummed) {
 
 			factors factor(b->getFactors()[ib]);
-			factor.squareOfPrefactor *= TFracNum_Quarter * b->_NormFactor;
+			factor.squareOfPrefactor *= TFracNum::Quarter * b->_NormFactor;
 			if (_J % 2) {
 				if(not factor.squareOfPrefactor.FlipSign()) {
 					cerr << "Flipping sign failed. Aborting..." << endl;
@@ -165,7 +168,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	vector<int> indicesToRemove;
 	for (size_t i = _factors.size()-1; i >= 0; --i) {
-		if (_factors[i].squareOfPrefactor == TFracNum_Zero) {
+		if (_factors[i].squareOfPrefactor == TFracNum::Zero) {
 			indicesToRemove.push_back(i);
 		}
 	}
@@ -181,7 +184,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	// Recalculate Normalization Factor
 	//
-	_NormFactor = TFracNum_Zero;
+	_NormFactor = TFracNum::Zero;
 	for (size_t i = 0; i < _factors.size(); i++) {
 		TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
 		if (sum) {
@@ -195,9 +198,9 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	// Apply normalization
 	//
-	if (_NormFactor == TFracNum_Zero) {
+	if (_NormFactor == TFracNum::Zero) {
 		_pureRelativistic = true;
-		_NormFactor = TFracNum_One;
+		_NormFactor = TFracNum::One;
 	} else {
 		_pureRelativistic = false;
 		TFracNum NormInv = _NormFactor;
@@ -207,6 +210,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 		}
 	}
 }
+
 
 void TLSContrib::Print() const
 {

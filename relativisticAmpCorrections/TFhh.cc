@@ -38,7 +38,7 @@ TFhh::TFhh(const long& J,
 			// cout << "iLS=" << iLS << ", delta=" << delta << endl;
 			TFracNum* CG3S = ClebschGordanBox::instance()->GetCG(LSampl[iLS]->GetS(), S1, S2);
 			TFracNum SpinCouplFac = CG3S[ClebschGordanBox::CGIndex(S1, _lambda, S2, -_nu)];
-			if (SpinCouplFac == TFracNum_Zero) {
+			if (SpinCouplFac == TFracNum::Zero) {
 				if (_debugLevel == 2) {
 					cout << "Clebsch-Gordan is zero" << endl;
 				}

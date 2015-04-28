@@ -9,6 +9,12 @@ using namespace std;
 bool TFracNum::debugFracNum = false;
 
 
+const TFracNum TFracNum::Zero = TFracNum(0, 1);
+const TFracNum TFracNum::One = TFracNum(1, 1);
+const TFracNum TFracNum::Two = TFracNum(2, 1);
+const TFracNum TFracNum::Quarter = TFracNum(1, 4);
+
+
 const char* SQUAREROOT_CHAR = "#";
 
 
@@ -334,7 +340,7 @@ TFracNum::SumSignedRoots(const TFracNum& b) {
 		bool flipsign = (aa.Dval() + bb.Dval() < 0);
 		aa.Abs();
 		bb.Abs();
-		*res = aa + bb + TFracNum_Two * mixed;
+		*res = aa + bb + TFracNum::Two * mixed;
 		if (flipsign) {
 			res->FlipSign();
 		}
@@ -842,8 +848,9 @@ TFracNum::FracStringSqrt() const {
 	return fstr;
 }
 
-
-TFracNum a_to_J(long J, long m) {
+// TODO: check if this can be deleted
+#if(0)
+TFracNum TFracNum::a_to_J(long J, long m) {
 	long kappa = (J - m) % 2;
 	cout << "kappa=" << kappa << endl;
 	long nom_ptr[1] = { 1 };
@@ -852,8 +859,9 @@ TFracNum a_to_J(long J, long m) {
 	TFracNum fac2(J - m, 1, "factorial");
 	return twofac * fac1 * fac2;
 }
+#endif
 
-TFracNum am0_to_J(long J, long m, long m0) {
+TFracNum TFracNum::am0_to_J(long J, long m, long m0) {
 	long nom_ptr[1] = { m0 };
 	TFracNum twofac(1, 0, nom_ptr, 0, 1);
 	TFracNum fac1(J + m, 2 * J, "factorial");
@@ -862,7 +870,7 @@ TFracNum am0_to_J(long J, long m, long m0) {
 }
 
 
-TFracNum c_sub_ell(long ell) {
+TFracNum TFracNum::c_sub_ell(long ell) {
 	if (ell == 0) {
 		return TFracNum(0, 0, 0, 0, 1);
 	}
@@ -874,7 +882,7 @@ TFracNum c_sub_ell(long ell) {
 }
 
 
-TFracNum cm0_sub_ell(long ell, long m0) {
+TFracNum TFracNum::cm0_sub_ell(long ell, long m0) {
 	if (ell == 0) {
 		return TFracNum(0, 0, 0, 0, 1);
 	}
@@ -886,7 +894,7 @@ TFracNum cm0_sub_ell(long ell, long m0) {
 }
 
 
-TFracNum cm0_sub_ell_2(long ell, long m0) {
+TFracNum TFracNum::cm0_sub_ell_2(long ell, long m0) {
 	//return  am0_to_J(ell, 0, m0);
 	if (ell == 0) {
 		return TFracNum(0, 0, 0, 0, 1);

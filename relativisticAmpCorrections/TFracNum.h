@@ -122,6 +122,11 @@ class TFracNum {
 
 	bool SetINTs();
 
+	static TFracNum am0_to_J(long J, long m, long m0);
+	static TFracNum c_sub_ell(long ell);
+	static TFracNum cm0_sub_ell(long ell, long m0);
+	static TFracNum cm0_sub_ell_2(long ell, long m0);
+
   private:
 	//
 	// since Num is appearing as short form of "Number",
@@ -153,6 +158,14 @@ class TFracNum {
 
 	static bool debugFracNum;
 
+  public:
+
+	const static TFracNum Zero;
+	const static TFracNum One;
+	const static TFracNum Two;
+	const static TFracNum Quarter;
+
+
 };
 
 
@@ -182,16 +195,5 @@ operator +(TFracNum lhs, const TFracNum& rhs)
 	return lhs;
 }
 
-const TFracNum TFracNum_Zero(0, 1);
-const TFracNum TFracNum_One(1, 1);
-const TFracNum TFracNum_Two(2, 1);
-const TFracNum TFracNum_mTwo(-2, 1);
-const TFracNum TFracNum_Half(1, 2);
-const TFracNum TFracNum_Quarter(1, 4);
-
-TFracNum am0_to_J(long J, long m, long m0);
-TFracNum c_sub_ell(long ell);
-TFracNum cm0_sub_ell(long ell, long m0);
-TFracNum cm0_sub_ell_2(long ell, long m0);
 
 #endif
