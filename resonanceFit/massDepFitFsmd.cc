@@ -70,12 +70,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("formula", libconfig::Setting::TypeString)
-	                     ("val", libconfig::Setting::TypeArray)
-	                     ("lower", libconfig::Setting::TypeArray)
-	                     ("upper", libconfig::Setting::TypeArray)
-	                     ("error", libconfig::Setting::TypeArray)
-	                     ("fix", libconfig::Setting::TypeArray);
+	                     ("formula", libconfig::Setting::TypeString);
 	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
 		printErr << "'finalStateMassDependence' section in configuration file contains errors." << std::endl;
 		return false;
@@ -88,57 +83,6 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		delete _function;
 	}
 	_function = new TFormula("finalStateMassDependence", formula.c_str());
-	const int nrPar = _function->GetNpar();
-
-	const libconfig::Setting& configFsmdValue = (*configFsmd)["val"];
-	if(configFsmdValue.getLength() != nrPar) {
-		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
-		return false;
-	}
-	if(configFsmdValue.getLength() > 0 and configFsmdValue[0].getType() != libconfig::Setting::TypeFloat) {
-		printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << std::endl;
-		return false;
-	}
-
-	const libconfig::Setting& configFsmdLower = (*configFsmd)["lower"];
-	if(configFsmdLower.getLength() != nrPar) {
-		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
-		return false;
-	}
-	if(configFsmdLower.getLength() > 0 and configFsmdLower[0].getType() != libconfig::Setting::TypeFloat) {
-		printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << std::endl;
-		return false;
-	}
-
-	const libconfig::Setting& configFsmdUpper = (*configFsmd)["upper"];
-	if(configFsmdUpper.getLength() != nrPar) {
-		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
-		return false;
-	}
-	if(configFsmdUpper.getLength() > 0 and configFsmdUpper[0].getType() != libconfig::Setting::TypeFloat) {
-		printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << std::endl;
-		return false;
-	}
-
-	const libconfig::Setting& configFsmdError = (*configFsmd)["error"];
-	if(configFsmdError.getLength() != nrPar) {
-		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
-		return false;
-	}
-	if(configFsmdError.getLength() > 0 and configFsmdError[0].getType() != libconfig::Setting::TypeFloat) {
-		printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << std::endl;
-		return false;
-	}
-
-	const libconfig::Setting& configFsmdFix = (*configFsmd)["fix"];
-	if(configFsmdFix.getLength() != nrPar) {
-		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << std::endl;
-		return false;
-	}
-	if(configFsmdFix.getLength() > 0 and configFsmdFix[0].getType() != libconfig::Setting::TypeBoolean) {
-		printErr << "'fix' in 'finalStateMassDependence' has to be made up of booleans." << std::endl;
-		return false;
-	}
 
 	_nrParameters = _function->GetNpar();
 
@@ -147,20 +91,54 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 	_parametersLimitedLower.resize(_nrParameters);
 	_parametersLimitUpper.resize(_nrParameters);
 	_parametersLimitedUpper.resize(_nrParameters);
-	_parametersStep.resize(_nrParameters);
+	_parametersStep.resize(_nrParameters, 0.0001);
 
 	fitParameters.resize(_id+1, 0, _nrParameters, 0);
 	fitParametersError.resize(_id+1, 0, _nrParameters, 0);
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		fitParameters.setParameter(_id, idxParameter, configFsmdValue[idxParameter]);
-		fitParametersError.setParameter(_id, idxParameter, configFsmdError[idxParameter]);
-		_parametersFixed[idxParameter] = configFsmdFix[idxParameter];
-		_parametersLimitLower[idxParameter] = configFsmdLower[idxParameter];
-		_parametersLimitedLower[idxParameter] = true;
-		_parametersLimitUpper[idxParameter] = configFsmdUpper[idxParameter];
-		_parametersLimitedUpper[idxParameter] = true;
-		_parametersStep[idxParameter] = 0.0001;
+		std::ostringstream parName;
+		parName << "p" << idxParameter;
+
+		if(debug) {
+			printDebug << "reading parameter '" << parName.str() << "'." << std::endl;
+		}
+
+		const libconfig::Setting* configParameter = findLibConfigGroup(*configFsmd, parName.str());
+		if (not configParameter) {
+			printErr << "final-state mass dependence does not define parameter '" << parName.str() << "'." << std::endl;
+			return false;
+		}
+
+		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("val", libconfig::Setting::TypeFloat)
+		                     ("fix", libconfig::Setting::TypeBoolean);
+		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
+			printErr << "'" << parName.str() << "' of final-state mass dependence does not contain all required variables." << std::endl;
+			return false;
+		}
+
+		double parameter;
+		configParameter->lookupValue("val", parameter);
+		fitParameters.setParameter(_id, idxParameter, parameter);
+
+		double error;
+		if(configParameter->lookupValue("error", error)) {
+			fitParametersError.setParameter(_id, idxParameter, error);
+		}
+
+		bool fixed;
+		configParameter->lookupValue("fix", fixed);
+		_parametersFixed[idxParameter] = fixed;
+
+		_parametersLimitedLower[idxParameter] = configParameter->lookupValue("lower", _parametersLimitLower[idxParameter]);
+		_parametersLimitedUpper[idxParameter] = configParameter->lookupValue("upper", _parametersLimitUpper[idxParameter]);
+
+		double step;
+		if(configParameter->lookupValue("step", step)) {
+			_parametersStep[idxParameter] = step;
+		}
 	}
 
 	if(debug) {
@@ -179,15 +157,27 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
                                const bool debug) const
 {
 	if(debug) {
-		printDebug << "updating final-state mass-dependence." << std::endl;
+		printDebug << "start updating final-state mass-dependence." << std::endl;
+		print(printDebug);
 	}
 
-	const libconfig::Setting& configFsmdValue = (*configFsmd)["val"];
-	const libconfig::Setting& configFsmdError = (*configFsmd)["error"];
-
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		configFsmdValue[idxParameter] = fitParameters.getParameter(_id, idxParameter);
-		configFsmdError[idxParameter] = fitParametersError.getParameter(_id, idxParameter);
+		std::ostringstream parName;
+		parName << "p" << idxParameter;
+
+		if(debug) {
+			printDebug << "updating parameter '" << parName.str() << "'." << std::endl;
+		}
+
+		libconfig::Setting* configParameter = &((*configFsmd)[parName.str()]);
+
+		(*configParameter)["val"] = fitParameters.getParameter(_id, idxParameter);
+
+		if(not configParameter->exists("error")) {
+			configParameter->add("error", libconfig::Setting::TypeFloat);
+		}
+
+		(*configParameter)["error"] = fitParametersError.getParameter(_id, idxParameter);
 	}
 
 	return true;
