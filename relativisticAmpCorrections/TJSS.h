@@ -14,20 +14,6 @@ class TJSS {
 
   public:
 
-// TODO: check if this can be deleted
-#if(0)
-	TJSS()
-		: _JMother(0),
-		  _etaJ(1),
-		  _SDecay1(0),
-		  _eta1(1),
-		  _SDecay2(0),
-		  _eta2(1),
-		  _LSAmplitudes(),
-		  _FhhAmpl(),
-		  _FhhIdAmpl(0) { }
-#endif
-
 	TJSS(long J,
 	     long eJ,
 	     long S1,
@@ -42,27 +28,25 @@ class TJSS {
 		  _eta2(e2),
 		  _LSAmplitudes(),
 		  _FhhAmpl(),
-		  _FhhIdAmpl(0) { }
+		  _FhhIdAmpl() { }
 
 	void CalcAmpl();
 
   private:
 
-	// TODO: rename this
-	bool initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
-	                                                     const long& cPsiChi,
-	                                                     const long& cChiPhi,
-	                                                     const long& cPsiPhi,
-	                                                     const long& IndexContractions,
-	                                                     const long& even_contraction,
-	                                                     const long& L) const;
+	bool checkSelectionRules(const long& PsiInternal,
+	                         const long& cPsiChi,
+	                         const long& cChiPhi,
+	                         const long& cPsiPhi,
+	                         const long& IndexContractions,
+	                         const long& even_contraction,
+	                         const long& L) const;
 
-	// TODO: rename this
-	bool getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
-	                                                       const long& cPsiChi,
-	                                                       const long& cPsiPhi,
-	                                                       const bool& evenContraction,
-	                                                       std::pair<long, long>& rPair) const;
+	bool getContractionRank(const long& PsiInternal,
+	                        const long& cPsiChi,
+	                        const long& cPsiPhi,
+	                        const bool& evenContraction,
+	                        std::pair<long, long>& rPair) const;
 
 	std::string getContractionPattern(const long& cPsiPhi,
 	                                  const long& cPhiOmega,

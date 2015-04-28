@@ -165,12 +165,12 @@ void TJSS::CalcAmpl() {
 					for (long cPsiChi = 0; cPsiChi <= MaxPsiChi; cPsiChi++) {
 						for (long cPsiPhi = 0; cPsiPhi <= MaxPsiPhi; cPsiPhi++) {
 
-							if(initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cChiPhi, cPsiPhi, IndexContractions, evenContraction, L)) {
+							if(checkSelectionRules(PsiInternal, cPsiChi, cChiPhi, cPsiPhi, IndexContractions, evenContraction, L)) {
 								continue;
 							}
 
 							pair<long, long> rPair;
-							if(not getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(PsiInternal, cPsiChi, cPsiPhi, evenContraction, rPair)) {
+							if(not getContractionRank(PsiInternal, cPsiChi, cPsiPhi, evenContraction, rPair)) {
 								continue;
 							}
 							const long r_ome = rPair.first;
@@ -355,13 +355,13 @@ void TJSS::CalcAmpl() {
 }
 
 
-bool TJSS::initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
-                                                           const long& cPsiChi,
-                                                           const long& cChiPhi,
-                                                           const long& cPsiPhi,
-                                                           const long& IndexContractions,
-                                                           const long& even_contraction,
-                                                           const long& L) const
+bool TJSS::checkSelectionRules(const long& PsiInternal,
+                               const long& cPsiChi,
+                               const long& cChiPhi,
+                               const long& cPsiPhi,
+                               const long& IndexContractions,
+                               const long& even_contraction,
+                               const long& L) const
 {
 	if (_debugLevel >= 3) {
 		cout << "Checking " << PsiInternal << " "
@@ -423,11 +423,11 @@ bool TJSS::initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiIntern
 }
 
 
-bool TJSS::getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
-                                                             const long& cPsiChi,
-                                                             const long& cPsiPhi,
-                                                             const bool& evenContraction,
-                                                             pair<long, long>& rPair) const
+bool TJSS::getContractionRank(const long& PsiInternal,
+                              const long& cPsiChi,
+                              const long& cPsiPhi,
+                              const bool& evenContraction,
+                              pair<long, long>& rPair) const
 {
 
 	long r_ome = _SDecay1 - PsiInternal;

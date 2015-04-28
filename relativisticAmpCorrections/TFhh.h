@@ -23,17 +23,6 @@ class TFhh {
 
   public:
 
-// TODO: check if this can be deleted
-#if(0)
-	TFhh()
-	: _J(0),
-	  _lambda(0),
-	  _nu(0),
-	  _evenContraction(false),
-	  _LSt(),
-	  _NRLSt() { }
-#endif
-
 	TFhh(const long& J,
 	     const long& S1,
 	     const long& S2,

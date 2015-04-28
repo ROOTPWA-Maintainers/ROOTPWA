@@ -25,6 +25,7 @@ const char IOUTSTRING[3] = "%d";
 class TFracNum {
 
   public:
+
 	//! Default constructor with numerator and denominator set to 1
 	TFracNum()
 		: _maxPrimNom(0),

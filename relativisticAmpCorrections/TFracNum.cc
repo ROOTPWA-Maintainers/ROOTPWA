@@ -669,7 +669,6 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 		}
 		out << -_maxPrimNom << "/" << -_maxPrimDen << endl;
 		return out;
-//		return double(_signPrefac) * double(-_maxPrimNom) / double(-_maxPrimDen);
 	}
 	long integrity = 1;
 	for (long i = 0; i < _maxPrimNom; i++) {
@@ -684,7 +683,6 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 	}
 	if (integrity == 0) {
 		return out;
-//		return -1;
 	}
 
 	long nom = 1;
@@ -731,7 +729,6 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 	out << "DEN_INT=" << _DEN_INT << endl;
 	out << "dvalue=" << _dValue << endl;
 	return out;
-//	return double(_signPrefac) * double(nom) / double(den);
 }
 
 

@@ -18,8 +18,8 @@ TTensorTerm::TTensorTerm(char name, Int_t RJ, Int_t* pzm_field,
 	if (name == 'p') {Rphi=RJ; phi_pzm=pzm_field;}
 }
 
-TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L, 
-		Int_t contractions, 
+TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L,
+		Int_t contractions,
 		Int_t o_share, Int_t e_share,
 		char con_type) {
 
@@ -37,10 +37,10 @@ TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L,
 	for (Int_t con=0; con<contractions; con++) {
 		Int_t cp = 0;
 		if (con_type=='c') { cp=L->chi_pzm[Rchi-1]; Rchi--; }
-		else               { cp=L->phi_pzm[Rphi-1]; Rphi--; }   
+		else               { cp=L->phi_pzm[Rphi-1]; Rphi--; }
 		Int_t oe = 0;
 		if (ocount) {              // o is to be contracted
-			oe = S->ome_pzm[Rome-1];    
+			oe = S->ome_pzm[Rome-1];
 			Rome--;
 		}
 		else {                     // e is to be contracted
@@ -50,29 +50,29 @@ TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L,
 		}
 		if ( con_type == 'c' && ( (oe==1&&cp==-1) || (oe==-1&&cp==1) ) )
 			prefac.FlipSign();
-		else if	     
+		else if
 			(  con_type == 'p' && ( (oe==1&&cp==1) || (oe==-1&&cp==-1) ) ) ;
 		else if (oe==0&&cp==0 ) {
-			if (ocount) gam_s_pot++;   
-			else        gam_sig_pot++;   
+			if (ocount) gam_s_pot++;
+			else        gam_sig_pot++;
 		}
 		else {
 			prefac=TFracNum(0,0,0,0,0);
 			return;
 		}
 		if (ocount) ocount--;
-	}                              
+	}
 
 	ome_pzm = new Int_t[Rome];
 	for (Int_t i=0; i<Rome; i++) ome_pzm[i] = S->ome_pzm[i];
-	eps_pzm = new Int_t[Reps];  
+	eps_pzm = new Int_t[Reps];
 	for (Int_t i=0; i<Reps; i++) eps_pzm[i] = S->eps_pzm[i];
-	chi_pzm = new Int_t[Rchi];  
+	chi_pzm = new Int_t[Rchi];
 	for (Int_t i=0; i<Rchi; i++) {
 		if (i < L->Rchi) chi_pzm[i] = L->chi_pzm[i];
 		else             chi_pzm[i] = S->chi_pzm[i-(L->Rchi)];
 	}
-	phi_pzm = new Int_t[Rphi];  
+	phi_pzm = new Int_t[Rphi];
 	for (Int_t i=0; i<Rphi; i++){
 		if (i < L->Rphi) phi_pzm[i] = L->phi_pzm[i];
 		else             phi_pzm[i] = S->phi_pzm[i-(L->Rphi)];
@@ -91,7 +91,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 		}
 		Rchi--;
 		Rphi--;
-	}                              
+	}
 
 	Int_t trouble=0;
 
@@ -127,7 +127,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 				else { prefac=TFracNum(0,0,0,0,0); return 1;}
 			}
 			else if ( Rchi==0 ) {
-				Rome--; Reps--; Rphi--; 
+				Rome--; Reps--; Rphi--;
 				if      (os== 1 && es==-1 && ps== 0 )                  ;
 				else if (os==-1 && es== 1 && ps== 0 ) prefac.FlipSign();
 				else if (os== 1 && es== 0 && ps== 1 ){                  gam_sig_pot++;}
@@ -185,8 +185,8 @@ TTensorTerm::SpinInnerContraction(Int_t cPsiInt) {
 	Int_t res=0;
 	for (Int_t ic=0; ic<cPsiInt; ic++) {
 		res=0;
-		Int_t o = ome_pzm[Rome-1];    
-		Int_t e = eps_pzm[Reps-1];    
+		Int_t o = ome_pzm[Rome-1];
+		Int_t e = eps_pzm[Reps-1];
 		if ( (o==1&&e==-1) || (o==-1&&e==1) ) {
 			prefac.FlipSign();
 			res=1;
@@ -194,7 +194,7 @@ TTensorTerm::SpinInnerContraction(Int_t cPsiInt) {
 		if   (o==0&&e==0) {
 			gam_s_pot   += 1;
 			gam_sig_pot += 1;
-			res=1; 
+			res=1;
 		}
 		Rome--;
 		Reps--;
@@ -236,36 +236,36 @@ TTensorTerm::Print(char flag) {
 	if (Rome) {
 		cout << "o(";
 		for (Int_t i=0; i<Rome; i++) {
-			if (ome_pzm[i]== 1) cout <<"+"; 
+			if (ome_pzm[i]== 1) cout <<"+";
 			if (ome_pzm[i]== 0) cout <<"0";
-			if (ome_pzm[i]==-1) cout <<"-"; 
+			if (ome_pzm[i]==-1) cout <<"-";
 		}
 		cout << ")";
 	}
 	if (Reps) {
 		cout << "e(";
 		for (Int_t i=0; i<Reps; i++) {
-			if (eps_pzm[i]== 1) cout <<"+"; 
+			if (eps_pzm[i]== 1) cout <<"+";
 			if (eps_pzm[i]== 0) cout <<"0";
-			if (eps_pzm[i]==-1) cout <<"-"; 
+			if (eps_pzm[i]==-1) cout <<"-";
 		}
 		cout << ")";
 	}
 	if (Rchi) {
 		cout << "c(";
 		for (Int_t i=0; i<Rchi; i++) {
-			if (chi_pzm[i]== 1) cout <<"+"; 
+			if (chi_pzm[i]== 1) cout <<"+";
 			if (chi_pzm[i]== 0) cout <<"0";
-			if (chi_pzm[i]==-1) cout <<"-"; 
+			if (chi_pzm[i]==-1) cout <<"-";
 		}
 		cout << ")";
 	}
 	if (Rphi) {
 		cout << "p(";
 		for (Int_t i=0; i<Rphi; i++) {
-			if (phi_pzm[i]== 1) cout <<"+"; 
+			if (phi_pzm[i]== 1) cout <<"+";
 			if (phi_pzm[i]== 0) cout <<"0";
-			if (phi_pzm[i]==-1) cout <<"-"; 
+			if (phi_pzm[i]==-1) cout <<"-";
 		}
 		cout << ")";
 	}
@@ -285,7 +285,7 @@ TTensorTerm::Print(char flag) {
 Int_t
 TTensorSum::Print(char flag){
 	for (Int_t i=0; i<Nterms; i++) {
-		terms[i].Print(flag); 
+		terms[i].Print(flag);
 		if (i<Nterms-1) cout << " ";
 	}
 	cout << endl;

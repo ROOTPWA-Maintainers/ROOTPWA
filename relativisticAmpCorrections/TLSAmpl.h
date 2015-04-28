@@ -14,16 +14,6 @@ class TLSAmpl {
 
   public:
 
-// TODO: check if this can be deleted
-#if(0)
-	TLSAmpl()
-		: _J(0),
-		  _L(0),
-		  _S(0),
-		  _delta(0),
-		  _Nterms(0) { }
-#endif
-
 	TLSAmpl(long RankS1,
 	        long RankS2,
 	        long RankL,
