@@ -36,8 +36,9 @@
 #include <limits>
 #include <vector>
 
-namespace libconfig {
-	class Setting;
+namespace YAML {
+	class Emitter;
+	class Node;
 }
 class TFormula;
 
@@ -55,15 +56,15 @@ namespace rpwa {
 			fsmd(const size_t id);
 			~fsmd();
 
-			bool init(const libconfig::Setting* configComponent,
+			bool init(const YAML::Node& configComponent,
 			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::parameters& fitParametersError,
 			          const bool debug);
 
-			bool update(const libconfig::Setting* configComponent,
-			            const rpwa::massDepFit::parameters& fitParameters,
-			            const rpwa::massDepFit::parameters& fitParametersError,
-			            const bool debug) const;
+			bool write(YAML::Emitter& yamlOutput,
+			           const rpwa::massDepFit::parameters& fitParameters,
+			           const rpwa::massDepFit::parameters& fitParametersError,
+			           const bool debug) const;
 
 			size_t getNrParameters() const { return _nrParameters; }
 			size_t importParameters(const double* par,

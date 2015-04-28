@@ -45,8 +45,9 @@
 #include "massDepFitCache.h"
 #include "massDepFitParameters.h"
 
-namespace libconfig {
-	class Setting;
+namespace YAML {
+	class Emitter;
+	class Node;
 }
 
 namespace rpwa {
@@ -110,7 +111,7 @@ namespace rpwa {
 			const std::string& getName() const { return _name; }
 			const std::string& getType() const { return _type; }
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -119,15 +120,18 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
-			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			virtual bool readDecayChannel(const YAML::Node& decayChannel,
 			                              const size_t idxDecayChannel,
 			                              const bool debug);
 
-			virtual bool update(const libconfig::Setting* configComponent,
-			                    const rpwa::massDepFit::parameters& fitParameters,
-			                    const rpwa::massDepFit::parameters& fitParametersError,
-			                    const bool useBranchings,
-			                    const bool debug) const;
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
+			                               const size_t idxDecayChannel,
+			                               const bool debug) const;
 
 			size_t getNrChannels() const { return _channels.size(); }
 			const std::vector<channel>& getChannels() const { return _channels; }
@@ -219,7 +223,7 @@ namespace rpwa {
 			fixedWidthBreitWigner(const size_t id,
 			                      const std::string& name);
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -228,6 +232,12 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -246,7 +256,7 @@ namespace rpwa {
 			dynamicWidthBreitWigner(const size_t id,
 			                        const std::string& name);
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -255,9 +265,18 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
-			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			virtual bool readDecayChannel(const YAML::Node& decayChannel,
 			                              const size_t idxDecayChannel,
 			                              const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
+			                               const size_t idxDecayChannel,
+			                               const bool debug) const;
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -284,7 +303,7 @@ namespace rpwa {
 			                         const std::string& name);
 			virtual ~integralWidthBreitWigner();
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -293,9 +312,18 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
-			virtual bool readDecayChannel(const libconfig::Setting* decayChannel,
+			virtual bool readDecayChannel(const YAML::Node& decayChannel,
 			                              const size_t idxDecayChannel,
 			                              const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
+			                               const size_t idxDecayChannel,
+			                               const bool debug) const;
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -321,7 +349,7 @@ namespace rpwa {
 			exponentialBackground(const size_t id,
 			                      const std::string& name);
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -330,6 +358,12 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -355,7 +389,7 @@ namespace rpwa {
 
 			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
-			virtual bool init(const libconfig::Setting* configComponent,
+			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
@@ -364,6 +398,12 @@ namespace rpwa {
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
