@@ -42,6 +42,7 @@ class TJSS {
 
   private:
 
+	// TODO: rename this
 	bool initialCheck_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
 	                                                     const long& cPsiChi,
 	                                                     const long& cChiPhi,
@@ -50,6 +51,7 @@ class TJSS {
 	                                                     const long& even_contraction,
 	                                                     const long& L) const;
 
+	// TODO: rename this
 	bool getRomeAndREps_ASK_JAN_WHAT_THAT_SHOULD_BE_CALLED(const long& PsiInternal,
 	                                                       const long& cPsiChi,
 	                                                       const long& cPsiPhi,
@@ -74,8 +76,8 @@ class TJSS {
 	long _eta2;
 
 	std::vector<TLSAmpl*> _LSAmplitudes;
-	std::vector<TFhh*> _FhhAmpl;
-	std::vector<TFhh*> _FhhIdAmpl;
+	std::vector<TFhh*>    _FhhAmpl;
+	std::vector<TFhh*>    _FhhIdAmpl;
 
 	static unsigned int _debugLevel;
 

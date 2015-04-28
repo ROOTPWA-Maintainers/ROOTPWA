@@ -4,14 +4,13 @@
 
 using namespace std;
 
-TLSNonRel::TLSNonRel(TLSContrib *C) {
-	J = C->GetJ();
-	L = C->GetL();
-	S = C->GetS();
-	Nterms = 1;
-	RelLS = new TLSContrib*[1];
-	RelLS[0] = C;
-	TFracNum *JdL0Sd = ClebschGordanBox::instance()->GetCG(J, L, S);
+TLSNonRel::TLSNonRel(TLSContrib* C)
+	: _J(C->GetJ()),
+	  _L(C->GetL()),
+	  _S(C->GetS()),
+	  _RelLS(1, C)
+{
+	TFracNum *JdL0Sd = ClebschGordanBox::instance()->GetCG(_J, _L, _S);
 	//cout << "delta=" << C->GetDelta()
 	//     << ",S=" << S
 	//     << ", 2L+1/2J+1=" << TFracNum(2*L+1,2*J+1).FracStringSqrt()
@@ -19,42 +18,35 @@ TLSNonRel::TLSNonRel(TLSContrib *C) {
 	//     << JdL0Sd[CGIndex(L, 0, S, C->GetDelta())].FracStringSqrt()
 	//     << ", SpinCG=" << C->GetSpinCG()->FracStringSqrt()
 	//     << endl;
-	GnrPrefac = TFracNum(2 * L + 1, 2 * J + 1)
-			* JdL0Sd[ClebschGordanBox::CGIndex(L, 0, S, C->GetDelta())]
-			* *C->GetSpinCG();
+	_GnrPrefac = TFracNum(2 * _L + 1, 2 * _J + 1)
+	             * JdL0Sd[ClebschGordanBox::CGIndex(_L, 0, _S, C->GetDelta())]
+	             * *C->GetSpinCG();
 }
 
-long TLSNonRel::Add(TLSContrib *C) {
+void TLSNonRel::Add(TLSContrib* C) {
 	if (!CheckJLS(C)) {
-		cout << "TLSNonRel::Add not appropriate, skipping (check code)!!!"
+		cout << "TLSNonRel::Add not appropriate. Aborting..."
 				<< endl;
-		return -1;
+		throw;
 	}
-	Nterms++;
-	TLSContrib **newRelLS = new TLSContrib*[Nterms];
-	for (long i = 0; i < Nterms - 1; i++) {
-		newRelLS[i] = RelLS[i];
-	}
-	newRelLS[Nterms - 1] = C;
-	RelLS = newRelLS;
-	return 0;
+	_RelLS.push_back(C);
 }
 
 long TLSNonRel::Print() {
-	cout << " [ " << GnrPrefac.FracStringSqrt() << "  G_" << L << S << " ] ";
-	for (long i = 0; i < Nterms; i++) {
-		RelLS[i]->PrintNR();
+	cout << " [ " << _GnrPrefac.FracStringSqrt() << "  G_" << _L << _S << " ] ";
+	for (size_t i = 0; i < _RelLS.size(); i++) {
+		_RelLS[i]->PrintNR();
 	}
 	cout << endl;
 	return 0;
 }
 
 long TLSNonRel::PrintG() {
-	cout << " [ G_" << L << S << " ] ";
-	for (long i = 0; i < Nterms; i++) {
-		TFracNum GnrInv(GnrPrefac);
+	cout << " [ G_" << _L << _S << " ] ";
+	for (size_t i = 0; i < _RelLS.size(); i++) {
+		TFracNum GnrInv(_GnrPrefac);
 		GnrInv.Invert();
-		RelLS[i]->PrintNRG(GnrInv);
+		_RelLS[i]->PrintNRG(GnrInv);
 	}
 	cout << endl;
 	return 0;

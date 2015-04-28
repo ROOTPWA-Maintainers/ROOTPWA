@@ -1,6 +1,8 @@
 #ifndef TLSNONREL_HH
 #define TLSNONREL_HH
 
+#include <vector>
+
 #include "TLSContrib.h"
 
 /*!
@@ -12,25 +14,24 @@
   */
 class TLSNonRel {
 
-	private:
-		long J;
-		long L;
-		long S;
-		long Nterms;
-		TLSContrib* *RelLS;
-		TFracNum GnrPrefac;
-
 	public:
 		TLSNonRel(TLSContrib *C);
 
 		long CheckJLS(TLSContrib *C) {
-			return (C->GetJ()==J && C->GetL()==L && C->GetS()==S) ? 1 : 0;
+			return (C->GetJ()==_J && C->GetL()==_L && C->GetS()==_S) ? 1 : 0;
 		};
-		long Add(TLSContrib *C);
-		long GetL(){return L;};
-		long GetS(){return S;};
+		void Add(TLSContrib *C);
+		long GetL(){return _L;};
+		long GetS(){return _S;};
 		long Print();
 		long PrintG();
+
+	private:
+		long _J;
+		long _L;
+		long _S;
+		std::vector<TLSContrib*> _RelLS;
+		TFracNum _GnrPrefac;
 
 };
 

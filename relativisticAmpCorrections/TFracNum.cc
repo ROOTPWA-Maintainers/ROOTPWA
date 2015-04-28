@@ -751,7 +751,7 @@ TFracNum::FracString() {
 const char NULLSTRING[1] = ""; // workaround CINT warning when sprintf(s,"");
 
 const char*
-TFracNum::FracStringSqrt() {
+TFracNum::FracStringSqrt() const {
 	char *formstr = new char[50];
 	char *fstr = new char[200];
 	if (NOM_INT == 0) {

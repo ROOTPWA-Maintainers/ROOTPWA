@@ -118,7 +118,7 @@ class TFracNum {
 		//! String of the square-root in the form <tt>Num/Den#RNum/RDen</tt>
 		/*! All numbers after the '#' are to be square-rooted,
 		  so Num/Den#RNum/RDen=Num/Den*sqrt(RNum/RDen) */
-		const char* FracStringSqrt();
+		const char* FracStringSqrt() const;
 
 		//! Complete information about the fractional number is put to cout
 		double Print() const;

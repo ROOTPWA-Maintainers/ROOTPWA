@@ -5,65 +5,72 @@
 #include "TSpinWaveFunction.h"
 
 /*!
-  \class TLSContrib
-  \brief Relativistic LS-coupling contributions
+ \class TLSContrib
+ \brief Relativistic LS-coupling contributions
 
 
-  \author Jan.Friedrich@ph.tum.de
-  */
+ \author Jan.Friedrich@ph.tum.de
+ */
 class TLSContrib {
 
-	private:
-		long J;
-		long L;
-		long S;
-		long cNum;
-		long delta;
-		TFracNum SpinCG;
+  public:
 
-		long Nterms;
-		TFracNum NormFactor;     // Square  of normalisation factor
-		TFracNum *termFracNum;   // Squares of prefactors
-		long    *termg1pot;     // exponent of gamma_s
-		long    *termg2pot;     // exponent of gamma_sigma
+	TLSContrib()
+		: _J(0),
+		  _L(0),
+		  _S(0),
+		  _delta(0),
+		  _Nterms(0),
+		  _termFracNum(0),
+		  _termg1pot(0),
+		  _termg2pot(0) { }
 
-		bool PureRelativistic;
+	TLSContrib(TLSContrib* b, bool particleExchange);
+	TLSContrib(TLSAmpl* A, long delta, TFracNum scfac);
 
-	public:
 
-		TLSContrib() {
-			J=0; L=0; S=0; delta=0;
-			Nterms=0;
-			termFracNum=0;
-			termg1pot=0;
-			termg2pot=0;
-		};
+	long Add(TLSContrib*, bool);
 
-		TLSContrib(TLSContrib *, bool);
-		TLSContrib(TLSAmpl*, long, TFracNum);
 
-		bool SameParameter(TLSContrib* b) {
-			if (J==b->J && L==b->L && S==b->S && cNum==b->cNum)
-				return true;
-			return false;
-		};
-		long GetNterms() {return Nterms;};
-		long Add(TLSContrib*, bool);
-		long Print();
-		long PrintNR();
-		long PrintNRG(TFracNum);
-		bool IsPureRelativistic() {return PureRelativistic;};
-		long GetJ() {return J;};
-		long GetL() {return L;};
-		long GetS() {return S;};
-		long GetDelta() {return delta;};
-		long GetRunningNumber() {return cNum;};
-		TFracNum* GetSpinCG() {return &SpinCG;};
-		TFracNum* GetNormFactor() {return &NormFactor;};
+	bool SameParameter(TLSContrib* b) { return (_J == b->_J && _L == b->_L && _S == b->_S && _cNum == b->_cNum); }
+	const long& GetNterms() { return _Nterms; }
+	const bool& IsPureRelativistic() { return _pureRelativistic; }
+	const long& GetJ() { return _J; }
+	const long& GetL() { return _L; }
+	const long& GetS() { return _S; }
+	const long& GetDelta() { return _delta; }
+	const long& GetRunningNumber() { return _cNum; }
 
-		TFracNum* GetTermFracNum() {return termFracNum;};
-		long*    GetTermg1pot()   {return termg1pot;}; // exponent of gamma_s
-		long*    GetTermg2pot()   {return termg2pot;}; // exponent of gamma_s
+	TFracNum* GetSpinCG() { return &_SpinCG; }
+	TFracNum* GetNormFactor() { return &_NormFactor; }
+
+	TFracNum* GetTermFracNum() { return _termFracNum; }
+	long* GetTermg1pot() { return _termg1pot; } // exponent of gamma_s
+	long* GetTermg2pot() { return _termg2pot; } // exponent of gamma_s
+
+	void Print()            const;
+	void PrintNR()          const;
+	void PrintNRG(TFracNum) const;
+
+  private:
+	long     _J;
+	long     _L;
+	long     _S;
+	long     _cNum;
+	long     _delta;
+	TFracNum _SpinCG;
+
+	long      _Nterms;
+	TFracNum  _NormFactor;     // Square  of normalisation factor
+
+// TODO: struct these?
+	TFracNum* _termFracNum;   // Squares of prefactors
+	long* _termg1pot;     // exponent of gamma_s
+	long* _termg2pot;     // exponent of gamma_sigma
+
+	bool _pureRelativistic;
+
+	static bool _debug;
 
 };
 
