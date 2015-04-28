@@ -31,9 +31,11 @@
 
 #include <boost/assign/std/vector.hpp>
 
-#include "libConfigUtils.hpp"
+#include <yaml-cpp/yaml.h>
+
 #include "physUtils.hpp"
 #include "reportingUtils.hpp"
+#include "yamlCppUtils.hpp"
 
 
 rpwa::massDepFit::channel::channel(const size_t waveIdx,
@@ -114,7 +116,7 @@ rpwa::massDepFit::component::component(const size_t id,
 
 
 bool
-rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::component::init(const YAML::Node& configComponent,
                                   rpwa::massDepFit::parameters& fitParameters,
                                   rpwa::massDepFit::parameters& fitParametersError,
                                   const size_t nrBins,
@@ -138,52 +140,79 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			printDebug << "reading parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 		}
 
-		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
+		const YAML::Node& configParameter = configComponent[_parametersName[idxParameter]];
 		if(not configParameter) {
 			printErr << "component '" << getName() << "' does not define parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 			return false;
 		}
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("val", libconfig::Setting::TypeFloat)
-		                     ("fix", libconfig::Setting::TypeBoolean);
+		                     ("val", YamlCppUtils::TypeFloat)
+		                     ("fix", YamlCppUtils::TypeBoolean);
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
 			printErr << "'" << _parametersName[idxParameter] << "' of component '" << getName() << "' does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		double parameter;
-		configParameter->lookupValue("val", parameter);
+		const double parameter = configParameter["val"].as<double>();
 		_parametersStart[idxParameter] = parameter;
 		fitParameters.setParameter(getId(), idxParameter, parameter);
 
-		double error;
-		if(configParameter->lookupValue("error", error)) {
-			_parametersError[idxParameter] = error;
-			fitParametersError.setParameter(getId(), idxParameter, error);
+		if(configParameter["error"]) {
+			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
+				const double error = configParameter["error"].as<double>();
+				_parametersError[idxParameter] = error;
+				fitParametersError.setParameter(getId(), idxParameter, error);
+			} else {
+				printErr << "variable 'error' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				return false;
+			}
 		}
 
-		bool fixed;
-		configParameter->lookupValue("fix", fixed);
+		const bool fixed = configParameter["fix"].as<bool>();
 		_parametersFixed[idxParameter] = fixed;
 
-		_parametersLimitedLower[idxParameter] = configParameter->lookupValue("lower", _parametersLimitLower[idxParameter]);
-		_parametersLimitedUpper[idxParameter] = configParameter->lookupValue("upper", _parametersLimitUpper[idxParameter]);
+		if(configParameter["lower"]) {
+			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
+				_parametersLimitedLower[idxParameter] = true;
+				_parametersLimitLower[idxParameter] = configParameter["lower"].as<double>();
+			} else {
+				printErr << "variable 'lower' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				return false;
+			}
+		} else {
+			_parametersLimitedLower[idxParameter] = false;
+		}
+		if(configParameter["upper"]) {
+			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
+				_parametersLimitedUpper[idxParameter] = true;
+				_parametersLimitUpper[idxParameter] = configParameter["upper"].as<double>();
+			} else {
+				printErr << "variable 'upper' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				return false;
+			}
+		} else {
+			_parametersLimitedUpper[idxParameter] = false;
+		}
 
-		double step;
-		if(configParameter->lookupValue("step", step)) {
-			_parametersStep[idxParameter] = step;
+		if(configParameter["step"]) {
+			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
+				_parametersStep[idxParameter] = configParameter["step"].as<double>();
+			} else {
+				printErr << "variable 'step' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				return false;
+			}
 		}
 	}
 
-	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
+	const YAML::Node& decayChannels = configComponent["decaychannels"];
 	if(not decayChannels) {
 		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
 		return false;
 	}
 
-	const int nrDecayChannels = decayChannels->getLength();
+	const size_t nrDecayChannels = decayChannels.size();
 
 	// resize fitParamters to the correct number of channels
 	fitParameters.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
@@ -191,19 +220,18 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 	std::map<std::string, size_t> couplingsQN;
 	std::map<std::string, size_t> branchingDecay;
-	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
+	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		const YAML::Node& decayChannel = decayChannels[idxDecayChannel];
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("amp", libconfig::Setting::TypeString);
+		                     ("amp", YamlCppUtils::TypeString);
 		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		std::string waveName;
-		decayChannel->lookupValue("amp", waveName);
+		const std::string waveName = decayChannel["amp"].as<std::string>();
 
 		// check that a wave with this wave is not yet in the decay channels
 		for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
@@ -260,41 +288,46 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			assert(couplingIndex == _nrCouplings);
 
 			boost::assign::insert(mandatoryArguments)
-			                     ("couplings", libconfig::Setting::TypeList);
+			                     ("couplings", YamlCppUtils::TypeSequence);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 				return false;
 			}
 
-			const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+			const YAML::Node& configCouplings = decayChannel["couplings"];
 			if(not configCouplings) {
 				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
 				return false;
 			}
 
-			const int nrCouplings = configCouplings->getLength();
-			if(nrCouplings < 0 || static_cast<size_t>(nrCouplings) != nrBins) {
+			const size_t nrCouplings = configCouplings.size();
+			if(nrCouplings != nrBins) {
 				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
 				return false;
 			}
 
-			for(int idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
-				const libconfig::Setting* configCoupling = &((*configCouplings)[idxCoupling]);
-
-				std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-				boost::assign::insert(mandatoryArguments)
-				                     ("coupling_Re", libconfig::Setting::TypeFloat)
-				                     ("coupling_Im", libconfig::Setting::TypeFloat);
-				if(not checkIfAllVariablesAreThere(configCoupling, mandatoryArguments)) {
-					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required variables." << std::endl;
+			for(size_t idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
+				const YAML::Node& configCoupling = configCouplings[idxCoupling];
+				if(not checkVariableType(configCoupling, YamlCppUtils::TypeSequence)) {
+					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a YAML sequence." << std::endl;
+					return false;
+				}
+				if(configCoupling.size() != 2) {
+					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain exactly two entries." << std::endl;
 					return false;
 				}
 
-				double couplingReal;
-				configCoupling->lookupValue("coupling_Re", couplingReal);
+				if(not checkVariableType(configCoupling[0], YamlCppUtils::TypeFloat)) {
+					printErr << "real part of one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+					return false;
+				}
+				if(not checkVariableType(configCoupling[1], YamlCppUtils::TypeFloat)) {
+					printErr << "imaginary part of one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+					return false;
+				}
 
-				double couplingImag;
-				configCoupling->lookupValue("coupling_Im", couplingImag);
+				const double couplingReal = configCoupling[0].as<double>();
+				const double couplingImag = configCoupling[1].as<double>();
 
 				const std::complex<double> coupling(couplingReal, couplingImag);
 				fitParameters.setCoupling(getId(), couplingIndex, idxCoupling, coupling);
@@ -309,32 +342,29 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 			assert(branchingIndex == _nrBranchings);
 
 			boost::assign::insert(mandatoryArguments)
-			                     ("branching", libconfig::Setting::TypeGroup);
+			                     ("branching", YamlCppUtils::TypeSequence);
 			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
 				return false;
 			}
 
-			const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
-			if(not configBranching) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no branching." << std::endl;
+			const YAML::Node& configBranching = decayChannel["branching"];
+			if(configBranching.size() != 2) {
+				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain exactly two entries." << std::endl;
 				return false;
 			}
 
-			std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
-			boost::assign::insert(mandatoryArguments)
-			                     ("branching_Re", libconfig::Setting::TypeFloat)
-			                     ("branching_Im", libconfig::Setting::TypeFloat);
-			if(not checkIfAllVariablesAreThere(configBranching, mandatoryArguments)) {
-				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain all required variables." << std::endl;
-				return false;
-			}
+				if(not checkVariableType(configBranching[0], YamlCppUtils::TypeFloat)) {
+					printErr << "real part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+					return false;
+				}
+				if(not checkVariableType(configBranching[1], YamlCppUtils::TypeFloat)) {
+					printErr << "imaginary part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+					return false;
+				}
 
-			double branchingReal;
-			configBranching->lookupValue("branching_Re", branchingReal);
-
-			double branchingImag;
-			configBranching->lookupValue("branching_Im", branchingImag);
+			double branchingReal = configBranching[0].as<double>();
+			double branchingImag = configBranching[1].as<double>();
 
 			if(branchingIndex == 0) {
 				// the first branching should always be 1.
@@ -377,7 +407,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 
 bool
-rpwa::massDepFit::component::readDecayChannel(const libconfig::Setting* /*decayChannel*/,
+rpwa::massDepFit::component::readDecayChannel(const YAML::Node& /*decayChannel*/,
                                               const size_t /*idxDecayChannel*/,
                                               const bool /*debug*/)
 {
@@ -386,62 +416,125 @@ rpwa::massDepFit::component::readDecayChannel(const libconfig::Setting* /*decayC
 
 
 bool
-rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
-                                    const rpwa::massDepFit::parameters& fitParameters,
-                                    const rpwa::massDepFit::parameters& fitParametersError,
-                                    const bool useBranchings,
-                                    const bool debug) const
+rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
+                                   const rpwa::massDepFit::parameters& fitParameters,
+                                   const rpwa::massDepFit::parameters& fitParametersError,
+                                   const bool useBranchings,
+                                   const bool debug) const
 {
 	if(debug) {
-		printDebug << "start updating 'component' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
+		printDebug << "start writing 'component' for component '" << getName() << "'." << std::endl;
 	}
+
+	yamlOutput << YAML::Key << "name";
+	yamlOutput << YAML::Value << getName();
+
+	yamlOutput << YAML::Key << "type";
+	yamlOutput << YAML::Value << getType();
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "updating parameter '" << _parametersName[idxParameter] << "'." << std::endl;
+			printDebug << "writing parameter '" << _parametersName[idxParameter] << "'." << std::endl;
 		}
 
-		libconfig::Setting* configParameter = &((*configComponent)[_parametersName[idxParameter]]);
+		yamlOutput << YAML::Key << _parametersName[idxParameter];
+		yamlOutput << YAML::Value;
 
-		(*configParameter)["val"] = fitParameters.getParameter(getId(), idxParameter);
+		yamlOutput << YAML::BeginMap;
 
-		if(not configParameter->exists("error")) {
-			configParameter->add("error", libconfig::Setting::TypeFloat);
+		yamlOutput << YAML::Key << "val";
+		yamlOutput << YAML::Value << fitParameters.getParameter(getId(), idxParameter);
+
+		yamlOutput << YAML::Key << "error";
+		yamlOutput << YAML::Value << fitParametersError.getParameter(getId(), idxParameter);
+
+		if(_parametersLimitedLower[idxParameter]) {
+			yamlOutput << YAML::Key << "lower";
+			yamlOutput << YAML::Value << _parametersLimitLower[idxParameter];
 		}
-		(*configParameter)["error"] = fitParametersError.getParameter(getId(), idxParameter);
+
+		if(_parametersLimitedUpper[idxParameter]) {
+			yamlOutput << YAML::Key << "upper";
+			yamlOutput << YAML::Value << _parametersLimitUpper[idxParameter];
+		}
+
+		yamlOutput << YAML::Key << "step";
+		yamlOutput << YAML::Value << _parametersStep[idxParameter];
+
+		yamlOutput << YAML::Key << "fix";
+		yamlOutput << YAML::Value << _parametersFixed[idxParameter];
+
+		yamlOutput << YAML::EndMap;
 	}
 
-	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
+	yamlOutput << YAML::Key << "decaychannels";
+	yamlOutput << YAML::Value;
+	yamlOutput << YAML::BeginSeq;
+
 	const size_t nrDecayChannels = getNrChannels();
 	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "amp";
+		yamlOutput << YAML::Value << getChannel(idxDecayChannel).getWaveName();
 
 		if(idxDecayChannel == getChannelIdxCoupling(idxDecayChannel)) {
-			const libconfig::Setting* configCouplings = findLibConfigList(*decayChannel, "couplings");
+			yamlOutput << YAML::Key << "couplings";
+			yamlOutput << YAML::Value;
+			yamlOutput << YAML::BeginSeq;
+
 			const size_t nrBins = getChannel(idxDecayChannel).getNrBins();
 			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
-				const libconfig::Setting* configCoupling = &((*configCouplings)[idxBin]);
+				yamlOutput << YAML::Flow;
+				yamlOutput << YAML::BeginSeq;
 
-				(*configCoupling)["coupling_Re"] = fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).real();
-				(*configCoupling)["coupling_Im"] = fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).imag();
+				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).real();
+				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).imag();
+
+				yamlOutput << YAML::EndSeq;
+				yamlOutput << YAML::Block;
 			}
+
+			yamlOutput << YAML::EndSeq;
 		}
 
 		if(useBranchings && nrDecayChannels > 1) {
 			if(idxDecayChannel == getChannelIdxBranching(idxDecayChannel)) {
-				const libconfig::Setting* configBranching = findLibConfigGroup(*decayChannel, "branching");
+				yamlOutput << YAML::Key << "branching";
+				yamlOutput << YAML::Value;
 
-				(*configBranching)["branching_Re"] = fitParameters.getBranching(getId(), idxDecayChannel).real();
-				(*configBranching)["branching_Im"] = fitParameters.getBranching(getId(), idxDecayChannel).imag();
+				yamlOutput << YAML::Flow;
+				yamlOutput << YAML::BeginSeq;
+
+				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).real();
+				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).imag();
+
+				yamlOutput << YAML::EndSeq;
+				yamlOutput << YAML::Block;
+
 			}
 		}
+
+		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
+
+		yamlOutput << YAML::EndMap;
 	}
+
+	yamlOutput << YAML::EndSeq;
 
 	if(debug) {
-		printDebug << "finished updating 'component'." << std::endl;
+		printDebug << "finished writing 'component'." << std::endl;
 	}
 
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::component::writeDecayChannel(YAML::Emitter& /*yamlOutput*/,
+                                               const size_t /*idxDecayChannel*/,
+                                               const bool /*debug*/) const
+{
 	return true;
 }
 
@@ -569,7 +662,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
 
 
 bool
-rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError,
                                               const size_t nrBins,
@@ -591,6 +684,35 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const libconfig::Setting* configCo
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'fixedWidthBreitWigner'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::fixedWidthBreitWigner::write(YAML::Emitter& yamlOutput,
+                                               const rpwa::massDepFit::parameters& fitParameters,
+                                               const rpwa::massDepFit::parameters& fitParametersError,
+                                               const bool useBranchings,
+                                               const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'fixedWidthBreitWigner'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'fixedWidthBreitWigner'." << std::endl;
 	}
 
 	return true;
@@ -672,7 +794,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t 
 
 
 bool
-rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponent,
                                                 rpwa::massDepFit::parameters& fitParameters,
                                                 rpwa::massDepFit::parameters& fitParametersError,
                                                 const size_t nrBins,
@@ -693,10 +815,10 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 
 	const size_t nrDecayChannels = getNrChannels();
 
-	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
-	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
-	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
+	const YAML::Node& extraDecayChannels = configComponent["extradecaychannels"];
+	const size_t nrExtraDecayChannels = extraDecayChannels ? extraDecayChannels.size() : 0;
+	for(size_t idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
+		const YAML::Node& decayChannel = extraDecayChannels[idxExtraDecayChannel];
 		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
 			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
 			return false;
@@ -730,7 +852,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const libconfig::Setting* config
 
 
 bool
-rpwa::massDepFit::dynamicWidthBreitWigner::readDecayChannel(const libconfig::Setting* decayChannel,
+rpwa::massDepFit::dynamicWidthBreitWigner::readDecayChannel(const YAML::Node& decayChannel,
                                                             const size_t idxDecayChannel,
                                                             const bool debug)
 {
@@ -745,32 +867,88 @@ rpwa::massDepFit::dynamicWidthBreitWigner::readDecayChannel(const libconfig::Set
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("mIsobar1", libconfig::Setting::TypeFloat)
-	                     ("mIsobar2", libconfig::Setting::TypeFloat)
-	                     ("relAngularMom", libconfig::Setting::TypeInt)
-	                     ("branchingRatio", libconfig::Setting::TypeFloat);
+	                     ("mIsobar1", YamlCppUtils::TypeFloat)
+	                     ("mIsobar2", YamlCppUtils::TypeFloat)
+	                     ("relAngularMom", YamlCppUtils::TypeInt)
+	                     ("branchingRatio", YamlCppUtils::TypeFloat);
 	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
 		return false;
 	}
 
-	double mIsobar1;
-	decayChannel->lookupValue("mIsobar1", mIsobar1);
-	_m1.push_back(mIsobar1);
+	_m1.push_back(decayChannel["mIsobar1"].as<double>());
+	_m2.push_back(decayChannel["mIsobar2"].as<double>());
+	_l.push_back(decayChannel["relAngularMom"].as<int>());
+	_ratio.push_back(decayChannel["branchingRatio"].as<double>());
 
-	double mIsobar2;
-	decayChannel->lookupValue("mIsobar2", mIsobar2);
-	_m2.push_back(mIsobar2);
+	return true;
+}
 
-	int relAngularMom;
-	decayChannel->lookupValue("relAngularMom", relAngularMom);
-	_l.push_back(relAngularMom);
 
-	double branchingRatio;
-	decayChannel->lookupValue("branchingRatio", branchingRatio);
-	_ratio.push_back(branchingRatio);
+bool
+rpwa::massDepFit::dynamicWidthBreitWigner::write(YAML::Emitter& yamlOutput,
+                                                 const rpwa::massDepFit::parameters& fitParameters,
+                                                 const rpwa::massDepFit::parameters& fitParametersError,
+                                                 const bool useBranchings,
+                                                 const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'dynamicWidthBreitWigner'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "extradecaychannels";
+	yamlOutput << YAML::Value;
+	yamlOutput << YAML::BeginSeq;
+
+	const size_t nrDecayChannels = _ratio.size();
+	for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		yamlOutput << YAML::BeginMap;
+		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
+		yamlOutput << YAML::EndMap;
+	}
+
+	yamlOutput << YAML::EndSeq;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'dynamicWidthBreitWigner'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::dynamicWidthBreitWigner::writeDecayChannel(YAML::Emitter& yamlOutput,
+                                                             const size_t idxDecayChannel,
+                                                             const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing decay channel at index " << idxDecayChannel << " in 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+	}
+
+	yamlOutput << YAML::Key << "mIsobar1";
+	yamlOutput << YAML::Value << _m1[idxDecayChannel];
+
+	yamlOutput << YAML::Key << "mIsobar2";
+	yamlOutput << YAML::Value <<_m2[idxDecayChannel];
+
+	yamlOutput << YAML::Key << "relAngularMom";
+	yamlOutput << YAML::Value <<_l[idxDecayChannel];
+
+	yamlOutput << YAML::Key << "branchingRatio";
+	yamlOutput << YAML::Value <<_ratio[idxDecayChannel];
 
 	return true;
 }
@@ -895,7 +1073,7 @@ rpwa::massDepFit::integralWidthBreitWigner::~integralWidthBreitWigner()
 
 
 bool
-rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configComponent,
                                                  rpwa::massDepFit::parameters& fitParameters,
                                                  rpwa::massDepFit::parameters& fitParametersError,
                                                  const size_t nrBins,
@@ -916,10 +1094,10 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 
 	const size_t nrDecayChannels = getNrChannels();
 
-	const libconfig::Setting* extraDecayChannels = findLibConfigList(*configComponent, "extradecaychannels", false);
-	const int nrExtraDecayChannels = (extraDecayChannels != NULL) ? extraDecayChannels->getLength() : 0;
-	for(int idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
-		const libconfig::Setting* decayChannel = &((*extraDecayChannels)[idxExtraDecayChannel]);
+	const YAML::Node& extraDecayChannels = configComponent["extradecaychannels"];
+	const size_t nrExtraDecayChannels = extraDecayChannels ? extraDecayChannels.size() : 0;
+	for(size_t idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
+		const YAML::Node& decayChannel = extraDecayChannels[idxExtraDecayChannel];
 		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
 			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
 			return false;
@@ -953,7 +1131,7 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const libconfig::Setting* confi
 
 
 bool
-rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Setting* decayChannel,
+rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const YAML::Node& decayChannel,
                                                              const size_t idxDecayChannel,
                                                              const bool debug)
 {
@@ -968,18 +1146,18 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Se
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("integral", libconfig::Setting::TypeList)
-	                     ("branchingRatio", libconfig::Setting::TypeFloat);
+	                     ("integral", YamlCppUtils::TypeSequence)
+	                     ("branchingRatio", YamlCppUtils::TypeFloat);
 	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
 		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
 		return false;
 	}
 
-	const libconfig::Setting* integrals = &((*decayChannel)["integral"]);
+	const YAML::Node& integrals = decayChannel["integral"];
 
-	const int nrValues = integrals->getLength();
+	const size_t nrValues = integrals.size();
 	if(nrValues < 2) {
 		printErr << "phase-space integrals of component '" << getName() << "' has to contain at least two points." << std::endl;
 		return false;
@@ -988,23 +1166,27 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Se
 	std::vector<double> masses;
 	std::vector<double> values;
 
-	for(int idx=0; idx<nrValues; ++idx) {
-		const libconfig::Setting* integral = &((*integrals)[idx]);
-		if (integral->getType() != libconfig::Setting::TypeArray) {
+	for(size_t idx=0; idx<nrValues; ++idx) {
+		const YAML::Node& integral = integrals[idx];
+		if(not integral.IsSequence()) {
 			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
 			return false;
 		}
-		if (integral->getLength() != 2) {
+		if(integral.size() != 2) {
 			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
 			return false;
 		}
-		if ((*integral)[0].getType() != libconfig::Setting::TypeFloat) {
+		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
 			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
 			return false;
 		}
 
-		const double mass = (*integral)[0];
-		const double val = (*integral)[1];
+		const double mass = integral[0].as<double>();
+		const double val = integral[1].as<double>();
 
 		if (masses.size() > 0 && masses.back() > mass) {
 			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
@@ -1018,10 +1200,79 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const libconfig::Se
 	_masses.push_back(masses);
 	_values.push_back(values);
 	_interpolator.push_back(new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR));
+	_ratio.push_back(decayChannel["branchingRatio"].as<double>());
 
-	double branchingRatio;
-	decayChannel->lookupValue("branchingRatio", branchingRatio);
-	_ratio.push_back(branchingRatio);
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
+                                            const rpwa::massDepFit::parameters& fitParameters,
+                                            const rpwa::massDepFit::parameters& fitParametersError,
+                                            const bool useBranchings,
+                                            const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'integralWidthBreitWigner'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "extradecaychannels";
+	yamlOutput << YAML::Value;
+	yamlOutput << YAML::BeginSeq;
+
+	const size_t nrDecayChannels = _ratio.size();
+	for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		yamlOutput << YAML::BeginMap;
+		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
+		yamlOutput << YAML::EndMap;
+	}
+
+	yamlOutput << YAML::EndSeq;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'integralWidthBreitWigner'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::integralWidthBreitWigner::writeDecayChannel(YAML::Emitter& yamlOutput,
+                                                              const size_t idxDecayChannel,
+                                                              const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing decay channel at index " << idxDecayChannel << " in 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
+	}
+
+	yamlOutput << YAML::Key << "integral";
+	yamlOutput << YAML::Value;
+
+	yamlOutput << YAML::Flow;
+	yamlOutput << YAML::BeginSeq;
+	for (size_t idx=0; idx<_masses[idxDecayChannel].size(); ++idx) {
+		yamlOutput << YAML::BeginSeq;
+		yamlOutput << _masses[idxDecayChannel][idx];
+		yamlOutput << _values[idxDecayChannel][idx];
+		yamlOutput << YAML::EndSeq;
+	}
+	yamlOutput << YAML::EndSeq;
+	yamlOutput << YAML::Block;
+
+	yamlOutput << YAML::Key << "branchingRatio";
+	yamlOutput << YAML::Value <<_ratio[idxDecayChannel];
 
 	return true;
 }
@@ -1116,7 +1367,7 @@ rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
 
 
 bool
-rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError,
                                               const size_t nrBins,
@@ -1140,21 +1391,56 @@ rpwa::massDepFit::exponentialBackground::init(const libconfig::Setting* configCo
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
-	                     ("mIsobar1", libconfig::Setting::TypeFloat)
-	                     ("mIsobar2", libconfig::Setting::TypeFloat);
+	                     ("mIsobar1", YamlCppUtils::TypeFloat)
+	                     ("mIsobar2", YamlCppUtils::TypeFloat);
 	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
 		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
-	configComponent->lookupValue("mIsobar1", _m1);
-	configComponent->lookupValue("mIsobar2", _m2);
+	_m1 = configComponent["mIsobar1"].as<double>();
+	_m2 = configComponent["mIsobar2"].as<double>();
 
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'exponentialBackground'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
+                                               const rpwa::massDepFit::parameters& fitParameters,
+                                               const rpwa::massDepFit::parameters& fitParametersError,
+                                               const bool useBranchings,
+                                               const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'exponentialBackground' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'exponentialBackground'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "mIsobar1";
+	yamlOutput << YAML::Value << _m1;
+
+	yamlOutput << YAML::Key << "mIsobar2";
+	yamlOutput << YAML::Value << _m2;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'exponentialBackground'." << std::endl;
 	}
 
 	return true;
@@ -1259,7 +1545,7 @@ rpwa::massDepFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<do
 
 
 bool
-rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* configComponent,
+rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configComponent,
                                                   rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::parameters& fitParametersError,
                                                   const size_t nrBins,
@@ -1283,17 +1569,17 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
-	                     ("mIsobar1", libconfig::Setting::TypeFloat)
-	                     ("mIsobar2", libconfig::Setting::TypeFloat);
+	                     ("mIsobar1", YamlCppUtils::TypeFloat)
+	                     ("mIsobar2", YamlCppUtils::TypeFloat);
 	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
 		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
 		return false;
 	}
 
-	configComponent->lookupValue("mIsobar1", _m1);
-	configComponent->lookupValue("mIsobar2", _m2);
+	_m1 = configComponent["mIsobar1"].as<double>();
+	_m2 = configComponent["mIsobar2"].as<double>();
 
 	if(_tPrimeMeans.size() != nrBins) {
 		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
@@ -1303,6 +1589,41 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const libconfig::Setting* conf
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'tPrimeDependentBackground'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
+                                                   const rpwa::massDepFit::parameters& fitParameters,
+                                                   const rpwa::massDepFit::parameters& fitParametersError,
+                                                   const bool useBranchings,
+                                                   const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'tPrimeDependentBackground'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "mIsobar1";
+	yamlOutput << YAML::Value << _m1;
+
+	yamlOutput << YAML::Key << "mIsobar2";
+	yamlOutput << YAML::Value << _m2;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'tPrimeDependentBackground'." << std::endl;
 	}
 
 	return true;

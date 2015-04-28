@@ -27,13 +27,16 @@
 //-------------------------------------------------------------------------
 
 
+#include <fstream>
+
+#include <yaml-cpp/yaml.h>
+
 #include <TFile.h>
 #include <TROOT.h>
 #include <TStopwatch.h>
 
 #include "conversionUtils.hpp"
 #include "fileUtils.hpp"
-#include "libConfigUtils.hpp"
 #include "massDepFit.h"
 #include "massDepFitCache.h"
 #include "massDepFitComponents.h"
@@ -44,6 +47,7 @@
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
+#include "yamlCppUtils.hpp"
 
 
 void
@@ -202,19 +206,18 @@ main(int    argc,
 	rpwa::massDepFit::model compset(doBranching);
 	rpwa::massDepFit::function fitFunction(doProdAmp, doCov);
 
-	libconfig::Config configFile;
-	if(not rpwa::parseLibConfigFile(configFileName, configFile, debug)) {
+	YAML::Node configRoot;
+	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
 		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
-	libconfig::Setting& configRoot = configFile.getRoot();
 
 	// read configuration file
 	rpwa::massDepFit::parameters fitParameters;
 	rpwa::massDepFit::parameters fitParametersError;
 	double chi2;
 	unsigned int ndf;
-	if(not mdepFit.readConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, compset, fitParameters, fitParametersError, chi2, ndf, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -266,24 +269,24 @@ main(int    argc,
 
 		const double chi2red = chi2/(double)ndf;
 		printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(chi2red) << std::endl;
-
-		if(not mdepFit.updateConfig(&configRoot, compset, fitParameters, fitParametersError, chi2, ndf)) {
-			printErr << "error while updating configuration file." << std::endl;
-			return 1;
-		}
 	}
 
 	std::string confFileName(outFileName);
 	if(rpwa::extensionFromPath(confFileName) == "root") {
-		confFileName = rpwa::changeFileExtension(confFileName, "conf");
+		confFileName = rpwa::changeFileExtension(confFileName, "yaml");
 	} else {
-		confFileName += ".conf";
+		confFileName += ".yaml";
 	}
 
 	if(debug) {
 		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
-	configFile.writeFile(confFileName.c_str());
+	std::ofstream configFile(confFileName.c_str());
+	if(not mdepFit.writeConfig(configFile, compset, fitParameters, fitParametersError, chi2, ndf)) {
+		printErr << "error while writing result to configuration file." << std::endl;
+		return 1;
+	}
+	configFile.close();
 
 	std::string rootFileName(outFileName);
 	if(rpwa::extensionFromPath(rootFileName) != "root") {

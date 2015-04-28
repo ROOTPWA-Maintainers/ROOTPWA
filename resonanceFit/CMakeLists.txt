@@ -39,7 +39,7 @@ include_directories(
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
-	${Libconfig_INCLUDE_DIR}
+	${YamlCpp_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
 
@@ -62,7 +62,7 @@ lib_name_for_current_dir(THIS_LIB)
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
-	"${Libconfig_LIBS}"
+	"${YamlCpp_LIBS}"
 	"${ROOT_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_UTILITIES_LIB}"

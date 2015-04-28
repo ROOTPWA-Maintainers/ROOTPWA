@@ -42,8 +42,9 @@
 
 #include <Rtypes.h>
 
-namespace libconfig {
-	class Setting;
+namespace YAML {
+	class Emitter;
+	class Node;
 }
 class TFile;
 class TTree;
@@ -66,7 +67,7 @@ namespace rpwa {
 			massDepFit();
 			~massDepFit() {};
 
-			bool readConfig(const libconfig::Setting* configRoot,
+			bool readConfig(const YAML::Node& configRoot,
 			                rpwa::massDepFit::model& fitModel,
 			                rpwa::massDepFit::parameters& fitParameters,
 			                rpwa::massDepFit::parameters& fitParametersError,
@@ -78,12 +79,12 @@ namespace rpwa {
 			bool init(rpwa::massDepFit::model& fitModel,
 			          rpwa::massDepFit::function& fitFunction);
 
-			bool updateConfig(libconfig::Setting* configRoot,
-			                  const rpwa::massDepFit::model& fitModel,
-			                  const rpwa::massDepFit::parameters& fitParameters,
-			                  const rpwa::massDepFit::parameters& fitParametersError,
-			                  const double chi2,
-			                  const unsigned int ndf) const;
+			bool writeConfig(std::ostream& output,
+			                 const rpwa::massDepFit::model& fitModel,
+			                 const rpwa::massDepFit::parameters& fitParameters,
+			                 const rpwa::massDepFit::parameters& fitParametersError,
+			                 const double chi2,
+			                 const unsigned int ndf) const;
 
 // FIXME: make private
 			bool createPlots(const rpwa::massDepFit::model& fitModel,
@@ -105,46 +106,53 @@ namespace rpwa {
 
 			bool prepareMassLimits();
 
-			bool readConfigFitquality(const libconfig::Setting* configFitquality,
+			bool readConfigFitquality(const YAML::Node& configFitquality,
 			                          double& chi2,
 			                          unsigned int& ndf) const;
 
-			bool readConfigInput(const libconfig::Setting* configInput);
-			bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
-			bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
-			bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
-			bool readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters);
+			bool readConfigInput(const YAML::Node& configInput);
+			bool readConfigInputFitResults(const YAML::Node& configInputFitResults);
+			bool readConfigInputWaves(const YAML::Node& configInputWaves);
+			bool readConfigInputSystematics(const YAML::Node& configInputSystematics);
+			bool readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters);
 
-			bool readConfigModel(const libconfig::Setting* configModel,
+			bool readConfigModel(const YAML::Node& configModel,
 			                     rpwa::massDepFit::model& fitModel,
 			                     rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::parameters& fitParametersError);
-			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
-			bool readConfigModelComponents(const libconfig::Setting* configComponents,
+			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
+			bool readConfigModelComponents(const YAML::Node& configComponents,
 			                               rpwa::massDepFit::model& fitModel,
 			                               rpwa::massDepFit::parameters& fitParameters,
 			                               rpwa::massDepFit::parameters& fitParametersError) const;
-			bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
+			bool readConfigModelFsmd(const YAML::Node& configFsmd,
 			                         rpwa::massDepFit::model& fitModel,
 			                         rpwa::massDepFit::parameters& fitParameters,
 			                         rpwa::massDepFit::parameters& fitParametersError) const;
 
-			bool updateConfigFitquality(libconfig::Setting* configFitquality,
-			                            const double chi2,
-			                            const unsigned int ndf) const;
+			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
+			                           const double chi2,
+			                           const unsigned int ndf) const;
 
-			bool updateConfigModel(const libconfig::Setting* configModel,
-			                       const rpwa::massDepFit::model& fitModel,
-			                       const rpwa::massDepFit::parameters& fitParameters,
-			                       const rpwa::massDepFit::parameters& fitParametersError) const;
-			bool updateConfigModelComponents(const libconfig::Setting* configComponents,
-			                                 const rpwa::massDepFit::model& fitModel,
-			                                 const rpwa::massDepFit::parameters& fitParameters,
-			                                 const rpwa::massDepFit::parameters& fitParametersError) const;
-			bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
-			                           const rpwa::massDepFit::model& fitModel,
-			                           const rpwa::massDepFit::parameters& fitParameters,
-			                           const rpwa::massDepFit::parameters& fitParametersError) const;
+			bool writeConfigInput(YAML::Emitter& yamlOutput) const;
+			bool writeConfigInputFitResults(YAML::Emitter& yamlOutput) const;
+			bool writeConfigInputWaves(YAML::Emitter& yamlOutput) const;
+			bool writeConfigInputSystematics(YAML::Emitter& yamlOutput) const;
+			bool writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const;
+
+			bool writeConfigModel(YAML::Emitter& yamlOutput,
+			                      const rpwa::massDepFit::model& fitModel,
+			                      const rpwa::massDepFit::parameters& fitParameters,
+			                      const rpwa::massDepFit::parameters& fitParametersError) const;
+			bool writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const;
+			bool writeConfigModelComponents(YAML::Emitter& yamlOutput,
+			                                const rpwa::massDepFit::model& fitModel,
+			                                const rpwa::massDepFit::parameters& fitParameters,
+			                                const rpwa::massDepFit::parameters& fitParametersError) const;
+			bool writeConfigModelFsmd(YAML::Emitter& yamlOutput,
+			                          const rpwa::massDepFit::model& fitModel,
+			                          const rpwa::massDepFit::parameters& fitParameters,
+			                          const rpwa::massDepFit::parameters& fitParametersError) const;
 
 			bool readInFiles(const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");

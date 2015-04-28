@@ -40,6 +40,8 @@
 #include <boost/assign/std/vector.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 #include <TTree.h>
 #include <TFile.h>
 #include <TGraph.h>
@@ -52,17 +54,15 @@
 #include <TRandom3.h>
 #include <TStopwatch.h>
 
-#include <libconfig.h++>
-
 #include "ampIntegralMatrix.h"
 #include "fileUtils.hpp"
 #include "fitResult.h"
-#include "libConfigUtils.hpp"
 #include "massDepFitComponents.h"
 #include "massDepFitFsmd.h"
 #include "massDepFitFunction.h"
 #include "massDepFitModel.h"
 #include "reportingUtils.hpp"
+#include "yamlCppUtils.hpp"
 
 
 bool rpwa::massDepFit::massDepFit::_debug = false;
@@ -78,7 +78,7 @@ rpwa::massDepFit::massDepFit::massDepFit()
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
+rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                          rpwa::massDepFit::model& fitModel,
                                          rpwa::massDepFit::parameters& fitParameters,
                                          rpwa::massDepFit::parameters& fitParametersError,
@@ -88,7 +88,7 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
                                          const std::string& valBranchName)
 {
 	// fit result information
-	const libconfig::Setting* configFitquality = findLibConfigGroup(*configRoot, "fitquality", false);
+	const YAML::Node& configFitquality = configRoot["fitquality"];
 	if(configFitquality) {
 		if(not readConfigFitquality(configFitquality, chi2, ndf)) {
 			printErr << "error while reading 'fitquality' in configuration file." << std::endl;
@@ -100,7 +100,7 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 	}
 
 	// input section
-	const libconfig::Setting* configInput = findLibConfigGroup(*configRoot, "input");
+	const YAML::Node& configInput = configRoot["input"];
 	if(not configInput) {
 		printErr << "'input' does not exist in configuration file." << std::endl;
 		return false;
@@ -129,7 +129,7 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 	}
 
 	// set-up fit model (resonances, background, final-state mass-dependence)
-	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	const YAML::Node& configModel = configRoot["model"];
 	if(not configModel) {
 		printErr << "'model' does not exist in configuration file." << std::endl;
 		return false;
@@ -144,41 +144,49 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigFitquality(const libconfig::Setting* configFitquality,
+rpwa::massDepFit::massDepFit::readConfigFitquality(const YAML::Node& configFitquality,
                                                    double& chi2,
                                                    unsigned int& ndf) const
 {
 	if(not configFitquality) {
-		printErr << "'configFitquality' is not a pointer to a valid object." << std::endl;
+		printErr << "'configFitquality' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configFitquality.IsMap()) {
+		printErr << "'fitquality' is not a YAML map." << std::endl;
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("chi2", libconfig::Setting::TypeFloat)
-	                     ("ndf", libconfig::Setting::TypeInt);
+	                     ("chi2", YamlCppUtils::TypeFloat)
+	                     ("ndf", YamlCppUtils::TypeInt);
 	if(not checkIfAllVariablesAreThere(configFitquality, mandatoryArguments)) {
 		printErr << "'fitquality' does not contain all required variables." << std::endl;
 		return false;
 	}
 
-	configFitquality->lookupValue("chi2", chi2);
-	configFitquality->lookupValue("ndf", ndf);
+	chi2 = configFitquality["chi2"].as<double>();
+	ndf = configFitquality["ndf"].as<unsigned int>();
 
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configInput)
+rpwa::massDepFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 {
 	if(not configInput) {
-		printErr << "'configInput' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInput' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInput.IsMap()) {
+		printErr << "'input' is not a YAML map." << std::endl;
 		return false;
 	}
 
 	// get information about fit results from mass-independent
-	const libconfig::Setting* configInputFitResults = findLibConfigList(*configInput, "fitresults");
+	const YAML::Node& configInputFitResults = configInput["fitresults"];
 	if(not configInputFitResults) {
 		printErr << "'fitresults' does not exist in 'input'." << std::endl;
 		return false;
@@ -189,7 +197,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	}
 
 	// get information about waves to be used in the fit
-	const libconfig::Setting* configInputWaves = findLibConfigList(*configInput, "waves");
+	const YAML::Node& configInputWaves = configInput["waves"];
 	if(not configInputWaves) {
 		printErr << "'waves' does not exist in 'input'." << std::endl;
 		return false;
@@ -200,7 +208,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	}
 
 	// get information for plotting of systematic error
-	const libconfig::Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
+	const YAML::Node& configInputSystematics = configInput["systematics"];
 	if(configInputSystematics) {
 		if(not readConfigInputSystematics(configInputSystematics)) {
 			printErr << "error while reading 'systematics' in 'input'." << std::endl;
@@ -211,7 +219,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 	}
 
 	// get information for which parameters to release in which order
-	const libconfig::Setting* configInputFreeParameters = findLibConfigArray(*configInput, "freeparameters", false);
+	const YAML::Node& configInputFreeParameters = configInput["freeparameters"];
 	if(configInputFreeParameters) {
 		if(not readConfigInputFreeParameters(configInputFreeParameters)) {
 			printErr << "error while reading 'freeparameters' in 'input'." << std::endl;
@@ -229,43 +237,45 @@ rpwa::massDepFit::massDepFit::readConfigInput(const libconfig::Setting* configIn
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputFitResults(const libconfig::Setting* configInputFitResults)
+rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& configInputFitResults)
 {
 	if(not configInputFitResults) {
-		printErr << "'configInputFitResults' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInputFitResults' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInputFitResults.IsSequence()) {
+		printErr << "'fitresults' is not a YAML sequence." << std::endl;
 		return false;
 	}
 
 	_inFileName.clear();
 	_inOverwritePhaseSpace.clear();
 
-	const int nrFitResults = configInputFitResults->getLength();
-	for(int idxFitResult=0; idxFitResult<nrFitResults; ++idxFitResult) {
+	const size_t nrFitResults = configInputFitResults.size();
+	for(size_t idxFitResult=0; idxFitResult<nrFitResults; ++idxFitResult) {
 		if(_debug) {
 			printDebug << "reading of entry " << idxFitResult << " in 'fitresults'." << std::endl;
 		}
 
-		const libconfig::Setting* configInputFitResult = &((*configInputFitResults)[idxFitResult]);
+		const YAML::Node& configInputFitResult = configInputFitResults[idxFitResult];
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("name", libconfig::Setting::TypeString)
-		                     ("tPrimeMean", libconfig::Setting::TypeFloat);
+		                     ("name", YamlCppUtils::TypeString)
+		                     ("tPrimeMean", YamlCppUtils::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
 			printErr << "'fitresults' entry at index " << idxFitResult << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		std::string fileName;
-		configInputFitResult->lookupValue("name", fileName);
+		const std::string fileName = configInputFitResult["name"].as<std::string>();
 		_inFileName.push_back(fileName);
 
 		if(_debug) {
 			printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << std::endl;
 		}
 
-		double tPrimeMean;
-		configInputFitResult->lookupValue("tPrimeMean", tPrimeMean);
+		const double tPrimeMean = configInputFitResult["tPrimeMean"].as<double>();
 		_tPrimeMeans.push_back(tPrimeMean);
 
 		if(_debug) {
@@ -274,17 +284,22 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const libconfig::Setting
 
 		std::vector<std::string> overwritePhaseSpace;
 
-		const libconfig::Setting* configOverwrite = findLibConfigArray(*configInputFitResult, "overwritePhaseSpace", false);
+		const YAML::Node& configOverwrite = configInputFitResult["overwritePhaseSpace"];
 		if(configOverwrite) {
-			const int nrParts = configOverwrite->getLength();
-
-			if(nrParts > 0 && (*configOverwrite)[0].getType() != libconfig::Setting::TypeString) {
-				printErr << "contents of 'overwritePhaseSpace' array in 'input' needs to be strings." << std::endl;
+			if(not configOverwrite.IsSequence()) {
+				printErr << "'overwritePhaseSpace' of 'fitresults' entry at index " << idxFitResult << " is not a YAML sequence." << std::endl;
 				return false;
 			}
 
-			for(int idxPart=0; idxPart<nrParts; ++idxPart) {
-				const std::string fileName = (*configOverwrite)[idxPart];
+			const size_t nrParts = configOverwrite.size();
+			for(size_t idxPart=0; idxPart<nrParts; ++idxPart) {
+				if(not checkVariableType(configOverwrite[idxPart], YamlCppUtils::TypeString)) {
+					printErr << "'overwritePhaseSpace' entry at index " << idxPart
+					         << " of 'fitresults' entry at index " << idxFitResult << " is not a string." << std::endl;
+					return false;
+				}
+
+				const std::string fileName = configOverwrite[idxPart].as<std::string>();
 				overwritePhaseSpace.push_back(fileName);
 			}
 
@@ -312,39 +327,52 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const libconfig::Setting
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputWaves(const libconfig::Setting* configInputWaves)
+rpwa::massDepFit::massDepFit::readConfigInputWaves(const YAML::Node& configInputWaves)
 {
 	if(not configInputWaves) {
-		printErr << "'configInputWaves' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInputWaves' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInputWaves.IsSequence()) {
+		printErr << "'waves' is not a YAML sequence." << std::endl;
 		return false;
 	}
 
-	const int nrWaves = configInputWaves->getLength();
+	_nrWaves = configInputWaves.size();
 	if(_debug) {
-		printDebug << "going to read information of " << nrWaves << " waves to be used in the fit." << std::endl;
+		printDebug << "going to read information of " << _nrWaves << " waves to be used in the fit." << std::endl;
 	}
 
-	for(int idxWave=0; idxWave<nrWaves; ++idxWave) {
-		const libconfig::Setting* configInputWave = &((*configInputWaves)[idxWave]);
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		const YAML::Node& configInputWave = configInputWaves[idxWave];
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("name", libconfig::Setting::TypeString);
+		                     ("name", YamlCppUtils::TypeString);
 		if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
 			printErr << "'waves' entry at index " << idxWave << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		std::string name;
-		configInputWave->lookupValue("name", name);
+		const std::string name = configInputWave["name"].as<std::string>();
 
-		double massLower;
-		if(not configInputWave->lookupValue("massLower", massLower)) {
-			massLower = -1.;
+		double massLower = -1.;
+		if(configInputWave["massLower"]) {
+			if(checkVariableType(configInputWave["massLower"], YamlCppUtils::TypeFloat)) {
+				massLower = configInputWave["massLower"].as<double>();
+			} else {
+				printErr << "variable 'massLower' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
+				return false;
+			}
 		}
-		double massUpper;
-		if(not configInputWave->lookupValue("massUpper", massUpper)) {
-			massUpper = -1.;
+		double massUpper = -1.;
+		if(configInputWave["massUpper"]) {
+			if(checkVariableType(configInputWave["massUpper"], YamlCppUtils::TypeFloat)) {
+				massUpper = configInputWave["massUpper"].as<double>();
+			} else {
+				printErr << "variable 'massUpper' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
+				return false;
+			}
 		}
 
 		// check that wave does not yet exist
@@ -362,7 +390,6 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const libconfig::Setting* con
 		}
 	}
 
-	_nrWaves = _waveNames.size();
 	if(_debug) {
 		printDebug << "read " << _nrWaves << " in total." << std::endl;
 	}
@@ -379,36 +406,41 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const libconfig::Setting* con
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputSystematics(const libconfig::Setting* configInputSystematics)
+rpwa::massDepFit::massDepFit::readConfigInputSystematics(const YAML::Node& configInputSystematics)
 {
 	if(not configInputSystematics) {
-		printErr << "'configInputSystematics' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInputSystematics' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInputSystematics.IsSequence()) {
+		printErr << "'systematics' is not a YAML sequence." << std::endl;
 		return false;
 	}
 
-	const int nrSystematics = configInputSystematics->getLength();
+	_nrSystematics = configInputSystematics.size();
 	if(_debug) {
-		printDebug << "going to read information for " << nrSystematics << " files containing information for systematic errors." << std::endl;
+		printDebug << "going to read information for " << _nrSystematics << " files containing information for systematic errors." << std::endl;
 	}
 
-	if(nrSystematics > 0) {
+	if(_nrSystematics > 0) {
 		_sysPlotting = true;
 	}
 
-	if(nrSystematics > 0 && (*configInputSystematics)[0].getType() != libconfig::Setting::TypeString) {
-		printErr << "contents of 'systematics' array in 'input' needs to be strings." << std::endl;
-		return false;
-	}
+	for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
+		if(not checkVariableType(configInputSystematics[idxSystematics], YamlCppUtils::TypeString)) {
+			printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
+			return false;
+		}
 
-	for(int idxSystematics=0; idxSystematics<nrSystematics; ++idxSystematics) {
-		const std::string fileName = (*configInputSystematics)[idxSystematics];
+		const std::string fileName = configInputSystematics[idxSystematics].as<std::string>();
 		if(_debug) {
 			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << std::endl;
 		}
 		_sysFileNames.push_back(fileName);
 	}
 
-	_nrSystematics = _sysFileNames.size() + 1;
+	// this also includes the main fitresult file
+	++_nrSystematics;
 	if(_debug) {
 		printDebug << "in total " << _nrSystematics << " files to be read to get information for systematic errors." << std::endl;
 	}
@@ -418,30 +450,32 @@ rpwa::massDepFit::massDepFit::readConfigInputSystematics(const libconfig::Settin
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Setting* configInputFreeParameters)
+rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters)
 {
 	if(not configInputFreeParameters) {
-		printErr << "'configInputFreeParameters' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInputFreeParameters' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInputFreeParameters.IsSequence()) {
+		printErr << "'freeparameters' is not a YAML sequence." << std::endl;
 		return false;
 	}
 
 	_freeParameters.clear();
 
-	const int nrItems = configInputFreeParameters->getLength();
+	const size_t nrItems = configInputFreeParameters.size();
 
 	if(_debug) {
 		printDebug << "going to extract " << nrItems << " items from 'freeparameters'." << std::endl;
 	}
 
-	for(int idxItem=0; idxItem<nrItems; ++idxItem) {
-		const libconfig::Setting& item = (*configInputFreeParameters)[idxItem];
-
-		if(item.getType() != libconfig::Setting::TypeString) {
+	for(size_t idxItem=0; idxItem<nrItems; ++idxItem) {
+		if(not checkVariableType(configInputFreeParameters[idxItem], YamlCppUtils::TypeString)) {
 			printErr << "'freeparameters' entry at index " << idxItem << " is not a string." << std::endl;
 			return false;
 		}
 
-		const std::string name = item;
+		const std::string name = configInputFreeParameters[idxItem].as<std::string>();
 		if(_debug) {
 			printDebug << idxItem << ": '" << name << "'." << std::endl;
 		}
@@ -453,13 +487,17 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const libconfig::Set
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configModel,
+rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
                                               rpwa::massDepFit::model& fitModel,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError)
 {
 	if(not configModel) {
-		printErr << "'configModel' is not a pointer to a valid object." << std::endl;
+		printErr << "'configModel' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configModel.IsMap()) {
+		printErr << "'model' is not a YAML map." << std::endl;
 		return false;
 	}
 
@@ -468,7 +506,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 	}
 
 	// get information about anchor wave
-	const libconfig::Setting* configAnchorWave = findLibConfigGroup(*configModel, "anchorwave");
+	const YAML::Node& configAnchorWave = configModel["anchorwave"];
 	if(not configAnchorWave) {
 		printErr << "'anchorwave' does not exist in 'model'." << std::endl;
 		return false;
@@ -479,7 +517,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 	}
 
 	// read information for the individual components
-	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
+	const YAML::Node& configComponents = configModel["components"];
 	if(not configComponents) {
 		printErr << "'components' does not exist in 'model'." << std::endl;
 		return false;
@@ -490,7 +528,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 	}
 
 	// get information for creating the final-state mass-dependence
-	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
+	const YAML::Node& configFsmd = configModel["finalStateMassDependence"];
 	if(configFsmd) {
 		if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
 			printErr << "error while reading 'finalStateMassDependence' in 'model'." << std::endl;
@@ -505,59 +543,66 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave)
+rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& configAnchorWave)
 {
 	if(not configAnchorWave) {
-		printErr << "'configInputAnchorWave' is not a pointer to a valid object." << std::endl;
+		printErr << "'configInputAnchorWave' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configAnchorWave.IsMap()) {
+		printErr << "'anchorwave' is not a YAML map." << std::endl;
 		return false;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("name", libconfig::Setting::TypeString)
-	                     ("resonance", libconfig::Setting::TypeString);
+	                     ("name", YamlCppUtils::TypeString)
+	                     ("resonance", YamlCppUtils::TypeString);
 	if(not checkIfAllVariablesAreThere(configAnchorWave, mandatoryArguments)) {
 		printErr << "'anchorwave' does not contain all required variables." << std::endl;
 		return false;
 	}
 
-	configAnchorWave->lookupValue("name", _anchorWaveName);
-	configAnchorWave->lookupValue("resonance", _anchorComponentName);
+	_anchorWaveName = configAnchorWave["name"].as<std::string>();
+	_anchorComponentName = configAnchorWave["resonance"].as<std::string>();
 
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting* configComponents,
+rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
                                                         rpwa::massDepFit::model& fitModel,
                                                         rpwa::massDepFit::parameters& fitParameters,
                                                         rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(not configComponents) {
-		printErr << "'configComponents' is not a pointer to a valid object." << std::endl;
+		printErr << "'configComponents' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configComponents.IsSequence()) {
+		printErr << "'components' is not a YAML sequence." << std::endl;
 		return false;
 	}
 
-	const int nrComponents = configComponents->getLength();
+	const size_t nrComponents = configComponents.size();
 
 	if(_debug) {
 		printDebug << "reading " << nrComponents << " components from configuration file." << std::endl;
 	}
 
-	for(int idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		const libconfig::Setting* configComponent = &((*configComponents)[idxComponent]);
+	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+		const YAML::Node& configComponent = configComponents[idxComponent];
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("name", libconfig::Setting::TypeString);
+		                     ("name", YamlCppUtils::TypeString);
 		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
 			printErr << "'components' entry at index " << idxComponent << " does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		std::string name;
-		configComponent->lookupValue("name", name);
+		const std::string name = configComponent["name"].as<std::string>();
 
 		for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
 			if(fitModel.getComponent(idx)->getName() == name) {
@@ -567,7 +612,13 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting
 		}
 
 		std::string type;
-		if(not configComponent->lookupValue("type", type)) {
+		if(configComponent["type"]) {
+			if(not checkVariableType(configComponent["type"], YamlCppUtils::TypeString)) {
+				printErr << "component '" << name << "' has a type that is not a string." << std::endl;
+				return false;
+			}
+			type = configComponent["type"].as<std::string>();
+		} else {
 			if(_debug) {
 				printDebug << "component '" << name << "' has no type, use 'fixedWidthBreitWigner'." << std::endl;
 			}
@@ -616,13 +667,17 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const libconfig::Setting
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* configFsmd,
+rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
                                                   rpwa::massDepFit::model& fitModel,
                                                   rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::parameters& fitParametersError) const
 {
 	if(not configFsmd) {
-		printErr << "'configFsmd' is not a pointer to a valid object." << std::endl;
+		printErr << "'configFsmd' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configFsmd.IsMap()) {
+		printErr << "'finalStateMassDependence' is not a YAML map." << std::endl;
 		return false;
 	}
 
@@ -671,151 +726,315 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfig(libconfig::Setting* configRoot,
-                                           const rpwa::massDepFit::model& fitModel,
-                                           const rpwa::massDepFit::parameters& fitParameters,
-                                           const rpwa::massDepFit::parameters& fitParametersError,
-                                           const double chi2,
-                                           const unsigned int ndf) const
+rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
+                                          const rpwa::massDepFit::model& fitModel,
+                                          const rpwa::massDepFit::parameters& fitParameters,
+                                          const rpwa::massDepFit::parameters& fitParametersError,
+                                          const double chi2,
+                                          const unsigned int ndf) const
 {
 	if(_debug) {
-		printDebug << "updating configuration file." << std::endl;
+		printDebug << "writing configuration file." << std::endl;
 	}
 
-	libconfig::Setting* configFitquality = NULL;
-	if(not configRoot->exists("fitquality")) {
-		configFitquality = &(configRoot->add("fitquality", libconfig::Setting::TypeGroup));
-	} else {
-		configFitquality = &((*configRoot)["fitquality"]);
-	}
-	if(not updateConfigFitquality(configFitquality, chi2, ndf)) {
-		printErr << "error while updating 'fitquality' for result file." << std::endl;
+	YAML::Emitter yamlOutput(output);
+	yamlOutput << YAML::BeginMap;
+
+	yamlOutput << YAML::Key << "fitquality";
+	yamlOutput << YAML::Value;
+	if(not writeConfigFitquality(yamlOutput, chi2, ndf)) {
+		printErr << "error while writing 'fitquality' to result file." << std::endl;
 		return false;
 	}
 
-	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
-	if(not updateConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'model' for result file." << std::endl;
+	yamlOutput << YAML::Key << "input";
+	yamlOutput << YAML::Value;
+	if(not writeConfigInput(yamlOutput)) {
+		printErr << "error while writing 'input' to result file." << std::endl;
 		return false;
 	}
+
+	yamlOutput << YAML::Key << "model";
+	yamlOutput << YAML::Value;
+	if(not writeConfigModel(yamlOutput, fitModel, fitParameters, fitParametersError)) {
+		printErr << "error while writing 'model' to result file." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::EndMap;
+
+	// newline at end-of-file
+	output << std::endl;
 
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfigFitquality(libconfig::Setting* configFitquality,
-                                                     const double chi2,
-                                                     const unsigned int ndf) const
+rpwa::massDepFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
+                                                    const double chi2,
+                                                    const unsigned int ndf) const
 {
 	if(_debug) {
-		printDebug << "updating 'fitquality'." << std::endl;
+		printDebug << "writing 'fitquality'." << std::endl;
 	}
 
-	if(not configFitquality->exists("chi2")) {
-		configFitquality->add("chi2", libconfig::Setting::TypeFloat);
-	}
-	(*configFitquality)["chi2"] = chi2;
-
-	if(not configFitquality->exists("ndf")) {
-		configFitquality->add("ndf", libconfig::Setting::TypeInt);
-	}
-	(*configFitquality)["ndf"] = (int)ndf;
-
-	if(not configFitquality->exists("redchi2")) {
-		configFitquality->add("redchi2", libconfig::Setting::TypeFloat);
-	}
-	(*configFitquality)["redchi2"] = chi2/(double)ndf;
+	yamlOutput << YAML::BeginMap;
+	yamlOutput << YAML::Key << "chi2";
+	yamlOutput << YAML::Value << chi2;
+	yamlOutput << YAML::Key << "ndf";
+	yamlOutput << YAML::Value << ndf;
+	yamlOutput << YAML::Key << "redchi2";
+	yamlOutput << YAML::Value << ((ndf>0) ? (chi2/(double)ndf) : 0.);
+	yamlOutput << YAML::EndMap;
 
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfigModel(const libconfig::Setting* configModel,
-                                                const rpwa::massDepFit::model& fitModel,
-                                                const rpwa::massDepFit::parameters& fitParameters,
-                                                const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::massDepFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) const
 {
-	if(not configModel) {
-		printErr << "'configModel' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
 	if(_debug) {
-		printDebug << "updating 'fitmodel'." << std::endl;
+		printDebug << "writing 'input'." << std::endl;
 	}
 
-	// update information of the individual components
-	const libconfig::Setting* configComponents = findLibConfigList(*configModel, "components");
-	if(not updateConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while updating 'components' for result file." << std::endl;
+	yamlOutput << YAML::BeginMap;
+
+	yamlOutput << YAML::Key << "fitresults";
+	yamlOutput << YAML::Value;
+	if(not writeConfigInputFitResults(yamlOutput)) {
+		printErr << "error while writing 'fitresults' to result file." << std::endl;
 		return false;
 	}
 
-	// update information of the final-state mass-dependence
-	const libconfig::Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
-	if(fitModel.getFsmd() != NULL) {
-		if(not updateConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
-			printErr << "error while updating 'finalStateMassDependence' for result file." << std::endl;
+	yamlOutput << YAML::Key << "waves";
+	yamlOutput << YAML::Value;
+	if(not writeConfigInputWaves(yamlOutput)) {
+		printErr << "error while writing 'waves' to result file." << std::endl;
+		return false;
+	}
+
+	if(_sysPlotting) {
+		yamlOutput << YAML::Key << "systematics";
+		yamlOutput << YAML::Value;
+		if(not writeConfigInputSystematics(yamlOutput)) {
+			printErr << "error while writing 'systematics' to result file." << std::endl;
 			return false;
 		}
 	}
 
+	yamlOutput << YAML::Key << "freeparameters";
+	yamlOutput << YAML::Value;
+	if(not writeConfigInputFreeParameters(yamlOutput)) {
+		printErr << "error while writing 'freeparameters' to result file." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::EndMap;
+
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfigModelComponents(const libconfig::Setting* configComponents,
-                                                          const rpwa::massDepFit::model& fitModel,
-                                                          const rpwa::massDepFit::parameters& fitParameters,
-                                                          const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::massDepFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutput) const
 {
-	if(not configComponents) {
-		printErr << "'configComponents' is not a pointer to a valid object." << std::endl;
+	if(_debug) {
+		printDebug << "writing 'fitresults'." << std::endl;
+	}
+
+	yamlOutput << YAML::BeginSeq;
+
+	for (size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "name";
+		yamlOutput << YAML::Value << _inFileName[idxBin];
+
+		yamlOutput << YAML::Key << "tPrimeMean";
+		yamlOutput << YAML::Value << _tPrimeMeans[idxBin];
+
+		if(_inOverwritePhaseSpace[idxBin].size() > 0) {;
+			yamlOutput << YAML::Key << "overwritePhaseSpace";
+			yamlOutput << YAML::Flow;
+			yamlOutput << YAML::Value << _inOverwritePhaseSpace[idxBin];
+			yamlOutput << YAML::Block;
+		}
+
+		yamlOutput << YAML::EndMap;
+	}
+
+	yamlOutput << YAML::EndSeq;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) const
+{
+	if(_debug) {
+		printDebug << "writing 'waves'." << std::endl;
+	}
+
+	yamlOutput << YAML::BeginSeq;
+
+	for (size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "name";
+		yamlOutput << YAML::Value << _waveNames[idxWave];
+
+		if (_waveMassLimits[idxWave].first >= 0) {
+			yamlOutput << YAML::Key << "massLower";
+			yamlOutput << YAML::Value << _waveMassLimits[idxWave].first;
+		}
+		if (_waveMassLimits[idxWave].second >= 0) {
+			yamlOutput << YAML::Key << "massUpper";
+			yamlOutput << YAML::Value << _waveMassLimits[idxWave].second;
+		}
+
+		yamlOutput << YAML::EndMap;
+	}
+
+	yamlOutput << YAML::EndSeq;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigInputSystematics(YAML::Emitter& yamlOutput) const
+{
+	if(_debug) {
+		printDebug << "writing 'systematics'." << std::endl;
+	}
+
+	yamlOutput << _sysFileNames;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const
+{
+	if(_debug) {
+		printDebug << "writing 'freeparameters'." << std::endl;
+	}
+
+	yamlOutput << _freeParameters;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
+                                               const rpwa::massDepFit::model& fitModel,
+                                               const rpwa::massDepFit::parameters& fitParameters,
+                                               const rpwa::massDepFit::parameters& fitParametersError) const
+{
+	if(_debug) {
+		printDebug << "writing 'model'." << std::endl;
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	yamlOutput << YAML::Key << "anchorwave";
+	yamlOutput << YAML::Value;
+	if(not writeConfigModelAnchorWave(yamlOutput)) {
+		printErr << "error while writing 'anchorwave' to result file." << std::endl;
 		return false;
 	}
 
-	if(_debug) {
-		printDebug << "updating 'components'." << std::endl;
+	yamlOutput << YAML::Key << "components";
+	yamlOutput << YAML::Value;
+	if(not writeConfigModelComponents(yamlOutput, fitModel, fitParameters, fitParametersError)) {
+		printErr << "error while writing 'components' to result file." << std::endl;
+		return false;
 	}
+
+	yamlOutput << YAML::Key << "finalStateMassDependence";
+	yamlOutput << YAML::Value;
+	if(fitModel.getFsmd() != NULL) {
+		if(not writeConfigModelFsmd(yamlOutput, fitModel, fitParameters, fitParametersError)) {
+			printErr << "error while writing 'finalStateMassDependence' to result file." << std::endl;
+			return false;
+		}
+	}
+
+	yamlOutput << YAML::EndMap;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const
+{
+	if(_debug) {
+		printDebug << "writing 'anchorwave'." << std::endl;
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	yamlOutput << YAML::Key << "name";
+	yamlOutput << YAML::Value << _anchorWaveName;
+
+	yamlOutput << YAML::Key << "resonance";
+	yamlOutput << YAML::Value << _anchorComponentName;
+
+	yamlOutput << YAML::EndMap;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutput,
+                                                         const rpwa::massDepFit::model& fitModel,
+                                                         const rpwa::massDepFit::parameters& fitParameters,
+                                                         const rpwa::massDepFit::parameters& fitParametersError) const
+{
+	if(_debug) {
+		printDebug << "writing 'components'." << std::endl;
+	}
+
+	yamlOutput << YAML::BeginSeq;
 
 	const size_t nrComponents = fitModel.getNrComponents();
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		const libconfig::Setting* configComponent = &((*configComponents)[idxComponent]);
-		if(not fitModel.getComponent(idxComponent)->update(configComponent, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
-			printErr << "error while updating component at index " << idxComponent << " for result file." << std::endl;
+		if(not fitModel.getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
+			printErr << "error while writing component at index " << idxComponent << " to result file." << std::endl;
 			return false;
 		}
 	}
+
+	yamlOutput << YAML::EndSeq;
 
 	return true;
 }
 
 
 bool
-rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* configFsmd,
-                                                    const rpwa::massDepFit::model& fitModel,
-                                                    const rpwa::massDepFit::parameters& fitParameters,
-                                                    const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::massDepFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
+                                                   const rpwa::massDepFit::model& fitModel,
+                                                   const rpwa::massDepFit::parameters& fitParameters,
+                                                   const rpwa::massDepFit::parameters& fitParametersError) const
 {
-	if(not configFsmd) {
-		printErr << "'configFsmd' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
 	if(_debug) {
-		printDebug << "updating 'finalStateMassDependence'." << std::endl;
+		printDebug << "writing 'finalStateMassDependence'." << std::endl;
 	}
 
 	if(not fitModel.getFsmd()) {
-		printErr << "updating final-state mass-dependence requested, but there is no final-state mass-dependence." << std::endl;
+		printErr << "writing final-state mass-dependence requested, but there is no final-state mass-dependence." << std::endl;
 		return false;
 	}
 
-	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, fitParametersError, _debug)) {
-		printErr << "error while updating final-state mass-dependence for result file." << std::endl;
+	if(not fitModel.getFsmd()->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
+		printErr << "error while writing final-state mass-dependence to result file." << std::endl;
 		return false;
 	}
 

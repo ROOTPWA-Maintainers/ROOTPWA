@@ -33,12 +33,14 @@
 
 #include <boost/assign/std/vector.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 #include <TFormula.h>
 
-#include "libConfigUtils.hpp"
 #include "massDepFitCache.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
+#include "yamlCppUtils.hpp"
 
 
 rpwa::massDepFit::fsmd::fsmd(const size_t id)
@@ -58,7 +60,7 @@ rpwa::massDepFit::fsmd::~fsmd()
 
 
 bool
-rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
+rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
                              rpwa::massDepFit::parameters& fitParameters,
                              rpwa::massDepFit::parameters& fitParametersError,
                              const bool debug)
@@ -67,16 +69,15 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		printDebug << "start initializing final-state mass-dependence." << std::endl;
 	}
 
-	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
-	                     ("formula", libconfig::Setting::TypeString);
+	                     ("formula", YamlCppUtils::TypeString);
 	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
 		printErr << "'finalStateMassDependence' does not contain all required variables." << std::endl;
 		return false;
 	}
 
-	std::string formula;
-	configFsmd->lookupValue("formula", formula);
+	const std::string formula = configFsmd["formula"].as<std::string>();
 
 	if(_function != NULL) {
 		delete _function;
@@ -103,40 +104,67 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 			printDebug << "reading parameter '" << parName.str() << "'." << std::endl;
 		}
 
-		const libconfig::Setting* configParameter = findLibConfigGroup(*configFsmd, parName.str());
+		const YAML::Node& configParameter = configFsmd[parName.str()];
 		if (not configParameter) {
 			printErr << "final-state mass-dependence does not define parameter '" << parName.str() << "'." << std::endl;
 			return false;
 		}
 
-		std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
+		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
-		                     ("val", libconfig::Setting::TypeFloat)
-		                     ("fix", libconfig::Setting::TypeBoolean);
+		                     ("val", YamlCppUtils::TypeFloat)
+		                     ("fix", YamlCppUtils::TypeBoolean);
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
 			printErr << "'" << parName.str() << "' of final-state mass-dependence does not contain all required variables." << std::endl;
 			return false;
 		}
 
-		double parameter;
-		configParameter->lookupValue("val", parameter);
+		const double parameter = configParameter["val"].as<double>();
 		fitParameters.setParameter(_id, idxParameter, parameter);
 
-		double error;
-		if(configParameter->lookupValue("error", error)) {
-			fitParametersError.setParameter(_id, idxParameter, error);
+		if(configParameter["error"]) {
+			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
+				const double error = configParameter["error"].as<double>();
+				fitParametersError.setParameter(_id, idxParameter, error);
+			} else {
+				printErr << "variable 'error' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				return false;
+			}
 		}
 
-		bool fixed;
-		configParameter->lookupValue("fix", fixed);
+		const bool fixed = configParameter["fix"].as<bool>();
 		_parametersFixed[idxParameter] = fixed;
 
-		_parametersLimitedLower[idxParameter] = configParameter->lookupValue("lower", _parametersLimitLower[idxParameter]);
-		_parametersLimitedUpper[idxParameter] = configParameter->lookupValue("upper", _parametersLimitUpper[idxParameter]);
+		if(configParameter["lower"]) {
+			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
+				_parametersLimitedLower[idxParameter] = true;
+				_parametersLimitLower[idxParameter] = configParameter["lower"].as<double>();
+			} else {
+				printErr << "variable 'lower' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				return false;
+			}
+		} else {
+			_parametersLimitedLower[idxParameter] = false;
+		}
+		if(configParameter["upper"]) {
+			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
+				_parametersLimitedUpper[idxParameter] = true;
+				_parametersLimitUpper[idxParameter] = configParameter["upper"].as<double>();
+			} else {
+				printErr << "variable 'upper' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				return false;
+			}
+		} else {
+			_parametersLimitedUpper[idxParameter] = false;
+		}
 
-		double step;
-		if(configParameter->lookupValue("step", step)) {
-			_parametersStep[idxParameter] = step;
+		if(configParameter["step"]) {
+			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
+				_parametersStep[idxParameter] = configParameter["step"].as<double>();
+			} else {
+				printErr << "variable 'step' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				return false;
+			}
 		}
 	}
 
@@ -150,33 +178,56 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 
 bool
-rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
-                               const rpwa::massDepFit::parameters& fitParameters,
-                               const rpwa::massDepFit::parameters& fitParametersError,
-                               const bool debug) const
+rpwa::massDepFit::fsmd::write(YAML::Emitter& yamlOutput,
+                              const rpwa::massDepFit::parameters& fitParameters,
+                              const rpwa::massDepFit::parameters& fitParametersError,
+                              const bool debug) const
 {
 	if(debug) {
-		printDebug << "start updating final-state mass-dependence." << std::endl;
+		printDebug << "start writing final-state mass-dependence." << std::endl;
 		print(printDebug);
 	}
+
+	yamlOutput << YAML::BeginMap;
+
+	yamlOutput << YAML::Key << "formula";
+	yamlOutput << YAML::Value << _function->GetTitle();
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		std::ostringstream parName;
 		parName << "p" << idxParameter;
 
-		if(debug) {
-			printDebug << "updating parameter '" << parName.str() << "'." << std::endl;
+		yamlOutput << YAML::Key << parName.str();
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "val";
+		yamlOutput << YAML::Value << fitParameters.getParameter(_id, idxParameter);
+
+		yamlOutput << YAML::Key << "error";
+		yamlOutput << YAML::Value << fitParametersError.getParameter(_id, idxParameter);
+
+		if(_parametersLimitedLower[idxParameter]) {
+			yamlOutput << YAML::Key << "lower";
+			yamlOutput << YAML::Value << _parametersLimitLower[idxParameter];
 		}
 
-		libconfig::Setting* configParameter = &((*configFsmd)[parName.str()]);
-
-		(*configParameter)["val"] = fitParameters.getParameter(_id, idxParameter);
-
-		if(not configParameter->exists("error")) {
-			configParameter->add("error", libconfig::Setting::TypeFloat);
+		if(_parametersLimitedUpper[idxParameter]) {
+			yamlOutput << YAML::Key << "upper";
+			yamlOutput << YAML::Value << _parametersLimitUpper[idxParameter];
 		}
-		(*configParameter)["error"] = fitParametersError.getParameter(_id, idxParameter);
+
+		yamlOutput << YAML::Key << "step";
+		yamlOutput << YAML::Value << _parametersStep[idxParameter];
+
+		yamlOutput << YAML::Key << "fix";
+		yamlOutput << YAML::Value << _parametersFixed[idxParameter];
+
+		yamlOutput << YAML::EndMap;
 	}
+
+	yamlOutput << YAML::EndMap;
 
 	return true;
 }
