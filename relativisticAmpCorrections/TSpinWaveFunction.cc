@@ -3,9 +3,9 @@
 #include "TSpinWaveFunction.h"
 using namespace std;
 
-extern ClebschGordanBox box;
 
 Int_t debugSpinWave=0;
+
 
 TSpinWaveFunction::TSpinWaveFunction(Int_t J_, char type_) {
 
@@ -49,15 +49,15 @@ TSpinWaveFunction::TSpinWaveFunction(Int_t J_, char type_) {
 				Int_t m0=0;
 				for (Int_t i=0; i<J; i++) {
 					if (debugSpinWave==2) {
-						if (mi[J*pzm+i]== 1) cout <<"+"; 
+						if (mi[J*pzm+i]== 1) cout <<"+";
 						if (mi[J*pzm+i]== 0) cout <<"0";
-						if (mi[J*pzm+i]==-1) cout <<"-"; 
+						if (mi[J*pzm+i]==-1) cout <<"-";
 					}
 					if (mi[J*pzm+i]== 0) m0++;
 				}
-				if (type=='s' || type=='c') 
+				if (type=='s' || type=='c')
 					coeff[pzm] = am0_to_J(J,MM,m0);
-				if (type=='l') 
+				if (type=='l')
 					coeff[pzm] = cm0_sub_ell_2(J,m0);
 				if (debugSpinWave==2)
 					cout << " * sqrt("
@@ -87,7 +87,7 @@ TSpinWaveFunction::GetTensorSum(char name, Int_t delta) {
 }
 
 TTensorSum*
-TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E, 
+TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 		Int_t delta, Int_t S) {
 
 	if ( !(type=='s' && E->type=='s') ) {
@@ -109,7 +109,7 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 	}
 
 	//TFracNum *S1S2 = ClebschGordan(twoS, twoS1, twoS2);
-	TFracNum *S1S2 = box.GetCG(S, J, E->J);
+	TFracNum *S1S2 = ClebschGordanBox::instance()->GetCG(S, J, E->J);
 	if (debugSpinWave==1){
 		cout << "Clebsch-Gordans calculated for "
 			<<twoS<<","<<twoS1<<","<<twoS2<<": "<< S1S2 << endl;
@@ -129,7 +129,7 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 							if (MM1+MM2==delta) {
 
 								Int_t *pzm1_field = new Int_t[J];
-								for (Int_t i=0; i<J; i++) 
+								for (Int_t i=0; i<J; i++)
 									pzm1_field[i] = mi[J*pzm1+i];
 
 								Int_t *pzm2_field = new Int_t[E->J];
@@ -139,7 +139,7 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 								TTensorTerm* newterm =
 									new TTensorTerm('o', J, pzm1_field, &(coeff[pzm1]));
 
-								TFracNum coeff2_CG = S1S2[CGIndex(J, MM1, E->J, MM2)];
+								TFracNum coeff2_CG = S1S2[ClebschGordanBox::CGIndex(J, MM1, E->J, MM2)];
 								coeff2_CG = coeff2_CG * E->coeff[pzm2];
 
 								newterm->Multiply('e', E->J, pzm2_field, &coeff2_CG);
@@ -162,14 +162,14 @@ TSpinWaveFunction::CheckCGFormula() {
 	for (Int_t i=0; i<J-1; i++){
 		// Int_t twoJ=2*(i+2);
 		// J1J[i] = ClebschGordan(twoJ, 2, twoJ-2);
-		J1J[i] = box.GetCG(i+2, 1, i+1);
+		J1J[i] = ClebschGordanBox::instance()->GetCG(i+2, 1, i+1);
 	}
 
 	TFracNum *coeffCG = new TFracNum[max_pzm];
 	TFracNum ONE(0,0,0,0,1);
 
 	for (Int_t pzm=0; pzm<max_pzm; pzm++) {
-		coeffCG[pzm]=ONE;    
+		coeffCG[pzm]=ONE;
 		Int_t m=mi[J*pzm];
 		if (debugSpinWave==2) cout << m << " x ";
 		for (Int_t jj=1; jj<J; jj++) {
@@ -194,16 +194,16 @@ TSpinWaveFunction::CheckCGFormula() {
 		cout << "Phi("<<J<<","<<MM<<")="<<endl;
 		for (Int_t pzm=max_pzm-1; pzm>=0; pzm--) {
 			if (M[pzm]==MM) {
-				cout << coeffCG[pzm].FracString()<< " * ("; 
+				cout << coeffCG[pzm].FracString()<< " * (";
 				Int_t m0=0;
 				for (Int_t i=0; i<J; i++) {
-					if (mi[J*pzm+i]== 1)  cout <<"+"; 
-					if (mi[J*pzm+i]== 0) {cout <<"0"; m0++;} 
-					if (mi[J*pzm+i]==-1)  cout <<"-"; 
+					if (mi[J*pzm+i]== 1)  cout <<"+";
+					if (mi[J*pzm+i]== 0) {cout <<"0"; m0++;}
+					if (mi[J*pzm+i]==-1)  cout <<"-";
 				}
 				cout << ")   [ (4.1): "<< coeff[pzm].FracString()<<" ]" <<endl;
 			}
 		}
 	}
-	return 0;  
+	return 0;
 }

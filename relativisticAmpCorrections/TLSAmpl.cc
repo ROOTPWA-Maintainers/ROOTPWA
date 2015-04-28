@@ -1,11 +1,14 @@
+#include "TLSAmpl.h"
+
 #include <iostream>
 #include <string>
-#include "TLSAmpl.h"
+
+
 using namespace std;
 
-extern ClebschGordanBox box;
 
 long debugLSAmpl=1;
+
 
 TLSAmpl::TLSAmpl(long RankS1, long RankS2,
 		long RankL,  long RankJ,

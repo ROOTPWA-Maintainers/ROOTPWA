@@ -10,24 +10,14 @@
 
   \author Jan.Friedrich@ph.tum.de
   */
-//
-// Uncomment the following line
-// if you want to work in CINT (root.cern.ch)
-//
-//#define __JCINT__
-#ifndef __JCINT__
-#define Int_t    long long
-#define Double_t double
-#define Bool_t   bool
-#endif
 
 #include "Primes.h"
 
 #ifndef __JCINT__
-const Int_t MAXPRIMSQUARED=PRIMES[NPRIMFIELD-1]*PRIMES[NPRIMFIELD-1]*1000;
+const long MAXPRIMSQUARED=PRIMES[NPRIMFIELD-1]*PRIMES[NPRIMFIELD-1]*1000;
 const char IOUTSTRING[5]="%lld";
 #else
-const Int_t MAXPRIMSQUARED=PRIMES[NPRIMFIELD-1]*PRIMES[NPRIMFIELD-1];
+const long MAXPRIMSQUARED=PRIMES[NPRIMFIELD-1]*PRIMES[NPRIMFIELD-1];
 const char IOUTSTRING[3]="%d";
 #endif
 
@@ -43,28 +33,28 @@ class TFracNum {
 		// nom/NOM is taken when the numerator is meant
 		//
 		// maximum prime index of numerator.
-		Int_t maxPrimNom;
+		long maxPrimNom;
 
 		// maximum prime index of denominator.
-		Int_t maxPrimDen;
+		long maxPrimDen;
 
 		// Prime number decomposition of numerator. Field length is maxPrimNom,
 		//  NOM[0] is the exponent of 2, NOM[1] of 3, and so on.
-		Int_t *NOM;
-		// Prime number decomposition of denominator, analogue to NOM 
-		Int_t *DEN;
+		long *NOM;
+		// Prime number decomposition of denominator, analogue to NOM
+		long *DEN;
 
 		// Prefactor, including sign
 		// Negative fractional number have sign_prefrac=-1
-		// Special cases: 
+		// Special cases:
 		// Division by zero      (<=> infinity)     => sign_prefac=-7777
 		// Division zero by zero (<=> undetermined) => sign_prefac=-6666
-		Int_t sign_prefac;
+		long sign_prefac;
 
 		// Integers of numerator and denominator
-		Int_t NOM_INT;
-		Int_t DEN_INT;
-		Double_t dvalue;
+		long NOM_INT;
+		long DEN_INT;
+		double dvalue;
 
 	public:
 		//! Default constructor with numerator and denominator set to 1
@@ -72,50 +62,50 @@ class TFracNum {
 			maxPrimNom=0;
 			maxPrimDen=0;
 			NOM=0;
-			DEN=0; 
+			DEN=0;
 			sign_prefac=1;
 		};
 
 		//! Constructor using the internal representation of the class
 		TFracNum(
 				//! index of the largest prime number in the numerator
-				Int_t mN,
+				long mN,
 				//! index of the largest prime number in the denominator
-				Int_t mD, 
+				long mD,
 				//! Field of exponents of the numerator's prime numbers up to mN
-				Int_t* N, 
+				long* N,
 				//! Field of exponents of the denominator's prime numbers up to mD
-				Int_t* D, 
+				long* D,
 				/*! Sign variable <br>
 				  1 or -1 depending on the sign <br>
 				  \it s =-6666 means "undetermined" (this is for example a
 				  consequence of a division zero by zero)  <br>
-				  -7777 means "infinity" (for example a consequence 
+				  -7777 means "infinity" (for example a consequence
 				  of division by zero)
 				  */
-				Int_t s);
+				long s);
 
 		//! Constructor by the integer values of the numerator and denominator
 		TFracNum(
 				//! numerator
-				Int_t inom,
+				long inom,
 				//! denominator
-				Int_t iden);
+				long iden);
 
 		//! Constructor when numerator and denominator are factorial numbers, N!/D!
 		/*! This method is much faster than giving the factorials to
 		  TFracNum(inom, iden) */
 		TFracNum(
 				//! numerator
-				Int_t N, 
+				long N,
 				//! denominator
-				Int_t D,  
+				long D,
 				/*! control string. For described function, set to "factorial",
 				  otherwise the number is set to 1 */
 				const char* s);
 
 		//! Largest common divisor of numerator and denominator
-		Int_t DenomCommonDivisor(const TFracNum &) const;
+		long DenomCommonDivisor(const TFracNum &) const;
 
 		//!  The return value c satisfies ssqrt(c)=ssqrt(a)+ssqrt(b)
 		/*! Here the signed square root function ssqrt(n)=sign(n)*sqrt(abs(n))
@@ -131,54 +121,53 @@ class TFracNum {
 		const char* FracStringSqrt();
 
 		//! Complete information about the fractional number is put to cout
-		Double_t Print() const;
+		double Print() const;
 
 		//! Complete information about the fractional number is put to cerr
-		Double_t PrintToErr() const;
+		double PrintToErr() const;
 
 		//! Return the double-precision real value
-		Double_t Dval(){return dvalue;};
+		double Dval(){return dvalue;};
 
 		//! Try square root operation
 		/*! In case of success, return true. In case this does not lead to a
 		  fractional number, the number is left untouched and return value is false*/
-		Bool_t Sqrt();
+		bool Sqrt();
 
 		//! Flip sign of number
-		Bool_t FlipSign();
+		bool FlipSign();
 
 		//! Force sign to plus
-		Bool_t Abs();
+		bool Abs();
 
 		//! Inversion of number, so nominator and denumerator are flipped
-		Bool_t Invert();
+		bool Invert();
 
 		//! Return sign as +1 (also for zero or undefined number) or -1
-		Int_t GetSign();
+		long GetSign();
 
 		//! Return numerator
-		Int_t GetNumerator(){return NOM_INT;};
+		long GetNumerator(){return NOM_INT;};
 
 		//! Return denominator
-		Int_t GetDenominator(){return DEN_INT;};
+		long GetDenominator(){return DEN_INT;};
 
 		//! Output some comparative values for two fractional numbers
-		Bool_t PrintDifference(const TFracNum &) const;
+		bool PrintDifference(const TFracNum &) const;
 
 		//! String containing NOM and DEN
 		char* HeaderString();
 
 		//! Check whether two fractional numbers are equal
-		Bool_t   operator== (const TFracNum &) const;
+		bool   operator== (const TFracNum &) const;
 		//! Check whether left-hand number is greater than right-hand number
-		Bool_t   operator>  (const TFracNum &) const;
+		bool   operator>  (const TFracNum &) const;
 		//! Multiply two fractional numbers
 		TFracNum operator*  (const TFracNum &) const;
 		//! Add two fractional numbers
 		TFracNum operator+  (const TFracNum &) const;
 
-		Bool_t SetINTs();
-		//ClassDef(TFracNum,1);
+		bool SetINTs();
 
 };
 
@@ -189,9 +178,9 @@ const TFracNum TFracNum_mTwo(-2,1);
 const TFracNum TFracNum_Half( 1,2);
 const TFracNum TFracNum_Quarter( 1,4);
 
-TFracNum am0_to_J(Int_t J, Int_t m, Int_t m0);
-TFracNum c_sub_ell(Int_t ell);
-TFracNum cm0_sub_ell(Int_t ell, Int_t m0);
-TFracNum cm0_sub_ell_2(Int_t ell, Int_t m0);
+TFracNum am0_to_J(long J, long m, long m0);
+TFracNum c_sub_ell(long ell);
+TFracNum cm0_sub_ell(long ell, long m0);
+TFracNum cm0_sub_ell_2(long ell, long m0);
 
 #endif

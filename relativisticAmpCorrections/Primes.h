@@ -1,7 +1,7 @@
-// const Int_t NPRIMFIELD = 148933; // problem with valgrind
-const Int_t NPRIMFIELD = 124990;
+// const long NPRIMFIELD = 148933; // problem with valgrind
+const long NPRIMFIELD = 124990;
 
-const Int_t PRIMES[NPRIMFIELD] = {
+const long PRIMES[NPRIMFIELD] = {
   2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
   31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
   73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 
@@ -14900,6 +14900,6 @@ const int primesrest[] = {
 1999969, 1999979, 1999993
 };
 
-//Int_t Primes(Int_t i) {
+//long Primes(long i) {
 //  cout << PRIMES[i] << endl;
 //}

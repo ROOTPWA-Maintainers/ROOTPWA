@@ -7,8 +7,6 @@
 
 using namespace std;
 
-extern ClebschGordanBox box;
-
 
 unsigned int TFhh::_debugLevel = 1;
 
@@ -38,8 +36,8 @@ TFhh::TFhh(const long& J,
 	for (size_t iLS = 0; iLS < LSampl.size(); iLS++) {
 		if ( (LSampl[iLS]->Getdelta() == delta) or (LSampl[iLS]->Getdelta() == -delta) ) {
 			// cout << "iLS=" << iLS << ", delta=" << delta << endl;
-			TFracNum* CG3S = box.GetCG(LSampl[iLS]->GetS(), S1, S2);
-			TFracNum SpinCouplFac = CG3S[CGIndex(S1, _lambda, S2, -_nu)];
+			TFracNum* CG3S = ClebschGordanBox::instance()->GetCG(LSampl[iLS]->GetS(), S1, S2);
+			TFracNum SpinCouplFac = CG3S[ClebschGordanBox::CGIndex(S1, _lambda, S2, -_nu)];
 			if (SpinCouplFac == TFracNum_Zero) {
 				if (_debugLevel == 2) {
 					cout << "Clebsch-Gordan is zero" << endl;
