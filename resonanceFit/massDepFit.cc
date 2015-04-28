@@ -1066,7 +1066,10 @@ rpwa::massDepFit::massDepFit::readSystematicsFiles(const std::string& valTreeNam
 	_sysPhases[0] = _inPhases[0];
 
 	for(size_t idxSystematics=1; idxSystematics<_nrSystematics; ++idxSystematics) {
-		readSystematicsFile(idxSystematics, valTreeName, valBranchName);
+		if(not readSystematicsFile(idxSystematics, valTreeName, valBranchName)) {;
+			printErr << "error while reading fit results for systematic errors." << std::endl;
+			return false;
+		}
 	}
 
 	return true;
