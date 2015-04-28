@@ -220,7 +220,7 @@ TTensorTerm::AddTwoTerms(TTensorTerm *other) {
 		return 0;
 	}
 	else {
-		TFracNum *sum = prefac.SumSignedRoots(&(other->prefac));
+		TFracNum *sum = prefac.SumSignedRoots(other->prefac);
 		if (sum) {
 			prefac= *sum;
 			return 1;

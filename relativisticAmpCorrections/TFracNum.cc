@@ -5,7 +5,7 @@
 #include "TFracNum.h"
 using namespace std;
 
-bool TFracNum::debugFracNum = 0;
+bool TFracNum::debugFracNum = false;
 
 const char* SQUAREROOT_CHAR = "#";
 
@@ -317,10 +317,10 @@ long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 }
 
 TFracNum*
-TFracNum::SumSignedRoots(TFracNum *b) {
-	TFracNum mixed = (*this) * (*b);
+TFracNum::SumSignedRoots(const TFracNum& b) {
+	TFracNum mixed = (*this) * b;
 	TFracNum aa = *this;
-	TFracNum bb = *b;
+	TFracNum bb = b;
 	TFracNum *res = new TFracNum();
 	if (mixed.Sqrt()) {
 		bool flipsign = (aa.Dval() + bb.Dval() < 0);
@@ -334,7 +334,7 @@ TFracNum::SumSignedRoots(TFracNum *b) {
 	}
 	cerr << "Error in TFracNum::SumSignedRoots()" << endl << "this:" << Dval() << endl;
 	cerr << *this;
-	cerr << "b:" << b->Dval() << endl;
+	cerr << "b:" << b.Dval() << endl;
 	cerr << b;
 	return 0;
 }

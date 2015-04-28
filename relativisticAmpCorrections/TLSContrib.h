@@ -1,8 +1,36 @@
 #ifndef TLSCONTRIB_HH
 #define TLSCONTRIB_HH
 
+#include <vector>
+
 #include "TLSAmpl.h"
 #include "TSpinWaveFunction.h"
+
+//TODO: ask Jan how to name that
+struct factors {
+
+	factors()
+		: squareOfPrefactor(),
+		  exponentOfGammaS(),
+		  exponentOfGammaSigma() { }
+
+	factors(const factors& factor)
+	// TODO: ask jan about "// force new power fields by multiplication " *1 ""
+		: squareOfPrefactor(TFracNum_One * factor.squareOfPrefactor),
+		  exponentOfGammaS(factor.exponentOfGammaS),
+		  exponentOfGammaSigma(factor.exponentOfGammaSigma)
+	{ }
+
+	void swapExponents() {
+		const long oldExpOfGammaS = exponentOfGammaS;
+		exponentOfGammaS          = exponentOfGammaSigma;
+		exponentOfGammaSigma      = oldExpOfGammaS;
+	}
+
+	TFracNum squareOfPrefactor;
+	long exponentOfGammaS;
+	long exponentOfGammaSigma;
+};
 
 /*!
  \class TLSContrib
@@ -15,41 +43,26 @@ class TLSContrib {
 
   public:
 
-// TODO: check if this can be deleted
-#if(0)
-	TLSContrib()
-		: _J(0),
-		  _L(0),
-		  _S(0),
-		  _delta(0),
-		  _Nterms(0),
-		  _termFracNum(0),
-		  _termg1pot(0),
-		  _termg2pot(0) { }
-#endif
-
 	TLSContrib(const TLSContrib* b, const bool& particleExchange);
 	TLSContrib(/*const*/ TLSAmpl* A, const long& delta, const TFracNum& scfac);
 
 
-	long Add(TLSContrib*, bool);
+	void Add(TLSContrib*, bool);
 
 
-	bool SameParameter(TLSContrib* b) const { return (_J == b->_J && _L == b->_L && _S == b->_S && _cNum == b->_cNum); }
-	const long& GetNterms()           const { return _Nterms; }
-	const bool& IsPureRelativistic()  const { return _pureRelativistic; }
-	const long& GetJ()                const { return _J; }
-	const long& GetL()                const { return _L; }
-	const long& GetS()                const { return _S; }
-	const long& GetDelta()            const { return _delta; }
-	const long& GetRunningNumber()    const { return _cNum; }
+	bool        SameParameter(TLSContrib* b) const { return (_J == b->_J and _L == b->_L and _S == b->_S and _cNum == b->_cNum); }
+	size_t      GetNterms()                  const { return _factors.size(); }
+	const bool& IsPureRelativistic()         const { return _pureRelativistic; }
+	const long& GetJ()                       const { return _J; }
+	const long& GetL()                       const { return _L; }
+	const long& GetS()                       const { return _S; }
+	const long& GetDelta()                   const { return _delta; }
+	const long& GetRunningNumber()           const { return _cNum; }
 
 	TFracNum* GetSpinCG()     { return &_SpinCG; }
 	TFracNum* GetNormFactor() { return &_NormFactor; }
 
-	TFracNum* GetTermFracNum() { return _termFracNum; }
-	long* GetTermg1pot()       { return _termg1pot; } // exponent of gamma_s
-	long* GetTermg2pot()       { return _termg2pot; } // exponent of gamma_s
+	const std::vector<factors>& getFactors() const { return _factors; }
 
 	void Print()            const;
 	void PrintNR()          const;
@@ -63,13 +76,10 @@ class TLSContrib {
 	long     _delta;
 	TFracNum _SpinCG;
 
-	long      _Nterms;
 	TFracNum  _NormFactor;     // Square  of normalisation factor
 
-// TODO: struct these?
-	TFracNum* _termFracNum;   // Squares of prefactors
-	long* _termg1pot;     // exponent of gamma_s
-	long* _termg2pot;     // exponent of gamma_sigma
+	// TODO: check with jan how this should be named
+	std::vector<factors> _factors;
 
 	bool _pureRelativistic;
 
