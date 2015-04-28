@@ -56,6 +56,8 @@ set(SOURCES
 	TLSAmpl.cc
 	TFhh.cc
 	TJSS.cc
+	TLSContrib.cc
+	TLSNonRel.cc
 	)
 
 

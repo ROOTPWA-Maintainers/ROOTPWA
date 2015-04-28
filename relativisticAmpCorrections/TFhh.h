@@ -16,6 +16,8 @@
 #include <vector>
 
 #include "TLSAmpl.h"
+#include "TLSContrib.h"
+#include "TLSNonRel.h"
 
 class TFhh {
 

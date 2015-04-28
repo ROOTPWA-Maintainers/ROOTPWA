@@ -1,4 +1,6 @@
-//
+#ifndef TSPINWAVEFUNCTION_HH
+#define TSPINWAVEFUNCTION_HH
+
 // Uncomment the following line
 // if you want to work in CINT (root.cern.ch)
 //
@@ -39,3 +41,5 @@ class TSpinWaveFunction {
 		//ClassDef(TSpinWaveFunction,1);
 
 };
+
+#endif
