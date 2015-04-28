@@ -5,16 +5,16 @@ using namespace std;
 
 extern ClebschGordanBox box;
 
-Int_t debugLSAmpl=1;
+long debugLSAmpl=1;
 
-TLSAmpl::TLSAmpl(Int_t RankS1, Int_t RankS2,
-		Int_t RankL,  Int_t RankJ,
-		Int_t delta_,  Int_t S_L,
-		Int_t cPsiInt, Int_t cPsiChi, 
-		Int_t cChiPhi, Int_t cPsiPhi,
-		Int_t cPhiOme, Int_t cChiOme,
-		Int_t cPhiEps, Int_t cChiEps,
-		Int_t cNum) {
+TLSAmpl::TLSAmpl(long RankS1, long RankS2,
+		long RankL,  long RankJ,
+		long delta_,  long S_L,
+		long cPsiInt, long cPsiChi,
+		long cChiPhi, long cPsiPhi,
+		long cPhiOme, long cChiOme,
+		long cPhiEps, long cChiEps,
+		long cNum) {
 
 	J=RankJ;
 	L=RankL;
@@ -24,27 +24,27 @@ TLSAmpl::TLSAmpl(Int_t RankS1, Int_t RankS2,
 
 	cPsI=cPsiInt; cPsC=cPsiChi;
 	cCP=cChiPhi;  cPsP=cPsiPhi;
-	cPO=cPhiOme;  cCO=cChiOme; 
+	cPO=cPhiOme;  cCO=cChiOme;
 	cPE=cPhiEps;  cCE=cChiEps;
 
-	Int_t totalR=RankS1+RankS2+RankL+RankJ;
-	Int_t contractions=2*(cPsiInt+cPsiChi+cChiPhi+cPsiPhi);
-	Int_t even_contraction=1;
+	long totalR=RankS1+RankS2+RankL+RankJ;
+	long contractions=2*(cPsiInt+cPsiChi+cChiPhi+cPsiPhi);
+	long even_contraction=1;
 	if ( totalR % 2 )  even_contraction=0;
 
 	if ( ( even_contraction==1 && contractions != totalR   ) ||
 			( even_contraction==0 && contractions != totalR-3 ) ) {
-		cerr << "Invalid contraction occurred" << endl; 
+		cerr << "Invalid contraction occurred" << endl;
 		return;
 	}
 
 	if (debugLSAmpl) {
-		cout << "LSAmpl: "<<RankS1<<" "<<RankS2<<" L="  
-			<<RankL<<" "<<RankJ<<" d="<<delta<<" S="<<S_L<<" c: "  
+		cout << "LSAmpl: "<<RankS1<<" "<<RankS2<<" L="
+			<<RankL<<" "<<RankJ<<" d="<<delta<<" S="<<S_L<<" c: "
 			<<cPsiInt<<" "<<cPsiChi<<" "<<cChiPhi<<" "<<cPsiPhi << " s: "
 			<<cPhiOme<<" "<<cChiOme<<" "<<cPhiEps<<" "<<cChiEps;
 		if (even_contraction) cout << endl;
-		else cout<< " (iw)" << endl;  
+		else cout<< " (iw)" << endl;
 	}
 
 	TSpinWaveFunction WFS1(RankS1, 's');
@@ -54,7 +54,7 @@ TLSAmpl::TLSAmpl(Int_t RankS1, Int_t RankS2,
 	if (debugLSAmpl==2) TSS->Print();
 
 	if (cPsiInt) {
-		Int_t ires = TSS->SpinInnerContraction(cPsiInt);
+		long ires = TSS->SpinInnerContraction(cPsiInt);
 		if (ires==0) {
 			if (debugLSAmpl) cout << "Inner contraction is zero." << endl;
 			Nterms=0;
@@ -98,7 +98,7 @@ TLSAmpl::TLSAmpl(Int_t RankS1, Int_t RankS2,
 	if (Nterms==0) {
 		if (debugLSAmpl) cout << "LJ contraction is zero." << endl;
 		return;
-	} 
+	}
 
 	if (debugLSAmpl) {
 		//TSScalar->Print();
@@ -106,19 +106,19 @@ TLSAmpl::TLSAmpl(Int_t RankS1, Int_t RankS2,
 	}
 }
 
-Int_t debugLSContrib=0;
+long debugLSContrib=0;
 
-TLSContrib::TLSContrib(TLSContrib *b, Bool_t particle_exchange) {
+TLSContrib::TLSContrib(TLSContrib *b, bool particle_exchange) {
 	J=b->J; L=b->L; S=b->S; cNum=b->cNum; delta=b->delta;
 	Nterms=b->Nterms;
 	NormFactor=b->NormFactor;
 	PureRelativistic=b->PureRelativistic;
 	termFracNum = new TFracNum[Nterms];
-	termg1pot = new Int_t[Nterms];
-	termg2pot = new Int_t[Nterms];
-	for (Int_t i=0; i<Nterms; i++) {
+	termg1pot = new long[Nterms];
+	termg2pot = new long[Nterms];
+	for (long i=0; i<Nterms; i++) {
 		// force new power fields by multiplication " *1 "
-		termFracNum[i] = TFracNum_One * b->termFracNum[i]; 
+		termFracNum[i] = TFracNum_One * b->termFracNum[i];
 		if (particle_exchange) {
 			termg1pot[i]   = b->termg2pot[i];
 			termg2pot[i]   = b->termg1pot[i];
@@ -130,7 +130,7 @@ TLSContrib::TLSContrib(TLSContrib *b, Bool_t particle_exchange) {
 	}
 };
 
-TLSContrib::TLSContrib(TLSAmpl *A, Int_t delta_, TFracNum scfac) {
+TLSContrib::TLSContrib(TLSAmpl *A, long delta_, TFracNum scfac) {
 	J=A->GetJ();
 	L=A->GetL();
 	S=A->GetS();
@@ -138,17 +138,17 @@ TLSContrib::TLSContrib(TLSAmpl *A, Int_t delta_, TFracNum scfac) {
 	delta=delta_;
 	SpinCG=scfac;
 
-	Bool_t sign_reversal=false;
-	if (delta<0 && (L+S-J)%2 ) sign_reversal=true;  
+	bool sign_reversal=false;
+	if (delta<0 && (L+S-J)%2 ) sign_reversal=true;
 
 	Nterms=A->GetNterms();
 	termFracNum = new TFracNum[Nterms];
-	termg1pot   = new Int_t[Nterms];
-	termg2pot   = new Int_t[Nterms];
+	termg1pot   = new long[Nterms];
+	termg2pot   = new long[Nterms];
 
 	NormFactor=TFracNum_Zero;
 	if (debugLSContrib) cout <<"("<<J<<")"<<L<<S<<"["<<delta<<"]"<<endl;
-	for (Int_t i=0; i<Nterms; i++) {
+	for (long i=0; i<Nterms; i++) {
 		TTensorTerm *tt = A->GetTerm(i); //TSScalar->GetTerm(i);
 
 		if (debugLSContrib)
@@ -159,23 +159,23 @@ TLSContrib::TLSContrib(TLSAmpl *A, Int_t delta_, TFracNum scfac) {
 
 		termFracNum[i] = scfac * tt->GetPreFac();
 		if (sign_reversal==true) termFracNum[i].FlipSign();
-		//TFracNum tSqr = NormFactor * termFracNum[i]; 
+		//TFracNum tSqr = NormFactor * termFracNum[i];
 		//if ( ! tSqrt.Sqrt() )
 		//  cout << " Building LSContrib leads not to squared-fractional numbers,"
 		//	   << " results will be wrong!" << endl;
 
 		TFracNum *sum = NormFactor.SumSignedRoots(&(termFracNum[i]));
 		if (sum) { NormFactor = *sum; }
-		else     { 
+		else     {
 			cerr << "TLSContrib: Normalisation not root-fractional,"
-				<< " *** results will be wrong *** " << endl; 
+				<< " *** results will be wrong *** " << endl;
 		}
 
 		//    NormFactor=NormFactor+termFracNum[i]+TFracNum_Two*tSqrt;
 
 		termg1pot[i] = tt->GetGamS();
 		termg2pot[i] = tt->GetGamSig();
-		if (debugLSContrib) cout << " -> Normfactor: " 
+		if (debugLSContrib) cout << " -> Normfactor: "
 			<< NormFactor.FracStringSqrt() << endl;
 
 	}
@@ -189,14 +189,14 @@ TLSContrib::TLSContrib(TLSAmpl *A, Int_t delta_, TFracNum scfac) {
 		NormInv.Invert();
 		// TFracNum InvAbs=TFracNum_One * NormInv; //Bug: real copy forced by "1 *"
 		// InvAbs.Abs();
-		for (Int_t i=0; i<Nterms; i++) {
+		for (long i=0; i<Nterms; i++) {
 			termFracNum[i]=termFracNum[i]*NormInv; // InvAbs;
-		}    
+		}
 	}
 }
 
-Int_t 
-TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
+long
+TLSContrib::Add(TLSContrib *b, bool particle_exchange) {
 	if (J!=b->J || L!=b->L || S!=b->S) {
 		cerr <<"TLSContrib::Add : Something is wrong, trying to add different"
 			<<" (J;L,S): ("<<J<<";"<<L<<","<<S<<") != ("
@@ -209,19 +209,19 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 	// representation of prefactors
 	//
 
-	for (Int_t i=0; i<Nterms; i++) {
+	for (long i=0; i<Nterms; i++) {
 		termFracNum[i]= TFracNum_Quarter * NormFactor *termFracNum[i];
 	}
 
-	for (Int_t ib=0; ib<b->Nterms; ib++) {
-		Bool_t term_summed=false;
-		for (Int_t i=0; i<Nterms; i++) {
+	for (long ib=0; ib<b->Nterms; ib++) {
+		bool term_summed=false;
+		for (long i=0; i<Nterms; i++) {
 			if ( !term_summed && cNum == b->cNum &&
-					( (particle_exchange==true  && 
-					   termg1pot[i]==b->termg2pot[ib] && 
+					( (particle_exchange==true  &&
+					   termg1pot[i]==b->termg2pot[ib] &&
 					   termg2pot[i]==b->termg1pot[ib]     ) ||
-					  (particle_exchange==false && 
-					   termg1pot[i]==b->termg1pot[ib] && 
+					  (particle_exchange==false &&
+					   termg1pot[i]==b->termg1pot[ib] &&
 					   termg2pot[i]==b->termg2pot[ib]     ) )  ) {
 				term_summed=true;
 				TFracNum bterm=TFracNum_Quarter * b->NormFactor * b->termFracNum[ib];
@@ -230,23 +230,23 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 
 				TFracNum *sum = bterm.SumSignedRoots(&(termFracNum[i]));
 				if (sum) { termFracNum[i] = *sum; }
-				else     { 
+				else     {
 					cerr << "TLSContrib: Normalisation not root-fractional,"
-						<< " *** results will be wrong *** " << endl; 
+						<< " *** results will be wrong *** " << endl;
 				}
 			}
 		}
 		if (!term_summed) {
 			Nterms++;
 			TFracNum *new_termFracNum = new TFracNum[Nterms];
-			Int_t *new_termg1pot = new Int_t[Nterms];
-			Int_t *new_termg2pot = new Int_t[Nterms];
-			for (Int_t i=0; i<Nterms-1; i++) {
+			long *new_termg1pot = new long[Nterms];
+			long *new_termg2pot = new long[Nterms];
+			for (long i=0; i<Nterms-1; i++) {
 				new_termFracNum[i]=termFracNum[i];
 				new_termg1pot[i]=termg1pot[i];
 				new_termg2pot[i]=termg2pot[i];
 			}
-			new_termFracNum[Nterms-1] = 
+			new_termFracNum[Nterms-1] =
 				TFracNum_Quarter * b->NormFactor * b->termFracNum[ib];
 			//if ( ! new_termFracNum[Nterms-1].Sqrt() )
 			//  cout << "Square root not possible, this will lead to wrong results:"
@@ -271,8 +271,8 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 	//
 	// Eliminate zero entries
 	//
-	Int_t non_zeros=0;
-	for (Int_t i=0; i<Nterms; i++)
+	long non_zeros=0;
+	for (long i=0; i<Nterms; i++)
 		if (! (termFracNum[i]==TFracNum_Zero) ) non_zeros++;
 
 	if (non_zeros==0) {
@@ -281,11 +281,11 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 	}
 	else {
 		TFracNum *new_termFracNum = new TFracNum[non_zeros];
-		Int_t *new_termg1pot = new Int_t[non_zeros];
-		Int_t *new_termg2pot = new Int_t[non_zeros];
+		long *new_termg1pot = new long[non_zeros];
+		long *new_termg2pot = new long[non_zeros];
 
-		Int_t j=0;
-		for (Int_t i=0; i<Nterms; i++)
+		long j=0;
+		for (long i=0; i<Nterms; i++)
 			if (! (termFracNum[i]==TFracNum_Zero) ) {
 				new_termFracNum[j]=termFracNum[i];
 				new_termg1pot[j]=termg1pot[i];
@@ -302,12 +302,12 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 	// Recalculate Normalization Factor
 	//
 	NormFactor=TFracNum_Zero;
-	for (Int_t i=0; i<Nterms; i++) {
+	for (long i=0; i<Nterms; i++) {
 		TFracNum *sum = NormFactor.SumSignedRoots(&(termFracNum[i]));
 		if (sum) { NormFactor = *sum; }
-		else     { 
+		else     {
 			cerr << "TLSContrib: Normalisation not root-fractional,"
-				<< " *** results will be wrong *** " << endl; 
+				<< " *** results will be wrong *** " << endl;
 		}
 	}
 
@@ -322,14 +322,14 @@ TLSContrib::Add(TLSContrib *b, Bool_t particle_exchange) {
 		PureRelativistic=false;
 		TFracNum NormInv=NormFactor;
 		NormInv.Invert();
-		for (Int_t i=0; i<Nterms; i++) {
+		for (long i=0; i<Nterms; i++) {
 			termFracNum[i]=termFracNum[i]*NormInv;
-		}    
+		}
 	}
 	return Nterms;
 }
 
-Int_t 
+long
 TLSContrib::Print() {
 	if (cNum==1) cout <<"g"<<"["<<cNum<<"] (";
 	if (cNum==2) cout <<"f"<<"["<<cNum<<"] (";
@@ -338,7 +338,7 @@ TLSContrib::Print() {
 	if (!PureRelativistic) {
 		cout << NormFactor.FracStringSqrt() << " ) ( ";
 	}
-	for (Int_t iT=0; iT<Nterms; iT++){
+	for (long iT=0; iT<Nterms; iT++){
 		cout << termFracNum[iT].FracStringSqrt()<<" ";
 		if (termg1pot[iT]) {
 			if (termg1pot[iT]==1) cout << " gs";
@@ -353,7 +353,7 @@ TLSContrib::Print() {
 	return 0;
 }
 
-Int_t
+long
 TLSContrib::PrintNR() {
 	cout << NormFactor.FracStringSqrt();
 	if (cNum==1) cout <<"*g";
@@ -362,7 +362,7 @@ TLSContrib::PrintNR() {
 	return 0;
 }
 
-Int_t
+long
 TLSContrib::PrintNRG(TFracNum m) {
 	cout << (NormFactor * m).FracStringSqrt();
 	if (cNum==1) cout <<"*g";
@@ -383,23 +383,23 @@ TLSNonRel::TLSNonRel(TLSContrib *C) {
 	//cout << "delta=" << C->GetDelta()
 	//     << ",S=" << S
 	//     << ", 2L+1/2J+1=" << TFracNum(2*L+1,2*J+1).FracStringSqrt()
-	//     << ",CG(JdL0Sd)=" 
+	//     << ",CG(JdL0Sd)="
 	//     << JdL0Sd[CGIndex(L, 0, S, C->GetDelta())].FracStringSqrt()
 	//     << ", SpinCG=" << C->GetSpinCG()->FracStringSqrt()
 	//     << endl;
-	GnrPrefac = TFracNum(2*L+1,2*J+1) * 
+	GnrPrefac = TFracNum(2*L+1,2*J+1) *
 		JdL0Sd[CGIndex(L, 0, S, C->GetDelta())] *
 		*C->GetSpinCG();
 }
 
-Int_t TLSNonRel::Add(TLSContrib *C){
+long TLSNonRel::Add(TLSContrib *C){
 	if ( ! CheckJLS(C) ) {
 		cout << "TLSNonRel::Add not appropriate, skipping (check code)!!!" << endl;
 		return -1;
 	}
 	Nterms++;
-	TLSContrib **newRelLS = new TLSContrib*[Nterms];  
-	for (Int_t i=0; i<Nterms-1; i++) {
+	TLSContrib **newRelLS = new TLSContrib*[Nterms];
+	for (long i=0; i<Nterms-1; i++) {
 		newRelLS[i]=RelLS[i];
 	}
 	newRelLS[Nterms-1]=C;
@@ -407,18 +407,18 @@ Int_t TLSNonRel::Add(TLSContrib *C){
 	return 0;
 }
 
-Int_t TLSNonRel::Print() {
+long TLSNonRel::Print() {
 	cout << " [ " << GnrPrefac.FracStringSqrt() << "  G_"<< L << S <<" ] ";
-	for (Int_t i=0; i<Nterms; i++) {
+	for (long i=0; i<Nterms; i++) {
 		RelLS[i]->PrintNR();
 	}
 	cout << endl;
 	return 0;
 }
 
-Int_t TLSNonRel::PrintG() {
+long TLSNonRel::PrintG() {
 	cout << " [ G_"<< L << S <<" ] ";
-	for (Int_t i=0; i<Nterms; i++) {
+	for (long i=0; i<Nterms; i++) {
 		TFracNum GnrInv(GnrPrefac);
 		GnrInv.Invert();
 		RelLS[i]->PrintNRG(GnrInv);
