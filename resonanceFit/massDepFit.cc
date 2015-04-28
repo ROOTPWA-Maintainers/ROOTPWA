@@ -112,23 +112,23 @@ rpwa::massDepFit::massDepFit::readConfig(const libconfig::Setting* configRoot,
 
 	// extract information from fit results
 	if(not readInFiles(valTreeName, valBranchName)) {
-		printErr << "error while trying to read fit result." << std::endl;
+		printErr << "error while reading fit result." << std::endl;
 		return false;
 	}
 
 	// extract information for systematic errors
 	if(not readSystematicsFiles(valTreeName, valBranchName)) {
-		printErr << "error while trying to read fit results for systematic errors." << std::endl;
+		printErr << "error while reading fit results for systematic errors." << std::endl;
 		return false;
 	}
 
 	// prepare mass limits
 	if(not prepareMassLimits()) {
-		printErr << "error determine which bins to use in the fit." << std::endl;
+		printErr << "error while determining which bins to use in the fit." << std::endl;
 		return false;
 	}
 
-	// set-up fit model (resonances, background, final-state mass dependence)
+	// set-up fit model (resonances, background, final-state mass-dependence)
 	const libconfig::Setting* configModel = findLibConfigGroup(*configRoot, "model");
 	if(not configModel) {
 		printErr << "'model' does not exist in configuration file." << std::endl;
@@ -497,7 +497,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const libconfig::Setting* configMo
 			return false;
 		}
 	} else {
-		printInfo << "not using final-state mass dependence." << std::endl;
+		printInfo << "not using final-state mass-dependence." << std::endl;
 	}
 
 	return true;
@@ -638,7 +638,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
 	}
 	fitModel.setFsmd(fsmd);
 
-	printInfo << "using final-state mass dependence as defined in the configuration file." << std::endl;
+	printInfo << "using final-state mass-dependence as defined in the configuration file." << std::endl;
 
 	return true;
 }
@@ -810,12 +810,12 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const libconfig::Setting* co
 	}
 
 	if(not fitModel.getFsmd()) {
-		printErr << "updating of 'finalStateMassDependence' requested, but there is no final-state mass-dependence." << std::endl;
+		printErr << "updating final-state mass-dependence requested, but there is no final-state mass-dependence." << std::endl;
 		return false;
 	}
 
 	if(not fitModel.getFsmd()->update(configFsmd, fitParameters, fitParametersError, _debug)) {
-		printErr << "error while updating 'finalStateMassDependence' for result file." << std::endl;
+		printErr << "error while updating final-state mass-dependence for result file." << std::endl;
 		return false;
 	}
 
@@ -1221,7 +1221,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 		for(size_t idx=0; idx<mapping.size(); ++idx) {
 			output << " " << idx << "->" << mapping[idx];
 		}
-		printDebug << "etablished mapping:" << output.str() << std::endl;
+		printDebug << "established mapping:" << output.str() << std::endl;
 	}
 
 	return true;

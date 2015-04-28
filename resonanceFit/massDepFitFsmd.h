@@ -98,7 +98,6 @@ namespace rpwa {
 			std::vector<bool> _parametersLimitedLower;
 			std::vector<double> _parametersLimitUpper;
 			std::vector<bool> _parametersLimitedUpper;
-			std::vector<std::string> _parametersName;
 			std::vector<double> _parametersStep;
 		};
 

@@ -65,14 +65,14 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
                              const bool debug)
 {
 	if(debug) {
-		printDebug << "starting initialization of final-state mass-dependence." << std::endl;
+		printDebug << "start initializing final-state mass-dependence." << std::endl;
 	}
 
 	std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
 	                     ("formula", libconfig::Setting::TypeString);
 	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
-		printErr << "'finalStateMassDependence' section in configuration file contains errors." << std::endl;
+		printErr << "'finalStateMassDependence' does not contain all required variables." << std::endl;
 		return false;
 	}
 
@@ -106,7 +106,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 		const libconfig::Setting* configParameter = findLibConfigGroup(*configFsmd, parName.str());
 		if (not configParameter) {
-			printErr << "final-state mass dependence does not define parameter '" << parName.str() << "'." << std::endl;
+			printErr << "final-state mass-dependence does not define parameter '" << parName.str() << "'." << std::endl;
 			return false;
 		}
 
@@ -115,7 +115,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 		                     ("val", libconfig::Setting::TypeFloat)
 		                     ("fix", libconfig::Setting::TypeBoolean);
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "'" << parName.str() << "' of final-state mass dependence does not contain all required variables." << std::endl;
+			printErr << "'" << parName.str() << "' of final-state mass-dependence does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -143,7 +143,7 @@ rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
 
 	if(debug) {
 		print(printDebug);
-		printDebug << "finished initialization of final-state mass-dependence." << std::endl;
+		printDebug << "finished initializing final-state mass-dependence." << std::endl;
 	}
 
 	return true;
@@ -176,7 +176,6 @@ rpwa::massDepFit::fsmd::update(const libconfig::Setting* configFsmd,
 		if(not configParameter->exists("error")) {
 			configParameter->add("error", libconfig::Setting::TypeFloat);
 		}
-
 		(*configParameter)["error"] = fitParametersError.getParameter(_id, idxParameter);
 	}
 
