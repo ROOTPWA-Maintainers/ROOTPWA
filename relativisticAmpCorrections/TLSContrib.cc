@@ -4,9 +4,9 @@
 
 using namespace std;
 
-bool TLSContrib::_debug = 0;
+bool TLSContrib::_debug = false;
 
-TLSContrib::TLSContrib(TLSContrib* b, bool particleExchange)
+TLSContrib::TLSContrib(const TLSContrib* b, const bool& particleExchange)
 	: _J(b->_J),
 	  _L(b->_L),
 	  _S(b->_S),
@@ -33,7 +33,9 @@ TLSContrib::TLSContrib(TLSContrib* b, bool particleExchange)
 }
 ;
 
-TLSContrib::TLSContrib(TLSAmpl *A, long delta, TFracNum scfac)
+TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
+                       const long& delta,
+                       const TFracNum& scfac)
 	: _J(A->GetJ()),
 	  _L(A->GetL()),
 	  _S(A->GetS()),

@@ -4,61 +4,85 @@
 #include "TSpinWaveFunction.h"
 
 /*!
-  \class TLSAmpl
-  \brief Relativistic LS-coupling amplitudes
+ \class TLSAmpl
+ \brief Relativistic LS-coupling amplitudes
 
 
-  \author Jan.Friedrich@ph.tum.de
-  */
+ \author Jan.Friedrich@ph.tum.de
+ */
 class TLSAmpl {
 
-	private:
-		long J;
-		long L;
-		long S;
-		long delta;
+  public:
 
-		long ContractionNumber;
-		long cPsI; long cPsC;
-		long cCP;  long cPsP;
-		long cPO; long cCO;
-		long cPE; long cCE;
+// TODO: check if this can be deleted
+#if(0)
+	TLSAmpl()
+		: _J(0),
+		  _L(0),
+		  _S(0),
+		  _delta(0),
+		  _Nterms(0) { }
+#endif
 
-		long Nterms;
-		TTensorSum *TSScalar;
+	TLSAmpl(long RankS1,
+	        long RankS2,
+	        long RankL,
+	        long RankJ,
+	        long delta,
+	        long S_L,
+	        long cPsiInt,
+	        long cPsiChi,
+	        long cChiPhi,
+	        long cPsiPhi,
+	        long cPhiOme,
+	        long cChiOme,
+	        long cPhiEps,
+	        long cChiEps,
+	        long contractionNumber);
 
-	public:
+	const long& GetNterms()      const { return _Nterms; }
+	const long& GetJ()           const { return _J; }
+	const long& GetL()           const { return _L; }
+	const long& GetS()           const { return _S; }
+	const long& Getdelta()       const { return _delta; }
+	const long& GetContraction() const { return _contractionNumber; }
 
-		TLSAmpl() {
-			J=0; L=0; S=0; delta=0;
-			Nterms=0;
-		};
+	bool CheckContraction(long L,
+	                      long S,
+	                      long cPsI,
+	                      long cPsC,
+	                      long cCP,
+	                      long cPsP,
+	                      long cPO,
+	                      long cCO,
+	                      long cPE,
+	                      long cCE) const;
 
-		TLSAmpl(long RankS1, long RankS2,
-				long RankL,  long RankJ,
-				long delta,  long S_L,
-				long cPsiInt, long cPsiChi,
-				long cChiPhi, long cPsiPhi,
-				long cPhiOme, long cChiOme,
-				long cPhiEps, long cChiEps,
-				long cNum);
+	TTensorTerm* GetTerm(long i) const {
+		return _TSScalar->GetTerm(i);
+	}
 
-		long GetNterms() {return Nterms;};
+  private:
 
-		long GetJ()     {return J;};
-		long GetL()     {return L;};
-		long GetS()     {return S;};
-		long Getdelta() {return delta;};
-		long GetContraction() {return ContractionNumber;};
-		bool CheckContraction(long L_, long S_, long cPsI_, long cPsC_,
-				long cCP_, long cPsP_, long cPO_, long cCO_,
-				long cPE_, long cCE_) {
-			if ( L!=L_ || S!=S_ || cPsI!=cPsI_ || cPsC!=cPsC_ || cCP!=cCP_ ||
-					cPsP!=cPsP_ || cPO!=cPO_ || cCO!=cCO_ || cPE!=cPE_ || cCE!=cCE_ )
-				return false;
-			return true;
-		}
-		TTensorTerm *GetTerm(long i) {return TSScalar->GetTerm(i);};
+	long _J;
+	long _L;
+	long _S;
+	long _delta;
+
+	long _contractionNumber;
+	long _cPsiInt;
+	long _cPsiChi;
+	long _cChiPhi;
+	long _cPsiPhi;
+	long _cPhiOme;
+	long _cChiOme;
+	long _cPhiEps;
+	long _cChiEps;
+
+	long _Nterms;
+	TTensorSum* _TSScalar;
+
+	static unsigned int _debugLevel;
 
 };
 

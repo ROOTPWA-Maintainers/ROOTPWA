@@ -14,6 +14,8 @@ class TJSS {
 
   public:
 
+// TODO: check if this can be deleted
+#if(0)
 	TJSS()
 		: _JMother(0),
 		  _etaJ(1),
@@ -24,10 +26,14 @@ class TJSS {
 		  _LSAmplitudes(),
 		  _FhhAmpl(),
 		  _FhhIdAmpl(0) { }
+#endif
 
-	TJSS(long J,  long eJ,
-	     long S1, long e1,
-	     long S2, long e2)
+	TJSS(long J,
+	     long eJ,
+	     long S1,
+	     long e1,
+	     long S2,
+	     long e2)
 		: _JMother(J),
 		  _etaJ(eJ),
 		  _SDecay1(S1),
