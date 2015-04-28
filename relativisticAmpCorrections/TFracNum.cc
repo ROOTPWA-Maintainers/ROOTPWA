@@ -5,9 +5,12 @@
 #include "TFracNum.h"
 using namespace std;
 
+
 bool TFracNum::debugFracNum = false;
 
+
 const char* SQUAREROOT_CHAR = "#";
+
 
 TFracNum::TFracNum(long mN, long mD, long* N, long* D, long s)
 	: _maxPrimNom(mN),
@@ -42,6 +45,7 @@ TFracNum::TFracNum(long mN, long mD, long* N, long* D, long s)
 	}
 	SetINTs();
 }
+
 
 TFracNum::TFracNum(const long& N, const long& D, const string& s)
 	: _maxPrimNom(0),
@@ -101,6 +105,7 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 	}
 	this->SetINTs();
 }
+
 
 TFracNum::TFracNum(long inom, long iden) {
 
@@ -252,6 +257,7 @@ TFracNum::TFracNum(long inom, long iden) {
 	}
 }
 
+
 bool TFracNum::SetINTs() {
 	if (_signPrefac == 0) {
 		_NOM_INT = 0;
@@ -298,6 +304,7 @@ bool TFracNum::SetINTs() {
 	return true;
 }
 
+
 long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 	long maxPD = _maxPrimDen;
 	if (maxPD > b._maxPrimDen) {
@@ -315,6 +322,7 @@ long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 	}
 	return comdiv;
 }
+
 
 TFracNum*
 TFracNum::SumSignedRoots(const TFracNum& b) {
@@ -338,6 +346,7 @@ TFracNum::SumSignedRoots(const TFracNum& b) {
 	cerr << b;
 	return 0;
 }
+
 
 bool TFracNum::Sqrt() {
 	if (_signPrefac == 0 or _NOM_INT == 0) {
@@ -383,13 +392,14 @@ bool TFracNum::Sqrt() {
 	SetINTs();
 	return true;
 }
-;
+
 
 bool TFracNum::FlipSign() {
 	_signPrefac *= -1;
 	_dValue *= -1.0;
 	return true;
 }
+
 
 bool TFracNum::Abs() {
 	if (_signPrefac == 0) {
@@ -404,6 +414,7 @@ bool TFracNum::Abs() {
 	}
 	return true;
 }
+
 
 bool TFracNum::Invert() {
 	if (_signPrefac == -7777) {
@@ -460,7 +471,7 @@ bool TFracNum::operator==(const TFracNum &b) const {
 	}
 	return true;
 }
-;
+
 
 bool TFracNum::PrintDifference(const TFracNum &b) const {
 	if (_signPrefac == 0 && b._signPrefac == 0) {
@@ -499,7 +510,7 @@ bool TFracNum::PrintDifference(const TFracNum &b) const {
 	cout << "Well, they're simply equal!" << endl;
 	return true;
 }
-;
+
 
 char*
 TFracNum::HeaderString() {
@@ -523,7 +534,7 @@ TFracNum::HeaderString() {
 	}
 	return hstr;
 }
-;
+
 
 bool TFracNum::operator>(const TFracNum &b) const {
 	if (_dValue > b._dValue) {
@@ -531,20 +542,24 @@ bool TFracNum::operator>(const TFracNum &b) const {
 	}
 	return false;
 }
-;
 
-TFracNum TFracNum::operator+(const TFracNum &b) const {
-	long den_cdiv = DenomCommonDivisor(b);
-	long bdc = b._DEN_INT / den_cdiv;
+
+
+TFracNum& TFracNum::operator+=(const TFracNum &rhs) {
+	long den_cdiv = DenomCommonDivisor(rhs);
+	long bdc = rhs._DEN_INT / den_cdiv;
 	long adc = _DEN_INT / den_cdiv;
-	return TFracNum(_signPrefac * _NOM_INT * bdc + b._signPrefac * b._NOM_INT * adc, _DEN_INT * bdc);
+	*this = TFracNum(_signPrefac * _NOM_INT * bdc + rhs._signPrefac * rhs._NOM_INT * adc, _DEN_INT * bdc);
+	return *this;
 }
 
-TFracNum TFracNum::operator*(const TFracNum &b) const {
+
+TFracNum& TFracNum::operator*=(const TFracNum &b) {
 	// if one of the two numbers is undetermined,
 	// the product is also undetermined
 	if (_signPrefac == -6666 || b._signPrefac == -6666) {
-		return TFracNum(0, 0, 0, 0, -6666);
+		*this = TFracNum(0, 0, 0, 0, -6666);
+		return *this;
 	}
 
 	// if one of the two numbers contains division by zero,
@@ -552,16 +567,19 @@ TFracNum TFracNum::operator*(const TFracNum &b) const {
 	if ((_signPrefac == -7777 and b._signPrefac == 0) or
 	    (_signPrefac == 0     and b._signPrefac == -7777))
 	{
-		return TFracNum(0, 0, 0, 0, -6666);
+		*this = TFracNum(0, 0, 0, 0, -6666);
+		return *this;
 	}
 
 	// other cases with division by zero; product is also infinity
 	if ((_signPrefac == -7777 or b._signPrefac == -7777)) {
-		return TFracNum(0, 0, 0, 0, -7777);
+		*this = TFracNum(0, 0, 0, 0, -7777);
+		return *this;
 	}
 
 	if (_signPrefac * b._signPrefac == 0) {
-		return TFracNum(0, 0, 0, 0, 0);
+		*this = TFracNum(0, 0, 0, 0, 0);
+		return *this;
 	}
 
 	long maxPrimNom_ = _maxPrimNom;
@@ -644,8 +662,10 @@ TFracNum TFracNum::operator*(const TFracNum &b) const {
 		}
 		cout << endl;
 	}
-	return TFracNum(maxPrimNom_, maxPrimDen_, NOM_, DEN_, _signPrefac * b._signPrefac);
+	*this = TFracNum(maxPrimNom_, maxPrimDen_, NOM_, DEN_, _signPrefac * b._signPrefac);
+	return *this;
 }
+
 
 std::ostream& TFracNum::Print(std::ostream& out) const {
 	if (debugFracNum) {
@@ -747,9 +767,10 @@ TFracNum::FracString() {
 	}
 	return fstr;
 }
-;
+
 
 const char NULLSTRING[1] = ""; // workaround CINT warning when sprintf(s,"");
+
 
 const char*
 TFracNum::FracStringSqrt() const {
@@ -820,7 +841,7 @@ TFracNum::FracStringSqrt() const {
 	sprintf(fstr, "%c%s%s", _signPrefac < 0 ? '-' : '+', sqrtstr, reststr);
 	return fstr;
 }
-;
+
 
 TFracNum a_to_J(long J, long m) {
 	long kappa = (J - m) % 2;
@@ -840,6 +861,7 @@ TFracNum am0_to_J(long J, long m, long m0) {
 	return twofac * fac1 * fac2;
 }
 
+
 TFracNum c_sub_ell(long ell) {
 	if (ell == 0) {
 		return TFracNum(0, 0, 0, 0, 1);
@@ -851,6 +873,7 @@ TFracNum c_sub_ell(long ell) {
 	return two_to_ell * fac1 * fac2;
 }
 
+
 TFracNum cm0_sub_ell(long ell, long m0) {
 	if (ell == 0) {
 		return TFracNum(0, 0, 0, 0, 1);
@@ -861,6 +884,7 @@ TFracNum cm0_sub_ell(long ell, long m0) {
 	TFracNum fac2(ell, 2 * ell, "factorial");
 	return two_to_ell * fac1 * fac2;
 }
+
 
 TFracNum cm0_sub_ell_2(long ell, long m0) {
 	//return  am0_to_J(ell, 0, m0);
@@ -875,4 +899,3 @@ TFracNum cm0_sub_ell_2(long ell, long m0) {
 	TFracNum fac2b(ell, 2 * ell, "factorial");
 	return two_to_ell * fac1a * fac1b * fac2a * fac2b;
 }
-

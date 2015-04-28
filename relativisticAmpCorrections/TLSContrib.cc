@@ -89,7 +89,7 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 		// TFracNum InvAbs=TFracNum_One * NormInv; //Bug: real copy forced by "1 *"
 		// InvAbs.Abs();
 		for (size_t i = 0; i < GetNterms(); i++) {
-			_factors[i].squareOfPrefactor = NormInv * _factors[i].squareOfPrefactor;
+			_factors[i].squareOfPrefactor *= NormInv; // InvAbs
 		}
 	}
 }
@@ -108,7 +108,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 
 	for (size_t i = 0; i < _factors.size(); i++) {
-		_factors[i].squareOfPrefactor = TFracNum_Quarter * _NormFactor * _factors[i].squareOfPrefactor;
+		_factors[i].squareOfPrefactor *= TFracNum_Quarter * _NormFactor;
 	}
 
 	for (size_t ib = 0; ib < b->GetNterms(); ib++) {
@@ -146,7 +146,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 		if (not termSummed) {
 
 			factors factor(b->getFactors()[ib]);
-			factor.squareOfPrefactor = TFracNum_Quarter * b->_NormFactor * factor.squareOfPrefactor;
+			factor.squareOfPrefactor *= TFracNum_Quarter * b->_NormFactor;
 			if (_J % 2) {
 				if(not factor.squareOfPrefactor.FlipSign()) {
 					cerr << "Flipping sign failed. Aborting..." << endl;
@@ -203,7 +203,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 		TFracNum NormInv = _NormFactor;
 		NormInv.Invert();
 		for (size_t i = 0; i < _factors.size(); i++) {
-			_factors[i].squareOfPrefactor = NormInv * _factors[i].squareOfPrefactor;
+			_factors[i].squareOfPrefactor *= NormInv;
 		}
 	}
 }

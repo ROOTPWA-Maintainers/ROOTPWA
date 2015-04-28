@@ -116,9 +116,9 @@ class TFracNum {
 	//! Check whether left-hand number is greater than right-hand number
 	bool operator>(const TFracNum &) const;
 	//! Multiply two fractional numbers
-	TFracNum operator*(const TFracNum &) const;
+	TFracNum& operator*=(const TFracNum& rhs);
 	//! Add two fractional numbers
-	TFracNum operator+(const TFracNum &) const;
+	TFracNum& operator+=(const TFracNum &);
 
 	bool SetINTs();
 
@@ -155,12 +155,31 @@ class TFracNum {
 
 };
 
+
 inline
 std::ostream&
 operator <<(std::ostream&            out,
             const TFracNum&          fracNum)
 {
 	return fracNum.Print(out);
+}
+
+
+inline
+TFracNum
+operator *(TFracNum lhs, const TFracNum& rhs)
+{
+	lhs *= rhs;
+	return lhs;
+}
+
+
+inline
+TFracNum
+operator +(TFracNum lhs, const TFracNum& rhs)
+{
+	lhs += rhs;
+	return lhs;
 }
 
 const TFracNum TFracNum_Zero(0, 1);
