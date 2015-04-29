@@ -99,6 +99,7 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
 	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
@@ -113,6 +114,9 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
+if(USE_NLOPT)
+	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)
+endif()
 
 
 # library
@@ -132,6 +136,9 @@ make_shared_library(
 	"${RPWA_STORAGEFORMATS_LIB}"
 	"${RPWA_UTILITIES_LIB}"
 	)
+if(USE_NLOPT)
+	target_link_libraries(${THIS_LIB} "${NLopt_LIBS}")
+endif()
 
 
 # link the shared library with the python bindings

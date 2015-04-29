@@ -579,10 +579,6 @@ if(COMPILE_SANDBOX)
 endif()
 add_feature_info(sandBox COMPILE_SANDBOX "The sandBox feature provides untested code that is under development.")
 
-if(USE_NLOPT)
-	add_subdirectory(nlopt)
-endif()
-
 
 # print package and feature summary
 message(STATUS "")

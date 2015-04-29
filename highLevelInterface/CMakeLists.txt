@@ -38,6 +38,7 @@ message_setup_this_dir()
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
+	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -47,12 +48,22 @@ include_directories(
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
+if(USE_NLOPT)
+	include_directories(
+		SYSTEM
+		${NLopt_INCLUDE_DIR}
+	)
+endif()
 
 
 # source files that are compiled into library
 set(SOURCES
 	calcAmplitude.cc
+	pwaFit.cc
 	)
+if(USE_NLOPT)
+	LIST(APPEND SOURCES pwaNloptFit.cc)
+endif()
 
 
 # library name
@@ -66,5 +77,10 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${ROOT_LIBS}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
+	"${RPWA_PARTIALWAVEFIT_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
+	"${RPWA_STORAGEFORMATS_LIB}"
 	)
+if(USE_NLOPT)
+	target_link_libraries(${THIS_LIB} "${NLopt_LIBS}")
+endif()

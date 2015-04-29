@@ -39,6 +39,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_HIGHLEVELINTERFACE_INCLUDE_DIR}
+	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -51,3 +52,7 @@ include_directories(
 # executables
 make_executable(calcAmplitudes calcAmplitudes.cc ${RPWA_HIGHLEVELINTERFACE_LIB})
 make_executable(calcIntegrals  calcIntegrals.cc  ${RPWA_DECAYAMPLITUDE_LIB})
+make_executable(pwafit         pwafit.cc         ${RPWA_HIGHLEVELINTERFACE_LIB})
+if(USE_NLOPT)
+	make_executable(pwaNloptFit    pwaNloptFit.cc    ${RPWA_HIGHLEVELINTERFACE_LIB})
+endif()
