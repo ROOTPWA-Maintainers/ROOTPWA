@@ -306,7 +306,6 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 				CG[i] = CG[i] * SumInv;
 				if (overall_sign == -1)
 					CG[i].FlipSign();
-				CG[i].SetINTs();
 			}
 		}
 	}

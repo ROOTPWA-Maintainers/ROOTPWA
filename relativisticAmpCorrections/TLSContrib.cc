@@ -65,7 +65,7 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 		//  cout << " Building LSContrib leads not to squared-fractional numbers,"
 		//	   << " results will be wrong!" << endl;
 
-		TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
+		const TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
 		if (sum) {
 			_NormFactor = *sum;
 		} else {
@@ -137,7 +137,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 					bterm.FlipSign();
 				}
 
-				TFracNum* sum = bterm.SumSignedRoots(_factors[i].squareOfPrefactor);
+				const TFracNum* sum = bterm.SumSignedRoots(_factors[i].squareOfPrefactor);
 				if (sum) {
 					_factors[i].squareOfPrefactor = *sum;
 				} else {
@@ -186,7 +186,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	_NormFactor = TFracNum::Zero;
 	for (size_t i = 0; i < _factors.size(); i++) {
-		TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
+		const TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
 		if (sum) {
 			_NormFactor = *sum;
 		} else {

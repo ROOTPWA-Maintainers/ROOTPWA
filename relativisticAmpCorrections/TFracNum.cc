@@ -27,13 +27,18 @@ const char* SQUAREROOT_CHAR = "#";
 TFracNum::TFracNum(const vector<long>& N, const vector<long>& D, long s)
 	: _NOM(N),
 	  _DEN(D),
-	  _signPrefac(s)
+	  _signPrefac(s),
+	  _numerator(0),
+	  _nomCacheRebuildRequired(true),
+	  _denominator(0),
+	  _denCacheRebuildRequired(true),
+	  _value(0.),
+	  _valueCacheRebuildRequired(true)
 {
 	if (debugFracNum) {
 		printDebug << "NOM: " << _NOM << endl;
 		printDebug << "DEN: " << _DEN << endl;
 	}
-	SetINTs();
 }
 
 
@@ -41,9 +46,12 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 	: _NOM(),
 	  _DEN(),
 	  _signPrefac(1),
-	  _NOM_INT(0),
-	  _DEN_INT(0),
-	  _dValue(0.)
+	  _numerator(0),
+	  _nomCacheRebuildRequired(true),
+	  _denominator(0),
+	  _denCacheRebuildRequired(true),
+	  _value(0.),
+	  _valueCacheRebuildRequired(true)
 {
 	if (s == "factorial") {
 		if (debugFracNum) {
@@ -80,37 +88,32 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 			}
 		}
 	}
-	this->SetINTs();
 }
 
 
-TFracNum::TFracNum(long inom, long iden) {
+TFracNum::TFracNum(long inom, long iden)
+	: _NOM(),
+	  _DEN(),
+	  _signPrefac(0),
+	  _numerator(0),
+	  _nomCacheRebuildRequired(true),
+	  _denominator(0),
+	  _denCacheRebuildRequired(true),
+	  _value(0.),
+	  _valueCacheRebuildRequired(true)
+{
 
 	if (debugFracNum) {
 		cout << "Initializing with " << inom << "," << iden << endl;
 	}
-	_NOM_INT = inom;
-	if (inom < 0) {
-		_NOM_INT = -inom;
-	}
-	_DEN_INT = iden;
-	if (iden < 0) {
-		_DEN_INT = -iden;
-	}
 
 	if (inom == 0) {
 		if (iden == 0) {
-			_NOM = vector<long>();
-			_DEN = vector<long>();
 			_signPrefac = -6666;
 			return;
 		}
-		_NOM = vector<long>();
-		_DEN = vector<long>();
-		_signPrefac = 0;
-		_NOM_INT = 0;
-		_DEN_INT = 1;
-		_dValue = 0;
+		_value = 0.;
+		_valueCacheRebuildRequired = false;
 		return;
 	}
 
@@ -187,32 +190,60 @@ TFracNum::TFracNum(long inom, long iden) {
 				TFracNum::removeZerosFromVector(_DEN);
 			}
 		}
-		this->SetINTs();
 	}
 }
 
 
-bool TFracNum::SetINTs() {
-	if (_signPrefac == 0) {
-		_NOM_INT = 0;
-		_DEN_INT = 1;
-		_dValue = 0;
-	} else {
-		_NOM_INT = 1;
-		_DEN_INT = 1;
-		for(size_t i = 0; i < _NOM.size(); ++i) {
-			for(long jj = 0; jj < _NOM[i]; ++jj) {
-				_NOM_INT *= PRIMES[i];
-			}
+const long& TFracNum::GetNumerator() const
+{
+	if(_nomCacheRebuildRequired) {
+		if(_signPrefac == 0) {
+			_numerator = 0;
+		} else {
+			_numerator = getNumberFromFactorization(_NOM);
 		}
-		for(size_t i = 0; i < _DEN.size(); ++i) {
-			for(long jj = 0; jj < _DEN[i]; ++jj) {
-				_DEN_INT *= PRIMES[i];
-			}
-		}
-		_dValue = double(_signPrefac) * double(_NOM_INT) / double(_DEN_INT);
+		_nomCacheRebuildRequired = false;
 	}
-	return true;
+	return _numerator;
+}
+
+
+const long& TFracNum::GetDenominator() const
+{
+	if(_denCacheRebuildRequired) {
+		if(_signPrefac == 0) {
+			_denominator = 1;
+		} else {
+			_denominator = getNumberFromFactorization(_DEN);
+		}
+		_denCacheRebuildRequired = false;
+	}
+	return _denominator;
+}
+
+
+const double& TFracNum::Dval() const
+{
+	if(_valueCacheRebuildRequired) {
+		if(_signPrefac == 0) {
+			_value = 0.;
+		} else {
+			_value = ((double)_signPrefac) * ((double)GetNumerator()) / ((double)GetDenominator());
+		}
+		_valueCacheRebuildRequired = false;
+	}
+	return _value;
+}
+
+
+void TFracNum::resetAllCaches() const
+{
+	_numerator   = 0;
+	_denominator = 0;
+	_value       = 0.;
+	_nomCacheRebuildRequired   = true;
+	_denCacheRebuildRequired   = true;
+	_valueCacheRebuildRequired = true;
 }
 
 
@@ -232,12 +263,13 @@ long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 }
 
 
-TFracNum*
-TFracNum::SumSignedRoots(const TFracNum& b) {
+const TFracNum*
+TFracNum::SumSignedRoots(const TFracNum& b) const
+{
 	TFracNum mixed = (*this) * b;
 	TFracNum aa = *this;
 	TFracNum bb = b;
-	TFracNum *res = new TFracNum();
+	TFracNum* res = new TFracNum();
 	if (mixed.Sqrt()) {
 		bool flipsign = (aa.Dval() + bb.Dval() < 0);
 		aa.Abs();
@@ -257,7 +289,7 @@ TFracNum::SumSignedRoots(const TFracNum& b) {
 
 
 bool TFracNum::Sqrt() {
-	if (_signPrefac == 0 or _NOM_INT == 0) {
+	if (_signPrefac == 0 or GetNumerator() == 0) {
 		return true;
 	}
 	// TODO: move this to the loops further down (or remove it completely?)
@@ -298,14 +330,16 @@ bool TFracNum::Sqrt() {
 	for (size_t i = 0; i < _DEN.size(); i++) {
 		_DEN[i] /= 2;
 	}
-	SetINTs();
+	resetAllCaches();
 	return true;
 }
 
 
 bool TFracNum::FlipSign() {
 	_signPrefac *= -1;
-	_dValue *= -1.0;
+	if(not _valueCacheRebuildRequired) {
+		_value      *= -1.;
+	}
 	return true;
 }
 
@@ -315,11 +349,11 @@ bool TFracNum::Abs() {
 		return true;
 	}
 	_signPrefac = 1;
-	if (_NOM_INT < 0) {
-		_NOM_INT *= -1;
+	if(not _nomCacheRebuildRequired) {
+		_numerator =  abs(_numerator);
 	}
-	if (_dValue < 0) {
-		_dValue *= -1.0;
+	if(not _valueCacheRebuildRequired) {
+		_value     = fabs(_value);
 	}
 	return true;
 }
@@ -330,20 +364,20 @@ bool TFracNum::Invert() {
 		_NOM = vector<long>();
 		_DEN = vector<long>();
 		_signPrefac = -6666;
-		SetINTs();
+		resetAllCaches();
 		return false;
 	}
-	if (_NOM_INT == 0) {
+	if (GetNumerator() == 0) {
 		_NOM = vector<long>();
 		_DEN = vector<long>();
 		_signPrefac = -7777;
-		SetINTs();
+		resetAllCaches();
 		return false;
 	}
 	vector<long> oldNOM = _NOM;
 	_NOM = _DEN;
 	_DEN = oldNOM;
-	SetINTs();
+	resetAllCaches();
 	return true;
 }
 
@@ -414,8 +448,9 @@ bool TFracNum::PrintDifference(const TFracNum &b) const {
 }
 
 
-char*
-TFracNum::HeaderString() {
+const char*
+TFracNum::HeaderString() const
+{
 	char* hstr = new char[30];
 	if (_signPrefac == 0) {
 		sprintf(hstr, "{0,1}");
@@ -430,16 +465,16 @@ TFracNum::HeaderString() {
 		return hstr;
 	}
 	if (_signPrefac == 1) {
-		sprintf(hstr, "{%ld,%ld}", _NOM_INT, _DEN_INT);
+		sprintf(hstr, "{%ld,%ld}", GetNumerator(), GetDenominator());
 	} else {
-		sprintf(hstr, "{%ld,%ld}", -_NOM_INT, _DEN_INT);
+		sprintf(hstr, "{%ld,%ld}", -GetNumerator(), GetDenominator());
 	}
 	return hstr;
 }
 
 
 bool TFracNum::operator>(const TFracNum &b) const {
-	if (_dValue > b._dValue) {
+	if (Dval() > b.Dval()) {
 		return true;
 	}
 	return false;
@@ -449,9 +484,9 @@ bool TFracNum::operator>(const TFracNum &b) const {
 
 TFracNum& TFracNum::operator+=(const TFracNum &rhs) {
 	long den_cdiv = DenomCommonDivisor(rhs);
-	long bdc = rhs._DEN_INT / den_cdiv;
-	long adc = _DEN_INT / den_cdiv;
-	*this = TFracNum(_signPrefac * _NOM_INT * bdc + rhs._signPrefac * rhs._NOM_INT * adc, _DEN_INT * bdc);
+	long bdc = rhs.GetDenominator() / den_cdiv;
+	long adc = GetDenominator() / den_cdiv;
+	*this = TFracNum(_signPrefac * GetNumerator() * bdc + rhs._signPrefac * rhs.GetNumerator() * adc, GetDenominator() * bdc);
 	return *this;
 }
 
@@ -512,7 +547,7 @@ TFracNum& TFracNum::operator*=(const TFracNum& b) {
 	}
 
 	_signPrefac *= b._signPrefac;
-	SetINTs();
+	resetAllCaches();
 	return *this;
 }
 
@@ -597,25 +632,28 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 		}
 	}
 	out << " = " << den << endl;
-	out << "NOM_INT=" << _NOM_INT << endl;
-	out << "DEN_INT=" << _DEN_INT << endl;
-	out << "dvalue=" << _dValue << endl;
+	out << "NOM_INT=" << GetNumerator() << endl;
+	out << "DEN_INT=" << GetDenominator() << endl;
+	out << "dvalue=" << Dval() << endl;
 	return out;
 }
 
 
 const char*
-TFracNum::FracString() {
+TFracNum::FracString() const
+{
 	char *formstr = new char[50];
 	char *fstr = new char[100];
-	if (_NOM_INT == 0) {
+	const long& numerator = GetNumerator();
+	const long& denominator = GetDenominator();
+	if (numerator == 0) {
 		sprintf(fstr, "0");
-	} else if (_DEN_INT == 1) {
+	} else if (denominator == 1) {
 		sprintf(formstr, "%%c%s", IOUTSTRING);
-		sprintf(fstr, formstr, _signPrefac < 0 ? '-' : '+', _NOM_INT);
+		sprintf(fstr, formstr, _signPrefac < 0 ? '-' : '+', numerator);
 	} else {
 		sprintf(formstr, "%%c%s/%s", IOUTSTRING, IOUTSTRING);
-		sprintf(fstr, formstr, _signPrefac < 0 ? '-' : '+', _NOM_INT, _DEN_INT);
+		sprintf(fstr, formstr, _signPrefac < 0 ? '-' : '+', numerator, denominator);
 	}
 	return fstr;
 }
@@ -628,7 +666,7 @@ const char*
 TFracNum::FracStringSqrt() const {
 	char *formstr = new char[50];
 	char *fstr = new char[200];
-	if (_NOM_INT == 0) {
+	if (GetNumerator() == 0) {
 		sprintf(fstr, "0");
 		return fstr;
 	}
@@ -708,6 +746,18 @@ void TFracNum::removeZerosFromVector(vector<long>& vector)
 		}
 	}
 	vector.resize(neededSize);
+}
+
+
+long TFracNum::getNumberFromFactorization(const vector<long>& vector)
+{
+	long retval = 1;
+	for(size_t i = 0; i < vector.size(); ++i) {
+		for(long j = 0; j < vector[i]; ++j) {
+			retval *= PRIMES[i];
+		}
+	}
+	return retval;
 }
 
 
