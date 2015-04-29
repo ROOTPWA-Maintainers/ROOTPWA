@@ -22,9 +22,8 @@ TSpinWaveFunction::TSpinWaveFunction(Int_t J_, char type_) {
 	M  = new Int_t[max_pzm];
 
 	coeff = new TFracNum[max_pzm];
-	TFracNum ZERO(0,0,0,0,0);
 	for (Int_t pzm=0; pzm<max_pzm; pzm++) {
-		coeff[pzm] = ZERO;
+		coeff[pzm] = TFracNum::Zero;
 	}
 
 	for (Int_t pzm=0; pzm<max_pzm; pzm++) {
@@ -72,14 +71,13 @@ TTensorSum*
 TSpinWaveFunction::GetTensorSum(char name, Int_t delta) {
 
 	TTensorSum *ts = new TTensorSum();
-	TFracNum ZERO(0,0,0,0,0);
 
 	for (Int_t pzm=max_pzm-1; pzm>=0; pzm--) {
 		if ( M[pzm]==delta ) {
 			Int_t *pzm_field = new Int_t[J];
 			for (Int_t i=0; i<J; i++) pzm_field[i] = mi[J*pzm+i];
 
-			if ( !(coeff[pzm]==ZERO) )
+			if ( !(coeff[pzm]==TFracNum::Zero) )
 				ts->AddTerm(new TTensorTerm(name, J, pzm_field, &(coeff[pzm])));
 		}
 	}
@@ -109,22 +107,21 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 	}
 
 	//TFracNum *S1S2 = ClebschGordan(twoS, twoS1, twoS2);
-	TFracNum *S1S2 = ClebschGordanBox::instance()->GetCG(S, J, E->J);
+	TFracNum* S1S2 = ClebschGordanBox::instance()->GetCG(S, J, E->J);
 	if (debugSpinWave==1){
 		cout << "Clebsch-Gordans calculated for "
 			<<twoS<<","<<twoS1<<","<<twoS2<<": "<< S1S2 << endl;
 	}
 
 	TTensorSum *ts = new TTensorSum();
-	TFracNum ZERO(0,0,0,0,0);
 
 	for (Int_t MM1=J; MM1>=-J; MM1--) {
 		for (Int_t pzm1=max_pzm-1; pzm1>=0; pzm1--) {
-			if ( M[pzm1]==MM1 && !(coeff[pzm1]==ZERO) ) {
+			if ( M[pzm1]==MM1 && !(coeff[pzm1]==TFracNum::Zero) ) {
 
 				for (Int_t MM2=E->J; MM2>=-J; MM2--) {
 					for (Int_t pzm2=E->max_pzm-1; pzm2>=0; pzm2--) {
-						if ( E->M[pzm2]==MM2 && !(E->coeff[pzm2]==ZERO) ) {
+						if ( E->M[pzm2]==MM2 && !(E->coeff[pzm2]==TFracNum::Zero) ) {
 
 							if (MM1+MM2==delta) {
 
@@ -166,10 +163,9 @@ TSpinWaveFunction::CheckCGFormula() {
 	}
 
 	TFracNum *coeffCG = new TFracNum[max_pzm];
-	TFracNum ONE(0,0,0,0,1);
 
 	for (Int_t pzm=0; pzm<max_pzm; pzm++) {
-		coeffCG[pzm]=ONE;
+		coeffCG[pzm]=TFracNum::One;
 		Int_t m=mi[J*pzm];
 		if (debugSpinWave==2) cout << m << " x ";
 		for (Int_t jj=1; jj<J; jj++) {

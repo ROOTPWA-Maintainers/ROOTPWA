@@ -57,7 +57,7 @@ TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L,
 			else        gam_sig_pot++;
 		}
 		else {
-			prefac=TFracNum(0,0,0,0,0);
+			prefac=TFracNum::Zero;
 			return;
 		}
 		if (ocount) ocount--;
@@ -86,7 +86,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 		Int_t c=chi_pzm[Rchi-1];
 		Int_t p=phi_pzm[Rphi-1];
 		if ( c != p ) {
-			prefac=TFracNum(0,0,0,0,0);
+			prefac=TFracNum::Zero;
 			return 0;
 		}
 		Rchi--;
@@ -114,7 +114,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 				else if (es==-1 && cs== 0 && ps==-1 ) prefac.FlipSign();
 				else if (es== 0 && cs== 1 && ps== 1 ){prefac.FlipSign();gam_sig_pot++;}
 				else if (es== 0 && cs==-1 && ps==-1 ){                  gam_sig_pot++;}
-				else { prefac=TFracNum(0,0,0,0,0); return 1;}
+				else { prefac=TFracNum::Zero; return 1;}
 			}
 			else if ( Reps==0 ) {
 				Rome--; Rchi--; Rphi--;
@@ -124,7 +124,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 				else if (os==-1 && cs== 0 && ps==-1 ) prefac.FlipSign();
 				else if (os== 0 && cs== 1 && ps== 1 ){prefac.FlipSign();gam_s_pot++;}
 				else if (os== 0 && cs==-1 && ps==-1 ){                  gam_s_pot++;}
-				else { prefac=TFracNum(0,0,0,0,0); return 1;}
+				else { prefac=TFracNum::Zero; return 1;}
 			}
 			else if ( Rchi==0 ) {
 				Rome--; Reps--; Rphi--;
@@ -134,7 +134,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 				else if (os==-1 && es== 0 && ps==-1 ){prefac.FlipSign();gam_sig_pot++;}
 				else if (os== 0 && es== 1 && ps== 1 ){prefac.FlipSign();gam_s_pot++;}
 				else if (os== 0 && es==-1 && ps==-1 ){                  gam_s_pot++;}
-				else { prefac=TFracNum(0,0,0,0,0); return 1;}
+				else { prefac=TFracNum::Zero; return 1;}
 			}
 			else if ( Rphi==0 ) {
 				Rome--; Reps--; Rchi--;
@@ -144,7 +144,7 @@ TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
 				else if (os==-1 && es== 0 && cs== 1 ){                  gam_sig_pot++;}
 				else if (os== 0 && es== 1 && cs==-1 ){                  gam_s_pot++;}
 				else if (os== 0 && es==-1 && cs== 1 ){prefac.FlipSign();gam_s_pot++;}
-				else { prefac=TFracNum(0,0,0,0,0); return 1;}
+				else { prefac=TFracNum::Zero; return 1;}
 			}
 			else { trouble=5;}
 		}

@@ -20,7 +20,7 @@ TLSNonRel::TLSNonRel(TLSContrib* C)
 	//     << endl;
 	_GnrPrefac = TFracNum(2 * _L + 1, 2 * _J + 1)
 	             * JdL0Sd[ClebschGordanBox::CGIndex(_L, 0, _S, C->GetDelta())]
-	             * *C->GetSpinCG();
+	             * C->GetSpinCG();
 }
 
 void TLSNonRel::Add(TLSContrib* C) {

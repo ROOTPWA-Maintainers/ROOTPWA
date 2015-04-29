@@ -1,9 +1,14 @@
+#include "TFracNum.h"
+
 #include <iostream>
 #include <string>
 #include <stdio.h>
 #include <string.h>
-#include "TFracNum.h"
+
+#include <reportingUtils.hpp>
+
 using namespace std;
+using namespace rpwa;
 
 
 bool TFracNum::debugFracNum = false;
@@ -12,52 +17,29 @@ bool TFracNum::debugFracNum = false;
 const TFracNum TFracNum::Zero = TFracNum(0, 1);
 const TFracNum TFracNum::One = TFracNum(1, 1);
 const TFracNum TFracNum::Two = TFracNum(2, 1);
+const TFracNum TFracNum::mTwo = TFracNum(-2, 1);
 const TFracNum TFracNum::Quarter = TFracNum(1, 4);
 
 
 const char* SQUAREROOT_CHAR = "#";
 
 
-TFracNum::TFracNum(long mN, long mD, long* N, long* D, long s)
-	: _maxPrimNom(mN),
-	  _maxPrimDen(mD),
-	  _NOM(N),
+TFracNum::TFracNum(const vector<long>& N, const vector<long>& D, long s)
+	: _NOM(N),
 	  _DEN(D),
 	  _signPrefac(s)
 {
 	if (debugFracNum) {
-		cout << "N:";
-		for (long i = 0; i < _maxPrimNom; i++) {
-			cout << _NOM[i] << ",";
-		}
-		cout << endl;
-		cout << "D:";
-		for (long i = 0; i < _maxPrimDen; i++) {
-			cout << _DEN[i] << ",";
-		}
-		cout << endl;
-		cout << "NOM pointer: " << _NOM;
-		cout << "| ";
-		for (long i = 0; i < mN; i++) {
-			cout << _NOM[i] << ",";
-		}
-		cout << endl;
-		cout << "DEN pointer: " << _DEN;
-		cout << "| ";
-		for (long i = 0; i < mD; i++) {
-			cout << _DEN[i] << ",";
-		}
-		cout << endl;
+		printDebug << "NOM: " << _NOM << endl;
+		printDebug << "DEN: " << _DEN << endl;
 	}
 	SetINTs();
 }
 
 
 TFracNum::TFracNum(const long& N, const long& D, const string& s)
-	: _maxPrimNom(0),
-	  _maxPrimDen(0),
-	  _NOM(0),
-	  _DEN(0),
+	: _NOM(),
+	  _DEN(),
 	  _signPrefac(1),
 	  _NOM_INT(0),
 	  _DEN_INT(0),
@@ -76,36 +58,25 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 			Low = D;
 			High = N;
 		}
-		long prim_vec[NPRIMFIELD];
-		for (long i = 0; i < NPRIMFIELD; i++) {
-			prim_vec[i] = 0;
-		}
-		long maxPrim = 0;
 		for (long fac = Low + 1; fac <= High; fac++) {
-			long rest = fac;
-			long fmax = 0;
+			size_t rest = fac;
+			size_t fmax = 0;
 			while (rest != 1 && fmax < NPRIMFIELD) {
 				while (rest % PRIMES[fmax] == 0) {
-					prim_vec[fmax]++;
+					if(N < D) {
+						if(fmax >= _DEN.size()) {
+							_DEN.resize(fmax+1, 0);
+						}
+						_DEN[fmax]++;
+					} else {
+						if(fmax >= _NOM.size()) {
+							_NOM.resize(fmax+1, 0);
+						}
+						_NOM[fmax]++;
+					}
 					rest /= PRIMES[fmax];
 				}
 				fmax++;
-			}
-			if (fmax > maxPrim) {
-				maxPrim = fmax;
-			}
-		}
-		if (N < D) {
-			_maxPrimDen = maxPrim;
-			_DEN = new long[_maxPrimDen];
-			for (long jp = 0; jp < _maxPrimDen; jp++) {
-				_DEN[jp] = prim_vec[jp];
-			}
-		} else {
-			_maxPrimNom = maxPrim;
-			_NOM = new long[_maxPrimNom];
-			for (long jp = 0; jp < _maxPrimNom; jp++) {
-				_NOM[jp] = prim_vec[jp];
 			}
 		}
 	}
@@ -129,17 +100,13 @@ TFracNum::TFracNum(long inom, long iden) {
 
 	if (inom == 0) {
 		if (iden == 0) {
-			_maxPrimNom = 0;
-			_maxPrimDen = 0;
-			_NOM = 0;
-			_DEN = 0;
+			_NOM = vector<long>();
+			_DEN = vector<long>();
 			_signPrefac = -6666;
 			return;
 		}
-		_maxPrimNom = 0;
-		_maxPrimDen = 0;
-		_NOM = 0;
-		_DEN = 0;
+		_NOM = vector<long>();
+		_DEN = vector<long>();
 		_signPrefac = 0;
 		_NOM_INT = 0;
 		_DEN_INT = 1;
@@ -166,97 +133,58 @@ TFracNum::TFracNum(long inom, long iden) {
 	    (inom > MAXPRIMSQUARED or iden > MAXPRIMSQUARED))      // in the header file
 	{
 		if (inom > MAXPRIMSQUARED or iden > MAXPRIMSQUARED) {
+			//TODO: check if throw is correct
 			cerr << "MAXPRIMSQUARED reached!!! NOM=" << inom << ", DEN=" << iden << endl;
+			throw;
 		}
-		_maxPrimNom = -inom;
-		_maxPrimDen = -iden;
-		_NOM = 0;
-		_DEN = 0;
-		_NOM_INT = inom;
-		_DEN_INT = iden;
-		_dValue = _signPrefac * double(inom) / double(iden);
 	} else {
-		_maxPrimNom = 0;
 		long rest_nom = inom;
-		long prim_vec_nom[NPRIMFIELD];
-		for (long i = 0; i < NPRIMFIELD; i++) {
-			prim_vec_nom[i] = 0;
-		}
-		while (rest_nom != 1 && _maxPrimNom < NPRIMFIELD) {
-			while (rest_nom % PRIMES[_maxPrimNom] == 0) {
-				prim_vec_nom[_maxPrimNom]++;
-				rest_nom /= PRIMES[_maxPrimNom];
+		size_t maxPrimNom = 0;
+		while (rest_nom != 1 && maxPrimNom < NPRIMFIELD) {
+			while (rest_nom % PRIMES[maxPrimNom] == 0) {
+				if(maxPrimNom >= _NOM.size()) {
+					_NOM.resize(maxPrimNom+1, 0);
+				}
+				_NOM[maxPrimNom]++;
+				rest_nom /= PRIMES[maxPrimNom];
 			}
-			_maxPrimNom++;
+			maxPrimNom++;
 		}
 		if (rest_nom != 1) {
-			_maxPrimNom = -inom;
-			_maxPrimDen = -iden;
-			_NOM = 0;
-			_DEN = 0;
+			//TODO: check what this does
+			cerr << "overflow?? Aborting..." << endl;
+			throw;
 		} else {
-			_maxPrimDen = 0;
+			size_t maxPrimDen = 0;
 			long rest_den = iden;
-			long prim_vec_den[NPRIMFIELD];
-			for (long i = 0; i < NPRIMFIELD; i++) {
-				prim_vec_den[i] = 0;
-			}
-			while (rest_den != 1 && _maxPrimDen < NPRIMFIELD) {
-				while (rest_den % PRIMES[_maxPrimDen] == 0) {
-					prim_vec_den[_maxPrimDen]++;
-					rest_den /= PRIMES[_maxPrimDen];
+			while (rest_den != 1 && maxPrimDen < NPRIMFIELD) {
+				while (rest_den % PRIMES[maxPrimDen] == 0) {
+					if(maxPrimDen >= _DEN.size()) {
+						_DEN.resize(maxPrimDen+1, 0);
+					}
+					_DEN[maxPrimDen]++;
+					rest_den /= PRIMES[maxPrimDen];
 				}
-				_maxPrimDen++;
+				maxPrimDen++;
 			}
 			if (rest_den != 1) {
-				_maxPrimNom = -inom;
-				_maxPrimDen = -iden;
-				_NOM = 0;
-				_DEN = 0;
+				cerr << "overflow?? Aborting..." << endl;
+				throw;
 			} else {
-				long maxPrim = _maxPrimNom;
-				if (_maxPrimDen > maxPrim) {
-					maxPrim = _maxPrimDen;
-				}
-				for (long ip = 0; ip < maxPrim; ip++) {
-					if (prim_vec_nom[ip] != 0 && prim_vec_den[ip] != 0) {
-						if (prim_vec_den[ip] > prim_vec_nom[ip]) {
-							prim_vec_den[ip] -= prim_vec_nom[ip];
-							prim_vec_nom[ip] = 0;
+				const size_t minPrim = min(_NOM.size(), _DEN.size());
+				for (size_t ip = 0; ip < minPrim; ip++) {
+					if (_NOM[ip] != 0 and _DEN[ip] != 0) {
+						if (_DEN[ip] > _NOM[ip]) {
+							_DEN[ip] -= _NOM[ip];
+							_NOM[ip] = 0;
 						} else {
-							prim_vec_nom[ip] -= prim_vec_den[ip];
-							prim_vec_den[ip] = 0;
+							_NOM[ip] -= _DEN[ip];
+							_DEN[ip] = 0;
 						}
 					}
 				}
-
-				_maxPrimNom = 0;
-				_maxPrimDen = 0;
-				for (long ip = 0; ip < NPRIMFIELD; ip++) {
-					if (prim_vec_nom[ip] != 0) {
-						_maxPrimNom = ip + 1;
-					}
-					if (prim_vec_den[ip] != 0) {
-						_maxPrimDen = ip + 1;
-					}
-				}
-
-				if (_maxPrimNom) {
-					_NOM = new long[_maxPrimNom];
-					for (long jp = 0; jp < _maxPrimNom; jp++) {
-						_NOM[jp] = prim_vec_nom[jp];
-					}
-				} else {
-					_NOM = 0;
-				}
-				if (_maxPrimDen) {
-					_DEN = new long[_maxPrimDen];
-					for (long jp = 0; jp < _maxPrimDen; jp++) {
-						_DEN[jp] = prim_vec_den[jp];
-					}
-				} else {
-					_DEN = 0;
-				}
+				TFracNum::removeZerosFromVector(_NOM);
+				TFracNum::removeZerosFromVector(_DEN);
 			}
 		}
 		this->SetINTs();
@@ -272,37 +200,14 @@ bool TFracNum::SetINTs() {
 	} else {
 		_NOM_INT = 1;
 		_DEN_INT = 1;
-		if (_maxPrimNom < 0 && _maxPrimDen < 0) {
-			_NOM_INT = -_maxPrimNom;
-			_DEN_INT = -_maxPrimDen;
-		} else {
-
-			long ip = _maxPrimNom - 1;
-			while (ip >= 0 && _NOM[ip] == 0) {
-				_maxPrimNom = ip;
-				ip--;
+		for(size_t i = 0; i < _NOM.size(); ++i) {
+			for(long jj = 0; jj < _NOM[i]; ++jj) {
+				_NOM_INT *= PRIMES[i];
 			}
-			//if (maxPrimNom==0) NOM=0;
-
-			ip = _maxPrimDen - 1;
-			while (ip >= 0 && _DEN[ip] == 0) {
-				_maxPrimDen = ip;
-				ip--;
-			}
-
-			long ipn = 0;
-			while (ipn < _maxPrimNom) {
-				for (long jj = 0; jj < _NOM[ipn]; jj++) {
-					_NOM_INT *= PRIMES[ipn];
-				}
-				ipn++;
-			}
-			long ipd = 0;
-			while (ipd < _maxPrimDen) {
-				for (long jj = 0; jj < _DEN[ipd]; jj++) {
-					_DEN_INT *= PRIMES[ipd];
-				}
-				ipd++;
+		}
+		for(size_t i = 0; i < _DEN.size(); ++i) {
+			for(long jj = 0; jj < _DEN[i]; ++jj) {
+				_DEN_INT *= PRIMES[i];
 			}
 		}
 		_dValue = double(_signPrefac) * double(_NOM_INT) / double(_DEN_INT);
@@ -312,12 +217,9 @@ bool TFracNum::SetINTs() {
 
 
 long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
-	long maxPD = _maxPrimDen;
-	if (maxPD > b._maxPrimDen) {
-		maxPD = b._maxPrimDen;
-	}
+	size_t minPD = min(_DEN.size(), b._DEN.size());
 	long comdiv = 1;
-	for (long i = 0; i < maxPD; i++) {
+	for (size_t i = 0; i < minPD; i++) {
 		long ppot = _DEN[i];
 		if (b._DEN[i] < ppot) {
 			ppot = b._DEN[i];
@@ -358,16 +260,17 @@ bool TFracNum::Sqrt() {
 	if (_signPrefac == 0 or _NOM_INT == 0) {
 		return true;
 	}
+	// TODO: move this to the loops further down (or remove it completely?)
 	if (debugFracNum) {
 		long sqrt_ok = 1;
-		for (long i = 0; i < _maxPrimNom; i++) {
+		for (size_t i = 0; i < _NOM.size(); i++) {
 			if (_NOM[i] % 2) {
 				sqrt_ok = 0;
 				break;
 			}
 		}
 		if (sqrt_ok == 1) {
-			for (long i = 0; i < _maxPrimDen; i++) {
+			for (size_t i = 0; i < _DEN.size(); i++) {
 				if (_DEN[i] % 2) {
 					sqrt_ok = 0;
 					break;
@@ -379,20 +282,20 @@ bool TFracNum::Sqrt() {
 			cout << *this;
 		}
 	}
-	for (long i = 0; i < _maxPrimNom; i++) {
+	for (size_t i = 0; i < _NOM.size(); i++) {
 		if (_NOM[i] % 2) {
 			return false;
 		}
 	}
-	for (long i = 0; i < _maxPrimDen; i++) {
+	for (size_t i = 0; i < _DEN.size(); i++) {
 		if (_DEN[i] % 2) {
 			return false;
 		}
 	}
-	for (long i = 0; i < _maxPrimNom; i++) {
+	for (size_t i = 0; i < _NOM.size(); i++) {
 		_NOM[i] /= 2;
 	}
-	for (long i = 0; i < _maxPrimDen; i++) {
+	for (size_t i = 0; i < _DEN.size(); i++) {
 		_DEN[i] /= 2;
 	}
 	SetINTs();
@@ -424,29 +327,22 @@ bool TFracNum::Abs() {
 
 bool TFracNum::Invert() {
 	if (_signPrefac == -7777) {
-		_maxPrimNom = 0;
-		_maxPrimDen = 0;
-		_NOM = 0;
-		_DEN = 0;
+		_NOM = vector<long>();
+		_DEN = vector<long>();
 		_signPrefac = -6666;
 		SetINTs();
 		return false;
 	}
 	if (_NOM_INT == 0) {
-		_maxPrimNom = 0;
-		_maxPrimDen = 0;
-		_NOM = 0;
-		_DEN = 0;
+		_NOM = vector<long>();
+		_DEN = vector<long>();
 		_signPrefac = -7777;
 		SetINTs();
 		return false;
 	}
-	long MPN = _maxPrimNom;
-	_maxPrimNom = _maxPrimDen;
-	_maxPrimDen = MPN;
-	long* NOMPTR = _NOM;
+	vector<long> oldNOM = _NOM;
 	_NOM = _DEN;
-	_DEN = NOMPTR;
+	_DEN = oldNOM;
 	SetINTs();
 	return true;
 }
@@ -459,18 +355,18 @@ bool TFracNum::operator==(const TFracNum &b) const {
 	if (_signPrefac != b._signPrefac) {
 		return false;
 	}
-	if (_maxPrimNom != b._maxPrimNom) {
+	if (_NOM.size() != b._NOM.size()) {
 		return false;
 	}
-	if (_maxPrimDen != b._maxPrimDen) {
+	if (_DEN.size() != b._DEN.size()) {
 		return false;
 	}
-	for (long i = 0; i < _maxPrimNom; i++) {
+	for (size_t i = 0; i < _NOM.size(); i++) {
 		if (_NOM[i] != b._NOM[i]) {
 			return false;
 		}
 	}
-	for (long i = 0; i < _maxPrimDen; i++) {
+	for (size_t i = 0; i < _DEN.size(); i++) {
 		if (_DEN[i] != b._DEN[i]) {
 			return false;
 		}
@@ -486,30 +382,30 @@ bool TFracNum::PrintDifference(const TFracNum &b) const {
 	}
 	if (_signPrefac != b._signPrefac) {
 		cout << "Different sign: " << _signPrefac << "!=" << b._signPrefac
-				<< endl;
+		     << endl;
 		return false;
 	}
-	if (_maxPrimNom != b._maxPrimNom) {
-		cout << "Different maxPrimNom: " << _maxPrimNom << "!=" << b._maxPrimNom
-				<< endl;
+	if (_NOM.size() != b._NOM.size()) {
+		cout << "Different maxPrimNom: " << _NOM.size() << "!=" << b._NOM.size()
+		     << endl;
 		return false;
 	}
-	if (_maxPrimDen != b._maxPrimDen) {
-		cout << "Different maxPrimDen: " << _maxPrimDen << "!=" << b._maxPrimDen
-				<< endl;
+	if (_DEN.size() != b._DEN.size()) {
+		cout << "Different maxPrimDen: " << _DEN.size() << "!=" << b._DEN.size()
+		     << endl;
 		return false;
 	}
-	for (long i = 0; i < _maxPrimNom; i++) {
+	for (size_t i = 0; i < _NOM.size(); i++) {
 		if (_NOM[i] != b._NOM[i]) {
 			cout << "Different numerator contribution at prime " << i << ": "
-					<< _NOM[i] << "!=" << b._NOM[i] << endl;
+			     << _NOM[i] << "!=" << b._NOM[i] << endl;
 			return false;
 		}
 	}
-	for (long i = 0; i < _maxPrimDen; i++) {
+	for (size_t i = 0; i < _DEN.size(); i++) {
 		if (_DEN[i] != b._DEN[i]) {
 			cout << "Different denominator contribution at prime " << i << ": "
-					<< _DEN[i] << "!=" << b._DEN[i] << endl;
+			     << _DEN[i] << "!=" << b._DEN[i] << endl;
 			return false;
 		}
 	}
@@ -560,11 +456,12 @@ TFracNum& TFracNum::operator+=(const TFracNum &rhs) {
 }
 
 
-TFracNum& TFracNum::operator*=(const TFracNum &b) {
+TFracNum& TFracNum::operator*=(const TFracNum& b) {
+
 	// if one of the two numbers is undetermined,
 	// the product is also undetermined
-	if (_signPrefac == -6666 || b._signPrefac == -6666) {
-		*this = TFracNum(0, 0, 0, 0, -6666);
+	if (_signPrefac == -6666 or b._signPrefac == -6666) {
+		*this = TFracNum(vector<long>(), vector<long>(), -6666);
 		return *this;
 	}
 
@@ -573,137 +470,86 @@ TFracNum& TFracNum::operator*=(const TFracNum &b) {
 	if ((_signPrefac == -7777 and b._signPrefac == 0) or
 	    (_signPrefac == 0     and b._signPrefac == -7777))
 	{
-		*this = TFracNum(0, 0, 0, 0, -6666);
+		*this = TFracNum(vector<long>(), vector<long>(), -6666);
 		return *this;
 	}
 
 	// other cases with division by zero; product is also infinity
 	if ((_signPrefac == -7777 or b._signPrefac == -7777)) {
-		*this = TFracNum(0, 0, 0, 0, -7777);
+		*this = TFracNum(vector<long>(), vector<long>(), -7777);
 		return *this;
 	}
 
 	if (_signPrefac * b._signPrefac == 0) {
-		*this = TFracNum(0, 0, 0, 0, 0);
+		*this = TFracNum::Zero;
 		return *this;
 	}
 
-	long maxPrimNom_ = _maxPrimNom;
-	if (b._maxPrimNom > maxPrimNom_) {
-		maxPrimNom_ = b._maxPrimNom;
+	if(_NOM.size() < b._NOM.size()) {
+		_NOM.resize(b._NOM.size(), 0);
 	}
-	long maxPrimDen_ = _maxPrimDen;
-	if (b._maxPrimDen > maxPrimDen_) {
-		maxPrimDen_ = b._maxPrimDen;
-	}
-	long maxPrim = maxPrimNom_;
-	if (maxPrimDen_ > maxPrim) {
-		maxPrim = maxPrimDen_;
+	for(size_t i = 0; i < b._NOM.size(); ++i) {
+		_NOM[i] += b._NOM[i];
 	}
 
-	long prim_vec_nom[maxPrim];
-	long prim_vec_den[maxPrim];
-
-	for (long ip = 0; ip < maxPrim; ip++) {
-		prim_vec_nom[ip] = 0;
-		prim_vec_den[ip] = 0;
-		if (_maxPrimNom > ip) {
-			prim_vec_nom[ip] += _NOM[ip];
-		}
-		if (b._maxPrimNom > ip) {
-			prim_vec_nom[ip] += b._NOM[ip];
-		}
-		if (_maxPrimDen > ip) {
-			prim_vec_den[ip] += _DEN[ip];
-		}
-		if (b._maxPrimDen > ip) {
-			prim_vec_den[ip] += b._DEN[ip];
-		}
+	if(_DEN.size() < b._DEN.size()) {
+		_DEN.resize(b._DEN.size(), 0);
+	}
+	for(size_t i = 0; i < b._DEN.size(); ++i) {
+		_DEN[i] += b._DEN[i];
 	}
 
-	for (long ip = 0; ip < maxPrim; ip++) {
-		if (prim_vec_nom[ip] != 0 && prim_vec_den[ip] != 0) {
-			if (prim_vec_den[ip] > prim_vec_nom[ip]) {
-				prim_vec_den[ip] -= prim_vec_nom[ip];
-				prim_vec_nom[ip] = 0;
+	for(size_t i = 0; i < min(_NOM.size(), _DEN.size()); ++i) {
+		if (_NOM[i] != 0 and _DEN[i] != 0) {
+			if (_DEN[i] > _NOM[i]) {
+				_DEN[i] -= _NOM[i];
+				_NOM[i] = 0;
 			} else {
-				prim_vec_nom[ip] -= prim_vec_den[ip];
-				prim_vec_den[ip] = 0;
+				_NOM[i] -= _DEN[i];
+				_DEN[i] = 0;
 			}
 		}
 	}
 
-	for (long ip = 0; ip < maxPrim; ip++) {
-		if (prim_vec_nom[ip] != 0) {
-			maxPrimNom_ = ip + 1;
-		}
-		if (prim_vec_den[ip] != 0) {
-			maxPrimDen_ = ip + 1;
-		}
-	}
-
-	long* NOM_ = new long[maxPrimNom_];
-	for (long jp = 0; jp < maxPrimNom_; jp++) {
-		NOM_[jp] = prim_vec_nom[jp];
-	}
-
-	long* DEN_ = new long[maxPrimDen_];
-	for (long jp = 0; jp < maxPrimDen_; jp++) {
-		DEN_[jp] = prim_vec_den[jp];
-	}
-
-	if (debugFracNum) {
-		cout << " Initial with maxN=" << maxPrimNom_ << ", maxD=" << maxPrimDen_
-		     << ", " << NOM_ << ", " << DEN_ << ", "
-		     << _signPrefac * b._signPrefac
-		     << endl
-		     << "NOM:";
-		for (long i = 0; i < maxPrimNom_; i++) {
-			cout << NOM_[i] << ",";
-		}
-		cout << endl
-		     << "DEN:";
-		for (long i = 0; i < maxPrimDen_; i++) {
-			cout << DEN_[i] << ",";
-		}
-		cout << endl;
-	}
-	*this = TFracNum(maxPrimNom_, maxPrimDen_, NOM_, DEN_, _signPrefac * b._signPrefac);
+	_signPrefac *= b._signPrefac;
+	SetINTs();
 	return *this;
 }
 
 
 std::ostream& TFracNum::Print(std::ostream& out) const {
 	if (debugFracNum) {
-		out << "nom prime list: " << _maxPrimNom << ",pointer " << _NOM << endl;
-		out << "den prime list: " << _maxPrimDen << ",pointer " << _DEN << endl;
+		out << "nom prime list: " << _NOM.size() << ",pointer " << _NOM << endl;
+		out << "den prime list: " << _DEN.size() << ",pointer " << _DEN << endl;
 		out << "NOM:";
-		for (long i = 0; i < _maxPrimNom; i++) {
+		for (size_t i = 0; i < _NOM.size(); i++) {
 			out << _NOM[i] << ",";
 		}
 		out << endl;
 		out << "DEN:";
-		for (long i = 0; i < _maxPrimDen; i++) {
+		for (size_t i = 0; i < _DEN.size(); i++) {
 			out << _DEN[i] << ",";
 		}
 		out << endl;
 	}
 	out << "sign_prefac=" << _signPrefac << endl;
-	if (_maxPrimNom < 0) {
+// TODO: check if this makes sense
+/*	if (_NOM.size() < 0) {
 		if (_signPrefac < 0) {
 			out << "-";
 		}
 		out << -_maxPrimNom << "/" << -_maxPrimDen << endl;
 		return out;
 	}
+*/
 	long integrity = 1;
-	for (long i = 0; i < _maxPrimNom; i++) {
-		if (_NOM[i] < 0 || _NOM[i] > 1000) {
+	for (size_t i = 0; i < _NOM.size(); i++) {
+		if (_NOM[i] < 0 or _NOM[i] > 1000) {
 			integrity = 0;
 		}
 	}
-	for (long i = 0; i < _maxPrimDen; i++) {
-		if (_DEN[i] < 0 || _DEN[i] > 1000) {
+	for (size_t i = 0; i < _DEN.size(); i++) {
+		if (_DEN[i] < 0 or _DEN[i] > 1000) {
 			integrity = 0;
 		}
 	}
@@ -712,14 +558,14 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 	}
 
 	long nom = 1;
-	long ipn = 0;
+	size_t ipn = 0;
 	if (_signPrefac < 0) {
 		out << "-NOM = ";
 	} else {
 		out << " NOM = ";
 	}
 	long FirstTerm = 1;
-	while (ipn < _maxPrimNom) {
+	while (ipn < _NOM.size()) {
 		if (_NOM[ipn] != 0) {
 			out << PRIMES[ipn] << "^" << _NOM[ipn];
 			FirstTerm = 0;
@@ -728,17 +574,17 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 			nom *= PRIMES[ipn];
 		}
 		ipn++;
-		if (!FirstTerm && ipn < _maxPrimNom && _NOM[ipn] != 0) {
+		if (!FirstTerm and ipn < _NOM.size() and _NOM[ipn] != 0) {
 			out << " * ";
 		}
 	}
 	out << " = " << nom << endl;
 
 	long den = 1;
-	long ipd = 0;
+	size_t ipd = 0;
 	out << " DEN = ";
 	FirstTerm = 1;
-	while (ipd < _maxPrimDen) {
+	while (ipd < _DEN.size()) {
 		if (_DEN[ipd] != 0) {
 			out << PRIMES[ipd] << "^" << _DEN[ipd];
 			FirstTerm = 0;
@@ -746,7 +592,7 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 		for (long jj = 0; jj < _DEN[ipd]; jj++)
 			den *= PRIMES[ipd];
 		ipd++;
-		if (!FirstTerm && ipd < _maxPrimDen && _DEN[ipd] != 0) {
+		if (!FirstTerm and ipd < _DEN.size() and _DEN[ipd] != 0) {
 			out << " * ";
 		}
 	}
@@ -786,10 +632,10 @@ TFracNum::FracStringSqrt() const {
 		sprintf(fstr, "0");
 		return fstr;
 	}
-	long ipn = 0;
+	size_t ipn = 0;
 	long SQRT_NOM_INT = 1;
 	long NOM_INT_REST = 1;
-	while (ipn < _maxPrimNom) {
+	while (ipn < _NOM.size()) {
 		for (long jj = 0; jj < _NOM[ipn] / 2; jj++) {
 			SQRT_NOM_INT *= PRIMES[ipn];
 		}
@@ -798,10 +644,10 @@ TFracNum::FracStringSqrt() const {
 		}
 		ipn++;
 	}
-	long ipd = 0;
+	size_t ipd = 0;
 	long SQRT_DEN_INT = 1;
 	long DEN_INT_REST = 1;
-	while (ipd < _maxPrimDen) {
+	while (ipd < _DEN.size()) {
 		for (long jj = 0; jj < _DEN[ipd] / 2; jj++) {
 			SQRT_DEN_INT *= PRIMES[ipd];
 		}
@@ -848,6 +694,23 @@ TFracNum::FracStringSqrt() const {
 	return fstr;
 }
 
+
+void TFracNum::removeZerosFromVector(vector<long>& vector)
+{
+	if(vector.empty()) {
+		return;
+	}
+	size_t neededSize = vector.size() - 1;
+	for( ; neededSize >= 0; --neededSize) {
+		if(vector[neededSize] != 0) {
+			++neededSize;
+			break;
+		}
+	}
+	vector.resize(neededSize);
+}
+
+
 // TODO: check if this can be deleted
 #if(0)
 TFracNum TFracNum::a_to_J(long J, long m) {
@@ -862,8 +725,9 @@ TFracNum TFracNum::a_to_J(long J, long m) {
 #endif
 
 TFracNum TFracNum::am0_to_J(long J, long m, long m0) {
-	long nom_ptr[1] = { m0 };
-	TFracNum twofac(1, 0, nom_ptr, 0, 1);
+	TFracNum twofac(vector<long>(1, m0),
+	                vector<long>(),
+	                1);
 	TFracNum fac1(J + m, 2 * J, "factorial");
 	TFracNum fac2(J - m, 1, "factorial");
 	return twofac * fac1 * fac2;
@@ -872,10 +736,11 @@ TFracNum TFracNum::am0_to_J(long J, long m, long m0) {
 
 TFracNum TFracNum::c_sub_ell(long ell) {
 	if (ell == 0) {
-		return TFracNum(0, 0, 0, 0, 1);
+		return TFracNum::One;
 	}
-	long nom_ptr[1] = { ell };
-	TFracNum two_to_ell(1, 0, nom_ptr, 0, 1);
+	TFracNum two_to_ell(vector<long>(1, ell),
+	                    vector<long>(),
+	                    1);
 	TFracNum fac1(ell, 1, "factorial");
 	TFracNum fac2(ell, 2 * ell, "factorial");
 	return two_to_ell * fac1 * fac2;
@@ -884,10 +749,11 @@ TFracNum TFracNum::c_sub_ell(long ell) {
 
 TFracNum TFracNum::cm0_sub_ell(long ell, long m0) {
 	if (ell == 0) {
-		return TFracNum(0, 0, 0, 0, 1);
+		return TFracNum::One;
 	}
-	long nom_ptr[1] = { (ell + m0) / 2 };
-	TFracNum two_to_ell(1, 0, nom_ptr, 0, 1);
+	TFracNum two_to_ell(vector<long>(1, (ell + m0) / 2),
+	                    vector<long>(),
+	                    1);
 	TFracNum fac1(ell, 1, "factorial");
 	TFracNum fac2(ell, 2 * ell, "factorial");
 	return two_to_ell * fac1 * fac2;
@@ -897,10 +763,11 @@ TFracNum TFracNum::cm0_sub_ell(long ell, long m0) {
 TFracNum TFracNum::cm0_sub_ell_2(long ell, long m0) {
 	//return  am0_to_J(ell, 0, m0);
 	if (ell == 0) {
-		return TFracNum(0, 0, 0, 0, 1);
+		return TFracNum::One;
 	}
-	long nom_ptr[1] = { (ell + m0) };
-	TFracNum two_to_ell(1, 0, nom_ptr, 0, 1);
+	TFracNum two_to_ell(vector<long>(1, (ell + m0) ),
+	                    vector<long>(),
+	                    1);
 	TFracNum fac1a(ell, 1, "factorial");
 	TFracNum fac1b(ell, 1, "factorial");
 	TFracNum fac2a(ell, 2 * ell, "factorial");

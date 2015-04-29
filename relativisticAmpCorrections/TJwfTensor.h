@@ -15,13 +15,13 @@ class TTensorTerm {
 
 	private:
 		Int_t Rome;
-		Int_t *ome_pzm; 
+		Int_t *ome_pzm;
 		Int_t Reps;
-		Int_t *eps_pzm; 
+		Int_t *eps_pzm;
 		Int_t Rchi;
-		Int_t *chi_pzm; 
+		Int_t *chi_pzm;
 		Int_t Rphi;
-		Int_t *phi_pzm; 
+		Int_t *phi_pzm;
 
 		Int_t gam_s_pot;
 		Int_t gam_sig_pot;
@@ -36,7 +36,7 @@ class TTensorTerm {
 			Rphi=0; phi_pzm=0;
 			gam_s_pot=0;
 			gam_sig_pot=0;
-			prefac=TFracNum(0,0,0,0,0);
+			prefac=TFracNum::Zero;
 		};
 
 		TTensorTerm (char, Int_t, Int_t*, TFracNum*);
@@ -47,7 +47,7 @@ class TTensorTerm {
 		Int_t SameStructure(TTensorTerm*);
 		Int_t AddTwoTerms(TTensorTerm*);
 		Int_t IsNonZero() {
-			if (prefac==TFracNum(0,0,0,0,0)) return 0;
+			if (prefac==TFracNum::Zero) return 0;
 			else                             return 1;
 		};
 		Int_t Print(char);

@@ -47,6 +47,7 @@ class TLSContrib {
 	TLSContrib(/*const*/ TLSAmpl* A, const long& delta, const TFracNum& scfac);
 
 
+	// TODO: make 1st arg const
 	void Add(TLSContrib*, bool);
 
 
@@ -59,8 +60,8 @@ class TLSContrib {
 	const long& GetDelta()                   const { return _delta; }
 	const long& GetRunningNumber()           const { return _cNum; }
 
-	TFracNum* GetSpinCG()     { return &_SpinCG; }
-	TFracNum* GetNormFactor() { return &_NormFactor; }
+	const TFracNum& GetSpinCG()     const { return _SpinCG; }
+	const TFracNum& GetNormFactor() const { return _NormFactor; }
 
 	const std::vector<factors>& getFactors() const { return _factors; }
 

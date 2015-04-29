@@ -12,6 +12,7 @@
  */
 
 #include <string>
+#include <vector>
 
 #include "Primes.h"
 
@@ -28,20 +29,16 @@ class TFracNum {
 
 	//! Default constructor with numerator and denominator set to 1
 	TFracNum()
-		: _maxPrimNom(0),
-		  _maxPrimDen(0),
-		  _NOM(0),
-		  _DEN(0),
+		: _NOM(),
+		  _DEN(),
 		  _signPrefac(1),
 		  _NOM_INT(0),
 		  _DEN_INT(0),
 		  _dValue(0) { }
 
 	//! Constructor using the internal representation of the class
-	TFracNum(long mN, //! index of the largest prime number in the numerator
-	         long mD, //! index of the largest prime number in the denominator
-	         long* N, //! Field of exponents of the numerator's prime numbers up to mN
-	         long* D, //! Field of exponents of the denominator's prime numbers up to mD
+	TFracNum(const std::vector<long>& N, //! Field of exponents of the numerator's prime numbers up to mN
+	         const std::vector<long>& D, //! Field of exponents of the denominator's prime numbers up to mD
 	         long s /*! Sign variable <br>
 	                    1 or -1 depending on the sign <br>
 	                    \it s =-6666 means "undetermined" (this is for example a
@@ -132,17 +129,15 @@ class TFracNum {
 	// since Num is appearing as short form of "Number",
 	// nom/NOM is taken when the numerator is meant
 	//
-	// maximum prime index of numerator.
-	long _maxPrimNom;
-
-	// maximum prime index of denominator.
-	long _maxPrimDen;
 
 	// Prime number decomposition of numerator. Field length is maxPrimNom,
 	//  NOM[0] is the exponent of 2, NOM[1] of 3, and so on.
-	long* _NOM;
+	std::vector<long> _NOM;
+
 	// Prime number decomposition of denominator, analogue to NOM
-	long* _DEN;
+	std::vector<long> _DEN;
+
+
 
 	// Prefactor, including sign
 	// Negative fractional number have sign_prefrac=-1
@@ -156,6 +151,8 @@ class TFracNum {
 	long _DEN_INT;
 	double _dValue;
 
+	static void removeZerosFromVector(std::vector<long>& vector);
+
 	static bool debugFracNum;
 
   public:
@@ -163,6 +160,7 @@ class TFracNum {
 	const static TFracNum Zero;
 	const static TFracNum One;
 	const static TFracNum Two;
+	const static TFracNum mTwo;
 	const static TFracNum Quarter;
 
 

@@ -66,10 +66,6 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 				<< " with |J1-J2|<=J<=J1+J2" << endl;
 	}
 
-	long nom_ptr[1] = { 1 };
-	TFracNum two(1, 0, nom_ptr, 0, 1);
-	TFracNum mtwo(1, 0, nom_ptr, 0, -1);
-
 	long max1 = twoJ1 + 1;
 	long max2 = twoJ2 + 1;
 
@@ -80,7 +76,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 	if (twoJ + twoJ2 < twoJ1)
 		mintwom1 = -twoJ - twoJ2;
 	long minIndex = (mintwom1 + twoJ1) / 2 * max2 + max2 - 1;
-	CG[minIndex] = TFracNum(0, 0, 0, 0, 1);
+	CG[minIndex] = TFracNum::One;
 	if (debugCG == 2) {
 		cout << "#############################################" << endl;
 		cout << " first row CG[" << minIndex << "]:" << endl;
@@ -103,7 +99,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 			twoi = twoi1 * max2 + twoi2;
 			i = twoi / 2;
 			if (twom1 + twom2 < -twoJ || twom1 + twom2 > twoJ) {
-				CG[i] = TFracNum(0, 0, 0, 0, 0);
+				CG[i] = TFracNum::Zero;
 				if (debugCG == 2) {
 					cout << "#############################################"
 							<< endl;
@@ -139,7 +135,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 					bool flipsign = cgm > cgp;
 					cgp.Abs();
 					cgm.Abs();
-					CG[i] = cgp + cgm + mtwo * cgmixed;
+					CG[i] = cgp + cgm + TFracNum::mTwo * cgmixed;
 					if (flipsign)
 						CG[i].FlipSign();
 					if (debugCG == 2) {
@@ -183,7 +179,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 		twoi = twoi1 * max2 + twoi2;
 		i = twoi / 2;
 		if (twom1 + twom2 < -twoJ || twom1 + twom2 > twoJ) {
-			CG[i] = TFracNum(0, 0, 0, 0, 0);
+			CG[i] = TFracNum::Zero;
 			if (debugCG == 2) {
 				cout << "#############################################" << endl;
 				cout << "first line Simple setting: CG[" << i << "]:" << endl;
@@ -207,7 +203,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 			if (cgmixed.Sqrt()) {
 				cg1.Abs();
 				cg2.Abs();
-				CG[i] = cg1 + cg2 + two * cgmixed;
+				CG[i] = cg1 + cg2 + TFracNum::Two * cgmixed;
 				if (debugCG == 2) {
 					cout << "#############################################"
 							<< endl;
@@ -252,7 +248,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 				bool flipsign = cg2 > cg1;
 				cg1.Abs();
 				cg2.Abs();
-				CG[i] = cg1 + cg2 + mtwo * cgmixed;
+				CG[i] = cg1 + cg2 + TFracNum::mTwo * cgmixed;
 				if (flipsign)
 					CG[i].FlipSign();
 				if (debugCG == 2) {
@@ -276,18 +272,17 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 	}
 
 	long overall_sign = 0;
-	TFracNum ZERO(0, 0, 0, 0, 0);
 
 	for (long i = 0; i < max1 * max2; i++) {
 		long twom1 = 2 * (i / max2) - twoJ1;
 		long twom2 = 2 * (i % max2) - twoJ2;
-		if (twom1 + twom2 == twoJ && !(CG[i] == ZERO)) {
+		if (twom1 + twom2 == twoJ && !(CG[i] == TFracNum::Zero)) {
 			overall_sign = CG[i].GetSign();
 		}
 	}
 
 	for (long twom = -twoJ; twom <= twoJ; twom += 2) {
-		TFracNum Sum(0, 0, 0, 0, 0);
+		TFracNum Sum = TFracNum::Zero;
 		for (long i = 0; i < max1 * max2; i++) {
 			// i=i1*max2+i2 => i1=i/max2, i2=i%max2
 			// i1=m1+J1, i2=m2+J2 => m1=i/max2-J1, m2=i%max2-J2
@@ -296,7 +291,7 @@ ClebschGordanBox::ClebschGordan(long twoJ, long twoJ1, long twoJ2) {
 			if (twom1 + twom2 == twom) {
 				TFracNum CGAbs = CG[i];
 				CGAbs.Abs();
-				Sum = Sum + CGAbs;
+				Sum += CGAbs;
 				if (debugCG == 2)
 					cout << "2m=" << twom << ": adding " << CGAbs.FracString()
 							<< " -> " << Sum.FracString() << endl;
