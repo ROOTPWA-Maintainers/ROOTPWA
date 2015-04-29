@@ -53,6 +53,7 @@
 #include "likelihoodInterface.cuh"
 #endif
 #include "amplitudeTreeLeaf.h"
+#include "amplitudeMetadata.h"
 #include "pwaLikelihood.h"
 #include "partialWaveFitHelper.h"
 
@@ -942,20 +943,24 @@ pwaLikelihood<complexT>::cudaEnabled() const
 
 template<typename complexT>
 void
-pwaLikelihood<complexT>::init(const unsigned int rank,
-                              const double       massBinCenter,
-                              const std::string& waveListFileName,
-                              const std::string& normIntFileName,
-                              const std::string& accIntFileName,
-                              const std::string& ampDirName,
-                              const unsigned int numbAccEvents,
-                              const bool         useRootAmps)
+pwaLikelihood<complexT>::init(const unsigned int             rank,
+                              const double                   massBinCenter,
+                              const vector<std::string>&     waveNames,
+                              const vector<double>&          waveThresholds,
+                              const ampIntegralMatrix&       normMatrix,
+                              ampIntegralMatrix&             accMatrix,
+                              std::map<std::string, TTree*>& ampTrees,
+                              const unsigned int             numbAccEvents)
 {
 	_numbAccEvents = numbAccEvents;
-	readWaveList(waveListFileName);
+	_totAcc = (double) accMatrix.nmbEvents() / _numbAccEvents;
+	printInfo << "total acceptance in this bin: " << _totAcc << endl;
+	accMatrix.setNmbEvents(numbAccEvents);
+	readWaveList(waveNames, waveThresholds);
 	buildParDataStruct(rank, massBinCenter);
-	readIntegrals(normIntFileName, accIntFileName);
-	readDecayAmplitudes(ampDirName, useRootAmps);
+	reorderIntegralMatrix(normMatrix, _normMatrix);
+	reorderIntegralMatrix(accMatrix, _accMatrix);
+	readDecayAmplitudes(ampTrees);
 #ifdef USE_CUDA
 	if (_cudaEnabled)
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
@@ -967,52 +972,34 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
 
 template<typename complexT>
 void
-pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
+pwaLikelihood<complexT>::readWaveList(const std::vector<std::string>& waveNamesInc, const std::vector<double>& waveThresholdsInc)
 {
-	printInfo << "reading amplitude names and thresholds from wave list file "
-	          << "'" << waveListFileName << "'." << endl;
-	ifstream waveListFile(waveListFileName.c_str());
-	if (not waveListFile) {
-		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
-		throw;
-	}
+//	printInfo << "reading amplitude names and thresholds from wave list file "
+//	          << "'" << waveListFileName << "'." << endl;
+//	ifstream waveListFile(waveListFileName.c_str());
+//	if (not waveListFile) {
+//		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;
+//		throw;
+//	}
 	vector<string>       waveNames     [2];
 	vector<double>       waveThresholds[2];
 	unsigned int         countWave = 0;
-	unsigned int         lineNmb   = 0;
-	string               line;
-	while (getline(waveListFile, line)) {
-		if (line[0] == '#')  // comments start with #
-			continue;
-		stringstream lineStream;
-		lineStream.str(line);
-		string waveName;
-		if (lineStream >> waveName) {
-			double threshold;
-			// !!! it would be safer to make the threshold value in the wave list file mandatory
-			if (not (lineStream >> threshold))
-				threshold = 0;
-			if (_debug)
-				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
-				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-			if (partialWaveFitHelper::getReflectivity(waveName) > 0) {
-				++_nmbWavesRefl[1];  // positive reflectivity
-				waveNames     [1].push_back(waveName);
-				waveThresholds[1].push_back(threshold);
-			} else {
-				++_nmbWavesRefl[0];  // negative reflectivity
-				waveNames     [0].push_back(waveName);
-				waveThresholds[0].push_back(threshold);
-			}
-			++countWave;
-		} else
-			printWarn << "cannot parse line '" << line << "' in wave list file "
-			          << "'" << waveListFileName << "'" << endl;
-		++lineNmb;
+//	unsigned int         lineNmb   = 0;
+//	string               line;
+	for (unsigned int i = 0; i < waveNamesInc.size(); ++i) {
+		std::string waveName = waveNamesInc[i];
+		double threshold = waveThresholdsInc[i];
+		if (partialWaveFitHelper::getReflectivity(waveName) > 0) {
+			++_nmbWavesRefl[1];  // positive reflectivity
+			waveNames     [1].push_back(waveName);
+			waveThresholds[1].push_back(threshold);
+		} else {
+			++_nmbWavesRefl[0];  // negative reflectivity
+			waveNames     [0].push_back(waveName);
+			waveThresholds[0].push_back(threshold);
+		}
+		++countWave;
 	}
-	waveListFile.close();
-	printInfo << "read " << lineNmb << " lines from wave list file "
-	          << "'" << waveListFileName << "'" << endl;
 	_nmbWaves        = _nmbWavesRefl[0] + _nmbWavesRefl[1];
 	_nmbWavesReflMax = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
 	_waveNames.resize      (extents[2][_nmbWavesReflMax]);
@@ -1124,87 +1111,7 @@ pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral
 
 template<typename complexT>
 void
-pwaLikelihood<complexT>::readIntegrals
-(const string& normIntFileName,   // name of file with normalization integrals
- const string& accIntFileName,    // name of file with acceptance integrals
- const string& integralTKeyName)  // name of TKey which stores integral in .root file
-{
-	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
-	const string normIntFileExt  = extensionFromPath(normIntFileName);
-	if (normIntFileExt == "root") {
-		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
-		if (not intFile or intFile->IsZombie()) {
-			printErr << "could not open normalization integral file '" << normIntFileName << "'. "
-			         << "Aborting..." << endl;
-			throw;
-		}
-		ampIntegralMatrix* integral = 0;
-		intFile->GetObject(integralTKeyName.c_str(), integral);
-		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << normIntFileName << "'. Aborting..." << endl;
-			throw;
-		}
-		reorderIntegralMatrix(*integral, _normMatrix);
-		intFile->Close();
-	} else if(normIntFileExt == "int") {
-			ampIntegralMatrix integral;
-			integral.readAscii(normIntFileName);
-			reorderIntegralMatrix(integral, _normMatrix);
-	} else {
-		printErr << "unknown file type '" << normIntFileName << "'. "
-		         << "only .int and .root files are supported. Aborting..." << endl;
-		throw;
-	}
-
-	printInfo << "loading acceptance integral from '" << accIntFileName << "'" << endl;
-	const string accIntFileExt  = extensionFromPath(accIntFileName);
-	if (accIntFileExt == "root") {
-		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
-		if (not intFile or intFile->IsZombie()) {
-			printErr << "could not open normalization integral file '" << accIntFileName << "'. "
-			         << "Aborting..." << endl;
-			throw;
-		}
-		ampIntegralMatrix* integral = 0;
-		intFile->GetObject(integralTKeyName.c_str(), integral);
-		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-			         << "'" << accIntFileName << "'. Aborting..." << endl;
-			throw;
-		}
-		if (_numbAccEvents != 0) {
-			_totAcc = ((double)integral->nmbEvents()) / (double)_numbAccEvents;
-			printInfo << "total acceptance in this bin: " << _totAcc << endl;
-			integral->setNmbEvents(_numbAccEvents);
-		} else
-			_totAcc = 1;
-		reorderIntegralMatrix(*integral, _accMatrix);
-		intFile->Close();
-	} else if (accIntFileExt == "int") {
-			ampIntegralMatrix integral;
-			integral.readAscii(accIntFileName);
-			if (_numbAccEvents != 0) {
-				_totAcc = ((double)integral.nmbEvents()) / (double)_numbAccEvents;
-				printInfo << "total acceptance in this bin: " << _totAcc << endl;
-				integral.setNmbEvents(_numbAccEvents);
-			} else {
-				_totAcc = 1;
-			}
-			reorderIntegralMatrix(integral, _accMatrix);
-	} else {
-		printErr << "unknown file type '" << accIntFileName << "'. "
-		         << "only .int and .root files are supported. exiting." << endl;
-		throw;
-	}
-}
-
-
-template<typename complexT>
-void
-pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
-                                             const bool    useRootAmps,
-                                             const string& ampLeafName)
+pwaLikelihood<complexT>::readDecayAmplitudes(std::map<std::string, TTree*>& trees)
 {
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
@@ -1214,90 +1121,51 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 	}
 	clear();
 
-	printInfo << "loading amplitude data from " << ((useRootAmps) ? ".root" : ".amp")
-	          << " files" << endl;
 	// loop over amplitudes and read in data
+	unsigned int nmbEvents = 0;
 	bool         firstWave = true;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+			std::string waveName = _waveNames[iRefl][iWave];
 			// get normalization
 			const complexT   normInt = _normMatrix[iRefl][iWave][iRefl][iWave];
 			vector<complexT> amps;
 			if (!firstWave)  // number of events is known except for first wave that is read in
-				amps.reserve(_nmbEvents);
-			// read decay amplitudes
-			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
-			if (useRootAmps) {
-				ampFilePath = changeFileExtension(ampFilePath, ".root");
-				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
-				// open amplitude file
-				TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
-				if (not ampFile or ampFile->IsZombie()) {
-					printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping." << endl;
+				amps.reserve(nmbEvents);
+			// connect tree leaf
+			TTree* currentTree = trees[waveName];
+			amplitudeTreeLeaf* ampTreeLeaf = 0;
+			currentTree->SetBranchAddress(rpwa::amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
+			for (long int eventIndex = 0; eventIndex < currentTree->GetEntriesFast(); ++eventIndex) {
+				currentTree->GetEntry(eventIndex);
+				if (!ampTreeLeaf) {
+					printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
+							  << "skipping." << endl;
 					continue;
 				}
-				// find amplitude tree
-				TTree*       ampTree     = 0;
-				const string ampTreeName = changeFileExtension(_waveNames[iRefl][iWave], ".amp");
-				ampFile->GetObject(ampTreeName.c_str(), ampTree);
-				if (not ampTree) {
-					printWarn << "cannot find tree '" << ampTreeName << "' in file "
-					          << "'" << ampFilePath << "'. skipping." << endl;
-					continue;
-				}
-				// connect tree leaf
-				amplitudeTreeLeaf* ampTreeLeaf = 0;
-				ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);
-				for (long int eventIndex = 0; eventIndex < ampTree->GetEntriesFast(); ++eventIndex) {
-					ampTree->GetEntry(eventIndex);
-					if (!ampTreeLeaf) {
-						printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
-						          << "skipping." << endl;
-						continue;
-					}
-					assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
-					complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
-					if (_useNormalizedAmps)         // normalize data, if option is switched on
-						amp /= sqrt(normInt.real());  // rescale decay amplitude
-					amps.push_back(amp);
-				}
-			} else {
-				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
-				ifstream ampFile(ampFilePath.c_str());
-				if (not ampFile) {
-					printErr << "cannot open amplitude file '" << ampFilePath << "'. Aborting..." << endl;
-					throw;
-				}
-				complexT amp;
-				while (ampFile.read((char*)&amp, sizeof(complexT))) {
-				  if (_useNormalizedAmps) {        // normalize data, if option is switched on
-					        value_type mynorm=normInt.real();
-					        if(mynorm==0)mynorm=1;
-						amp /= sqrt(mynorm);  // rescale decay amplitude
-				  }
-				  amps.push_back(amp);
-				}
+				assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+				complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+				if (_useNormalizedAmps)         // normalize data, if option is switched on
+					amp /= sqrt(normInt.real());  // rescale decay amplitude
+				amps.push_back(amp);
 			}
-
-			unsigned int nmbEvents = amps.size();
-			if (firstWave) {
-				_nmbEvents = nmbEvents;
-				_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
-				firstWave = false;
-			} else {
+			if (firstWave)
+				nmbEvents = _nmbEvents = amps.size();
+			else {
+				nmbEvents = amps.size();
 				if (nmbEvents != _nmbEvents)
 					printWarn << "size mismatch in amplitude files: this file contains " << nmbEvents
 					          << " events, previous file had " << _nmbEvents << " events." << endl;
-				// make sure not to store more events than _decayAmps can keep
-				nmbEvents = std::min(nmbEvents, _nmbEvents);
+				nmbEvents = _nmbEvents;
 			}
 
 			// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 			// this index scheme ensures a more linear memory access pattern in the likelihood function
-			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt)
+			_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
+			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 				_decayAmps[iEvt][iRefl][iWave] = amps[iEvt];
 			if (_debug)
-				printDebug << "read " << nmbEvents << " events from file "
+				printDebug << "read " << _nmbEvents << " events from file "
 				           << "'" << _waveNames[iRefl][iWave] << "'" << endl;
 		}
 	printInfo << "loaded decay amplitudes for " << _nmbEvents << " events into memory" << endl;

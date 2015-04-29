@@ -88,16 +88,7 @@ make_shared_library(
 
 
 # executables
-make_executable(pwafit                         pwafit.cc                          ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(pwaplot                        pwaplots.cc                        ${THIS_LIB})
-make_executable(likelihoodPointCalculator      likelihoodPointCalculator.cc       ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-
-make_executable(eigenvectorLikelihoodSlices    eigenvectorLikelihoodSlices.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(calcCovMatrixForFitResult      calcCovMatrixForFitResult.cc       ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-
-make_executable(stripIntegralsFromFitResult    stripIntegralsFromFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(addIntegralsToFitResult        addIntegralsToFitResult.cc         ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(compareFitResultsIntegrals     compareFitResultsIntegrals.cc      ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(pwaplot pwaplots.cc ${THIS_LIB})
 
 
 # build tests

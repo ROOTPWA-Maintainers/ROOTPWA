@@ -45,4 +45,3 @@ include_directories(
 
 # executables
 make_executable(testParameterSpace testParameterSpace.cc "${RPWA_PARTIALWAVEFIT_LIB}")
-make_executable(testLikelihood     testLikelihood.cc     "${RPWA_PARTIALWAVEFIT_LIB}")

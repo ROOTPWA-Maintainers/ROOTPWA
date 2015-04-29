@@ -21,6 +21,9 @@ namespace rpwa {
 		int setBranchAddress(T objectPtr, PyObject* pyTree, const std::string& name);
 
 		template<typename T>
+		bool branch(T objectPtr, PyObject* pyTree, const std::string& name);
+
+		template<typename T>
 		T* getFromTDirectory(PyObject* pyDir, const std::string& name);
 
 		void exportRootConverters();

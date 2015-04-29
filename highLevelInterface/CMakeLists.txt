@@ -41,6 +41,7 @@ set(INCLUDE_DIRECTORIES
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
+	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -53,6 +54,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	calcAmplitude.cc
+	pwaFit.cc
 	)
 
 

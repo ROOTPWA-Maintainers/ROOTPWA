@@ -114,6 +114,7 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
 	)
 
 

@@ -52,4 +52,4 @@ include_directories(
 include_directories(${INCLUDE_DIRECTORIES})
 
 # executables
-make_executable(pwaNloptFit   pwaNloptFit.cc       ${RPWA_PARTIALWAVEFIT_LIB} ${RPWA_UTILITIES_LIB} ${NLopt_LIBS})
+# make_executable(pwaNloptFit   pwaNloptFit.cc       ${RPWA_PARTIALWAVEFIT_LIB} ${RPWA_UTILITIES_LIB} ${NLopt_LIBS})

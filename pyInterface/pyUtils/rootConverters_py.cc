@@ -42,6 +42,27 @@ int rpwa::py::setBranchAddress(T objectPtr, PyObject* pyTree, const std::string&
 		return tree->SetBranchAddress(name.c_str(), pointerMap[objectPtr]);
 }
 
+template<typename T>
+bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name)
+{
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(not tree) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for tree when executing rpwa::py::branch()");
+			bp::throw_error_already_set();
+		}
+		static std::map<T, T*> pointerMap;
+		if(pointerMap.find(objectPtr) == pointerMap.end())
+		{
+			pointerMap[objectPtr] = new T(objectPtr);
+		}
+		TBranch* branch = tree->Branch(name.c_str(), pointerMap[objectPtr]);
+		if (branch == 0) {
+			return false;
+		} else {
+			return true;
+		}
+}
+
 namespace {
 
 	template<typename T>
@@ -126,7 +147,13 @@ void rpwa::py::exportRootConverters() {
 		, bp::return_internal_reference<1>()
 	);
 
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaAmpIntegralMatrix", &rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>
+		, bp::return_internal_reference<1>()
+	);
+
 	rpwa::py::setBranchAddress<rpwa::fitResult*>(0, 0, "");
 	rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>(0, 0, "");
+	rpwa::py::branch<rpwa::fitResult*>(0, 0, "");
 
 }
