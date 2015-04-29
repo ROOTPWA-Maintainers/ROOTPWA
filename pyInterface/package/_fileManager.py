@@ -60,11 +60,13 @@ class fileManager:
 	dataDirectory      = ""
 	keyDirectory       = ""
 	amplitudeDirectory = ""
+	integralDirectory  = ""
 	limitFilesInDir = -1
 
 	dataFiles       = {}
 	keyFiles        = {}
 	amplitudeFiles  = {}
+	intergalFiles   = {}
 	globalAxes = {}
 	binList = []
 
@@ -72,9 +74,11 @@ class fileManager:
 		self.dataDirectory      = configObject.dataDirectory
 		self.keyDirectory       = configObject.keyDirectory
 		self.amplitudeDirectory = configObject.ampDirectory
+		self.integralDirectory  = configObject.intDirectory
 		pyRootPwa.utils.printInfo("data file dir read from config file: '" + self.dataDirectory + "'.")
 		pyRootPwa.utils.printInfo("key file dir read from config file: '" + self.keyDirectory + "'.")
 		pyRootPwa.utils.printInfo("amplitude file dir read from config file: '" + self.amplitudeDirectory + "'.")
+		pyRootPwa.utils.printInfo("integral file dir read from config file: '" + self.integralDirectory + "'.")
 
 		self.dataFiles = self._openDataFiles()
 		allAxes = []
@@ -98,6 +102,8 @@ class fileManager:
 			pyRootPwa.utils.printInfo("limit for files per directory set to " + str(self.limitFilesInDir))
 		self.amplitudeFiles = self._getAmplitudeFilePaths()
 		pyRootPwa.utils.printInfo("number of amplitude files: " + str(len(self.amplitudeFiles)))
+		self.integralFiles = self._getIntegralFilePaths()
+		pyRootPwa.utils.printInfo("number of integral files: " + str(len(self.integralFiles)))
 		return True
 
 
@@ -124,10 +130,10 @@ class fileManager:
 		return fileManager.convertKeyFilesToPaths(self.keyFiles)
 
 
-	def getAmpFilePaths(self, eventsType):
+	def getAmpFilePaths(self, binID, eventsType):
 		ampFileList = []
 		for key in sorted(self.amplitudeFiles):
-			if (key[2] == eventsType):
+			if (key[0] == binID and key[2] == eventsType):
 				ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
 		return ampFileList
 
@@ -156,6 +162,11 @@ class fileManager:
 
 	def getAmplitudeFilePath(self, binID, waveName, eventsType):
 		return self.amplitudeDirectory + "/" + self.amplitudeFiles[(binID, waveName, fileManager.eventsTypeFromBpEnum(eventsType))]
+
+
+	def getIntegralFilePath(self, binID, eventsType):
+		return self.integralFiles[(binID, fileManager.eventsTypeFromBpEnum(eventsType))]
+
 
 	def getBinID(self, binInformation):
 		foundBins = []
@@ -285,6 +296,13 @@ class fileManager:
 
 		return amplitudeFiles
 
+	def _getIntegralFilePaths(self):
+		integralFiles = {}
+		for binID in self.getBinIDList():
+			for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
+				integralFiles[(binID, eventsType)] = self.integralDirectory + "/integral_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+		return integralFiles
+
 
 	def _openKeyFiles(self):
 		keyFileNames = glob.glob(self.keyDirectory + "/*.key")
@@ -367,7 +385,11 @@ class fileManager:
 		for eventsType in self.dataFiles:
 			for binID in self.getBinIDList():
 				for waveName in self.keyFiles:
-					retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "], wavename [" + waveName + "] >> " + self.getAmplitudeFilePath(binID, waveName, eventsType) + "\n"
+					retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "], wavename [" + waveName + "] >> " + self.amplitudeFiles[(binID, waveName, eventsType)] + "\n"
+		retStr += "\nintfiles:\n"
+		for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
+			for binID in self.getBinIDList():
+				retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "] >> " + self.integralFiles[(binID, eventsType)] + "\n"
 		return retStr
 
 

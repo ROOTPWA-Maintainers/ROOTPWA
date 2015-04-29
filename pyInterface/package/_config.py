@@ -60,6 +60,7 @@ class rootPwaConfig:
 			self.dataDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
 			self.keyDirectory    = self.getPathFromConfig("general", "keyFileDirectory" , configDir + "/keyfiles")
 			self.ampDirectory    = self.getPathFromConfig("general", "ampFileDirectory" , configDir + "/amps")
+			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
 
 			if self.config.has_option('general', 'limitFilesPerDir'):
 				self.limitFilesPerDir                   = self.config.get('general', 'limitFilesPerDir')
@@ -88,4 +89,7 @@ class rootPwaConfig:
 		if not os.path.isdir(self.ampDirectory):
 			os.mkdir(self.ampDirectory)
 			pyRootPwa.utils.printInfo("created amplitude directory '" + self.ampDirectory + "'.")
+		if not os.path.isdir(self.intDirectory):
+			os.mkdir(self.intDirectory)
+			pyRootPwa.utils.printInfo("created integral directory '" + self.intDirectory + "'.")
 		return True
