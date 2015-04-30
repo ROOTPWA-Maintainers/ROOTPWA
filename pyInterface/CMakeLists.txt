@@ -73,7 +73,6 @@ include_directories(
 	${ROOT_INCLUDE_DIR}
 	)
 
-
 # source files that are compiled into library
 set(SOURCES
 	rootPwaPy.cc
@@ -116,7 +115,9 @@ set(SOURCES
 	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
 	)
-
+if(USE_NLOPT)
+	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)
+endif()
 
 # library
 set(THIS_LIB "RootPwaPy")
@@ -135,7 +136,9 @@ make_shared_library(
 	"${RPWA_STORAGEFORMATS_LIB}"
 	"${RPWA_HIGHLEVELINTERFACE_LIB}"
 	)
-
+if(USE_NLOPT)
+	target_link_libraries(${THIS_LIB} "${NLopt_LIBS}")
+endif()
 
 # link the shared library with the python bindings
 add_custom_target(

@@ -49,6 +49,12 @@ set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
+if(USE_NLOPT)
+	include_directories(
+		SYSTEM
+		${NLopt_INCLUDE_DIR}
+	)
+endif()
 
 
 # source files that are compiled into library
@@ -56,6 +62,9 @@ set(SOURCES
 	calcAmplitude.cc
 	pwaFit.cc
 	)
+if(USE_NLOPT)
+	LIST(APPEND SOURCES pwaNloptFit.cc)
+endif()
 
 
 # library name
@@ -68,6 +77,10 @@ make_shared_library(
 	"${SOURCES}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
+	"${RPWA_PARTIALWAVEFIT_LIB}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	)
+if(USE_NLOPT)
+	target_link_libraries(${THIS_LIB} "${NLopt_LIBS}")
+endif()

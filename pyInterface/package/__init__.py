@@ -8,6 +8,7 @@ from _fileManager import loadFileManager
 from amplitude import calcAmplitude
 from integrals import calcIntegrals
 from fit import pwaFit
+from fit import pwaNloptFit
 
 del _config
 del _fileManager

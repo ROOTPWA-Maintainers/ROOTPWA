@@ -38,6 +38,9 @@
 #include "amplitudeMetadata_py.h"
 #include "calcAmplitude_py.h"
 #include "pwaFit_py.h"
+#ifdef USE_NLOPT
+#include "pwaNloptFit_py.h"
+#endif
 
 namespace bp = boost::python;
 
@@ -78,5 +81,8 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportAmplitudeMetadata();
 	rpwa::py::exportCalcAmplitude();
 	rpwa::py::exportPwaFit();
+#ifdef USE_NLOPT
+	rpwa::py::exportPwaNloptFit();
+#endif
 
 }
