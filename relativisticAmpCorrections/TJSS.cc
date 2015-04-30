@@ -14,25 +14,13 @@ unsigned int TJSS::_debugLevel = 9999;
 
 void TJSS::CalcAmpl() {
 	if (_debugLevel >= 2) {
-		cout << "  Decay channel:   " << _JMother;
-		if (_etaJ > 0) {
-			cout << "+  ->  ";
-		} else {
-			cout << "-  ->  ";
-		}
-		cout << _SDecay1;
-		if (_eta1 > 0) {
-			cout << "+ ";
-		} else {
-			cout << "- ";
-		}
-		cout << _SDecay2;
-		if (_eta2 > 0) {
-			cout << "+";
-		} else {
-			cout << "-";
-		}
-		cout << endl;
+		cout << "  Decay channel:   " << _JMother
+		     << ((_etaJ > 0) ? "+  ->  " : "-  ->  ")
+		     << _SDecay1
+		     << ((_eta1 > 0) ? "+ " : "- ")
+		     << _SDecay2
+		     << ((_eta2 > 0) ? "+" : "-")
+		     << endl;
 	}
 
 	// range for coupled Spin
