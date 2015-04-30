@@ -1,81 +1,99 @@
-//
-// Uncomment the following line
-// if you want to work in CINT (root.cern.ch)
-//
-//#define __JCINT__
-#ifndef __JCINT__
-#define Int_t    long long
-#define Double_t double
-#define Bool_t   bool
-#endif
+#ifndef TJWFTENSOR_HH
+#define TJWFTENSOR_HH
 
 #include "ClebschGordanBox.h"
 
 class TTensorTerm {
 
-	private:
-		Int_t Rome;
-		Int_t *ome_pzm;
-		Int_t Reps;
-		Int_t *eps_pzm;
-		Int_t Rchi;
-		Int_t *chi_pzm;
-		Int_t Rphi;
-		Int_t *phi_pzm;
+  public:
 
-		Int_t gam_s_pot;
-		Int_t gam_sig_pot;
+	TTensorTerm()
+	: _Rome(0),
+	  _ome_pzm(0),
+	  _Reps(0),
+	  _eps_pzm(0),
+	  _Rchi(0),
+	  _chi_pzm(0),
+	  _Rphi(0),
+	  _phi_pzm(0),
+	  _gam_s_pot(0),
+	  _gam_sig_pot(0),
+	  _prefac(TFracNum::Zero) {
+	}
 
-		TFracNum prefac;
+	TTensorTerm(char name,
+	            long RJ,
+	            long* pzm_field,
+	            const TFracNum& prefac);
 
-	public:
-		TTensorTerm () {
-			Rome=0; ome_pzm=0;
-			Reps=0; eps_pzm=0;
-			Rchi=0; chi_pzm=0;
-			Rphi=0; phi_pzm=0;
-			gam_s_pot=0;
-			gam_sig_pot=0;
-			prefac=TFracNum::Zero;
-		};
+	TTensorTerm(const TTensorTerm& S,
+	            const TTensorTerm& L,
+	            long contractions,
+	            long o_share,
+	            long e_share,
+	            char con_type);
 
-		TTensorTerm (char, Int_t, Int_t*, TFracNum*);
-		TTensorTerm (TTensorTerm*, TTensorTerm*, Int_t, Int_t, Int_t, char);
-		Int_t LJContraction(Int_t, Int_t);
-		Int_t Multiply(char, Int_t, Int_t*, TFracNum*);
-		Int_t SpinInnerContraction(Int_t);
-		Int_t SameStructure(TTensorTerm*);
-		Int_t AddTwoTerms(TTensorTerm*);
-		Int_t IsNonZero() {
-			if (prefac==TFracNum::Zero) return 0;
-			else                             return 1;
-		};
-		Int_t Print(char);
-		TFracNum GetPreFac() {return prefac;};
-		Int_t GetGamS()   {return gam_s_pot;};
-		Int_t GetGamSig() {return gam_sig_pot;};
-		//ClassDef(TTensorTerm,1);
+	long LJContraction(long ncon, long even);
+	long Multiply(char name, long RJ, long* pzm_field, const TFracNum& prefac);
+	long SpinInnerContraction(long cPsiInt);
+	bool SameStructure(const TTensorTerm& rhs) const;
+	bool AddTwoTerms(const TTensorTerm& rhs);
+	long IsNonZero() const { return (_prefac == TFracNum::Zero) ? 0 : 1; }
+
+	long Print(char flag) const;
+
+	const TFracNum& GetPreFac() const { return _prefac; }
+	const long&     GetGamS()   const { return _gam_s_pot; }
+	const long&     GetGamSig() const { return _gam_sig_pot; }
+
+private:
+
+	long _Rome;
+	long* _ome_pzm;
+	long _Reps;
+	long* _eps_pzm;
+	long _Rchi;
+	long* _chi_pzm;
+	long _Rphi;
+	long* _phi_pzm;
+
+	long _gam_s_pot;
+	long _gam_sig_pot;
+
+	TFracNum _prefac;
+
 };
 
 class TTensorSum {
 
-	private:
-		Int_t Nterms;
-		TTensorTerm *terms;
+private:
+	long Nterms;
+	TTensorTerm *terms;
 
-	public:
-		TTensorSum () {
-			Nterms=0;
-			terms=0;
-		};
-		Int_t AddTerm(TTensorTerm*);
-		Int_t SpinInnerContraction(Int_t);
-		TTensorSum* LSContraction(TTensorSum*, Int_t, Int_t, Int_t, char);
-		TTensorSum* LJContraction(Int_t, Int_t);
-		Int_t GetNterms() {return Nterms;};
-		Int_t Print(char);
-		Int_t Print() {return Print('n');}; // CINT limitation for overloading
+public:
+	TTensorSum() {
+		Nterms = 0;
+		terms = 0;
+	}
+	;
+	long AddTerm(TTensorTerm*);
+	long SpinInnerContraction(long);
+	TTensorSum* LSContraction(TTensorSum*, long, long, long, char);
+	TTensorSum* LJContraction(long, long);
+	long GetNterms() {
+		return Nterms;
+	}
+	;
+	long Print(char);
+	long Print() {
+		return Print('n');
+	}
+	; // CINT limitation for overloading
 
-		TTensorTerm* GetTerm(Int_t i) {return &terms[i];}
-		//ClassDef(TTensorSum,1);
+	TTensorTerm* GetTerm(long i) {
+		return &terms[i];
+	}
+
 };
+
+#endif

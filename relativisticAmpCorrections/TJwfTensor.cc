@@ -1,343 +1,523 @@
+#include "TJwfTensor.h"
+
 #include <iostream>
 #include <string>
-#include "TJwfTensor.h"
+
+#include <reportingUtils.hpp>
+
 using namespace std;
 
-TTensorTerm::TTensorTerm(char name, Int_t RJ, Int_t* pzm_field,
-		TFracNum* prefac_){
-	Rome=0; ome_pzm=0;
-	Reps=0; eps_pzm=0;
-	Rchi=0; chi_pzm=0;
-	Rphi=0; phi_pzm=0;
-	gam_s_pot=0;
-	gam_sig_pot=0;
-	prefac=*prefac_;
-	if (name == 'o') {Rome=RJ; ome_pzm=pzm_field;}
-	if (name == 'e') {Reps=RJ; eps_pzm=pzm_field;}
-	if (name == 'c') {Rchi=RJ; chi_pzm=pzm_field;}
-	if (name == 'p') {Rphi=RJ; phi_pzm=pzm_field;}
+TTensorTerm::TTensorTerm(char name,
+                         long RJ,
+                         long* pzm_field,
+                         const TFracNum& prefac)
+	: _Rome(0),
+	  _ome_pzm(0),
+	  _Reps(0),
+	  _eps_pzm(0),
+	  _Rchi(0),
+	  _chi_pzm(0),
+	  _Rphi(0),
+	  _phi_pzm(0),
+	  _gam_s_pot(0),
+	  _gam_sig_pot(0),
+	  _prefac(prefac)
+{
+	switch(name) {
+		case 'o':
+			_Rome = RJ;
+			_ome_pzm = pzm_field;
+			break;
+		case 'e':
+			_Reps = RJ;
+			_eps_pzm = pzm_field;
+			break;
+		case 'c':
+			_Rchi = RJ;
+			_chi_pzm = pzm_field;
+			break;
+		case 'p':
+			_Rphi = RJ;
+			_phi_pzm = pzm_field;
+			break;
+	}
 }
 
-TTensorTerm::TTensorTerm(TTensorTerm *S, TTensorTerm *L,
-		Int_t contractions,
-		Int_t o_share, Int_t e_share,
-		char con_type) {
+TTensorTerm::TTensorTerm(const TTensorTerm& S,
+                         const TTensorTerm& L,
+                         long contractions,
+                         long o_share,
+                         long e_share,
+                         char con_type)
+	: _Rome(S._Rome),
+	  _Reps(S._Reps),
+	  _Rchi(S._Rchi + L._Rchi),
+	  _Rphi(S._Rphi + L._Rphi),
+	  _gam_s_pot(S._gam_s_pot + L._gam_s_pot),
+	  _gam_sig_pot(S._gam_sig_pot + L._gam_sig_pot),
+	  _prefac(S._prefac * L._prefac)
+{
 
-	if ( L->Rome || L->Reps ) return;
-	Rome = S->Rome;
-	Reps = S->Reps;
-	Rchi = S->Rchi + L->Rchi;
-	Rphi = S->Rphi + L->Rphi;
-	gam_s_pot   = S->gam_s_pot  +L->gam_s_pot;
-	gam_sig_pot = S->gam_sig_pot+L->gam_sig_pot;
-	prefac=S->prefac*L->prefac;
+	if (L._Rome or L._Reps) {
+		return;
+	}
 
-	Int_t ocount=o_share;
-	Int_t ecount=e_share;
-	for (Int_t con=0; con<contractions; con++) {
-		Int_t cp = 0;
-		if (con_type=='c') { cp=L->chi_pzm[Rchi-1]; Rchi--; }
-		else               { cp=L->phi_pzm[Rphi-1]; Rphi--; }
-		Int_t oe = 0;
+	long ocount = o_share;
+	long ecount = e_share;
+	for (long con = 0; con < contractions; con++) {
+		long cp = 0;
+		if (con_type == 'c') {
+			cp = L._chi_pzm[_Rchi - 1];
+			_Rchi--;
+		} else {
+			cp = L._phi_pzm[_Rphi - 1];
+			_Rphi--;
+		}
+		long oe = 0;
 		if (ocount) {              // o is to be contracted
-			oe = S->ome_pzm[Rome-1];
-			Rome--;
-		}
-		else {                     // e is to be contracted
-			oe = S->eps_pzm[Reps-1];
+			oe = S._ome_pzm[_Rome - 1];
+			_Rome--;
+		} else {                     // e is to be contracted
+			oe = S._eps_pzm[_Reps - 1];
 			ecount--;
-			Reps--;
+			_Reps--;
 		}
-		if ( con_type == 'c' && ( (oe==1&&cp==-1) || (oe==-1&&cp==1) ) )
-			prefac.FlipSign();
-		else if
-			(  con_type == 'p' && ( (oe==1&&cp==1) || (oe==-1&&cp==-1) ) ) ;
-		else if (oe==0&&cp==0 ) {
-			if (ocount) gam_s_pot++;
-			else        gam_sig_pot++;
-		}
-		else {
-			prefac=TFracNum::Zero;
+		if (con_type == 'c' and ((oe == 1 and cp == -1) or (oe == -1 and cp == 1)))
+		{
+			_prefac.FlipSign();
+		} else if (con_type == 'p' and ((oe == 1 and cp == 1) or (oe == -1 and cp == -1))) {
+
+		} else if (oe == 0 and cp == 0) {
+			if (ocount) {
+				_gam_s_pot++;
+			} else {
+				_gam_sig_pot++;
+			}
+		} else {
+			_prefac = TFracNum::Zero;
 			return;
 		}
-		if (ocount) ocount--;
+		if (ocount) {
+			ocount--;
+		}
 	}
 
-	ome_pzm = new Int_t[Rome];
-	for (Int_t i=0; i<Rome; i++) ome_pzm[i] = S->ome_pzm[i];
-	eps_pzm = new Int_t[Reps];
-	for (Int_t i=0; i<Reps; i++) eps_pzm[i] = S->eps_pzm[i];
-	chi_pzm = new Int_t[Rchi];
-	for (Int_t i=0; i<Rchi; i++) {
-		if (i < L->Rchi) chi_pzm[i] = L->chi_pzm[i];
-		else             chi_pzm[i] = S->chi_pzm[i-(L->Rchi)];
+	_ome_pzm = new long[_Rome];
+	for (long i = 0; i < _Rome; i++) {
+		_ome_pzm[i] = S._ome_pzm[i];
 	}
-	phi_pzm = new Int_t[Rphi];
-	for (Int_t i=0; i<Rphi; i++){
-		if (i < L->Rphi) phi_pzm[i] = L->phi_pzm[i];
-		else             phi_pzm[i] = S->phi_pzm[i-(L->Rphi)];
+	_eps_pzm = new long[_Reps];
+	for (long i = 0; i < _Reps; i++) {
+		_eps_pzm[i] = S._eps_pzm[i];
+	}
+	_chi_pzm = new long[_Rchi];
+	for (long i = 0; i < _Rchi; i++) {
+		if (i < L._Rchi) {
+			_chi_pzm[i] = L._chi_pzm[i];
+		} else {
+			_chi_pzm[i] = S._chi_pzm[i - (L._Rchi)];
+		}
+	}
+	_phi_pzm = new long[_Rphi];
+	for (long i = 0; i < _Rphi; i++) {
+		if (i < L. _Rphi) {
+			_phi_pzm[i] = L._phi_pzm[i];
+		} else {
+			_phi_pzm[i] = S._phi_pzm[i - (L._Rphi)];
+		}
 	}
 }
 
-Int_t
-TTensorTerm::LJContraction(Int_t ncon, Int_t even) {
+long TTensorTerm::LJContraction(long ncon, long even) {
 
-	for (Int_t con=0; con<ncon; con++) {
-		Int_t c=chi_pzm[Rchi-1];
-		Int_t p=phi_pzm[Rphi-1];
-		if ( c != p ) {
-			prefac=TFracNum::Zero;
+	for (long con = 0; con < ncon; con++) {
+		long c = _chi_pzm[_Rchi - 1];
+		long p = _phi_pzm[_Rphi - 1];
+		if (c != p) {
+			_prefac = TFracNum::Zero;
 			return 0;
 		}
-		Rchi--;
-		Rphi--;
+		_Rchi--;
+		_Rphi--;
 	}
 
-	Int_t trouble=0;
+	bool error = false;
 
-	if (even==0) {
-		if (Rome+Reps+Rchi+Rphi!=3) {
-			cerr << "TTensorTerm::LJContraction:"
-				<<" Contraction ended with wrong number of indices!!" <<endl;
-			return 0;
-		}
-		else { // eq. (5.21) - (5.23)
-			Int_t os=-100; if (Rome==1) os=ome_pzm[0];
-			Int_t es=-100; if (Reps==1) es=eps_pzm[0];
-			Int_t cs=-100; if (Rchi==1) cs=chi_pzm[0];
-			Int_t ps=-100; if (Rphi==1) ps=phi_pzm[0];
-			if ( Rome==0 ) {
-				Reps--; Rchi--; Rphi--;
-				if      (es== 1 && cs==-1 && ps== 0 )                  ;
-				else if (es==-1 && cs== 1 && ps== 0 ) prefac.FlipSign();
-				else if (es== 1 && cs== 0 && ps== 1 )                  ;
-				else if (es==-1 && cs== 0 && ps==-1 ) prefac.FlipSign();
-				else if (es== 0 && cs== 1 && ps== 1 ){prefac.FlipSign();gam_sig_pot++;}
-				else if (es== 0 && cs==-1 && ps==-1 ){                  gam_sig_pot++;}
-				else { prefac=TFracNum::Zero; return 1;}
+	if (even == 0) {
+		if (_Rome + _Reps + _Rchi + _Rphi != 3) {
+			printErr << "TTensorTerm::LJContraction:"
+			         << " Contraction ended with wrong number of indices!!"
+			         << endl;
+			throw;
+		} else { // eq. (5.21) - (5.23)
+			long os = -100;
+			if (_Rome == 1) {
+				os = _ome_pzm[0];
 			}
-			else if ( Reps==0 ) {
-				Rome--; Rchi--; Rphi--;
-				if      (os== 1 && cs==-1 && ps== 0 )                  ;
-				else if (os==-1 && cs== 1 && ps== 0 ) prefac.FlipSign();
-				else if (os== 1 && cs== 0 && ps== 1 )                  ;
-				else if (os==-1 && cs== 0 && ps==-1 ) prefac.FlipSign();
-				else if (os== 0 && cs== 1 && ps== 1 ){prefac.FlipSign();gam_s_pot++;}
-				else if (os== 0 && cs==-1 && ps==-1 ){                  gam_s_pot++;}
-				else { prefac=TFracNum::Zero; return 1;}
+			long es = -100;
+			if (_Reps == 1) {
+				es = _eps_pzm[0];
 			}
-			else if ( Rchi==0 ) {
-				Rome--; Reps--; Rphi--;
-				if      (os== 1 && es==-1 && ps== 0 )                  ;
-				else if (os==-1 && es== 1 && ps== 0 ) prefac.FlipSign();
-				else if (os== 1 && es== 0 && ps== 1 ){                  gam_sig_pot++;}
-				else if (os==-1 && es== 0 && ps==-1 ){prefac.FlipSign();gam_sig_pot++;}
-				else if (os== 0 && es== 1 && ps== 1 ){prefac.FlipSign();gam_s_pot++;}
-				else if (os== 0 && es==-1 && ps==-1 ){                  gam_s_pot++;}
-				else { prefac=TFracNum::Zero; return 1;}
+			long cs = -100;
+			if (_Rchi == 1) {
+				cs = _chi_pzm[0];
 			}
-			else if ( Rphi==0 ) {
-				Rome--; Reps--; Rchi--;
-				if      (os== 1 && es==-1 && cs== 0 )                  ;
-				else if (os==-1 && es== 1 && cs== 0 ) prefac.FlipSign();
-				else if (os== 1 && es== 0 && cs==-1 ){prefac.FlipSign();gam_sig_pot++;}
-				else if (os==-1 && es== 0 && cs== 1 ){                  gam_sig_pot++;}
-				else if (os== 0 && es== 1 && cs==-1 ){                  gam_s_pot++;}
-				else if (os== 0 && es==-1 && cs== 1 ){prefac.FlipSign();gam_s_pot++;}
-				else { prefac=TFracNum::Zero; return 1;}
+			long ps = -100;
+			if (_Rphi == 1) {
+				ps = _phi_pzm[0];
 			}
-			else { trouble=5;}
+			if (_Rome == 0) {
+				_Reps--;
+				_Rchi--;
+				_Rphi--;
+				if (es == 1 && cs == -1 && ps == 0) {
+
+				} else if (es == -1 && cs == 1 && ps == 0) {
+					_prefac.FlipSign();
+				} else if (es == 1 && cs == 0 && ps == 1) {
+
+				} else if (es == -1 && cs == 0 && ps == -1) {
+					_prefac.FlipSign();
+				} else if (es == 0 && cs == 1 && ps == 1) {
+					_prefac.FlipSign();
+					_gam_sig_pot++;
+				} else if (es == 0 && cs == -1 && ps == -1) {
+					_gam_sig_pot++;
+				} else {
+					_prefac = TFracNum::Zero;
+					return 1;
+				}
+			} else if (_Reps == 0) {
+				_Rome--;
+				_Rchi--;
+				_Rphi--;
+				if (os == 1 && cs == -1 && ps == 0) {
+
+				} else if (os == -1 && cs == 1 && ps == 0) {
+					_prefac.FlipSign();
+				} else if (os == 1 && cs == 0 && ps == 1) {
+
+				} else if (os == -1 && cs == 0 && ps == -1) {
+					_prefac.FlipSign();
+				} else if (os == 0 && cs == 1 && ps == 1) {
+					_prefac.FlipSign();
+					_gam_s_pot++;
+				} else if (os == 0 && cs == -1 && ps == -1) {
+					_gam_s_pot++;
+				} else {
+					_prefac = TFracNum::Zero;
+					return 1;
+				}
+			} else if (_Rchi == 0) {
+				_Rome--;
+				_Reps--;
+				_Rphi--;
+				if (os == 1 && es == -1 && ps == 0) {
+
+				} else if (os == -1 && es == 1 && ps == 0) {
+					_prefac.FlipSign();
+				} else if (os == 1 && es == 0 && ps == 1) {
+					_gam_sig_pot++;
+				} else if (os == -1 && es == 0 && ps == -1) {
+					_prefac.FlipSign();
+					_gam_sig_pot++;
+				} else if (os == 0 && es == 1 && ps == 1) {
+					_prefac.FlipSign();
+					_gam_s_pot++;
+				} else if (os == 0 && es == -1 && ps == -1) {
+					_gam_s_pot++;
+				} else {
+					_prefac = TFracNum::Zero;
+					return 1;
+				}
+			} else if (_Rphi == 0) {
+				_Rome--;
+				_Reps--;
+				_Rchi--;
+				if (os == 1 && es == -1 && cs == 0) {
+
+				} else if (os == -1 && es == 1 && cs == 0) {
+					_prefac.FlipSign();
+				} else if (os == 1 && es == 0 && cs == -1) {
+					_prefac.FlipSign();
+					_gam_sig_pot++;
+				} else if (os == -1 && es == 0 && cs == 1) {
+					_gam_sig_pot++;
+				} else if (os == 0 && es == 1 && cs == -1) {
+					_gam_s_pot++;
+				} else if (os == 0 && es == -1 && cs == 1) {
+					_prefac.FlipSign();
+					_gam_s_pot++;
+				} else {
+					_prefac = TFracNum::Zero;
+					return 1;
+				}
+			} else {
+				printWarn << "troule == 5, whatever that means..." << endl;
+				error = true;
+			}
 		}
 	}
 
 	else {
-		if (Rome!=0 || Reps!=0 || Rchi!=0 || Rphi!=0 ) trouble=1;
+		if (_Rome != 0 and _Reps != 0 and _Rchi != 0 and _Rphi != 0) {
+			printWarn << "troule == 1, whatever that means..." << endl;
+			error = true;
+		}
 	}
-	if (trouble){
-		cerr << "TTensorTerm::LJContraction: "
-			<< "Invalid espilon-contraction occurred "<< trouble << endl;
-		return 0;
+	if (error) {
+		printErr << "TTensorTerm::LJContraction: "
+		         << "Invalid espilon-contraction occurred " << endl;
+		throw;
 	}
 	return 1;
 }
 
-Int_t
-TTensorTerm::Multiply(char name, Int_t RJ, Int_t* pzm_field,
-		TFracNum* prefac_){
+long TTensorTerm::Multiply(char name,
+                           long RJ,
+                           long* pzm_field,
+                           const TFracNum& prefac)
+{
 
-	prefac = prefac * *prefac_;
+	_prefac = _prefac * prefac;
 
-	Int_t Merr=0;
-	if (name == 'o') {if (Rome) Merr=1; else {Rome=RJ; ome_pzm=pzm_field;}}
-	if (name == 'e') {if (Reps) Merr=1; else {Reps=RJ; eps_pzm=pzm_field;}}
-	if (name == 'c') {if (Rchi) Merr=1; else {Rchi=RJ; chi_pzm=pzm_field;}}
-	if (name == 'p') {if (Rphi) Merr=1; else {Rphi=RJ; phi_pzm=pzm_field;}}
+	long Merr = 0;
+	if (name == 'o') {
+		if (_Rome) {
+			Merr = 1;
+		} else {
+			_Rome = RJ;
+			_ome_pzm = pzm_field;
+		}
+	}
+	if (name == 'e') {
+		if (_Reps) {
+			Merr = 1;
+		} else {
+			_Reps = RJ;
+			_eps_pzm = pzm_field;
+		}
+	}
+	if (name == 'c') {
+		if (_Rchi) {
+			Merr = 1;
+		} else {
+			_Rchi = RJ;
+			_chi_pzm = pzm_field;
+		}
+	}
+	if (name == 'p') {
+		if (_Rphi) {
+			Merr = 1;
+		} else {
+			_Rphi = RJ;
+			_phi_pzm = pzm_field;
+		}
+	}
 	if (Merr) {
-		cerr << "TTensorTerm::Multiply: Each type can be multiplied only once!"
-			<<endl;
+		printErr << "TTensorTerm::Multiply: Each type can be multiplied only once!"
+		         << endl;
 		return 0;
 	}
 	return 1;
 }
 
-Int_t
-TTensorTerm::SpinInnerContraction(Int_t cPsiInt) {
-	Int_t res=0;
-	for (Int_t ic=0; ic<cPsiInt; ic++) {
-		res=0;
-		Int_t o = ome_pzm[Rome-1];
-		Int_t e = eps_pzm[Reps-1];
-		if ( (o==1&&e==-1) || (o==-1&&e==1) ) {
-			prefac.FlipSign();
-			res=1;
+long TTensorTerm::SpinInnerContraction(long cPsiInt) {
+	long res = 0;
+	for (long ic = 0; ic < cPsiInt; ic++) {
+		res = 0;
+		long o = _ome_pzm[_Rome - 1];
+		long e = _eps_pzm[_Reps - 1];
+		if ((o == 1 and e == -1) or (o == -1 and e == 1)) {
+			_prefac.FlipSign();
+			res = 1;
 		}
-		if   (o==0&&e==0) {
-			gam_s_pot   += 1;
-			gam_sig_pot += 1;
-			res=1;
+		if (o == 0 and e == 0) {
+			_gam_s_pot += 1;
+			_gam_sig_pot += 1;
+			res = 1;
 		}
-		Rome--;
-		Reps--;
+		_Rome--;
+		_Reps--;
 	}
 	return res;
 }
 
-Int_t
-TTensorTerm::SameStructure(TTensorTerm *other) {
-	if (Rome==other->Rome &&
-			Reps==other->Reps &&
-			Rchi==other->Rchi &&
-			Rphi==other->Rphi &&
-			gam_s_pot==other->gam_s_pot &&
-			gam_sig_pot==other->gam_sig_pot) return 1;
-	return 0;
+bool TTensorTerm::SameStructure(const TTensorTerm& other) const
+{
+	if (_Rome == other._Rome           and
+	    _Reps == other._Reps           and
+	    _Rchi == other._Rchi           and
+	    _Rphi == other._Rphi           and
+	    _gam_s_pot == other._gam_s_pot and
+	    _gam_sig_pot == other._gam_sig_pot)
+	{
+		return true;
+	}
+	return false;
 }
 
-Int_t
-TTensorTerm::AddTwoTerms(TTensorTerm *other) {
+bool TTensorTerm::AddTwoTerms(const TTensorTerm& other) {
 	if (!SameStructure(other)) {
-		cerr << "NO NO NO these terms cannot be added!" << endl;
-		return 0;
-	}
-	else {
-		const TFracNum* sum = prefac.SumSignedRoots(other->prefac);
+		printErr << "NO NO NO these terms cannot be added!" << endl;
+		return false;
+	} else {
+		const TFracNum* sum = _prefac.SumSignedRoots(other._prefac);
 		if (sum) {
-			prefac= *sum;
-			return 1;
+			_prefac = *sum;
+			return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
-Int_t
-TTensorTerm::Print(char flag) {
-	if (flag=='s') cout << prefac.FracStringSqrt()<<" ";
-	else           cout << prefac.FracString()<<" ";
-	if (Rome) {
+long TTensorTerm::Print(char flag) const
+{
+	if (flag == 's') {
+		cout << _prefac.FracStringSqrt() << " ";
+	} else {
+		cout << _prefac.FracString() << " ";
+	}
+	if (_Rome) {
 		cout << "o(";
-		for (Int_t i=0; i<Rome; i++) {
-			if (ome_pzm[i]== 1) cout <<"+";
-			if (ome_pzm[i]== 0) cout <<"0";
-			if (ome_pzm[i]==-1) cout <<"-";
+		for (long i = 0; i < _Rome; i++) {
+			if (_ome_pzm[i] == 1) {
+				cout << "+";
+			}
+			if (_ome_pzm[i] == 0) {
+				cout << "0";
+			}
+			if (_ome_pzm[i] == -1) {
+				cout << "-";
+			}
 		}
 		cout << ")";
 	}
-	if (Reps) {
+	if (_Reps) {
 		cout << "e(";
-		for (Int_t i=0; i<Reps; i++) {
-			if (eps_pzm[i]== 1) cout <<"+";
-			if (eps_pzm[i]== 0) cout <<"0";
-			if (eps_pzm[i]==-1) cout <<"-";
+		for (long i = 0; i < _Reps; i++) {
+			if (_eps_pzm[i] == 1) {
+				cout << "+";
+			}
+			if (_eps_pzm[i] == 0) {
+				cout << "0";
+			}
+			if (_eps_pzm[i] == -1) {
+				cout << "-";
+			}
 		}
 		cout << ")";
 	}
-	if (Rchi) {
+	if (_Rchi) {
 		cout << "c(";
-		for (Int_t i=0; i<Rchi; i++) {
-			if (chi_pzm[i]== 1) cout <<"+";
-			if (chi_pzm[i]== 0) cout <<"0";
-			if (chi_pzm[i]==-1) cout <<"-";
+		for (long i = 0; i < _Rchi; i++) {
+			if (_chi_pzm[i] == 1) {
+				cout << "+";
+			}
+			if (_chi_pzm[i] == 0) {
+				cout << "0";
+			}
+			if (_chi_pzm[i] == -1) {
+				cout << "-";
+			}
 		}
 		cout << ")";
 	}
-	if (Rphi) {
+	if (_Rphi) {
 		cout << "p(";
-		for (Int_t i=0; i<Rphi; i++) {
-			if (phi_pzm[i]== 1) cout <<"+";
-			if (phi_pzm[i]== 0) cout <<"0";
-			if (phi_pzm[i]==-1) cout <<"-";
+		for (long i = 0; i < _Rphi; i++) {
+			if (_phi_pzm[i] == 1) {
+				cout << "+";
+			}
+			if (_phi_pzm[i] == 0) {
+				cout << "0";
+			}
+			if (_phi_pzm[i] == -1) {
+				cout << "-";
+			}
 		}
 		cout << ")";
 	}
-	if (gam_s_pot) {
-		if (gam_s_pot==1) cout << " gs";
-		else              cout << " gs^" << gam_s_pot;
+	if (_gam_s_pot) {
+		if (_gam_s_pot == 1) {
+			cout << " gs";
+		} else {
+			cout << " gs^" << _gam_s_pot;
+		}
 	}
-	if (gam_sig_pot) {
-		if (gam_sig_pot==1) cout << " gsig";
-		else                cout << " gsig^" << gam_sig_pot;
+	if (_gam_sig_pot) {
+		if (_gam_sig_pot == 1) {
+			cout << " gsig";
+		} else {
+			cout << " gsig^" << _gam_sig_pot;
+		}
 	}
 	return 0;
 }
 
-//Int_t
+//long
 //TTensorSum::Print(char flag='n'){ // CINT limitation for overloading
-Int_t
-TTensorSum::Print(char flag){
-	for (Int_t i=0; i<Nterms; i++) {
+long TTensorSum::Print(char flag) {
+	for (long i = 0; i < Nterms; i++) {
 		terms[i].Print(flag);
-		if (i<Nterms-1) cout << " ";
+		if (i < Nterms - 1) {
+			cout << " ";
+		}
 	}
 	cout << endl;
 	return 0;
-};
+}
+;
 
-Int_t
-TTensorSum::AddTerm (TTensorTerm* addt) {
-	TTensorTerm* nt=new TTensorTerm[Nterms+1];
-	for (Int_t i=0; i<Nterms; i++)
-		nt[i]=terms[i];
-	nt[Nterms]= *addt;
+long TTensorSum::AddTerm(TTensorTerm* addt) {
+	TTensorTerm* nt = new TTensorTerm[Nterms + 1];
+	for (long i = 0; i < Nterms; i++) {
+		nt[i] = terms[i];
+	}
+	nt[Nterms] = *addt;
 	delete[] terms;
-	terms=nt;
+	terms = nt;
 	Nterms++;
 	return 0;
 }
 
-Int_t
-TTensorSum::SpinInnerContraction(Int_t cPsiInt) {
-	Int_t non_zero_terms=0;
-	Int_t val[Nterms];
-	for (Int_t i=0; i<Nterms; i++) {
+long TTensorSum::SpinInnerContraction(long cPsiInt) {
+	long non_zero_terms = 0;
+	long val[Nterms];
+	for (long i = 0; i < Nterms; i++) {
 		val[i] = terms[i].SpinInnerContraction(cPsiInt);
-		if (val[i]!=0) non_zero_terms++;
+		if (val[i] != 0) {
+			non_zero_terms++;
+		}
 	}
-	if (non_zero_terms<Nterms) {
-		TTensorTerm* nt=new TTensorTerm[non_zero_terms];
-		Int_t j=0;
-		for (Int_t i=0; i<Nterms; i++)
+	if (non_zero_terms < Nterms) {
+		TTensorTerm* nt = new TTensorTerm[non_zero_terms];
+		long j = 0;
+		for (long i = 0; i < Nterms; i++) {
 			if (val[i]) {
-				nt[j]=terms[i];
+				nt[j] = terms[i];
 				j++;
 			}
+		}
 		delete[] terms;
-		terms=nt;
-		Nterms=non_zero_terms;
+		terms = nt;
+		Nterms = non_zero_terms;
 	}
 	return Nterms;
 }
 
 TTensorSum*
-TTensorSum::LSContraction(TTensorSum *L, Int_t contr,
-		Int_t co, Int_t ce, char con_type) {
+TTensorSum::LSContraction(TTensorSum *L, long contr,
+long co, long ce, char con_type) {
 
 	TTensorSum *tls = new TTensorSum();
 
-	for (Int_t i=0; i<Nterms; i++) {
-		for (Int_t j=0; j<L->Nterms; j++) {
-			TTensorTerm *nt = new TTensorTerm(&(terms[i]), &(L->terms[j]),
-					contr, co, ce, con_type);
-			if ( nt->IsNonZero() ) tls->AddTerm(nt);
+	for (long i = 0; i < Nterms; i++) {
+		for (long j = 0; j < L->Nterms; j++) {
+			TTensorTerm *nt = new TTensorTerm(terms[i], L->terms[j], contr, co, ce, con_type);
+			if (nt->IsNonZero()) {
+				tls->AddTerm(nt);
+			}
 		}
 	}
 
@@ -345,18 +525,20 @@ TTensorSum::LSContraction(TTensorSum *L, Int_t contr,
 }
 
 TTensorSum*
-TTensorSum::LJContraction(Int_t cChiPhi, Int_t even) {
+TTensorSum::LJContraction(long cChiPhi, long even) {
 
-	for (Int_t i=0; i<Nterms; i++) terms[i].LJContraction(cChiPhi, even);
+	for (long i = 0; i < Nterms; i++) {
+		terms[i].LJContraction(cChiPhi, even);
+	}
 
 	TTensorSum *tls = new TTensorSum();
 
-	for (Int_t i=0; i<Nterms; i++) {
-		Int_t found_same=0;
-		for (Int_t j=0; j<tls->Nterms; j++) {
-			if (terms[i].SameStructure(&(tls->terms[j]))) {
-				if ( (tls->terms[j]).AddTwoTerms(&(terms[i])) ) {
-					found_same=1;
+	for (long i = 0; i < Nterms; i++) {
+		long found_same = 0;
+		for (long j = 0; j < tls->Nterms; j++) {
+			if (terms[i].SameStructure(tls->terms[j])) {
+				if ((tls->terms[j]).AddTwoTerms(terms[i])) {
+					found_same = 1;
 					break;
 				}
 			}
@@ -367,10 +549,10 @@ TTensorSum::LJContraction(Int_t cChiPhi, Int_t even) {
 		}
 	}
 
-	TTensorSum *tls_nonzero = new TTensorSum();
+	TTensorSum* tls_nonzero = new TTensorSum();
 
-	for (Int_t i=0; i<tls->Nterms; i++) {
-		if ( tls->terms[i].IsNonZero() ) {
+	for (long i = 0; i < tls->Nterms; i++) {
+		if (tls->terms[i].IsNonZero()) {
 			TTensorTerm *nt = new TTensorTerm(tls->terms[i]);
 			tls_nonzero->AddTerm(nt);
 		}
