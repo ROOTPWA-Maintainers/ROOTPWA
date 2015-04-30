@@ -569,27 +569,19 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 		out << endl;
 	}
 	out << "sign_prefac=" << _signPrefac << endl;
-// TODO: check if this makes sense
-/*	if (_NOM.size() < 0) {
-		if (_signPrefac < 0) {
-			out << "-";
-		}
-		out << -_maxPrimNom << "/" << -_maxPrimDen << endl;
-		return out;
-	}
-*/
-	long integrity = 1;
+
+	bool integrity = true;
 	for (size_t i = 0; i < _NOM.size(); i++) {
 		if (_NOM[i] < 0 or _NOM[i] > 1000) {
-			integrity = 0;
+			integrity = false;
 		}
 	}
 	for (size_t i = 0; i < _DEN.size(); i++) {
 		if (_DEN[i] < 0 or _DEN[i] > 1000) {
-			integrity = 0;
+			integrity = false;
 		}
 	}
-	if (integrity == 0) {
+	if (not integrity) {
 		return out;
 	}
 

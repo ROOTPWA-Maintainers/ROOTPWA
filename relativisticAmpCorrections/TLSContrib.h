@@ -15,8 +15,7 @@ struct factors {
 		  exponentOfGammaSigma() { }
 
 	factors(const factors& factor)
-	// TODO: ask jan about "// force new power fields by multiplication " *1 ""
-		: squareOfPrefactor(TFracNum::One * factor.squareOfPrefactor),
+		: squareOfPrefactor(factor.squareOfPrefactor),
 		  exponentOfGammaS(factor.exponentOfGammaS),
 		  exponentOfGammaSigma(factor.exponentOfGammaSigma)
 	{ }
