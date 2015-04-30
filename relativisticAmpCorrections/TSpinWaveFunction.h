@@ -10,7 +10,7 @@ class TSpinWaveFunction {
   public:
 
 	TSpinWaveFunction(const size_t& J, const char& type);
-	TTensorSum GetTensorSum(char name, long delta);
+	TTensorSum GetTensorSum(const char& name, const long& delta);
 	TTensorSum GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 	                                   const long& delta,
 	                                   const long& S);
@@ -19,16 +19,11 @@ class TSpinWaveFunction {
 
   private:
 	size_t _J;
+	std::vector<long> _mi;
+	std::vector<std::pair<long, TFracNum> > _M_and_coeff;
 
-	long _max_pzm;
-
-
-	long* _mi;
-	long* _M;
 	char _type;      // 's' Spin, 'l' Orbital Angular Momentum
 	                 // 'c' Spin conjugated
-
-	TFracNum* _coeff;
 
 	static unsigned int _debugSpinWave;
 
