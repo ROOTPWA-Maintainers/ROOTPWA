@@ -12,7 +12,7 @@ TLSNonRel::TLSNonRel(TLSContrib* C)
 	  _S(C->GetS()),
 	  _RelLS(1, C)
 {
-	TFracNum *JdL0Sd = ClebschGordanBox::instance()->GetCG(_J, _L, _S);
+	const vector<TFracNum>& JdL0Sd = ClebschGordanBox::instance()->GetCG(_J, _L, _S);
 	//cout << "delta=" << C->GetDelta()
 	//     << ",S=" << S
 	//     << ", 2L+1/2J+1=" << TFracNum(2*L+1,2*J+1).FracStringSqrt()
@@ -26,7 +26,7 @@ TLSNonRel::TLSNonRel(TLSContrib* C)
 }
 
 void TLSNonRel::Add(TLSContrib* C) {
-	if (!CheckJLS(C)) {
+	if (not CheckJLS(C)) {
 		cout << "TLSNonRel::Add not appropriate. Aborting..."
 				<< endl;
 		throw;
@@ -34,16 +34,15 @@ void TLSNonRel::Add(TLSContrib* C) {
 	_RelLS.push_back(C);
 }
 
-long TLSNonRel::Print() {
+void TLSNonRel::Print() const {
 	cout << " [ " << _GnrPrefac.FracStringSqrt() << "  G_" << _L << _S << " ] ";
 	for (size_t i = 0; i < _RelLS.size(); i++) {
 		_RelLS[i]->PrintNR();
 	}
 	cout << endl;
-	return 0;
 }
 
-long TLSNonRel::PrintG() {
+void TLSNonRel::PrintG() const {
 	cout << " [ G_" << _L << _S << " ] ";
 	for (size_t i = 0; i < _RelLS.size(); i++) {
 		TFracNum GnrInv(_GnrPrefac);
@@ -51,5 +50,4 @@ long TLSNonRel::PrintG() {
 		_RelLS[i]->PrintNRG(GnrInv);
 	}
 	cout << endl;
-	return 0;
 }

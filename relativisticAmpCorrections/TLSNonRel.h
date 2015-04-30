@@ -15,16 +15,16 @@
 class TLSNonRel {
 
 	public:
-		TLSNonRel(TLSContrib *C);
+		TLSNonRel(TLSContrib* C);
 
-		long CheckJLS(TLSContrib *C) {
-			return (C->GetJ()==_J && C->GetL()==_L && C->GetS()==_S) ? 1 : 0;
-		};
-		void Add(TLSContrib *C);
-		long GetL(){return _L;};
-		long GetS(){return _S;};
-		long Print();
-		long PrintG();
+		bool CheckJLS(const TLSContrib* C) const {
+			return (C->GetJ() == _J and C->GetL() == _L and C->GetS() == _S);
+		}
+		void Add(TLSContrib* C);
+		const long& GetL()   const { return _L; }
+		const long& GetS()   const { return _S; }
+		void Print()  const;
+		void PrintG() const;
 
 	private:
 		long _J;

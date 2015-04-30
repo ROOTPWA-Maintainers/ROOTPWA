@@ -8,6 +8,7 @@
 #include "ClebschGordanBox.h"
 
 using namespace std;
+using rpwa::operator<<;
 
 unsigned int TSpinWaveFunction::_debugSpinWave = 0;
 
@@ -126,7 +127,7 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 	}
 
 	//TFracNum *S1S2 = ClebschGordan(twoS, twoS1, twoS2);
-	TFracNum* S1S2 = ClebschGordanBox::instance()->GetCG(S, _J, E._J);
+	const vector<TFracNum>& S1S2 = (ClebschGordanBox::instance()->GetCG(S, _J, E._J));
 	if (_debugSpinWave >= 1) {
 		cout << "Clebsch-Gordans calculated for "
 		     << twoS << "," << twoS1 << "," << twoS2 << ": " << S1S2 << endl;
@@ -179,11 +180,11 @@ TSpinWaveFunction::CheckCGFormula() {
 		throw;
 	}
 
-	vector<TFracNum*> J1J(_J - 1);
+	vector<const vector<TFracNum>* > J1J(_J - 1);
 	for (size_t i = 0; i < J1J.size(); i++) {
 		// long twoJ=2*(i+2);
 		// J1J[i] = ClebschGordan(twoJ, 2, twoJ-2);
-		J1J[i] = ClebschGordanBox::instance()->GetCG(i + 2, 1, i + 1);
+		J1J[i] = &ClebschGordanBox::instance()->GetCG(i + 2, 1, i + 1);
 	}
 
 	vector<TFracNum> coeffCG(_M_and_coeff.size());
@@ -197,13 +198,14 @@ TSpinWaveFunction::CheckCGFormula() {
 		for (size_t jj = 1; jj < _J; jj++) {
 			long mj = _mi[_J * pzm + jj];
 			// m1=i/max2-J1, m2=i%max2-J2 ==> i=(m1+J1)*max2
+			const vector<TFracNum>& J1JsubVector = *J1J[jj - 1];
 			if (_debugSpinWave >= 2) {
 				cout << mj << ": * CG[" << jj - 1 << "]["
 				     << (mj + 1) * (2 * jj + 1) + jj + m
-				     << "]:" << J1J[jj - 1][(mj + 1) * (2 * jj + 1) + jj + m].Dval()
+				     << "]:" << J1JsubVector[(mj + 1) * (2 * jj + 1) + jj + m].Dval()
 				     << endl;
 			}
-			coeffCG[pzm] = coeffCG[pzm] * J1J[jj - 1][(mj + 1) * (2 * jj + 1) + jj + m];
+			coeffCG[pzm] = coeffCG[pzm] * J1JsubVector[(mj + 1) * (2 * jj + 1) + jj + m];
 			m += mj;
 			if (_debugSpinWave >= 2) {
 				cout << m << " x ";

@@ -21,7 +21,31 @@
   \author Jan.Friedrich@ph.tum.de
   */
 
+#include <iostream>
+#include <map>
+#include <vector>
+
 #include "TFracNum.h"
+
+struct quantumNumbers {
+
+	quantumNumbers(const long& J_, const long& J1_, const long& J2_)
+		: J(J_),
+		  J1(J1_),
+		  J2(J2_) { }
+
+	long J;
+	long J1;
+	long J2;
+
+	std::ostream& print(std::ostream& out = std::cout) const {
+		out << "quantumNumbers: J=" << J << ", J1=" << J1 << ", J2=" << J2;
+		return out;
+	}
+
+	quantumNumbers& operator*=(const long& factor) { J *= factor; J1 *= factor; J2 *= factor; return *this; }
+
+};
 
 class ClebschGordanBox {
 
@@ -31,7 +55,8 @@ class ClebschGordanBox {
 	/*! The calculation is performed only once per coupling
 	  as long as the ClebschGordanBox exists, so the method may be
 	  called repeatedly as needed. */
-	TFracNum* GetCG(const long& J, const long& J1, const long& J2);
+	const std::vector<TFracNum>& GetCG(const quantumNumbers& qN);
+	const std::vector<TFracNum>& GetCG(const long& J, const long& J1, const long& J2) { return GetCG(quantumNumbers(J, J1, J2)); }
 
 	static ClebschGordanBox* instance();
 
@@ -49,23 +74,58 @@ class ClebschGordanBox {
   private:
 
 	//! Contructor of the container structure
-	ClebschGordanBox() {
-		NCG=0;
-		CG=0;
-	}
+	ClebschGordanBox()
+		: _clebschGordans() { }
 
-	TFracNum* ClebschGordan(long twoJ, long twoJ1, long twoJ2);
+	const std::vector<TFracNum> ClebschGordan(const quantumNumbers& qN);
 
-	long NCG;
-	long* CGJ;
-	long* CGJ1;
-	long* CGJ2;
-	TFracNum **CG;
+	std::map<quantumNumbers, const std::vector<TFracNum> > _clebschGordans;
 
 	static ClebschGordanBox* _instance;
-	static unsigned int debugCG;
-	static unsigned int debugCGBox;
+	static unsigned int _debugCG;
+	static bool _debugCGBox;
 
 };
+
+
+inline
+std::ostream&
+operator <<(std::ostream&            out,
+            const quantumNumbers&    qn)
+{
+	return qn.print(out);
+}
+
+
+inline
+bool operator<(const quantumNumbers& lhs, const quantumNumbers& rhs)
+{
+	if(lhs.J != rhs.J) {
+		return lhs.J < rhs.J;
+	}
+	if(lhs.J1 != rhs.J1) {
+		return lhs.J1 < rhs.J1;
+	}
+	if(lhs.J2 != rhs.J2) {
+		return lhs.J2 < rhs.J2;
+	}
+	return false;
+}
+
+
+inline
+quantumNumbers operator*(const long& factor, quantumNumbers lhs)
+{
+	lhs *= factor;
+	return lhs;
+}
+
+
+inline
+quantumNumbers operator*(quantumNumbers lhs, const long& factor)
+{
+	return factor * lhs;
+}
+
 
 #endif
