@@ -93,11 +93,11 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 }
 
 
-void TLSContrib::Add(TLSContrib* rhs, bool particleExchange) {
-	if (_J != rhs->_J or _L != rhs->_L or _S != rhs->_S) {
+void TLSContrib::Add(const TLSContrib& rhs, bool particleExchange) {
+	if (_J != rhs._J or _L != rhs._L or _S != rhs._S) {
 		printErr << "TLSContrib::Add : Something is wrong, trying to add different"
 		         << " (J;L,S): (" << _J << ";" << _L << "," << _S << ") != ("
-		         << rhs->_J << ";" << rhs->_L << "," << rhs->_S << ")" << endl;
+		         << rhs._J << ";" << rhs._L << "," << rhs._S << ")" << endl;
 		throw;
 	}
 
@@ -110,24 +110,24 @@ void TLSContrib::Add(TLSContrib* rhs, bool particleExchange) {
 		_factors[i].squareOfPrefactor *= TFracNum::Quarter * _NormFactor;
 	}
 
-	for (size_t ib = 0; ib < rhs->GetNterms(); ib++) {
+	for (size_t ib = 0; ib < rhs.GetNterms(); ib++) {
 		bool termSummed = false;
 		for (size_t i = 0; i < _factors.size(); i++) {
-			if (not termSummed and _cNum == rhs->_cNum                                            and
+			if (not termSummed and _cNum == rhs._cNum                                            and
 			    (
-			      (particleExchange                                                             and
-			       _factors[i].exponentOfGammaS     == rhs->getFactors()[ib].exponentOfGammaSigma and
-			       _factors[i].exponentOfGammaSigma == rhs->getFactors()[ib].exponentOfGammaS
-			      )                                                                             or
+			      (particleExchange                                                              and
+			       _factors[i].exponentOfGammaS     == rhs.getFactors()[ib].exponentOfGammaSigma and
+			       _factors[i].exponentOfGammaSigma == rhs.getFactors()[ib].exponentOfGammaS
+			      )                                                                              or
 			      (
-			       not particleExchange                                                         and
-			       _factors[i].exponentOfGammaS     == rhs->getFactors()[ib].exponentOfGammaS     and
-			       _factors[i].exponentOfGammaSigma == rhs->getFactors()[ib].exponentOfGammaSigma
+			       not particleExchange                                                          and
+			       _factors[i].exponentOfGammaS     == rhs.getFactors()[ib].exponentOfGammaS     and
+			       _factors[i].exponentOfGammaSigma == rhs.getFactors()[ib].exponentOfGammaSigma
 			      )
 			    ) )
 			{
 				termSummed = true;
-				TFracNum bterm = TFracNum::Quarter * rhs->_NormFactor * rhs->getFactors()[ib].squareOfPrefactor;
+				TFracNum bterm = TFracNum::Quarter * rhs._NormFactor * rhs.getFactors()[ib].squareOfPrefactor;
 
 				if (_J % 2) {
 					bterm.FlipSign();
@@ -139,8 +139,8 @@ void TLSContrib::Add(TLSContrib* rhs, bool particleExchange) {
 		}
 		if (not termSummed) {
 
-			factors factor(rhs->getFactors()[ib]);
-			factor.squareOfPrefactor *= TFracNum::Quarter * rhs->_NormFactor;
+			factors factor(rhs.getFactors()[ib]);
+			factor.squareOfPrefactor *= TFracNum::Quarter * rhs._NormFactor;
 			if (_J % 2) {
 				if(not factor.squareOfPrefactor.FlipSign()) {
 					printErr << "Flipping sign failed. Aborting..." << endl;

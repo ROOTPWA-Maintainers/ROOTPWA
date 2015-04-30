@@ -491,11 +491,13 @@ void TTensorSum::AddTerm(const TTensorTerm& addt) {
 }
 
 size_t TTensorSum::SpinInnerContraction(long cPsiInt) {
-	for(size_t i = _terms.size(); i > 0; --i) {
-		if(_terms[i-1].SpinInnerContraction(cPsiInt) == 0) {
-			_terms.erase(_terms.begin() + (i-1));
+	vector<TTensorTerm> contracted;
+	for(size_t i = 0; i < _terms.size(); ++i) {
+		if(_terms[i].SpinInnerContraction(cPsiInt) != 0) {
+			contracted.push_back(_terms[i]);
 		}
 	}
+	_terms = contracted;
 	return _terms.size();
 }
 

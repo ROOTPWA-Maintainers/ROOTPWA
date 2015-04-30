@@ -46,10 +46,7 @@ class TLSContrib {
 	TLSContrib(const TLSContrib* b, const bool& particleExchange);
 	TLSContrib(/*const*/ TLSAmpl* A, const long& delta, const TFracNum& scfac);
 
-
-	// TODO: make 1st arg const
-	void Add(TLSContrib* rhs, bool particleExchange);
-
+	void Add(const TLSContrib& rhs, bool particleExchange);
 
 	bool        SameParameter(TLSContrib* b) const { return (_J == b->_J and _L == b->_L and _S == b->_S and _cNum == b->_cNum); }
 	size_t      GetNterms()                  const { return _factors.size(); }

@@ -127,9 +127,9 @@ TFhh::TFhh(TFhh *sFhh, TFhh *xFhh)
 			if (pLSt[j]->SameParameter(toBeAdded)) {
 				foundInPrevterm = true;
 				if (i < Ns) {
-					pLSt[j]->Add(toBeAdded, false);
+					pLSt[j]->Add(*toBeAdded, false);
 				} else {
-					pLSt[j]->Add(toBeAdded, true);
+					pLSt[j]->Add(*toBeAdded, true);
 				}
 			}
 		}
