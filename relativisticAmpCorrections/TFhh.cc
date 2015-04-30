@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 
+#include "ClebschGordanBox.h"
+
 #include <reportingUtils.hpp>
 
 using namespace std;

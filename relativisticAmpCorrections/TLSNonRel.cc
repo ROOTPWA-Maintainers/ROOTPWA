@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "ClebschGordanBox.h"
+
 using namespace std;
 
 TLSNonRel::TLSNonRel(TLSContrib* C)

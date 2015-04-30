@@ -1,43 +1,37 @@
 #include "TJwfTensor.h"
 
-#include <iostream>
 #include <string>
+
+#include "ClebschGordanBox.h"
 
 #include <reportingUtils.hpp>
 
 using namespace std;
+using rpwa::operator<<;
+
 
 TTensorTerm::TTensorTerm(char name,
-                         long RJ,
-                         long* pzm_field,
+                         const vector<long>& pzm_field,
                          const TFracNum& prefac)
-	: _Rome(0),
-	  _ome_pzm(0),
-	  _Reps(0),
-	  _eps_pzm(0),
-	  _Rchi(0),
-	  _chi_pzm(0),
-	  _Rphi(0),
-	  _phi_pzm(0),
+	: _ome_pzm(),
+	  _eps_pzm(),
+	  _chi_pzm(),
+	  _phi_pzm(),
 	  _gam_s_pot(0),
 	  _gam_sig_pot(0),
 	  _prefac(prefac)
 {
 	switch(name) {
 		case 'o':
-			_Rome = RJ;
 			_ome_pzm = pzm_field;
 			break;
 		case 'e':
-			_Reps = RJ;
 			_eps_pzm = pzm_field;
 			break;
 		case 'c':
-			_Rchi = RJ;
 			_chi_pzm = pzm_field;
 			break;
 		case 'p':
-			_Rphi = RJ;
 			_phi_pzm = pzm_field;
 			break;
 	}
@@ -48,47 +42,50 @@ TTensorTerm::TTensorTerm(const TTensorTerm& S,
                          long contractions,
                          long o_share,
                          long e_share,
-                         char con_type)
-	: _Rome(S._Rome),
-	  _Reps(S._Reps),
-	  _Rchi(S._Rchi + L._Rchi),
-	  _Rphi(S._Rphi + L._Rphi),
+                         char conType)
+	: _ome_pzm(),
+	  _eps_pzm(),
+	  _chi_pzm(),
+	  _phi_pzm(),
 	  _gam_s_pot(S._gam_s_pot + L._gam_s_pot),
 	  _gam_sig_pot(S._gam_sig_pot + L._gam_sig_pot),
 	  _prefac(S._prefac * L._prefac)
 {
 
-	if (L._Rome or L._Reps) {
+	if (not L._ome_pzm.empty() or not L._eps_pzm.empty()) {
 		return;
 	}
 
-	long ocount = o_share;
-	long ecount = e_share;
+	size_t rOme = S._ome_pzm.size();
+	size_t rEps = S._eps_pzm.size();
+	size_t rChi = L._chi_pzm.size() + S._chi_pzm.size();
+	size_t rPhi = L._phi_pzm.size() + S._phi_pzm.size();
+
 	for (long con = 0; con < contractions; con++) {
 		long cp = 0;
-		if (con_type == 'c') {
-			cp = L._chi_pzm[_Rchi - 1];
-			_Rchi--;
+		if (conType == 'c') {
+			cp = L._chi_pzm[rChi - 1];
+			rChi--;
 		} else {
-			cp = L._phi_pzm[_Rphi - 1];
-			_Rphi--;
+			cp = L._phi_pzm[rPhi - 1];
+			rPhi--;
 		}
 		long oe = 0;
-		if (ocount) {              // o is to be contracted
-			oe = S._ome_pzm[_Rome - 1];
-			_Rome--;
+		if (o_share) {              // o is to be contracted
+			oe = S._ome_pzm[rOme - 1];
+			rOme--;
 		} else {                     // e is to be contracted
-			oe = S._eps_pzm[_Reps - 1];
-			ecount--;
-			_Reps--;
+			oe = S._eps_pzm[rEps - 1];
+			e_share--;
+			rEps--;
 		}
-		if (con_type == 'c' and ((oe == 1 and cp == -1) or (oe == -1 and cp == 1)))
+		if (conType == 'c' and ((oe == 1 and cp == -1) or (oe == -1 and cp == 1)))
 		{
 			_prefac.FlipSign();
-		} else if (con_type == 'p' and ((oe == 1 and cp == 1) or (oe == -1 and cp == -1))) {
+		} else if (conType == 'p' and ((oe == 1 and cp == 1) or (oe == -1 and cp == -1))) {
 
 		} else if (oe == 0 and cp == 0) {
-			if (ocount) {
+			if (o_share) {
 				_gam_s_pot++;
 			} else {
 				_gam_sig_pot++;
@@ -97,159 +94,170 @@ TTensorTerm::TTensorTerm(const TTensorTerm& S,
 			_prefac = TFracNum::Zero;
 			return;
 		}
-		if (ocount) {
-			ocount--;
+		if (o_share) {
+			o_share--;
 		}
 	}
 
-	_ome_pzm = new long[_Rome];
-	for (long i = 0; i < _Rome; i++) {
+	_ome_pzm.resize(rOme);
+	for (size_t i = 0; i < _ome_pzm.size(); i++) {
 		_ome_pzm[i] = S._ome_pzm[i];
 	}
-	_eps_pzm = new long[_Reps];
-	for (long i = 0; i < _Reps; i++) {
+	_eps_pzm.resize(rEps);
+	for (size_t i = 0; i < _eps_pzm.size(); i++) {
 		_eps_pzm[i] = S._eps_pzm[i];
 	}
-	_chi_pzm = new long[_Rchi];
-	for (long i = 0; i < _Rchi; i++) {
-		if (i < L._Rchi) {
+	_chi_pzm.resize(rChi);
+	for (size_t i = 0; i < _chi_pzm.size(); i++) {
+		if (i < L._chi_pzm.size()) {
 			_chi_pzm[i] = L._chi_pzm[i];
 		} else {
-			_chi_pzm[i] = S._chi_pzm[i - (L._Rchi)];
+			_chi_pzm[i] = S._chi_pzm[i - L._chi_pzm.size()];
 		}
 	}
-	_phi_pzm = new long[_Rphi];
-	for (long i = 0; i < _Rphi; i++) {
-		if (i < L. _Rphi) {
+	_phi_pzm.resize(rPhi);
+	for (size_t i = 0; i < _phi_pzm.size(); i++) {
+		if (i < L._phi_pzm.size()) {
 			_phi_pzm[i] = L._phi_pzm[i];
 		} else {
-			_phi_pzm[i] = S._phi_pzm[i - (L._Rphi)];
+			_phi_pzm[i] = S._phi_pzm[i - L._phi_pzm.size()];
 		}
 	}
+
 }
 
-long TTensorTerm::LJContraction(long ncon, long even) {
+long TTensorTerm::LJContraction(long nCon, long even) {
 
-	for (long con = 0; con < ncon; con++) {
-		long c = _chi_pzm[_Rchi - 1];
-		long p = _phi_pzm[_Rphi - 1];
+	size_t rOme = _ome_pzm.size();
+	size_t rEps = _eps_pzm.size();
+	size_t rChi = _chi_pzm.size();
+	size_t rPhi = _phi_pzm.size();
+
+	for (long con = 0; con < nCon; con++) {
+		const long& c = _chi_pzm[rChi - 1];
+		const long& p = _phi_pzm[rPhi - 1];
 		if (c != p) {
 			_prefac = TFracNum::Zero;
+			shrinkVectors(rOme, rEps, rChi, rPhi);
 			return 0;
 		}
-		_Rchi--;
-		_Rphi--;
+		rChi--;
+		rPhi--;
 	}
 
 	bool error = false;
 
 	if (even == 0) {
-		if (_Rome + _Reps + _Rchi + _Rphi != 3) {
+		if (rOme + rEps + rChi + rPhi != 3) {
 			printErr << "TTensorTerm::LJContraction:"
 			         << " Contraction ended with wrong number of indices!!"
 			         << endl;
 			throw;
 		} else { // eq. (5.21) - (5.23)
 			long os = -100;
-			if (_Rome == 1) {
+			if (rOme == 1) {
 				os = _ome_pzm[0];
 			}
 			long es = -100;
-			if (_Reps == 1) {
+			if (rEps == 1) {
 				es = _eps_pzm[0];
 			}
 			long cs = -100;
-			if (_Rchi == 1) {
+			if (rChi == 1) {
 				cs = _chi_pzm[0];
 			}
 			long ps = -100;
-			if (_Rphi == 1) {
+			if (rPhi == 1) {
 				ps = _phi_pzm[0];
 			}
-			if (_Rome == 0) {
-				_Reps--;
-				_Rchi--;
-				_Rphi--;
-				if (es == 1 && cs == -1 && ps == 0) {
+			if (rOme == 0) {
+				rEps--;
+				rChi--;
+				rPhi--;
+				if (es == 1 and cs == -1 and ps == 0) {
 
-				} else if (es == -1 && cs == 1 && ps == 0) {
+				} else if (es == -1 and cs == 1 and ps == 0) {
 					_prefac.FlipSign();
-				} else if (es == 1 && cs == 0 && ps == 1) {
+				} else if (es == 1 and cs == 0 and ps == 1) {
 
-				} else if (es == -1 && cs == 0 && ps == -1) {
+				} else if (es == -1 and cs == 0 and ps == -1) {
 					_prefac.FlipSign();
-				} else if (es == 0 && cs == 1 && ps == 1) {
+				} else if (es == 0 and cs == 1 and ps == 1) {
 					_prefac.FlipSign();
 					_gam_sig_pot++;
-				} else if (es == 0 && cs == -1 && ps == -1) {
+				} else if (es == 0 and cs == -1 and ps == -1) {
 					_gam_sig_pot++;
 				} else {
 					_prefac = TFracNum::Zero;
+					shrinkVectors(rOme, rEps, rChi, rPhi);
 					return 1;
 				}
-			} else if (_Reps == 0) {
-				_Rome--;
-				_Rchi--;
-				_Rphi--;
-				if (os == 1 && cs == -1 && ps == 0) {
+			} else if (rEps == 0) {
+				rOme--;
+				rChi--;
+				rPhi--;
+				if (os == 1 and cs == -1 and ps == 0) {
 
-				} else if (os == -1 && cs == 1 && ps == 0) {
+				} else if (os == -1 and cs == 1 and ps == 0) {
 					_prefac.FlipSign();
-				} else if (os == 1 && cs == 0 && ps == 1) {
+				} else if (os == 1 and cs == 0 and ps == 1) {
 
-				} else if (os == -1 && cs == 0 && ps == -1) {
+				} else if (os == -1 and cs == 0 and ps == -1) {
 					_prefac.FlipSign();
-				} else if (os == 0 && cs == 1 && ps == 1) {
+				} else if (os == 0 and cs == 1 and ps == 1) {
 					_prefac.FlipSign();
 					_gam_s_pot++;
-				} else if (os == 0 && cs == -1 && ps == -1) {
+				} else if (os == 0 and cs == -1 and ps == -1) {
 					_gam_s_pot++;
 				} else {
 					_prefac = TFracNum::Zero;
+					shrinkVectors(rOme, rEps, rChi, rPhi);
 					return 1;
 				}
-			} else if (_Rchi == 0) {
-				_Rome--;
-				_Reps--;
-				_Rphi--;
-				if (os == 1 && es == -1 && ps == 0) {
+			} else if (rChi == 0) {
+				rOme--;
+				rEps--;
+				rPhi--;
+				if (os == 1 and es == -1 and ps == 0) {
 
-				} else if (os == -1 && es == 1 && ps == 0) {
+				} else if (os == -1 and es == 1 and ps == 0) {
 					_prefac.FlipSign();
-				} else if (os == 1 && es == 0 && ps == 1) {
+				} else if (os == 1 and es == 0 and ps == 1) {
 					_gam_sig_pot++;
-				} else if (os == -1 && es == 0 && ps == -1) {
+				} else if (os == -1 and es == 0 and ps == -1) {
 					_prefac.FlipSign();
 					_gam_sig_pot++;
-				} else if (os == 0 && es == 1 && ps == 1) {
+				} else if (os == 0 and es == 1 and ps == 1) {
 					_prefac.FlipSign();
 					_gam_s_pot++;
-				} else if (os == 0 && es == -1 && ps == -1) {
+				} else if (os == 0 and es == -1 and ps == -1) {
 					_gam_s_pot++;
 				} else {
 					_prefac = TFracNum::Zero;
+					shrinkVectors(rOme, rEps, rChi, rPhi);
 					return 1;
 				}
-			} else if (_Rphi == 0) {
-				_Rome--;
-				_Reps--;
-				_Rchi--;
-				if (os == 1 && es == -1 && cs == 0) {
+			} else if (rPhi == 0) {
+				rOme--;
+				rEps--;
+				rChi--;
+				if (os == 1 and es == -1 and cs == 0) {
 
-				} else if (os == -1 && es == 1 && cs == 0) {
+				} else if (os == -1 and es == 1 and cs == 0) {
 					_prefac.FlipSign();
-				} else if (os == 1 && es == 0 && cs == -1) {
+				} else if (os == 1 and es == 0 and cs == -1) {
 					_prefac.FlipSign();
 					_gam_sig_pot++;
-				} else if (os == -1 && es == 0 && cs == 1) {
+				} else if (os == -1 and es == 0 and cs == 1) {
 					_gam_sig_pot++;
-				} else if (os == 0 && es == 1 && cs == -1) {
+				} else if (os == 0 and es == 1 and cs == -1) {
 					_gam_s_pot++;
-				} else if (os == 0 && es == -1 && cs == 1) {
+				} else if (os == 0 and es == -1 and cs == 1) {
 					_prefac.FlipSign();
 					_gam_s_pot++;
 				} else {
 					_prefac = TFracNum::Zero;
+					shrinkVectors(rOme, rEps, rChi, rPhi);
 					return 1;
 				}
 			} else {
@@ -257,10 +265,8 @@ long TTensorTerm::LJContraction(long ncon, long even) {
 				error = true;
 			}
 		}
-	}
-
-	else {
-		if (_Rome != 0 and _Reps != 0 and _Rchi != 0 and _Rphi != 0) {
+	} else {
+		if (rOme != 0 and rEps != 0 and rChi != 0 and rPhi != 0) {
 			printWarn << "troule == 1, whatever that means..." << endl;
 			error = true;
 		}
@@ -270,64 +276,60 @@ long TTensorTerm::LJContraction(long ncon, long even) {
 		         << "Invalid espilon-contraction occurred " << endl;
 		throw;
 	}
+	shrinkVectors(rOme, rEps, rChi, rPhi);
 	return 1;
 }
 
-long TTensorTerm::Multiply(char name,
-                           long RJ,
-                           long* pzm_field,
+void TTensorTerm::Multiply(char name,
+                           const vector<long>& pzm_field,
                            const TFracNum& prefac)
 {
 
 	_prefac = _prefac * prefac;
 
-	long Merr = 0;
+	bool error = false;
 	if (name == 'o') {
-		if (_Rome) {
-			Merr = 1;
+		if (not _ome_pzm.empty()) {
+			error = true;
 		} else {
-			_Rome = RJ;
 			_ome_pzm = pzm_field;
 		}
 	}
 	if (name == 'e') {
-		if (_Reps) {
-			Merr = 1;
+		if (not _eps_pzm.empty()) {
+			error = true;
 		} else {
-			_Reps = RJ;
 			_eps_pzm = pzm_field;
 		}
 	}
 	if (name == 'c') {
-		if (_Rchi) {
-			Merr = 1;
+		if (not _chi_pzm.empty()) {
+			error = true;
 		} else {
-			_Rchi = RJ;
 			_chi_pzm = pzm_field;
 		}
 	}
 	if (name == 'p') {
-		if (_Rphi) {
-			Merr = 1;
+		if (not _phi_pzm.empty()) {
+			error = true;
 		} else {
-			_Rphi = RJ;
 			_phi_pzm = pzm_field;
 		}
 	}
-	if (Merr) {
-		printErr << "TTensorTerm::Multiply: Each type can be multiplied only once!"
-		         << endl;
-		return 0;
+	if (error) {
+		printErr << "TTensorTerm::Multiply: Each type can be multiplied only once!" << endl;
+		throw;
 	}
-	return 1;
 }
 
-long TTensorTerm::SpinInnerContraction(long cPsiInt) {
+long TTensorTerm::SpinInnerContraction(const long& cPsiInt) {
 	long res = 0;
+	size_t rOme = _ome_pzm.size();
+	size_t rEps = _eps_pzm.size();
 	for (long ic = 0; ic < cPsiInt; ic++) {
 		res = 0;
-		long o = _ome_pzm[_Rome - 1];
-		long e = _eps_pzm[_Reps - 1];
+		long o = _ome_pzm[rOme - 1];
+		long e = _eps_pzm[rEps - 1];
 		if ((o == 1 and e == -1) or (o == -1 and e == 1)) {
 			_prefac.FlipSign();
 			res = 1;
@@ -337,19 +339,21 @@ long TTensorTerm::SpinInnerContraction(long cPsiInt) {
 			_gam_sig_pot += 1;
 			res = 1;
 		}
-		_Rome--;
-		_Reps--;
+		rOme--;
+		rEps--;
 	}
+	_ome_pzm.resize(rOme);
+	_eps_pzm.resize(rEps);
 	return res;
 }
 
 bool TTensorTerm::SameStructure(const TTensorTerm& other) const
 {
-	if (_Rome == other._Rome           and
-	    _Reps == other._Reps           and
-	    _Rchi == other._Rchi           and
-	    _Rphi == other._Rphi           and
-	    _gam_s_pot == other._gam_s_pot and
+	if (_ome_pzm.size() == other._ome_pzm.size() and
+	    _eps_pzm.size() == other._eps_pzm.size() and
+	    _chi_pzm.size() == other._chi_pzm.size() and
+	    _phi_pzm.size() == other._phi_pzm.size() and
+	    _gam_s_pot == other._gam_s_pot             and
 	    _gam_sig_pot == other._gam_sig_pot)
 	{
 		return true;
@@ -358,7 +362,8 @@ bool TTensorTerm::SameStructure(const TTensorTerm& other) const
 }
 
 bool TTensorTerm::AddTwoTerms(const TTensorTerm& other) {
-	if (!SameStructure(other)) {
+	// TODO: check if this should just throw?
+	if (not SameStructure(other)) {
 		printErr << "NO NO NO these terms cannot be added!" << endl;
 		return false;
 	} else {
@@ -371,92 +376,111 @@ bool TTensorTerm::AddTwoTerms(const TTensorTerm& other) {
 	return false;
 }
 
-long TTensorTerm::Print(char flag) const
+std::ostream& TTensorTerm::Print(const char& flag, std::ostream& out) const
 {
 	if (flag == 's') {
-		cout << _prefac.FracStringSqrt() << " ";
+		out << _prefac.FracStringSqrt() << " ";
 	} else {
-		cout << _prefac.FracString() << " ";
+		out << _prefac.FracString() << " ";
 	}
-	if (_Rome) {
-		cout << "o(";
-		for (long i = 0; i < _Rome; i++) {
+	if (not _ome_pzm.empty()) {
+		out << "o(";
+		for (size_t i = 0; i < _ome_pzm.size(); i++) {
 			if (_ome_pzm[i] == 1) {
-				cout << "+";
+				out << "+";
 			}
 			if (_ome_pzm[i] == 0) {
-				cout << "0";
+				out << "0";
 			}
 			if (_ome_pzm[i] == -1) {
-				cout << "-";
+				out << "-";
 			}
 		}
-		cout << ")";
+		out << ")";
 	}
-	if (_Reps) {
-		cout << "e(";
-		for (long i = 0; i < _Reps; i++) {
+	if (not _eps_pzm.empty()) {
+		out << "e(";
+		for (size_t i = 0; i < _eps_pzm.size(); i++) {
 			if (_eps_pzm[i] == 1) {
-				cout << "+";
+				out << "+";
 			}
 			if (_eps_pzm[i] == 0) {
-				cout << "0";
+				out << "0";
 			}
 			if (_eps_pzm[i] == -1) {
-				cout << "-";
+				out << "-";
 			}
 		}
-		cout << ")";
+		out << ")";
 	}
-	if (_Rchi) {
-		cout << "c(";
-		for (long i = 0; i < _Rchi; i++) {
+	if (not _chi_pzm.empty()) {
+		out << "c(";
+		for (size_t i = 0; i < _chi_pzm.size(); i++) {
 			if (_chi_pzm[i] == 1) {
-				cout << "+";
+				out << "+";
 			}
 			if (_chi_pzm[i] == 0) {
-				cout << "0";
+				out << "0";
 			}
 			if (_chi_pzm[i] == -1) {
-				cout << "-";
+				out << "-";
 			}
 		}
-		cout << ")";
+		out << ")";
 	}
-	if (_Rphi) {
-		cout << "p(";
-		for (long i = 0; i < _Rphi; i++) {
+	if (not _phi_pzm.empty()) {
+		out << "p(";
+		for (size_t i = 0; i < _phi_pzm.size(); i++) {
 			if (_phi_pzm[i] == 1) {
-				cout << "+";
+				out << "+";
 			}
 			if (_phi_pzm[i] == 0) {
-				cout << "0";
+				out << "0";
 			}
 			if (_phi_pzm[i] == -1) {
-				cout << "-";
+				out << "-";
 			}
 		}
-		cout << ")";
+		out << ")";
 	}
 	if (_gam_s_pot) {
 		if (_gam_s_pot == 1) {
-			cout << " gs";
+			out << " gs";
 		} else {
-			cout << " gs^" << _gam_s_pot;
+			out << " gs^" << _gam_s_pot;
 		}
 	}
 	if (_gam_sig_pot) {
 		if (_gam_sig_pot == 1) {
-			cout << " gsig";
+			out << " gsig";
 		} else {
-			cout << " gsig^" << _gam_sig_pot;
+			out << " gsig^" << _gam_sig_pot;
 		}
 	}
-	return 0;
+	return out;
 }
 
-//long
-//TTensorSum::Print(char flag='n'){ // CINT limitation for overloading
+
+void TTensorTerm::shrinkVectors(const size_t& rOme,
+                                const size_t& rEps,
+                                const size_t& rChi,
+                                const size_t& rPhi)
+{
+	if(rOme > _ome_pzm.size() or
+	   rEps > _eps_pzm.size() or
+	   rChi > _chi_pzm.size() or
+	   rPhi > _phi_pzm.size())
+	{
+		printErr << "could not shrink arrays, they are already too small. Aborting..." << endl;
+		throw;
+	}
+	_ome_pzm.resize(rOme);
+	_eps_pzm.resize(rEps);
+	_chi_pzm.resize(rChi);
+	_phi_pzm.resize(rPhi);
+}
+
+
 long TTensorSum::Print(char flag) {
 	for (long i = 0; i < Nterms; i++) {
 		terms[i].Print(flag);

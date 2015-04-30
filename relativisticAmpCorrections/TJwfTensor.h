@@ -1,29 +1,28 @@
 #ifndef TJWFTENSOR_HH
 #define TJWFTENSOR_HH
 
-#include "ClebschGordanBox.h"
+#include <iostream>
+#include <vector>
+
+#include "TFracNum.h"
 
 class TTensorTerm {
 
   public:
 
 	TTensorTerm()
-	: _Rome(0),
-	  _ome_pzm(0),
-	  _Reps(0),
-	  _eps_pzm(0),
-	  _Rchi(0),
-	  _chi_pzm(0),
-	  _Rphi(0),
-	  _phi_pzm(0),
+	: _ome_pzm(),
+	  _eps_pzm(),
+	  _chi_pzm(),
+	  _phi_pzm(),
 	  _gam_s_pot(0),
 	  _gam_sig_pot(0),
 	  _prefac(TFracNum::Zero) {
 	}
 
+	// TODO: optimize this call
 	TTensorTerm(char name,
-	            long RJ,
-	            long* pzm_field,
+	            const std::vector<long>& pzm_field,
 	            const TFracNum& prefac);
 
 	TTensorTerm(const TTensorTerm& S,
@@ -34,13 +33,14 @@ class TTensorTerm {
 	            char con_type);
 
 	long LJContraction(long ncon, long even);
-	long Multiply(char name, long RJ, long* pzm_field, const TFracNum& prefac);
-	long SpinInnerContraction(long cPsiInt);
+	// TODO: optimize this call
+	void Multiply(char name, const std::vector<long>& pzm_field, const TFracNum& prefac);
+	long SpinInnerContraction(const long& cPsiInt);
 	bool SameStructure(const TTensorTerm& rhs) const;
 	bool AddTwoTerms(const TTensorTerm& rhs);
 	long IsNonZero() const { return (_prefac == TFracNum::Zero) ? 0 : 1; }
 
-	long Print(char flag) const;
+	std::ostream& Print(const char& flag = 'n', std::ostream& out = std::cout) const;
 
 	const TFracNum& GetPreFac() const { return _prefac; }
 	const long&     GetGamS()   const { return _gam_s_pot; }
@@ -48,14 +48,15 @@ class TTensorTerm {
 
 private:
 
-	long _Rome;
-	long* _ome_pzm;
-	long _Reps;
-	long* _eps_pzm;
-	long _Rchi;
-	long* _chi_pzm;
-	long _Rphi;
-	long* _phi_pzm;
+	void shrinkVectors(const size_t& rOme,
+	                   const size_t& rEps,
+	                   const size_t& rChi,
+	                   const size_t& rPhi);
+
+	std::vector<long> _ome_pzm;
+	std::vector<long> _eps_pzm;
+	std::vector<long> _chi_pzm;
+	std::vector<long> _phi_pzm;
 
 	long _gam_s_pot;
 	long _gam_sig_pot;
@@ -63,6 +64,15 @@ private:
 	TFracNum _prefac;
 
 };
+
+inline
+std::ostream&
+operator <<(std::ostream&            out,
+            const TTensorTerm&       tensorTerm)
+{
+	return tensorTerm.Print('n', out);
+}
+
 
 class TTensorSum {
 
@@ -84,11 +94,7 @@ public:
 		return Nterms;
 	}
 	;
-	long Print(char);
-	long Print() {
-		return Print('n');
-	}
-	; // CINT limitation for overloading
+	long Print(char = 'n');
 
 	TTensorTerm* GetTerm(long i) {
 		return &terms[i];
