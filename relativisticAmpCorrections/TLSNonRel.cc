@@ -6,7 +6,7 @@
 
 using namespace std;
 
-TLSNonRel::TLSNonRel(TLSContrib* C)
+TLSNonRel::TLSNonRel(const TLSContrib* C)
 	: _J(C->GetJ()),
 	  _L(C->GetL()),
 	  _S(C->GetS()),
@@ -25,7 +25,7 @@ TLSNonRel::TLSNonRel(TLSContrib* C)
 	             * C->GetSpinCG();
 }
 
-void TLSNonRel::Add(TLSContrib* C) {
+void TLSNonRel::Add(const TLSContrib* C) {
 	if (not CheckJLS(C)) {
 		cout << "TLSNonRel::Add not appropriate. Aborting..."
 				<< endl;

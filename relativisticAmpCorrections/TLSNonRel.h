@@ -15,12 +15,12 @@
 class TLSNonRel {
 
 	public:
-		TLSNonRel(TLSContrib* C);
+		TLSNonRel(const TLSContrib* C);
 
 		bool CheckJLS(const TLSContrib* C) const {
 			return (C->GetJ() == _J and C->GetL() == _L and C->GetS() == _S);
 		}
-		void Add(TLSContrib* C);
+		void Add(const TLSContrib* C);
 		const long& GetL()   const { return _L; }
 		const long& GetS()   const { return _S; }
 		void Print()  const;
@@ -30,7 +30,7 @@ class TLSNonRel {
 		long _J;
 		long _L;
 		long _S;
-		std::vector<TLSContrib*> _RelLS;
+		std::vector<const TLSContrib*> _RelLS;
 		TFracNum _GnrPrefac;
 
 };
