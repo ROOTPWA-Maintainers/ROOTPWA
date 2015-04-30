@@ -5,30 +5,35 @@
 
 class TSpinWaveFunction {
 
-private:
-	long J;
-	long max_pzm;
-	long *pot3;
-	long *mi;
-	long *M;
-	char type;      // 's' Spin, 'l' Orbital Angular Momentum
-	// 'c' Spin conjugated
-	TFracNum *coeff;
+  public:
 
-public:
-	TSpinWaveFunction() {
-		J = 0;
-		max_pzm = 1;
-		pot3 = 0;
-		mi = 0;
-		M = 0;
-	}
+#if(0)
+	TSpinWaveFunction()
+		: _J(0),
+		  _max_pzm(1),
+		  _pot3(0),
+		  _mi(0),
+		  _M(0) { }
+#endif
 
 	TSpinWaveFunction(long J, char type);
 	TTensorSum* GetTensorSum(char name, long delta);
 	TTensorSum* GetSpinCoupledTensorSum(TSpinWaveFunction*, long, long);
 
 	long CheckCGFormula();
+
+  private:
+	long _J;
+	long _max_pzm;
+	long* _pot3;
+	long* _mi;
+	long* _M;
+	char _type;      // 's' Spin, 'l' Orbital Angular Momentum
+	                 // 'c' Spin conjugated
+
+	TFracNum* _coeff;
+
+	static unsigned int _debugSpinWave;
 
 };
 
