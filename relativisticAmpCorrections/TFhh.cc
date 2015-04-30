@@ -5,6 +5,8 @@
 #include <string>
 #include <sstream>
 
+#include <reportingUtils.hpp>
+
 using namespace std;
 
 
@@ -61,18 +63,17 @@ TFhh::TFhh(TFhh *sFhh, char flag)
 	  _NRLSt()
 {
 	if (flag != 'i' && flag != 'm') {
-		cerr << "TFhh::TFhh unknown flag " << flag << endl;
-		return;
+		printErr << "TFhh::TFhh unknown flag " << flag << endl;
+		throw;
 	}
 	if (_debugLevel) {
 		cout << "Initializing from single Amplitude" << endl;
 	}
-	if ( ( (flag == 'i') and ((sFhh->GetJ()) % 2)) or ((flag == 'm') and ((sFhh->GetJ()) % 2 == 0)) ) {
+	if ( ( (flag == 'i') and ((sFhh->GetJ()) % 2))      or
+	     ( (flag == 'm') and ((sFhh->GetJ()) % 2 == 0)))
+	{
 		cout << sFhh->GetName() << "[symm] = 0" << endl;
-		if(GetNterms() != 0) {
-			cerr << "GetNterms returns " << GetNterms() << " instead of 0. Aborting..." << endl;
-			throw;
-		}
+		_LSt = vector<TLSContrib*>();
 	} else {
 		{
 			stringstream sstr;
@@ -100,8 +101,8 @@ TFhh::TFhh(TFhh *sFhh, TFhh *xFhh)
 	}
 	if (_J != xFhh->GetJ() or _evenContraction != xFhh->GetEvenContraction()
 			or _lambda != xFhh->GetNu() or _nu != xFhh->GetLambda()) {
-		cerr << "TFhh::TFhh(TFhh *, TFhh*): Something is wrong," << endl
-		     << " source amplitudes for symmetrization do not match" << endl;
+		printErr << "TFhh::TFhh(TFhh *, TFhh*): Something is wrong," << endl
+		         << " source amplitudes for symmetrization do not match" << endl;
 		throw;
 	}
 

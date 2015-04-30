@@ -8,8 +8,7 @@
 #include <reportingUtils.hpp>
 
 using namespace std;
-using namespace rpwa;
-
+using rpwa::operator<<;
 
 bool TFracNum::debugFracNum = false;
 
@@ -137,7 +136,7 @@ TFracNum::TFracNum(long inom, long iden)
 	{
 		if (inom > MAXPRIMSQUARED or iden > MAXPRIMSQUARED) {
 			//TODO: check if throw is correct
-			cerr << "MAXPRIMSQUARED reached!!! NOM=" << inom << ", DEN=" << iden << endl;
+			printErr << "MAXPRIMSQUARED reached!!! NOM=" << inom << ", DEN=" << iden << endl;
 			throw;
 		}
 	} else {
@@ -155,7 +154,7 @@ TFracNum::TFracNum(long inom, long iden)
 		}
 		if (rest_nom != 1) {
 			//TODO: check what this does
-			cerr << "overflow?? Aborting..." << endl;
+			printErr << "overflow?? Aborting..." << endl;
 			throw;
 		} else {
 			size_t maxPrimDen = 0;
@@ -171,7 +170,7 @@ TFracNum::TFracNum(long inom, long iden)
 				maxPrimDen++;
 			}
 			if (rest_den != 1) {
-				cerr << "overflow?? Aborting..." << endl;
+				printErr << "overflow?? Aborting..." << endl;
 				throw;
 			} else {
 				const size_t minPrim = min(_NOM.size(), _DEN.size());

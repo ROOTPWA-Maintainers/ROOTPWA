@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+#include <reportingUtils.hpp>
+
 using namespace std;
 
 unsigned int TLSAmpl::_debugLevel = 1;
@@ -43,7 +45,7 @@ TLSAmpl::TLSAmpl(long RankS1,
 	if ( (evenContraction == 1 and contractions != totalR) or
 	     (evenContraction == 0 and contractions != totalR - 3))
 	{
-		cerr << "Invalid contraction occurred. Aborting..." << endl;
+		printErr << "Invalid contraction occurred. Aborting..." << endl;
 		throw;
 	}
 

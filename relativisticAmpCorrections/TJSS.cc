@@ -6,6 +6,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <reportingUtils.hpp>
+
 using namespace std;
 
 unsigned int TJSS::_debugLevel = 9999;
@@ -287,7 +289,7 @@ void TJSS::CalcAmpl() {
 	}
 
 	if(not _FhhAmpl.empty()) {
-		cerr << "_FhhAmpl not empty. Aborting..." << endl;
+		printErr << "_FhhAmpl not empty. Aborting..." << endl;
 		throw;
 	}
 

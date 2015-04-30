@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <reportingUtils.hpp>
+
 using namespace std;
 
 
@@ -99,9 +101,9 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 
 void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	if (_J != b->_J or _L != b->_L or _S != b->_S) {
-		cerr << "TLSContrib::Add : Something is wrong, trying to add different"
-		     << " (J;L,S): (" << _J << ";" << _L << "," << _S << ") != ("
-		     << b->_J << ";" << b->_L << "," << b->_S << ")" << endl;
+		printErr << "TLSContrib::Add : Something is wrong, trying to add different"
+		         << " (J;L,S): (" << _J << ";" << _L << "," << _S << ") != ("
+		         << b->_J << ";" << b->_L << "," << b->_S << ")" << endl;
 		throw;
 	}
 
@@ -152,7 +154,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 			factor.squareOfPrefactor *= TFracNum::Quarter * b->_NormFactor;
 			if (_J % 2) {
 				if(not factor.squareOfPrefactor.FlipSign()) {
-					cerr << "Flipping sign failed. Aborting..." << endl;
+					printErr << "Flipping sign failed. Aborting..." << endl;
 					throw;
 				}
 			}
