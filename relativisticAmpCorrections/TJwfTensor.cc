@@ -10,7 +10,7 @@ using namespace std;
 using rpwa::operator<<;
 
 
-TTensorTerm::TTensorTerm(char name,
+TTensorTerm::TTensorTerm(const char& name,
                          const vector<long>& pzm_field,
                          const TFracNum& prefac)
 	: _ome_pzm(),
@@ -39,10 +39,10 @@ TTensorTerm::TTensorTerm(char name,
 
 TTensorTerm::TTensorTerm(const TTensorTerm& S,
                          const TTensorTerm& L,
-                         long contractions,
+                         const long& contractions,
                          long o_share,
                          long e_share,
-                         char conType)
+                         const char& conType)
 	: _ome_pzm(),
 	  _eps_pzm(),
 	  _chi_pzm(),
@@ -280,7 +280,7 @@ long TTensorTerm::LJContraction(long nCon, long even) {
 	return 1;
 }
 
-void TTensorTerm::Multiply(char name,
+void TTensorTerm::Multiply(const char& name,
                            const vector<long>& pzm_field,
                            const TFracNum& prefac)
 {
@@ -481,65 +481,45 @@ void TTensorTerm::shrinkVectors(const size_t& rOme,
 }
 
 
-long TTensorSum::Print(char flag) {
-	for (long i = 0; i < Nterms; i++) {
-		terms[i].Print(flag);
-		if (i < Nterms - 1) {
+void TTensorSum::Print(char flag) const
+{
+	for (size_t i = 0; i < _terms.size(); i++) {
+		_terms[i].Print(flag);
+		if (i < _terms.size() - 1) {
 			cout << " ";
 		}
 	}
 	cout << endl;
-	return 0;
-}
-;
-
-long TTensorSum::AddTerm(TTensorTerm* addt) {
-	TTensorTerm* nt = new TTensorTerm[Nterms + 1];
-	for (long i = 0; i < Nterms; i++) {
-		nt[i] = terms[i];
-	}
-	nt[Nterms] = *addt;
-	delete[] terms;
-	terms = nt;
-	Nterms++;
-	return 0;
 }
 
-long TTensorSum::SpinInnerContraction(long cPsiInt) {
-	long non_zero_terms = 0;
-	long val[Nterms];
-	for (long i = 0; i < Nterms; i++) {
-		val[i] = terms[i].SpinInnerContraction(cPsiInt);
-		if (val[i] != 0) {
-			non_zero_terms++;
+
+void TTensorSum::AddTerm(const TTensorTerm& addt) {
+	_terms.push_back(addt);
+}
+
+size_t TTensorSum::SpinInnerContraction(long cPsiInt) {
+	for(size_t i = _terms.size(); i > 0; --i) {
+		if(_terms[i-1].SpinInnerContraction(cPsiInt) == 0) {
+			_terms.erase(_terms.begin() + (i-1));
 		}
 	}
-	if (non_zero_terms < Nterms) {
-		TTensorTerm* nt = new TTensorTerm[non_zero_terms];
-		long j = 0;
-		for (long i = 0; i < Nterms; i++) {
-			if (val[i]) {
-				nt[j] = terms[i];
-				j++;
-			}
-		}
-		delete[] terms;
-		terms = nt;
-		Nterms = non_zero_terms;
-	}
-	return Nterms;
+	return _terms.size();
 }
 
 TTensorSum*
-TTensorSum::LSContraction(TTensorSum *L, long contr,
-long co, long ce, char con_type) {
+TTensorSum::LSContraction(const TTensorSum& L,
+                          const long& contr,
+                          const long& co,
+                          const long& ce,
+                          const char& conType) const
+{
 
 	TTensorSum *tls = new TTensorSum();
 
-	for (long i = 0; i < Nterms; i++) {
-		for (long j = 0; j < L->Nterms; j++) {
-			TTensorTerm *nt = new TTensorTerm(terms[i], L->terms[j], contr, co, ce, con_type);
-			if (nt->IsNonZero()) {
+	for (size_t i = 0; i < _terms.size(); i++) {
+		for (size_t j = 0; j < L.GetNterms(); j++) {
+			TTensorTerm nt(_terms[i], L._terms[j], contr, co, ce, conType);
+			if (nt.IsNonZero()) {
 				tls->AddTerm(nt);
 			}
 		}
@@ -550,37 +530,37 @@ long co, long ce, char con_type) {
 
 TTensorSum*
 TTensorSum::LJContraction(long cChiPhi, long even) {
-
-	for (long i = 0; i < Nterms; i++) {
-		terms[i].LJContraction(cChiPhi, even);
+//TODO: fix this...
+	for (size_t i = 0; i < _terms.size(); i++) {
+		_terms[i].LJContraction(cChiPhi, even);
 	}
 
-	TTensorSum *tls = new TTensorSum();
+	TTensorSum* tls = new TTensorSum();
 
-	for (long i = 0; i < Nterms; i++) {
-		long found_same = 0;
-		for (long j = 0; j < tls->Nterms; j++) {
-			if (terms[i].SameStructure(tls->terms[j])) {
-				if ((tls->terms[j]).AddTwoTerms(terms[i])) {
-					found_same = 1;
+	for (size_t i = 0; i < _terms.size(); i++) {
+		bool foundSame = false;
+		for (size_t j = 0; j < tls->GetNterms(); j++) {
+			if (_terms[i].SameStructure(tls->_terms[j])) {
+				if ((tls->_terms[j]).AddTwoTerms(_terms[i])) {
+					foundSame = true;
 					break;
 				}
 			}
 		}
-		if (!found_same) {
-			TTensorTerm *nt = new TTensorTerm(terms[i]);
+		if (not foundSame) {
+			TTensorTerm nt(_terms[i]);
 			tls->AddTerm(nt);
 		}
 	}
 
-	TTensorSum* tls_nonzero = new TTensorSum();
+	TTensorSum* tlsNonzero = new TTensorSum();
 
-	for (long i = 0; i < tls->Nterms; i++) {
-		if (tls->terms[i].IsNonZero()) {
-			TTensorTerm *nt = new TTensorTerm(tls->terms[i]);
-			tls_nonzero->AddTerm(nt);
+	for (size_t i = 0; i < tls->GetNterms(); i++) {
+		if (tls->_terms[i].IsNonZero()) {
+			TTensorTerm nt(tls->_terms[i]);
+			tlsNonzero->AddTerm(nt);
 		}
 	}
 
-	return tls_nonzero;
+	return tlsNonzero;
 }

@@ -86,7 +86,7 @@ TSpinWaveFunction::GetTensorSum(char name, long delta) {
 				pzm_field[i] = mi[J * pzm + i];
 			}
 			if (!(coeff[pzm] == TFracNum::Zero))
-				ts->AddTerm(new TTensorTerm(name, pzm_field, coeff[pzm]));
+				ts->AddTerm(TTensorTerm(name, pzm_field, coeff[pzm]));
 		}
 	}
 	return ts;
@@ -144,12 +144,12 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 									pzm2_field[i] = E->mi[E->J * pzm2 + i];
 								}
 
-								TTensorTerm* newterm = new TTensorTerm('o', pzm1_field, coeff[pzm1]);
+								TTensorTerm newterm('o', pzm1_field, coeff[pzm1]);
 
 								TFracNum coeff2_CG = S1S2[ClebschGordanBox::CGIndex(J, MM1, E->J, MM2)];
 								coeff2_CG = coeff2_CG * E->coeff[pzm2];
 
-								newterm->Multiply('e', pzm2_field, coeff2_CG);
+								newterm.Multiply('e', pzm2_field, coeff2_CG);
 
 								ts->AddTerm(newterm);
 							}

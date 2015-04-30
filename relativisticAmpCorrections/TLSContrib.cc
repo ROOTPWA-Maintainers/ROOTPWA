@@ -47,17 +47,17 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 		cout << "(" << _J << ")" << _L << _S << "[" << _delta << "]" << endl;
 	}
 	for (size_t i = 0; i < _factors.size(); i++) {
-		TTensorTerm *tt = A->GetTerm(i); //TSScalar->GetTerm(i);
+		const TTensorTerm& tt = A->GetTerm(i); //TSScalar->GetTerm(i);
 
 		if (_debug) {
 			cout << scfac.FracStringSqrt() << ","
-			     << tt->GetPreFac().FracStringSqrt() << " L" << _L << "S"
+			     << tt.GetPreFac().FracStringSqrt() << " L" << _L << "S"
 			     << _S << "J" << _J << "Ampldelta" << A->Getdelta()
 			     << " delta" << _delta << ", sigrev " << signReversal;
 		}
 
 
-		_factors[i].squareOfPrefactor = scfac * tt->GetPreFac();
+		_factors[i].squareOfPrefactor = scfac * tt.GetPreFac();
 		if (signReversal == true) {
 			_factors[i].squareOfPrefactor.FlipSign();
 		}
@@ -77,8 +77,8 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 
 		//    NormFactor=NormFactor+termFracNum[i]+TFracNum_Two*tSqrt;
 
-		_factors[i].exponentOfGammaS     = tt->GetGamS();
-		_factors[i].exponentOfGammaSigma = tt->GetGamSig();
+		_factors[i].exponentOfGammaS     = tt.GetGamS();
+		_factors[i].exponentOfGammaSigma = tt.GetGamSig();
 		if (_debug) {
 			cout << " -> Normfactor: " << _NormFactor.FracStringSqrt() << endl;
 		}
@@ -168,18 +168,9 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	// Eliminate zero entries
 	//
-	vector<int> indicesToRemove;
-	for (size_t i = _factors.size()-1; i >= 0; --i) {
-		if (_factors[i].squareOfPrefactor == TFracNum::Zero) {
-			indicesToRemove.push_back(i);
-		}
-	}
-
-	if (indicesToRemove.empty()) {
-		return;
-	} else {
-		for(size_t i = 0; i < indicesToRemove.size(); ++i) {
-			_factors.erase(_factors.begin()+i);
+	for (size_t i = _factors.size(); i > 0; --i) {
+		if (_factors[i-1].squareOfPrefactor == TFracNum::Zero) {
+			_factors.erase(_factors.begin() + (i-1));
 		}
 	}
 

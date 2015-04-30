@@ -89,7 +89,7 @@ TLSAmpl::TLSAmpl(long RankS1,
 		TSL->Print();
 	}
 
-	TTensorSum *TSLS = TSS->LSContraction(TSL, cPsiChi, cChiOme, cChiEps, 'c');
+	TTensorSum* TSLS = TSS->LSContraction(*TSL, cPsiChi, cChiOme, cChiEps, 'c');
 	if (TSLS->GetNterms() == 0) {
 		if (_debugLevel) {
 			cout << "LS contraction is zero." << endl;
@@ -107,7 +107,7 @@ TLSAmpl::TLSAmpl(long RankS1,
 		TSJ->Print();
 	}
 
-	TTensorSum* TSLSJ = TSLS->LSContraction(TSJ, cPsiPhi, cPhiOme, cPhiEps, 'p');
+	TTensorSum* TSLSJ = TSLS->LSContraction(*TSJ, cPsiPhi, cPhiOme, cPhiEps, 'p');
 
 	if (TSLSJ->GetNterms() == 0) {
 		if (_debugLevel) {

@@ -21,24 +21,24 @@ class TTensorTerm {
 	}
 
 	// TODO: optimize this call
-	TTensorTerm(char name,
+	TTensorTerm(const char& name,
 	            const std::vector<long>& pzm_field,
 	            const TFracNum& prefac);
 
 	TTensorTerm(const TTensorTerm& S,
 	            const TTensorTerm& L,
-	            long contractions,
+	            const long& contractions,
 	            long o_share,
 	            long e_share,
-	            char con_type);
+	            const char& con_type);
 
 	long LJContraction(long ncon, long even);
 	// TODO: optimize this call
-	void Multiply(char name, const std::vector<long>& pzm_field, const TFracNum& prefac);
+	void Multiply(const char& name, const std::vector<long>& pzm_field, const TFracNum& prefac);
 	long SpinInnerContraction(const long& cPsiInt);
 	bool SameStructure(const TTensorTerm& rhs) const;
 	bool AddTwoTerms(const TTensorTerm& rhs);
-	long IsNonZero() const { return (_prefac == TFracNum::Zero) ? 0 : 1; }
+	bool IsNonZero() const { return (_prefac != TFracNum::Zero); }
 
 	std::ostream& Print(const char& flag = 'n', std::ostream& out = std::cout) const;
 
@@ -76,29 +76,28 @@ operator <<(std::ostream&            out,
 
 class TTensorSum {
 
-private:
-	long Nterms;
-	TTensorTerm *terms;
 
 public:
-	TTensorSum() {
-		Nterms = 0;
-		terms = 0;
-	}
-	;
-	long AddTerm(TTensorTerm*);
-	long SpinInnerContraction(long);
-	TTensorSum* LSContraction(TTensorSum*, long, long, long, char);
-	TTensorSum* LJContraction(long, long);
-	long GetNterms() {
-		return Nterms;
-	}
-	;
-	long Print(char = 'n');
+	TTensorSum() : _terms() { }
 
-	TTensorTerm* GetTerm(long i) {
-		return &terms[i];
-	}
+	void AddTerm(const TTensorTerm& addt);
+	size_t SpinInnerContraction(long cPsiInt);
+
+	TTensorSum* LSContraction(const TTensorSum& L,
+	                          const long& contr,
+	                          const long& co,
+	                          const long& ce,
+	                          const char& conType) const;
+
+	TTensorSum* LJContraction(long, long);
+	size_t GetNterms() const { return _terms.size(); }
+	void Print(char = 'n') const;
+
+	const TTensorTerm& GetTerm(size_t i) const { return _terms[i]; }
+
+  private:
+
+	std::vector<TTensorTerm> _terms;
 
 };
 

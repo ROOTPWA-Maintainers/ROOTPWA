@@ -113,13 +113,15 @@ class TFracNum {
 	const char* HeaderString() const;
 
 	//! Check whether two fractional numbers are equal
-	bool operator==(const TFracNum &) const;
+	bool operator==(const TFracNum& rhs) const;
+	//! Check whether two fractional numbers are not equal
+	bool operator!=(const TFracNum& rhs) const { return not (*this == rhs); }
 	//! Check whether left-hand number is greater than right-hand number
-	bool operator>(const TFracNum &) const;
+	bool operator>(const TFracNum& rhs) const;
 	//! Multiply two fractional numbers
 	TFracNum& operator*=(const TFracNum& rhs);
 	//! Add two fractional numbers
-	TFracNum& operator+=(const TFracNum &);
+	TFracNum& operator+=(const TFracNum& rhs);
 
 	static TFracNum am0_to_J(long J, long m, long m0);
 	static TFracNum c_sub_ell(long ell);

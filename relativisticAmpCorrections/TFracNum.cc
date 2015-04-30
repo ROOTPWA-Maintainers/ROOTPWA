@@ -154,7 +154,8 @@ TFracNum::TFracNum(long inom, long iden)
 		}
 		if (rest_nom != 1) {
 			//TODO: check what this does
-			printErr << "overflow?? Aborting..." << endl;
+			printErr << "(" << inom << "/" << iden << ") overflow?? Aborting..." << endl;
+			cout << endl << (*this) << endl;
 			throw;
 		} else {
 			size_t maxPrimDen = 0;
@@ -170,7 +171,9 @@ TFracNum::TFracNum(long inom, long iden)
 				maxPrimDen++;
 			}
 			if (rest_den != 1) {
-				printErr << "overflow?? Aborting..." << endl;
+				//TODO: check what this does
+				printErr << "(" << inom << "/" << iden << ") overflow?? Aborting..." << endl;
+				cout << endl << (*this) << endl;
 				throw;
 			} else {
 				const size_t minPrim = min(_NOM.size(), _DEN.size());
@@ -472,8 +475,8 @@ TFracNum::HeaderString() const
 }
 
 
-bool TFracNum::operator>(const TFracNum &b) const {
-	if (Dval() > b.Dval()) {
+bool TFracNum::operator>(const TFracNum& rhs) const {
+	if (Dval() > rhs.Dval()) {
 		return true;
 	}
 	return false;
@@ -490,47 +493,47 @@ TFracNum& TFracNum::operator+=(const TFracNum &rhs) {
 }
 
 
-TFracNum& TFracNum::operator*=(const TFracNum& b) {
+TFracNum& TFracNum::operator*=(const TFracNum& rhs) {
 
 	// if one of the two numbers is undetermined,
 	// the product is also undetermined
-	if (_signPrefac == -6666 or b._signPrefac == -6666) {
+	if (_signPrefac == -6666 or rhs._signPrefac == -6666) {
 		*this = TFracNum(vector<long>(), vector<long>(), -6666);
 		return *this;
 	}
 
 	// if one of the two numbers contains division by zero,
 	// and the other nominator is zero, the product is undetermined
-	if ((_signPrefac == -7777 and b._signPrefac == 0) or
-	    (_signPrefac == 0     and b._signPrefac == -7777))
+	if ((_signPrefac == -7777 and rhs._signPrefac == 0) or
+	    (_signPrefac == 0     and rhs._signPrefac == -7777))
 	{
 		*this = TFracNum(vector<long>(), vector<long>(), -6666);
 		return *this;
 	}
 
 	// other cases with division by zero; product is also infinity
-	if ((_signPrefac == -7777 or b._signPrefac == -7777)) {
+	if ((_signPrefac == -7777 or rhs._signPrefac == -7777)) {
 		*this = TFracNum(vector<long>(), vector<long>(), -7777);
 		return *this;
 	}
 
-	if (_signPrefac * b._signPrefac == 0) {
+	if (_signPrefac * rhs._signPrefac == 0) {
 		*this = TFracNum::Zero;
 		return *this;
 	}
 
-	if(_NOM.size() < b._NOM.size()) {
-		_NOM.resize(b._NOM.size(), 0);
+	if(_NOM.size() < rhs._NOM.size()) {
+		_NOM.resize(rhs._NOM.size(), 0);
 	}
-	for(size_t i = 0; i < b._NOM.size(); ++i) {
-		_NOM[i] += b._NOM[i];
+	for(size_t i = 0; i < rhs._NOM.size(); ++i) {
+		_NOM[i] += rhs._NOM[i];
 	}
 
-	if(_DEN.size() < b._DEN.size()) {
-		_DEN.resize(b._DEN.size(), 0);
+	if(_DEN.size() < rhs._DEN.size()) {
+		_DEN.resize(rhs._DEN.size(), 0);
 	}
-	for(size_t i = 0; i < b._DEN.size(); ++i) {
-		_DEN[i] += b._DEN[i];
+	for(size_t i = 0; i < rhs._DEN.size(); ++i) {
+		_DEN[i] += rhs._DEN[i];
 	}
 
 	for(size_t i = 0; i < min(_NOM.size(), _DEN.size()); ++i) {
@@ -545,7 +548,7 @@ TFracNum& TFracNum::operator*=(const TFracNum& b) {
 		}
 	}
 
-	_signPrefac *= b._signPrefac;
+	_signPrefac *= rhs._signPrefac;
 	resetAllCaches();
 	return *this;
 }

@@ -48,9 +48,7 @@ class TLSAmpl {
 	                      long cPE,
 	                      long cCE) const;
 
-	TTensorTerm* GetTerm(long i) const {
-		return _TSScalar->GetTerm(i);
-	}
+	const TTensorTerm& GetTerm(long i) const { return _TSScalar->GetTerm(i); }
 
   private:
 
