@@ -11,15 +11,15 @@ using namespace std;
 
 unsigned int TSpinWaveFunction::_debugSpinWave = 0;
 
-TSpinWaveFunction::TSpinWaveFunction(long J_, char type_) {
-
-	_J = J_;
-	_type = type_;
+TSpinWaveFunction::TSpinWaveFunction(const size_t& J, const char& type)
+	: _J(J),
+	  _type(type)
+{
 
 	_max_pzm = 1;
-	_pot3 = new long[_J];
-	for (long i = 0; i < _J; i++) {
-		_pot3[i] = _max_pzm;
+	vector<long> pot3(_J);
+	for (size_t i = 0; i < _J; i++) {
+		pot3[i] = _max_pzm;
 		_max_pzm *= 3;
 	}
 	_mi = new long[_max_pzm * _J];
@@ -35,16 +35,16 @@ TSpinWaveFunction::TSpinWaveFunction(long J_, char type_) {
 		long i = _J - 1;
 		_M[pzm] = 0;
 		while (i >= 0) {
-			long ipot3 = rest / _pot3[i];
+			long ipot3 = rest / pot3[i];
 			_mi[_J * pzm + i] = ipot3 - 1;
 			_M[pzm] += _mi[_J * pzm + i];
 			//cout << "Setting mi["<<J<<"*"<<pzm<<"+"<<i<<"]="<<mi[J*pzm+i]<<endl;
-			rest -= ipot3 * _pot3[i];
+			rest -= ipot3 * pot3[i];
 			i--;
 		}
 	}
 
-	for (long MM = _J; MM >= -_J; MM--) {
+	for (long MM = _J; MM >= -(long)_J; MM--) {
 		if (_debugSpinWave >= 2) {
 			cout << "Phi(" << _J << "," << MM << ")=" << endl;
 		}
@@ -52,7 +52,7 @@ TSpinWaveFunction::TSpinWaveFunction(long J_, char type_) {
 			if (((_type == 's' or  _type == 'c') and _M[pzm] == MM) or
 			     (_type == 'l' and _M[pzm] == MM and MM == 0)) {
 				long m0 = 0;
-				for (long i = 0; i < _J; i++) {
+				for (size_t i = 0; i < _J; i++) {
 					if (_debugSpinWave >= 2) {
 						if (_mi[_J * pzm + i] == 1) {
 							cout << "+";
@@ -92,7 +92,7 @@ TSpinWaveFunction::GetTensorSum(char name, long delta) {
 	for (long pzm = _max_pzm - 1; pzm >= 0; pzm--) {
 		if (_M[pzm] == delta) {
 			vector<long> pzm_field(_J);
-			for (long i = 0; i < _J; i++) {
+			for (size_t i = 0; i < _J; i++) {
 				pzm_field[i] = _mi[_J * pzm + i];
 			}
 			if (not (_coeff[pzm] == TFracNum::Zero)) {
@@ -137,23 +137,23 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 
 	TTensorSum ts;
 
-	for (long MM1 = _J; MM1 >= -_J; MM1--) {
+	for (long MM1 = _J; MM1 >= -(long)_J; MM1--) {
 		for (long pzm1 = _max_pzm - 1; pzm1 >= 0; pzm1--) {
 			if (_M[pzm1] == MM1 and not (_coeff[pzm1] == TFracNum::Zero)) {
 
-				for (long MM2 = E._J; MM2 >= -_J; MM2--) {
+				for (long MM2 = E._J; MM2 >= -(long)_J; MM2--) {
 					for (long pzm2 = E._max_pzm - 1; pzm2 >= 0; pzm2--) {
 						if (E._M[pzm2] == MM2 and not (E._coeff[pzm2] == TFracNum::Zero)) {
 
 							if (MM1 + MM2 == delta) {
 
 								vector<long> pzm1_field(_J);
-								for (long i = 0; i < _J; i++) {
+								for (size_t i = 0; i < _J; i++) {
 									pzm1_field[i] = _mi[_J * pzm1 + i];
 								}
 
 								vector<long> pzm2_field(E._J);
-								for (long i = 0; i < E._J; i++) {
+								for (size_t i = 0; i < E._J; i++) {
 									pzm2_field[i] = E._mi[E._J * pzm2 + i];
 								}
 
@@ -178,8 +178,13 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 long
 TSpinWaveFunction::CheckCGFormula() {
 
+	if(_J == 0) {
+		printErr << "J = 0, that is bad..." << endl;
+		throw;
+	}
+
 	TFracNum **J1J = new TFracNum*[_J - 1];
-	for (long i = 0; i < _J - 1; i++) {
+	for (size_t i = 0; i < _J - 1; i++) {
 		// long twoJ=2*(i+2);
 		// J1J[i] = ClebschGordan(twoJ, 2, twoJ-2);
 		J1J[i] = ClebschGordanBox::instance()->GetCG(i + 2, 1, i + 1);
@@ -193,7 +198,7 @@ TSpinWaveFunction::CheckCGFormula() {
 		if (_debugSpinWave >= 2) {
 			cout << m << " x ";
 		}
-		for (long jj = 1; jj < _J; jj++) {
+		for (size_t jj = 1; jj < _J; jj++) {
 			long mj = _mi[_J * pzm + jj];
 			// m1=i/max2-J1, m2=i%max2-J2 ==> i=(m1+J1)*max2
 			if (_debugSpinWave >= 2) {
@@ -219,7 +224,7 @@ TSpinWaveFunction::CheckCGFormula() {
 			if (_M[pzm] == MM) {
 				cout << coeffCG[pzm].FracString() << " * (";
 				long m0 = 0;
-				for (long i = 0; i < _J; i++) {
+				for (size_t i = 0; i < _J; i++) {
 					if (_mi[_J * pzm + i] == 1) {
 						cout << "+";
 					}
