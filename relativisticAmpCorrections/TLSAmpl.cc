@@ -64,13 +64,13 @@ TLSAmpl::TLSAmpl(long RankS1,
 	TSpinWaveFunction WFS1(RankS1, 's');
 	TSpinWaveFunction WFS2(RankS2, 's');
 
-	TTensorSum* TSS = WFS1.GetSpinCoupledTensorSum(&WFS2, _delta, S_L);
+	TTensorSum TSS = WFS1.GetSpinCoupledTensorSum(WFS2, _delta, S_L);
 	if (_debugLevel >= 2) {
-		TSS->Print();
+		TSS.Print();
 	}
 
 	if (cPsiInt) {
-		long ires = TSS->SpinInnerContraction(cPsiInt);
+		long ires = TSS.SpinInnerContraction(cPsiInt);
 		if (ires == 0) {
 			if (_debugLevel) {
 				cout << "Inner contraction is zero." << endl;
@@ -79,18 +79,18 @@ TLSAmpl::TLSAmpl(long RankS1,
 			return;
 		}
 		if (_debugLevel >= 2) {
-			TSS->Print();
+			TSS.Print();
 		}
 	}
 
 	TSpinWaveFunction WFL(RankL, 'l');
-	TTensorSum *TSL = WFL.GetTensorSum('c', 0);
+	TTensorSum TSL = WFL.GetTensorSum('c', 0);
 	if (_debugLevel >= 2) {
-		TSL->Print();
+		TSL.Print();
 	}
 
-	TTensorSum* TSLS = TSS->LSContraction(*TSL, cPsiChi, cChiOme, cChiEps, 'c');
-	if (TSLS->GetNterms() == 0) {
+	TTensorSum TSLS = TSS.LSContraction(TSL, cPsiChi, cChiOme, cChiEps, 'c');
+	if (TSLS.GetNterms() == 0) {
 		if (_debugLevel) {
 			cout << "LS contraction is zero." << endl;
 		}
@@ -98,18 +98,18 @@ TLSAmpl::TLSAmpl(long RankS1,
 		return;
 	}
 	if (_debugLevel >= 2) {
-		TSLS->Print();
+		TSLS.Print();
 	}
 
 	TSpinWaveFunction WFJ(RankJ, 'c');
-	TTensorSum* TSJ = WFJ.GetTensorSum('p', _delta);
+	TTensorSum TSJ = WFJ.GetTensorSum('p', _delta);
 	if (_debugLevel >= 2) {
-		TSJ->Print();
+		TSJ.Print();
 	}
 
-	TTensorSum* TSLSJ = TSLS->LSContraction(*TSJ, cPsiPhi, cPhiOme, cPhiEps, 'p');
+	TTensorSum TSLSJ = TSLS.LSContraction(TSJ, cPsiPhi, cPhiOme, cPhiEps, 'p');
 
-	if (TSLSJ->GetNterms() == 0) {
+	if (TSLSJ.GetNterms() == 0) {
 		if (_debugLevel) {
 			cout << "JS contraction is zero." << endl;
 		}
@@ -118,16 +118,16 @@ TLSAmpl::TLSAmpl(long RankS1,
 	}
 
 	if (_debugLevel >= 2) {
-		TSLSJ->Print();
+		TSLSJ.Print();
 	}
 
-	_TSScalar = TSLSJ->LJContraction(cChiPhi, evenContraction);
+	_TSScalar = TSLSJ.LJContraction(cChiPhi, evenContraction);
 
 	if (_debugLevel >= 2) {
-		TSLSJ->Print();
+		TSLSJ.Print();
 	}
 
-	_Nterms = _TSScalar->GetNterms();
+	_Nterms = _TSScalar.GetNterms();
 
 	if (_Nterms == 0) {
 		if (_debugLevel) {
@@ -137,8 +137,8 @@ TLSAmpl::TLSAmpl(long RankS1,
 	}
 
 	if (_debugLevel) {
-		//TSScalar->Print();
-		_TSScalar->Print('s');
+		//TSScalar.Print();
+		_TSScalar.Print('s');
 	}
 }
 

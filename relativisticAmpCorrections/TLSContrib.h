@@ -48,7 +48,7 @@ class TLSContrib {
 
 
 	// TODO: make 1st arg const
-	void Add(TLSContrib*, bool);
+	void Add(TLSContrib* rhs, bool particleExchange);
 
 
 	bool        SameParameter(TLSContrib* b) const { return (_J == b->_J and _L == b->_L and _S == b->_S and _cNum == b->_cNum); }

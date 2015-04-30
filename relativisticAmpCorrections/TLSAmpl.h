@@ -48,7 +48,7 @@ class TLSAmpl {
 	                      long cPE,
 	                      long cCE) const;
 
-	const TTensorTerm& GetTerm(long i) const { return _TSScalar->GetTerm(i); }
+	const TTensorTerm& GetTerm(long i) const { return _TSScalar.GetTerm(i); }
 
   private:
 
@@ -68,7 +68,7 @@ class TLSAmpl {
 	long _cChiEps;
 
 	long _Nterms;
-	TTensorSum* _TSScalar;
+	TTensorSum _TSScalar;
 
 	static unsigned int _debugLevel;
 

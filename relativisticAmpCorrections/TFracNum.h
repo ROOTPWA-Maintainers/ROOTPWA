@@ -67,8 +67,7 @@ class TFracNum {
 
 	//! The return value c satisfies ssqrt(c)=ssqrt(a)+ssqrt(b)
 	//! Here the signed square root function ssqrt(n)=sign(n)*sqrt(abs(n)) is used
-	//TODO: change the return type and do better error handling
-	const TFracNum* SumSignedRoots(const TFracNum& b) const;
+	TFracNum SumSignedRoots(const TFracNum& b) const;
 
 	//! String in the form Num/Den. If Den=1, only Num is given
 	const char* FracString() const;

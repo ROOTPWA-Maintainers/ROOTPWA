@@ -361,19 +361,12 @@ bool TTensorTerm::SameStructure(const TTensorTerm& other) const
 	return false;
 }
 
-bool TTensorTerm::AddTwoTerms(const TTensorTerm& other) {
-	// TODO: check if this should just throw?
+void TTensorTerm::AddTwoTerms(const TTensorTerm& other) {
 	if (not SameStructure(other)) {
 		printErr << "NO NO NO these terms cannot be added!" << endl;
-		return false;
-	} else {
-		const TFracNum* sum = _prefac.SumSignedRoots(other._prefac);
-		if (sum) {
-			_prefac = *sum;
-			return true;
-		}
+		throw;
 	}
-	return false;
+	_prefac = _prefac.SumSignedRoots(other._prefac);
 }
 
 std::ostream& TTensorTerm::Print(const char& flag, std::ostream& out) const
@@ -506,7 +499,7 @@ size_t TTensorSum::SpinInnerContraction(long cPsiInt) {
 	return _terms.size();
 }
 
-TTensorSum*
+TTensorSum
 TTensorSum::LSContraction(const TTensorSum& L,
                           const long& contr,
                           const long& co,
@@ -514,42 +507,39 @@ TTensorSum::LSContraction(const TTensorSum& L,
                           const char& conType) const
 {
 
-	TTensorSum *tls = new TTensorSum();
-
+	TTensorSum tls;
 	for (size_t i = 0; i < _terms.size(); i++) {
 		for (size_t j = 0; j < L.GetNterms(); j++) {
 			TTensorTerm nt(_terms[i], L._terms[j], contr, co, ce, conType);
 			if (nt.IsNonZero()) {
-				tls->AddTerm(nt);
+				tls.AddTerm(nt);
 			}
 		}
 	}
-
 	return tls;
 }
 
-TTensorSum*
+TTensorSum
 TTensorSum::LJContraction(long cChiPhi, long even) {
 	for (size_t i = 0; i < _terms.size(); i++) {
 		_terms[i].LJContraction(cChiPhi, even);
 	}
-	TTensorSum* tls = new TTensorSum();
+	TTensorSum tls;
 	for (size_t i = 0; i < _terms.size(); i++) {
 		bool foundSame = false;
-		for (size_t j = 0; j < tls->GetNterms(); j++) {
-			if (_terms[i].SameStructure(tls->_terms[j])) {
-				if ((tls->_terms[j]).AddTwoTerms(_terms[i])) {
-					foundSame = true;
-					break;
-				}
+		for (size_t j = 0; j < tls.GetNterms(); j++) {
+			if (_terms[i].SameStructure(tls._terms[j])) {
+				(tls._terms[j]).AddTwoTerms(_terms[i]);
+				foundSame = true;
+				break;
 			}
 		}
 		if (not foundSame) {
 			TTensorTerm nt(_terms[i]);
-			tls->AddTerm(nt);
+			tls.AddTerm(nt);
 		}
 	}
-	tls->removeZeroTerms();
+	tls.removeZeroTerms();
 	return tls;
 }
 

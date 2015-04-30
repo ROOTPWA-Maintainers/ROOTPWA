@@ -265,28 +265,27 @@ long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 }
 
 
-const TFracNum*
+TFracNum
 TFracNum::SumSignedRoots(const TFracNum& b) const
 {
 	TFracNum mixed = (*this) * b;
 	TFracNum aa = *this;
 	TFracNum bb = b;
-	TFracNum* res = new TFracNum();
 	if (mixed.Sqrt()) {
 		bool flipsign = (aa.Dval() + bb.Dval() < 0);
 		aa.Abs();
 		bb.Abs();
-		*res = aa + bb + TFracNum::Two * mixed;
+		TFracNum res = aa + bb + TFracNum::Two * mixed;
 		if (flipsign) {
-			res->FlipSign();
+			res.FlipSign();
 		}
 		return res;
 	}
-	cerr << "Error in TFracNum::SumSignedRoots()" << endl << "this:" << Dval() << endl;
-	cerr << *this;
-	cerr << "b:" << b.Dval() << endl;
-	cerr << b;
-	return 0;
+	printErr << "Error in TFracNum::SumSignedRoots()" << endl << "this:" << Dval() << endl
+	         << *this << endl
+	         << "b:" << b.Dval() << endl
+	         << b;
+	throw;
 }
 
 
@@ -641,6 +640,7 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 }
 
 
+//TODO: fix this horrible sprintf mess
 const char*
 TFracNum::FracString() const
 {
@@ -664,6 +664,7 @@ TFracNum::FracString() const
 const char NULLSTRING[1] = ""; // workaround CINT warning when sprintf(s,"");
 
 
+//TODO: fix this horrible sprintf mess
 const char*
 TFracNum::FracStringSqrt() const {
 	char *formstr = new char[50];

@@ -67,13 +67,7 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 		//  cout << " Building LSContrib leads not to squared-fractional numbers,"
 		//	   << " results will be wrong!" << endl;
 
-		const TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
-		if (sum) {
-			_NormFactor = *sum;
-		} else {
-			cerr << "TLSContrib: Normalisation not root-fractional,"
-					<< " *** results will be wrong *** " << endl;
-		}
+		_NormFactor = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
 
 		//    NormFactor=NormFactor+termFracNum[i]+TFracNum_Two*tSqrt;
 
@@ -99,11 +93,11 @@ TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
 }
 
 
-void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
-	if (_J != b->_J or _L != b->_L or _S != b->_S) {
+void TLSContrib::Add(TLSContrib* rhs, bool particleExchange) {
+	if (_J != rhs->_J or _L != rhs->_L or _S != rhs->_S) {
 		printErr << "TLSContrib::Add : Something is wrong, trying to add different"
 		         << " (J;L,S): (" << _J << ";" << _L << "," << _S << ") != ("
-		         << b->_J << ";" << b->_L << "," << b->_S << ")" << endl;
+		         << rhs->_J << ";" << rhs->_L << "," << rhs->_S << ")" << endl;
 		throw;
 	}
 
@@ -116,42 +110,37 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 		_factors[i].squareOfPrefactor *= TFracNum::Quarter * _NormFactor;
 	}
 
-	for (size_t ib = 0; ib < b->GetNterms(); ib++) {
+	for (size_t ib = 0; ib < rhs->GetNterms(); ib++) {
 		bool termSummed = false;
 		for (size_t i = 0; i < _factors.size(); i++) {
-			if (not termSummed and _cNum == b->_cNum                                            and
+			if (not termSummed and _cNum == rhs->_cNum                                            and
 			    (
 			      (particleExchange                                                             and
-			       _factors[i].exponentOfGammaS     == b->getFactors()[ib].exponentOfGammaSigma and
-			       _factors[i].exponentOfGammaSigma == b->getFactors()[ib].exponentOfGammaS
+			       _factors[i].exponentOfGammaS     == rhs->getFactors()[ib].exponentOfGammaSigma and
+			       _factors[i].exponentOfGammaSigma == rhs->getFactors()[ib].exponentOfGammaS
 			      )                                                                             or
 			      (
 			       not particleExchange                                                         and
-			       _factors[i].exponentOfGammaS     == b->getFactors()[ib].exponentOfGammaS     and
-			       _factors[i].exponentOfGammaSigma == b->getFactors()[ib].exponentOfGammaSigma
+			       _factors[i].exponentOfGammaS     == rhs->getFactors()[ib].exponentOfGammaS     and
+			       _factors[i].exponentOfGammaSigma == rhs->getFactors()[ib].exponentOfGammaSigma
 			      )
 			    ) )
 			{
 				termSummed = true;
-				TFracNum bterm = TFracNum::Quarter * b->_NormFactor * b->getFactors()[ib].squareOfPrefactor;
+				TFracNum bterm = TFracNum::Quarter * rhs->_NormFactor * rhs->getFactors()[ib].squareOfPrefactor;
 
 				if (_J % 2) {
 					bterm.FlipSign();
 				}
 
-				const TFracNum* sum = bterm.SumSignedRoots(_factors[i].squareOfPrefactor);
-				if (sum) {
-					_factors[i].squareOfPrefactor = *sum;
-				} else {
-					cerr << "TLSContrib: Normalisation not root-fractional,"
-					     << " *** results will be wrong *** " << endl;
-				}
+				_factors[i].squareOfPrefactor = bterm.SumSignedRoots(_factors[i].squareOfPrefactor);
+
 			}
 		}
 		if (not termSummed) {
 
-			factors factor(b->getFactors()[ib]);
-			factor.squareOfPrefactor *= TFracNum::Quarter * b->_NormFactor;
+			factors factor(rhs->getFactors()[ib]);
+			factor.squareOfPrefactor *= TFracNum::Quarter * rhs->_NormFactor;
 			if (_J % 2) {
 				if(not factor.squareOfPrefactor.FlipSign()) {
 					printErr << "Flipping sign failed. Aborting..." << endl;
@@ -179,13 +168,7 @@ void TLSContrib::Add(TLSContrib *b, bool particleExchange) {
 	//
 	_NormFactor = TFracNum::Zero;
 	for (size_t i = 0; i < _factors.size(); i++) {
-		const TFracNum* sum = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
-		if (sum) {
-			_NormFactor = *sum;
-		} else {
-			cerr << "TLSContrib: Normalisation not root-fractional,"
-					<< " *** results will be wrong *** " << endl;
-		}
+		_NormFactor = _NormFactor.SumSignedRoots(_factors[i].squareOfPrefactor);
 	}
 
 	//

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+#include <reportingUtils.hpp>
+
 #include "ClebschGordanBox.h"
 
 using namespace std;
@@ -82,10 +84,10 @@ TSpinWaveFunction::TSpinWaveFunction(long J_, char type_) {
 	}
 }
 
-TTensorSum*
+TTensorSum
 TSpinWaveFunction::GetTensorSum(char name, long delta) {
 
-	TTensorSum* ts = new TTensorSum();
+	TTensorSum ts;
 
 	for (long pzm = _max_pzm - 1; pzm >= 0; pzm--) {
 		if (_M[pzm] == delta) {
@@ -94,24 +96,25 @@ TSpinWaveFunction::GetTensorSum(char name, long delta) {
 				pzm_field[i] = _mi[_J * pzm + i];
 			}
 			if (not (_coeff[pzm] == TFracNum::Zero)) {
-				ts->AddTerm(TTensorTerm(name, pzm_field, _coeff[pzm]));
+				ts.AddTerm(TTensorTerm(name, pzm_field, _coeff[pzm]));
 			}
 		}
 	}
 	return ts;
 }
 
-TTensorSum*
-TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
-		long delta, long S) {
+TTensorSum
+TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
+                                           const long& delta,
+                                           const long& S) {
 
-	if (!(_type == 's' and E->_type == 's')) {
-		cerr << "GetSpinCoupledTensorSum only for spin-type wave functions!" << endl;
-		return 0;
+	if (!(_type == 's' and E._type == 's')) {
+		printErr << "GetSpinCoupledTensorSum only for spin-type wave functions!" << endl;
+		throw;
 	}
 
 	long twoS1 = 2 * _J;
-	long twoS2 = 2 * E->_J;
+	long twoS2 = 2 * E._J;
 	long twoS = 2 * S;
 
 	long twoSmin = twoS1 - twoS2;
@@ -120,27 +123,27 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 	}
 
 	if (twoS < twoSmin || twoS > twoS1 + twoS2) {
-		cerr << "GetSpinCoupledTensorSum: no coupling "
-		     << _J << " + " << E->_J << " -> " << S << endl;
-		return 0;
+		printErr << "GetSpinCoupledTensorSum: no coupling "
+		         << _J << " + " << E._J << " -> " << S << endl;
+		throw;
 	}
 
 	//TFracNum *S1S2 = ClebschGordan(twoS, twoS1, twoS2);
-	TFracNum* S1S2 = ClebschGordanBox::instance()->GetCG(S, _J, E->_J);
+	TFracNum* S1S2 = ClebschGordanBox::instance()->GetCG(S, _J, E._J);
 	if (_debugSpinWave >= 1) {
 		cout << "Clebsch-Gordans calculated for "
 		     << twoS << "," << twoS1 << "," << twoS2 << ": " << S1S2 << endl;
 	}
 
-	TTensorSum *ts = new TTensorSum();
+	TTensorSum ts;
 
 	for (long MM1 = _J; MM1 >= -_J; MM1--) {
 		for (long pzm1 = _max_pzm - 1; pzm1 >= 0; pzm1--) {
 			if (_M[pzm1] == MM1 and not (_coeff[pzm1] == TFracNum::Zero)) {
 
-				for (long MM2 = E->_J; MM2 >= -_J; MM2--) {
-					for (long pzm2 = E->_max_pzm - 1; pzm2 >= 0; pzm2--) {
-						if (E->_M[pzm2] == MM2 and not (E->_coeff[pzm2] == TFracNum::Zero)) {
+				for (long MM2 = E._J; MM2 >= -_J; MM2--) {
+					for (long pzm2 = E._max_pzm - 1; pzm2 >= 0; pzm2--) {
+						if (E._M[pzm2] == MM2 and not (E._coeff[pzm2] == TFracNum::Zero)) {
 
 							if (MM1 + MM2 == delta) {
 
@@ -149,19 +152,19 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(TSpinWaveFunction* E,
 									pzm1_field[i] = _mi[_J * pzm1 + i];
 								}
 
-								vector<long> pzm2_field(E->_J);
-								for (long i = 0; i < E->_J; i++) {
-									pzm2_field[i] = E->_mi[E->_J * pzm2 + i];
+								vector<long> pzm2_field(E._J);
+								for (long i = 0; i < E._J; i++) {
+									pzm2_field[i] = E._mi[E._J * pzm2 + i];
 								}
 
 								TTensorTerm newterm('o', pzm1_field, _coeff[pzm1]);
 
-								TFracNum coeff2_CG = S1S2[ClebschGordanBox::CGIndex(_J, MM1, E->_J, MM2)];
-								coeff2_CG = coeff2_CG * E->_coeff[pzm2];
+								TFracNum coeff2_CG = S1S2[ClebschGordanBox::CGIndex(_J, MM1, E._J, MM2)];
+								coeff2_CG = coeff2_CG * E._coeff[pzm2];
 
 								newterm.Multiply('e', pzm2_field, coeff2_CG);
 
-								ts->AddTerm(newterm);
+								ts.AddTerm(newterm);
 							}
 						}
 					}

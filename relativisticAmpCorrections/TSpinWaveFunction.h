@@ -17,8 +17,10 @@ class TSpinWaveFunction {
 #endif
 
 	TSpinWaveFunction(long J, char type);
-	TTensorSum* GetTensorSum(char name, long delta);
-	TTensorSum* GetSpinCoupledTensorSum(TSpinWaveFunction*, long, long);
+	TTensorSum GetTensorSum(char name, long delta);
+	TTensorSum GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
+	                                   const long& delta,
+	                                   const long& S);
 
 	long CheckCGFormula();
 

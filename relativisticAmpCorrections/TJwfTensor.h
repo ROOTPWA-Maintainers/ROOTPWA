@@ -37,7 +37,7 @@ class TTensorTerm {
 	void Multiply(const char& name, const std::vector<long>& pzm_field, const TFracNum& prefac);
 	long SpinInnerContraction(const long& cPsiInt);
 	bool SameStructure(const TTensorTerm& rhs) const;
-	bool AddTwoTerms(const TTensorTerm& rhs);
+	void AddTwoTerms(const TTensorTerm& rhs);
 	bool IsNonZero() const { return (_prefac != TFracNum::Zero); }
 
 	std::ostream& Print(const char& flag = 'n', std::ostream& out = std::cout) const;
@@ -83,13 +83,13 @@ public:
 	void AddTerm(const TTensorTerm& addt);
 	size_t SpinInnerContraction(long cPsiInt);
 
-	TTensorSum* LSContraction(const TTensorSum& L,
-	                          const long& contr,
-	                          const long& co,
-	                          const long& ce,
-	                          const char& conType) const;
+	TTensorSum LSContraction(const TTensorSum& L,
+	                         const long& contr,
+	                         const long& co,
+	                         const long& ce,
+	                         const char& conType) const;
 
-	TTensorSum* LJContraction(long, long);
+	TTensorSum LJContraction(long, long);
 
 	void removeZeroTerms();
 	size_t GetNterms() const { return _terms.size(); }
