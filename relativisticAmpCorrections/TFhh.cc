@@ -56,7 +56,7 @@ TFhh::TFhh(const long& J,
 	}
 }
 
-TFhh::TFhh(TFhh *sFhh, char flag)
+TFhh::TFhh(const TFhh* sFhh, const char& flag)
 	: _J(sFhh->GetJ()),
 	  _lambda(sFhh->GetLambda()),
 	  _nu(sFhh->GetNu()),
@@ -88,7 +88,7 @@ TFhh::TFhh(TFhh *sFhh, char flag)
 	}
 }
 
-TFhh::TFhh(TFhh *sFhh, TFhh *xFhh)
+TFhh::TFhh(const TFhh* sFhh, const TFhh* xFhh)
 	: _J(sFhh->GetJ()),
 	  _lambda(sFhh->GetLambda()),
 	  _nu(sFhh->GetNu()),

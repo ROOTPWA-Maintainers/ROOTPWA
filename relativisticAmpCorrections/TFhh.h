@@ -31,8 +31,8 @@ class TFhh {
 	     const std::vector<TLSAmpl*>& LSampl,
 	     const bool& evenContraction);
 
-	TFhh(TFhh* sFhh, char flag);
-	TFhh(TFhh* sFhh, TFhh* xFhh);
+	TFhh(const TFhh* sFhh, const char& flag);
+	TFhh(const TFhh* sFhh, const TFhh* xFhh);
 
 	size_t                          GetNterms()          const { return _LSt.size(); }
 	bool                            IsNuNu()             const { return (_lambda ==  _nu); }
