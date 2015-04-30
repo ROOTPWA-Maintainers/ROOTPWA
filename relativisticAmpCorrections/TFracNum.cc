@@ -10,7 +10,7 @@
 using namespace std;
 using rpwa::operator<<;
 
-bool TFracNum::debugFracNum = false;
+bool TFracNum::_debug = false;
 
 
 const TFracNum TFracNum::Zero = TFracNum(0, 1);
@@ -34,7 +34,7 @@ TFracNum::TFracNum(const vector<long>& N, const vector<long>& D, long s)
 	  _value(0.),
 	  _valueCacheRebuildRequired(true)
 {
-	if (debugFracNum) {
+	if (_debug) {
 		printDebug << "NOM: " << _NOM << endl;
 		printDebug << "DEN: " << _DEN << endl;
 	}
@@ -53,7 +53,7 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 	  _valueCacheRebuildRequired(true)
 {
 	if (s == "factorial") {
-		if (debugFracNum) {
+		if (_debug) {
 			cout << s << endl;
 		}
 		if (N == D) {
@@ -102,7 +102,7 @@ TFracNum::TFracNum(long inom, long iden)
 	  _valueCacheRebuildRequired(true)
 {
 
-	if (debugFracNum) {
+	if (_debug) {
 		cout << "Initializing with " << inom << "," << iden << endl;
 	}
 
@@ -249,13 +249,13 @@ void TFracNum::resetAllCaches() const
 }
 
 
-long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
-	size_t minPD = min(_DEN.size(), b._DEN.size());
+long TFracNum::DenomCommonDivisor(const TFracNum& rhs) const {
+	size_t minPD = min(_DEN.size(), rhs._DEN.size());
 	long comdiv = 1;
 	for (size_t i = 0; i < minPD; i++) {
 		long ppot = _DEN[i];
-		if (b._DEN[i] < ppot) {
-			ppot = b._DEN[i];
+		if (rhs._DEN[i] < ppot) {
+			ppot = rhs._DEN[i];
 		}
 		while (ppot-- > 0) {
 			comdiv *= PRIMES[i];
@@ -266,11 +266,11 @@ long TFracNum::DenomCommonDivisor(const TFracNum &b) const {
 
 
 TFracNum
-TFracNum::SumSignedRoots(const TFracNum& b) const
+TFracNum::SumSignedRoots(const TFracNum& rhs) const
 {
-	TFracNum mixed = (*this) * b;
+	TFracNum mixed = (*this) * rhs;
 	TFracNum aa = *this;
-	TFracNum bb = b;
+	TFracNum bb = rhs;
 	if (mixed.Sqrt()) {
 		bool flipsign = (aa.Dval() + bb.Dval() < 0);
 		aa.Abs();
@@ -283,8 +283,8 @@ TFracNum::SumSignedRoots(const TFracNum& b) const
 	}
 	printErr << "Error in TFracNum::SumSignedRoots()" << endl << "this:" << Dval() << endl
 	         << *this << endl
-	         << "b:" << b.Dval() << endl
-	         << b;
+	         << "b:" << rhs.Dval() << endl
+	         << rhs;
 	throw;
 }
 
@@ -294,7 +294,7 @@ bool TFracNum::Sqrt() {
 		return true;
 	}
 	// TODO: move this to the loops further down (or remove it completely?)
-	if (debugFracNum) {
+	if (_debug) {
 		long sqrt_ok = 1;
 		for (size_t i = 0; i < _NOM.size(); i++) {
 			if (_NOM[i] % 2) {
@@ -554,7 +554,7 @@ TFracNum& TFracNum::operator*=(const TFracNum& rhs) {
 
 
 std::ostream& TFracNum::Print(std::ostream& out) const {
-	if (debugFracNum) {
+	if (_debug) {
 		out << "nom prime list: " << _NOM.size() << ",pointer " << _NOM << endl;
 		out << "den prime list: " << _DEN.size() << ",pointer " << _DEN << endl;
 		out << "NOM:";
@@ -769,7 +769,7 @@ TFracNum TFracNum::a_to_J(long J, long m) {
 }
 #endif
 
-TFracNum TFracNum::am0_to_J(long J, long m, long m0) {
+TFracNum TFracNum::am0_to_J(const long& J, const long& m, const long& m0) {
 	TFracNum twofac(vector<long>(1, m0),
 	                vector<long>(),
 	                1);
@@ -779,7 +779,7 @@ TFracNum TFracNum::am0_to_J(long J, long m, long m0) {
 }
 
 
-TFracNum TFracNum::c_sub_ell(long ell) {
+TFracNum TFracNum::c_sub_ell(const long& ell) {
 	if (ell == 0) {
 		return TFracNum::One;
 	}
@@ -792,7 +792,7 @@ TFracNum TFracNum::c_sub_ell(long ell) {
 }
 
 
-TFracNum TFracNum::cm0_sub_ell(long ell, long m0) {
+TFracNum TFracNum::cm0_sub_ell(const long& ell, const long& m0) {
 	if (ell == 0) {
 		return TFracNum::One;
 	}
@@ -805,7 +805,7 @@ TFracNum TFracNum::cm0_sub_ell(long ell, long m0) {
 }
 
 
-TFracNum TFracNum::cm0_sub_ell_2(long ell, long m0) {
+TFracNum TFracNum::cm0_sub_ell_2(const long& ell, const long& m0) {
 	//return  am0_to_J(ell, 0, m0);
 	if (ell == 0) {
 		return TFracNum::One;

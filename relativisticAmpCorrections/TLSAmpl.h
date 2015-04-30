@@ -14,21 +14,21 @@ class TLSAmpl {
 
   public:
 
-	TLSAmpl(long RankS1,
-	        long RankS2,
-	        long RankL,
-	        long RankJ,
-	        long delta,
-	        long S_L,
-	        long cPsiInt,
-	        long cPsiChi,
-	        long cChiPhi,
-	        long cPsiPhi,
-	        long cPhiOme,
-	        long cChiOme,
-	        long cPhiEps,
-	        long cChiEps,
-	        long contractionNumber);
+	TLSAmpl(const long& RankS1,
+	        const long& RankS2,
+	        const long& RankL,
+	        const long& RankJ,
+	        const long& delta,
+	        const long& S_L,
+	        const long& cPsiInt,
+	        const long& cPsiChi,
+	        const long& cChiPhi,
+	        const long& cPsiPhi,
+	        const long& cPhiOme,
+	        const long& cChiOme,
+	        const long& cPhiEps,
+	        const long& cChiEps,
+	        const long& contractionNumber);
 
 	const long& GetNterms()      const { return _Nterms; }
 	const long& GetJ()           const { return _J; }
@@ -37,18 +37,18 @@ class TLSAmpl {
 	const long& Getdelta()       const { return _delta; }
 	const long& GetContraction() const { return _contractionNumber; }
 
-	bool CheckContraction(long L,
-	                      long S,
-	                      long cPsI,
-	                      long cPsC,
-	                      long cCP,
-	                      long cPsP,
-	                      long cPO,
-	                      long cCO,
-	                      long cPE,
-	                      long cCE) const;
+	bool CheckContraction(const long& L,
+	                      const long& S,
+	                      const long& cPsI,
+	                      const long& cPsC,
+	                      const long& cCP,
+	                      const long& cPsP,
+	                      const long& cPO,
+	                      const long& cCO,
+	                      const long& cPE,
+	                      const long& cCE) const;
 
-	const TTensorTerm& GetTerm(long i) const { return _TSScalar.GetTerm(i); }
+	const TTensorTerm& GetTerm(const long& i) const { return _TSScalar.GetTerm(i); }
 
   private:
 

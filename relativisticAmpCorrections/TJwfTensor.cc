@@ -126,7 +126,7 @@ TTensorTerm::TTensorTerm(const TTensorTerm& S,
 
 }
 
-long TTensorTerm::LJContraction(long nCon, long even) {
+long TTensorTerm::LJContraction(const long& nCon, const bool& even) {
 
 	size_t rOme = _ome_pzm.size();
 	size_t rEps = _eps_pzm.size();
@@ -147,7 +147,7 @@ long TTensorTerm::LJContraction(long nCon, long even) {
 
 	bool error = false;
 
-	if (even == 0) {
+	if (not even) {
 		if (rOme + rEps + rChi + rPhi != 3) {
 			printErr << "TTensorTerm::LJContraction:"
 			         << " Contraction ended with wrong number of indices!!"
@@ -490,7 +490,7 @@ void TTensorSum::AddTerm(const TTensorTerm& addt) {
 	_terms.push_back(addt);
 }
 
-size_t TTensorSum::SpinInnerContraction(long cPsiInt) {
+size_t TTensorSum::SpinInnerContraction(const long& cPsiInt) {
 	vector<TTensorTerm> contracted;
 	for(size_t i = 0; i < _terms.size(); ++i) {
 		if(_terms[i].SpinInnerContraction(cPsiInt) != 0) {
@@ -522,7 +522,7 @@ TTensorSum::LSContraction(const TTensorSum& L,
 }
 
 TTensorSum
-TTensorSum::LJContraction(long cChiPhi, long even) {
+TTensorSum::LJContraction(const long& cChiPhi, const bool& even) {
 	for (size_t i = 0; i < _terms.size(); i++) {
 		_terms[i].LJContraction(cChiPhi, even);
 	}

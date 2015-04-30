@@ -11,7 +11,6 @@
 
 class TJSS {
 
-
   public:
 
 	TJSS(long J,

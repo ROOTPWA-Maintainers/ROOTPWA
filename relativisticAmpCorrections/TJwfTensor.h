@@ -32,13 +32,13 @@ class TTensorTerm {
 	            long e_share,
 	            const char& con_type);
 
-	long LJContraction(long ncon, long even);
+	long LJContraction       (const long& ncon, const bool& even);
 	// TODO: optimize this call
-	void Multiply(const char& name, const std::vector<long>& pzm_field, const TFracNum& prefac);
+	void Multiply            (const char& name, const std::vector<long>& pzm_field, const TFracNum& prefac);
 	long SpinInnerContraction(const long& cPsiInt);
-	bool SameStructure(const TTensorTerm& rhs) const;
-	void AddTwoTerms(const TTensorTerm& rhs);
-	bool IsNonZero() const { return (_prefac != TFracNum::Zero); }
+	bool SameStructure       (const TTensorTerm& rhs) const;
+	void AddTwoTerms         (const TTensorTerm& rhs);
+	bool IsNonZero           () const { return (_prefac != TFracNum::Zero); }
 
 	std::ostream& Print(const char& flag = 'n', std::ostream& out = std::cout) const;
 
@@ -81,7 +81,7 @@ public:
 	TTensorSum() : _terms() { }
 
 	void AddTerm(const TTensorTerm& addt);
-	size_t SpinInnerContraction(long cPsiInt);
+	size_t SpinInnerContraction(const long& cPsiInt);
 
 	TTensorSum LSContraction(const TTensorSum& L,
 	                         const long& contr,
@@ -89,14 +89,14 @@ public:
 	                         const long& ce,
 	                         const char& conType) const;
 
-	TTensorSum LJContraction(long, long);
+	TTensorSum LJContraction(const long& cChiPhi, const bool& even);
 
 	void removeZeroTerms();
 	size_t GetNterms() const { return _terms.size(); }
 
 	void Print(char = 'n') const;
 
-	const TTensorTerm& GetTerm(size_t i) const { return _terms[i]; }
+	const TTensorTerm& GetTerm(const size_t& i) const { return _terms[i]; }
 
   private:
 

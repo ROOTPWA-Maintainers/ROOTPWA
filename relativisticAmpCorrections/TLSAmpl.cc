@@ -9,21 +9,21 @@ using namespace std;
 
 unsigned int TLSAmpl::_debugLevel = 1;
 
-TLSAmpl::TLSAmpl(long RankS1,
-                 long RankS2,
-                 long RankL,
-                 long RankJ,
-                 long delta,
-                 long S_L,
-                 long cPsiInt,
-                 long cPsiChi,
-                 long cChiPhi,
-                 long cPsiPhi,
-                 long cPhiOme,
-                 long cChiOme,
-                 long cPhiEps,
-                 long cChiEps,
-                 long contractionNumber)
+TLSAmpl::TLSAmpl(const long& RankS1,
+                 const long& RankS2,
+                 const long& RankL,
+                 const long& RankJ,
+                 const long& delta,
+                 const long& S_L,
+                 const long& cPsiInt,
+                 const long& cPsiChi,
+                 const long& cChiPhi,
+                 const long& cPsiPhi,
+                 const long& cPhiOme,
+                 const long& cChiOme,
+                 const long& cPhiEps,
+                 const long& cChiEps,
+                 const long& contractionNumber)
 	: _J(RankJ),
 	  _L(RankL),
 	  _S(S_L),
@@ -42,8 +42,8 @@ TLSAmpl::TLSAmpl(long RankS1,
 	const long contractions = 2 * (cPsiInt + cPsiChi + cChiPhi + cPsiPhi);
 	const bool evenContraction = (not (totalR % 2));
 
-	if ( (evenContraction == 1 and contractions != totalR) or
-	     (evenContraction == 0 and contractions != totalR - 3))
+	if ( (    evenContraction and contractions != totalR) or
+	     (not evenContraction and contractions != totalR - 3))
 	{
 		printErr << "Invalid contraction occurred. Aborting..." << endl;
 		throw;
@@ -143,27 +143,27 @@ TLSAmpl::TLSAmpl(long RankS1,
 }
 
 
-bool TLSAmpl::CheckContraction(long L_,
-                               long S_,
-                               long cPsI_,
-                               long cPsC_,
-                               long cCP_,
-                               long cPsP_,
-                               long cPO_,
-                               long cCO_,
-                               long cPE_,
-                               long cCE_) const
+bool TLSAmpl::CheckContraction(const long& L,
+                               const long& S,
+                               const long& cPsI,
+                               const long& cPsC,
+                               const long& cCP,
+                               const long& cPsP,
+                               const long& cPO,
+                               const long& cCO,
+                               const long& cPE,
+                               const long& cCE) const
 {
-	if (_L != L_          or
-	    _S != S_          or
-	    _cPsiInt != cPsI_ or
-	    _cPsiChi != cPsC_ or
-	    _cChiPhi != cCP_  or
-	    _cPsiPhi != cPsP_ or
-	    _cPhiOme != cPO_  or
-	    _cChiOme != cCO_  or
-	    _cPhiEps != cPE_  or
-	    _cChiEps != cCE_)
+	if (_L != L          or
+	    _S != S          or
+	    _cPsiInt != cPsI or
+	    _cPsiChi != cPsC or
+	    _cChiPhi != cCP  or
+	    _cPsiPhi != cPsP or
+	    _cPhiOme != cPO  or
+	    _cChiOme != cCO  or
+	    _cPhiEps != cPE  or
+	    _cChiEps != cCE)
 	{
 		return false;
 	}

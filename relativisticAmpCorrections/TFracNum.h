@@ -63,11 +63,11 @@ class TFracNum {
 	         const std::string& s); //! control string. For described function, set to "factorial", otherwise the number is set to 1
 
 	//! Largest common divisor of numerator and denominator
-	long DenomCommonDivisor(const TFracNum &) const;
+	long DenomCommonDivisor(const TFracNum& rhs) const;
 
 	//! The return value c satisfies ssqrt(c)=ssqrt(a)+ssqrt(b)
 	//! Here the signed square root function ssqrt(n)=sign(n)*sqrt(abs(n)) is used
-	TFracNum SumSignedRoots(const TFracNum& b) const;
+	TFracNum SumSignedRoots(const TFracNum& rhs) const;
 
 	//! String in the form Num/Den. If Den=1, only Num is given
 	const char* FracString() const;
@@ -122,10 +122,10 @@ class TFracNum {
 	//! Add two fractional numbers
 	TFracNum& operator+=(const TFracNum& rhs);
 
-	static TFracNum am0_to_J(long J, long m, long m0);
-	static TFracNum c_sub_ell(long ell);
-	static TFracNum cm0_sub_ell(long ell, long m0);
-	static TFracNum cm0_sub_ell_2(long ell, long m0);
+	static TFracNum am0_to_J(const long& J, const long& m, const long& m0);
+	static TFracNum c_sub_ell(const long& ell);
+	static TFracNum cm0_sub_ell(const long& ell, const long& m0);
+	static TFracNum cm0_sub_ell_2(const long& ell, const long& m0);
 
   private:
 	//
@@ -163,7 +163,7 @@ class TFracNum {
 	static void removeZerosFromVector(std::vector<long>& vector);
 	static long getNumberFromFactorization(const std::vector<long>& vector);
 
-	static bool debugFracNum;
+	static bool _debug;
 
   public:
 

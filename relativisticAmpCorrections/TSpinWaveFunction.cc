@@ -85,7 +85,8 @@ TSpinWaveFunction::TSpinWaveFunction(const size_t& J, const char& type)
 }
 
 TTensorSum
-TSpinWaveFunction::GetTensorSum(const char& name, const long& delta) {
+TSpinWaveFunction::GetTensorSum(const char& name, const long& delta) const
+{
 	TTensorSum ts;
 	for (long pzm = (long)_M_and_coeff.size() - 1; pzm >= 0; pzm--) {
 		if (_M_and_coeff[pzm].first == delta) {
@@ -104,7 +105,8 @@ TSpinWaveFunction::GetTensorSum(const char& name, const long& delta) {
 TTensorSum
 TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
                                            const long& delta,
-                                           const long& S) {
+                                           const long& S) const
+{
 
 	if (!(_type == 's' and E._type == 's')) {
 		printErr << "GetSpinCoupledTensorSum only for spin-type wave functions!" << endl;
@@ -172,8 +174,11 @@ TSpinWaveFunction::GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 	return ts;
 }
 
+//TODO: check if this can be removed, it is completely useless as it is always returning 0??
+#if(0)
 long
-TSpinWaveFunction::CheckCGFormula() {
+TSpinWaveFunction::CheckCGFormula() const
+{
 
 	if(_J == 0) {
 		printErr << "J = 0, that is bad..." << endl;
@@ -240,3 +245,4 @@ TSpinWaveFunction::CheckCGFormula() {
 	}
 	return 0;
 }
+#endif

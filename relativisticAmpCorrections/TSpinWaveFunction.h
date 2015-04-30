@@ -10,12 +10,14 @@ class TSpinWaveFunction {
   public:
 
 	TSpinWaveFunction(const size_t& J, const char& type);
-	TTensorSum GetTensorSum(const char& name, const long& delta);
+	TTensorSum GetTensorSum(const char& name, const long& delta) const;
 	TTensorSum GetSpinCoupledTensorSum(const TSpinWaveFunction& E,
 	                                   const long& delta,
-	                                   const long& S);
+	                                   const long& S) const;
 
-	long CheckCGFormula();
+#if(0)
+	long CheckCGFormula() const;
+#endif
 
   private:
 	size_t _J;
