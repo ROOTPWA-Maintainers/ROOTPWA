@@ -31,14 +31,20 @@ class ClebschGordanBox {
 	/*! The calculation is performed only once per coupling
 	  as long as the ClebschGordanBox exists, so the method may be
 	  called repeatedly as needed. */
-	TFracNum* GetCG(long J, long J1, long J2);
+	TFracNum* GetCG(const long& J, const long& J1, const long& J2);
 
 	static ClebschGordanBox* instance();
 
 	//! Return index for a specific (J1,m1,J2,m2|Jm) Clebsch-Gordan coefficient
 	/*! By construction of the field indices, the total spin J has not to be
 	  specified here. */
-	static long CGIndex(long J1, long m1, long J2, long m2) { return (J1 + m1) * (2 * J2 + 1) + J2 + m2; }
+	static long CGIndex(const long& J1,
+	                    const long& m1,
+	                    const long& J2,
+	                    const long& m2)
+	{
+		return (J1 + m1) * (2 * J2 + 1) + J2 + m2;
+	}
 
   private:
 
