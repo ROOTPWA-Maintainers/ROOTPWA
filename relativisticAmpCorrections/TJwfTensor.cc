@@ -530,13 +530,10 @@ TTensorSum::LSContraction(const TTensorSum& L,
 
 TTensorSum*
 TTensorSum::LJContraction(long cChiPhi, long even) {
-//TODO: fix this...
 	for (size_t i = 0; i < _terms.size(); i++) {
 		_terms[i].LJContraction(cChiPhi, even);
 	}
-
 	TTensorSum* tls = new TTensorSum();
-
 	for (size_t i = 0; i < _terms.size(); i++) {
 		bool foundSame = false;
 		for (size_t j = 0; j < tls->GetNterms(); j++) {
@@ -552,15 +549,15 @@ TTensorSum::LJContraction(long cChiPhi, long even) {
 			tls->AddTerm(nt);
 		}
 	}
+	tls->removeZeroTerms();
+	return tls;
+}
 
-	TTensorSum* tlsNonzero = new TTensorSum();
-
-	for (size_t i = 0; i < tls->GetNterms(); i++) {
-		if (tls->_terms[i].IsNonZero()) {
-			TTensorTerm nt(tls->_terms[i]);
-			tlsNonzero->AddTerm(nt);
+void TTensorSum::removeZeroTerms()
+{
+	for(size_t i= _terms.size(); i > 0; --i) {
+		if(not _terms[i-1].IsNonZero()) {
+			_terms.erase(_terms.begin() + (i-1));
 		}
 	}
-
-	return tlsNonzero;
 }

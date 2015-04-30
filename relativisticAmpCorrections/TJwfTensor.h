@@ -90,7 +90,10 @@ public:
 	                          const char& conType) const;
 
 	TTensorSum* LJContraction(long, long);
+
+	void removeZeroTerms();
 	size_t GetNterms() const { return _terms.size(); }
+
 	void Print(char = 'n') const;
 
 	const TTensorTerm& GetTerm(size_t i) const { return _terms[i]; }
