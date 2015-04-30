@@ -179,14 +179,14 @@ TSpinWaveFunction::CheckCGFormula() {
 		throw;
 	}
 
-	TFracNum **J1J = new TFracNum*[_J - 1];
-	for (size_t i = 0; i < _J - 1; i++) {
+	vector<TFracNum*> J1J(_J - 1);
+	for (size_t i = 0; i < J1J.size(); i++) {
 		// long twoJ=2*(i+2);
 		// J1J[i] = ClebschGordan(twoJ, 2, twoJ-2);
 		J1J[i] = ClebschGordanBox::instance()->GetCG(i + 2, 1, i + 1);
 	}
 
-	TFracNum *coeffCG = new TFracNum[_M_and_coeff.size()];
+	vector<TFracNum> coeffCG(_M_and_coeff.size());
 
 	for (size_t pzm = 0; pzm < _M_and_coeff.size(); pzm++) {
 		coeffCG[pzm] = TFracNum::One;

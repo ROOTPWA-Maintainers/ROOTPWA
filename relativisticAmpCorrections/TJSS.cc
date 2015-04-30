@@ -63,32 +63,15 @@ void TJSS::CalcAmpl() {
 	if (_debugLevel >= 2) {
 		cout << "possible L:";
 	}
-	long NL = 0;
-	long *fL = 0;
-	long testL = 0; // L even
-	if (intr_parity < 0) {
-		testL = 1; // L odd
-	}
-	long tL = testL;
 
-	while (testL <= Lmax) {
-		if (testL >= Lmin)
-			NL++;
-		testL += 2;
-	}
-
-	if (NL) {
-		fL = new long[NL];
-		NL = 0;
-		while (tL <= Lmax) {
-			if (tL >= Lmin) {
-				fL[NL] = tL;
-				if (_debugLevel >= 2) {
-					cout << " " << fL[NL];
-				}
-				NL++;
+	vector<long> fL;
+	long testL = (intr_parity < 0) ? 1 : 0;
+	for ( ; testL <= Lmax; testL += 2) {
+		if(testL >= Lmin) {
+			fL.push_back(testL);
+			if (_debugLevel >= 2) {
+				cout << " " << fL[fL.size()-1];
 			}
-			tL += 2;
 		}
 	}
 	if (_debugLevel >= 2) {
@@ -115,9 +98,9 @@ void TJSS::CalcAmpl() {
 		MaxPsiPhi = _JMother;
 	}
 
-	for (long il = 0; il < NL; il++) {
+	for (size_t il = 0; il < fL.size(); il++) {
 
-		long L = fL[il];
+		const long& L = fL[il];
 
 		long MaxPsiChi = _SDecay1 + _SDecay2;
 		if (L < MaxPsiChi) {
