@@ -58,6 +58,7 @@ set(SOURCES
 	TJSS.cc
 	TLSContrib.cc
 	TLSNonRel.cc
+	primeNumbers.cc
 	)
 
 
@@ -66,8 +67,10 @@ set(THIS_LIB "RelAmpl")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
+	"${ROOT_LIBS}"
 	)
 
 
 # executables
-make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
+make_executable(CalcAmpl                   CalcAmpl.cc                   ${THIS_LIB})
+make_executable(generatePrimeNumberCache   generatePrimeNumberCache.cc   ${THIS_LIB})
