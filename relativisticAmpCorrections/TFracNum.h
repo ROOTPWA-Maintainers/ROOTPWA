@@ -14,9 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "Primes.h"
 
-const long MAXPRIMSQUARED = PRIMES[NPRIMFIELD - 1] * PRIMES[NPRIMFIELD - 1];
 const char IOUTSTRING[3] = "%d";
 
 //

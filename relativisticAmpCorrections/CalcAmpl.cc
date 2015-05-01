@@ -1,8 +1,14 @@
+
 #include <iostream>
 #include <string>
 #include <stdio.h>
+
 #include "TFhh.h"
 #include "TJSS.h"
+
+#include "primeNumbers.h"
+#include "reportingUtils.hpp"
+
 using namespace std;
 
 int main(int narg, char* carg[]) {
@@ -14,6 +20,14 @@ int main(int narg, char* carg[]) {
 		     << "where J is the spin of the particle and p = +/- its parity" << endl;
 
 		return 0;
+	}
+	string fileName = "primeNumberCache.root";
+	if(narg == 5) {
+		fileName = carg[4];
+	}
+	if(not rpwa::primeNumbers::instance().readCacheFile(fileName)) {
+		printErr << "could not read prime number cache file. Aborting..." << endl;
+		return 1;
 	}
 
 	int  jmother;

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <reportingUtils.hpp>
+#include <primeNumbers.h>
 
 using namespace std;
 using rpwa::operator<<;
@@ -66,10 +67,11 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 			High = N;
 		}
 		for (long fac = Low + 1; fac <= High; fac++) {
-			size_t rest = fac;
+			rpwa::primeNumbers::entryType rest = fac;
 			size_t fmax = 0;
-			while (rest != 1 && fmax < NPRIMFIELD) {
-				while (rest % PRIMES[fmax] == 0) {
+			while (rest != 1) {
+				const rpwa::primeNumbers::entryType& prime = rpwa::primeNumbers::instance().primeNumber(fmax);
+				while (rest % prime == 0) {
 					if(N < D) {
 						if(fmax >= _DEN.size()) {
 							_DEN.resize(fmax+1, 0);
@@ -81,7 +83,7 @@ TFracNum::TFracNum(const long& N, const long& D, const string& s)
 						}
 						_NOM[fmax]++;
 					}
-					rest /= PRIMES[fmax];
+					rest /= prime;
 				}
 				fmax++;
 			}
@@ -131,66 +133,56 @@ TFracNum::TFracNum(long inom, long iden)
 		iden *= -1;
 	}
 
-	if ((inom > 1000           or iden > 1000)             and // catch the const initialisations
-	    (inom > MAXPRIMSQUARED or iden > MAXPRIMSQUARED))      // in the header file
-	{
-		if (inom > MAXPRIMSQUARED or iden > MAXPRIMSQUARED) {
-			//TODO: check if throw is correct
-			printErr << "MAXPRIMSQUARED reached!!! NOM=" << inom << ", DEN=" << iden << endl;
-			throw;
-		}
-	} else {
-		long rest_nom = inom;
-		size_t maxPrimNom = 0;
-		while (rest_nom != 1 && maxPrimNom < NPRIMFIELD) {
-			while (rest_nom % PRIMES[maxPrimNom] == 0) {
-				if(maxPrimNom >= _NOM.size()) {
-					_NOM.resize(maxPrimNom+1, 0);
-				}
-				_NOM[maxPrimNom]++;
-				rest_nom /= PRIMES[maxPrimNom];
+	rpwa::primeNumbers::entryType rest_nom = inom;
+	size_t maxPrimNom = 0;
+	while (rest_nom != 1) {
+		const rpwa::primeNumbers::entryType& prime = rpwa::primeNumbers::instance().primeNumber(maxPrimNom);
+		while (rest_nom % prime == 0) {
+			if(maxPrimNom >= _NOM.size()) {
+				_NOM.resize(maxPrimNom+1, 0);
 			}
-			maxPrimNom++;
+			_NOM[maxPrimNom]++;
+			rest_nom /= prime;
 		}
-		if (rest_nom != 1) {
-			//TODO: check what this does
+		maxPrimNom++;
+	}
+	if (rest_nom != 1) {
+		printErr << "(" << inom << "/" << iden << ") overflow?? Aborting..." << endl;
+		cout << endl << (*this) << endl;
+		throw;
+	} else {
+		rpwa::primeNumbers::entryType rest_den = iden;
+		size_t maxPrimDen = 0;
+		while (rest_den != 1) {
+			const rpwa::primeNumbers::entryType& prime = rpwa::primeNumbers::instance().primeNumber(maxPrimDen);
+			while (rest_den % prime == 0) {
+				if(maxPrimDen >= _DEN.size()) {
+					_DEN.resize(maxPrimDen+1, 0);
+				}
+				_DEN[maxPrimDen]++;
+				rest_den /= prime;
+			}
+			maxPrimDen++;
+		}
+		if (rest_den != 1) {
 			printErr << "(" << inom << "/" << iden << ") overflow?? Aborting..." << endl;
 			cout << endl << (*this) << endl;
 			throw;
 		} else {
-			size_t maxPrimDen = 0;
-			long rest_den = iden;
-			while (rest_den != 1 && maxPrimDen < NPRIMFIELD) {
-				while (rest_den % PRIMES[maxPrimDen] == 0) {
-					if(maxPrimDen >= _DEN.size()) {
-						_DEN.resize(maxPrimDen+1, 0);
-					}
-					_DEN[maxPrimDen]++;
-					rest_den /= PRIMES[maxPrimDen];
-				}
-				maxPrimDen++;
-			}
-			if (rest_den != 1) {
-				//TODO: check what this does
-				printErr << "(" << inom << "/" << iden << ") overflow?? Aborting..." << endl;
-				cout << endl << (*this) << endl;
-				throw;
-			} else {
-				const size_t minPrim = min(_NOM.size(), _DEN.size());
-				for (size_t ip = 0; ip < minPrim; ip++) {
-					if (_NOM[ip] != 0 and _DEN[ip] != 0) {
-						if (_DEN[ip] > _NOM[ip]) {
-							_DEN[ip] -= _NOM[ip];
-							_NOM[ip] = 0;
-						} else {
-							_NOM[ip] -= _DEN[ip];
-							_DEN[ip] = 0;
-						}
+			const size_t minPrim = min(_NOM.size(), _DEN.size());
+			for (size_t ip = 0; ip < minPrim; ip++) {
+				if (_NOM[ip] != 0 and _DEN[ip] != 0) {
+					if (_DEN[ip] > _NOM[ip]) {
+						_DEN[ip] -= _NOM[ip];
+						_NOM[ip] = 0;
+					} else {
+						_NOM[ip] -= _DEN[ip];
+						_DEN[ip] = 0;
 					}
 				}
-				TFracNum::removeZerosFromVector(_NOM);
-				TFracNum::removeZerosFromVector(_DEN);
 			}
+			TFracNum::removeZerosFromVector(_NOM);
+			TFracNum::removeZerosFromVector(_DEN);
 		}
 	}
 }
@@ -251,14 +243,14 @@ void TFracNum::resetAllCaches() const
 
 long TFracNum::DenomCommonDivisor(const TFracNum& rhs) const {
 	size_t minPD = min(_DEN.size(), rhs._DEN.size());
-	long comdiv = 1;
+	rpwa::primeNumbers::entryType comdiv = 1;
 	for (size_t i = 0; i < minPD; i++) {
 		long ppot = _DEN[i];
 		if (rhs._DEN[i] < ppot) {
 			ppot = rhs._DEN[i];
 		}
 		while (ppot-- > 0) {
-			comdiv *= PRIMES[i];
+			comdiv *= rpwa::primeNumbers::instance().primeNumber(i);
 		}
 	}
 	return comdiv;
@@ -595,11 +587,11 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 	long FirstTerm = 1;
 	while (ipn < _NOM.size()) {
 		if (_NOM[ipn] != 0) {
-			out << PRIMES[ipn] << "^" << _NOM[ipn];
+			out << rpwa::primeNumbers::instance().primeNumber(ipn) << "^" << _NOM[ipn];
 			FirstTerm = 0;
 		}
 		for (long jj = 0; jj < _NOM[ipn]; jj++) {
-			nom *= PRIMES[ipn];
+			nom *= rpwa::primeNumbers::instance().primeNumber(ipn);
 		}
 		ipn++;
 		if (!FirstTerm and ipn < _NOM.size() and _NOM[ipn] != 0) {
@@ -614,11 +606,11 @@ std::ostream& TFracNum::Print(std::ostream& out) const {
 	FirstTerm = 1;
 	while (ipd < _DEN.size()) {
 		if (_DEN[ipd] != 0) {
-			out << PRIMES[ipd] << "^" << _DEN[ipd];
+			out << rpwa::primeNumbers::instance().primeNumber(ipd) << "^" << _DEN[ipd];
 			FirstTerm = 0;
 		}
 		for (long jj = 0; jj < _DEN[ipd]; jj++)
-			den *= PRIMES[ipd];
+			den *= rpwa::primeNumbers::instance().primeNumber(ipd);
 		ipd++;
 		if (!FirstTerm and ipd < _DEN.size() and _DEN[ipd] != 0) {
 			out << " * ";
@@ -666,14 +658,14 @@ TFracNum::FracStringSqrt() const {
 		return fstr;
 	}
 	size_t ipn = 0;
-	long SQRT_NOM_INT = 1;
-	long NOM_INT_REST = 1;
+	rpwa::primeNumbers::entryType SQRT_NOM_INT = 1;
+	rpwa::primeNumbers::entryType NOM_INT_REST = 1;
 	while (ipn < _NOM.size()) {
 		for (long jj = 0; jj < _NOM[ipn] / 2; jj++) {
-			SQRT_NOM_INT *= PRIMES[ipn];
+			SQRT_NOM_INT *= rpwa::primeNumbers::instance().primeNumber(ipn);
 		}
 		if (_NOM[ipn] % 2) {
-			NOM_INT_REST *= PRIMES[ipn];
+			NOM_INT_REST *= rpwa::primeNumbers::instance().primeNumber(ipn);
 		}
 		ipn++;
 	}
@@ -682,10 +674,10 @@ TFracNum::FracStringSqrt() const {
 	long DEN_INT_REST = 1;
 	while (ipd < _DEN.size()) {
 		for (long jj = 0; jj < _DEN[ipd] / 2; jj++) {
-			SQRT_DEN_INT *= PRIMES[ipd];
+			SQRT_DEN_INT *= rpwa::primeNumbers::instance().primeNumber(ipd);
 		}
 		if (_DEN[ipd] % 2) {
-			DEN_INT_REST *= PRIMES[ipd];
+			DEN_INT_REST *= rpwa::primeNumbers::instance().primeNumber(ipd);
 		}
 		ipd++;
 	}
@@ -748,7 +740,7 @@ long TFracNum::getNumberFromFactorization(const vector<long>& vector)
 	long retval = 1;
 	for(size_t i = 0; i < vector.size(); ++i) {
 		for(long j = 0; j < vector[i]; ++j) {
-			retval *= PRIMES[i];
+			retval *= rpwa::primeNumbers::instance().primeNumber(i);
 		}
 	}
 	return retval;
