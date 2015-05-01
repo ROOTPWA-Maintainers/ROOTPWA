@@ -43,7 +43,7 @@ class TLSContrib {
   public:
 
 	TLSContrib(const TLSContrib* b, const bool& particleExchange);
-	TLSContrib(/*const*/ TLSAmpl* A, const long& delta, const TFracNum& scfac);
+	TLSContrib(const TLSAmpl* A, const long& delta, const TFracNum& scfac);
 
 	void Add(const TLSContrib& rhs, bool particleExchange);
 

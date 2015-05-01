@@ -28,7 +28,7 @@ TLSContrib::TLSContrib(const TLSContrib* b, const bool& particleExchange)
 }
 
 
-TLSContrib::TLSContrib(/*const*/ TLSAmpl* A,
+TLSContrib::TLSContrib(const TLSAmpl* A,
                        const long& delta,
                        const TFracNum& scfac)
 	: _J(A->GetJ()),

@@ -200,7 +200,7 @@ void TJSS::CalcAmpl() {
 										if (_debugLevel >= 2) {
 											cout << " Constructing LS-Amplitude " << _LSAmplitudes.size() << endl;
 										}
-										unsigned int SameContr = 0;
+										size_t SameContr = 0;
 										for (SameContr = 0; SameContr < _LSAmplitudes.size(); SameContr++) {
 											if (_LSAmplitudes[SameContr]->CheckContraction(
 											    L, S_L, PsiInternal,

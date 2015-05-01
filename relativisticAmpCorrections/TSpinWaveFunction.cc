@@ -223,7 +223,7 @@ TSpinWaveFunction::CheckCGFormula() const
 
 	for (long MM = _J; MM >= 0; MM--) {
 		cout << "Phi(" << _J << "," << MM << ")=" << endl;
-		for (size_t pzm = _M_and_coeff.size() - 1; pzm >= 0; pzm--) {
+		for (long pzm = (long)_M_and_coeff.size() - 1; pzm >= 0; pzm--) {
 			if (_M_and_coeff[pzm].first == MM) {
 				cout << coeffCG[pzm].FracString() << " * (";
 				long m0 = 0;

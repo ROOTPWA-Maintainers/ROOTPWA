@@ -353,7 +353,7 @@ bool TTensorTerm::SameStructure(const TTensorTerm& other) const
 	    _eps_pzm.size() == other._eps_pzm.size() and
 	    _chi_pzm.size() == other._chi_pzm.size() and
 	    _phi_pzm.size() == other._phi_pzm.size() and
-	    _gam_s_pot == other._gam_s_pot             and
+	    _gam_s_pot == other._gam_s_pot           and
 	    _gam_sig_pot == other._gam_sig_pot)
 	{
 		return true;

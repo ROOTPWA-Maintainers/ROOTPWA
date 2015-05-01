@@ -733,10 +733,9 @@ void TFracNum::removeZerosFromVector(vector<long>& vector)
 	if(vector.empty()) {
 		return;
 	}
-	size_t neededSize = vector.size() - 1;
-	for( ; neededSize >= 0; --neededSize) {
-		if(vector[neededSize] != 0) {
-			++neededSize;
+	size_t neededSize = vector.size();
+	for( ; neededSize > 0; --neededSize) {
+		if(vector[neededSize-1] != 0) {
 			break;
 		}
 	}
