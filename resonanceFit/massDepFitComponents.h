@@ -69,7 +69,7 @@ namespace rpwa {
 			rpwa::massDepFit::channel& operator=(rpwa::massDepFit::channel& other);
 #endif
 
-			const size_t getWaveIdx() const { return _waveIdx; }
+			size_t getWaveIdx() const { return _waveIdx; }
 			const std::string& getWaveName() const { return _waveName; }
 
 			bool isAnchor() const { return _anchor; }
