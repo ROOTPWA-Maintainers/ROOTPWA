@@ -67,6 +67,8 @@ namespace rpwa {
 
 		};
 
+		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::cache& cache);
+
 	} // end namespace massDepFit
 
 } // end namespace rpwa
@@ -74,7 +76,7 @@ namespace rpwa {
 
 inline
 std::ostream&
-operator<< (std::ostream& out, const rpwa::massDepFit::cache& cache)
+rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::cache& cache)
 {
 	return cache.print(out);
 }

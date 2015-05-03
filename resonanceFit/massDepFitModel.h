@@ -140,6 +140,8 @@ namespace rpwa {
 
 		};
 
+		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel);
+
 	} // end namespace massDepFit
 
 } // end namespace rpwa
@@ -147,7 +149,7 @@ namespace rpwa {
 
 inline
 std::ostream&
-operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel)
+rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel)
 {
 	return fitModel.print(out);
 }

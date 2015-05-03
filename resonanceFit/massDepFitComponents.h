@@ -210,6 +210,8 @@ namespace rpwa {
 
 		};
 
+		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::component& component);
+
 		class fixedWidthBreitWigner : public component {
 
 		public:
@@ -432,7 +434,7 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::param
 
 inline
 std::ostream&
-operator<< (std::ostream& out, const rpwa::massDepFit::component& component)
+rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::component& component)
 {
 	return component.print(out);
 }
