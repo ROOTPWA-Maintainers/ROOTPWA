@@ -68,7 +68,7 @@ using namespace rpwa;
 
 double rpwaNloptFunc(unsigned n, const double* x, double* gradient, void* func_data)
 {
-	pwaLikelihood<complex<double> >* L = (pwaLikelihood<complex<double> >*)func_data;
+	const pwaLikelihood<complex<double> >* L = (pwaLikelihood<complex<double> >*)func_data;
 	if(n != L->nmbPars()) {
 		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
 		return 1;
