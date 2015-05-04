@@ -57,6 +57,7 @@ fsVertex::fsVertex(const particlePtr& fsParticle)
 
 
 fsVertex::fsVertex(const fsVertex& vert)
+	: interactionVertex()
 {
 	*this = vert;
 }

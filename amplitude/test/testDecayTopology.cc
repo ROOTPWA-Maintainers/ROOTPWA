@@ -58,7 +58,7 @@ typedef decayGraph<interactionVertex, particle> graphType;
 
 
 int
-main(int argc, char** argv)
+main()
 {
 	printGitHash();
 

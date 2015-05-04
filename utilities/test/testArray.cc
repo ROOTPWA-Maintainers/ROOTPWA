@@ -19,7 +19,7 @@ using namespace boost;
 using namespace rpwa;
 
 
-int main(int argc, char** argv)
+int main()
 {
   double a[2][3][4];
   for (unsigned int i = 0; i < 2; ++i)

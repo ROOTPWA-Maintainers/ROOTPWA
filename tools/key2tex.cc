@@ -35,7 +35,7 @@
 using namespace std;
 
 
-int main(int argc, char** argv)
+int main()
 {
   const unsigned int maxNmbWavesPerPage = 1;
 

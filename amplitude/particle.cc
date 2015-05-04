@@ -54,6 +54,7 @@ particle::particle()
 
 
 particle::particle(const particle& part)
+	: particleProperties()
 {
 	*this = part;
 }

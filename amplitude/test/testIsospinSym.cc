@@ -183,7 +183,7 @@ readDatFile(const string& fileName,
 
 
 int
-main(int argc, char** argv)
+main()
 {
 	printCompilerInfo();
 	printGitHash();

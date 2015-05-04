@@ -84,6 +84,7 @@ decayTopology::decayTopology(const productionVertexPtr&          productionVerte
 
 
 decayTopology::decayTopology(const decayTopology& topo)
+	: decayGraph()
 {
 	*this = topo;
 }
@@ -995,8 +996,8 @@ decayTopology::buildInternalData()
 
 interactionVertexPtr
 decayTopology::cloneNode(const nodeDesc& nd,
-                         const bool      cloneInParticles,
-                         const bool      cloneOutParticles)
+                         const bool,
+                         const bool)
 {
 	const interactionVertexPtr  vert        = vertex(nd);  // this must not be a reference
 	const bool                  isProdVert  = isProductionVertex(vert);

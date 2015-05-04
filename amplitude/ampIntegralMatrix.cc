@@ -79,6 +79,7 @@ ampIntegralMatrix::ampIntegralMatrix()
 
 
 ampIntegralMatrix::ampIntegralMatrix(const ampIntegralMatrix& integral)
+	: TObject()
 {
 	*this = integral;
 }

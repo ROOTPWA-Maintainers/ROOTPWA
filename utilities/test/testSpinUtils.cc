@@ -42,8 +42,7 @@ using namespace boost::tuples;
 
 
 int
-main(int    argc,
-     char** argv)
+main()
 {
 	// test spin range
 	tuple<int, int> demandedRange = make_tuple(0, 10);
