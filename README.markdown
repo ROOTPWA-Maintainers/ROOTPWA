@@ -1,8 +1,7 @@
 <!--- please do _not_ break the paragraphs to 80 char line width -->
 
-
-[TOC]
-
+.. image:: https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA.png
+   :target: https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA
 
 # ROOTPWA #
 
