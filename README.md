@@ -64,33 +64,43 @@ The minimum required CMake version is 2.8.8. In case your system offers only out
 
 ### Boost ###
 
-Part of the code relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.50.0 or higher is required; it is recommended to use the latest Boots release. Boost is to a large extend a header-only library so that usually nothing has to be build (noteworthy exception are the Python bindings; see below). Just install the respective Boost packages for your platform or, in case you do not have administrator privileges, extract the source archive to a location of your choice.
+Part of the code relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.56.0 or higher is required; it is recommended to use the latest Boots release. Boost is to a large extend a header-only library so that usually nothing has to be build (noteworthy exception are the Python bindings; see below). Just install the respective Boost packages for your platform or, in case you do not have administrator privileges, extract the source archive to a location of your choice.
 
-A more convenient way than downloading and extracting the tarball of a certain Boost version is to clone the Boost git repository by running
+The most convenient way to install Boost is to download and extract the tarball of the desired Boost version. However one can also clone the Boost git repository by running
 
-    > git clone https://github.com/ned14/boost-trunk.git
+    > git clone --recursive https://github.com/boostorg/boost.git
 
 The list of available versions (tags) is printed by
 
+    > cd boost
     > git tag
 
-Checkout the wanted release version via
+As the Boost git repository is split into multiple modules checking out one particular tag is a bit cumbersome. After identifying the tag the checkout has to be performed for the main directory and each submodule. This can be done by (be sure to be in the main Boost directory)
 
-    > cd boost-trunk
-    > git checkout release/Boost_1_50_0
-
-This way one can easily switch to any existing Boost version and also updates are much more convenient:
-
-    > git checkout master
-    > git fetch
-    > git fetch --tags
-    > git checkout release/Boost_1_51_0
+    > cd boost
+    > git checkout boost-1.58.0
+    > git submodule foreach 'git checkout --force boost-1.58.0 || true'
 
 If you use one of the (optional) features like Python or MPI be sure to recompile the respective Boost libraries after having switched to a different Boost version.
 
 In order to find out the current Boost version (a.k.a. branch tag) run
 
     > git describe --tags
+
+And accordingly for the submodules run
+
+    > git submodule foreach 'git describe --tags'
+
+You should note though that the tags shown by this command might differ from the one expected in cases where no changes between the tag shown and the one expected were made.
+
+A full update of the Boost git repository can be performed by running
+
+    > cd boost
+    > git checkout master
+    > git pull
+    > git submodule update --recursive --init
+    > git submodule update --recursive
+    > git submodule foreach --recursive "git checkout master; git pull"
 
 
 ### ROOT ###

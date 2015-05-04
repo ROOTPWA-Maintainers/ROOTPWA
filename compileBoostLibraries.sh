@@ -21,23 +21,26 @@ else
 fi
 
 
-JAM_CONFIG_FILE="${BOOST_ROOT_DIR}/tools/build/v2/user-config.jam"
-if [[ ! -e ${JAM_CONFIG_FILE} ]]
+JAM_CONFIG_FILE_SOURCE="${BOOST_ROOT_DIR}/tools/build/example/user-config.jam"
+JAM_CONFIG_FILE_TARGET="${BOOST_ROOT_DIR}/tools/build/src/user-config.jam"
+if [[ ! -e ${JAM_CONFIG_FILE_SOURCE} ]]
 then
-		echo "!!! error: '${JAM_CONFIG_FILE}' does not exist"
+		echo "!!! error: '${JAM_CONFIG_FILE_SOURCE}' does not exist"
 		exit 1
 fi
-LINE='using mpi ;'
-if ! grep --quiet --line-regexp "${LINE}" ${JAM_CONFIG_FILE}
+if [[ ! -e ${JAM_CONFIG_FILE_TARGET} ]]
 then
-		echo "${LINE}" >> ${JAM_CONFIG_FILE}
+		cp ${JAM_CONFIG_FILE_SOURCE} ${JAM_CONFIG_FILE_TARGET}
+fi
+LINE='using mpi ;'
+if ! grep --quiet --line-regexp "${LINE}" ${JAM_CONFIG_FILE_TARGET}
+then
+		echo "${LINE}" >> ${JAM_CONFIG_FILE_TARGET}
 fi
 
-
 echo "    view result in ${LOG_FILE}"
-#./bootstrap.sh --with-libraries=mpi,python --with-python=python3 --prefix=. &> ${LOG_FILE}
 ./bootstrap.sh --with-libraries=mpi,python,timer --prefix=. &> ${LOG_FILE}
-./bjam -a >> ${LOG_FILE} 2>&1
+./b2 -a >> ${LOG_FILE} 2>&1
 
 
 exit 0
