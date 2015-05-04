@@ -1,0 +1,23 @@
+language: cpp
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev
+    - sudo apt-get install -y gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
+    - ./install-libconfig.sh
+    - export LIBCONFIG=$PWD/libconfig_install
+    - export LD_LIBRARY_PATH=${LIBCONFIG}/lib
+    - ./install-cmake.sh
+    - export PATH=$PWD/cmake/bin:${PATH}
+    - ./install-boost.sh
+    - export BOOST_ROOT=$PWD/boost_1_58_0
+    - ./compileBoostLibraries.sh
+    - ./install-root.sh
+    - . ./root/bin/thisroot.sh
+    - export ROOTPWA=$PWD
+install:
+    - cd ${ROOTPWA}/build
+    - cmake ..
+    - make
+before_script: echo "before_script nop"
+script: echo "script nop"
+cache: apt
