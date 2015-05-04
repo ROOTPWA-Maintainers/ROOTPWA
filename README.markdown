@@ -1,7 +1,6 @@
 <!--- please do _not_ break the paragraphs to 80 char line width -->
 
-.. image:: https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA.png
-   :target: https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA
+[![Build Status](https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA.svg?branch=master)](https://travis-ci.org/ROOTPWA-Maintainers/ROOTPWA)
 
 # ROOTPWA #
 
