@@ -93,8 +93,8 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -s seed -x [startvalue] -N -n normfile"
-	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -P -q -z -h]" << endl
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -s seed -x -V startValue -N -n normfile"
+	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -P width -q -z -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -103,8 +103,8 @@ usage(const string& progName,
 	     << "        -R         use .root amplitude files (default: false)" << endl
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
-	     << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
-
+	     << "        -x         use fixed instead of random start values" << endl
+	     << "        -V #       start values to use (only in combination with -x) (default: 0.01)" << endl
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
@@ -113,7 +113,7 @@ usage(const string& progName,
 	     << "        -t #       relative parameter tolerance (default: 0.0001)" << endl
 	     << "        -m #       absolute likelihood tolerance (default: 0.000001)" << endl
 	     << "        -C         use half-Cauchy priors (default: false)" << endl
-	     << "        -P         width of half-Cauchy priors (default: 0.5)" << endl
+	     << "        -P #       width of half-Cauchy priors (default: 0.5)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -z         save space by not saving integral and covariance matrices (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -167,10 +167,11 @@ main(int    argc,
 	double       cauchyWidth         = 0.5;
 	bool         quiet               = false;
 	bool         saveSpace           = false;
+
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:x::Nn:a:A:r:t:m:CP:qzh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:xV:Nn:a:A:r:t:m:CP:qzh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -194,9 +195,10 @@ main(int    argc,
 			startValSeed = atoi(optarg);
 			break;
 		case 'x':
-			if (optarg)
-				defaultStartValue = atof(optarg);
 			useFixedStartValues = true;
+			break;
+		case 'V':
+			defaultStartValue = atof(optarg);
 			break;
 		case 'N':
 			useNormalizedAmps = true;
