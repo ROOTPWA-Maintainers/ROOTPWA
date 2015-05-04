@@ -100,7 +100,6 @@ namespace rpwa {
 	                      const TClonesArray& prodKinPartNames,
 	                      const TClonesArray& decayKinPartNames,
 	                      const long int      maxNmbEvents            = -1,
-	                      const std::string&  inTreeName              = "rootPwaEvtTree",
 	                      const std::string&  prodKinMomentaLeafName  = "prodKinMomenta",
 	                      const std::string&  decayKinMomentaLeafName = "decayKinMomenta",
 	                      const bool          debug                   = false);

@@ -86,7 +86,7 @@ message(STATUS "")
 message(STATUS ">>> Setting up compiler environment.")
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
-	set(CMAKE_BUILD_TYPE RELEASE)
+	set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 endif()
 
 
@@ -95,6 +95,9 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
 # set additional flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+if(WEXTRA)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+endif()
 # -march=native switch was removed, because is caused trouble in heterogeneous environments
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math

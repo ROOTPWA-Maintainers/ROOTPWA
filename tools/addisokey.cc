@@ -38,6 +38,11 @@ using namespace std;
 
 int main(int argc, char** argv) {
 
+  if(argc != 3) {
+    cerr << "Not the right number of arguments" << endl;
+    return 1;
+  }
+
   if(strlen(argv[1])!=strlen(argv[2])){
     cerr << "Different Key Lengths" << endl;
     return 1;

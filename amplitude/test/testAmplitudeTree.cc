@@ -49,7 +49,7 @@ using namespace rpwa;
 
 
 int
-main(int argc, char** argv)
+main()
 {
 	printCompilerInfo();
 	printGitHash();

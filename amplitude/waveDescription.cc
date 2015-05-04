@@ -1029,7 +1029,7 @@ waveDescription::writeKeyFile(FILE&                      outStream,
 bool
 waveDescription::writeKeyFile(FILE&                  outStream,
                               const isobarAmplitude& amplitude,
-                              const bool             writeProdVert)
+                              const bool                       )
 {
 	Config   key;
 	Setting& rootKey = key.getRoot();

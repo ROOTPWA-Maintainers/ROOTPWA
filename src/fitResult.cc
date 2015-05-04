@@ -70,7 +70,8 @@ fitResult::fitResult()
 
 
 fitResult::fitResult(const fitResult& result)
-	: _nmbEvents             (result.nmbEvents()),
+	: TObject(),
+	  _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),
 	  _massBinCenter         (result.massBinCenter()),
 	  _logLikelihood         (result.logLikelihood()),
