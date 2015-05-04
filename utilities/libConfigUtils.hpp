@@ -229,8 +229,9 @@ namespace rpwa {
 		try {
 			listKey = &(parent[listName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+			if (mustExist)
+				printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
+				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 		// check that it is a list
@@ -263,8 +264,9 @@ namespace rpwa {
 		try {
 			arrayKey = &(parent[arrayName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
-					  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+			if(mustExist)
+				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
+				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 

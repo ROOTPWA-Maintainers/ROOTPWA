@@ -377,9 +377,9 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 
 
 bool
-rpwa::massDepFit::component::readDecayChannel(const libconfig::Setting* decayChannel,
-                                              const size_t idxDecayChannel,
-                                              const bool debug)
+rpwa::massDepFit::component::readDecayChannel(const libconfig::Setting* /*decayChannel*/,
+                                              const size_t /*idxDecayChannel*/,
+                                              const bool /*debug*/)
 {
 	return true;
 }

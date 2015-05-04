@@ -41,8 +41,7 @@ using namespace boost::accumulators;
 
 
 int
-main(int argc,
-     char** argv)
+main()
 {
 	const size_t nmbValues = 1000000;
 	const float  value     = 1e-6;

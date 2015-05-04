@@ -517,7 +517,6 @@ namespace rpwa {
 	                 const TClonesArray& prodKinPartNames,
 	                 const TClonesArray& decayKinPartNames,
 	                 const long int      maxNmbEvents,
-	                 const string&       inTreeName,
 	                 const string&       prodKinMomentaLeafName,
 	                 const string&       decayKinMomentaLeafName,
 	                 const bool          debug)

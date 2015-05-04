@@ -85,6 +85,7 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
 
 
 isobarDecayVertex::isobarDecayVertex(const isobarDecayVertex& vert)
+	: interactionVertex()
 {
 	*this = vert;
 }

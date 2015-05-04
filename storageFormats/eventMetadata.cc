@@ -144,7 +144,7 @@ string rpwa::eventMetadata::recalculateHash(const bool& printProgress) const
 }
 
 
-Long64_t rpwa::eventMetadata::Merge(TCollection* list, Option_t* option) {
+Long64_t rpwa::eventMetadata::Merge(TCollection* /*list*/, Option_t* /*option*/) {
 	printErr << "data files cannot be merged with hadd. Please use $ROOTPWA/build/bin/mergeDatafiles." << endl;
 	throw;
 }

@@ -272,7 +272,7 @@ class threeBodyDynAmpMc : public threeBodyDynAmpInt {
 
 public:
 
-	threeBodyDynAmpMc(const dynamicAmplitude& isobarAmp,
+	threeBodyDynAmpMc(const dynamicAmplitude&,
 	                  const double            mass         = 0,
 	                  const double            width        = 0,
 	                  const unsigned int      L            = 0,
