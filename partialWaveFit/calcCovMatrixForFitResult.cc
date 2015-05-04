@@ -76,7 +76,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " [-d amplitude directory -R] -i infile [-o outfile -N -n normfile"
-	     << " -a normfile -A # normalisation events -C -q -h]" << endl
+	     << " -a normfile -A # normalisation events -C -P width -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 	     << "        -R         use .root amplitude files (default: false)" << endl
@@ -86,7 +86,8 @@ usage(const string& progName,
 	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
 	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
 	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from acceptance integral file)" << endl
-	     << "        -C         use half-Cauchy priors" << endl
+	     << "        -C         use half-Cauchy priors (default: false)" << endl
+	     << "        -P #       width of half-Cauchy priors (default: 0.5)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -127,11 +128,12 @@ main(int    argc,
 	string       accIntFileName      = "";                     // file with acceptance integrals
 	unsigned int numbAccEvents       = 0;                      // number of events used for acceptance integrals
 	bool         cauchyPriors        = false;
+	double       cauchyWidth         = 0.5;
 	bool         quiet               = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "d:Ri:o:Nn:a:A:Cqh")) != -1)
+	while ((c = getopt(argc, argv, "d:Ri:o:Nn:a:A:CP:qh")) != -1)
 		switch (c) {
 		case 'd':
 			ampDirName = optarg;
@@ -159,6 +161,9 @@ main(int    argc,
 			break;
 		case 'C':
 			cauchyPriors = true;
+			break;
+		case 'P':
+			cauchyWidth = atof(optarg);
 			break;
 		case 'q':
 			quiet = true;
@@ -190,8 +195,11 @@ main(int    argc,
 	     << "        path to file with normalization integral ... '" << normIntFileName          << "'" << endl
 	     << "        path to file with acceptance integral ...... '" << accIntFileName           << "'" << endl
 	     << "        number of acceptance norm. events .......... "  << numbAccEvents            << endl
-	     << "    use half-Cauchy priors ......................... '" << yesNo(cauchyPriors)      << "'" << endl
-	     << "    quiet .......................................... '" << yesNo(quiet)             << "'" << endl;
+	     << "    use half-Cauchy priors ......................... '" << yesNo(cauchyPriors)      << "'" << endl;
+	if(cauchyPriors) {
+		cout << "    width of cauchy priors.......................... "  << cauchyWidth << endl;
+	}
+	cout << "    quiet .......................................... '" << yesNo(quiet)             << "'" << endl;
 
 	TFile* inFile = TFile::Open(inFileName.c_str(), "READ");
 	if(not inFile || inFile->IsZombie()) {
@@ -235,8 +243,10 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-	if (cauchyPriors)
+	if (cauchyPriors) {
 		L.setPriorType(L.HALF_CAUCHY);
+		L.setCauchyWidth(cauchyWidth);
+	}
 	L.init(result->rank(), result->massBinCenter(), waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	remove(waveListFileName.c_str());
