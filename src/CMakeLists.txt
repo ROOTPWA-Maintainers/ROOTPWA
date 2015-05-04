@@ -95,6 +95,16 @@ make_shared_library(
 	)
 
 
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.6.3)
+		# workaround for presumably a compiler bug
+		set_source_files_properties(massDepFitComponents.cc
+		                            PROPERTIES
+		                            COMPILE_FLAGS "-Wno-uninitialized")
+	endif()
+endif()
+
+
 # executables
 make_executable(pwafit                       pwafit.cc                      ${THIS_LIB} "${UTILITIES_LIBS}")
 make_executable(eigenvectorLikelihoodSlices  eigenvectorLikelihoodSlices.cc ${THIS_LIB} "${UTILITIES_LIBS}")
