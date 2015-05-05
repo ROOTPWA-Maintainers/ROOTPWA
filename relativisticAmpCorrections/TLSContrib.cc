@@ -200,7 +200,7 @@ void TLSContrib::Print() const
 		cout << "h" << "[" << _cNum << "] (";
 	}
 	cout << _J << ")" << _L << _S << "( ";
-	if (!_pureRelativistic) {
+	if (not _pureRelativistic) {
 		cout << _NormFactor.FracStringSqrt() << " ) ( ";
 	}
 	for (size_t iT = 0; iT < _factors.size(); iT++) {

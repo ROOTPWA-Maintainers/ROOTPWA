@@ -29,6 +29,8 @@ class TJSS {
 		  _FhhAmpl(),
 		  _FhhIdAmpl() { }
 
+	std::vector<TFhh*>& fhh() { return _FhhAmpl; }
+
 	void CalcAmpl();
 
   private:
