@@ -1029,11 +1029,11 @@ waveDescription::writeKeyFile(FILE&                      outStream,
 bool
 waveDescription::writeKeyFile(FILE&                  outStream,
                               const isobarAmplitude& amplitude,
-                              const bool                       )
+                              const bool             writeProdVert)
 {
 	Config   key;
 	Setting& rootKey = key.getRoot();
-	if (not setKeysFromAmplitude(rootKey, amplitude)) {
+	if (not setKeysFromAmplitude(rootKey, amplitude, writeProdVert)) {
 		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
 		return false;
 	}

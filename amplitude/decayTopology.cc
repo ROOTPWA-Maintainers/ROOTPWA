@@ -996,13 +996,13 @@ decayTopology::buildInternalData()
 
 interactionVertexPtr
 decayTopology::cloneNode(const nodeDesc& nd,
-                         const bool,
-                         const bool)
+                         const bool      cloneInParticles,
+                         const bool      cloneOutParticles)
 {
 	const interactionVertexPtr  vert        = vertex(nd);  // this must not be a reference
 	const bool                  isProdVert  = isProductionVertex(vert);
 	const bool                  isDecayVert = isDecayVertex(vert);
-	const interactionVertexPtr& newVert = decayTopologyGraphType::cloneNode(nd);  // created new vertex for this node
+	const interactionVertexPtr& newVert = decayTopologyGraphType::cloneNode(nd, cloneInParticles, cloneOutParticles);  // created new vertex for this node
 	// update member variables
 	if (isProdVert)
 		_prodVertex = static_pointer_cast<rpwa::productionVertex>(newVert);

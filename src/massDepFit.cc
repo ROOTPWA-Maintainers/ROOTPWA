@@ -585,7 +585,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
 
 bool
 rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
-                                   rpwa::massDepFit::parameters&,
+                                   rpwa::massDepFit::parameters& /*fitParameters*/,
                                    rpwa::massDepFit::function& fitFunction)
 {
 	if(not fitModel.init(_waveNames,
