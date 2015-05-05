@@ -264,7 +264,7 @@ namespace rpwa {
 		try {
 			arrayKey = &(parent[arrayName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			if(mustExist)
+			if (mustExist)
 				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;

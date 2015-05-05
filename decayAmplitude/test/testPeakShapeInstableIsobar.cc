@@ -272,14 +272,14 @@ class threeBodyDynAmpMc : public threeBodyDynAmpInt {
 
 public:
 
-	threeBodyDynAmpMc(const dynamicAmplitude&,
+	threeBodyDynAmpMc(const dynamicAmplitude& isobarAmp,
 	                  const double            mass         = 0,
 	                  const double            width        = 0,
 	                  const unsigned int      L            = 0,
 	                  const double            bachelorMass = 0,
 	                  const double            isobarMass   = 0,
 	                  const unsigned int      algo         = 1)
-		: threeBodyDynAmpInt(mass, width, L, bachelorMass, isobarMass, algo)
+		: threeBodyDynAmpInt(isobarAmp, mass, width, L, bachelorMass, isobarMass, algo)
 	{ }
 	virtual ~threeBodyDynAmpMc() { }
 

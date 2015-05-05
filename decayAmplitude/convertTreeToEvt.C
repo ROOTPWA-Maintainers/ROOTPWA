@@ -97,8 +97,7 @@ convertTreeToEvt(const string&  inFileNamePattern        = "testEvents.root",
 	pdt.readFile(pdgTableFileName);
 
 	// doit
-	const bool success = writeEvtFromTree(*inTree, outFile, *prodKinPartNames, *decayKinPartNames,
-	                                      maxNmbEvents, inTreeName,
+	const bool success = writeEvtFromTree(*inTree, outFile, *prodKinPartNames, *decayKinPartNames, maxNmbEvents,
 	                                      prodKinMomentaLeafName, decayKinMomentaLeafName, debug);
 
 	if (success)
