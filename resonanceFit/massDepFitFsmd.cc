@@ -61,7 +61,6 @@ bool
 rpwa::massDepFit::fsmd::init(const libconfig::Setting* configFsmd,
                              rpwa::massDepFit::parameters& fitParameters,
                              rpwa::massDepFit::parameters& fitParametersError,
-                             const std::vector<double>& massBinCenters,
                              const bool debug)
 {
 	if(debug) {

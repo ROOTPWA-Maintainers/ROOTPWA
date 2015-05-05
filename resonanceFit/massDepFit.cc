@@ -631,7 +631,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const libconfig::Setting* conf
 	}
 
 	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
-	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _massBinCenters, _debug)) {
+	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;

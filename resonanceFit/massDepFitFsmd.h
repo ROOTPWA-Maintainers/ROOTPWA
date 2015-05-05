@@ -58,7 +58,6 @@ namespace rpwa {
 			bool init(const libconfig::Setting* configComponent,
 			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::parameters& fitParametersError,
-			          const std::vector<double>& massBinCenters,
 			          const bool debug);
 
 			bool update(const libconfig::Setting* configComponent,
