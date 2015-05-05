@@ -84,7 +84,7 @@ decayTopology::decayTopology(const productionVertexPtr&          productionVerte
 
 
 decayTopology::decayTopology(const decayTopology& topo)
-	: decayGraph()
+	: decayTopologyGraphType()
 {
 	*this = topo;
 }
