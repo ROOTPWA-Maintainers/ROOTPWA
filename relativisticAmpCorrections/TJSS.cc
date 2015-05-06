@@ -283,7 +283,7 @@ void TJSS::CalcAmpl() {
 		cout << _FhhAmpl.size() << " non-zero helicity-coupling amplitudes" << endl;
 	}
 
-	_FhhIdAmpl = vector<TFhh*>((_SDecay1 + 1) * (_SDecay2 + 1), 0);
+	_FhhIdAmpl = vector<TFhh*>(_FhhAmpl.size(), 0);
 
 	if (_SDecay1 == _SDecay2 && _eta1 == _eta2) {
 		if (_debugLevel) {
@@ -296,17 +296,18 @@ void TJSS::CalcAmpl() {
 				} else if (_FhhAmpl[ifhh]->IsNuMinusNu()) {
 					_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], 'm');
 				} else {
-					long found_partner = 0;
+					bool foundPartner = false;
 					for (size_t jfhh = 0; jfhh < _FhhAmpl.size(); jfhh++) {
 						if ( (_FhhAmpl[ifhh]->GetLambda() == _FhhAmpl[jfhh]->GetNu()) and
 						     (_FhhAmpl[ifhh]->GetNu() == _FhhAmpl[jfhh]->GetLambda()) )
 						{
-							found_partner = 1;
+							foundPartner = true;
 							_FhhIdAmpl[ifhh] = new TFhh(_FhhAmpl[ifhh], _FhhAmpl[jfhh]);
 							// ** continue here **
 						}
 					}
-					if (!found_partner) {
+					if (not foundPartner) {
+						//TODO: ask Jan if this is bad
 						cerr << "?!?! No partner for amplitude " << _FhhAmpl[ifhh]->GetName() << endl;
 					}
 				}
