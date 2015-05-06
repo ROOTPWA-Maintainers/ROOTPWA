@@ -155,7 +155,7 @@ endif()
 check_cxx_source_compiles("#include <iostream>
 int main() { thread_local int a = 1; std::cout << a << std::endl; }" COMPILER_PROVIDES_THREAD_LOCAL)
 if(COMPILER_PROVIDES_THREAD_LOCAL)
-       add_definitions(-DCOMPILER_PROVIDES_THREAD_LOCAL)
+	add_definitions(-DCOMPILER_PROVIDES_THREAD_LOCAL)
 endif()
 
 
@@ -496,20 +496,20 @@ enable_testing()
 #   a non-empty value
 
 set(_SRC_DIRS
-#   cuda
-  decayAmplitude
-  fortran
-  generators
-# 	mpi
-  nBodyPhaseSpace
+#	cuda
+	decayAmplitude
+	fortran
+	generators
+#	mpi
+	nBodyPhaseSpace
 	partialWaveFit
 	particleData
-# 	pyInterface
-# 	relativisticAmpCorrections
+#	pyInterface
+#	relativisticAmpCorrections
 	resonanceFit
-# 	sandBox
+#	sandBox
 	storageFormats
-  utilities
+	utilities
 	)
 foreach(_SRC_DIR ${_SRC_DIRS})
 	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
@@ -520,68 +520,9 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 		message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
 			"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
 		unset(_LIB_NAME)
-  endif()
+	endif()
 	unset(_VAR_NAME)
 endforeach()
-
-# set(RPWA_UTILITIES_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/utilities
-# 	)
-# set(RPWA_UTILITIES_LIB
-# 	RootPwaUtil
-# 	)
-
-# set(RPWA_PARTICLEDATA_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/particleData
-# 	)
-# set(RPWA_PARTICLEDATA_LIB
-# 	RootPwaParticleData
-# 	)
-
-# set(RPWA_STORAGEFORMATS_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/storageFormats
-# 	)
-# set(RPWA_STORAGEFORMATS_LIB
-# 	RootPwaMeta
-# 	)
-
-# set(RPWA_DECAYAMPLITUDE_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/decayAmplitude
-# 	)
-# set(RPWA_DECAYAMPLITUDE_LIB
-# 	RootPwaAmp
-# 	)
-
-# set(RPWA_PARTIALWAVEFIT_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/partialWaveFit
-# 	)
-# set(RPWA_PARTIALWAVEFIT_LIB
-# 	RootPwaPartialWaveFit
-# 	)
-
-# set(RPWA_RESONANCEFIT_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/resonanceFit
-# 	)
-# set(RPWA_RESONANCEFIT_LIB
-# 	RootPwaResonanceFit
-# 	)
-
-# set(RPWA_GENERATORS_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/generators
-# 	)
-# set(RPWA_NBODYPHASESPACE_LIB
-# 	RootPwaNBPSGen
-# 	)
-# set(RPWA_GENERATORS_LIB
-# 	RootPwaGen
-# 	)
-
-# set(FORTRAN_INCLUDE_DIR
-# 	${CMAKE_SOURCE_DIR}/fortran
-# 	)
-# set(FORTRAN_LIBS
-# 	RootPwaFortran
-# 	)
 
 set(PYINTERFACE_LIBS
 	RootPwaPy
@@ -610,37 +551,13 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 endforeach()
 unset(_SRC_DIRS)
 
-# # Utilities
-# add_subdirectory(utilities)
-
-# # Particle data
-# add_subdirectory(particleData)
-
-# # Metadata
-# add_subdirectory(storageFormats)
-
 # CUDA stuff
 if(USE_CUDA)
 	add_subdirectory(cuda)
 endif()
 
-# # RootPwaAmp
-# add_subdirectory(decayAmplitude)
-
-# # spin-parity decomposition in bins
-# add_subdirectory(partialWaveFit)
-
-# # resonance fit
-# add_subdirectory(resonanceFit)
-
-# # RootPwaGen
-# add_subdirectory(generators)
-
 # Relativic Amplitudes
 add_subdirectory(relativisticAmpCorrections)
-
-# # Fortran
-# add_subdirectory(fortran)
 
 # MPI
 if(USE_MPI)
