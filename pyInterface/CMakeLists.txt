@@ -34,12 +34,14 @@
 message_setup_this_dir()
 
 
-set(AMPLITUDE_SUBDIR amplitude)
-set(PARTICLEDATA_SUBDIR particleData)
-set(GENERATORS_SUBDIR generators)
-set(STORAGEFORMATS_SUBDIR storageFormats)
 set(PYUTILS_SUBDIR pyUtils)
+
+set(DECAYAMPLITUDE_SUBDIR decayAmplitude)
+set(GENERATORS_SUBDIR generators)
+set(NBODYPHASESPACE_SUBDIR nBodyPhaseSpace)
+set(PARTICLEDATA_SUBDIR particleData)
 set(PARTIALWAVEFIT_SUBDIR partialWaveFit)
+set(STORAGEFORMATS_SUBDIR storageFormats)
 set(UTILITIES_SUBDIR utilities)
 
 
@@ -47,10 +49,11 @@ set(UTILITIES_SUBDIR utilities)
 set(INCLUDE_DIRECTORIES
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
-	${AMPLITUDE_SUBDIR}
+	${DECAYAMPLITUDE_SUBDIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${PARTICLEDATA_SUBDIR}
 	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
+	${NBODYPHASESPACE_SUBDIR}
 	${RPWA_GENERATORS_INCLUDE_DIR}
 	${GENERATORS_SUBDIR}
 	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
@@ -74,35 +77,35 @@ set(SOURCES
 	rootPwaPy.cc
 	${PYUTILS_SUBDIR}/stlContainers_py.cc
 	${PYUTILS_SUBDIR}/rootConverters_py.cc
-	${AMPLITUDE_SUBDIR}/interactionVertex_py.cc
-	${AMPLITUDE_SUBDIR}/fsVertex_py.cc
-	${AMPLITUDE_SUBDIR}/massDependence_py.cc
-	${AMPLITUDE_SUBDIR}/isobarDecayVertex_py.cc
-	${AMPLITUDE_SUBDIR}/productionVertex_py.cc
-	${AMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
-	${AMPLITUDE_SUBDIR}/decayTopology_py.cc
-	${AMPLITUDE_SUBDIR}/isobarDecayTopology_py.cc
-	${AMPLITUDE_SUBDIR}/isobarAmplitude_py.cc
-	${AMPLITUDE_SUBDIR}/isobarCanonicalAmplitude_py.cc
-	${AMPLITUDE_SUBDIR}/isobarHelicityAmplitude_py.cc
-	${AMPLITUDE_SUBDIR}/waveDescription_py.cc
-	${AMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
-	${AMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
-	${AMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
-	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
-	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
-	${PARTICLEDATA_SUBDIR}/particle_py.cc
-	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
-	${GENERATORS_SUBDIR}/randomNumberGenerator_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/interactionVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/fsVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/massDependence_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarDecayVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/productionVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/decayTopology_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarDecayTopology_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarAmplitude_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarCanonicalAmplitude_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarHelicityAmplitude_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/waveDescription_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
 	${GENERATORS_SUBDIR}/generatorManager_py.cc
 	${GENERATORS_SUBDIR}/generator_py.cc
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
-	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
-	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
+	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
+	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
+	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
+	${PARTICLEDATA_SUBDIR}/particle_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
