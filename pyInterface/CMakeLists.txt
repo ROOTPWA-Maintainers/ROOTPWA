@@ -46,7 +46,7 @@ set(UTILITIES_SUBDIR utilities)
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${DECAYAMPLITUDE_SUBDIR}
@@ -69,7 +69,6 @@ set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library

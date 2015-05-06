@@ -32,7 +32,7 @@
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${CUDACODE_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
@@ -41,7 +41,6 @@ set(INCLUDE_DIRECTORIES
 	${CUDA_SAMPLES_INC_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # compile HOST executables

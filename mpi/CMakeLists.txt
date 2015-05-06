@@ -39,13 +39,12 @@ set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} ${MPI_CXX_LINK_FLAGS}")
 
 
 # set include directories
-set(INCLUDE_DIRECTORIES
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${MPI_CXX_INCLUDE_PATH}
 	)
-include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
