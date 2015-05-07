@@ -216,13 +216,17 @@ const long& TFracNum::GetDenominator() const
 }
 
 
-const double& TFracNum::Dval() const
+const double& TFracNum::Dval(const bool& squareRootTheResult) const
 {
 	if(_valueCacheRebuildRequired) {
 		if(_signPrefac == 0) {
 			_value = 0.;
 		} else {
-			_value = ((double)_signPrefac) * ((double)GetNumerator()) / ((double)GetDenominator());
+			double absVal = ((double)GetNumerator()) / ((double)GetDenominator());
+			if(squareRootTheResult) {
+				absVal = std::sqrt(absVal);
+			}
+			_value = ((double)_signPrefac) * absVal;
 		}
 		_valueCacheRebuildRequired = false;
 	}
