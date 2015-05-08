@@ -7,14 +7,14 @@
 #include "TSpinWaveFunction.h"
 
 
-struct termParameters {
+struct polynomialTerms {
 
-	termParameters()
+	polynomialTerms()
 		: squareOfPrefactor(),
 		  exponentOfGammaS(),
 		  exponentOfGammaSigma() { }
 
-	termParameters(const termParameters& factor)
+	polynomialTerms(const polynomialTerms& factor)
 		: squareOfPrefactor(factor.squareOfPrefactor),
 		  exponentOfGammaS(factor.exponentOfGammaS),
 		  exponentOfGammaSigma(factor.exponentOfGammaSigma)
@@ -48,7 +48,7 @@ class TLSContrib {
 	void Add(const TLSContrib& rhs, bool particleExchange);
 
 	bool        SameParameter(TLSContrib* b) const { return (_J == b->_J and _L == b->_L and _S == b->_S and _cNum == b->_cNum); }
-	size_t      GetNterms()                  const { return _parameters.size(); }
+	size_t      GetNterms()                  const { return _polynomialTerms.size(); }
 	const bool& IsPureRelativistic()         const { return _pureRelativistic; }
 	const long& GetJ()                       const { return _J; }
 	const long& GetL()                       const { return _L; }
@@ -59,7 +59,7 @@ class TLSContrib {
 	const TFracNum& GetSpinCG()     const { return _SpinCG; }
 	const TFracNum& GetNormFactor() const { return _NormFactor; }
 
-	const std::vector<termParameters>& getParameters() const { return _parameters; }
+	const std::vector<polynomialTerms>& getPolynomialTerms() const { return _polynomialTerms; }
 
 	void Print()            const;
 	void PrintNR()          const;
@@ -76,7 +76,7 @@ class TLSContrib {
 	TFracNum  _NormFactor;     // Square  of normalisation factor
 
 	// TODO: check with jan how this should be named
-	std::vector<termParameters> _parameters;
+	std::vector<polynomialTerms> _polynomialTerms;
 
 	bool _pureRelativistic;
 
