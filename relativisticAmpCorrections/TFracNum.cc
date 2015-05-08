@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <stdio.h>
-#include <string.h>
+#include <cstdlib>
 
 #include <reportingUtils.hpp>
 #include <primeNumbers.h>
