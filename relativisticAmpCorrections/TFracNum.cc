@@ -343,7 +343,7 @@ bool TFracNum::Abs() {
 	}
 	_signPrefac = 1;
 	if(not _nomCacheRebuildRequired) {
-		_numerator =  abs(_numerator);
+		_numerator = labs(_numerator);
 	}
 	if(not _valueCacheRebuildRequired) {
 		_value     = fabs(_value);
