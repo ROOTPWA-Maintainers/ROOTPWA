@@ -906,18 +906,20 @@ rpwa::massDepFit::dynamicWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 		return false;
 	}
 
-	yamlOutput << YAML::Key << "extradecaychannels";
-	yamlOutput << YAML::Value;
-	yamlOutput << YAML::BeginSeq;
+	if (_ratio.size() > getNrChannels()) {
+		yamlOutput << YAML::Key << "extradecaychannels";
+		yamlOutput << YAML::Value;
+		yamlOutput << YAML::BeginSeq;
 
-	const size_t nrDecayChannels = _ratio.size();
-	for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		yamlOutput << YAML::BeginMap;
-		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
-		yamlOutput << YAML::EndMap;
+		const size_t nrDecayChannels = _ratio.size();
+		for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+			yamlOutput << YAML::BeginMap;
+			writeDecayChannel(yamlOutput, idxDecayChannel, debug);
+			yamlOutput << YAML::EndMap;
+		}
+
+		yamlOutput << YAML::EndSeq;
 	}
-
-	yamlOutput << YAML::EndSeq;
 
 	yamlOutput << YAML::EndMap;
 
@@ -1225,18 +1227,20 @@ rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 		return false;
 	}
 
-	yamlOutput << YAML::Key << "extradecaychannels";
-	yamlOutput << YAML::Value;
-	yamlOutput << YAML::BeginSeq;
+	if (_ratio.size() > getNrChannels()) {
+		yamlOutput << YAML::Key << "extradecaychannels";
+		yamlOutput << YAML::Value;
+		yamlOutput << YAML::BeginSeq;
 
-	const size_t nrDecayChannels = _ratio.size();
-	for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		yamlOutput << YAML::BeginMap;
-		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
-		yamlOutput << YAML::EndMap;
+		const size_t nrDecayChannels = _ratio.size();
+		for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+			yamlOutput << YAML::BeginMap;
+			writeDecayChannel(yamlOutput, idxDecayChannel, debug);
+			yamlOutput << YAML::EndMap;
+		}
+
+		yamlOutput << YAML::EndSeq;
 	}
-
-	yamlOutput << YAML::EndSeq;
 
 	yamlOutput << YAML::EndMap;
 
