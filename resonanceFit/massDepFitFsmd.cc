@@ -97,16 +97,15 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 	fitParametersError.resize(_id+1, 0, _nrParameters, 0);
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		std::ostringstream parName;
-		parName << "p" << idxParameter;
+		const std::string parName = _function->GetParName(idxParameter);
 
 		if(debug) {
-			printDebug << "reading parameter '" << parName.str() << "'." << std::endl;
+			printDebug << "reading parameter '" << parName << "'." << std::endl;
 		}
 
-		const YAML::Node& configParameter = configFsmd[parName.str()];
+		const YAML::Node& configParameter = configFsmd[parName];
 		if (not configParameter) {
-			printErr << "final-state mass-dependence does not define parameter '" << parName.str() << "'." << std::endl;
+			printErr << "final-state mass-dependence does not define parameter '" << parName << "'." << std::endl;
 			return false;
 		}
 
@@ -115,7 +114,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 		                     ("val", YamlCppUtils::TypeFloat)
 		                     ("fix", YamlCppUtils::TypeBoolean);
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "'" << parName.str() << "' of final-state mass-dependence does not contain all required variables." << std::endl;
+			printErr << "'" << parName << "' of final-state mass-dependence does not contain all required variables." << std::endl;
 			return false;
 		}
 
@@ -127,7 +126,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 				const double error = configParameter["error"].as<double>();
 				fitParametersError.setParameter(_id, idxParameter, error);
 			} else {
-				printErr << "variable 'error' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				printErr << "variable 'error' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		}
@@ -140,7 +139,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 				_parametersLimitedLower[idxParameter] = true;
 				_parametersLimitLower[idxParameter] = configParameter["lower"].as<double>();
 			} else {
-				printErr << "variable 'lower' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				printErr << "variable 'lower' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
@@ -151,7 +150,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 				_parametersLimitedUpper[idxParameter] = true;
 				_parametersLimitUpper[idxParameter] = configParameter["upper"].as<double>();
 			} else {
-				printErr << "variable 'upper' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				printErr << "variable 'upper' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
@@ -162,7 +161,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
 				_parametersStep[idxParameter] = configParameter["step"].as<double>();
 			} else {
-				printErr << "variable 'step' for parameter '" << parName.str() << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				printErr << "variable 'step' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		}
@@ -194,10 +193,9 @@ rpwa::massDepFit::fsmd::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Value << _function->GetTitle();
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		std::ostringstream parName;
-		parName << "p" << idxParameter;
+		const std::string parName = _function->GetParName(idxParameter);
 
-		yamlOutput << YAML::Key << parName.str();
+		yamlOutput << YAML::Key << parName;
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginMap;
