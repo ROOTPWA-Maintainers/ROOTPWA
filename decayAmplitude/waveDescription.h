@@ -63,6 +63,7 @@ namespace rpwa {
 	public:
 
 		waveDescription();
+		waveDescription(const waveDescription& waveDesc);
 		virtual ~waveDescription();
 
 		void clear();
