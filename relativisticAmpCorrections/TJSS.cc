@@ -24,7 +24,7 @@ void TJSS::CalcAmpl() {
 	}
 
 	// range for coupled Spin
-	const long Smin = abs(_SDecay1 - _SDecay2);
+	const long Smin = labs(_SDecay1 - _SDecay2);
 	const long Smax = _SDecay1 + _SDecay2;
 
 	if (_debugLevel >= 2) {
@@ -42,7 +42,7 @@ void TJSS::CalcAmpl() {
 	long Lmax = _JMother + Smax;
 	long Lmin = Lmax;
 	for (long iS = Smin; iS <= Smax; iS++) {
-		long Lm1 = abs(_JMother - iS);
+		long Lm1 = labs(_JMother - iS);
 		if (Lm1 < Lmin) {
 			Lmin = Lm1;
 		}
