@@ -9,6 +9,7 @@
 #include<TTree.h>
 
 #include<ampIntegralMatrix.h>
+#include<pwaLikelihood.h>
 #include<fitResult.h>
 
 namespace bp = boost::python;
@@ -149,6 +150,11 @@ void rpwa::py::exportRootConverters() {
 
 	bp::def(
 		"__RootConverters_convertFromPy_rpwaAmpIntegralMatrix", &rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_rpwaPwaLikelihood", &rpwa::py::convertFromPy<rpwa::pwaLikelihood<std::complex<double> >* >
 		, bp::return_internal_reference<1>()
 	);
 

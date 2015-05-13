@@ -34,17 +34,11 @@ const std::string valTreeName   = "pwa";
 const std::string valBranchName = "fitResult_v2";
 
 rpwa::fitResultPtr
-rpwa::hli::pwaFit(std::map<std::string, TTree*>&  ampTrees,
-                  const rpwa::ampIntegralMatrix&  normMatrix,
-                  rpwa::ampIntegralMatrix&        accMatrix,
-                  const std::vector<std::string>& waveNames,
-                  const std::vector<double>&      waveThresholds,
+rpwa::hli::pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
+                  const unsigned int              seed=0,
                   const double                    massBinMin=0,
                   const double                    massBinMax=0,
-                  const unsigned int              seed=0,
                   const std::string               startValFileName="",
-                  const unsigned int              accEventsOverride=0,
-                  const unsigned int              rank=1,
                   const bool                      checkHessian=false,
                   const bool                      verbose=false)
 {
@@ -87,7 +81,7 @@ rpwa::hli::pwaFit(std::map<std::string, TTree*>&  ampTrees,
 	     << "    seed for random start values ................... "  << seed            << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
-	cout << "    rank of spin density matrix .................... "  << rank                    << endl
+	cout << "    rank of spin density matrix .................... "  << L.rank()                    << endl
 	     << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
 	     << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
@@ -98,22 +92,14 @@ rpwa::hli::pwaFit(std::map<std::string, TTree*>&  ampTrees,
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
 	const double massBinCenter  = (massBinMin + massBinMax) / 2;
-	unsigned int accNormEvents = 0;
-	if (accEventsOverride == 0) {
-		accNormEvents = normMatrix.nmbEvents();
-	}
-	else {
-		accNormEvents = accEventsOverride;
-	}
 	printInfo << "creating and setting up likelihood function" << endl;
-	pwaLikelihood<complex<double> > L;
-	if (quiet)
-		L.setQuiet();
-	L.useNormalizedAmps(true);
-#ifdef USE_CUDA
-	L.enableCuda(cudaEnabled);
-#endif
-	L.init(rank, massBinCenter, waveNames, waveThresholds, normMatrix, accMatrix, ampTrees, accNormEvents);
+//	if (quiet)
+//		L.setQuiet();
+//	L.useNormalizedAmps(true);
+//#ifdef USE_CUDA
+//	L.enableCuda(cudaEnabled);
+//#endif
+//	L.init(rank, massBinCenter, waveNames, waveThresholds, normMatrix, accMatrix, ampTrees, accNormEvents);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
@@ -382,7 +368,7 @@ rpwa::hli::pwaFit(std::map<std::string, TTree*>&  ampTrees,
 				 normNmbEvents,
 				 massBinCenter,
 				 minimizer->MinValue(),
-				 rank,
+				 L.rank(),
 				 prodAmps,
 				 prodAmpNames,
 				 fitParCovMatrix,

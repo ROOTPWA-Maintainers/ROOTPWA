@@ -131,10 +131,10 @@ class fileManager:
 
 
 	def getAmpFilePaths(self, binID, eventsType):
-		ampFileList = []
+		ampFileList = {}
 		for key in sorted(self.amplitudeFiles):
 			if (key[0] == binID and key[2] == eventsType):
-				ampFileList.append(self.amplitudeDirectory + "/" + self.amplitudeFiles[key])
+				ampFileList[key[1]] = self.amplitudeDirectory + "/" + self.amplitudeFiles[key]
 		return ampFileList
 
 

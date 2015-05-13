@@ -47,28 +47,36 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	ampFileListFile = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
-	if not ampFileListFile:
+	ampFileList = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
+	if not ampFileList:
 		printErr("could not retrieve valid amplitude file list. Aborting...")
 		sys.exit(1)
 	binningMap = fileManager.getBinFromID(args.binID)
+	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
 
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+
+	likelihood = pyRootPwa.core.pwaLikelihood()
+	if (not args.verbose):
+		likelihood.setQuiet(True)
+	likelihood.init(
+	                args.rank,
+	                ampFileList,
+	                massBinCenter,
+	                args.waveListFileName,
+	                psIntegralPath,
+	                accIntegralPath,
+	                args.accEventsOverride)
 	fitResult = pyRootPwa.pwaNloptFit(
-	                                  ampFileList = ampFileListFile,
-	                                  normIntegralFileName = psIntegralPath,
-	                                  accIntegralFileName = accIntegralPath,
-	                                  binningMap = binningMap,
-	                                  waveListFileName = args.waveListFileName,
+	                                  likelihood = likelihood,
 	                                  seed = args.seed,
-	                                  maxNmbEvents = args.nEvents,
+	                                  massBinLower = binningMap['mass'][0],
+	                                  massBinUpper = binningMap['mass'][1],
 	                                  cauchy = args.cauchyPriors,
 	                                  startValFileName = args.startValFileName,
-	                                  accEventsOverride = args.accEventsOverride,
 	                                  checkHessian = args.checkHessian,
 	                                  saveSpace = args.saveSpace,
-	                                  rank = args.rank,
 	                                  verbose = args.verbose
 	                                  )
 	pyRootPwa.utils.printInfo("writing result to '" + args.outputFileName + "'")

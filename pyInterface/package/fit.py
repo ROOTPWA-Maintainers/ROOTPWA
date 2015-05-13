@@ -39,127 +39,29 @@ def readWaveList(waveListFileName):
 	return (waveNames, waveThresholds)
 
 
-def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, seed=0, maxNmbEvents=0, startValFileName="", accEventsOverride=0, runHesse=False, rank=1, verbose=False):
-	treeDict = {}
-	waveNames = []
-	ampFiles = []
-
-	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
-	if len(normIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
-		return False
-	normIntMatrix = normIntFile.Get(normIntFile.GetListOfKeys()[0].GetName())
-	accIntFile = ROOT.TFile.Open(accIntegralFileName, "READ")
-	if len(accIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
-		return False
-	accIntMatrix = accIntFile.Get(normIntFile.GetListOfKeys()[0].GetName())
-
-	for ampFileName in ampFileList:
-		ampFile = ROOT.TFile.Open(ampFileName, "READ")
-		ampFiles.append(ampFile)
-		if not ampFile:
-			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
-		foundAmpKey = False
-		for key in ampFile.GetListOfKeys():
-			if not key:
-				pyRootPwa.utils.printWarn("NULL pointer to TKey in file '" + ampFileName + "'.")
-				continue
-			keyName = key.GetName()
-			keyWithoutExt, keyExt = os.path.splitext(keyName)
-			if keyExt == ".amp":
-				foundAmpKey = True
-				tree = ampFile.Get(keyName)
-				meta = ampFile.Get(keyWithoutExt + ".meta")
-				if not meta:
-					pyRootPwa.utils.printErr("could not get metadata for waveName '" + keyWithoutExt + "'.")
-					del ampFiles
-					return False
-				waveNames.append(meta.objectBaseName())
-				treeDict[meta.objectBaseName()] = tree
-		if not foundAmpKey:
-			pyRootPwa.utils.printWarn("no TKey in file '" + ampFileName + "'.")
-	(waveNames, waveThresholds) = readWaveList(waveListFileName)
-	lowerBound = binningMap[binningMap.keys()[0]][0]
-	upperBound = binningMap[binningMap.keys()[0]][1]
+def pwaFit(likelihood, seed=0, massBinLower=0, massBinUpper=0, startValFileName="", checkHessian=False, verbose=False):
 	fitResult = pyRootPwa.core.pwaFit(
-	                                  ampTreesDict = treeDict,
-	                                  normMatrix = normIntMatrix,
-	                                  accMatrix = accIntMatrix,
-	                                  waveNames = waveNames,
-	                                  waveThresholds = waveThresholds,
-	                                  massBinMin = lowerBound,
-	                                  massBinMax = upperBound,
+	                                  likelihood = likelihood,
 	                                  seed = seed,
+	                                  massBinLower = massBinLower,
+	                                  massBinUpper = massBinUpper,
 	                                  startValFileName = startValFileName,
-	                                  accEventsOverride = accEventsOverride,
-	                                  rank = rank,
-	                                  runHesse = runHesse,
+	                                  checkHessian = checkHessian,
 	                                  verbose = verbose
 	                                  )
-	del ampFiles
 	return fitResult
 
 
-def pwaNloptFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, seed=0, maxNmbEvents=0, cauchy=False, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False):
-	treeDict = {}
-	waveNames = []
-	ampFiles = []
-
-	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
-	if len(normIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
-		return False
-	normIntMatrix = normIntFile.Get(normIntFile.GetListOfKeys()[0].GetName())
-	accIntFile = ROOT.TFile.Open(accIntegralFileName, "READ")
-	if len(accIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
-		return False
-	accIntMatrix = accIntFile.Get(normIntFile.GetListOfKeys()[0].GetName())
-
-	for ampFileName in ampFileList:
-		ampFile = ROOT.TFile.Open(ampFileName, "READ")
-		ampFiles.append(ampFile)
-		if not ampFile:
-			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
-		foundAmpKey = False
-		for key in ampFile.GetListOfKeys():
-			if not key:
-				pyRootPwa.utils.printWarn("NULL pointer to TKey in file '" + ampFileName + "'.")
-				continue
-			keyName = key.GetName()
-			keyWithoutExt, keyExt = os.path.splitext(keyName)
-			if keyExt == ".amp":
-				foundAmpKey = True
-				tree = ampFile.Get(keyName)
-				meta = ampFile.Get(keyWithoutExt + ".meta")
-				if not meta:
-					pyRootPwa.utils.printErr("could not get metadata for waveName '" + keyWithoutExt + "'.")
-					del ampFiles
-					return False
-				waveNames.append(meta.objectBaseName())
-				treeDict[meta.objectBaseName()] = tree
-		if not foundAmpKey:
-			pyRootPwa.utils.printWarn("no TKey in file '" + ampFileName + "'.")
-	(waveNames, waveThresholds) = readWaveList(waveListFileName)
-	lowerBound = binningMap[binningMap.keys()[0]][0]
-	upperBound = binningMap[binningMap.keys()[0]][1]
+def pwaNloptFit(likelihood, seed=0, cauchy=False, massBinLower=0, massBinUpper=0, startValFileName="", checkHessian=False, saveSpace=False, verbose=False):
 	fitResult = pyRootPwa.core.pwaNloptFit(
-	                                       ampTreesDict = treeDict,
-	                                       normMatrix = normIntMatrix,
-	                                       accMatrix = accIntMatrix,
-	                                       waveNames = waveNames,
-	                                       waveThresholds = waveThresholds,
-	                                       massBinMin = lowerBound,
-	                                       massBinMax = upperBound,
+	                                       likelihood = likelihood,
 	                                       seed = seed,
 	                                       cauchy = cauchy,
+	                                       massBinLower = massBinLower,
+	                                       massBinUpper = massBinUpper,
 	                                       startValFileName = startValFileName,
-	                                       accEventsOverride = accEventsOverride,
-	                                       rank = rank,
 	                                       checkHessian = checkHessian,
 	                                       saveSpace = saveSpace,
 	                                       verbose = verbose
 	                                       )
-	del ampFiles
 	return fitResult

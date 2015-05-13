@@ -16,13 +16,12 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
-	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-S", type=str, metavar="path", dest="startValFileName", default="", help="path to start value fit result file (default: none)")
-	parser.add_argument("-A", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
-	parser.add_argument("-r", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from acceptance integral file)")
-	parser.add_argument("-H", "--runHesse", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
+	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from acceptance integral file)")
+	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -45,26 +44,34 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	ampFileListFile = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
-	if not ampFileListFile:
+	ampFileList = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
+	if not ampFileList:
 		printErr("could not retrieve valid amplitude file list. Aborting...")
 		sys.exit(1)
 	binningMap = fileManager.getBinFromID(args.binID)
+	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
 
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+
+	likelihood = pyRootPwa.core.pwaLikelihood()
+	if (not args.verbose):
+		likelihood.setQuiet(True)
+	likelihood.init(
+	                args.rank,
+	                ampFileList,
+	                massBinCenter,
+	                args.waveListFileName,
+	                psIntegralPath,
+	                accIntegralPath,
+	                args.accEventsOverride)
 	fitResult = pyRootPwa.pwaFit(
-	                             ampFileList = ampFileListFile,
-	                             normIntegralFileName = psIntegralPath,
-	                             accIntegralFileName = accIntegralPath,
-	                             binningMap = binningMap,
-	                             waveListFileName = args.waveListFileName,
+	                             likelihood,
 	                             seed = args.seed,
-	                             maxNmbEvents = args.nEvents,
+	                             massBinLower = binningMap['mass'][0],
+	                             massBinUpper = binningMap['mass'][1],
 	                             startValFileName = args.startValFileName,
-	                             accEventsOverride = args.accEventsOverride,
-	                             runHesse = args.runHesse,
-	                             rank = args.rank,
+	                             checkHessian = args.checkHessian,
 	                             verbose = args.verbose
 	                             )
 	pyRootPwa.utils.printInfo("writing result to '" + args.outputFileName + "'")
