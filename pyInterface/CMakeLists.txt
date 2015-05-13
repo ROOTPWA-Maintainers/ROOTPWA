@@ -104,6 +104,7 @@ set(SOURCES
 	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
+	${PARTIALWAVEFIT_SUBDIR}/pwaLikelihood_py.cc
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
 	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
