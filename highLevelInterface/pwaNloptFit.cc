@@ -24,7 +24,7 @@ using namespace rpwa;
 double
 rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data)
 {
-	pwaLikelihood<complex<double> >* L = (pwaLikelihood<complex<double> >*)func_data;
+	const pwaLikelihood<complex<double> >* L = (const pwaLikelihood<complex<double> >*)func_data;
 	if(n != L->nmbPars()) {
 		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
 		throw;
@@ -40,22 +40,14 @@ rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data
 
 
 fitResultPtr
-rpwa::hli::pwaNloptFit(map<string, TTree*>&     ampTrees,
-                       const ampIntegralMatrix& normMatrix,
-                       ampIntegralMatrix&       accMatrix,
-                       const vector<string>&    waveNames,
-                       const vector<double>&    waveThresholds,
-                       const double             massBinMin = 0.,
-                       const double             massBinMax = 0.,
-                       const unsigned int       seed = 0,
-                       const string&            startValFileName = "",
-                       const unsigned int       accEventsOverride = 0,
-                       const unsigned int       rank = 1,
-                       const bool               cauchy = false,
-                       const double             cauchyWidth = 0.5,
-                       const bool               checkHessian = false,
-                       const bool               saveSpace = false,
-                       const bool               verbose = false)
+rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
+                       const double                           massBinMin,
+                       const double                           massBinMax,
+                       const unsigned int                     seed,
+                       const string&                          startValFileName,
+                       const bool                             checkHessian,
+                       const bool                             saveSpace,
+                       const bool                             verbose)
 {
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
@@ -73,71 +65,47 @@ rpwa::hli::pwaNloptFit(map<string, TTree*>&     ampTrees,
 	const unsigned int maxNmbOfIterations    = 50000;
 	const double       minimizerTolerance    = 1e-4;                   // minimizer tolerance
 	const double       likelihoodTolerance   = 1e-6;                   // tolerance of likelihood function
-	const bool         cudaEnabled           = false;                  // if true CUDA kernels are activated
 	const bool         quiet                 = not verbose;
 
 	// report parameters
 	printInfo << "running pwaNloptFit with the following parameters:" << endl;
 	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] MeV/c^2" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl;
+	     << "    seed for random start values ................... "  << seed                    << endl
+	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
-	cout << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    using half-Cauchy priors........................ "  << yesNo(cauchy) << endl;
-	if(cauchy) {
-		cout << "    width of cauchy priors.......................... "  << cauchyWidth << endl;
-	}
 	cout << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian)     << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance      << endl
 	     << "    likelihood tolerance ........................... "  << likelihoodTolerance     << endl
 	     << "    saving integral and covariance matrices......... "  << yesNo(not saveSpace)    << endl
-	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
 	     << "    quiet .......................................... "  << yesNo(quiet)            << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
-	const double massBinCenter = (massBinMin + massBinMax) / 2;
-	unsigned int accNormEvents = 0;
-	if (accEventsOverride == 0) {
-		accNormEvents = normMatrix.nmbEvents();
-	} else {
-		accNormEvents = accEventsOverride;
-	}
-	printInfo << "creating and setting up likelihood function" << endl;
-	pwaLikelihood<complex<double> > L;
-	if (quiet)
-		L.setQuiet();
-	L.useNormalizedAmps(true);
-#ifdef USE_CUDA
-	L.enableCuda(cudaEnabled);
-#endif
-	L.init(rank, massBinCenter, waveNames, waveThresholds, normMatrix, accMatrix, ampTrees, accNormEvents);
-	if (not quiet)
+	if (not quiet) {
+		printInfo << "likelihood initialized with the following parameters:" << endl;
 		cout << L << endl;
+
+		printInfo << "using prior: ";
+		switch(L.priorType()) {
+			case pwaLikelihood<complex<double> >::FLAT:
+				cout << "flat" << endl;
+				break;
+			case pwaLikelihood<complex<double> >::HALF_CAUCHY:
+				cout      << "half-cauchy" << endl;
+				printInfo << "cauchy width: " << L.cauchyWidth() << endl;
+				break;
+		}
+	}
+
+	const double massBinCenter = (massBinMin + massBinMax) / 2;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
-
-	if (cauchy) {
-		L.setPriorType(L.HALF_CAUCHY);
-		L.setCauchyWidth(cauchyWidth);
-	}
-
-	printInfo << "using prior: ";
-	switch(L.priorType())
-	{
-		case pwaLikelihood<complex<double> >::FLAT:
-			cout << "flat" << endl;
-			break;
-		case pwaLikelihood<complex<double> >::HALF_CAUCHY:
-			cout      << "half-cauchy" << endl;
-			printInfo << "cauchy width: " << L.cauchyWidth() << endl;
-			break;
-	}
 
 	// ---------------------------------------------------------------------------
 	// setup minimizer
 	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
-	optimizer.set_min_objective(&rpwaNloptFunc, &L);
+	optimizer.set_min_objective(&rpwaNloptFunc, &const_cast<pwaLikelihood<complex<double> >&>(L));
 
 	optimizer.set_xtol_rel(minimizerTolerance);
 	optimizer.set_maxeval(maxNmbOfIterations);
@@ -151,6 +119,13 @@ rpwa::hli::pwaNloptFit(map<string, TTree*>&     ampTrees,
 		cout << "    maximum time for optimization.............. " << optimizer.get_maxtime() << endl;
 		cout << "    stop when this likelihood is found......... " << optimizer.get_stopval() << endl;
 		cout << "    relative parameter tolerance............... " << optimizer.get_xtol_rel() << endl;
+	}
+
+	// ---------------------------------------------------------------------------
+	// read in fitResult with start values
+	if (startValFileName.length() > 0) {
+		printErr << "cannot use start values from fitResult with pwaNloptFit. Aborting..." << std::endl;
+		throw;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -310,15 +285,19 @@ rpwa::hli::pwaNloptFit(map<string, TTree*>&     ampTrees,
 #endif
 
 	// get data structures to construct fitResult
+	const unsigned int nmbWaves = L.nmbWaves() + 1;   // flat wave is not included in L.nmbWaves()
 	vector<complex<double> > prodAmps;                // production amplitudes
 	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
 	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 	L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
-	const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-	complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-	complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+	complexMatrix normIntegral(0, 0);                 // normalization integral over full phase space without acceptance
+	complexMatrix accIntegral (0, 0);                 // normalization integral over full phase space with acceptance
 	vector<double> phaseSpaceIntegral;
-	L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+	if (not saveSpace) {
+		normIntegral.resizeTo(nmbWaves, nmbWaves);
+		accIntegral.resizeTo(nmbWaves, nmbWaves);
+		L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+	}
 	const int normNmbEvents = 1;  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
@@ -336,7 +315,7 @@ rpwa::hli::pwaNloptFit(map<string, TTree*>&     ampTrees,
 	             normNmbEvents,
 	             massBinCenter,
 	             likeli,
-	             rank,
+	             L.rank(),
 	             prodAmps,
 	             prodAmpNames,
 	             fitParCovMatrix,

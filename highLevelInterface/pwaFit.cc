@@ -58,19 +58,14 @@ namespace ROOT {
 
 
 fitResultPtr
-rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
-                  const ampIntegralMatrix& normMatrix,
-                  ampIntegralMatrix&       accMatrix,
-                  const vector<string>&    waveNames,
-                  const vector<double>&    waveThresholds,
-                  const double             massBinMin = 0.,
-                  const double             massBinMax = 0.,
-                  const unsigned int       seed = 0,
-                  const string&            startValFileName = "",
-                  const unsigned int       accEventsOverride = 0,
-                  const unsigned int       rank = 1,
-                  const bool               checkHessian = false,
-                  const bool               verbose = false)
+rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
+                  const double                           massBinMin,
+                  const double                           massBinMax,
+                  const unsigned int                     seed,
+                  const string&                          startValFileName,
+                  const bool                             checkHessian,
+                  const bool                             saveSpace,
+                  const bool                             verbose)
 {
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
@@ -96,44 +91,41 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
 	const bool         saveMinimizerMemory   = true;
 #endif
-	const bool         cudaEnabled           = false;                  // if true CUDA kernels are activated
 	const bool         quiet                 = not verbose;
 
 	// report parameters
 	printInfo << "running pwaFit with the following parameters:" << endl;
 	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] MeV/c^2" << endl
-	     << "    path to file with start values ................. '" << startValFileName << "'" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl;
+	     << "    seed for random start values ................... "  << seed                    << endl
+	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
-	cout << "    rank of spin density matrix .................... "  << rank                    << endl
-	     << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian)     << endl
+	cout << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian)     << endl
 	     << "    minimizer ...................................... '" << minimizerType[0] << ", " << minimizerType[1] << "'" << endl
 	     << "    minimizer strategy ............................. "  << minimizerStrategy       << endl
 	     << "    minimizer tolerance ............................ "  << minimizerTolerance      << endl
-	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
+	     << "    saving integral and covariance matrices......... "  << yesNo(not saveSpace)    << endl
 	     << "    quiet .......................................... "  << yesNo(quiet)            << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
-	const double massBinCenter = (massBinMin + massBinMax) / 2;
-	unsigned int accNormEvents = 0;
-	if (accEventsOverride == 0) {
-		accNormEvents = normMatrix.nmbEvents();
-	} else {
-		accNormEvents = accEventsOverride;
-	}
-	printInfo << "creating and setting up likelihood function" << endl;
-	pwaLikelihood<complex<double> > L;
-	if (quiet)
-		L.setQuiet();
-	L.useNormalizedAmps(true);
-#ifdef USE_CUDA
-	L.enableCuda(cudaEnabled);
-#endif
-	L.init(rank, massBinCenter, waveNames, waveThresholds, normMatrix, accMatrix, ampTrees, accNormEvents);
-	if (not quiet)
+	if (not quiet) {
+		printInfo << "likelihood initialized with the following parameters:" << endl;
 		cout << L << endl;
+
+		printInfo << "using prior: ";
+		switch(L.priorType()) {
+			case pwaLikelihood<complex<double> >::FLAT:
+				cout << "flat" << endl;
+				break;
+			case pwaLikelihood<complex<double> >::HALF_CAUCHY:
+				cout      << "half-cauchy" << endl;
+				printInfo << "cauchy width: " << L.cauchyWidth() << endl;
+				break;
+		}
+	}
+
+	const double massBinCenter = (massBinMin + massBinMax) / 2;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 
@@ -277,6 +269,7 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 	bool converged  = false;
 	bool hasHessian = false;
 	vector<double> correctParams;
+	TMatrixT<double> fitParCovMatrix(0, 0);
 	printInfo << "performing minimization." << endl;
 	{
 		TStopwatch timer;
@@ -321,7 +314,7 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 		cout << "used " << flush;
 		timer.Print();
 		printInfo << *minimizer;
-		if (runHesse) {
+		if (runHesse && not saveSpace) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
 			hasHessian = minimizer->Hesse();
@@ -335,21 +328,34 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 			cout << "used " << flush;
 			timer.Print();
 			printInfo << *minimizer;
+
+			fitParCovMatrix.ResizeTo(nmbPar, nmbPar);
+			for(unsigned int i = 0; i < nmbPar; ++i)
+				for(unsigned int j = 0; j < nmbPar; ++j)
+					// The factor 0.5 is needed because
+					// MINUIT by default assumes a Chi2
+					// function and not a loglikeli
+					// (see Minuit manual!)
+					// Note: SetErrorDef in ROOT does not work
+					fitParCovMatrix[i][j] = 0.5 * minimizer->CovMatrix(i, j);
 		}
 	}
 
 	// ---------------------------------------------------------------------------
 	// print results
 	printInfo << "minimization result:" << endl;
-	const double inverseOfSqrtTwo = 1. / sqrt(2.);
 	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(maxParNameLength) << L.parName(i) << " = ";
 		if (L.parFixed(i))
 			cout << correctParams[i] << " (fixed)";
 		else {
-			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- "
-			     << setw(12) << maxPrecisionAlign(inverseOfSqrtTwo * minimizer->Errors()[i]);
+			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
+			if(runHesse && not saveSpace) {
+				cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
+			} else {
+				cout << setw(12) << "[not available]";
+			}
 			if (runMinos) {
 				double minosErrLow = 0;
 				double minosErrUp  = 0;
@@ -368,24 +374,19 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 #endif
 
 	// get data structures to construct fitResult
+	const unsigned int nmbWaves = L.nmbWaves() + 1;   // flat wave is not included in L.nmbWaves()
 	vector<complex<double> > prodAmps;                // production amplitudes
 	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
 	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 	L.buildProdAmpArrays(correctParams.data(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
-	TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
-	for(unsigned int i = 0; i < nmbPar; ++i)
-		for(unsigned int j = 0; j < nmbPar; ++j)
-			// The factor 0.5 is needed because
-			// MINUIT by default assumes a Chi2
-			// function and not a loglikeli
-			// (see Minuit manual!)
-			// Note: SetErrorDef in ROOT does not work
-			fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
-	const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-	complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-	complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+	complexMatrix normIntegral(0, 0);                 // normalization integral over full phase space without acceptance
+	complexMatrix accIntegral (0, 0);                 // normalization integral over full phase space with acceptance
 	vector<double> phaseSpaceIntegral;
-	L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+	if (not saveSpace) {
+		normIntegral.resizeTo(nmbWaves, nmbWaves);
+		accIntegral.resizeTo(nmbWaves, nmbWaves);
+		L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+	}
 	const int normNmbEvents = 1;  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
@@ -403,7 +404,7 @@ rpwa::hli::pwaFit(map<string, TTree*>&     ampTrees,
 	             normNmbEvents,
 	             massBinCenter,
 	             minimizer->MinValue(),
-	             rank,
+	             L.rank(),
 	             prodAmps,
 	             prodAmpNames,
 	             fitParCovMatrix,
