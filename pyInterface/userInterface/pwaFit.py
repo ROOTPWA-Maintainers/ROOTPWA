@@ -10,7 +10,7 @@ import pyRootPwa.core
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
-	                                 description="generate phase space Monte Carlo events"
+	                                 description="pwa fit executable"
 	                                )
 
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
@@ -36,12 +36,12 @@ if __name__ == "__main__":
 
 	config = pyRootPwa.rootPwaConfig()
 	if not config.initialize(args.configFileName):
-		pyRootPwa.utils.printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
+		printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
 		sys.exit(1)
 	pyRootPwa.core.particleDataTable.readFile(config.pdgFileName)
 	fileManager = pyRootPwa.loadFileManager(config.fileManagerPath)
 	if not fileManager:
-		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
+		printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
 	ampFileList = fileManager.getAmpFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 	                             checkHessian = args.checkHessian,
 	                             verbose = args.verbose
 	                             )
-	pyRootPwa.utils.printInfo("writing result to '" + args.outputFileName + "'")
+	printInfo("writing result to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "UPDATE")
@@ -83,11 +83,11 @@ if __name__ == "__main__":
 		sys.exit(1)
 	tree = outputFile.Get(valTreeName)
 	if (not tree):
-		pyRootPwa.utils.printInfo("file '" + args.outputFileName + "' is empty. "
-		          + "creating new tree '" + valTreeName + "' for PWA result.")
+		printInfo("file '" + args.outputFileName + "' is empty. "
+		        + "creating new tree '" + valTreeName + "' for PWA result.")
 		tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
 		if not fitResult.branch(tree, valBranchName):
-			pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
+			printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
 			sys.exit(1)
 	else:
 		fitResult.setBranchAddress(tree, valBranchName)
@@ -96,8 +96,8 @@ if __name__ == "__main__":
 	outputFile.Close()
 	if nmbBytes == 0:
 		printErr("problems writing integral to TKey 'fitResult' "
-		         + "in file '" + args.outputFileName + "'")
+		       + "in file '" + args.outputFileName + "'")
 		sys.exit(1)
 	else:
 		printSucc("wrote integral to TKey 'fitResult' "
-		          + "in file '" + args.outputFileName + "'")
+		        + "in file '" + args.outputFileName + "'")

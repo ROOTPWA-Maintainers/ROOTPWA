@@ -1132,14 +1132,14 @@ pwaLikelihood<complexT>::readIntegrals
 	TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 	if (not intFile or intFile->IsZombie()) {
 		printErr << "could not open normalization integral file '" << normIntFileName << "'. "
-				 << "Aborting..." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	ampIntegralMatrix* integral = 0;
 	intFile->GetObject(integralTKeyName.c_str(), integral);
 	if (not integral) {
 		printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-				 << "'" << normIntFileName << "'. Aborting..." << endl;
+		         << "'" << normIntFileName << "'. Aborting..." << endl;
 		throw;
 	}
 	_numbAccEvents = _numbAccEvents==0 ? integral->nmbEvents() : _numbAccEvents;
@@ -1150,14 +1150,14 @@ pwaLikelihood<complexT>::readIntegrals
 	intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 	if (not intFile or intFile->IsZombie()) {
 		printErr << "could not open normalization integral file '" << accIntFileName << "'. "
-				 << "Aborting..." << endl;
+		         << "Aborting..." << endl;
 		throw;
 	}
 	integral = 0;
 	intFile->GetObject(integralTKeyName.c_str(), integral);
 	if (not integral) {
 		printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
-				 << "'" << accIntFileName << "'. Aborting..." << endl;
+		         << "'" << accIntFileName << "'. Aborting..." << endl;
 		throw;
 	}
 	if (_numbAccEvents != 0) {
@@ -1210,7 +1210,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::st
 			ampFile->GetObject(ampTreeName.c_str(), ampTree);
 			if (not ampTree) {
 				printWarn << "cannot find tree '" << ampTreeName << "' in file "
-						  << "'" << ampFilePath << "'. skipping." << endl;
+				          << "'" << ampFilePath << "'. skipping." << endl;
 				continue;
 			}
 			// connect tree leaf
@@ -1220,7 +1220,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::st
 				ampTree->GetEntry(eventIndex);
 				if (!ampTreeLeaf) {
 					printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
-							  << "skipping." << endl;
+					          << "skipping." << endl;
 					continue;
 				}
 				assert(ampTreeLeaf->nmbIncohSubAmps() == 1);

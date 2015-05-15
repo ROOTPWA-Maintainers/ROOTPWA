@@ -342,11 +342,11 @@ rpwa::hli::pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
 	TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 	for(unsigned int i = 0; i < nmbPar; ++i)
 		for(unsigned int j = 0; j < nmbPar; ++j)
-		  // The factor 0.5 is needed because
-		  // MINUIT by default assumes a Chi2
-		  // function and not a loglikeli
-		  // (see Minuit manual!)
-		  // Note: SetErrorDef in ROOT does not work
+			// The factor 0.5 is needed because
+			// MINUIT by default assumes a Chi2
+			// function and not a loglikeli
+			// (see Minuit manual!)
+			// Note: SetErrorDef in ROOT does not work
 			fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 	const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 	complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
@@ -356,28 +356,28 @@ rpwa::hli::pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
 	const int normNmbEvents = 1;  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
-		 << "    number of fit parameters ............... " << nmbPar                        << endl
-		 << "    number of production amplitudes ........ " << prodAmps.size()               << endl
-		 << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
-		 << "    number of wave names ................... " << nmbWaves                      << endl
-		 << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
-		 << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
-		 << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
-		 << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
+	     << "    number of fit parameters ............... " << nmbPar                        << endl
+	     << "    number of production amplitudes ........ " << prodAmps.size()               << endl
+	     << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
+	     << "    number of wave names ................... " << nmbWaves                      << endl
+	     << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
+	     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
+	     << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
+	     << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
 	result->fill(L.nmbEvents(),
-				 normNmbEvents,
-				 massBinCenter,
-				 minimizer->MinValue(),
-				 L.rank(),
-				 prodAmps,
-				 prodAmpNames,
-				 fitParCovMatrix,
-				 fitParCovMatrixIndices,
-				 normIntegral,
-				 accIntegral,
-				 phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
-				 converged,
-				 hasHessian);
+	             normNmbEvents,
+	             massBinCenter,
+	             minimizer->MinValue(),
+	             L.rank(),
+	             prodAmps,
+	             prodAmpNames,
+	             fitParCovMatrix,
+	             fitParCovMatrixIndices,
+	             normIntegral,
+	             accIntegral,
+	             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+	             converged,
+	             hasHessian);
 	if (minimizer)
 		delete minimizer;
 	return rpwa::fitResultPtr(result);

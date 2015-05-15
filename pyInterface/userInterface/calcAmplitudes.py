@@ -8,7 +8,7 @@ import pyRootPwa.core
 
 def readWaveList(waveListFileName):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
-	          + "'" + waveListFileName + "'.")
+	                        + "'" + waveListFileName + "'.")
 	try:
 		with open(waveListFileName, 'r') as waveListFile:
 			waveNamesFromWavelist = []
@@ -29,7 +29,7 @@ def readWaveList(waveListFileName):
 					waveThresholds.append(float(threshold))
 				else:
 					pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
-					          + "'" + waveListFileName + "'.")
+					                        + "'" + waveListFileName + "'.")
 	#  			if (_debug):
 	#  				printDebug("reading line " + lineNmb + 1 + ": " + waveName + ", "
 	#  				           + "threshold = " + threshold + " MeV/c^2")

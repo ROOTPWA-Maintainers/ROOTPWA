@@ -72,27 +72,27 @@ rpwa::hli::pwaNloptFit(rpwa::pwaLikelihood<std::complex<double> >& L,
 	double             defaultStartValue     = 0.01;
 	bool               useFixedStartValues   = false;
 	const unsigned int maxNmbOfIterations    = 50000;
-	const double             minimizerTolerance    = 1e-4;                   // minimizer tolerance
-	const double             likelihoodTolerance   = 1e-6;                   // tolerance of likelihood function
+	const double       minimizerTolerance    = 1e-4;                   // minimizer tolerance
+	const double       likelihoodTolerance   = 1e-6;                   // tolerance of likelihood function
 #if ROOT_VERSION_CODE >= ROOT_VERSION(5, 34, 19)
-//	bool         saveMinimizerMemory      = true;
+//	bool               saveMinimizerMemory   = true;
 #endif
-//	bool         cudaEnabled              = false;                  // if true CUDA kernels are activated
-	bool         quiet               = not verbose;
+//	bool               cudaEnabled           = false;                  // if true CUDA kernels are activated
+	bool               quiet                 = not verbose;
 
 	// report parameters
-	printInfo << "running pwaNloptFit with the following parameters:" << endl;
-	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
-	     << "    path to file with start values ................. '" << startValFileName << "'" << endl
-	     << "    seed for random start values ................... "  << seed            << endl;
+	printInfo << "running pwaNloptFit with the following parameters:"   << endl;
+	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2"                << endl
+	     << "    path to file with start values ................. '"    << startValFileName << "'"  << endl
+	     << "    seed for random start values ................... "     << seed                     << endl;
 	if (useFixedStartValues)
-		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
-	cout << "    rank of spin density matrix .................... "  << L.rank()                 << endl
-	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
-	     << "    likelihood tolerance ........................... "  << likelihoodTolerance << endl
-//	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
-	     << "    check analytical Hessian eigenvalues............ "  << yesNo(checkHessian) << endl
-	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
+		cout << "    using fixed instead of random start values ..... " << defaultStartValue     << endl;
+	cout << "    rank of spin density matrix .................... "     << L.rank()                 << endl
+	     << "    minimizer tolerance ............................ "     << minimizerTolerance       << endl
+	     << "    likelihood tolerance ........................... "     << likelihoodTolerance      << endl
+//	     << "    CUDA acceleration .............................. "     << enDisabled(cudaEnabled)  << endl
+	     << "    check analytical Hessian eigenvalues............ "     << yesNo(checkHessian)      << endl
+	     << "    quiet .......................................... "     << yesNo(quiet)             << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
@@ -102,7 +102,7 @@ rpwa::hli::pwaNloptFit(rpwa::pwaLikelihood<std::complex<double> >& L,
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
-	const double sqrtNmbEvts = sqrt((double)nmbEvts);
+	const double sqrtNmbEvts   = sqrt((double)nmbEvts);
 
 	if (cauchy)
 		L.setPriorType(L.HALF_CAUCHY);
@@ -269,27 +269,27 @@ rpwa::hli::pwaNloptFit(rpwa::pwaLikelihood<std::complex<double> >& L,
 	const int normNmbEvents = 1;  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
-		 << "    number of fit parameters ............... " << nmbPar                        << endl
-		 << "    number of production amplitudes ........ " << prodAmps.size()               << endl
-		 << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
-		 << "    number of wave names ................... " << nmbWaves                      << endl
-		 << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
-		 << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
-		 << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
-		 << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
+	     << "    number of fit parameters ............... " << nmbPar                        << endl
+	     << "    number of production amplitudes ........ " << prodAmps.size()               << endl
+	     << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
+	     << "    number of wave names ................... " << nmbWaves                      << endl
+	     << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
+	     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
+	     << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
+	     << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
 	fitResult->fill(L.nmbEvents(),
-				 normNmbEvents,
-				 massBinCenter,
-				 likeli,
-				 L.rank(),
-				 prodAmps,
-				 prodAmpNames,
-				 fitParCovMatrix,
-				 fitParCovMatrixIndices,
-				 normIntegral,
-				 accIntegral,
-				 phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
-				 converged,
-				 hasHessian);
+	                normNmbEvents,
+	                massBinCenter,
+	                likeli,
+	                L.rank(),
+	                prodAmps,
+	                prodAmpNames,
+	                fitParCovMatrix,
+	                fitParCovMatrixIndices,
+	                normIntegral,
+	                accIntegral,
+	                phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+	                converged,
+	                hasHessian);
 	return rpwa::fitResultPtr(fitResult);
 }

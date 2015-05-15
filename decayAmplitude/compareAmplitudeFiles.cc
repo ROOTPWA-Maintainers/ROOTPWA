@@ -160,7 +160,7 @@ main(int    argc,
 		if (nmbSubAmps < 1) {
 			printErr << "amplitude object for wave "
 			         << "does not contain any amplitude values "
-			         << "at event " << evt << " of total " << nmbEvt << ". aborting." << endl;
+			         << "at event " << evt << " of total " << nmbEvt << ". Aborting..." << endl;
 			return 1;
 		}
 		// get all incoherent subamps
@@ -175,17 +175,17 @@ main(int    argc,
 	for (unsigned int evt = 0; evt < nmbEvents; evt++) {
 		if (debug) {
 			cout << "event #" << evt << endl
-				 << rpwa::maxPrecisionAlign(binAmps[evt].real())  << "  "
-				 << rpwa::maxPrecisionAlign(binAmps[evt].imag())  << endl
-				 << rpwa::maxPrecisionAlign(rootAmps[evt].real()) << "  "
-				 << rpwa::maxPrecisionAlign(rootAmps[evt].imag()) << endl;
+			     << rpwa::maxPrecisionAlign(binAmps[evt].real())  << "  "
+			     << rpwa::maxPrecisionAlign(binAmps[evt].imag())  << endl
+			     << rpwa::maxPrecisionAlign(rootAmps[evt].real()) << "  "
+			     << rpwa::maxPrecisionAlign(rootAmps[evt].imag()) << endl;
 		}
 		if(binAmps[evt] != rootAmps[evt]) {
 			cout << "event #" << evt << endl
-				 << rpwa::maxPrecisionAlign(binAmps[evt].real())  << "  "
-				 << rpwa::maxPrecisionAlign(binAmps[evt].imag())  << endl
-				 << rpwa::maxPrecisionAlign(rootAmps[evt].real()) << "  "
-				 << rpwa::maxPrecisionAlign(rootAmps[evt].imag()) << endl;
+			     << rpwa::maxPrecisionAlign(binAmps[evt].real())  << "  "
+			     << rpwa::maxPrecisionAlign(binAmps[evt].imag())  << endl
+			     << rpwa::maxPrecisionAlign(rootAmps[evt].real()) << "  "
+			     << rpwa::maxPrecisionAlign(rootAmps[evt].imag()) << endl;
 			cout << "amplitudes in event #" << evt << " not equal!" << endl;
 			success = false;
 		}

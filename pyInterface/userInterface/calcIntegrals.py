@@ -9,7 +9,7 @@ import pyRootPwa.core
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
-	                                 description="generate phase space Monte Carlo events"
+	                                 description="calculate integral matrices"
 	                                )
 
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
@@ -57,8 +57,8 @@ if __name__ == "__main__":
 			outputFile.Close()
 			if nmbBytes == 0:
 				printErr("problems writing integral to TKey '" + args.integralName + "' "
-				         + "in file '" + outputFileName + "'")
+				       + "in file '" + outputFileName + "'")
 				continue
 			else:
 				printSucc("wrote integral to TKey '" + args.integralName + "' "
-				          + "in file '" + outputFileName + "'")
+				        + "in file '" + outputFileName + "'")

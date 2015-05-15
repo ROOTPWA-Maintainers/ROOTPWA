@@ -11,11 +11,11 @@ namespace {
 
 	bool amplitudeFileWriter_initialize(rpwa::amplitudeFileWriter& self,
 	                                    PyObject*                  pyOutputFile,
-                                        bp::object                 pyEventMetadata,
-                                        const std::string&         keyfileContent,
-                                        const std::string&         objectBasename,
-                                        const int&                 splitlevel = 99,
-                                        const int&                 buffsize = 256000)
+	                                    bp::object                 pyEventMetadata,
+	                                    const std::string&         keyfileContent,
+	                                    const std::string&         objectBasename,
+	                                    const int&                 splitlevel = 99,
+	                                    const int&                 buffsize = 256000)
 	{
 		TFile* outputFile = rpwa::py::convertFromPy<TFile*>(pyOutputFile);
 		std::vector<rpwa::eventMetadata*> eventMeta;

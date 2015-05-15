@@ -154,12 +154,12 @@ int main(int argc, char** argv)
 	eventFileWriter fileWriter;
 	{
 		bool success = fileWriter.initialize(*outputFile,
-											 userString,
-											 eventsType,
-											 productionKinematicsParticleNames,
-											 decayKinematicsParticleNames,
-											 map<string, pair<double, double> >(),
-											 std::vector<string>());
+		                                     userString,
+		                                     eventsType,
+		                                     productionKinematicsParticleNames,
+		                                     decayKinematicsParticleNames,
+		                                     map<string, pair<double, double> >(),
+		                                     std::vector<string>());
 		if(not success) {
 			printErr << "could not initialize rootpwaDataFileWriter. Aborting..." << endl;
 			return 1;

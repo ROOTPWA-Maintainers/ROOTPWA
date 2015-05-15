@@ -13,7 +13,7 @@ namespace {
 	                          const double       massBinLower = 0,
 	                          const double       massBinUpper = 0,
 	                          const std::string  startValFileName = "",
-			                  const bool         checkHessian=false,
+	                          const bool         checkHessian=false,
 	                          const bool         verbose = false)
 	{
 		rpwa::pwaLikelihood<std::complex<double> > likelihood = bp::extract<rpwa::pwaLikelihood<std::complex<double> > >(pyLikelihood);
@@ -22,7 +22,7 @@ namespace {
 		                         massBinLower,
 		                         massBinUpper,
 		                         startValFileName,
-								 checkHessian,
+		                         checkHessian,
 		                         verbose);
 	}
 

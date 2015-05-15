@@ -28,4 +28,4 @@ if __name__ == "__main__":
 	if not pyRootPwa.saveFileManager(fileManager, config.fileManagerPath):
 		pyRootPwa.utils.printErr("saving the file manager failed. Aborting...")
 		sys.exit(1)
-	pyRootPwa.utils.printSucc("Saved file manager to '" + config.fileManagerPath + "'.")
+	pyRootPwa.utils.printSucc("saved file manager to '" + config.fileManagerPath + "'.")

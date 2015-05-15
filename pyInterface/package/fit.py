@@ -6,7 +6,7 @@ ROOT = pyRootPwa.ROOT
 
 def readWaveList(waveListFileName):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
-	          + "'" + waveListFileName + "'.")
+	                        + "'" + waveListFileName + "'.")
 	with open(waveListFileName, 'r') as waveListFile:
 # 	if (not waveListFile) {
 # 		printErr << "cannot open file '" << waveListFileName << "'. aborting." << endl;

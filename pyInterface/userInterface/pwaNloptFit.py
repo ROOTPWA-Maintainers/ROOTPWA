@@ -10,7 +10,7 @@ import pyRootPwa.core
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
-	                                 description="generate phase space Monte Carlo events"
+	                                 description="pwa NLopt fit executable"
 	                                )
 
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
@@ -88,11 +88,11 @@ if __name__ == "__main__":
 		sys.exit(1)
 	tree = outputFile.Get(valTreeName)
 	if (not tree):
-		pyRootPwa.utils.printInfo("file '" + args.outputFileName + "' is empty. "
-		          + "creating new tree '" + valTreeName + "' for PWA result.")
+		printInfo("file '" + args.outputFileName + "' is empty. "
+		        + "creating new tree '" + valTreeName + "' for PWA result.")
 		tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
 		if not fitResult.branch(tree, valBranchName):
-			pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
+			printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
 			sys.exit(1)
 	else:
 		fitResult.setBranchAddress(tree, valBranchName)
@@ -101,8 +101,8 @@ if __name__ == "__main__":
 	outputFile.Close()
 	if nmbBytes == 0:
 		printErr("problems writing integral to TKey 'fitResult' "
-		         + "in file '" + args.outputFileName + "'")
+		       + "in file '" + args.outputFileName + "'")
 		sys.exit(1)
 	else:
 		printSucc("wrote integral to TKey 'fitResult' "
-		          + "in file '" + args.outputFileName + "'")
+		        + "in file '" + args.outputFileName + "'")

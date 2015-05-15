@@ -12,13 +12,13 @@ namespace {
 
 	void
 	pwaLikelihood_init(rpwa::pwaLikelihood<std::complex<double> >& self,
-	     const unsigned int                          rank,
-	     PyObject*                                   pyAmpFileList,
-	     const double                                massBinCenter,
-	     const std::string&                          waveListFileName,
-	     const std::string&                          normIntFileName,
-	     const std::string&                          accIntFileName,
-	     const unsigned int                          numbAccEvents)
+	                   const unsigned int                          rank,
+	                   PyObject*                                   pyAmpFileList,
+	                   const double                                massBinCenter,
+	                   const std::string&                          waveListFileName,
+	                   const std::string&                          normIntFileName,
+	                   const std::string&                          accIntFileName,
+	                   const unsigned int                          numbAccEvents)
 	{
 		std::map<std::string, std::string> ampFilesMap;
 		bp::dict pyDictAmpFilesDict = bp::extract<bp::dict>(pyAmpFileList);
