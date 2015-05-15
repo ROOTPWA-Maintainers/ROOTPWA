@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="configFileName", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
-	parser.add_argument("-b", type=str, metavar="massBin(s)", default="all", dest="massBins", help="mass bins to be calculated (default: all)")
+	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
 	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="number of jobs (default: 1)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
@@ -80,7 +80,11 @@ if __name__ == "__main__":
 	if (len(waveList) == 0):
 		waveList = fileManager.getWaveNameList()
 
-	for binID in fileManager.getBinIDList():
+	binIDList = fileManager.getBinIDList()
+	if (not args.massBin == -1):
+		binIDList = [args.massBin]
+
+	for binID in binIDList:
 		for waveName in waveList:
 			for eventsType in [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED, pyRootPwa.core.eventMetadata.OTHER ]:
 				dataFile = fileManager.getDataFile(binID, eventsType)
