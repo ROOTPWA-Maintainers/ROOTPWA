@@ -1497,6 +1497,18 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 	_m1 = configComponent["mIsobar1"].as<double>();
 	_m2 = configComponent["mIsobar2"].as<double>();
 
+	if (configComponent["relAngularMom"]) {
+		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
+			_l = configComponent["relAngularMom"].as<int>();
+		} else {
+			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
+		_l = 0;
+	}
+
 	if (configComponent["exponent"]) {
 		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
 			_exponent = configComponent["exponent"].as<double>();
@@ -1543,6 +1555,9 @@ rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Key << "mIsobar2";
 	yamlOutput << YAML::Value << _m2;
 
+	yamlOutput << YAML::Key << "relAngularMom";
+	yamlOutput << YAML::Value <<_l;
+
 	yamlOutput << YAML::Key << "exponent";
 	yamlOutput << YAML::Value <<_exponent;
 
@@ -1578,7 +1593,8 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 		return std::complex<double>(1,0);
 	}
 	const double q = rpwa::breakupMomentum(mass, _m1, _m2);
-	const double c = std::pow(q, _exponent);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	const double c = std::pow(q*f2, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 1)*c);
 
@@ -1622,7 +1638,8 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 	out << (_parametersFixed[1] ? " (FIXED) " : "") << std::endl;
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
-	out << "    exponent of break-up momentum: " << _exponent << std::endl;
+	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
+	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
 
 	return component::print(out);
 }
@@ -1692,6 +1709,18 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 	_m1 = configComponent["mIsobar1"].as<double>();
 	_m2 = configComponent["mIsobar2"].as<double>();
 
+	if (configComponent["relAngularMom"]) {
+		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
+			_l = configComponent["relAngularMom"].as<int>();
+		} else {
+			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
+		_l = 0;
+	}
+
 	if (configComponent["exponent"]) {
 		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
 			_exponent = configComponent["exponent"].as<double>();
@@ -1743,6 +1772,9 @@ rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Key << "mIsobar2";
 	yamlOutput << YAML::Value << _m2;
 
+	yamlOutput << YAML::Key << "relAngularMom";
+	yamlOutput << YAML::Value <<_l;
+
 	yamlOutput << YAML::Key << "exponent";
 	yamlOutput << YAML::Value <<_exponent;
 
@@ -1775,7 +1807,8 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 		return std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 	}
 	const double q = rpwa::breakupMomentum(m, _m1, _m2);
-	const double c = std::pow(q, _exponent);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	const double c = std::pow(q*f2, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
@@ -1827,7 +1860,8 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 	}
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
-	out << "    exponent of break-up momentum: " << _exponent << std::endl;
+	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
+	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
 
 	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
 	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
