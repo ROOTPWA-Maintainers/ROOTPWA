@@ -1622,7 +1622,7 @@ rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const siz
 	_parametersName[4] = "c3";
 
 	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 1.0e-3;
+	_parametersStep[1] = 0.001;
 	_parametersStep[2] = 1.0;
 	_parametersStep[3] = 1.0;
 	_parametersStep[4] = 1.0;
@@ -1746,8 +1746,11 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
+	const double tPrimePol = fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime;
 
-	const std::complex<double> component = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1)) * exp(-(fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime)*q2);
+	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
+
+	const std::complex<double> component = mPre * exp(-tPrimePol*q2);
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		cache.setComponent(getId(), idxBin, idxMass, component);
@@ -1787,7 +1790,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 		} else {
 			out << "unlimited";
 		}
-		out << (_parametersFixed[i] ? " (FIXED) " : "") << std::endl;
+		out << (_parametersFixed[i] ? " (FIXED)" : "") << std::endl;
 	}
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
