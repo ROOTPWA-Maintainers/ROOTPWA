@@ -342,6 +342,39 @@ namespace rpwa {
 
 		};
 
+		class constantBackground : public component {
+
+		public:
+
+			constantBackground(const size_t id,
+			                   const std::string& name);
+
+			virtual bool init(const YAML::Node& configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  const size_t nrBins,
+			                  const std::vector<double>& massBinCenters,
+			                  const std::map<std::string, size_t>& waveIndices,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
+			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
+			                                 const size_t idxBin,
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		};
+
 		class exponentialBackground : public component {
 
 		public:

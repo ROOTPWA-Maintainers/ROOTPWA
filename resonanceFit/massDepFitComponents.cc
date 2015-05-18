@@ -1358,6 +1358,96 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 }
 
 
+rpwa::massDepFit::constantBackground::constantBackground(const size_t id,
+                                                         const std::string& name)
+	: component(id, name, "constantBackground", 0)
+{
+}
+
+
+bool
+rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
+                                           rpwa::massDepFit::parameters& fitParameters,
+                                           rpwa::massDepFit::parameters& fitParametersError,
+                                           const size_t nrBins,
+                                           const std::vector<double>& massBinCenters,
+                                           const std::map<std::string, size_t>& waveIndices,
+                                           const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                           const bool useBranchings,
+                                           const bool debug)
+{
+	if(debug) {
+		printDebug << "start initializing 'constantBackground' for component '" << getName() << "'." << std::endl;
+	}
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+		printErr << "error while reading configuration of 'component' class." << std::endl;
+		return false;
+	}
+
+	if(getNrChannels() != 1) {
+		printErr << "component '" << getName() << "' of type 'constantBackground' needs to have exactly one decay channel." << std::endl;
+		return false;
+	}
+
+	if(debug) {
+		print(printDebug);
+		printDebug << "finished initializing 'constantBackground'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
+                                            const rpwa::massDepFit::parameters& fitParameters,
+                                            const rpwa::massDepFit::parameters& fitParametersError,
+                                            const bool useBranchings,
+                                            const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'constantBackground' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'constantBackground'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'constantBackground'." << std::endl;
+	}
+
+	return true;
+}
+
+
+std::complex<double>
+rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& fitParameters,
+                                          rpwa::massDepFit::cache& cache,
+                                          const size_t idxBin,
+                                          const double m,
+                                          const size_t idxMass) const
+{
+	return 1.;
+}
+
+
+std::ostream&
+rpwa::massDepFit::constantBackground::print(std::ostream& out) const
+{
+	out << "component " << getId() << " '" << getName() << "' (constantBackground):" << std::endl;
+
+	return component::print(out);
+}
+
+
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
 	: component(id, name, "exponentialBackground", 2)

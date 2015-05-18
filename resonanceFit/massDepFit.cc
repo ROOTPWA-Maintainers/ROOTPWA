@@ -636,6 +636,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			component = new dynamicWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "integralWidthBreitWigner") {
 			component = new integralWidthBreitWigner(fitModel.getNrComponents(), name);
+		} else if(type == "constantBackground") {
+			component = new constantBackground(fitModel.getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
 			component = new exponentialBackground(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
