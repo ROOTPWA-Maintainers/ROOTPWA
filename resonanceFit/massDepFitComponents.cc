@@ -1450,13 +1450,11 @@ rpwa::massDepFit::constantBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "exponentialBackground", 2)
+	: component(id, name, "exponentialBackground", 1)
 {
-	_parametersName[0] = "m0";
-	_parametersName[1] = "g";
+	_parametersName[0] = "g";
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 1.0;
+	_parametersStep[0] = 1.0;
 }
 
 
@@ -1585,18 +1583,15 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 		}
 	}
 
-	// shift baseline mass
-	const double mass = m - fitParameters.getParameter(getId(), 0);
-
 	// calculate breakup momentum
-	if(mass < _m1+_m2) {
+	if(m < _m1+_m2) {
 		return std::complex<double>(1,0);
 	}
-	const double q = rpwa::breakupMomentum(mass, _m1, _m2);
+	const double q = rpwa::breakupMomentum(m, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
 	const double c = std::pow(q*f2, _exponent);
 
-	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 1)*c);
+	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		cache.setComponent(getId(), std::numeric_limits<size_t>::max(), idxMass, component);
@@ -1611,7 +1606,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 {
 	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
 
-	out << "    mass threshold ";
+	out << "    width ";
 	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
@@ -1623,19 +1618,6 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 		out << "unlimited";
 	}
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
-
-	out << "    width ";
-	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
-	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
-	} else if(_parametersLimitedLower[1]) {
-		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[1]) {
-		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parametersFixed[1] ? " (FIXED) " : "") << std::endl;
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
