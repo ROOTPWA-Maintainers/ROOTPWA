@@ -410,6 +410,7 @@ namespace rpwa {
 
 			double _m1;
 			double _m2;
+			double _exponent;
 
 		};
 
@@ -451,6 +452,7 @@ namespace rpwa {
 			std::vector<double> _tPrimeMeans;
 			double _m1;
 			double _m2;
+			double _exponent;
 
 		};
 
