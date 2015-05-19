@@ -44,6 +44,7 @@ namespace rpwa {
 
 		Long64_t Merge(TCollection* list, Option_t* option = "");     // throws an exception
 		static eventMetadata* merge(const std::vector<const rpwa::eventMetadata*>& inputData,
+		                            const bool mergeDiffMeta = false,
 		                            const int& splitlevel = 99,
 		                            const int& buffsize = 256000);                     // actually works
 
