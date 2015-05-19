@@ -647,6 +647,11 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 		} else if(type == "tPrimeDependentBackground") {
 			component = new tPrimeDependentBackground(fitModel.getNrComponents(), name);
 			((tPrimeDependentBackground*)component)->setTPrimeMeans(_tPrimeMeans);
+		} else if(type == "exponentialBackgroundIntegral") {
+			component = new exponentialBackgroundIntegral(fitModel.getNrComponents(), name);
+		} else if(type == "tPrimeDependentBackgroundIntegral") {
+			component = new tPrimeDependentBackgroundIntegral(fitModel.getNrComponents(), name);
+			((tPrimeDependentBackgroundIntegral*)component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
 			return false;
