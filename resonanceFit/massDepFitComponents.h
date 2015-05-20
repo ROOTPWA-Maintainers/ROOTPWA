@@ -157,8 +157,8 @@ namespace rpwa {
 			                                rpwa::massDepFit::parameters& fitParameters,
 			                                rpwa::massDepFit::cache& cache);
 
-			virtual bool getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
-			virtual bool getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
+			virtual double getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
+			virtual double getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
 
 			virtual bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
 			virtual double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
