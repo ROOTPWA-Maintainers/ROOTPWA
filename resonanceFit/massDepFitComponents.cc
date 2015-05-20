@@ -1519,6 +1519,10 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 		_exponent = 2.0;
 	}
 
+	const double q = rpwa::breakupMomentum(massBinCenters.back(), _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	_norm = 1. / (q*f2);
+
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'exponentialBackground'." << std::endl;
@@ -1589,7 +1593,7 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 	}
 	const double q = rpwa::breakupMomentum(m, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
-	const double c = std::pow(q*f2, _exponent);
+	const double c = std::pow(q*f2 * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
@@ -1715,6 +1719,10 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 		_exponent = 2.0;
 	}
 
+	const double q = rpwa::breakupMomentum(massBinCenters.back(), _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	_norm = 1. / (q*f2);
+
 	if(_tPrimeMeans.size() != nrBins) {
 		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
 		return false;
@@ -1790,7 +1798,7 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 	}
 	const double q = rpwa::breakupMomentum(m, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
-	const double c = std::pow(q*f2, _exponent);
+	const double c = std::pow(q*f2 * _norm, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
@@ -1955,6 +1963,8 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 
 	_exponent = configComponent["exponent"].as<double>();
 
+	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'exponentialBackgroundIntegral'." << std::endl;
@@ -2025,7 +2035,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::val(const rpwa::massDepFit::par
 	}
 
 	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(ps, _exponent);
+	const double c = std::pow(ps * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
@@ -2178,6 +2188,8 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 
 	_exponent = configComponent["exponent"].as<double>();
 
+	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+
 	if(_tPrimeMeans.size() != nrBins) {
 		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
 		return false;
@@ -2253,7 +2265,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::val(const rpwa::massDepFit:
 	}
 
 	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(ps, _exponent);
+	const double c = std::pow(ps * _norm, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];

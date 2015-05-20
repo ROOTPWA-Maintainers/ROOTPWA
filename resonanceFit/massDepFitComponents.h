@@ -413,6 +413,8 @@ namespace rpwa {
 			double _m2;
 			double _exponent;
 
+			double _norm;
+
 		};
 
 		class tPrimeDependentBackground : public component {
@@ -456,6 +458,8 @@ namespace rpwa {
 			double _m2;
 			double _exponent;
 
+			double _norm;
+
 		};
 
 		class exponentialBackgroundIntegral : public component {
@@ -496,6 +500,8 @@ namespace rpwa {
 			std::vector<double> _values;
 			ROOT::Math::Interpolator* _interpolator;
 			double _exponent;
+
+			double _norm;
 
 		};
 
@@ -540,6 +546,8 @@ namespace rpwa {
 			std::vector<double> _values;
 			ROOT::Math::Interpolator* _interpolator;
 			double _exponent;
+
+			double _norm;
 
 		};
 
