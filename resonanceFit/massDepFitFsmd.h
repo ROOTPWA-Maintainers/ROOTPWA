@@ -76,6 +76,7 @@ namespace rpwa {
 			bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
 			double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
 			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
+			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
 			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
 			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
@@ -98,6 +99,7 @@ namespace rpwa {
 			std::vector<bool> _parametersLimitedLower;
 			std::vector<double> _parametersLimitUpper;
 			std::vector<bool> _parametersLimitedUpper;
+			std::vector<std::string> _parametersName;
 			std::vector<double> _parametersStep;
 		};
 

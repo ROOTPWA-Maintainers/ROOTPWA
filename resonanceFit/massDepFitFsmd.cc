@@ -91,6 +91,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 	_parametersLimitedLower.resize(_nrParameters);
 	_parametersLimitUpper.resize(_nrParameters);
 	_parametersLimitedUpper.resize(_nrParameters);
+	_parametersName.resize(_nrParameters);
 	_parametersStep.resize(_nrParameters, 0.0001);
 
 	fitParameters.resize(_id+1, 0, _nrParameters, 0);
@@ -98,6 +99,7 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		const std::string parName = _function->GetParName(idxParameter);
+		_parametersName[idxParameter] = parName;
 
 		if(debug) {
 			printDebug << "reading parameter '" << parName << "'." << std::endl;
@@ -193,9 +195,7 @@ rpwa::massDepFit::fsmd::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Value << _function->GetTitle();
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		const std::string parName = _function->GetParName(idxParameter);
-
-		yamlOutput << YAML::Key << parName;
+		yamlOutput << YAML::Key << _parametersName[idxParameter];
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginMap;
