@@ -464,6 +464,10 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& co
 	_freeParameters.clear();
 
 	const size_t nrItems = configInputFreeParameters.size();
+	if(nrItems == 0) {
+		printErr << "'freeparameters' is an empty sequence, when defined it must at least contain one entry." << std::endl;
+		return false;
+	}
 
 	if(_debug) {
 		printDebug << "going to extract " << nrItems << " items from 'freeparameters'." << std::endl;
