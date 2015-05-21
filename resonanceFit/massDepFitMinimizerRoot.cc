@@ -111,7 +111,7 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 }
 
 unsigned int
-rpwa::massDepFit::minimizerRoot::NFree()
+rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
 {
 	return _minimizer->NFree();
 }

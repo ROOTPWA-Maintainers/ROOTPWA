@@ -84,7 +84,7 @@ namespace rpwa {
 			              const bool quiet);
 			virtual ~minimizerRoot() {}
 
-			unsigned int NFree();
+			unsigned int getNrFreeParameters() const;
 
 			bool minimize(rpwa::massDepFit::parameters& fitParameters,
 			              rpwa::massDepFit::parameters& fitParametersError,

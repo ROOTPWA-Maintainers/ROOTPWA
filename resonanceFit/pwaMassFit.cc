@@ -263,7 +263,7 @@ main(int    argc,
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
 		const unsigned int nrDataPoints = fitFunction.getNrDataPoints();
-		const unsigned int nrFree = minimizer.NFree();
+		const unsigned int nrFree = minimizer.getNrFreeParameters();
 		ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
 
