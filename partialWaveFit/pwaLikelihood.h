@@ -166,7 +166,7 @@ namespace rpwa {
 		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
-		void init(const unsigned int                        rank,
+		bool init(const unsigned int                        rank,
 		          const std::map<std::string, std::string>& ampFileList,
 		          const double                              massBinCenter,
 		          const std::string&                        waveListFileName,
@@ -196,14 +196,14 @@ namespace rpwa {
 		void clear();
 
 		// helper functions
-		void readWaveList       (const std::string& waveListFileName);                    ///< reads wave names and thresholds from wave list file
-		void buildParDataStruct (const unsigned int rank,
+		bool readWaveList       (const std::string& waveListFileName);                    ///< reads wave names and thresholds from wave list file
+		bool buildParDataStruct (const unsigned int rank,
 		                         const double       massBinCenter);                       ///< builds parameter data structures
-		void readIntegrals      (const std::string& normIntFileName,
+		bool readIntegrals      (const std::string& normIntFileName,
 		                         const std::string& accIntFileName);                      ///< reads normalization and acceptance integrals from file
 		void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
 		                           normMatrixArrayType&           reorderedMatrix) const;
-		void readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList);  ///< reads decay amplitudes from files in specified directory
+		bool readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList);  ///< reads decay amplitudes from files in specified directory
 
 	public:
 

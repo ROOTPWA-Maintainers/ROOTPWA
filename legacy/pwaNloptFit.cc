@@ -263,7 +263,10 @@ main(int    argc,
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
 #endif
-	L.init(rank, ampFileList, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents);
+	if (not L.init(rank, ampFileList, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents)) {
+		printErr << "error while initializing likelihood function. Aborting..." << endl;
+		exit(1);
+	}
 
 	if (cauchy) {
 		L.setPriorType(L.HALF_CAUCHY);
