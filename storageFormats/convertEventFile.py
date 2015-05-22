@@ -20,9 +20,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="convert event file")
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format without meta data")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="input file in ROOTPWA format with meta data")
-	parser.add_argument("--bin-quantity-name", type=str, metavar="binQuantityName", dest="binQuantityName", default="", help="name of quantity this data is binned in (default: None)")
-	parser.add_argument("--lower-bin-boundary", type=float, metavar="binBoundaryLower", dest="binBoundaryLower", default=0., help="lower bin boundary (default: 0.)")
-	parser.add_argument("--upper-bin-boundary", type=float, metavar="binBoundaryUpper", dest="binBoundaryUpper", default=0., help="upper bin boundary (default: 0.)")
+	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
+	                                                             "You can use the argument multiple times for multiple binning variables")
 	parser.add_argument("-l", type=str, metavar="string", dest="userString", help="label which is saved to the metadata (default: output file name)")
 	parser.add_argument("-t", type=str, metavar="eventsType", dest="eventsType", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
@@ -59,9 +58,9 @@ if __name__ == "__main__":
 	for name in inputFile.Get(decayKinPartNamesObjName):
 		finalStateParticleNames.append(str(name))
 
-	binningMap = {}
-	if args.binQuantityName != "":
-		binningMap[args.binQuantityName] = (args.binBoundaryLower, args.binBoundaryUpper)
+	binningMap = pyRootPwa.utils.binningMapFromArgList(args.binning)
+	if not binningMap:
+		printWarn("received no valid binning map argument")
 
 	fileWriter = pyRootPwa.core.eventFileWriter()
 	fileWriter.initialize(outputFile,
