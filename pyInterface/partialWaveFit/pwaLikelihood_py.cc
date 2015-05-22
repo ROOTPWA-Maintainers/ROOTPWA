@@ -10,7 +10,7 @@ namespace bp = boost::python;
 
 namespace {
 
-	void
+	bool
 	pwaLikelihood_init(rpwa::pwaLikelihood<std::complex<double> >& self,
 	                   const unsigned int                          rank,
 	                   PyObject*                                   pyAmpFileList,
@@ -28,7 +28,7 @@ namespace {
 			std::string fileName = bp::extract<std::string>(pyDictAmpFilesDict[keys[i]]);
 			ampFilesMap.insert(std::pair<std::string, std::string>(waveName, fileName));
 		}
-		self.init(rank, ampFilesMap, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents);
+		return self.init(rank, ampFilesMap, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents);
 	}
 
 	bp::list

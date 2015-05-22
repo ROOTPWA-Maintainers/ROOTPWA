@@ -57,14 +57,16 @@ if __name__ == "__main__":
 	likelihood = pyRootPwa.core.pwaLikelihood()
 	if (not args.verbose):
 		likelihood.setQuiet(True)
-	likelihood.init(
-	                args.rank,
-	                ampFileList,
-	                massBinCenter,
-	                args.waveListFileName,
-	                psIntegralPath,
-	                accIntegralPath,
-	                args.accEventsOverride)
+	if (not likelihood.init(
+	                        args.rank,
+	                        ampFileList,
+	                        massBinCenter,
+	                        args.waveListFileName,
+	                        psIntegralPath,
+	                        accIntegralPath,
+	                        args.accEventsOverride)):
+		printErr("could not initialize likelihood. Aborting...")
+		sys.exit(1)
 	fitResult = pyRootPwa.pwaFit(
 	                             likelihood,
 	                             seed = args.seed,

@@ -941,7 +941,7 @@ pwaLikelihood<complexT>::cudaEnabled() const
 
 
 template<typename complexT>
-void
+bool
 pwaLikelihood<complexT>::init(const unsigned int rank,
                               const std::map<std::string, std::string>& ampFileList,
                               const double       massBinCenter,
@@ -951,21 +951,22 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
                               const unsigned int numbAccEvents)
 {
 	_numbAccEvents = numbAccEvents;
-	readWaveList(waveListFileName);
-	buildParDataStruct(rank, massBinCenter);
-	readIntegrals(normIntFileName, accIntFileName);
-	readDecayAmplitudes(ampFileList);
+	if (not readWaveList(waveListFileName)) return false;
+	if (not buildParDataStruct(rank, massBinCenter)) return false;
+	if (not readIntegrals(normIntFileName, accIntFileName)) return false;
+	if (not readDecayAmplitudes(ampFileList)) return false;
 #ifdef USE_CUDA
 	if (_cudaEnabled)
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
 			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 #endif
+	return true;
 }
 
 
 template<typename complexT>
-void
+bool
 pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 {
 	printInfo << "reading amplitude names and thresholds from wave list file "
@@ -973,7 +974,7 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 	ifstream waveListFile(waveListFileName.c_str());
 	if (not waveListFile) {
 		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
-		throw;
+		return false;
 	}
 	vector<string>       waveNames     [2];
 	vector<double>       waveThresholds[2];
@@ -1021,17 +1022,18 @@ pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 			_waveNames      [iRefl][iWave] = waveNames     [iRefl][iWave];
 			_waveThresholds [iRefl][iWave] = waveThresholds[iRefl][iWave];
 		}
+	return true;
 }
 
 
 template<typename complexT>
-void
+bool
 pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
                                             const double       massBinCenter)
 {
 	if ((_nmbWavesRefl[0] + _nmbWavesRefl[1] == 0) or (_waveThresholds.size() == 0)) {
 		printErr << "no wave info. was readWaveList() executed successfully? Aborting...";
-		throw;
+		return false;
 	}
 	_rank = rank;
 	// calculate dimension of function taking into account rank restrictions and flat wave
@@ -1100,6 +1102,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
 	// flat wave
 	_parNames     [parIndex] = "V_flat";
 	_parThresholds[parIndex] = 0;
+	return true;
 }
 
 
@@ -1122,7 +1125,7 @@ pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral
 
 
 template<typename complexT>
-void
+bool
 pwaLikelihood<complexT>::readIntegrals
 (const string& normIntFileName,   // name of file with normalization integrals
  const string& accIntFileName)  // name of TKey which stores integral in .root file
@@ -1133,14 +1136,14 @@ pwaLikelihood<complexT>::readIntegrals
 	if (not intFile or intFile->IsZombie()) {
 		printErr << "could not open normalization integral file '" << normIntFileName << "'. "
 		         << "Aborting..." << endl;
-		throw;
+		return false;
 	}
 	ampIntegralMatrix* integral = 0;
 	intFile->GetObject(integralTKeyName.c_str(), integral);
 	if (not integral) {
 		printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
 		         << "'" << normIntFileName << "'. Aborting..." << endl;
-		throw;
+		return false;
 	}
 	_numbAccEvents = _numbAccEvents==0 ? integral->nmbEvents() : _numbAccEvents;
 	reorderIntegralMatrix(*integral, _normMatrix);
@@ -1151,14 +1154,14 @@ pwaLikelihood<complexT>::readIntegrals
 	if (not intFile or intFile->IsZombie()) {
 		printErr << "could not open normalization integral file '" << accIntFileName << "'. "
 		         << "Aborting..." << endl;
-		throw;
+		return false;
 	}
 	integral = 0;
 	intFile->GetObject(integralTKeyName.c_str(), integral);
 	if (not integral) {
 		printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
 		         << "'" << accIntFileName << "'. Aborting..." << endl;
-		throw;
+		return false;
 	}
 	if (_numbAccEvents != 0) {
 		_totAcc = ((double)integral->nmbEvents()) / (double)_numbAccEvents;
@@ -1168,11 +1171,12 @@ pwaLikelihood<complexT>::readIntegrals
 		_totAcc = 1;
 	reorderIntegralMatrix(*integral, _accMatrix);
 	intFile->Close();
+	return true;
 }
 
 
 template<typename complexT>
-void
+bool
 pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList,
                                              const string& ampLeafName)
 {
@@ -1180,7 +1184,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::st
 	if (_normMatrix.num_elements() == 0) {
 		printErr << "normalization integrals have to be loaded before loading the amplitudes. "
 		         << "Aborting..." << endl;
-		throw;
+		return false;
 	}
 	clear();
 
@@ -1302,6 +1306,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::st
 						}
 		}
 	}  // _useNormalizedAmps
+	return true;
 }
 
 
