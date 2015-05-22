@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
+	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 # 	parser.add_argument("-r", type=int, metavar="#", dest="nEventsRenorm", default=0, help="number of events to renormalize to (default: no renormalization)")
 	parser.add_argument("-w", type=str, metavar="path", dest="weightsFileName", default="", help="path to MC weight file for de-weighting (default: none)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
@@ -38,8 +39,17 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	eventsTypes = []
+	if (args.eventsType == "generated"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED ]
+	elif (args.eventsType == "accepted"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.ACCEPTED ]
+	elif (args.eventsType == "all"):
+		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED,
+		                pyRootPwa.core.eventMetadata.ACCEPTED ]
+
 	for binID in fileManager.getBinIDList():
-		for eventsType in [ pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
+		for eventsType in eventsTypes:
 			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
 			outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "NEW")
 			if not outputFile:
