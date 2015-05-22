@@ -40,6 +40,11 @@ if __name__ == "__main__":
 
 	for binID in fileManager.getBinIDList():
 		for eventsType in [ pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
+			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
+			outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "NEW")
+			if not outputFile:
+				printErr("cannot open output file '" + outputFileName + "'. Aborting...")
+				sys.exit(1)
 			ampFileList = fileManager.getAmpFilePaths(binID, eventsType)
 			if not ampFileList:
 				printErr("could not retrieve valid amplitude file list. Aborting...")
@@ -47,11 +52,7 @@ if __name__ == "__main__":
 			printInfo("calculating integral matrix from " + str(len(ampFileList)) + " amplitude files:")
 			integral = pyRootPwa.calcIntegrals(ampFileList, args.nEvents, args.weightsFileName)
 
-			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
-			outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "RECREATE")
-			if not outputFile:
-				printErr("cannot open output file '" + outputFileName + "'. Aborting...")
-				sys.exit(1)
+			outputFile.cd()
 			nmbBytes = integral.Write(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
 			outputFile.Close()
 			if nmbBytes == 0:
