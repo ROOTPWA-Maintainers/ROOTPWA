@@ -49,8 +49,7 @@ using namespace rpwa;
 
 
 ampIntegralMatrix
-readIntegralMatrix(const string& intFileName,
-                   const string& integralTKeyName = "integral")
+readIntegralMatrix(const string& intFileName)
 {
 	printInfo << "loading normalization integral from '" << intFileName << "'" << endl;
 	ampIntegralMatrix integral;
@@ -63,9 +62,9 @@ readIntegralMatrix(const string& intFileName,
 			throw;
 		}
 		ampIntegralMatrix* integralPtr = 0;
-		intFile->GetObject(integralTKeyName.c_str(), integralPtr);
+		intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integralPtr);
 		if (not integralPtr) {
-			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
+			printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
 			         << "'" << intFileName << "'. Aborting..." << endl;
 			throw;
 		}

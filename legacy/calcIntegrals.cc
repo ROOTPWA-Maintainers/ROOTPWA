@@ -56,11 +56,10 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-o output file -i TKey name -n max. # of events -r max. # of events -w weight file -v -h] "
+	     << " [-o output file -n max. # of events -r max. # of events -w weight file -v -h] "
 	     << "amplitude files" << endl
 	     << "    where:" << endl
 	     << "        -o path    path to output file (default: './norm.int')"                      << endl
-	     << "        -i name    integral TKey name (only for .root format, default: 'integral')"  << endl
 	     << "        -n #       maximum number of events to process (default: all)"               << endl
 	     << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
 	     << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
@@ -83,7 +82,6 @@ main(int    argc,
 	// parse command line options
 	const string progName        = argv[0];
 	string       outFileName     = "./norm.int";
-	string       integralName    = "integral";
 	unsigned int maxNmbEvents    = 0;
 	unsigned int nmbEventsRenorm = 0;
 	string       weightFileName  = "";
@@ -91,13 +89,10 @@ main(int    argc,
 	extern char* optarg;
 	extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "o:i:n:r:w:vh")) != -1)
+	while ((c = getopt(argc, argv, "o:n:r:w:vh")) != -1)
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
-			break;
-		case 'i':
-			integralName = optarg;
 			break;
 		case 'n':
 			maxNmbEvents = atoi(optarg);
@@ -171,14 +166,14 @@ main(int    argc,
 			printErr << "cannot open output file '" << outFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
-		const int nmbBytes = integral.Write(integralName.c_str());
+		const int nmbBytes = integral.Write(ampIntegralMatrix::integralObjectName.c_str());
 		outFile->Close();
 		if (nmbBytes == 0) {
-			printErr << "problems writing integral to TKey '" << integralName << "' "
+			printErr << "problems writing integral to TKey '" << ampIntegralMatrix::integralObjectName << "' "
 			         << "in file '" << outFileName << "'" << endl;
 			exit(1);
 		} else
-			printSucc << "wrote integral to TKey '" << integralName << "' "
+			printSucc << "wrote integral to TKey '" << ampIntegralMatrix::integralObjectName << "' "
 			          << "in file '" << outFileName << "'" << endl;
 	} else if (outFileExt == "int")
 		integral.writeAscii(outFileName);

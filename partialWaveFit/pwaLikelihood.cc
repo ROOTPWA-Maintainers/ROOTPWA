@@ -1125,9 +1125,9 @@ template<typename complexT>
 void
 pwaLikelihood<complexT>::readIntegrals
 (const string& normIntFileName,   // name of file with normalization integrals
- const string& accIntFileName,    // name of file with acceptance integrals
- const string& integralTKeyName)  // name of TKey which stores integral in .root file
+ const string& accIntFileName)  // name of TKey which stores integral in .root file
 {
+	const string integralTKeyName = rpwa::ampIntegralMatrix::integralObjectName;
 	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
 	const string normIntFileExt  = extensionFromPath(normIntFileName);
 	if (normIntFileExt == "root") {

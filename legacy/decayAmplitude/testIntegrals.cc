@@ -124,14 +124,14 @@ main()
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
 			printInfo << "writing integral to 'testIntegral.root'" << endl;
-			integral.Write("integral");
+			integral.Write(ampIntegralMatrix::integralObjectName.c_str());
 			outFile->Close();
 		}
 		{
 			TFile*             inFile    = TFile::Open("testIntegral.root", "READ");
 			ampIntegralMatrix* integral3 = 0;
 			printInfo << "reading integral from 'testIntegral.root'" << endl;
-			inFile->GetObject("integral", integral3);
+			inFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral3);
 			if (not integral3)
 				printErr << "cannot find integral 'integral'" << endl;
 			else {

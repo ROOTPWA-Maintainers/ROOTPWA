@@ -76,7 +76,7 @@ if __name__ == "__main__":
 	if config.outputFileFormat == "root":
 		# read integral matrix from ROOT file
 		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-		integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get("integral"))
+		integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName))
 		integralFile.Close()
 	else:
 		# read integral matrix from ASCII file

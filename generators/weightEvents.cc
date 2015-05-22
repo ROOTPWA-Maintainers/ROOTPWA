@@ -221,7 +221,6 @@ main(int    argc,
 	const string   fitResultTreeName        = "pwa";
 	const string   fitResultLeafName        = "fitResult_v2";
 	string         intFileName              = "./norm.int";
-	const string   intTKeyName              = "integral";              // key name in case of ROOT integrals
 	string         ampDirName               = ".";
 	bool           useRootAmps              = false;                   // if true .root amplitude files are read
 	unsigned int   nmbProdAmpSamples        = 1;
@@ -298,9 +297,9 @@ main(int    argc,
 			exit(1);
 		}
 		ampIntegralMatrix* integral = 0;
-		intFile->GetObject(intTKeyName.c_str(), integral);
+		intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral);
 		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << intTKeyName << "' in file "
+			printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
 			         << "'" << intFileName << "'. Aborting..." << endl;
 			exit(1);
 		}

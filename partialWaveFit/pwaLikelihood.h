@@ -198,8 +198,7 @@ namespace rpwa {
 		void buildParDataStruct (const unsigned int rank,
 		                         const double       massBinCenter);     ///< builds parameter data structures
 		void readIntegrals      (const std::string& normIntFileName,
-		                         const std::string& accIntFileName,
-		                         const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
+		                         const std::string& accIntFileName);  ///< reads normalization and acceptance integrals from file
 
 		void readDecayAmplitudes(const std::string& ampDirName  = ".",
 		                         const std::string& ampLeafName = "amplitude");  ///< reads decay amplitudes from files in specified directory
