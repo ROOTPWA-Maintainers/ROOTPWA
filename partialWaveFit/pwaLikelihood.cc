@@ -52,6 +52,7 @@
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
 #endif
+#include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "pwaLikelihood.h"
 #include "partialWaveFitHelper.h"
@@ -1177,9 +1178,9 @@ pwaLikelihood<complexT>::readIntegrals
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList,
-                                             const string& ampLeafName)
+pwaLikelihood<complexT>::readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList)
 {
+	const std::string ampLeafName = rpwa::amplitudeMetadata::amplitudeLeafName;
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
 		printErr << "normalization integrals have to be loaded before loading the amplitudes. "

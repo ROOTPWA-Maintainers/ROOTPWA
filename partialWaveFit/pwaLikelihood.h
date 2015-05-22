@@ -200,8 +200,7 @@ namespace rpwa {
 		bool readIntegrals      (const std::string& normIntFileName,
 		                         const std::string& accIntFileName);  ///< reads normalization and acceptance integrals from file
 
-		bool readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList,
-		                         const std::string& ampLeafName = "amplitude");  ///< reads decay amplitudes from files in specified directory
+		bool readDecayAmplitudes(const std::map<std::string, std::string>& ampFileList);  ///< reads decay amplitudes from files in specified directory
 
 
 		void clear();
