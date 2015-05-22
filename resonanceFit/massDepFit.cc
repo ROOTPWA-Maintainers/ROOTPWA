@@ -464,6 +464,10 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& co
 	_freeParameters.clear();
 
 	const size_t nrItems = configInputFreeParameters.size();
+	if(nrItems == 0) {
+		printErr << "'freeparameters' is an empty sequence, when defined it must at least contain one entry." << std::endl;
+		return false;
+	}
 
 	if(_debug) {
 		printDebug << "going to extract " << nrItems << " items from 'freeparameters'." << std::endl;
@@ -636,6 +640,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			component = new dynamicWidthBreitWigner(fitModel.getNrComponents(), name);
 		} else if(type == "integralWidthBreitWigner") {
 			component = new integralWidthBreitWigner(fitModel.getNrComponents(), name);
+		} else if(type == "constantBackground") {
+			component = new constantBackground(fitModel.getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
 			component = new exponentialBackground(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {

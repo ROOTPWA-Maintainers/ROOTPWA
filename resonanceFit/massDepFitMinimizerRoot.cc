@@ -111,7 +111,7 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 }
 
 unsigned int
-rpwa::massDepFit::minimizerRoot::NFree()
+rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
 {
 	return _minimizer->NFree();
 }
@@ -369,48 +369,47 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	if(_fitModel.getFsmd() != NULL) {
 		const rpwa::massDepFit::fsmd* fsmd = _fitModel.getFsmd();
 		for(size_t idxParameter=0; idxParameter<fsmd->getNrParameters(); ++idxParameter) {
-			std::ostringstream name;
-			name << "PSP__" << idxParameter;
+			const std::string name = "fsmd__" + fsmd->getParameterName(idxParameter);
 
 			const bool fix = fsmd->getParameterFixed(idxParameter);
 
 			const double parameter = fitParameters.getParameter(_fitModel.getNrComponents(), idxParameter);
 
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') fixed to " << parameter << std::endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << parameter << std::endl;
 				_minimizer->SetFixedVariable(parcount,
-				                             name.str(),
+				                             name,
 				                             parameter);
 			} else if(fsmd->getParameterLimitedLower(idxParameter) && fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited between " << fsmd->getParameterLimitLower(idxParameter)
 				          << " and " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				_minimizer->SetLimitedVariable(parcount,
-				                               name.str(),
+				                               name,
 				                               parameter,
 				                               fsmd->getParameterStep(idxParameter),
 				                               fsmd->getParameterLimitLower(idxParameter),
 				                               fsmd->getParameterLimitUpper(idxParameter));
 			} else if(fsmd->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited larger than " << fsmd->getParameterLimitLower(idxParameter) << ")" << std::endl;
 				_minimizer->SetLowerLimitedVariable(parcount,
-				                                    name.str(),
+				                                    name,
 				                                    parameter,
 				                                    fsmd->getParameterStep(idxParameter),
 				                                    fsmd->getParameterLimitLower(idxParameter));
 			} else if(fsmd->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter
 				          << " (limited smaller than " << fsmd->getParameterLimitUpper(idxParameter) << ")" << std::endl;
 				_minimizer->SetUpperLimitedVariable(parcount,
-				                                    name.str(),
+				                                    name,
 				                                    parameter,
 				                                    fsmd->getParameterStep(idxParameter),
 				                                    fsmd->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << name.str() << "') set to " << parameter << std::endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << parameter << std::endl;
 				_minimizer->SetVariable(parcount,
-				                        name.str(),
+				                        name,
 				                        parameter,
 				                        fsmd->getParameterStep(idxParameter));
 			}

@@ -154,7 +154,7 @@ class TFracNum {
 	mutable long   _denominator;
 	mutable bool   _denCacheRebuildRequired;
 	mutable double _value;
-	mutable double _valueCacheRebuildRequired;
+	mutable bool   _valueCacheRebuildRequired;
 
 	void resetAllCaches() const;
 
