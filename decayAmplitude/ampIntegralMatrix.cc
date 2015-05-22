@@ -58,6 +58,7 @@ using namespace rpwa;
 ClassImp(ampIntegralMatrix);
 
 
+const std::string rpwa::ampIntegralMatrix::integralObjectName = "integral";
 bool ampIntegralMatrix::_debug = false;
 
 

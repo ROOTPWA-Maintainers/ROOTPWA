@@ -140,6 +140,7 @@ namespace rpwa {
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		static const std::string integralObjectName;
 
 
 	private:

@@ -139,7 +139,8 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def("Write", &ampIntegralMatrix_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>)
 
-		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
+		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug)
+		.def_readonly("integralObjectName", &rpwa::ampIntegralMatrix::integralObjectName);
 
 	bp::def(
 		"getFromTDirectory"
