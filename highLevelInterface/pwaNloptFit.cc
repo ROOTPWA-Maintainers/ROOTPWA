@@ -49,14 +49,13 @@ double rpwaNloptFunc(unsigned n, const double* x, double* gradient, void* func_d
 
 rpwa::fitResultPtr
 rpwa::hli::pwaNloptFit(rpwa::pwaLikelihood<std::complex<double> >& L,
-                       const unsigned int              seed=0,
-                       const bool                      cauchy=false,
-                       const double                    massBinMin=0,
-                       const double                    massBinMax=0,
-                       const std::string               startValFileName="",
-                       const bool                      checkHessian=false,
-                       const bool                      saveSpace=false,
-                       const bool                      verbose=false)
+                       const unsigned int                          seed=0,
+                       const double                                massBinMin=0,
+                       const double                                massBinMax=0,
+                       const std::string                           startValFileName="",
+                       const bool                                  checkHessian=false,
+                       const bool                                  saveSpace=false,
+                       const bool                                  verbose=false)
 {
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
@@ -103,9 +102,6 @@ rpwa::hli::pwaNloptFit(rpwa::pwaLikelihood<std::complex<double> >& L,
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 	const double sqrtNmbEvts   = sqrt((double)nmbEvts);
-
-	if (cauchy)
-		L.setPriorType(L.HALF_CAUCHY);
 
 	printInfo << "using prior: ";
 	switch(L.priorType())

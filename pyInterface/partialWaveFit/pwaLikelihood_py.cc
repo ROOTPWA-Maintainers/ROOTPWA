@@ -12,23 +12,61 @@ namespace {
 
 	bool
 	pwaLikelihood_init(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                   bp::object                                  pyWaveDescriptions,
+	                   bp::object                                  pyWaveThresholds,
 	                   const unsigned int                          rank,
-	                   PyObject*                                   pyAmpFileList,
-	                   const double                                massBinCenter,
-	                   const std::string&                          waveListFileName,
-	                   const std::string&                          normIntFileName,
-	                   const std::string&                          accIntFileName,
-	                   const unsigned int                          numbAccEvents)
+	                   const double                                massBinCenter)
 	{
-		std::map<std::string, std::string> ampFilesMap;
-		bp::dict pyDictAmpFilesDict = bp::extract<bp::dict>(pyAmpFileList);
-		bp::list keys = pyDictAmpFilesDict.keys();
-		for(int i = 0; i < bp::len(keys); ++i) {
-			std::string waveName = bp::extract<std::string>(keys[i]);
-			std::string fileName = bp::extract<std::string>(pyDictAmpFilesDict[keys[i]]);
-			ampFilesMap.insert(std::pair<std::string, std::string>(waveName, fileName));
+		std::vector<rpwa::waveDescription> vectorWaveDescriptions;
+		if(not rpwa::py::convertBPObjectToVector<rpwa::waveDescription>(pyWaveDescriptions, vectorWaveDescriptions)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for waveDescriptions when executing rpwa::pwaFit()");
+			bp::throw_error_already_set();
 		}
-		return self.init(rank, ampFilesMap, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents);
+		std::vector<double> vectorWaveThresholds;
+		if(not rpwa::py::convertBPObjectToVector<double>(pyWaveThresholds, vectorWaveThresholds)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for waveThresholds when executing rpwa::pwaFit()");
+			bp::throw_error_already_set();
+		}
+
+		return self.init(vectorWaveDescriptions, vectorWaveThresholds, rank, massBinCenter);
+	}
+
+	bool
+	pwaLikelihood_addNormIntegral(rpwa::pwaLikelihood<std::complex<double> >& self, PyObject* pyNormMatrix)
+	{
+		rpwa::ampIntegralMatrix* normMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix* >(pyNormMatrix);
+		if(not normMatrix) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for normMatrix when executing rpwa::pwaLikelihood::addNormIntegral()");
+			bp::throw_error_already_set();
+		}
+		return self.addNormIntegral(*normMatrix);
+	}
+
+	bool
+	pwaLikelihood_addAccIntegral(rpwa::pwaLikelihood<std::complex<double> >& self, PyObject* pyAccMatrix, unsigned int accEventsOverride)
+	{
+		rpwa::ampIntegralMatrix* accMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix* >(pyAccMatrix);
+		if(not accMatrix) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for accMatrix when executing rpwa::pwaLikelihood::addAccIntegral()");
+			bp::throw_error_already_set();
+		}
+		return self.addAccIntegral(*accMatrix, accEventsOverride);
+	}
+
+	bool
+	pwaLikelihood_addAmplitude(rpwa::pwaLikelihood<std::complex<double> >& self, PyObject* pyTree, PyObject* pyMetadata)
+	{
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(not tree) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for tree when executing rpwa::pwaLikelihood::addAmplitude()");
+			bp::throw_error_already_set();
+		}
+		rpwa::amplitudeMetadata* meta = rpwa::py::convertFromPy<rpwa::amplitudeMetadata*>(pyMetadata);
+		if(not meta) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for metadata when executing rpwa::pwaLikelihood::addAmplitude()");
+			bp::throw_error_already_set();
+		}
+		return self.addAmplitude(tree, *meta);
 	}
 
 	bp::list
@@ -131,14 +169,18 @@ void rpwa::py::exportPwaLikelihood() {
 	bp::class_<rpwa::pwaLikelihood<std::complex<double> > >("pwaLikelihood")
 		.def("init",
 		     ::pwaLikelihood_init,
-		     (bp::arg("rank"),
-		      bp::arg("ampFileList"),
-		      bp::arg("massBinCenter"),
-		      bp::arg("waveListFileName"),
-		      bp::arg("normIntFileName"),
-		      bp::arg("accIntFileName"),
-		      bp::arg("numbAccEvents") = 0)
-		     )
+		     (bp::arg("waveDescriptions"),
+		      bp::arg("waveThresholds"),
+		      bp::arg("rank")=1,
+		      bp::arg("massBinCenter")=0.)
+		)
+		.def("addNormIntegral", ::pwaLikelihood_addNormIntegral)
+		.def("addAccIntegral", ::pwaLikelihood_addAccIntegral,
+			     (bp::arg("accMatrix"),
+			      bp::arg("accEventsOverride")=0)
+		)
+		.def("addAmplitude", ::pwaLikelihood_addAmplitude)
+		.def("finishInit", &rpwa::pwaLikelihood<std::complex<double> >::finishInit)
 		.def("Gradient", ::pwaLikelihood_Gradient)
 		.def("FdF", ::pwaLikelihood_FdF)
 		.def("DoEval", ::pwaLikelihood_DoEval)

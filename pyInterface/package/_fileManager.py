@@ -130,6 +130,10 @@ class fileManager:
 		return fileManager.convertKeyFilesToPaths(self.keyFiles)
 
 
+	def getKeyFiles(self):
+		return self.keyFiles
+
+
 	def getAmpFilePaths(self, binID, eventsType):
 		ampFileList = {}
 		for key in sorted(self.amplitudeFiles):

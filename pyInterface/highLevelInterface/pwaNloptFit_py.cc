@@ -8,22 +8,20 @@ namespace bp = boost::python;
 
 namespace {
 
-	rpwa::fitResultPtr pwaNloptFit(PyObject*          pyLikelihood,
-	                               const int          seed = 0,
-	                               const bool         cauchy = false,
-	                               const double       massBinLower = 0,
-	                               const double       massBinUpper = 0,
-	                               const std::string  startValFileName = "",
-	                               const bool         checkHessian=false,
-	                               const bool         saveSpace=false,
-	                               const bool         verbose = false)
+	rpwa::fitResultPtr pwaNloptFit(PyObject*         pyLikelihood,
+	                               const int         seed = 0,
+	                               const double      massBinMin = 0,
+	                               const double      massBinMax = 0,
+	                               const std::string startValFileName = "",
+	                               const bool        checkHessian=false,
+	                               const bool        saveSpace=false,
+	                               const bool        verbose = false)
 	{
 		rpwa::pwaLikelihood<std::complex<double> > likelihood = bp::extract<rpwa::pwaLikelihood<std::complex<double> > >(pyLikelihood);
 		return rpwa::hli::pwaNloptFit(likelihood,
 		                              seed,
-		                              cauchy,
-		                              massBinLower,
-		                              massBinUpper,
+		                              massBinMin,
+		                              massBinMax,
 		                              startValFileName,
 		                              checkHessian,
 		                              saveSpace,
@@ -39,9 +37,8 @@ void rpwa::py::exportPwaNloptFit()
 		, &::pwaNloptFit
 		, (bp::arg("likelihood"),
 		   bp::arg("seed") = 0,
-		   bp::arg("cauchy") = false,
-		   bp::arg("massBinLower") = 0,
-		   bp::arg("massBinUpper") = 0,
+		   bp::arg("massBinMin") = 0,
+		   bp::arg("massBinMax") = 0,
 		   bp::arg("startValFileName") = "",
 		   bp::arg("checkHessian") = false,
 		   bp::arg("saveSpace") = false,

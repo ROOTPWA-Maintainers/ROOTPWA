@@ -54,28 +54,23 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
-	likelihood = pyRootPwa.core.pwaLikelihood()
-	if (not args.verbose):
-		likelihood.setQuiet(True)
-	if (not likelihood.init(
-	                        args.rank,
-	                        ampFileList,
-	                        massBinCenter,
-	                        args.waveListFileName,
-	                        psIntegralPath,
-	                        accIntegralPath,
-	                        args.accEventsOverride)):
-		printErr("could not initialize likelihood. Aborting...")
-		sys.exit(1)
 	fitResult = pyRootPwa.pwaFit(
-	                             likelihood,
+	                             ampFileList = ampFileList,
+	                             normIntegralFileName = psIntegralPath,
+	                             accIntegralFileName = accIntegralPath,
+	                             binningMap = binningMap,
+	                             waveListFileName = args.waveListFileName,
+	                             keyFiles = fileManager.getKeyFiles(),
 	                             seed = args.seed,
-	                             massBinLower = binningMap['mass'][0],
-	                             massBinUpper = binningMap['mass'][1],
 	                             startValFileName = args.startValFileName,
+	                             accEventsOverride = args.accEventsOverride,
 	                             checkHessian = args.checkHessian,
+	                             rank = args.rank,
 	                             verbose = args.verbose
 	                             )
+	if (not fitResult):
+		printErr("didn't get a valid fit result. Aborting...")
+		sys.exit(1)
 	printInfo("writing result to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"

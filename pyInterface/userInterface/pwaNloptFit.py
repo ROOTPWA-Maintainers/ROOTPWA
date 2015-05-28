@@ -16,7 +16,6 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
-	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
@@ -57,30 +56,20 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
-	likelihood = pyRootPwa.core.pwaLikelihood()
-	if (not args.verbose):
-		likelihood.setQuiet(True)
-	if (not likelihood.init(
-	                        args.rank,
-	                        ampFileList,
-	                        massBinCenter,
-	                        args.waveListFileName,
-	                        psIntegralPath,
-	                        accIntegralPath,
-	                        args.accEventsOverride)):
-		printErr("could not initialize likelihood. Aborting...")
-		sys.exit(1)
-	fitResult = pyRootPwa.pwaNloptFit(
-	                                  likelihood = likelihood,
+	fitResult = pyRootPwa.pwaNloptFit(ampFileList = ampFileList,
+	                                  normIntegralFileName = psIntegralPath,
+	                                  accIntegralFileName = accIntegralPath,
+	                                  binningMap = binningMap,
+	                                  waveListFileName = args.waveListFileName,
+	                                  keyFiles = fileManager.getKeyFiles(),
 	                                  seed = args.seed,
-	                                  massBinLower = binningMap['mass'][0],
-	                                  massBinUpper = binningMap['mass'][1],
 	                                  cauchy = args.cauchyPriors,
 	                                  startValFileName = args.startValFileName,
+	                                  accEventsOverride = args.accEventsOverride,
 	                                  checkHessian = args.checkHessian,
 	                                  saveSpace = args.saveSpace,
-	                                  verbose = args.verbose
-	                                  )
+	                                  rank = args.rank,
+	                                  verbose = args.verbose)
 	pyRootPwa.utils.printInfo("writing result to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"

@@ -36,8 +36,8 @@ void rpwa::py::exportPwaFit()
 		, &::pwaFit
 		, (bp::arg("likelihood"),
 		   bp::arg("seed") = 0,
-		   bp::arg("massBinLower") = 0,
-		   bp::arg("massBinUpper") = 0,
+		   bp::arg("massBinMin") = 0,
+		   bp::arg("massBinMax") = 0,
 		   bp::arg("startValFileName") = "",
 		   bp::arg("checkHessian") = false,
 		   bp::arg("verbose") = false)
