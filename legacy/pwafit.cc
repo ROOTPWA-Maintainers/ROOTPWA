@@ -43,6 +43,7 @@
 
 #include <amplitudeMetadata.h>
 #include <fitResult.h>
+#include <particleDataTable.h>
 #include <pwaFit.h>
 #include <reportingUtils.hpp>
 #include <reportingUtilsEnvironment.h>
@@ -62,7 +63,7 @@ usage(const string& progName,
 	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -o outfile -S start value file -s seed -n normfile"
-	     << " -a normfile -A # normalisation events -r rank -C -P width -H -c -z -q -h]" << endl
+	     << " -a normfile -A # normalisation events -r rank -C -P width -H -c -z -p PDG file -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -84,6 +85,7 @@ usage(const string& progName,
 	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
 #endif
 	     << "        -z         save space by not saving integral and covariance matrices (default: false)" << endl
+	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -128,14 +130,15 @@ main(int    argc,
 	bool         cauchy           = false;
 	double       cauchyWidth      = 0.5;
 	bool         checkHessian     = false;                  // if true checks analytical Hessian eigenvalues
-	bool         saveSpace        = false;
 	bool         cudaEnabled      = false;                  // if true CUDA kernels are activated
+	bool         saveSpace        = false;
+	string       pdgFileName      = "./particleDataTable.txt";
 	bool         verbose          = true;
 
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczpqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -179,13 +182,16 @@ main(int    argc,
 		case 'H':
 			checkHessian = true;
 			break;
-		case 'z':
-			saveSpace = true;
-			break;
 		case 'c':
 #ifdef USE_CUDA
 			cudaEnabled = true;
 #endif
+			break;
+		case 'z':
+			saveSpace = true;
+			break;
+		case 'p':
+			pdgFileName = optarg;
 			break;
 		case 'q':
 			verbose = false;
@@ -225,31 +231,89 @@ main(int    argc,
 	     << "    quiet .......................................... "  << yesNo(not verbose)      << endl;
 
 	// ---------------------------------------------------------------------------
-	// read wave list to get wave names and construct amplitude file names
-	map<string, string> ampFileList;
-	{
-		printInfo << "reading amplitude names from wave list file '" << waveListFileName << "'." << endl;
-		ifstream waveListFile(waveListFileName.c_str());
-		if (not waveListFile) {
-			printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
-			exit(1);
-		}
-		string       line;
-		unsigned int lineNmb = 0;
-		while (getline(waveListFile, line)) {
-			if (line[0] == '#')  // comments start with #
-				continue;
-			stringstream lineStream;
-			lineStream.str(line);
-			string waveName;
-			if (lineStream >> waveName) {
-				const string ampFileName = ampDirName + "/" + waveName + ".root";
-				ampFileList[waveName] = ampFileName;
-			} else
-				printWarn << "cannot parse line '" << line << "' in wave list file '" << waveListFileName << "'" << endl;
-			++lineNmb;
-		}
-		waveListFile.close();
+	// initialize particle data table
+	particleDataTable::readFile(pdgFileName);
+
+	// ---------------------------------------------------------------------------
+	// read wave list to get wave names and thresholds
+	printInfo << "reading amplitude names and thresholds from wave list file '" << waveListFileName << "'." << endl;
+	ifstream waveListFile(waveListFileName.c_str());
+	if (not waveListFile) {
+		printErr << "cannot open file '" << waveListFileName << "'. Aborting..." << endl;
+		exit(1);
+	}
+
+	//extract wave names and thresholds
+	vector<pwaLikelihood<complex<double> >::waveDescThresType> waveDescThres;
+
+	string       line;
+	unsigned int lineNmb = 0;
+	while (getline(waveListFile, line)) {
+		if (line[0] == '#')  // comments start with #
+			continue;
+		stringstream lineStream;
+		lineStream.str(line);
+		string waveName;
+		if (lineStream >> waveName) {
+			double threshold;
+			// !!! it would be safer to make the threshold value in the wave list file mandatory
+			if (not (lineStream >> threshold))
+				threshold = 0;
+			if (verbose)
+				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
+				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
+
+			const string waveFileName = ampDirName + "/" + waveName + ".root";
+			TFile* file = TFile::Open(waveFileName.c_str());
+			if (file == NULL || file->IsZombie()) {
+				printErr << "amplitude file '" << waveFileName << "' cannot be opened. Aborting..." << endl;
+				exit(1);
+			}
+
+			const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(file, waveName);
+			if (ampMeta == NULL) {
+				printErr << "cannot read event data from event file '" << waveFileName << "'. Aborting..." << endl;
+				exit(1);
+			}
+
+			waveDescription waveDesc(ampMeta);
+
+			waveDescThres.push_back(boost::tuples::make_tuple(waveName, waveDesc, threshold));
+
+			file->Close();
+			delete file;
+		} else
+			printWarn << "cannot parse line '" << line << "' in wave list file '" << waveListFileName << "'" << endl;
+		++lineNmb;
+	}
+	waveListFile.close();
+
+	TFile* normIntFile = TFile::Open(normIntFileName.c_str(), "READ");
+	if (not normIntFile or normIntFile->IsZombie()) {
+		printErr << "could not open normalization integral file '" << normIntFileName << "'. "
+		         << "Aborting..." << endl;
+		exit(1);
+	}
+	ampIntegralMatrix* normIntMatrix = NULL;
+	normIntFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), normIntMatrix);
+	if (not normIntMatrix) {
+		printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
+		         << "'" << normIntFileName << "'. Aborting..." << endl;
+		exit(1);
+	}
+
+	TFile* accIntFile = TFile::Open(accIntFileName.c_str(), "READ");
+	if (not accIntFile or accIntFile->IsZombie()) {
+		printErr << "could not open acceptance integral file '" << accIntFileName << "'. "
+		         << "Aborting..." << endl;
+		exit(1);
+	}
+	ampIntegralMatrix* accIntMatrix = NULL;
+	accIntFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), accIntMatrix);
+	if (not accIntMatrix) {
+		printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
+		         << "'" << accIntFileName << "'. Aborting..." << endl;
+		exit(1);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -263,7 +327,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
 #endif
-	if (not L.init(rank, ampFileList, massBinCenter, waveListFileName, normIntFileName, accIntFileName, numbAccEvents)) {
+	if (not L.init(waveDescThres, rank, massBinCenter)) {
 		printErr << "error while initializing likelihood function. Aborting..." << endl;
 		exit(1);
 	}
@@ -271,6 +335,43 @@ main(int    argc,
 	if (cauchy) {
 		L.setPriorType(L.HALF_CAUCHY);
 		L.setCauchyWidth(cauchyWidth);
+	}
+
+	if (not L.addNormIntegral(*normIntMatrix)) {
+		printErr << "error while adding normalization integral to likelihood function. Aborting..." << endl;
+		exit(1);
+	}
+	if (not L.addAccIntegral(*accIntMatrix, numbAccEvents)) {
+		printErr << "error while adding acceptance integral to likelihood function. Aborting..." << endl;
+		exit(1);
+	}
+	for (size_t i=0; i<waveDescThres.size(); ++i) {
+		const string waveName     = boost::tuples::get<0>(waveDescThres[i]);
+
+		const string waveFileName = ampDirName + "/" + waveName + ".root";
+		TFile* file = TFile::Open(waveFileName.c_str());
+		if (file == NULL || file->IsZombie()) {
+			printErr << "amplitude file '" << waveFileName << "' cannot be opened. Aborting..." << endl;
+			exit(1);
+		}
+
+		const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(file, waveName);
+		if (ampMeta == NULL) {
+			printErr << "cannot read event data from event file '" << waveFileName << "'. Aborting..." << endl;
+			exit(1);
+		}
+
+		if (not L.addAmplitude(*ampMeta)) {
+			printErr << "error while adding amplitude of wave '" << waveName << "' to likelihood function. Aborting..." << endl;
+			exit(1);
+		}
+
+		file->Close();
+		delete file;
+	}
+	if (not L.finishInit()) {
+		printErr << "error while finished initialization of likelihood function. Aborting..." << endl;
+		exit(1);
 	}
 
 	// ---------------------------------------------------------------------------
