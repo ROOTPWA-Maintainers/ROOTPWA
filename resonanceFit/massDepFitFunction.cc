@@ -146,13 +146,19 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					if(idxWave == _idxAnchorWave) {
 						zeroAnchorWave |= zeroThisWave;
 					}
+
+					// check that a wave is not zero in its fit range
+					if(zeroThisWave && idxMass >= _wavePairMassBinLimits[idxWave][idxWave].first && idxMass <= _wavePairMassBinLimits[idxWave][idxWave].second) {
+						printErr << "production amplitudes of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
+						return false;
+					}
 				}
 			}
 		}
 
 		// error if anchor wave is zero in one mass bin
 		if(zeroAnchorWave) {
-			printErr << "production amplitudes of anchor wave zero in same mass bins (mass limit in mass-independent fit)." << std::endl;
+			printErr << "production amplitudes of anchor wave zero in some mass bins (mass limit in mass-independent fit)." << std::endl;
 			return false;
 		}
 
@@ -351,6 +357,12 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 					if(zeroThisWave || idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
 						zeroWaves[idxBin][idxMass].push_back(idxWave);
+					}
+
+					// check that a wave is not zero in its fit range
+					if(zeroThisWave && idxMass >= _wavePairMassBinLimits[idxWave][idxWave].first && idxMass <= _wavePairMassBinLimits[idxWave][idxWave].second) {
+						printErr << "spin-density matrix element of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
+						return false;
 					}
 				}
 			}
