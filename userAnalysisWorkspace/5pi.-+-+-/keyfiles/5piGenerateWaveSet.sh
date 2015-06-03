@@ -12,7 +12,7 @@
 #-------------------------------------------------------------------------
 
 
-PARTICLE_DATA_TABLE="../../particleData/particleDataTable.txt"
+PARTICLE_DATA_TABLE="../../../particleData/particleDataTable.txt"
 PARTICLE_DECAY_LIST="./5piParticleDecays.txt"
 TEMPLATE_KEY_FILES="5pi3pi2pi.template.key 5pi4pi2pi2pi.template.key 5pi4pi3pi.template.key"
 TEST_DATA="./5piTestData.root"

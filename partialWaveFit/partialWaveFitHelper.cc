@@ -73,9 +73,9 @@ rpwa::partialWaveFitHelper::getReflectivity(const std::string& name)
 
 	int refl = 0;
 	if (name.substr(waveNamePos) != "flat") {
-		if (name[waveNamePos + 6] == '-')
+		if (name[waveNamePos + 8] == '-')
 			refl= -1;
-		else if (name[waveNamePos + 6] == '+')
+		else if (name[waveNamePos + 8] == '+')
 			refl= +1;
 		else {
 			printErr << "cannot parse parameter/wave name '" << name << "'. "

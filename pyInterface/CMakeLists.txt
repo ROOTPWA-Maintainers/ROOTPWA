@@ -43,6 +43,7 @@ set(PARTICLEDATA_SUBDIR particleData)
 set(PARTIALWAVEFIT_SUBDIR partialWaveFit)
 set(STORAGEFORMATS_SUBDIR storageFormats)
 set(UTILITIES_SUBDIR utilities)
+set(HIGHLEVELINTERFACE_SUBDIR highLevelInterface)
 
 
 # set include directories
@@ -63,13 +64,14 @@ include_directories(
 	${STORAGEFORMATS_SUBDIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	${UTILITIES_SUBDIR}
+	${RPWA_HIGHLEVELINTERFACE_INCLUDE_DIR}
+	${HIGHLEVELINTERFACE_SUBDIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
-
 
 # source files that are compiled into library
 set(SOURCES
@@ -98,16 +100,25 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
+	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
+	${PARTIALWAVEFIT_SUBDIR}/pwaLikelihood_py.cc
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
 	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
 	)
-
+if(USE_NLOPT)
+	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)
+endif()
 
 # library
 set(THIS_LIB "RootPwaPy")
@@ -124,8 +135,11 @@ make_shared_library(
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_UTILITIES_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
+	"${RPWA_HIGHLEVELINTERFACE_LIB}"
 	)
-
+if(USE_NLOPT)
+	target_link_libraries(${THIS_LIB} "${NLopt_LIBS}")
+endif()
 
 # link the shared library with the python bindings
 add_custom_target(

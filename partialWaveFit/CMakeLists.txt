@@ -41,6 +41,7 @@ include_directories(
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
+	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -82,20 +83,12 @@ make_shared_library(
 	"${CUDACODE_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
+	"${RPWA_STORAGEFORMATS_LIB}"
 	)
 
 
 # executables
-make_executable(pwafit                         pwafit.cc                          ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(pwaplot                        pwaplots.cc                        ${THIS_LIB})
-make_executable(likelihoodPointCalculator      likelihoodPointCalculator.cc       ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-
-make_executable(eigenvectorLikelihoodSlices    eigenvectorLikelihoodSlices.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(calcCovMatrixForFitResult      calcCovMatrixForFitResult.cc       ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-
-make_executable(stripIntegralsFromFitResult    stripIntegralsFromFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(addIntegralsToFitResult        addIntegralsToFitResult.cc         ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(compareFitResultsIntegrals     compareFitResultsIntegrals.cc      ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(pwaplot pwaplots.cc ${THIS_LIB})
 
 
 # build tests

@@ -1,5 +1,7 @@
 #include "ampIntegralMatrix_py.h"
 
+#include <TDirectory.h>
+
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
@@ -38,22 +40,23 @@ namespace {
 	}
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
-	                                 const bp::object& pyBinAmpFileNames,
-	                                 const bp::object& pyRootAmpFileNames,
+	                                 const bp::list&  ampTreeList,
+	                                 const bp::object& waveNameList,
 	                                 const unsigned long maxNmbEvents,
 	                                 const std::string& weightFileName)
 	{
-		std::vector<std::string> binAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyBinAmpFileNames, binAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for binAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
+		std::vector<TTree*> ampTreeVector(len(ampTreeList));
+		for(unsigned int i = 0; i < len(ampTreeList); ++i) {
+			bp::object item = bp::extract<bp::object>(ampTreeList[i]);
+			ampTreeVector[i] = rpwa::py::convertFromPy<TTree*>(item.ptr());
+		}
+		std::vector<std::string> waveNamesVector;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(waveNameList, waveNamesVector))
+		{
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for waveNames when executing rpwa::ampIntegralMatrix::integrate()");
 			bp::throw_error_already_set();
 		}
-		std::vector<std::string> rootAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyRootAmpFileNames, rootAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for rootAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
-			bp::throw_error_already_set();
-		}
-		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
+		return self.integrate(ampTreeVector, waveNamesVector, maxNmbEvents, weightFileName);
 	}
 
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
@@ -123,8 +126,8 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.def("integrate"
 		     , &ampIntegralMatrix_integrate
-		     , (bp::arg("pyBinAmpFileNames"),
-		         bp::arg("pyRootAmpFileNames"),
+		     , (bp::arg("ampTreeList"),
+		         bp::arg("waveNameList"),
 		         bp::arg("maxNmbEvents")=0,
 		         bp::arg("weightFileName")="")
 		)
@@ -136,6 +139,13 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def("Write", &ampIntegralMatrix_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>)
 
-		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
+		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug)
+		.def_readonly("integralObjectName", &rpwa::ampIntegralMatrix::integralObjectName);
+
+	bp::def(
+		"getFromTDirectory"
+		, &rpwa::py::getFromTDirectory<rpwa::ampIntegralMatrix>
+		, bp::return_value_policy<bp::manage_new_object>()
+	);
 
 }

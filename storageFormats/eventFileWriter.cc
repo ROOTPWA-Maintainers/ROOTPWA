@@ -19,7 +19,7 @@ using namespace rpwa;
 
 rpwa::eventFileWriter::eventFileWriter()
 	: _initialized(false),
-	  _outfile(0),
+	  _outputFile(0),
 	  _metadata(),
 	  _productionKinematicsMomenta(0),
 	  _decayKinematicsMomenta(0),
@@ -37,6 +37,7 @@ rpwa::eventFileWriter::~eventFileWriter()
 
 bool rpwa::eventFileWriter::initialize(TFile&                                     outputFile,
                                        const string&                              userString,
+                                       const eventMetadata::eventsTypeEnum&       eventsType,
                                        const vector<string>&                      productionKinematicsParticleNames,
                                        const vector<string>&                      decayKinematicsParticleNames,
                                        const map<string, pair<double, double> >&  binningMap,
@@ -45,14 +46,15 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
                                        const int&                                 buffsize)
 {
 	if(_initialized) {
-		printWarn << "trying to initialize when already initialized" << endl;
+		printWarn << "trying to initialize when already initialized." << endl;
 		return false;
 	}
-	_outfile = &outputFile;
-	_outfile->cd();
+	_outputFile = &outputFile;
+	_outputFile->cd();
 
 	// prepare metadata
 	_metadata.setUserString(userString);
+	_metadata.setEventsType(eventsType);
 	_metadata.setProductionKinematicsParticleNames(productionKinematicsParticleNames);
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
 	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);
@@ -78,19 +80,23 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 }
 
 
-void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKinematicsMomenta,
-                                     const vector<TVector3>& decayKinematicsMomenta,
-                                     const vector<double>&   additionalVariablesToSave)
+void rpwa::eventFileWriter::addEvent(const TClonesArray&   productionKinematicsMomenta,
+                                     const TClonesArray&   decayKinematicsMomenta,
+                                     const vector<double>& additionalVariablesToSave)
 {
-	if(productionKinematicsMomenta.size() != _nmbProductionKinematicsParticles) {
+	if(not _initialized) {
+		printWarn << "trying to add event when not initialized." << endl;
+		return;
+	}
+	if(productionKinematicsMomenta.GetEntries() != (int) _nmbProductionKinematicsParticles) {
 		printErr << "received unexpected number of initial state particles (got "
-		         << productionKinematicsMomenta.size() << ", expected "
+		         << productionKinematicsMomenta.GetEntries() << ", expected "
 		         << _nmbProductionKinematicsParticles << "). Aborting..." << endl;
 		throw;
 	}
-	if(decayKinematicsMomenta.size() != _nmbDecayKinematicsParticles) {
+	if(decayKinematicsMomenta.GetEntries() != (int) _nmbDecayKinematicsParticles) {
 		printErr << "received unexpected number of final state particles (got "
-		         << decayKinematicsMomenta.size() << ", expected "
+		         << decayKinematicsMomenta.GetEntries() << ", expected "
 		         << _nmbDecayKinematicsParticles << "). Aborting..." << endl;
 		throw;
 	}
@@ -100,13 +106,13 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 		         << _additionalVariablesToSave.size() << "). Aborting..." << endl;
 		throw;
 	}
-	for(unsigned int i = 0; i < productionKinematicsMomenta.size(); ++i) {
-		const TVector3& productionKinematicsMomentum = productionKinematicsMomenta[i];
+	for(int i = 0; i < productionKinematicsMomenta.GetEntries(); ++i) {
+		const TVector3& productionKinematicsMomentum = *((TVector3*) productionKinematicsMomenta[i]);
 		_hashCalculator.Update(productionKinematicsMomentum);
 		new ((*_productionKinematicsMomenta)[i]) TVector3(productionKinematicsMomentum);
 	}
-	for(unsigned int i = 0; i < decayKinematicsMomenta.size(); ++i) {
-		const TVector3& decayKinematicsMomentum = decayKinematicsMomenta[i];
+	for(int i = 0; i < decayKinematicsMomenta.GetEntries(); ++i) {
+		const TVector3& decayKinematicsMomentum = *((TVector3*) decayKinematicsMomenta[i]);
 		_hashCalculator.Update(decayKinematicsMomentum);
 		new ((*_decayKinematicsMomenta)[i]) TVector3(decayKinematicsMomentum);
 	}
@@ -118,15 +124,32 @@ void rpwa::eventFileWriter::addEvent(const vector<TVector3>&       productionKin
 }
 
 
+void rpwa::eventFileWriter::addEvent(const vector<TVector3>& productionKinematicsMomenta,
+                                     const vector<TVector3>& decayKinematicsMomenta,
+                                     const vector<double>&   additionalVariablesToSave)
+{
+	TClonesArray prodKinClonesArray = TClonesArray("TVector3", productionKinematicsMomenta.size());
+	TClonesArray decayKinClonesArray = TClonesArray("TVector3", decayKinematicsMomenta.size());
+
+	for(unsigned int i = 0; i < productionKinematicsMomenta.size(); ++i) {
+		new(prodKinClonesArray[i]) TVector3(productionKinematicsMomenta[i]);
+	}
+	for(unsigned int i = 0; i < decayKinematicsMomenta.size(); ++i) {
+		new(decayKinClonesArray[i]) TVector3(decayKinematicsMomenta[i]);
+	}
+	this->addEvent(prodKinClonesArray, decayKinClonesArray, additionalVariablesToSave);
+}
+
+
 bool rpwa::eventFileWriter::finalize() {
 	if(not _initialized) {
-		printWarn << "trying to finalize when not initialized" << endl;
+		printWarn << "trying to finalize when not initialized." << endl;
 		return false;
 	}
 	_metadata.setContentHash(_hashCalculator.hash());
-	_outfile->cd();
+	_outputFile->cd();
 	_metadata.Write(eventMetadata::objectNameInFile.c_str());
-	_outfile->Close();
+	_outputFile->Close();
 	reset();
 	return true;
 }
@@ -141,6 +164,7 @@ void rpwa::eventFileWriter::reset() {
 		delete _decayKinematicsMomenta;
 		_decayKinematicsMomenta = 0;
 	}
-	_outfile = 0;
+	_outputFile = 0;
+	_hashCalculator = hashCalculator();
 	_initialized = false;
 }

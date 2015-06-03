@@ -8,6 +8,8 @@ namespace rpwa {
 	void printCompilerInfo();
 	void printLibraryInfo();
 
+	std::string gitHash();
+
 }
 
 #endif

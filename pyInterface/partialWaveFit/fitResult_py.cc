@@ -353,6 +353,7 @@ void rpwa::py::exportFitResult() {
 		.def("printAmpsGenPW", &fitResult_printAmpsGenPW)
 
 		.def("Write", &fitResult_Write, bp::arg("name")=0)
-		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>);
-
+		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>)
+		.def("branch", &rpwa::py::branch<rpwa::fitResult*>);
+	bp::register_ptr_to_python<rpwa::fitResultPtr>();
 }

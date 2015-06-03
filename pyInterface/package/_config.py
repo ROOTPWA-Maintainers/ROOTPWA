@@ -1,7 +1,6 @@
 
 import ConfigParser
 import os
-import sys
 
 import pyRootPwa.utils
 
@@ -12,110 +11,85 @@ class rootPwaConfig:
 
 	# general section
 	pdgFileName                            = ""
-	massBinDirectoryNamePattern            = ""
+	fileManagerPath                        = ""
 	dataDirectory                          = ""
-	dataFileExtensionQualifier             = ""
-	phaseSpaceEventFileExtensionQualifier  = ""
-	accCorrPSEventFileExtensionQualifier   = ""
-	phaseSpaceWeightFileExtensionQualifier = ""
-	accCorrPSWeightFileExtensionQualifier  = ""
-
-	# amplitude section
-	keyfilePattern                         = ""
-	dataAmplitudeDirectoryName             = ""
-	phaseSpaceAmpDirectoryName             = ""
-	accCorrPSAmpDirectoryName              = ""
-	amplitudeLeafName                      = ""
-	inTreeName                             = ""
-	prodKinPartNamesObjName                = ""
-	prodKinMomentaLeafName                 = ""
-	decayKinPartNamesObjName               = ""
-	decayKinMomentaLeafName                = ""
-	weightTreeName                         = ""
-	outputFileFormat                       = ""
-	outputCacheSize                        = 0
+	keyDirectory                           = ""
+	ampDirectory                           = ""
+	limitFilesPerDir                       = -1
 
 	# fit section
 	fitResultTreeName                      = ""
 	fitResultBranchName                    = ""
 
+	# other
+	phaseSpaceWeightFileExtensionQualifier = ""
+	accCorrPSWeightFileExtensionQualifier  = ""
+	phaseSpaceAmpDirectoryName             = ""
+	accCorrPSAmpDirectoryName              = ""
+	weightTreeName                         = ""
 
-	def __init__(self, configFileName):
+	def getPathFromConfig(self, category, varName, defaultValue):
+		if self.config.has_option(category, varName):
+			path = os.path.expanduser(os.path.expandvars(self.config.get(category, varName)))
+			if not os.path.isabs(path):
+				path = os.path.abspath(os.path.dirname(os.path.abspath(self.configFileName)) + "/" + path)
+		else:
+			path = defaultValue
+			pyRootPwa.utils.printWarn("can not find '" + varName + "' in category '" + category + "'. Using default value '" + defaultValue + "'.")
+		return path
+
+
+	def initialize(self, configFileName):
 		self.config = ConfigParser.ConfigParser()
 		self.configFileName = configFileName
+		configDir = os.path.dirname(os.path.abspath(self.configFileName))
 
 		try:
 			with open(configFileName, 'r') as configFile:
 				self.config.readfp(configFile)
 		except IOError:
-			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be opened. Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be opened.")
+			return False
 		except ConfigParser.Error:
-			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be parsed. Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be parsed.")
+			return False
 
 		try:
-			self.pdgFileName                 = os.path.expanduser(os.path.expandvars(self.config.get('general', 'particleDataTable')))
+			self.pdgFileName     = self.getPathFromConfig("general", "particleDataTable", os.path.expandvars("$ROOTPWA/particleData/particleDataTable.txt"))
+			self.fileManagerPath = self.getPathFromConfig("general", "fileManagerPath"  , configDir + "/fileManager.pkl")
+			self.dataDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
+			self.keyDirectory    = self.getPathFromConfig("general", "keyFileDirectory" , configDir + "/keyfiles")
+			self.ampDirectory    = self.getPathFromConfig("general", "ampFileDirectory" , configDir + "/amps")
+			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
 
-			if self.config.has_option('general', 'dataDirectory'):
-				self.dataDirectory = os.path.expanduser(os.path.expandvars(self.config.get('general', 'dataDirectory')))
-				if self.dataDirectory == "":
-					self.dataDirectory = os.path.abspath(os.path.dirname(configFileName))
+			if self.config.has_option('general', 'limitFilesPerDir'):
+				self.limitFilesPerDir                   = self.config.get('general', 'limitFilesPerDir')
 			else:
-				self.dataDirectory = os.path.abspath(os.path.dirname(configFileName))
-
-			if not self.config.has_option('general', 'dataFileExtensionQualifier'):
-				self.dataFileExtensionQualifier = ""
-			else:
-				self.dataFileExtensionQualifier = self.config.get('general', 'dataFileExtensionQualifier')
-
-			self.phaseSpaceEventFileExtensionQualifier  = self.config.get('general', 'phaseSpaceEventFileExtensionQualifier')
-			self.accCorrPSEventFileExtensionQualifier   = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
-			self.phaseSpaceWeightFileExtensionQualifier = self.config.get('general', 'phaseSpaceWeightFileExtensionQualifier')
-			self.accCorrPSWeightFileExtensionQualifier  = self.config.get('general', 'accCorrPSWeightFileExtensionQualifier')
-			self.massBinDirectoryNamePattern            = self.config.get('general', 'massBinDirectoryNamePattern')
-			rawKeyfilePattern                           = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
-
-			self.dataAmplitudeDirectoryName             = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
-			self.phaseSpaceAmpDirectoryName             = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')
-			self.accCorrPSAmpDirectoryName              = self.config.get('amplitudes', 'accCorrPSAmpDirectoryName')
-			self.amplitudeLeafName                      = self.config.get('amplitudes', 'amplitudeLeafName')
-			self.inTreeName                             = self.config.get('amplitudes', 'inTreeName')
-
-			self.prodKinPartNamesObjName                = self.config.get('amplitudes', 'prodKinPartNamesObjName')
-			self.prodKinMomentaLeafName                 = self.config.get('amplitudes', 'prodKinMomentaLeafName')
-			self.decayKinPartNamesObjName               = self.config.get('amplitudes', 'decayKinPartNamesObjName')
-			self.decayKinMomentaLeafName                = self.config.get('amplitudes', 'decayKinMomentaLeafName')
-
-			self.weightTreeName                         = self.config.get('amplitudes', 'weightTreeName')
-
-			self.outputCacheSize                        = self.config.get('amplitudes', 'outputCacheSize')
-
-			self.outputFileFormat                       = self.config.get('amplitudes', 'outputFileFormat').lower()
-			if not self.outputFileFormat in ['binary', 'ascii', 'root']:
-				pyRootPwa.utils.printErr('"outputFileFormat" option of the "amplitude" section has to be either "binary" or "ascii" (found "' + self.outputFileFormat + '"). Aborting...')
-				sys.exit(1)
-
-			rawKeyfilePattern = rawKeyfilePattern.replace('\n', '').replace(' ', '')
-			if ';' in rawKeyfilePattern:
-				self.keyfilePattern = rawKeyfilePattern.split(';')
-			elif ',' in rawKeyfilePattern:
-				self.keyfilePattern = rawKeyfilePattern.split(',')
-			else:
-				self.keyfilePattern = [rawKeyfilePattern]
+				self.limitFilesPerDir                   = -1
 
 			self.fitResultTreeName = self.config.get('fit', 'treeName')
 			self.fitResultBranchName = self.config.get('fit', 'fitResultBranch')
 
+			self.phaseSpaceWeightFileExtensionQualifier = self.config.get('other', 'phaseSpaceWeightFileExtensionQualifier')
+			self.accCorrPSWeightFileExtensionQualifier  = self.config.get('other', 'accCorrPSWeightFileExtensionQualifier')
+			self.phaseSpaceAmpDirectoryName             = self.config.get('other', 'phaseSpaceAmpDirectoryName')
+			self.accCorrPSAmpDirectoryName              = self.config.get('other', 'accCorrPSAmpDirectoryName')
+			self.weightTreeName                         = self.config.get('other', 'weightTreeName')
+
 		except ConfigParser.Error as exc:
-			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "'). Aborting...")
-			sys.exit(1)
+			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "').")
+			return False
 
 		if not os.path.isdir(self.dataDirectory):
-			pyRootPwa.utils.printErr("Data directory invalid. Aborting...")
-			sys.exit(1)
-
-		if self.phaseSpaceEventFileExtensionQualifier == "":
-			pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
-		if self.accCorrPSEventFileExtensionQualifier == "":
-			pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")
+			os.mkdir(self.dataDirectory)
+			pyRootPwa.utils.printInfo("created data directory '" + self.dataDirectory + "'.")
+		if not os.path.isdir(self.keyDirectory):
+			os.mkdir(self.keyDirectory)
+			pyRootPwa.utils.printInfo("created key directory '" + self.keyDirectory + "'.")
+		if not os.path.isdir(self.ampDirectory):
+			os.mkdir(self.ampDirectory)
+			pyRootPwa.utils.printInfo("created amplitude directory '" + self.ampDirectory + "'.")
+		if not os.path.isdir(self.intDirectory):
+			os.mkdir(self.intDirectory)
+			pyRootPwa.utils.printInfo("created integral directory '" + self.intDirectory + "'.")
+		return True

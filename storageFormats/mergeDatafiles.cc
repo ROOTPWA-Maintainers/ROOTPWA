@@ -23,8 +23,9 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-f] outputFile inputFile1 inputFile2 ..." << endl
+	     << " [-a -f] outputFile inputFile1 inputFile2 ..." << endl
 	     << "    where:" << endl
+	     << "        -a         accept different metadata and merge to combined bin" << endl
 	     << "        -f         overwrite output file if it exists" << endl
 	     << endl;
 	exit(errCode);
@@ -39,7 +40,8 @@ int main(int argc, char** argv)
 	cout << endl;
 
 	const string progName = argv[0];
-	bool force = false;
+	bool mergeDiffMeta = false;
+	bool force         = false;
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// if the following line is missing, there are error messages of the sort
@@ -51,9 +53,13 @@ int main(int argc, char** argv)
 
 //	extern char* optarg;
 	int c;
-	while((c = getopt(argc, argv, "fh")) != -1)
+	extern int optind;
+	while((c = getopt(argc, argv, "afh")) != -1)
 	{
 		switch(c) {
+		case 'a':
+			mergeDiffMeta = true;
+			break;
 		case 'f':
 			force = true;
 			break;
@@ -62,17 +68,15 @@ int main(int argc, char** argv)
 			break;
 		}
 	}
-	string outputFileName = "";
+	if (argc - optind < 3) {
+		printErr << "you have to specify at least two data files to be merged. Aborting..." << endl;;
+		usage(progName, 1);
+	}
+
 	vector<string> inputFileNames;
-	{
-		unsigned int startingPoint = 1;
-		if(force) {
-			++startingPoint;
-		}
-		outputFileName = argv[startingPoint++];
-		for(int i = startingPoint; i < argc; ++i) {
-			inputFileNames.push_back(argv[i]);
-		}
+	string outputFileName = argv[optind];
+	for(int i = optind+1; i < argc; ++i) {
+		inputFileNames.push_back(argv[i]);
 	}
 	printInfo << "target file: " << outputFileName << endl;
 	for(unsigned int i = 0; i < inputFileNames.size(); ++i) {
@@ -104,7 +108,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	eventMetadata* metadata = eventMetadata::merge(inputData);
+	eventMetadata* metadata = eventMetadata::merge(inputData, mergeDiffMeta);
 	if(not metadata) {
 		printErr << "merge failed. Aborting..." << endl;
 		return 1;

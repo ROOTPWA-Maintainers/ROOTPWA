@@ -38,8 +38,9 @@ message_setup_this_dir()
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
-	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
+	${RPWA_PARTICLEDATA_INCLUDE_DIR}
+	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
@@ -65,8 +66,6 @@ set(SOURCES
 	isobarAmplitude.cc
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
-	amplitudeTreeLeaf.cc
-	amplitudeTreeHelper.cc
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
@@ -81,7 +80,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
 	${ROOTPWAAMP_DICTIONARY}
-	waveDescription.h amplitudeTreeLeaf.h ampIntegralMatrix.h
+	waveDescription.h ampIntegralMatrix.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaAmpLinkDef.h
 	)
@@ -96,16 +95,17 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_NBODYPHASESPACE_LIB}"
+	"${RPWA_STORAGEFORMATS_LIB}"
 	)
 
 
 # executables
-make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(calcIntegrals      calcIntegrals.cc      ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(ampDiff            ampDiff.cc            ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
-make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(calcAmplitudes        calcAmplitudes.cc        ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(checkKeyFile          checkKeyFile.cc          ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(ampDiff               ampDiff.cc               ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(createGraphDiagram    createGraphDiagram.cc    ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(generateWaveSet       generateWaveSet.cc       ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
+make_executable(compareAmplitudeFiles compareAmplitudeFiles.cc ${THIS_LIB} "${RPWA_UTILITIES_LIB}")
 
 
 # build tests

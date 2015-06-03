@@ -56,6 +56,7 @@ def impLib(name):
 	sys.stdout.write(name + "...")
 	try:
 		import pyRootPwa
+		import pyRootPwa.core
 	except:
 		print_red("error")
 		return False
@@ -66,6 +67,7 @@ if not impLib("Importing pyRootPwa"):
 	sys.exit(1)
 
 import pyRootPwa
+import pyRootPwa.core
 
 def testPrintingUtils():
 	print("\n")

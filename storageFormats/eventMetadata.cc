@@ -24,6 +24,7 @@ const std::string rpwa::eventMetadata::decayKinematicsMomentaBranchName = "decay
 rpwa::eventMetadata::eventMetadata()
 	: _userString(""),
 	  _contentHash(""),
+	  _eventsType(eventMetadata::OTHER),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
 	  _binningMap(),
@@ -36,11 +37,12 @@ rpwa::eventMetadata::~eventMetadata() { };
 
 ostream& rpwa::eventMetadata::print(ostream& out) const
 {
-	out << "dataMetadata: " << endl
-	    << "    userString ...................... '" << _userString << "'"         << endl
-	    << "    contentHash ..................... '" << _contentHash << "'"        << endl
-	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames << endl
-        << "    final state particle names: ..... "  << _decayKinematicsParticleNames   << endl
+	out << "eventMetadata: " << endl
+	    << "    userString ...................... '" << _userString << "'"                  << endl
+	    << "    contentHash ..................... '" << _contentHash << "'"                 << endl
+	    << "    eventsType ...................... '" << getStringForEventsType(_eventsType) << "'" << endl
+	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames  << endl
+	    << "    final state particle names: ..... "  << _decayKinematicsParticleNames       << endl
 	    << "    binning map";
 	if(_binningMap.empty()) {
 		out << " ..................... " << "<empty>" << endl;
@@ -50,6 +52,10 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 			out << "        variable '" << it->first << "' range " << it->second << endl;
 		}
 	}
+	if(_eventTree) {
+		out << "    number of events in file ........ " << _eventTree->GetEntries() << endl;
+	}
+	out << "    additional branches ............. " << additionalSavedVariableLables() << endl;
 	return out;
 }
 
@@ -151,6 +157,7 @@ Long64_t rpwa::eventMetadata::Merge(TCollection* /*list*/, Option_t* /*option*/)
 
 
 eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
+                                          const bool mergeDiffMeta,
                                           const int& splitlevel,
                                           const int& buffsize)
 {
@@ -169,6 +176,7 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 	mergee->_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &decayKinematicsMomenta,   buffsize, splitlevel);
 	vector<double> additionalSavedVariables;
 	bool first = true;
+	rpwa::eventMetadata::binningMapType mergedBinningMap;
 	for(unsigned int inputDataNumber = 0; inputDataNumber < inputData.size(); ++inputDataNumber) {
 		const eventMetadata* metadata = inputData[inputDataNumber];
 		TTree* inputTree = metadata->eventTree();
@@ -186,8 +194,12 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 				mergee->setProductionKinematicsParticleNames(metadata->productionKinematicsParticleNames());
 				mergee->setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
 			}
-			if(mergee->binningMap().empty()) {
-				mergee->setBinningMap(metadata->binningMap());
+			if(not mergeDiffMeta) {
+				if(mergee->binningMap().empty()) {
+					mergee->setBinningMap(metadata->binningMap());
+				}
+			} else {
+				mergedBinningMap = metadata->binningMap();
 			}
 			if(mergee->additionalSavedVariableLables().empty()) {
 				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
@@ -215,11 +227,32 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 			delete mergee;
 			return 0;
 		}
-		if(mergee->binningMap() != metadata->binningMap()) {
-			printWarn << "binning maps differ." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+		if (not mergeDiffMeta) {
+			if(mergee->binningMap() != metadata->binningMap()) {
+				printWarn << "binning maps differ." << endl;
+				delete mergee->_eventTree;
+				delete mergee;
+				return 0;
+			}
+		} else {
+			for(binningMapType::const_iterator iterator = mergedBinningMap.begin(); iterator != mergedBinningMap.end(); iterator++) {
+				const string binningVariable = iterator->first;
+				const pair<double, double> binningRange = iterator->second;
+				binningMapType toAdd = metadata->binningMap();
+				if (toAdd.count(binningVariable) == 1) { // check if binningVariable exists (uniquely) in other binningMap
+					if (binningRange.first > toAdd[binningVariable].first) {
+						mergedBinningMap[binningVariable].first = toAdd[binningVariable].first;
+					}
+					if (binningRange.second < toAdd[binningVariable].second) {
+						mergedBinningMap[binningVariable].second = toAdd[binningVariable].second;
+					}
+				} else {
+					printWarn << "files do not use the same binning variables." << endl;
+					delete mergee->_eventTree;
+					delete mergee;
+					return 0;
+				}
+			}
 		}
 		if(inputTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0) {
 			printWarn << "could not set branch address for branch '" << productionKinematicsMomentaBranchName << "'." << endl;
@@ -257,6 +290,7 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 		}
 
 	}
+	mergee->setBinningMap(mergedBinningMap);
 	mergee->setContentHash(hashor.hash());
 	return mergee;
 }
@@ -289,4 +323,20 @@ Int_t rpwa::eventMetadata::Write(const char* name, Int_t option, Int_t bufsize) 
 		retval = _eventTree->Write();
 	}
 	return retval + TObject::Write(name, option, bufsize);
+}
+
+
+std::string rpwa::eventMetadata::getStringForEventsType(const eventsTypeEnum& type)
+{
+	switch(type) {
+		case OTHER:
+			return "other";
+		case REAL:
+			return "real";
+		case GENERATED:
+			return "generated";
+		case ACCEPTED:
+			return "accepted";
+	}
+	return "UNKNOWN";
 }

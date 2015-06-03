@@ -22,6 +22,7 @@ namespace rpwa {
 
 		bool initialize(TFile&                                                   outputFile,                        // output file to write the data to (user keeps ownership!)
 		                const std::string&                                       userString,                        // some arbitrary string to identify this data file
+		                const eventMetadata::eventsTypeEnum&                     eventsType,                        // type of events
 		                const std::vector<std::string>&                          productionKinematicsParticleNames, // particle names of initial state particles (has to be the same order as the particles appear in the data!)
 		                const std::vector<std::string>&                          decayKinematicsParticleNames,      // particle names of final state particles (has to be the same order as the particles appear in the data!)
 		                const std::map<std::string, std::pair<double, double> >& binningMap,                        // binning variable map with content "label" -> (lowerBound, upperBound) describing which bin these data belong to
@@ -29,9 +30,13 @@ namespace rpwa {
 		                const int&                                               splitlevel = 99,
 		                const int&                                               buffsize = 256000);
 
+		void addEvent(const TClonesArray&        productionKinematicsMomenta,
+		              const TClonesArray&        decayKinematicsMomenta,
+		              const std::vector<double>& additionalVariablesToSave = std::vector<double>());
+
 		void addEvent(const std::vector<TVector3>& productionKinematicsMomenta,
 		              const std::vector<TVector3>& decayKinematicsMomenta,
-		              const std::vector<double>& additionalVariablesToSave = std::vector<double>());
+		              const std::vector<double>&   additionalVariablesToSave = std::vector<double>());
 
 
 		bool finalize();
@@ -43,7 +48,7 @@ namespace rpwa {
 	  private:
 
 		bool _initialized;
-		TFile* _outfile;
+		TFile* _outputFile;
 		eventMetadata _metadata;
 		TClonesArray* _productionKinematicsMomenta;
 		TClonesArray* _decayKinematicsMomenta;

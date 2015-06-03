@@ -43,6 +43,9 @@
 #include <map>
 #include <string>
 #include <complex>
+#ifndef __CINT__
+#include <boost/shared_ptr.hpp>
+#endif
 
 #include "TObject.h"
 #include "TComplex.h"
@@ -84,6 +87,10 @@ namespace rpwa {
 		return escapedS;
 	}
 
+#ifndef __CINT__
+	class fitResult;
+	typedef boost::shared_ptr<fitResult> fitResultPtr;
+#endif
 
 	/// \brief data storage class for PWA fit result of one kinematic bin
 	class fitResult : public TObject {
