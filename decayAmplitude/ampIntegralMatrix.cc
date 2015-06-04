@@ -522,7 +522,7 @@ ampIntegralMatrix::readAscii(const string& inFileName)
 {
 	if (_debug)
 		printDebug << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
-	fstream inFile(inFileName.c_str());
+	ifstream inFile(inFileName.c_str());
 	if (not inFile or not inFile.good()) {
 		printWarn << "cannot open file '" << inFileName << "' for reading of integral matrix" << endl;
 		return false;
