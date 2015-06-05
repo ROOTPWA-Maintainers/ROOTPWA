@@ -93,14 +93,13 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -s seed -x -V startValue -N -n normfile"
+	     << " -l # -u # -w wavelist [-d amplitude directory -o outfile -s seed -x -V startValue -N -n normfile"
 	     << " -a normfile -A # normalisation events -r rank -t # -m # -C -P width -q -z -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-	     << "        -R         use .root amplitude files (default: false)" << endl
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
 	     << "        -x         use fixed instead of random start values" << endl
@@ -153,8 +152,6 @@ main(int    argc,
 	double       massBinMax          = 0;                      // [MeV/c^2]
 	string       waveListFileName    = "";                     // wavelist filename
 	string       ampDirName          = ".";                    // decay amplitude directory name
-	bool         useRootAmps         = false;                  // if true .root amplitude files are read
-	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
 	string       outFileName         = "fitresult.root";       // output filename
 	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
 	string       normIntFileName     = "";                     // file with normalization integrals
@@ -171,7 +168,7 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:Ro:s:xV:Nn:a:A:r:t:m:CP:qzh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:o:s:xV:Nn:a:A:r:t:m:CP:qzh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -184,9 +181,6 @@ main(int    argc,
 			break;
 		case 'd':
 			ampDirName = optarg;
-			break;
-		case 'R':
-			useRootAmps = true;
 			break;
 		case 'o':
 			outFileName = optarg;
@@ -255,7 +249,6 @@ main(int    argc,
 	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
 	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
 	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
-	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
 	     << "    path to output file ............................ '" << outFileName      << "'" << endl
 	     << "    seed for random start values ................... "  << startValSeed            << endl;
 	if (useFixedStartValues)
@@ -283,7 +276,7 @@ main(int    argc,
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
 	L.init(rank, massBinCenter, waveListFileName, normIntFileName, accIntFileName,
-	       ampDirName, numbAccEvents, useRootAmps);
+	       ampDirName, numbAccEvents);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();

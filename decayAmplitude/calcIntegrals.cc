@@ -124,26 +124,23 @@ main(int    argc,
 		usage(progName, 1);
 	}
 	vector<string> rootAmpFileNames;
-	vector<string> binAmpFileNames;
 	while (optind < argc) {
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
 		if (fileExt == "root")
 			rootAmpFileNames.push_back(fileName);
-		else if (fileExt == "amp")
-			binAmpFileNames.push_back(fileName);
 		else
-			printWarn << "input file '" << fileName << "' is neither a .root nor a .amp file. "
+			printWarn << "input file '" << fileName << "' is not a .root file. "
 			          << "skipping." << endl;
 	}
-	if ((rootAmpFileNames.size() == 0) and (binAmpFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .amp file. Aborting..." << endl;
+	if (rootAmpFileNames.size() == 0) {
+		printErr << "none of the specified input files is a .root file. Aborting..." << endl;
 		usage(progName, 1);
 	}
 
 	// calculate integral
 	ampIntegralMatrix integral;
-	integral.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
+	integral.integrate(rootAmpFileNames, maxNmbEvents, weightFileName);
 	if (nmbEventsRenorm > 0)
 		integral.renormalize(nmbEventsRenorm);
 

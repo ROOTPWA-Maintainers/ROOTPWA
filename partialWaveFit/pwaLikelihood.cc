@@ -948,14 +948,13 @@ pwaLikelihood<complexT>::init(const unsigned int rank,
                               const std::string& normIntFileName,
                               const std::string& accIntFileName,
                               const std::string& ampDirName,
-                              const unsigned int numbAccEvents,
-                              const bool         useRootAmps)
+                              const unsigned int numbAccEvents)
 {
 	_numbAccEvents = numbAccEvents;
 	readWaveList(waveListFileName);
 	buildParDataStruct(rank, massBinCenter);
 	readIntegrals(normIntFileName, accIntFileName);
-	readDecayAmplitudes(ampDirName, useRootAmps);
+	readDecayAmplitudes(ampDirName);
 #ifdef USE_CUDA
 	if (_cudaEnabled)
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
@@ -1203,7 +1202,6 @@ pwaLikelihood<complexT>::readIntegrals
 template<typename complexT>
 void
 pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
-                                             const bool    useRootAmps,
                                              const string& ampLeafName)
 {
 	// check that normalization integrals are loaded
@@ -1214,8 +1212,7 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 	}
 	clear();
 
-	printInfo << "loading amplitude data from " << ((useRootAmps) ? ".root" : ".amp")
-	          << " files" << endl;
+	printInfo << "loading amplitude data from .root files" << endl;
 	// loop over amplitudes and read in data
 	bool         firstWave = true;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1227,56 +1224,38 @@ pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				amps.reserve(_nmbEvents);
 			// read decay amplitudes
 			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
-			if (useRootAmps) {
-				ampFilePath = changeFileExtension(ampFilePath, ".root");
-				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
-				// open amplitude file
-				TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
-				if (not ampFile or ampFile->IsZombie()) {
-					printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping." << endl;
+			ampFilePath = changeFileExtension(ampFilePath, ".root");
+			printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
+			// open amplitude file
+			TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
+			if (not ampFile or ampFile->IsZombie()) {
+				printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping." << endl;
+				continue;
+			}
+			// find amplitude tree
+			TTree*       ampTree     = 0;
+			const string ampTreeName = changeFileExtension(_waveNames[iRefl][iWave], ".amp");
+			ampFile->GetObject(ampTreeName.c_str(), ampTree);
+			if (not ampTree) {
+				printWarn << "cannot find tree '" << ampTreeName << "' in file "
+				          << "'" << ampFilePath << "'. skipping." << endl;
+				continue;
+			}
+			// connect tree leaf
+			amplitudeTreeLeaf* ampTreeLeaf = 0;
+			ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);
+			for (long int eventIndex = 0; eventIndex < ampTree->GetEntriesFast(); ++eventIndex) {
+				ampTree->GetEntry(eventIndex);
+				if (!ampTreeLeaf) {
+					printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
+					          << "skipping." << endl;
 					continue;
 				}
-				// find amplitude tree
-				TTree*       ampTree     = 0;
-				const string ampTreeName = changeFileExtension(_waveNames[iRefl][iWave], ".amp");
-				ampFile->GetObject(ampTreeName.c_str(), ampTree);
-				if (not ampTree) {
-					printWarn << "cannot find tree '" << ampTreeName << "' in file "
-					          << "'" << ampFilePath << "'. skipping." << endl;
-					continue;
-				}
-				// connect tree leaf
-				amplitudeTreeLeaf* ampTreeLeaf = 0;
-				ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);
-				for (long int eventIndex = 0; eventIndex < ampTree->GetEntriesFast(); ++eventIndex) {
-					ampTree->GetEntry(eventIndex);
-					if (!ampTreeLeaf) {
-						printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
-						          << "skipping." << endl;
-						continue;
-					}
-					assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
-					complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
-					if (_useNormalizedAmps)         // normalize data, if option is switched on
-						amp /= sqrt(normInt.real());  // rescale decay amplitude
-					amps.push_back(amp);
-				}
-			} else {
-				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
-				ifstream ampFile(ampFilePath.c_str());
-				if (not ampFile) {
-					printErr << "cannot open amplitude file '" << ampFilePath << "'. Aborting..." << endl;
-					throw;
-				}
-				complexT amp;
-				while (ampFile.read((char*)&amp, sizeof(complexT))) {
-				  if (_useNormalizedAmps) {        // normalize data, if option is switched on
-					        value_type mynorm=normInt.real();
-					        if(mynorm==0)mynorm=1;
-						amp /= sqrt(mynorm);  // rescale decay amplitude
-				  }
-				  amps.push_back(amp);
-				}
+				assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+				complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+				if (_useNormalizedAmps)         // normalize data, if option is switched on
+					amp /= sqrt(normInt.real());  // rescale decay amplitude
+				amps.push_back(amp);
 			}
 
 			unsigned int nmbEvents = amps.size();

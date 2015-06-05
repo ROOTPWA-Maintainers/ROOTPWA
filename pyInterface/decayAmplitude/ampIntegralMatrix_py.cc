@@ -38,22 +38,16 @@ namespace {
 	}
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
-	                                 const bp::object& pyBinAmpFileNames,
 	                                 const bp::object& pyRootAmpFileNames,
 	                                 const unsigned long maxNmbEvents,
 	                                 const std::string& weightFileName)
 	{
-		std::vector<std::string> binAmpFileNames;
-		if(not rpwa::py::convertBPObjectToVector<std::string>(pyBinAmpFileNames, binAmpFileNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for binAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
-			bp::throw_error_already_set();
-		}
 		std::vector<std::string> rootAmpFileNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyRootAmpFileNames, rootAmpFileNames)) {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for rootAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
 			bp::throw_error_already_set();
 		}
-		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
+		return self.integrate(rootAmpFileNames, maxNmbEvents, weightFileName);
 	}
 
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
@@ -123,10 +117,9 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.def("integrate"
 		     , &ampIntegralMatrix_integrate
-		     , (bp::arg("pyBinAmpFileNames"),
-		         bp::arg("pyRootAmpFileNames"),
-		         bp::arg("maxNmbEvents")=0,
-		         bp::arg("weightFileName")="")
+		     , (bp::arg("pyRootAmpFileNames"),
+		        bp::arg("maxNmbEvents")=0,
+		        bp::arg("weightFileName")="")
 		)
 
 		.def("renormalize", &rpwa::ampIntegralMatrix::renormalize)

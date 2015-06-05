@@ -75,11 +75,10 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-d amplitude directory -R] -i infile [-o outfile -N -n normfile"
+	     << " [-d amplitude directory] -i infile [-o outfile -N -n normfile"
 	     << " -a normfile -A # normalisation events -C -P width -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-	     << "        -R         use .root amplitude files (default: false)" << endl
 	     << "        -i file    path to input file" << endl
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
@@ -119,8 +118,6 @@ main(int    argc,
 	// parse command line options
 	const string progName            = argv[0];
 	string       ampDirName          = ".";                    // decay amplitude directory name
-	bool         useRootAmps         = false;                  // if true .root amplitude files are read
-	//bool         useRootAmps         = true;                   // if true .root amplitude files are read
 	string       inFileName          = "";                     // input filename
 	string       outFileName         = "fitresult.root";       // output filename
 	bool         useNormalizedAmps   = false;                  // if true normalized amplitudes are used
@@ -133,13 +130,10 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "d:Ri:o:Nn:a:A:CP:qh")) != -1)
+	while ((c = getopt(argc, argv, "d:i:o:Nn:a:A:CP:qh")) != -1)
 		switch (c) {
 		case 'd':
 			ampDirName = optarg;
-			break;
-		case 'R':
-			useRootAmps = true;
 			break;
 		case 'i':
 			inFileName = optarg;
@@ -188,7 +182,6 @@ main(int    argc,
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << endl;
 	cout << "    path to amplitude directory .................... '" << ampDirName               << "'" << endl
-	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)       << endl
 	     << "    path to input file ............................. '" << inFileName               << "'" << endl
 	     << "    path to output file ............................ '" << outFileName              << "'" << endl
 	     << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
@@ -248,7 +241,7 @@ main(int    argc,
 		L.setCauchyWidth(cauchyWidth);
 	}
 	L.init(result->rank(), result->massBinCenter(), waveListFileName, normIntFileName, accIntFileName,
-	       ampDirName, numbAccEvents, useRootAmps);
+	       ampDirName, numbAccEvents);
 	remove(waveListFileName.c_str());
 	if (not quiet)
 		cout << L << endl;

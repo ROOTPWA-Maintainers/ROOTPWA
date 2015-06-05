@@ -76,9 +76,8 @@ usage(const string& progName,
 	     << "        -k file    path to key file" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -o file    path to amplitude file (.amp or .root format; default: ./out.root)" << endl
+	     << "        -o file    path to amplitude file (.root format; default: ./out.root)" << endl
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
-	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -l names   semicolon separated object/leaf names in input data" << endl
 	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
@@ -111,7 +110,6 @@ main(int    argc,
 	string         pdgFileName              = "./particleDataTable.txt";
 	string         ampFileName              = "./out.root";
 	string         ampLeafName              = "amplitude";
-	bool           asciiOutput              = false;
 	string         inTreeName               = "rootPwaEvtTree";
 	string         leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
 	bool           newKeyFileNameConvention = false;
@@ -120,7 +118,7 @@ main(int    argc,
 	extern char*   optarg;
 	extern int     optind;
 	int            c;
-	while ((c = getopt(argc, argv, "k:n:p:o:m:at:l:r:vh")) != -1)
+	while ((c = getopt(argc, argv, "k:n:p:o:m:t:l:r:vh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -136,9 +134,6 @@ main(int    argc,
 			break;
 		case 'm':
 			ampLeafName = optarg;
-			break;
-		case 'a':
-			asciiOutput = true;
 			break;
 		case 't':
 			inTreeName = optarg;
@@ -214,45 +209,30 @@ main(int    argc,
 	printInfo << *amplitude;
 
 	// create output file for amplitudes
-	bool writeRootFormat = false;
 	const string ampFileExt = extensionFromPath(ampFileName);
-	if (ampFileExt == "root")
-		writeRootFormat = true;
-	else if (ampFileExt == "amp")
-		writeRootFormat = false;
-	else {
-		printErr << "specified amplitude file '" << ampFileName << "' is neither a .root "
-		         << "nor a .amp file. Aborting..." << endl;
+	if (ampFileExt != "root") {
+		printErr << "specified amplitude file '" << ampFileName << "' is not a .root file. Aborting..." << endl;
 		usage(progName);
 	}
-	printInfo << "creating amplitude file '" << ampFileName << "'";
-	ofstream*          ampFilePlain = 0;
-	TFile*             ampFileRoot  = 0;
-	amplitudeTreeLeaf* ampTreeLeaf  = 0;
-	TTree*             ampTree      = 0;
-	if (writeRootFormat) {
-		cout << endl;
-		ampFileRoot = TFile::Open(ampFileName.c_str(), "RECREATE");
-		// write wave description
-		const string waveName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology()),
-		                                                      newKeyFileNameConvention);
-		waveDesc.Write((waveName + ".key").c_str());
-		// create output tree
-		ampTreeLeaf = new amplitudeTreeLeaf();
-		const string ampTreeName = waveName + ".amp";
-		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		const int splitLevel = 99;
-		const int bufSize    = 256000;
-		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
-	} else {
-		cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
-		ampFilePlain = new ofstream(ampFileName.c_str());
-	}
-	if (   (writeRootFormat and not ampFileRoot)
-	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
+	printInfo << "creating amplitude file '" << ampFileName << "'" << endl;
+	TFile* ampFileRoot = TFile::Open(ampFileName.c_str(), "RECREATE");
+	if (not ampFileRoot) {
 		printErr << "cannot create amplitude file '" << ampFileName << "'. Aborting..." << endl;
 		exit(1);
 	}
+
+	// write wave description
+	const string waveName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology()),
+	                                                      newKeyFileNameConvention);
+	waveDesc.Write((waveName + ".key").c_str());
+
+	// create output tree
+	amplitudeTreeLeaf* ampTreeLeaf = new amplitudeTreeLeaf();
+	const string ampTreeName = waveName + ".amp";
+	TTree* ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
+	const int splitLevel = 99;
+	const int bufSize    = 256000;
+	ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
 
 	// read data from tree(s) and calculate decay amplitudes
 	TStopwatch timer;
@@ -278,36 +258,20 @@ main(int    argc,
 
 	// write amplitudes to output file
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
-		if (ampFileRoot) {
-			ampTreeLeaf->setAmp(ampValues[i]);
-			ampTree->Fill();
-		}
-		if (ampFilePlain) {
-			if (asciiOutput)
-				*ampFilePlain << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[i] << endl;
-			else
-				ampFilePlain->write((char*)(&ampValues[i]), sizeof(complex<double>));
-		}
+		ampTreeLeaf->setAmp(ampValues[i]);
+		ampTree->Fill();
 	}
-	if (ampFileRoot) {
-		printInfo << "optimizing tree" << endl;
-		//ampTree->Print();
-		ampTree->OptimizeBaskets(treeCacheSize, 1, "d");
-		ampTree->Write();
-		//ampTree->Print();
-		ampFileRoot->Close();
-		delete ampFileRoot;
-	}
-	if (ampFilePlain) {
-		ampFilePlain->close();
-		delete ampFilePlain;
-	}
+
+	printInfo << "optimizing tree" << endl;
+	//ampTree->Print();
+	ampTree->OptimizeBaskets(treeCacheSize, 1, "d");
+	ampTree->Write();
+	//ampTree->Print();
+	ampFileRoot->Close();
+	delete ampFileRoot;
+
 	printSucc << "wrote " << ampValues.size() << " amplitude values to "
-	          << "'" << ampFileName << "'";
-	if (not writeRootFormat)
-		cout << " in " << ((asciiOutput) ? "ASCII" : "binary")
-		     << " mode";
-	cout << endl;
+	          << "'" << ampFileName << "'" << endl;
 
 	// clean up
 	for (unsigned int i = 0; i < inTrees.size(); ++i)

@@ -56,56 +56,55 @@ main()
 	if (0) {
 		// test integral calculation
 		// get file list
-		// vector<string> binAmpFileNames = filesMatchingGlobPattern("/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/*.amp", true);
-		// sort(binAmpFileNames.begin(), binAmpFileNames.end());
+		// vector<string> rootAmpFileNames = filesMatchingGlobPattern("/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/*.root", true);
+		// sort(rootAmpFileNames.begin(), rootAmpFileNames.end());
 		// make sure order of waves is the same as used by int
-		vector<string> binAmpFileNames = list_of
-			("1-0-+0+f0980_00_pi-.amp"   )
-			("1-0-+0+rho770_11_pi-.amp"  )
-			("1-0-+0+sigma_00_pi-.amp"   )
-			("1-1++0+f21270_12_pi-.amp"  )
-			("1-1++0+rho770_01_pi-.amp"  )
-			("1-1-+0-rho770_11_pi-.amp"  )
-			("1-1++0+rho770_21_pi-.amp"  )
-			("1-1++0+sigma_10_pi-.amp"   )
-			("1-1++1+f21270_12_pi-.amp"  )
-			("1-1++1-rho770_01_pi-.amp"  )
-			("1-1++1+rho770_01_pi-.amp"  )
-			("1-1-+1-rho770_11_pi-.amp"  )
-			("1-1-+1+rho770_11_pi-.amp"  )
-			("1-1++1+rho770_21_pi-.amp"  )
-			("1-1++1+sigma_10_pi-.amp"   )
-			("1-2-+0+f21270_02_pi-.amp"  )
-			("1-2++0-f21270_12_pi-.amp"  )
-			("1-2-+0+f21270_22_pi-.amp"  )
-			("1-2-+0+rho770_11_pi-.amp"  )
-			("1-2++0-rho770_21_pi-.amp"  )
-			("1-2-+0+rho770_31_pi-.amp"  )
-			("1-2-+0+sigma_20_pi-.amp"   )
-			("1-2-+1-f21270_02_pi-.amp"  )
-			("1-2-+1+f21270_02_pi-.amp"  )
-			("1-2++1-f21270_12_pi-.amp"  )
-			("1-2++1+f21270_12_pi-.amp"  )
-			("1-2-+1+f21270_22_pi-.amp"  )
-			("1-2-+1+rho770_11_pi-.amp"  )
-			("1-2++1+rho770_21_pi-.amp"  )
-			("1-2-+1+rho770_31_pi-.amp"  )
-			("1-2-+1+sigma_20_pi-.amp"   )
-			("1-3++0+f21270_12_pi-.amp"  )
-			("1-3++0+rho31690_03_pi-.amp")
-			("1-3++0+rho770_21_pi-.amp"  )
-			("1-3++1+f21270_12_pi-.amp"  )
-			("1-3++1+rho31690_03_pi-.amp")
-			("1-3++1+rho770_21_pi-.amp"  )
-			("1-4-+0+rho770_31_pi-.amp"  )
-			("1-4++1+f21270_32_pi-.amp"  )
-			("1-4-+1+rho770_31_pi-.amp"  )
-			("1-4++1+rho770_41_pi-.amp"  );
-		for (size_t i = 0; i < binAmpFileNames.size(); ++i)
-			binAmpFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + binAmpFileNames[i];
-		vector<string> rootAmpFileNames;
+		vector<string> rootAmpFileNames = list_of
+			("1-0-+0+f0980_00_pi-.root"   )
+			("1-0-+0+rho770_11_pi-.root"  )
+			("1-0-+0+sigma_00_pi-.root"   )
+			("1-1++0+f21270_12_pi-.root"  )
+			("1-1++0+rho770_01_pi-.root"  )
+			("1-1-+0-rho770_11_pi-.root"  )
+			("1-1++0+rho770_21_pi-.root"  )
+			("1-1++0+sigma_10_pi-.root"   )
+			("1-1++1+f21270_12_pi-.root"  )
+			("1-1++1-rho770_01_pi-.root"  )
+			("1-1++1+rho770_01_pi-.root"  )
+			("1-1-+1-rho770_11_pi-.root"  )
+			("1-1-+1+rho770_11_pi-.root"  )
+			("1-1++1+rho770_21_pi-.root"  )
+			("1-1++1+sigma_10_pi-.root"   )
+			("1-2-+0+f21270_02_pi-.root"  )
+			("1-2++0-f21270_12_pi-.root"  )
+			("1-2-+0+f21270_22_pi-.root"  )
+			("1-2-+0+rho770_11_pi-.root"  )
+			("1-2++0-rho770_21_pi-.root"  )
+			("1-2-+0+rho770_31_pi-.root"  )
+			("1-2-+0+sigma_20_pi-.root"   )
+			("1-2-+1-f21270_02_pi-.root"  )
+			("1-2-+1+f21270_02_pi-.root"  )
+			("1-2++1-f21270_12_pi-.root"  )
+			("1-2++1+f21270_12_pi-.root"  )
+			("1-2-+1+f21270_22_pi-.root"  )
+			("1-2-+1+rho770_11_pi-.root"  )
+			("1-2++1+rho770_21_pi-.root"  )
+			("1-2-+1+rho770_31_pi-.root"  )
+			("1-2-+1+sigma_20_pi-.root"   )
+			("1-3++0+f21270_12_pi-.root"  )
+			("1-3++0+rho31690_03_pi-.root")
+			("1-3++0+rho770_21_pi-.root"  )
+			("1-3++1+f21270_12_pi-.root"  )
+			("1-3++1+rho31690_03_pi-.root")
+			("1-3++1+rho770_21_pi-.root"  )
+			("1-4-+0+rho770_31_pi-.root"  )
+			("1-4++1+f21270_32_pi-.root"  )
+			("1-4-+1+rho770_31_pi-.root"  )
+			("1-4++1+rho770_41_pi-.root"  );
+		for (size_t i = 0; i < rootAmpFileNames.size(); ++i)
+			rootAmpFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + rootAmpFileNames[i];
 		ampIntegralMatrix integral;
-		integral.integrate(binAmpFileNames, rootAmpFileNames);
+		integral.integrate(rootAmpFileNames);
 		integral.writeAscii("testIntegral2.int");
 	}
 

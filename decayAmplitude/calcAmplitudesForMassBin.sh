@@ -63,8 +63,7 @@ PSACC_FILE_EXT=.acc.evt
 #PS_FILE_EXT=.ps.root
 #PSACC_FILE_EXT=.acc.root
 # amplitude file format
-AMP_FILE_EXT=.amp
-#AMP_FILE_EXT=.root
+AMP_FILE_EXT=.root
 # integral file name
 INT_FILE_NAME=norm.int
 #INT_FILE_NAME=norm.root
@@ -151,20 +150,6 @@ function runCalcAmplitudes {
 						time eval ${_CMD}
 				fi
     done
-}
-
-
-function runInt {
-    local _AMP_DIR="${1}"
-    echo
-    echo ">>> info: generating integrals for '${_AMP_DIR}'"
-    local _CURRENT_DIR=$(pwd)
-    # avoid problems with full path names in pwa2000
-    cd "${_AMP_DIR}"
-    local _CMD="${ROOTPWA_BIN}/int *.amp > ${INT_FILE_NAME}"  # works only with .amp and .int files
-    echo "${_CMD}"
-    time eval ${_CMD}
-    cd ${_CURRENT_DIR}
 }
 
 
@@ -352,7 +337,6 @@ fi
 # generate amplitude files for phase-space MC data
 runCalcAmplitudes "${PS_FILE}" "${PS_AMP_DIR}"
 # perform integration for phase-space MC data
-#runInt "${PS_AMP_DIR}"
 runCalcIntegrals "${PS_AMP_DIR}"
 echo
 
@@ -372,7 +356,6 @@ else
     # generate amplitude files for accepted phase-space MC data
 		runCalcAmplitudes "${PSACC_FILE}" "${PSACC_AMP_DIR}"
     # perform integration for accepted phase-space MC data
-    #runInt "${PSACC_AMP_DIR}"
 		runCalcIntegrals "${PSACC_AMP_DIR}"
 fi
 echo
