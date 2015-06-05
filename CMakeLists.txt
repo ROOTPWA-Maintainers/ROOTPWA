@@ -517,8 +517,8 @@ set(_SRC_DIRS
 	nBodyPhaseSpace
 	partialWaveFit
 	particleData
-#	pyInterface
-#	relativisticAmpCorrections
+	pyInterface
+	relativisticAmpCorrections
 	resonanceFit
 #	sandBox
 	storageFormats
@@ -536,10 +536,6 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 	endif()
 	unset(_VAR_NAME)
 endforeach()
-
-set(PYINTERFACE_LIBS
-	RootPwaPy
-	)
 
 if(USE_CUDA)
 	set(CUDACODE_INCLUDE_DIR
@@ -569,16 +565,10 @@ if(USE_CUDA)
 	add_subdirectory(cuda)
 endif()
 
-# Relativic Amplitudes
-add_subdirectory(relativisticAmpCorrections)
-
 # MPI
 if(USE_MPI)
 	add_subdirectory(mpi)
 endif()
-
-# Python bindings
-add_subdirectory(pyInterface)
 
 # compilation of sandBox is optional
 option(COMPILE_SANDBOX "en/disable compilation of code in sandBox directory" OFF)
