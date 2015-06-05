@@ -82,8 +82,7 @@ namespace rpwa {
 		std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
 		const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
 
-		bool writeKeyFiles(const std::string& dirName                  = "",
-		                   const bool         newKeyFileNameConvention = false);  ///< writes key files for wave set into given directory
+		bool writeKeyFiles(const std::string& dirName                  = "");  ///< writes key files for wave set into given directory
 
 		virtual void reset();  ///< resets parameters to default values and clears wave set
 

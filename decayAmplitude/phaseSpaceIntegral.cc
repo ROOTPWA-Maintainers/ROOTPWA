@@ -74,8 +74,7 @@ namespace {
 	// spin projection quantum number M for the top vertex, as it does not change
 	// the integral.
 	string
-	__waveNameFromTopology(const isobarDecayTopology& topo,
-	                       const bool          newConvention)
+	__waveNameFromTopology(const isobarDecayTopology& topo)
 	{
 		ostringstream waveName;
 		if (not topo.checkTopology() or not topo.checkConsistency()) {
@@ -84,31 +83,14 @@ namespace {
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		if(newConvention) {
-			waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
-			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
-			         << "M" << parityQn(X.reflectivity()) << "]"
-			         << waveDescription::waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
-		} else {
-			waveName << spinQn(X.isospin()) << sign(X.G())
-			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
-			         << "M" << sign(X.reflectivity())
-			         << waveDescription::waveNameFromTopology(topo, newConvention, boost::static_pointer_cast<isobarDecayVertex>
-			                                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
-			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
-			         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
-			         << waveDescription::waveNameFromTopology(topo, newConvention, boost::static_pointer_cast<isobarDecayVertex>
-			                                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
-		}
+		waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
+		         << "M" << parityQn(X.reflectivity()) << "]"
+		         << waveDescription::waveNameFromTopology(topo, topo.XIsobarDecayVertex());
 		{
 			string name = waveName.str();
-			if (newConvention) {
-				boost::replace_all(name, "(", "_");
-				boost::replace_all(name, ")", "_");
-			} else {
-				boost::replace_all(name, "(", "");
-				boost::replace_all(name, ")", "");
-			}
+			boost::replace_all(name, "(", "_");
+			boost::replace_all(name, ")", "_");
 			return name;
 		}
 	}
@@ -122,7 +104,6 @@ const int integralTableContainer::N_MC_EVENTS = 1000000;
 const int integralTableContainer::N_MC_EVENTS_FOR_M0 = 10000000;
 const int integralTableContainer::MC_SEED = 987654321;
 const double integralTableContainer::UPPER_BOUND = 4.5;
-const bool integralTableContainer::NEW_FILENAME_CONVENTION = false;
 const bool integralTableContainer::CALCULATE_ERRORS = true;
 
 
@@ -163,7 +144,7 @@ string integralTableContainer::getSubWaveNameFromVertex(const isobarDecayVertex&
 	}
 
 	subDecay = createIsobarDecayTopology(mainTopo->subDecayConsistent(vertexPtr));
-	return __waveNameFromTopology(*subDecay, NEW_FILENAME_CONVENTION);
+	return __waveNameFromTopology(*subDecay);
 
 }
 
@@ -175,7 +156,7 @@ integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
 	_subWaveName = getSubWaveNameFromVertex(vertex, _vertex, _subDecay);
 
 	stringstream sstr;
-	sstr<<DIRECTORY<<"/"<<__waveNameFromTopology(*_subDecay, NEW_FILENAME_CONVENTION)<<".root";
+	sstr<<DIRECTORY<<"/"<<__waveNameFromTopology(*_subDecay)<<".root";
 	_fullPathToFile = sstr.str();
 
 	readIntegralFile();

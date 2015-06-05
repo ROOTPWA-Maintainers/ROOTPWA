@@ -62,7 +62,6 @@ usage(const string& progName,
 	     << "        -f         force decay check (only works with -d option); isobars without defined decay modes will be ignored" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
 	     << "        -t file    path to waveset LaTeX output file" << endl
-	     << "        -n         use new key file name convention (default: false)" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -87,12 +86,11 @@ main(int    argc,
 	string       decayFileName            = "";
 	string       texFileName              = "waveset.tex";
 	string       outDirName               = ".";
-	bool         newKeyFileNameConvention = false;
 	bool         debug                    = false;
 	bool         forceDecayCheck          = false;
 	extern char* optarg;
 	int          c;
-	while ((c = getopt(argc, argv, "k:p:d:o:t:fnvh")) != -1)
+	while ((c = getopt(argc, argv, "k:p:d:o:t:fvh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -108,9 +106,6 @@ main(int    argc,
 			break;
 		case 'o':
 			outDirName = optarg;
-			break;
-		case 'n':
-			newKeyFileNameConvention = true;
 			break;
 		case 'v':
 			debug = true;
@@ -174,7 +169,7 @@ main(int    argc,
 	for (unsigned int i = 0; i < decayTopos.size(); ++i) {
 		bool isConsistent = decayTopos[i].checkTopology() and decayTopos[i].checkConsistency();
 		cout << "    " << setw(4) << i << ": "
-		     << waveDescription::waveNameFromTopology(decayTopos[i], newKeyFileNameConvention) << " ... ";
+		     << waveDescription::waveNameFromTopology(decayTopos[i]) << " ... ";
 		if (isConsistent) {
 		  cout << "okay" << endl;
 		  if (doTeX) {
@@ -192,7 +187,7 @@ main(int    argc,
 	}
 
 	printInfo << "writing .key files for generated waves to directory '" << outDirName << "'" << endl;
-	waveSetGen.writeKeyFiles(outDirName, newKeyFileNameConvention);
+	waveSetGen.writeKeyFiles(outDirName);
 
 	printInfo << ((nmbInconsistentDecays == 0) ? "successfully " : "")
 	          << "generated " << decayTopos.size() << " waves";

@@ -83,7 +83,6 @@ void rpwa::py::exportWaveDescription() {
 			"waveNameFromTopology"
 			, &rpwa::waveDescription::waveNameFromTopology
 			, (bp::arg("topo"),
-			   bp::arg("newConvention")=false,
 			   bp::arg("currentVertex")=rpwa::isobarDecayVertexPtr())
 		)
 		.staticmethod("waveNameFromTopology")

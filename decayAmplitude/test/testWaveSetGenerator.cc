@@ -156,7 +156,7 @@ main()
 		}
 
 		for (unsigned int i = 0; i < decays.size(); ++i)
-			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i], true) << endl;
+			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i]) << endl;
 
 		gSystem->Exec("mkdir testWaveSetGenerator");
 		waveSetGen.writeKeyFiles("testWaveSetGenerator");

@@ -375,7 +375,6 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 
 string
 waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
-                                      const bool                  newConvention,
                                       const isobarDecayVertexPtr& currentVertex)
 {
 	ostringstream waveName;
@@ -386,61 +385,30 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		if (newConvention)
-			waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
-			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
-			         << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
-			         << waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
-		else
-			waveName << spinQn(X.isospin()) << sign(X.G())
-			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
-			         << spinQn(X.spinProj()) << sign(X.reflectivity())
-			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
-			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
-			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
-			         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
-			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
-			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
+		waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
+		         << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
+		         << waveNameFromTopology(topo, topo.XIsobarDecayVertex());
 	} else {
 		// recurse down decay chain
-		if (newConvention) {
-			// first daughter
-			waveName << "=[" << currentVertex->daughter1()->name();
-			if (not topo.isFsParticle(currentVertex->daughter1()))
-				waveName << waveNameFromTopology
-					(topo, newConvention,
-					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
-			// L, S
-			waveName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
-			// second daughter
-			waveName << currentVertex->daughter2()->name();
-			if (not topo.isFsParticle(currentVertex->daughter2()))
-				waveName << waveNameFromTopology
-					(topo, newConvention,
-					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-			waveName << "]";
-		} else {
-			waveName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
-			             : currentVertex->parent()->bareName());
-			isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
-			if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
-				waveName << "="
-				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
-				                                 (topo.toVertex(currentVertex->daughter1())))
-				         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
-				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
-				                                 (topo.toVertex(currentVertex->daughter2())));
-		}
+		// first daughter
+		waveName << "=[" << currentVertex->daughter1()->name();
+		if (not topo.isFsParticle(currentVertex->daughter1()))
+			waveName << waveNameFromTopology
+				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+		// L, S
+		waveName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+		// second daughter
+		waveName << currentVertex->daughter2()->name();
+		if (not topo.isFsParticle(currentVertex->daughter2()))
+			waveName << waveNameFromTopology
+				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+		waveName << "]";
 	}
 	{
 		string name = waveName.str();
-		if (newConvention) {
-			replace_all(name, "(", "_");
-			replace_all(name, ")", "_");
-		} else {
-			replace_all(name, "(", "");
-			replace_all(name, ")", "");
-		}
+		replace_all(name, "(", "_");
+		replace_all(name, ")", "_");
 		return name;
 	}
 }

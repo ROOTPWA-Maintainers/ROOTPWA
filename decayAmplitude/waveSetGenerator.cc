@@ -453,13 +453,12 @@ waveSetGenerator::generateWaveSet()
 
 
 bool
-waveSetGenerator::writeKeyFiles(const string& dirName,
-                                const bool    newKeyFileNameConvention)
+waveSetGenerator::writeKeyFiles(const string& dirName)
 {
 	size_t countSuccess = 0;
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
 		const string keyFileName = dirName + "/"
-			+ waveDescription::waveNameFromTopology(_waveSet[i], newKeyFileNameConvention) + ".key";
+			+ waveDescription::waveNameFromTopology(_waveSet[i]) + ".key";
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
@@ -598,7 +597,7 @@ waveSetGenerator::findBoseSymDecays() const
 		                                        topo->subDecay(topo->toNode(daughters[1]))};
 		if (_debug)
 			printDebug << "wave[" << waveIndex << "] "
-			           << waveDescription::waveNameFromTopology(*topo, true)
+			           << waveDescription::waveNameFromTopology(*topo)
 			           << " has Bose-symmetric vertex " << *vert << ". "
 			           << "looking for partner waves in wave set." << endl;
 
@@ -661,7 +660,7 @@ waveSetGenerator::findBoseSymDecays() const
 				continue;
 			if (_debug)
 				printDebug << "found Bose-partner wave[" << i << "] "
-				           << waveDescription::waveNameFromTopology(*symTopo, true) << endl;
+				           << waveDescription::waveNameFromTopology(*symTopo) << endl;
 			// keep topology with the heavier first particle
 			if (daughters[0]->mass() > daughters[1]->mass()) {
 				if (   not waveIndicesToRemove.insert(i).second
@@ -670,7 +669,7 @@ waveSetGenerator::findBoseSymDecays() const
 					         << "removal(for keeping) twice. this should never happen. Aborting..." << endl;
 					throw;
 				}
-				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*symTopo, true)
+				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*symTopo)
 				          << " as superfluous" << endl;
 			} else {
 				if (   not waveIndicesToRemove.insert(waveIndex).second
@@ -679,7 +678,7 @@ waveSetGenerator::findBoseSymDecays() const
 					         << "removal(for keeping) twice. this should never happen. Aborting..." << endl;
 					throw;
 				}
-				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*topo, true)
+				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*topo)
 				          << " as superfluous" << endl;
 			}
 		}  // inner loop over wave set
