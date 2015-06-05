@@ -54,8 +54,6 @@ rpwa::partialWaveFitHelper::extractWaveList(const rpwa::fitResult& result,
 }
 
 
-// depends on naming convention for waves!!!
-// VR_IGJPCMEIso....
 int
 rpwa::partialWaveFitHelper::getReflectivity(const std::string& name)
 {
@@ -73,14 +71,48 @@ rpwa::partialWaveFitHelper::getReflectivity(const std::string& name)
 
 	int refl = 0;
 	if (name.substr(waveNamePos) != "flat") {
-		if (name[waveNamePos + 6] == '-')
-			refl= -1;
-		else if (name[waveNamePos + 6] == '+')
-			refl= +1;
-		else {
-			printErr << "cannot parse parameter/wave name '" << name << "'. "
-			         << "cannot not determine reflectivity. Aborting..." << std::endl;
-			throw;
+		if (name[waveNamePos] == '[') {
+			// new naming convention "[IG,JPC,ME]=..."
+			// * the C might not be present
+			const size_t startQn = waveNamePos + 1;
+			const size_t endQn = name.find(']', startQn);
+			if (endQn == std::string::npos) {
+				printErr << "cannot parse parameter/wave name '" << name.substr(waveNamePos) << "'. "
+				         << "could not find closing bracket ']' around quantum numbers. Aborting..." << std::endl;
+				throw;
+			}
+			const size_t firstSplit = name.find(',', startQn);
+			const size_t secondSplit = name.find(',', firstSplit+1);
+			if (firstSplit == std::string::npos || secondSplit == std::string::npos || endQn < secondSplit) {
+				printErr << "cannot parse parameter/wave name '" << name.substr(waveNamePos) << "'. "
+				         << "could not find two separators ','. Aborting..." << std::endl;
+				throw;
+			}
+			if (endQn - secondSplit < 3) {
+				printErr << "cannot parse parameter/wave name '" << name.substr(waveNamePos) << "'. "
+				         << "spin-projection and reflectivity not correctly specified. Aborting..." << std::endl;
+				throw;
+			}
+			if (name[endQn - 1] == '-')
+				refl= -1;
+			else if (name[endQn - 1] == '+')
+				refl= +1;
+			else {
+				printErr << "cannot parse parameter/wave name '" << name << "'. "
+				         << "cannot not determine reflectivity. Aborting..." << std::endl;
+				throw;
+			}
+		} else {
+			// old naming convention "IGJPCME...
+			if (name[waveNamePos + 6] == '-')
+				refl= -1;
+			else if (name[waveNamePos + 6] == '+')
+				refl= +1;
+			else {
+				printErr << "cannot parse parameter/wave name '" << name << "'. "
+				         << "cannot not determine reflectivity. Aborting..." << std::endl;
+				throw;
+			}
 		}
 	}
 
