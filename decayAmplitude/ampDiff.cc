@@ -133,7 +133,7 @@ main(int    argc,
 
 	// get amplitude file names
 	if (argc - optind != 2) {
-		printErr << "you have to specify two amplitude files. Aborting..." << endl;;
+		printErr << "you have to specify two amplitude files. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	ampFileNames[0] = argv[optind++];

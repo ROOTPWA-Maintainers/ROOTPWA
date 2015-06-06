@@ -156,7 +156,7 @@ main(int    argc,
 
 	// get input file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one data file to process. Aborting..." << endl;;
+		printErr << "you need to specify at least one data file to process. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	vector<string> rootFileNames;
@@ -173,7 +173,7 @@ main(int    argc,
 			          << "skipping." << endl;
 	}
 	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .evt file. Aborting...";
+		printErr << "none of the specified input files is a .root or .evt file. Aborting..." << endl;
 		usage(progName, 1);
 	}
 

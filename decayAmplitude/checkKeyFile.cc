@@ -349,7 +349,7 @@ main(int    argc,
 
 	// get key file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one key file to process. Aborting..." << endl;;
+		printErr << "you need to specify at least one key file to process. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	vector<string> keyFileNames;
@@ -380,7 +380,7 @@ main(int    argc,
 		else if (fileExt == "evt")
 			evtFileNames.push_back(dataFileName);
 		else {
-			printErr << "specified input files is neither a .root nor a .evt file. Aborting...";
+			printErr << "specified input files is neither a .root nor a .evt file. Aborting..." << endl;
 			usage(progName, 1);
 		}
 		vector<TTree*> inTrees;

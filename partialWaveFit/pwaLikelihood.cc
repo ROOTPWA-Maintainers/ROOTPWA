@@ -1031,7 +1031,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
                                             const double       massBinCenter)
 {
 	if ((_nmbWavesRefl[0] + _nmbWavesRefl[1] == 0) or (_waveThresholds.size() == 0)) {
-		printErr << "no wave info. was readWaveList() executed successfully? Aborting...";
+		printErr << "no wave info. was readWaveList() executed successfully? Aborting..." << endl;
 		throw;
 	}
 	_rank = rank;

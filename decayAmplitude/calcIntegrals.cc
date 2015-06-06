@@ -120,7 +120,7 @@ main(int    argc,
 
 	// get input file names
 	if (optind >= argc) {
-		printErr << "you need to specify at least one amplitude file to process. Aborting..." << endl;;
+		printErr << "you need to specify at least one amplitude file to process. Aborting..." << endl;
 		usage(progName, 1);
 	}
 	vector<string> rootAmpFileNames;
@@ -137,7 +137,7 @@ main(int    argc,
 			          << "skipping." << endl;
 	}
 	if ((rootAmpFileNames.size() == 0) and (binAmpFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .amp file. Aborting...";
+		printErr << "none of the specified input files is a .root or .amp file. Aborting..." << endl;
 		usage(progName, 1);
 	}
 
