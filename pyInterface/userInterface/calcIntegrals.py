@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
+	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
 	parser.add_argument("-w", type=str, metavar="path", dest="weightsFileName", default="", help="path to MC weight file for de-weighting (default: none)")
 	args = parser.parse_args()
 
@@ -36,7 +37,11 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	for binID in fileManager.getBinIDList():
+	binIDList = fileManager.getBinIDList()
+	if (not args.massBin == -1):
+		binIDList = [args.massBin]
+
+	for binID in binIDList:
 		for eventsType in [ pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
 			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
 			outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "NEW")
