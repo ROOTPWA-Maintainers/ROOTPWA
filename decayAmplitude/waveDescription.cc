@@ -454,7 +454,7 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
 	}
 	else if (not (topo.isFsParticle(currentVertex->daughter1())
-	             and topo.isFsParticle(currentVertex->daughter1()))) {
+	             and topo.isFsParticle(currentVertex->daughter2()))) {
 		// recurse down decay chain
 		// do this only if not both daughters are fs partiles
 
