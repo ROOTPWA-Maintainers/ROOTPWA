@@ -264,10 +264,14 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 	subAmp.enableReflectivityBasis(false);
 	subAmp.init();
 
+	// create phase-space generator and set some options
+	// currently those are in any case the default values, but just to be safe
 	nBodyPhaseSpaceGen psGen;
+	psGen.setKinematicsType(rpwa::nBodyPhaseSpaceGen::BLOCK);
+	psGen.setWeightType(rpwa::nBodyPhaseSpaceGen::S_U_CHUNG);
+
 	psGen.setDecay(daughterMasses);
-	psGen.setMaxWeight(1.01 * psGen.estimateMaxWeight(M, 100000));
-	TLorentzVector parent(0., 0., 0., M);
+	const TLorentzVector parent(0., 0., 0., M);
 
 	double integral = 0.;
 	vector<double> samples;
@@ -277,19 +281,17 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 
 	boost::progress_display progressIndicator(nEvents, cout, "");
 	for(unsigned int i = 0; i < nEvents; ++i) {
-		psGen.generateDecay(parent);
+		const double weight = psGen.generateDecay(parent);
 		TClonesArray prodKinMom("TVector3", 1);
 		TClonesArray decayKinMom("TVector3", nmbFsParticles);
-		TLorentzVector particleSum(0., 0., 0., 0.);
 		for(unsigned int j = 0; j < nmbFsParticles; ++j) {
 			const TLorentzVector& daughter = psGen.daughter(j);
 			new (decayKinMom[j]) TVector3(daughter.Vect());
-			particleSum += daughter;
 		}
-		new (prodKinMom[0]) TVector3(particleSum.Vect());
+		new (prodKinMom[0]) TVector3(parent.Vect());
 		subAmp.decayTopology()->readKinematicsData(prodKinMom, decayKinMom);
 		const double ampVal = norm(subAmp());
-		const double sample = ampVal * psGen.eventWeight();
+		const double sample = ampVal * weight;
 		integral += sample;
 		if(CALCULATE_ERRORS) {
 			samples[i] = sample;
@@ -298,7 +300,6 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 	}
 
 	_vertex->setMassDependence(originalMassDep);
-	const double V = fourPi * (1 / rpwa::factorial<double>(nmbFsParticles)) * pow((fourPi*(M - fsParticlesMassSum)), nmbFsParticles-2);
 	integral /= (double)nEvents;
 
 	double error = 0.;
@@ -309,10 +310,8 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 			sig2 += diff * diff;
 		}
 		sig2 /= (nEvents - 1);
-		error = V * sqrt(sig2 / nEvents);
+		error = sqrt(sig2 / nEvents);
 	}
-
-	integral *= V;
 
 	_subDecay->saveDecayToVertices(origTopology);
 
