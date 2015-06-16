@@ -1429,11 +1429,11 @@ rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
 
 
 std::complex<double>
-rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& fitParameters,
-                                          rpwa::massDepFit::cache& cache,
-                                          const size_t idxBin,
-                                          const double m,
-                                          const size_t idxMass) const
+rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /* fitParameters */,
+                                          rpwa::massDepFit::cache& /* cache */,
+                                          const size_t /* idxBin */,
+                                          const double /* m */,
+                                          const size_t /* idxMass */) const
 {
 	return 1.;
 }
