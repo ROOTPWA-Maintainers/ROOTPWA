@@ -136,6 +136,25 @@ TLorentzRotation
 isobarAmplitude::gjTransform(const TLorentzVector& beamLv,  // beam Lorentz-vector
                              const TLorentzVector& XLv)     // X  Lorentz-vector
 {
+	if (beamLv == XLv) {
+		// Beam and X Lorentz vector are equal if the amplitude is to
+		// be calculated starting with a non-interaction vertex as it
+		// is the case for, e.g., the 'phaseSpaceIntegral' class. In
+		// this case the production plane is not well defined. Any
+		// rotation might skew the angles as there might be a prefered
+		// orientation due to numerical instabilities, so only perform
+		// the boost. Print a warning if this boost is not small.
+		const TVector3 boostVector(-XLv.BoostVector());
+		if (boostVector.Mag() > numeric_limits<double>::epsilon()) {
+			printWarn << "Lorentz-vectors of beam and X are collinear and the boost vector to the center-of-mass system of X is not negligible (" << maxPrecisionAlign(boostVector.Mag()) << ")." << std::endl;
+		}
+
+		TLorentzRotation boost;
+		boost.Boost(boostVector);
+
+		return boost;
+	}
+
 	TLorentzVector beam    = beamLv;
 	TLorentzVector X       = XLv;
 	const TVector3 yGjAxis = beam.Vect().Cross(X.Vect());  // y-axis of Gottfried-Jackson frame

@@ -1060,8 +1060,14 @@ pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta)
 		}
 		assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
 		complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
-		if (_useNormalizedAmps)         // normalize data, if option is switched on
-			amp /= sqrt(normInt.real());  // rescale decay amplitude
+		if (_useNormalizedAmps) {  // normalize data, if option is switched on
+			if (normInt == (value_type)0. && amp != (value_type)0.) {
+				printErr << "normalization integral for wave '" << waveName << "' is zero, but the amplitude is not. Aborting...";
+				return false;
+			}
+			if (normInt != (value_type)0.)
+				amp /= sqrt(normInt.real());  // rescale decay amplitude
+		}
 		amps.push_back(amp);
 	}
 
