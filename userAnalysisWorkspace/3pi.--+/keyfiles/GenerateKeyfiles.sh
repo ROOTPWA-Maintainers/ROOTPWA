@@ -23,7 +23,7 @@ done
 
 # post-process the keyfiles
 # * change mass dependence for sigma isobars
-for KEY_FILE in ${DESTINATION_DIR}/*sigma{_,=}*.key
+for KEY_FILE in ${DESTINATION_DIR}/*sigma0=*.key
 do
 	if [[ ! -f ${KEY_FILE} ]]
 	then
@@ -57,7 +57,7 @@ done
 # post-process the keyfiles
 # * f0(980) isobars with three different mass dependences:
 #   usual Breit-Wigner, special Breit-Wigner and Flatte
-for KEY_FILE in ${DESTINATION_DIR}/*f0980{_,=}*.key
+for KEY_FILE in ${DESTINATION_DIR}/*f0_980_0=*.key
 do
 	if [[ ! -f ${KEY_FILE} ]]
 	then
@@ -84,9 +84,9 @@ BEGIN {
 	}
 	print $0
 }
-' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0980/f0980bw/g'`
+' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0_980_0/f0_980_0bw/g'`
 done
-for KEY_FILE in ${DESTINATION_DIR}/*f0980{_,=}*.key
+for KEY_FILE in ${DESTINATION_DIR}/*f0_980_0=*.key
 do
 	if [[ ! -f ${KEY_FILE} ]]
 	then
@@ -113,32 +113,38 @@ BEGIN {
 	}
 	print $0
 }
-' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0980/f0980fl/g'`
+' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0_980_0/f0_980_0fl/g'`
 done
 
 if [[ ! -z "${WAVESET_FILES}" ]]
 then
 	# copy wavesets to destination dir, and create copies for the various
 	# f0(980) mass dependences
+	ALL_WAVESET_FILES=
 	for WAVESET_FILE in ${WAVESET_FILES}
 	do
 		if [[ ! -e ${WAVESET_FILE} ]]
 		then
 			echo "Waveset file '${WAVESET_FILE}' does not exist."
 		else
-			cp ${WAVESET_FILE} ${DESTINATION_DIR}
+			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE} ]]
+			then
+				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE}
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+			else
+				echo "Waveset file '${WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+			fi
 		fi
 	done
-	ALL_WAVESET_FILES=
 	for WAVESET_FILE in ${WAVESET_FILES}
 	do
 		if [[ -e ${WAVESET_FILE} ]]
 		then
-			ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
 			NEW_WAVESET_FILE="${WAVESET_FILE}.f0980bw"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
-				sed -e 's/f0980\([_=]\)/f0980bw\1/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
+				sed -e 's/f0_980_0=/f0_980_0bw=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				if cmp -s ${WAVESET_FILE} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				then
 					rm -rf ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
@@ -147,11 +153,12 @@ then
 				fi
 			else
 				echo "Waveset file '${NEW_WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}"
 			fi
 			NEW_WAVESET_FILE="${WAVESET_FILE}.f0980fl"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
-				sed -e 's/f0980\([_=]\)/f0980fl\1/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
+				sed -e 's/f0_980_0=/f0_980_0fl=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				if cmp -s ${WAVESET_FILE} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				then
 					rm -rf ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
@@ -160,11 +167,12 @@ then
 				fi
 			else
 				echo "Waveset file '${NEW_WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}"
 			fi
 		fi
 	done
 	# create list of all waves in wavesets (removing the thresholds)
-	awk '{print $1}' ${ALL_WAVESET_FILES} | sed -e 's/\.amp$//' | awk '{print $0".key"}' | sort -u > temp.waves.keep
+	awk '{print $1".key"}' ${ALL_WAVESET_FILES} | sort -u > temp.waves.keep
 	# create list of all keyfiles just created
 	for i in `ls -1 ${DESTINATION_DIR}/*.key` ; do basename $i ; done | sort -u > temp.waves.all
 	if [[ `diff temp.waves.all temp.waves.keep | grep "^>" | wc -l` -gt 0 ]]
