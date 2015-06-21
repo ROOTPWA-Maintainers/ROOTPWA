@@ -138,7 +138,7 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczpqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczp:qh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
