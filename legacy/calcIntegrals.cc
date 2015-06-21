@@ -59,7 +59,7 @@ usage(const string& progName,
 	     << " [-o output file -n max. # of events -r max. # of events -w weight file -v -h] "
 	     << "amplitude files" << endl
 	     << "    where:" << endl
-	     << "        -o path    path to output file (default: './norm.int')"                      << endl
+	     << "        -o path    path to output file (default: './norm.root')"                     << endl
 	     << "        -n #       maximum number of events to process (default: all)"               << endl
 	     << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
 	     << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
@@ -87,7 +87,7 @@ main(int    argc,
 
 	// parse command line options
 	const string progName        = argv[0];
-	string       outFileName     = "./norm.int";
+	string       outFileName     = "./norm.root";
 	unsigned int maxNmbEvents    = 0;
 	unsigned int nmbEventsRenorm = 0;
 	string       weightFileName  = "";

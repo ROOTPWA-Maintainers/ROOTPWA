@@ -77,27 +77,27 @@ include_directories(
 # source files that are compiled into library
 set(SOURCES
 	rootPwaPy.cc
-	${PYUTILS_SUBDIR}/stlContainers_py.cc
 	${PYUTILS_SUBDIR}/rootConverters_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/interactionVertex_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/fsVertex_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/massDependence_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/isobarDecayVertex_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/productionVertex_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
+	${PYUTILS_SUBDIR}/stlContainers_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/decayTopology_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/isobarDecayTopology_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/fsVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/interactionVertex_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/isobarAmplitude_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/isobarCanonicalAmplitude_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/isobarHelicityAmplitude_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/waveDescription_py.cc
-	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarDecayTopology_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/isobarDecayVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/massDependence_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
-	${GENERATORS_SUBDIR}/generatorManager_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/productionVertex_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/waveDescription_py.cc
+	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${GENERATORS_SUBDIR}/generator_py.cc
+	${GENERATORS_SUBDIR}/generatorManager_py.cc
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
-	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
 	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
@@ -105,9 +105,9 @@ set(SOURCES
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/pwaLikelihood_py.cc
-	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
-	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
+	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
+	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc

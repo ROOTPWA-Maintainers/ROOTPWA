@@ -103,7 +103,7 @@ rpwa::partialWaveFitHelper::getReflectivity(const std::string& name)
 				throw;
 			}
 		} else {
-			// old naming convention "IGJPCME...
+			// old naming convention "IGJPCME..."
 			if (name[waveNamePos + 6] == '-')
 				refl= -1;
 			else if (name[waveNamePos + 6] == '+')
