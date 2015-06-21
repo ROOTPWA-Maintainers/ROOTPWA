@@ -181,10 +181,8 @@ main(int    argc,
 		} else
 			printSucc << "wrote integral to TKey '" << ampIntegralMatrix::integralObjectName << "' "
 			          << "in file '" << outFileName << "'" << endl;
-	} else if (outFileExt == "int")
-		integral.writeAscii(outFileName);
-	else {
-		printErr << "output file '" << outFileName << "' should be either a .root or a .int file. "
+	} else {
+		printErr << "output file '" << outFileName << "' should be a .root file. "
 		         << "Aborting...";
 		exit(1);
 	}
