@@ -31,6 +31,7 @@
 #include "beamAndVertexGenerator_py.h"
 #include "complexMatrix_py.h"
 #include "fitResult_py.h"
+#include "physUtils_py.h"
 #include "utils_py.h"
 #include "eventFileWriter_py.h"
 #include "eventMetadata_py.h"
@@ -75,6 +76,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportBeamAndVertexGenerator();
 	rpwa::py::exportComplexMatrix();
 	rpwa::py::exportFitResult();
+	rpwa::py::exportPhysUtils();
 	rpwa::py::exportUtils();
 	rpwa::py::exportEventFileWriter();
 	rpwa::py::exportEventMetadata();

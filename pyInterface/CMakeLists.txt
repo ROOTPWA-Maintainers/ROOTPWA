@@ -113,6 +113,7 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${UTILITIES_SUBDIR}/physUtils_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 if(USE_NLOPT)
