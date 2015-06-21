@@ -1,10 +1,13 @@
-
 #include "generatorParameters_py.h"
 
+#include <boost/python.hpp>
+
+#include "generatorParameters.hpp"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

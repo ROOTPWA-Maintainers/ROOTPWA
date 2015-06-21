@@ -1,6 +1,11 @@
 #include "reportingUtilsEnvironment_py.h"
 
+#include <boost/python.hpp>
+
+#include "reportingUtilsEnvironment.h"
+
 namespace bp = boost::python;
+
 
 void rpwa::py::exportReportingUtilsEnvironment() {
 

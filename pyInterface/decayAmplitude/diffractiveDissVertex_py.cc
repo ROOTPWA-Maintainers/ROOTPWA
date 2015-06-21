@@ -1,10 +1,14 @@
 #include "diffractiveDissVertex_py.h"
 
-#include<TClonesArray.h>
+#include <boost/python.hpp>
 
+#include <TClonesArray.h>
+
+#include "diffractiveDissVertex.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

@@ -1,10 +1,13 @@
-
 #include "beamAndVertexGenerator_py.h"
 
-#include <generatorParameters.hpp>
+#include <boost/python.hpp>
+
+#include "beamAndVertexGenerator.h"
+#include "generatorParameters.hpp"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

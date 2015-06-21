@@ -1,8 +1,12 @@
 #include "massDependence_py.h"
 
-#include<isobarDecayVertex.h>
+#include <boost/python.hpp>
+
+#include "isobarDecayVertex.h"
+#include "massDependence.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

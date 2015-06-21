@@ -1,12 +1,15 @@
-
 #include "fitResult_py.h"
+
+#include <boost/python.hpp>
 
 #include <TTree.h>
 
+#include "fitResult.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

@@ -1,10 +1,13 @@
 #include "particleDataTable_py.h"
 
-#include<particleProperties.h>
+#include <boost/python.hpp>
 
+#include "particleDataTable.h"
+#include "particleProperties.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

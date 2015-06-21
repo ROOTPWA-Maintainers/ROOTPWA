@@ -1,7 +1,11 @@
-
 #include "generatorPickerFunctions_py.h"
 
+#include <boost/python.hpp>
+
+#include "generatorPickerFunctions.h"
+
 namespace bp = boost::python;
+
 
 namespace {
 

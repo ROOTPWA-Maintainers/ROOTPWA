@@ -1,11 +1,10 @@
 #ifndef ROOTCONVERTERS_PY_H
 #define ROOTCONVERTERS_PY_H
 
-#include<boost/python.hpp>
+#include <boost/python.hpp>
 
-class TDirectory;
-class TLorentzRotation;
-class TVector3;
+#include <string>
+
 
 namespace rpwa {
 

@@ -1,12 +1,15 @@
-
 #include "eventMetadata_py.h"
+
+#include <boost/python.hpp>
 
 #include <TPython.h>
 #include <TTree.h>
 
+#include "eventMetadata.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

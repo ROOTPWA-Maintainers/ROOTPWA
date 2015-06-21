@@ -1,8 +1,12 @@
 #include "fsVertex_py.h"
 
-#include<particle.h>
+#include <boost/python.hpp>
+
+#include "fsVertex.h"
+#include "particle.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

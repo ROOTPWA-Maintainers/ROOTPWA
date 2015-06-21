@@ -1,13 +1,17 @@
 #include "particle_py.h"
 
-#include<TLorentzRotation.h>
-#include<TPython.h>
-#include<TVector3.h>
+#include <boost/python.hpp>
 
+#include <TLorentzRotation.h>
+#include <TPython.h>
+#include <TVector3.h>
+
+#include "particle.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

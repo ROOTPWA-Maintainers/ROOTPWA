@@ -1,8 +1,11 @@
 #include "amplitudeTreeLeaf_py.h"
 
-#include<TTree.h>
+#include <boost/python.hpp>
 
-#include<reportingUtils.hpp>
+#include <TTree.h>
+
+#include "amplitudeTreeLeaf.h"
+#include "reportingUtils.hpp"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;

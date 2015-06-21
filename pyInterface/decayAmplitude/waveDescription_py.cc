@@ -1,8 +1,12 @@
 #include "waveDescription_py.h"
 
+#include <boost/python.hpp>
+
 #include "amplitudeMetadata.h"
+#include "waveDescription.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

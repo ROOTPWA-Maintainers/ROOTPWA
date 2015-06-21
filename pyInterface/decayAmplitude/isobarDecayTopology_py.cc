@@ -1,9 +1,13 @@
 #include "isobarDecayTopology_py.h"
 
+#include <boost/python.hpp>
+
+#include "isobarDecayTopology.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

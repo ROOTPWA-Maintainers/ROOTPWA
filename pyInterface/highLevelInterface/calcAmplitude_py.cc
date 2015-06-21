@@ -1,6 +1,8 @@
-
 #include "calcAmplitude_py.h"
 
+#include <boost/python.hpp>
+
+#include "calcAmplitude.h"
 
 namespace bp = boost::python;
 

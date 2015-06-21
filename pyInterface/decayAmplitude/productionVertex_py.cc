@@ -1,8 +1,13 @@
 #include "productionVertex_py.h"
 
-#include<TClonesArray.h>
+#include <boost/python.hpp>
+
+#include <TClonesArray.h>
+
+#include "productionVertex.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

@@ -1,10 +1,13 @@
 #include "isobarDecayVertex_py.h"
 
-#include<particle.h>
+#include <boost/python.hpp>
 
+#include "isobarDecayVertex.h"
+#include "particle.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

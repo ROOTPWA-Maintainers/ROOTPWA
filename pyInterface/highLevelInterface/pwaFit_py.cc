@@ -1,10 +1,13 @@
-
 #include "pwaFit_py.h"
 
+#include <boost/python.hpp>
+
+#include "pwaFit.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 void rpwa::py::exportPwaFit()
 {

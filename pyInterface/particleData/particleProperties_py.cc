@@ -1,8 +1,12 @@
 #include "particleProperties_py.h"
 
+#include <boost/python.hpp>
+
+#include "particleProperties.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 
