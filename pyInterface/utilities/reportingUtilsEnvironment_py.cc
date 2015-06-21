@@ -1,8 +1,8 @@
-#include "utils_py.h"
+#include "reportingUtilsEnvironment_py.h"
 
 namespace bp = boost::python;
 
-void rpwa::py::exportUtils() {
+void rpwa::py::exportReportingUtilsEnvironment() {
 
 	bp::def("printGitHash", &rpwa::printGitHash);
 	bp::def("printCompilerInfo", &rpwa::printCompilerInfo);
