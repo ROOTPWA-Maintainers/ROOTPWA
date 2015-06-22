@@ -31,12 +31,18 @@ then
 		then
 			echo "Waveset file '${WAVESET_FILE}' does not exist."
 		else
-			cp ${WAVESET_FILE} ${DESTINATION_DIR}
-			ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE} ]]
+			then
+				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE}
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+			else
+				echo "Waveset file '${WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+			fi
 		fi
 	done
 	# create list of all waves in wavesets (removing the thresholds)
-	awk '{print $1}' ${ALL_WAVESET_FILES} | sed -e 's/\.amp$//' | awk '{print $0".key"}' | sort -u > temp.waves.keep
+	awk '{print $1".key"}' ${ALL_WAVESET_FILES} | sort -u > temp.waves.keep
 	# create list of all keyfiles just created
 	for i in `ls -1 ${DESTINATION_DIR}/*.key` ; do basename $i ; done | sort -u > temp.waves.all
 	if [[ `diff temp.waves.all temp.waves.keep | grep "^>" | wc -l` -gt 0 ]]

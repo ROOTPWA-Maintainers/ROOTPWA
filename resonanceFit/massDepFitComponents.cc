@@ -1450,13 +1450,11 @@ rpwa::massDepFit::constantBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "exponentialBackground", 2)
+	: component(id, name, "exponentialBackground", 1)
 {
-	_parametersName[0] = "m0";
-	_parametersName[1] = "g";
+	_parametersName[0] = "g";
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 1.0;
+	_parametersStep[0] = 1.0;
 }
 
 
@@ -1497,6 +1495,34 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 	_m1 = configComponent["mIsobar1"].as<double>();
 	_m2 = configComponent["mIsobar2"].as<double>();
 
+	if (configComponent["relAngularMom"]) {
+		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
+			_l = configComponent["relAngularMom"].as<int>();
+		} else {
+			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
+		_l = 0;
+	}
+
+	if (configComponent["exponent"]) {
+		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
+			_exponent = configComponent["exponent"].as<double>();
+		} else {
+			printErr << "variable 'exponent' for component '" << getName() << "' defined, but not a floating point number." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'exponent' for component '" << getName() << "' not defined, using default value 2.0." << std::endl;
+		_exponent = 2.0;
+	}
+
+	const double q = rpwa::breakupMomentum(massBinCenters.back(), _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	_norm = 1. / (q*f2);
+
 	if(debug) {
 		print(printDebug);
 		printDebug << "finished initializing 'exponentialBackground'." << std::endl;
@@ -1531,6 +1557,12 @@ rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Key << "mIsobar2";
 	yamlOutput << YAML::Value << _m2;
 
+	yamlOutput << YAML::Key << "relAngularMom";
+	yamlOutput << YAML::Value <<_l;
+
+	yamlOutput << YAML::Key << "exponent";
+	yamlOutput << YAML::Value <<_exponent;
+
 	yamlOutput << YAML::EndMap;
 
 	if(debug) {
@@ -1555,16 +1587,15 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 		}
 	}
 
-	// shift baseline mass
-	const double mass = m - fitParameters.getParameter(getId(), 0);
-
 	// calculate breakup momentum
-	if(mass < _m1+_m2) {
+	if(m < _m1+_m2) {
 		return std::complex<double>(1,0);
 	}
-	const double q2 = rpwa::breakupMomentumSquared(mass, _m1, _m2);
+	const double q = rpwa::breakupMomentum(m, _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	const double c = std::pow(q*f2 * _norm, _exponent);
 
-	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 1)*q2);
+	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		cache.setComponent(getId(), std::numeric_limits<size_t>::max(), idxMass, component);
@@ -1579,7 +1610,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 {
 	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
 
-	out << "    mass threshold ";
+	out << "    width ";
 	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
 	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
 		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
@@ -1592,20 +1623,9 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 	}
 	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
 
-	out << "    width ";
-	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
-	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
-	} else if(_parametersLimitedLower[1]) {
-		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[1]) {
-		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parametersFixed[1] ? " (FIXED) " : "") << std::endl;
-
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
+	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
+	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
 
 	return component::print(out);
 }
@@ -1675,6 +1695,34 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 	_m1 = configComponent["mIsobar1"].as<double>();
 	_m2 = configComponent["mIsobar2"].as<double>();
 
+	if (configComponent["relAngularMom"]) {
+		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
+			_l = configComponent["relAngularMom"].as<int>();
+		} else {
+			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
+		_l = 0;
+	}
+
+	if (configComponent["exponent"]) {
+		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
+			_exponent = configComponent["exponent"].as<double>();
+		} else {
+			printErr << "variable 'exponent' for component '" << getName() << "' defined, but not a floating point number." << std::endl;
+			return false;
+		}
+	} else {
+		printInfo << "variable 'exponent' for component '" << getName() << "' not defined, using default value 2.0." << std::endl;
+		_exponent = 2.0;
+	}
+
+	const double q = rpwa::breakupMomentum(massBinCenters.back(), _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	_norm = 1. / (q*f2);
+
 	if(_tPrimeMeans.size() != nrBins) {
 		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
 		return false;
@@ -1714,6 +1762,12 @@ rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Key << "mIsobar2";
 	yamlOutput << YAML::Value << _m2;
 
+	yamlOutput << YAML::Key << "relAngularMom";
+	yamlOutput << YAML::Value <<_l;
+
+	yamlOutput << YAML::Key << "exponent";
+	yamlOutput << YAML::Value <<_exponent;
+
 	yamlOutput << YAML::EndMap;
 
 	if(debug) {
@@ -1742,7 +1796,9 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 	if(m < _m1+_m2) {
 		return std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 	}
-	const double q2 = rpwa::breakupMomentumSquared(m, _m1, _m2);
+	const double q = rpwa::breakupMomentum(m, _m1, _m2);
+	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
+	const double c = std::pow(q*f2 * _norm, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
@@ -1750,7 +1806,7 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 
 	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 
-	const std::complex<double> component = mPre * exp(-tPrimePol*q2);
+	const std::complex<double> component = mPre * exp(-tPrimePol*c);
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		cache.setComponent(getId(), idxBin, idxMass, component);
@@ -1794,6 +1850,473 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 	}
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
+	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
+	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
+
+	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
+	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
+		out << ", " << _tPrimeMeans[i];
+	}
+	out << std::endl;
+
+	return component::print(out);
+}
+
+
+rpwa::massDepFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
+                                                                               const std::string& name)
+	: component(id, name, "exponentialBackgroundIntegral", 1),
+	  _interpolator(NULL)
+{
+	_parametersName[0] = "g";
+
+	_parametersStep[0] = 1.0;
+}
+
+
+rpwa::massDepFit::exponentialBackgroundIntegral::~exponentialBackgroundIntegral()
+{
+	if (_interpolator != NULL) {
+		delete _interpolator;
+	}
+}
+
+
+bool
+rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configComponent,
+                                                      rpwa::massDepFit::parameters& fitParameters,
+                                                      rpwa::massDepFit::parameters& fitParametersError,
+                                                      const size_t nrBins,
+                                                      const std::vector<double>& massBinCenters,
+                                                      const std::map<std::string, size_t>& waveIndices,
+                                                      const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                      const bool useBranchings,
+                                                      const bool debug)
+{
+	if(debug) {
+		printDebug << "start initializing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
+	}
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+		printErr << "error while reading configuration of 'component' class." << std::endl;
+		return false;
+	}
+
+	if(getNrChannels() != 1) {
+		printErr << "component '" << getName() << "' of type 'exponentialBackgroundIntegral' needs to have exactly one decay channel." << std::endl;
+		return false;
+	}
+
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("integral", YamlCppUtils::TypeSequence)
+	                     ("exponent", YamlCppUtils::TypeFloat);
+	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+		printErr << "not all required variables are defined for the component '" << getName() << "'." << std::endl;
+		return false;
+	}
+
+	const YAML::Node& integrals = configComponent["integral"];
+
+	const size_t nrValues = integrals.size();
+	if(nrValues < 2) {
+		printErr << "phase-space integral of component '" << getName() << "' has to contain at least two points." << std::endl;
+		return false;
+	}
+
+	_masses.clear();
+	_values.clear();
+
+	for(size_t idx=0; idx<nrValues; ++idx) {
+		const YAML::Node& integral = integrals[idx];
+		if(not integral.IsSequence()) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(integral.size() != 2) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+
+		const double mass = integral[0].as<double>();
+		const double val = integral[1].as<double>();
+
+		if (_masses.size() > 0 && _masses.back() > mass) {
+			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
+			return false;
+		}
+
+		_masses.push_back(mass);
+		_values.push_back(val);
+	}
+
+	assert(_interpolator == NULL);
+	_interpolator = new ROOT::Math::Interpolator(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
+
+	_exponent = configComponent["exponent"].as<double>();
+
+	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+
+	if(debug) {
+		print(printDebug);
+		printDebug << "finished initializing 'exponentialBackgroundIntegral'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::exponentialBackgroundIntegral::write(YAML::Emitter& yamlOutput,
+                                                       const rpwa::massDepFit::parameters& fitParameters,
+                                                       const rpwa::massDepFit::parameters& fitParametersError,
+                                                       const bool useBranchings,
+                                                       const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'exponentialBackgroundIntegral'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "integral";
+	yamlOutput << YAML::Value;
+
+	yamlOutput << YAML::Flow;
+	yamlOutput << YAML::BeginSeq;
+	for (size_t idx=0; idx<_masses.size(); ++idx) {
+		yamlOutput << YAML::BeginSeq;
+		yamlOutput << _masses[idx];
+		yamlOutput << _values[idx];
+		yamlOutput << YAML::EndSeq;
+	}
+	yamlOutput << YAML::EndSeq;
+	yamlOutput << YAML::Block;
+
+	yamlOutput << YAML::Key << "exponent";
+	yamlOutput << YAML::Value <<_exponent;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'exponentialBackgroundIntegral'." << std::endl;
+	}
+
+	return true;
+}
+
+
+std::complex<double>
+rpwa::massDepFit::exponentialBackgroundIntegral::val(const rpwa::massDepFit::parameters& fitParameters,
+                                                     rpwa::massDepFit::cache& cache,
+                                                     const size_t idxBin,
+                                                     const double m,
+                                                     const size_t idxMass) const
+{
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
+		if (component != 0.) {
+			return component;
+		}
+	}
+
+	const double ps = _interpolator->Eval(m);
+	const double c = std::pow(ps * _norm, _exponent);
+
+	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
+
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		cache.setComponent(getId(), std::numeric_limits<size_t>::max(), idxMass, component);
+	}
+
+	return component;
+}
+
+
+std::ostream&
+rpwa::massDepFit::exponentialBackgroundIntegral::print(std::ostream& out) const
+{
+	out << "component " << getId() << " '" << getName() << "' (exponentialBackgroundIntegral):" << std::endl;
+
+	out << "    width ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
+	} else if(_parametersLimitedLower[0]) {
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	} else {
+		out << "unlimited";
+	}
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+
+	out << "    exponent of phase-space integral: " << _exponent << std::endl;
+
+	return component::print(out);
+}
+
+
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIntegral(const size_t id,
+                                                                                       const std::string& name)
+	: component(id, name, "tPrimeDependentBackgroundIntegral", 5),
+	  _interpolator(NULL)
+{
+	_parametersName[0] = "m0";
+	_parametersName[1] = "c0";
+	_parametersName[2] = "c1";
+	_parametersName[3] = "c2";
+	_parametersName[4] = "c3";
+
+	_parametersStep[0] = 0.001;
+	_parametersStep[1] = 0.001;
+	_parametersStep[2] = 1.0;
+	_parametersStep[3] = 1.0;
+	_parametersStep[4] = 1.0;
+}
+
+
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::~tPrimeDependentBackgroundIntegral()
+{
+	if (_interpolator != NULL) {
+		delete _interpolator;
+	}
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::setTPrimeMeans(const std::vector<double> tPrimeMeans)
+{
+	_tPrimeMeans = tPrimeMeans;
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& configComponent,
+                                                          rpwa::massDepFit::parameters& fitParameters,
+                                                          rpwa::massDepFit::parameters& fitParametersError,
+                                                          const size_t nrBins,
+                                                          const std::vector<double>& massBinCenters,
+                                                          const std::map<std::string, size_t>& waveIndices,
+                                                          const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                                                          const bool useBranchings,
+                                                          const bool debug)
+{
+	if(debug) {
+		printDebug << "start initializing 'tPrimeDependentBackgroundIntegral' for component '" << getName() << "'." << std::endl;
+	}
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+		printErr << "error while reading configuration of 'component' class." << std::endl;
+		return false;
+	}
+
+	if(getNrChannels() != 1) {
+		printErr << "component '" << getName() << "' of type 'tPrimeDependentBackgroundIntegral' needs to have exactly one decay channel." << std::endl;
+		return false;
+	}
+
+	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("integral", YamlCppUtils::TypeSequence)
+	                     ("exponent", YamlCppUtils::TypeFloat);
+	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+		printErr << "not all required variables are defined for the component '" << getName() << "'." << std::endl;
+		return false;
+	}
+
+	const YAML::Node& integrals = configComponent["integral"];
+
+	const size_t nrValues = integrals.size();
+	if(nrValues < 2) {
+		printErr << "phase-space integral of component '" << getName() << "' has to contain at least two points." << std::endl;
+		return false;
+	}
+
+	_masses.clear();
+	_values.clear();
+
+	for(size_t idx=0; idx<nrValues; ++idx) {
+		const YAML::Node& integral = integrals[idx];
+		if(not integral.IsSequence()) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(integral.size() != 2) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
+			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
+			return false;
+		}
+
+		const double mass = integral[0].as<double>();
+		const double val = integral[1].as<double>();
+
+		if (_masses.size() > 0 && _masses.back() > mass) {
+			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
+			return false;
+		}
+
+		_masses.push_back(mass);
+		_values.push_back(val);
+	}
+
+	assert(_interpolator == NULL);
+	_interpolator = new ROOT::Math::Interpolator(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
+
+	_exponent = configComponent["exponent"].as<double>();
+
+	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+
+	if(_tPrimeMeans.size() != nrBins) {
+		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
+		return false;
+	}
+
+	if(debug) {
+		print(printDebug);
+		printDebug << "finished initializing 'tPrimeDependentBackgroundIntegral'." << std::endl;
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::write(YAML::Emitter& yamlOutput,
+                                                           const rpwa::massDepFit::parameters& fitParameters,
+                                                           const rpwa::massDepFit::parameters& fitParametersError,
+                                                           const bool useBranchings,
+                                                           const bool debug) const
+{
+	if(debug) {
+		printDebug << "start writing 'tPrimeDependentBackgroundIntegral' for component '" << getName() << "'." << std::endl;
+		print(printDebug);
+	}
+
+	yamlOutput << YAML::BeginMap;
+
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+		printErr << "error while writing 'component' part of 'tPrimeDependentBackgroundIntegral'." << std::endl;
+		return false;
+	}
+
+	yamlOutput << YAML::Key << "integral";
+	yamlOutput << YAML::Value;
+
+	yamlOutput << YAML::Flow;
+	yamlOutput << YAML::BeginSeq;
+	for (size_t idx=0; idx<_masses.size(); ++idx) {
+		yamlOutput << YAML::BeginSeq;
+		yamlOutput << _masses[idx];
+		yamlOutput << _values[idx];
+		yamlOutput << YAML::EndSeq;
+	}
+	yamlOutput << YAML::EndSeq;
+	yamlOutput << YAML::Block;
+
+	yamlOutput << YAML::Key << "exponent";
+	yamlOutput << YAML::Value <<_exponent;
+
+	yamlOutput << YAML::EndMap;
+
+	if(debug) {
+		printDebug << "finished writing 'tPrimeDependentBackgroundIntegral'." << std::endl;
+	}
+
+	return true;
+}
+
+
+std::complex<double>
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::val(const rpwa::massDepFit::parameters& fitParameters,
+                                                         rpwa::massDepFit::cache& cache,
+                                                         const size_t idxBin,
+                                                         const double m,
+                                                         const size_t idxMass) const
+{
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
+		if (component != 0.) {
+			return component;
+		}
+	}
+
+	const double ps = _interpolator->Eval(m);
+	const double c = std::pow(ps * _norm, _exponent);
+
+	// get mean t' value for current bin
+	const double tPrime = _tPrimeMeans[idxBin];
+	const double tPrimePol = fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime;
+
+	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
+
+	const std::complex<double> component = mPre * exp(-tPrimePol*c);
+
+	if (idxMass != std::numeric_limits<size_t>::max()) {
+		cache.setComponent(getId(), idxBin, idxMass, component);
+	}
+
+	return component;
+}
+
+
+std::ostream&
+rpwa::massDepFit::tPrimeDependentBackgroundIntegral::print(std::ostream& out) const
+{
+	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackgroundIntegral):" << std::endl;
+
+	out << "    mass threshold ";
+	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
+	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
+	} else if(_parametersLimitedLower[0]) {
+		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
+	} else if(_parametersLimitedUpper[0]) {
+		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	} else {
+		out << "unlimited";
+	}
+	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+
+	for(size_t i=1; i<5; ++i) {
+		out << "    c" << i-1 << " ";
+		out << "start value: " << _parametersStart[i] << " +/- " << _parametersError[i] << " ";
+		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
+			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
+		} else if(_parametersLimitedLower[i]) {
+			out << "lower limit: " << _parametersLimitLower[i] << " GeV/c^2";
+		} else if(_parametersLimitedUpper[i]) {
+			out << "upper limit: " << _parametersLimitUpper[i] << " GeV/c^2";
+		} else {
+			out << "unlimited";
+		}
+		out << (_parametersFixed[i] ? " (FIXED)" : "") << std::endl;
+	}
+
+	out << "    exponent of phase-space integral: " << _exponent << std::endl;
 
 	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
 	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {

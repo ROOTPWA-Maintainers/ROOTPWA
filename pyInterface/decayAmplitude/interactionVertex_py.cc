@@ -1,11 +1,15 @@
 #include "interactionVertex_py.h"
 
-#include<TLorentzRotation.h>
+#include <boost/python.hpp>
 
+#include <TLorentzRotation.h>
+
+#include "interactionVertex.h"
+#include "particle.h"
 #include "rootConverters_py.h"
-#include<particle.h>
 
 namespace bp = boost::python;
+
 
 namespace {
 

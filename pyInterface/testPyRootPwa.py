@@ -737,7 +737,7 @@ def waveDescTestConstructAmplitude():
 consistentIsobarAmp = do_test(waveDescTestConstructAmplitude, "Testing waveDescription.constructAmplitude()")
 
 def waveDescWaveName():
-	assert(pyRootPwa.core.waveDescription.waveNameFromTopology(consistentIsobarTopo) == '1-1+00+rho31690=a21320-=rho770_21_pi-_22_pi+_23_pi-')
+	assert(pyRootPwa.core.waveDescription.waveNameFromTopology(consistentIsobarTopo) == '[1-,1+,0+]=[rho3_1690_0=[a2_1320_-=[rho_770_0=[pi+[1,0]pi-][2,1]pi-][2,2]pi+][2,3]pi-]')
 do_test(waveDescWaveName, "Testing waveDescription::waveNameFromTopology()")
 
 def waveDescWaveNameLatex():

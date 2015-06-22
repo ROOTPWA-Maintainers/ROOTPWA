@@ -72,8 +72,8 @@ usage(const string& progName,
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -S file    path to file with start values (default: none; highest priority)" << endl
 	     << "        -s #       seed for random start values (default: 0)" << endl
-	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
-	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+	     << "        -n file    path to normalization integral file (default: 'norm.root')" << endl
+	     << "        -a file    path to acceptance integral file (default: 'norm.root')" << endl
 	     << "        -A #       number of input events to normalize acceptance to (default: use number of events from normalization integral file)" << endl
 	     << "        -r #       rank of spin density matrix (default: 1)" << endl
 	     << "        -C         use half-Cauchy priors (default: false)" << endl
@@ -138,7 +138,7 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczpqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:n:a:A:r:CP:Hczp:qh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -201,11 +201,11 @@ main(int    argc,
 			break;
 		}
 	if (normIntFileName.length() == 0) {
-		normIntFileName = "norm.int";
+		normIntFileName = "norm.root";
 		printWarn << "using default normalization integral file '" << normIntFileName << "'" << endl;
 	}
 	if (accIntFileName.length() == 0) {
-		accIntFileName = "norm.int";
+		accIntFileName = "norm.root";
 		printWarn << "using default acceptance normalization integral file "
 		          << "'" << accIntFileName << "'" << endl;
 	}

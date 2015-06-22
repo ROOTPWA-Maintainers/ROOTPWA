@@ -1,6 +1,11 @@
-#include<phaseSpaceIntegral_py.h>
+#include "phaseSpaceIntegral_py.h"
+
+#include <boost/python.hpp>
+
+#include "phaseSpaceIntegral.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

@@ -408,8 +408,12 @@ namespace rpwa {
 
 		private:
 
+			int _l;
 			double _m1;
 			double _m2;
+			double _exponent;
+
+			double _norm;
 
 		};
 
@@ -449,8 +453,101 @@ namespace rpwa {
 		private:
 
 			std::vector<double> _tPrimeMeans;
+			int _l;
 			double _m1;
 			double _m2;
+			double _exponent;
+
+			double _norm;
+
+		};
+
+		class exponentialBackgroundIntegral : public component {
+
+		public:
+
+			exponentialBackgroundIntegral(const size_t id,
+			                              const std::string& name);
+			~exponentialBackgroundIntegral();
+
+			virtual bool init(const YAML::Node& configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  const size_t nrBins,
+			                  const std::vector<double>& massBinCenters,
+			                  const std::map<std::string, size_t>& waveIndices,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
+			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
+			                                 const size_t idxBin,
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		private:
+
+			std::vector<double> _masses;
+			std::vector<double> _values;
+			ROOT::Math::Interpolator* _interpolator;
+			double _exponent;
+
+			double _norm;
+
+		};
+
+		class tPrimeDependentBackgroundIntegral : public component {
+
+		public:
+
+			tPrimeDependentBackgroundIntegral(const size_t id,
+			                                  const std::string& name);
+			~tPrimeDependentBackgroundIntegral();
+
+			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+
+			virtual bool init(const YAML::Node& configComponent,
+			                  rpwa::massDepFit::parameters& fitParameters,
+			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  const size_t nrBins,
+			                  const std::vector<double>& massBinCenters,
+			                  const std::map<std::string, size_t>& waveIndices,
+			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+			                  const bool useBranchings,
+			                  const bool debug);
+
+			virtual bool write(YAML::Emitter& yamlOutput,
+			                   const rpwa::massDepFit::parameters& fitParameters,
+			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const bool useBranchings,
+			                   const bool debug) const;
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 rpwa::massDepFit::cache& cache,
+			                                 const size_t idxBin,
+			                                 const double m,
+			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		private:
+
+			std::vector<double> _tPrimeMeans;
+			std::vector<double> _masses;
+			std::vector<double> _values;
+			ROOT::Math::Interpolator* _interpolator;
+			double _exponent;
+
+			double _norm;
 
 		};
 

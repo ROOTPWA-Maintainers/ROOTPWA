@@ -1,14 +1,17 @@
 #include "decayTopology_py.h"
 
-#include<TLorentzRotation.h>
-#include<TVector3.h>
+#include <boost/python.hpp>
 
-#include<productionVertex.h>
+#include <TLorentzRotation.h>
+#include <TVector3.h>
 
+#include "decayTopology.h"
+#include "productionVertex.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

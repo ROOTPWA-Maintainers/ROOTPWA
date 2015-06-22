@@ -1,11 +1,14 @@
-
 #include "randomNumberGenerator_py.h"
 
-#include<TRandom3.h>
+#include <boost/python.hpp>
 
+#include <TRandom3.h>
+
+#include "randomNumberGenerator.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

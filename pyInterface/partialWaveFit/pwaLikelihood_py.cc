@@ -1,12 +1,14 @@
 #include "pwaLikelihood_py.h"
 
-#include <complex>
+#include <boost/python.hpp>
 
 #include "amplitudeMetadata.h"
 #include "boostContainers_py.hpp"
+#include "pwaLikelihood.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
+#include <complex>
 
 namespace bp = boost::python;
 

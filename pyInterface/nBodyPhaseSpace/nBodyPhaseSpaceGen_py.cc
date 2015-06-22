@@ -1,12 +1,15 @@
-
 #include "nBodyPhaseSpaceGen_py.h"
 
-#include<TLorentzVector.h>
+#include <boost/python.hpp>
 
+#include <TLorentzVector.h>
+
+#include "nBodyPhaseSpaceGen.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

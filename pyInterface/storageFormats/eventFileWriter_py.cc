@@ -1,13 +1,16 @@
-
 #include "eventFileWriter_py.h"
+
+#include <boost/python.hpp>
 
 #include <TFile.h>
 #include <TVector3.h>
 
+#include "eventFileWriter.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

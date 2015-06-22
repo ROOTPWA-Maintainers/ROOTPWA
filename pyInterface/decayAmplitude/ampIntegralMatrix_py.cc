@@ -1,12 +1,16 @@
 #include "ampIntegralMatrix_py.h"
 
+#include <boost/python.hpp>
+
 #include <TDirectory.h>
 
-#include <amplitudeMetadata.h>
+#include "ampIntegralMatrix.h"
+#include "amplitudeMetadata.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

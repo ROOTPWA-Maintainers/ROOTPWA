@@ -1,6 +1,8 @@
-
 #include "amplitudeFileWriter_py.h"
 
+#include <boost/python.hpp>
+
+#include "amplitudeFileWriter.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 

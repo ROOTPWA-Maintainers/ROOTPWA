@@ -1,9 +1,12 @@
-
 #include "generatorManager_py.h"
 
-#include<generator.h>
+#include <boost/python.hpp>
+
+#include "generator.h"
+#include "generatorManager.h"
 
 namespace bp = boost::python;
+
 
 void rpwa::py::exportGeneratorManager() {
 

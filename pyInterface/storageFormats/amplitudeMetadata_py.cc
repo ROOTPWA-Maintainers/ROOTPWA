@@ -1,6 +1,8 @@
-
 #include "amplitudeMetadata_py.h"
 
+#include <boost/python.hpp>
+
+#include "amplitudeMetadata.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;

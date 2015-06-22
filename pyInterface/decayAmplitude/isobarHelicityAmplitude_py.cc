@@ -1,8 +1,12 @@
 #include "isobarHelicityAmplitude_py.h"
 
+#include <boost/python.hpp>
+
+#include "isobarHelicityAmplitude.h"
 #include "rootConverters_py.h"
 
 namespace bp = boost::python;
+
 
 namespace {
 

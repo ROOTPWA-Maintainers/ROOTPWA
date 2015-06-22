@@ -1,6 +1,11 @@
 #include "isobarCanonicalAmplitude_py.h"
 
+#include <boost/python.hpp>
+
+#include "isobarCanonicalAmplitude.h"
+
 namespace bp = boost::python;
+
 
 void rpwa::py::exportIsobarCanonicalAmplitude() {
 
