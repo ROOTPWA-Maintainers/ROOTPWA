@@ -49,9 +49,6 @@ FILE_LINKS = {
 
 if __name__ == "__main__":
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	parser = argparse.ArgumentParser(description="integral benchmark")
 
 	parser.add_argument("path", type=str, metavar="<path>", help="path where benchmark should be run (will be created if it doesn't exist)")

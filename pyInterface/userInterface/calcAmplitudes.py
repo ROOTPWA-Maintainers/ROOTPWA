@@ -39,9 +39,6 @@ def readWaveList(waveListFileName):
 
 if __name__ == "__main__":
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	# parse command line arguments
 	parser = argparse.ArgumentParser(
 	                                 description="calculates decay amplitudes "

@@ -84,9 +84,6 @@ if __name__ == "__main__":
 	parser.add_argument("file2", type=str, metavar="<filename>", help="path to second amplitude file")
 	args = parser.parse_args()
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	real1, imag1 = extractRealImagListsFromAmpFile(args.file1)
 	real2, imag2 = extractRealImagListsFromAmpFile(args.file2)
 	if not len(real1) == len(real2):

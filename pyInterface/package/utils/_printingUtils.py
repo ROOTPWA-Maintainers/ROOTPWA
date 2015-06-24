@@ -5,8 +5,9 @@ import sys as _sys
 
 import pyRootPwa.utils
 
-stdoutisatty = None
-stderrisatty = None
+# making the output nice for multi-threading
+stdoutisatty = _sys.stdout.isatty()
+stderrisatty = _sys.stderr.isatty()
 
 def printPrintingSummary(printingCounter):
 	print

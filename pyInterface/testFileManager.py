@@ -9,10 +9,6 @@ import pyRootPwa.core
 
 if __name__ == "__main__":
 
-	# making the output nice for multi-threading
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	f = pyRootPwa.fileManager()
 	if not f.initialize("rootpwa.config"):
 		pyRootPwa.utils.printErr("initializing the file manager failed. Aborting...")

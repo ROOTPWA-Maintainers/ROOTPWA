@@ -35,9 +35,6 @@ if __name__ == "__main__":
 	pyRootPwa.core.printLibraryInfo()
 	pyRootPwa.core.printGitHash()
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	printErr  = pyRootPwa.utils.printErr
 	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc

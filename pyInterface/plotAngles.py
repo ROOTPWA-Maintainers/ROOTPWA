@@ -110,9 +110,6 @@ if __name__ == "__main__":
 	if len(arguments.massBins) == 0:
 		arguments.massBins.append("all")
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	if arguments.type not in ["data", "acc", "gen"]:
 		pyRootPwa.utils.printErr("invalid type '" + arguments.type + "' found, must be either 'data', 'gen' or 'acc'. Aborting...")
 		sys.exit(5)
