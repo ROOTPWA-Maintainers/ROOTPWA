@@ -324,7 +324,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	accumulator_set<double, stats<tag::sum(compensated)> > weightAcc;
 	typedef accumulator_set<complex<double>, stats<tag::sum(compensated)> > complexAcc;
 	vector<vector<complexAcc> > ampProdAcc(_nmbWaves, vector<complexAcc>(_nmbWaves));
-	// process weight file and binary amplitude files
+	// process weight file and amplitudes
 	vector<vector<complex<double> > > amps(_nmbWaves);
 	progress_display progressIndicator(_nmbEvents, cout, "");
 	bool             success = true;
