@@ -140,7 +140,7 @@ if __name__ == "__main__":
 		if not os.path.isfile(keyfile):
 			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
-		reflectivities.append(1 if waveName[6] == '+' else -1)
+		reflectivities.append(pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName))
 		waveIndex = fitResult.waveIndex(waveName)
 
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
