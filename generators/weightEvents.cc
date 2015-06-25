@@ -57,6 +57,7 @@
 #include "amplitudeTreeLeaf.h"
 #include "fitResult.h"
 #include "fileUtils.hpp"
+#include "partialWaveFitHelper.h"
 #include "reportingUtilsEnvironment.h"
 
 
@@ -355,12 +356,8 @@ main(int    argc,
 				const int iWave          = result->waveIndex(waveName);
 
 				// extract rank and reflectivity from wave name
-				int rank = result->rankOfProdAmp(iProdAmp);
-				int refl = 0;
-				if (prodAmpName != "V_flat") {
-					// check reflectivity to sort into correct production vector
-					refl = ((waveName[6] == '+') ? +1 : -1);
-				}
+				const int rank = result->rankOfProdAmp(iProdAmp);
+				const int refl = partialWaveFitHelper::getReflectivity(waveName);
 				// read production amplitude
 				const complex<double> prodAmp = result->prodAmp(iProdAmp);
 				prodAmps[iSample].push_back(prodAmp);
