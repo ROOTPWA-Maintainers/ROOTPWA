@@ -142,7 +142,7 @@ usage(const string& progName,
 	     << "        -s         write out weights for each single wave (caution: this vastly increase the size of the output file)" << endl
 	     << "        -w file    fit-result file containing the fitResult tree to be used as input (default: './fitresult.root')"<< endl
 	     << "        -n #       if > 1, additional production amplitudes are generated according to covariances (default: 1)"<< endl
-	     << "        -i file    integral file (default: './norm.int')"<< endl
+	     << "        -i file    integral file (default: './norm.root')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
@@ -175,7 +175,7 @@ main(int    argc,
 	string         fitResultFileName        = "./fitresult.root";
 	const string   fitResultTreeName        = "pwa";
 	const string   fitResultLeafName        = "fitResult_v2";
-	string         intFileName              = "./norm.int";
+	string         intFileName              = "./norm.root";
 	string         ampDirName               = ".";
 	unsigned int   nmbProdAmpSamples        = 1;
 	bool           writeSingleWaveWeights   = false;
@@ -238,29 +238,18 @@ main(int    argc,
 	}
 
 	// load integrals
-	ampIntegralMatrix normInt;
-	const string intFileExt  = extensionFromPath(intFileName);
-	if (intFileExt == "root") {
-		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
-		if (not intFile or intFile->IsZombie()) {
-			printErr << "cannot open normalization integral file '" << intFileName << "'. "
-			         << "Aborting..." << endl;
-			exit(1);
-		}
-		ampIntegralMatrix* integral = 0;
-		intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral);
-		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
-			         << "'" << intFileName << "'. Aborting..." << endl;
-			exit(1);
-		}
-		normInt = *integral;
-	} else {
-		if (not normInt.readAscii(intFileName)) {
-			printErr << "cannot read normalization integral from file '"
-			         << intFileName << "'. Aborting..." << endl;
-			exit(1);
-		}
+	TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
+	if (not intFile or intFile->IsZombie()) {
+		printErr << "cannot open normalization integral file '" << intFileName << "'. "
+		         << "Aborting..." << endl;
+		exit(1);
+	}
+	ampIntegralMatrix* integral = 0;
+	intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral);
+	if (not integral) {
+		printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
+		         << "'" << intFileName << "'. Aborting..." << endl;
+		exit(1);
 	}
 
 	// load production amplitudes and wave information
@@ -479,13 +468,13 @@ main(int    argc,
 				const complex<double> decayAmp  = decayAmps        [iWave];
 				const complex<double> prodAmp   = prodAmps[iSample][iProdAmp];
 				const string          waveName  = waveNames        [iWave];
-				const double          nmbEvents = normInt.nmbEvents();
+				const double          nmbEvents = integral->nmbEvents();
 				if (waveName == "flat") {
 					flatAmp = prodAmp / sqrt(nmbEvents);
 					if (iSample == 0)  // set weights of individual production amplitudes
 						weightProdAmps[iProdAmp] = norm(flatAmp);
 				} else {
-					const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
+					const complex<double> amp = decayAmp * prodAmp / sqrt(integral->element(waveName, waveName).real() * nmbEvents);
 					if (iSample == 0)  // set weights of individual production amplitudes
 						weightProdAmps[iProdAmp] = norm(amp);
 					if (reflectivities[iProdAmp] == +1)
@@ -536,6 +525,9 @@ main(int    argc,
 	outFile->Close();
 
 	// cleanup
+	intFile->Close();
+	delete intFile;
+
 	ampRootTrees.clear();
 	ampRootLeafs.clear();
 
