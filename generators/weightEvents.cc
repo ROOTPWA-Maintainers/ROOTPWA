@@ -54,6 +54,7 @@
 #include <TTree.h>
 
 #include "ampIntegralMatrix.h"
+#include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "fitResult.h"
 #include "fileUtils.hpp"
@@ -70,8 +71,7 @@ unsigned long
 openRootAmpFiles(const string&               ampDirName,
                  const vector<string>&       waveNames,
                  vector<TTree*>&             ampRootTrees,
-                 vector<amplitudeTreeLeaf*>& ampRootLeafs,
-                 const string&               ampLeafName = "amplitude")
+                 vector<amplitudeTreeLeaf*>& ampRootLeafs)
 {
 	ampRootTrees.clear();
 	ampRootLeafs.assign(waveNames.size(), NULL);
@@ -92,15 +92,13 @@ openRootAmpFiles(const string&               ampDirName,
 			continue;
 		}
 
-		// find amplitude tree
-		TTree* ampTree = NULL;
-		const string ampTreeName = changeFileExtension(waveNames[iWave], ".amp");
-		ampFile->GetObject(ampTreeName.c_str(), ampTree);
-		if (not ampTree) {
-			printErr << "cannot find tree '" << ampTreeName << "' in file "
-			         << "'" << ampFilePath << "'. skipping wave." << endl;
+		// read amplitude metadata
+		const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(ampFile, waveNames[iWave]);
+		if (ampMeta == NULL) {
+			printErr << "cannot read amplitude metadata from amplitude file '" << ampFilePath << "'. skipping wave." << endl;
 			continue;
 		}
+		TTree* ampTree = ampMeta->amplitudeTree();
 
 		// check that all tree have the same number of entries
 		const unsigned long nmbEntries = ampTree->GetEntriesFast();
@@ -119,7 +117,7 @@ openRootAmpFiles(const string&               ampDirName,
 
 		// connect tree leaf
 		ampRootTrees.push_back(ampTree);
-		ampTree->SetBranchAddress(ampLeafName.c_str(), &ampRootLeafs[iWave]);
+		ampTree->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampRootLeafs[iWave]);
 	}
 
 	return nmbAmpValues;
