@@ -41,6 +41,7 @@
 // partialWaveFit
 #include "complexMatrix_py.h"
 #include "fitResult_py.h"
+#include "partialWaveFitHelper_py.h"
 #include "pwaLikelihood_py.h"
 
 // particleData
@@ -90,6 +91,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportBeamAndVertexGenerator();
 	rpwa::py::exportComplexMatrix();
 	rpwa::py::exportFitResult();
+	rpwa::py::exportPartialWaveFitHelper();
 	rpwa::py::exportPhysUtils();
 	rpwa::py::exportReportingUtilsEnvironment();
 	rpwa::py::exportEventFileWriter();
