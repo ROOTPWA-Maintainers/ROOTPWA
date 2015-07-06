@@ -28,14 +28,14 @@ void rpwa::py::exportPhaseSpaceIntegral() {
 			                    bp::return_value_policy<bp::reference_existing_object>())
 		)
 
-		.def("__call__", &rpwa::phaseSpaceIntegral::operator());
+		.def("__call__", &rpwa::phaseSpaceIntegral::operator())
+		.def("removeVertex", &rpwa::phaseSpaceIntegral::removeVertex);
 
 	bp::class_<integralTableContainer>("integralTableContainer")
 
 		.def(bp::init<const rpwa::isobarDecayVertex&>())
 
-		.def("__call__", &rpwa::phaseSpaceIntegral::operator())
-		.def("removeVertex", &rpwa::phaseSpaceIntegral::removeVertex)
+		.def("__call__", &rpwa::integralTableContainer::operator())
 
 		.def("getSubWaveNameFromVertex", &integralTableContainer_getSubWaveNameFromVertex)
 		.staticmethod("getSubWaveNameFromVertex");
