@@ -10,6 +10,14 @@ namespace bp = boost::python;
 void rpwa::py::exportPhysUtils() {
 
 	bp::def(
+		"breakupMomentumSquared"
+		, &rpwa::breakupMomentumSquared
+		, (bp::arg("M"),
+		   bp::arg("m1"),
+		   bp::arg("m2"),
+		   bp::arg("allowSubThr")=false)
+	);
+	bp::def(
 		"breakupMomentum"
 		, &rpwa::breakupMomentum
 		, (bp::arg("M"),
@@ -23,6 +31,16 @@ void rpwa::py::exportPhysUtils() {
 		   bp::arg("breakupMom"),
 		   bp::arg("debug") = false,
 		   bp::arg("Pr") = 0.1973)
+	);
+	bp::def(
+		"breitWigner"
+		, &rpwa::breitWigner
+		, (bp::arg("M"),
+		   bp::arg("M0"),
+		   bp::arg("Gamma0"),
+		   bp::arg("L"),
+		   bp::arg("q"),
+		   bp::arg("q0"))
 	);
 
 }
