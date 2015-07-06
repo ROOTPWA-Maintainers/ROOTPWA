@@ -21,8 +21,8 @@
 //-----------------------------------------------------------
 //
 // Description:
-//      calculates weights (= intensities) from .amp files and writes
-//      them to output file
+//      calculates weights (= intensities) from amplitude and fit result
+//      files and writes them to output file
 //
 //      limitations:
 //
@@ -54,9 +54,11 @@
 #include <TTree.h>
 
 #include "ampIntegralMatrix.h"
+#include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "fitResult.h"
 #include "fileUtils.hpp"
+#include "partialWaveFitHelper.h"
 #include "reportingUtilsEnvironment.h"
 
 
@@ -69,8 +71,7 @@ unsigned long
 openRootAmpFiles(const string&               ampDirName,
                  const vector<string>&       waveNames,
                  vector<TTree*>&             ampRootTrees,
-                 vector<amplitudeTreeLeaf*>& ampRootLeafs,
-                 const string&               ampLeafName = "amplitude")
+                 vector<amplitudeTreeLeaf*>& ampRootLeafs)
 {
 	ampRootTrees.clear();
 	ampRootLeafs.assign(waveNames.size(), NULL);
@@ -91,15 +92,13 @@ openRootAmpFiles(const string&               ampDirName,
 			continue;
 		}
 
-		// find amplitude tree
-		TTree* ampTree = NULL;
-		const string ampTreeName = changeFileExtension(waveNames[iWave], ".amp");
-		ampFile->GetObject(ampTreeName.c_str(), ampTree);
-		if (not ampTree) {
-			printErr << "cannot find tree '" << ampTreeName << "' in file "
-			         << "'" << ampFilePath << "'. skipping wave." << endl;
+		// read amplitude metadata
+		const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(ampFile, waveNames[iWave]);
+		if (ampMeta == NULL) {
+			printErr << "cannot read amplitude metadata from amplitude file '" << ampFilePath << "'. skipping wave." << endl;
 			continue;
 		}
+		TTree* ampTree = ampMeta->amplitudeTree();
 
 		// check that all tree have the same number of entries
 		const unsigned long nmbEntries = ampTree->GetEntriesFast();
@@ -118,54 +117,9 @@ openRootAmpFiles(const string&               ampDirName,
 
 		// connect tree leaf
 		ampRootTrees.push_back(ampTree);
-		ampTree->SetBranchAddress(ampLeafName.c_str(), &ampRootLeafs[iWave]);
+		ampTree->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampRootLeafs[iWave]);
 	}
 
-	return nmbAmpValues;
-}
-
-
-unsigned long
-openBinAmpFiles(const string&         ampDirName,
-                const vector<string>& waveNames,
-                vector <ifstream*>&   ampFiles)
-{
-	ampFiles.clear();
-	streampos ampFileSize = 0;
-	for (size_t iWave = 0; iWave < waveNames.size(); ++iWave) {
-		// no amplitude file for the flat wave
-		if (waveNames[iWave] == "flat") {
-			ampFiles.push_back(NULL);
-			continue;
-		}
-
-		// try to open amplitude file
-		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
-		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
-		ifstream* ampFile = new ifstream(ampFilePath.c_str());
-		if (not ampFile->good()) {
-			printErr << "cannot open amplitude file '" << ampFilePath << "'. skipping wave." << endl;
-			continue;
-		}
-
-		// check that all files have the same size
-		const streampos fileSize = rpwa::fileSize(*ampFile);
-		if (fileSize == 0) {
-			printErr << "amplitude file '" << ampFilePath << "' has zero size. skipping wave." << endl;
-			continue;
-		}
-		if (ampFileSize == 0)
-			ampFileSize = fileSize;
-		else if (fileSize != ampFileSize) {
-			printErr << "amplitude file '" << ampFilePath << "' has different size "
-			         << "than previous file. skipping wave." << endl;
-			continue;
-		}
-
-		ampFiles.push_back(ampFile);
-	}
-
-	const unsigned long nmbAmpValues = ampFileSize / sizeof(complex<double>);
 	return nmbAmpValues;
 }
 
@@ -186,9 +140,8 @@ usage(const string& progName,
 	     << "        -s         write out weights for each single wave (caution: this vastly increase the size of the output file)" << endl
 	     << "        -w file    fit-result file containing the fitResult tree to be used as input (default: './fitresult.root')"<< endl
 	     << "        -n #       if > 1, additional production amplitudes are generated according to covariances (default: 1)"<< endl
-	     << "        -i file    integral file (default: './norm.int')"<< endl
+	     << "        -i file    integral file (default: './norm.root')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-	     << "        -R         use .root amplitude files (default: false)" << endl
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
 	     << "        -t name    name of tree in output file (default: rootPwaWeightTree)" << endl
@@ -220,9 +173,8 @@ main(int    argc,
 	string         fitResultFileName        = "./fitresult.root";
 	const string   fitResultTreeName        = "pwa";
 	const string   fitResultLeafName        = "fitResult_v2";
-	string         intFileName              = "./norm.int";
+	string         intFileName              = "./norm.root";
 	string         ampDirName               = ".";
-	bool           useRootAmps              = false;                   // if true .root amplitude files are read
 	unsigned int   nmbProdAmpSamples        = 1;
 	bool           writeSingleWaveWeights   = false;
 	double         massBinCenter            = 0;                       // [MeV/c^2]
@@ -231,7 +183,7 @@ main(int    argc,
 	bool           debug                    = false;
 
 	int c;
-	while ((c = getopt(argc, argv, "o:sw:n:i:d:Rm:b:t:vh")) != -1) {
+	while ((c = getopt(argc, argv, "o:sw:n:i:d:m:b:t:vh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -250,9 +202,6 @@ main(int    argc,
 			break;
 		case 'd':
 			ampDirName = optarg;
-			break;
-		case 'R':
-			useRootAmps = true;
 			break;
 		case 'm':
 			massBinCenter = atof(optarg);
@@ -287,29 +236,18 @@ main(int    argc,
 	}
 
 	// load integrals
-	ampIntegralMatrix normInt;
-	const string intFileExt  = extensionFromPath(intFileName);
-	if (intFileExt == "root") {
-		TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
-		if (not intFile or intFile->IsZombie()) {
-			printErr << "cannot open normalization integral file '" << intFileName << "'. "
-			         << "Aborting..." << endl;
-			exit(1);
-		}
-		ampIntegralMatrix* integral = 0;
-		intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral);
-		if (not integral) {
-			printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
-			         << "'" << intFileName << "'. Aborting..." << endl;
-			exit(1);
-		}
-		normInt = *integral;
-	} else {
-		if (not normInt.readAscii(intFileName)) {
-			printErr << "cannot read normalization integral from file '"
-			         << intFileName << "'. Aborting..." << endl;
-			exit(1);
-		}
+	TFile* intFile  = TFile::Open(intFileName.c_str(), "READ");
+	if (not intFile or intFile->IsZombie()) {
+		printErr << "cannot open normalization integral file '" << intFileName << "'. "
+		         << "Aborting..." << endl;
+		exit(1);
+	}
+	ampIntegralMatrix* integral = 0;
+	intFile->GetObject(ampIntegralMatrix::integralObjectName.c_str(), integral);
+	if (not integral) {
+		printErr << "cannot find integral object in TKey '" << ampIntegralMatrix::integralObjectName << "' in file "
+		         << "'" << intFileName << "'. Aborting..." << endl;
+		exit(1);
 	}
 
 	// load production amplitudes and wave information
@@ -405,12 +343,8 @@ main(int    argc,
 				const int iWave          = result->waveIndex(waveName);
 
 				// extract rank and reflectivity from wave name
-				int rank = result->rankOfProdAmp(iProdAmp);
-				int refl = 0;
-				if (prodAmpName != "V_flat") {
-					// check reflectivity to sort into correct production vector
-					refl = ((waveName[6] == '+') ? +1 : -1);
-				}
+				const int rank = result->rankOfProdAmp(iProdAmp);
+				const int refl = partialWaveFitHelper::getReflectivity(waveName);
 				// read production amplitude
 				const complex<double> prodAmp = result->prodAmp(iProdAmp);
 				prodAmps[iSample].push_back(prodAmp);
@@ -444,26 +378,14 @@ main(int    argc,
 	const unsigned int nmbProdAmps = prodAmpNames.size();
 
 	// open decay amplitude files
-	unsigned long              nmbEvents = 0;
 	vector<TTree*>             ampRootTrees;
 	vector<amplitudeTreeLeaf*> ampRootLeafs;
-	vector<ifstream*>          ampBinFiles;
-	if (useRootAmps) {
-		nmbEvents = openRootAmpFiles(ampDirName, waveNames, ampRootTrees, ampRootLeafs);
-		// test that an amplitude file was opened for each wave
-		// note that ampRootLeafs cannot be used for this check
-		if (waveNames.size() != ampRootTrees.size()) {
-			printErr << "error opening ROOT amplitude files." << endl;
-			exit(1);
-		}
-	} else {
-		nmbEvents = openBinAmpFiles(ampDirName, waveNames, ampBinFiles);
-		//const unsigned long nmbBinEvents = openBinAmpFiles(ampDirName, waveNames, ampFiles);
-		// test that an amplitude file was opened for each wave
-		if (waveNames.size() != ampBinFiles.size()) {
-			printErr << "error opening binary amplitude files." << endl;
-			exit(1);
-		}
+	const unsigned long        nmbEvents   = openRootAmpFiles(ampDirName, waveNames, ampRootTrees, ampRootLeafs);
+	// test that an amplitude file was opened for each wave
+	// note that ampRootLeafs cannot be used for this check
+	if (waveNames.size() != ampRootTrees.size()) {
+		printErr << "error opening ROOT amplitude files." << endl;
+		exit(1);
 	}
 	if (nmbEvents == 0) {
 		printErr << "could not read any amplitude from files." << endl;
@@ -523,22 +445,12 @@ main(int    argc,
 		// read decay amplitudes for this event
 		vector<complex<double> > decayAmps(nmbWaves);
 			for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-			if (useRootAmps) {
-				if (not ampRootTrees[iWave])  // e.g. flat wave
-					decayAmps[iWave] = complex<double>(0);
-				else {
-					ampRootTrees[iWave]->GetEntry(iEvent);
-					assert(ampRootLeafs[iWave]->nmbIncohSubAmps() == 1);
-					decayAmps[iWave] = ampRootLeafs[iWave]->incohSubAmp(0);
-				}
-			} else {
-				if (not ampBinFiles[iWave])  // e.g. flat wave
-					decayAmps[iWave] = complex<double>(0);
-				else {
-					complex<double> decayAmp;
-					ampBinFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
-					decayAmps[iWave] = decayAmp;
-				}
+			if (not ampRootTrees[iWave])  // e.g. flat wave
+				decayAmps[iWave] = complex<double>(0);
+			else {
+				ampRootTrees[iWave]->GetEntry(iEvent);
+				assert(ampRootLeafs[iWave]->nmbIncohSubAmps() == 1);
+				decayAmps[iWave] = ampRootLeafs[iWave]->incohSubAmp(0);
 			}
 		}
 
@@ -554,13 +466,13 @@ main(int    argc,
 				const complex<double> decayAmp  = decayAmps        [iWave];
 				const complex<double> prodAmp   = prodAmps[iSample][iProdAmp];
 				const string          waveName  = waveNames        [iWave];
-				const double          nmbEvents = normInt.nmbEvents();
+				const double          nmbEvents = integral->nmbEvents();
 				if (waveName == "flat") {
 					flatAmp = prodAmp / sqrt(nmbEvents);
 					if (iSample == 0)  // set weights of individual production amplitudes
 						weightProdAmps[iProdAmp] = norm(flatAmp);
 				} else {
-					const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
+					const complex<double> amp = decayAmp * prodAmp / sqrt(integral->element(waveName, waveName).real() * nmbEvents);
 					if (iSample == 0)  // set weights of individual production amplitudes
 						weightProdAmps[iProdAmp] = norm(amp);
 					if (reflectivities[iProdAmp] == +1)
@@ -611,18 +523,11 @@ main(int    argc,
 	outFile->Close();
 
 	// cleanup
-	if (useRootAmps) {
-		ampRootTrees.clear();
-		ampRootLeafs.clear();
-	} else {
-		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
-			if (ampBinFiles[iWave]) {
-				ampBinFiles[iWave]->close();
-				delete ampBinFiles[iWave];
-			}
-		}
-		ampBinFiles.clear();
-	}
+	intFile->Close();
+	delete intFile;
+
+	ampRootTrees.clear();
+	ampRootLeafs.clear();
 
 	prodAmps.clear();
 

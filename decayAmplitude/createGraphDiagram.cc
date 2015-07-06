@@ -21,9 +21,8 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      reads in data files in .evt or tree format, calculates
-//      amplitudes for each event based on given key file, and writes
-//      out amplitudes in PWA2000 binary or ascii format
+//      creates graphical representation of decay graphs specified
+//      in key files
 //
 //
 // Author List:

@@ -13,10 +13,6 @@ if __name__ == "__main__":
 	pyRootPwa.core.printLibraryInfo()
 	pyRootPwa.core.printGitHash()
 
-	# making the output nice for multi-threading
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	#initialize the printing functors
 	printingCounter = multiprocessing.Array('i', [0]*5)
 	pyRootPwa.utils.printErr = pyRootPwa.utils.printErrClass(printingCounter)

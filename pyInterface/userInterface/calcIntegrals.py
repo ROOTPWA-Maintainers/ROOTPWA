@@ -19,9 +19,6 @@ if __name__ == "__main__":
 	parser.add_argument("-w", type=str, metavar="path", dest="weightsFileName", default="", help="path to MC weight file for de-weighting (default: none)")
 	args = parser.parse_args()
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	printErr  = pyRootPwa.utils.printErr
 	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc

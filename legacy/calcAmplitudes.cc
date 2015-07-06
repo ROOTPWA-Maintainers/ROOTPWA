@@ -23,7 +23,7 @@
 // Description:
 //      reads in data files in .evt or ROOT tree format, calculates
 //      amplitudes for each event based on given key file, and writes
-//      out amplitudes in ROOT tree or PWA2000 binary or ascii format
+//      out amplitudes in ROOT tree format
 //
 //
 // Author List:

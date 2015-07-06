@@ -17,10 +17,6 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 	pyRootPwa.core.printLibraryInfo()
 	pyRootPwa.core.printGitHash()
 
-	# making the output nice for multi-threading
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	# Check and get the arguments
 	nJobs = 1
 	if 'nJobs' in arguments:

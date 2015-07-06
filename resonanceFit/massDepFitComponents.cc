@@ -1311,7 +1311,7 @@ rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::paramete
 
 		gamma += _ratio[i] * ps / ps0;
 	}
-	gamma *= gamma0 * m0/m;
+	gamma *= gamma0;
 
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 
@@ -1963,7 +1963,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 
 	_exponent = configComponent["exponent"].as<double>();
 
-	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+	_norm = 1. / (massBinCenters.back() * _interpolator->Eval(massBinCenters.back()));
 
 	if(debug) {
 		print(printDebug);
@@ -2035,7 +2035,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::val(const rpwa::massDepFit::par
 	}
 
 	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(ps * _norm, _exponent);
+	const double c = std::pow(m * ps * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
@@ -2188,7 +2188,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 
 	_exponent = configComponent["exponent"].as<double>();
 
-	_norm = 1. / _interpolator->Eval(massBinCenters.back());
+	_norm = 1. / (massBinCenters.back() * _interpolator->Eval(massBinCenters.back()));
 
 	if(_tPrimeMeans.size() != nrBins) {
 		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
@@ -2265,7 +2265,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::val(const rpwa::massDepFit:
 	}
 
 	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(ps * _norm, _exponent);
+	const double c = std::pow(m * ps * _norm, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];

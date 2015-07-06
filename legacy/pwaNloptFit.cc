@@ -272,7 +272,7 @@ main(int    argc,
 
 			const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(file, waveName);
 			if (ampMeta == NULL) {
-				printErr << "cannot read event data from event file '" << waveFileName << "'. Aborting..." << endl;
+				printErr << "cannot read amplitude metadata from amplitude file '" << waveFileName << "'. Aborting..." << endl;
 				exit(1);
 			}
 
@@ -357,7 +357,7 @@ main(int    argc,
 
 		const amplitudeMetadata* ampMeta = amplitudeMetadata::readAmplitudeFile(file, waveName);
 		if (ampMeta == NULL) {
-			printErr << "cannot read event data from event file '" << waveFileName << "'. Aborting..." << endl;
+			printErr << "cannot read amplitude metadata from amplitude file '" << waveFileName << "'. Aborting..." << endl;
 			exit(1);
 		}
 

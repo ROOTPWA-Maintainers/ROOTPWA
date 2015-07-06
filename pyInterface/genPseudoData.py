@@ -61,9 +61,6 @@ if __name__ == "__main__":
 	pyRootPwa.core.printLibraryInfo()
 	pyRootPwa.core.printGitHash()
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	printErr  = pyRootPwa.utils.printErr
 	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc
@@ -143,7 +140,7 @@ if __name__ == "__main__":
 		if not os.path.isfile(keyfile):
 			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
-		reflectivities.append(1 if waveName[6] == '+' else -1)
+		reflectivities.append(pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName))
 		waveIndex = fitResult.waveIndex(waveName)
 
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:

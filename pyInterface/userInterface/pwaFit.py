@@ -28,9 +28,6 @@ if __name__ == "__main__":
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
-	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
-	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
-
 	printErr  = pyRootPwa.utils.printErr
 	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc
