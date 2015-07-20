@@ -180,8 +180,8 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		TStopwatch timer;
 		timer.Start();
 		nlopt::result result = optimizer.optimize(params, likeli);
-		if(result < 0) {
-			converged = false;
+		if(result > 0) {
+			converged = true;
 		}
 		timer.Stop();
 
