@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
-	parser.add_argument("-k", "--keyfiles", type=str, metavar="keyfiles", dest="keyfiles", nargs="*", help="keyfiles to calculate amplitude for (overrides settings from the config file)")
+	parser.add_argument("-k", "--keyfileIndex", type=int, metavar="#", default=-1, help="keyfile index to calculate amplitude for (overrides settings from the config file, index from 0 to number of keyfiles - 1)")
 	parser.add_argument("-w", type=str, metavar="wavelistFileName", default="", dest="wavelistFileName", help="path to wavelist file (default: none)")
 	args = parser.parse_args()
 
@@ -66,11 +66,22 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	if not args.wavelistFileName == "" and not args.keyfileIndex == -1:
+		pyRootPwa.utils.printErr("Setting both options -k and -w is conflicting. Aborting...")
+		sys.exit(1)
+
 	waveList = []
 	if (not args.wavelistFileName==""):
 		(waveList, waveThresholds) = readWaveList(args.wavelistFileName)
 	if (len(waveList) == 0):
 		waveList = fileManager.getWaveNameList()
+	if not args.keyfileIndex == -1:
+		allWaveNames = fileManager.getWaveNameList()
+		if not args.keyfileIndex < len(allWaveNames):
+			pyRootPwa.utils.printErr("keyfileIndex from command line argument out of range. Maximum value is " + str(len(allWaveNames)-1) + ". Aborting...")
+			sys.exit(1)
+		waveList = [allWaveNames[args.keyfileIndex]]
+		pyRootPwa.utils.printInfo("using keyfile index " + str(args.keyfileIndex) + " resulting in the wave name '" + waveList[0] + "'.")
 
 	binIDList = fileManager.getBinIDList()
 	if (not args.massBin == -1):
