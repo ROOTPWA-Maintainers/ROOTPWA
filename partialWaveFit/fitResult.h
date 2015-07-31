@@ -494,8 +494,12 @@ namespace rpwa {
 	{
 		// escape special characters:
 		TString Pattern(waveNamePattern);
-		Pattern.ReplaceAll("+","\\+");
-		Pattern.ReplaceAll("\\\\+","\\+");
+		Pattern.ReplaceAll("+", "\\+");
+		Pattern.ReplaceAll("\\\\+", "\\+");
+		Pattern.ReplaceAll("[", "\\[");
+		Pattern.ReplaceAll("\\\\[", "\\[");
+		Pattern.ReplaceAll("]", "\\]");
+		Pattern.ReplaceAll("\\\\]", "\\]");
 		TPRegexp Regexp(Pattern);
 		std::vector<unsigned int> waveIndices;
 		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
@@ -514,8 +518,12 @@ namespace rpwa {
 	{
 		// escape special characters:
 		TString Pattern(ampNamePattern);
-		Pattern.ReplaceAll("+","\\+");
-		Pattern.ReplaceAll("\\\\+","\\+");
+		Pattern.ReplaceAll("+", "\\+");
+		Pattern.ReplaceAll("\\\\+", "\\+");
+		Pattern.ReplaceAll("[", "\\[");
+		Pattern.ReplaceAll("\\\\[", "\\[");
+		Pattern.ReplaceAll("]", "\\]");
+		Pattern.ReplaceAll("\\\\]", "\\]");
 		TPRegexp Regexp(Pattern);
 		std::vector<unsigned int> prodAmpIndices;
 		for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
