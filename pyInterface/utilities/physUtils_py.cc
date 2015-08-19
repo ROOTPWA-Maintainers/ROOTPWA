@@ -10,14 +10,17 @@
 namespace bp = boost::python;
 
 
-double tPrime_py(PyObject* beam, PyObject* target, PyObject* out) {
-	TLorentzVector* lvBeam   = rpwa::py::convertFromPy<TLorentzVector*>(beam  );
-	TLorentzVector* lvTarget = rpwa::py::convertFromPy<TLorentzVector*>(target);
-	TLorentzVector* lvOut    = rpwa::py::convertFromPy<TLorentzVector*>(out   );
+namespace {
 
-	return rpwa::tPrime(*lvBeam, *lvTarget, *lvOut);
+	double tPrime_py(PyObject* beam, PyObject* target, PyObject* out) {
+		TLorentzVector* lvBeam   = rpwa::py::convertFromPy<TLorentzVector*>(beam  );
+		TLorentzVector* lvTarget = rpwa::py::convertFromPy<TLorentzVector*>(target);
+		TLorentzVector* lvOut    = rpwa::py::convertFromPy<TLorentzVector*>(out   );
+
+		return rpwa::tPrime(*lvBeam, *lvTarget, *lvOut);
+	}
+
 }
-
 
 void rpwa::py::exportPhysUtils() {
 
