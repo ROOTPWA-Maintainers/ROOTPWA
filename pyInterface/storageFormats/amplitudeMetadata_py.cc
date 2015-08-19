@@ -12,7 +12,12 @@ namespace {
 
 	bp::list amplitudeMetadata_eventMetadata(const rpwa::amplitudeMetadata& self)
 	{
-		return bp::list(self.eventMetadata());
+		bp::list retval;
+		const std::vector<rpwa::eventMetadata>& metas = self.eventMetadata();
+		for(unsigned int i = 0; i < metas.size(); ++i) {
+			retval.append(bp::object(boost::cref(metas[i])));
+		}
+		return retval;
 	}
 
 	const rpwa::amplitudeMetadata* amplitudeMetadata_readAmplitudeFile(PyObject* pyInputFile,
