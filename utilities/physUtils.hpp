@@ -34,6 +34,7 @@
 #ifndef PHYSUTILS_H
 #define PHYSUTILS_H
 
+
 #include <TLorentzVector.h>
 
 #include "mathUtils.hpp"
@@ -46,11 +47,10 @@ namespace rpwa {
 
 	inline
 	double
-	tPrime(
-		TLorentzVector          lvBeam,         // Beam
-		TLorentzVector          lvTarget,       // Target
-		TLorentzVector          lvOut){         // Outgoing resonance X
-
+	tPrime(TLorentzVector lvBeam,    // beam
+	       TLorentzVector lvTarget,  // target
+	       TLorentzVector lvOut)     // outgoing resonance X
+	{
 		TVector3 boostTarget = lvTarget.BoostVector();
 		lvTarget.Boost(boostTarget);
 		lvBeam.Boost(boostTarget);
@@ -62,10 +62,11 @@ namespace rpwa {
 		const double p3 = (-b/2. - sqrt(std::pow(b/2., 2.) - a*c)) / a;
 		const double tMin = lvBeam.M2() + lvOut.M2() - 2.*lvBeam.E()*sqrt(p3*p3 + lvOut.M2()) + 2.*lvBeam.P()*p3;
 
-		TLorentzVector lvT = lvBeam - lvOut;	// Four momentum transfer
+		TLorentzVector lvT = lvBeam - lvOut;  // four-momentum transfer
 
 		return tMin - lvT.M2();
 	};
+
 
 	// computes squared breakup momentum of 2-body decay
 	inline

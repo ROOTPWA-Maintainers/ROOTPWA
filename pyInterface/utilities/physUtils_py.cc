@@ -1,28 +1,32 @@
 #include "physUtils_py.h"
 
 #include <boost/python.hpp>
+
 #include <TLorentzVector.h>
+
 #include "physUtils.hpp"
 #include "rootConverters_py.h"
+
 namespace bp = boost::python;
 
 
-double tPrime_py(PyObject* beam, PyObject* target, PyObject* out){
-        TLorentzVector* lvBeam   = rpwa::py::convertFromPy<TLorentzVector*>(beam  );
-        TLorentzVector* lvTarget = rpwa::py::convertFromPy<TLorentzVector*>(target);
-        TLorentzVector* lvOut    = rpwa::py::convertFromPy<TLorentzVector*>(out   );
+double tPrime_py(PyObject* beam, PyObject* target, PyObject* out) {
+	TLorentzVector* lvBeam   = rpwa::py::convertFromPy<TLorentzVector*>(beam  );
+	TLorentzVector* lvTarget = rpwa::py::convertFromPy<TLorentzVector*>(target);
+	TLorentzVector* lvOut    = rpwa::py::convertFromPy<TLorentzVector*>(out   );
 
-        return rpwa::tPrime(*lvBeam,*lvTarget,*lvOut);
-};
+	return rpwa::tPrime(*lvBeam, *lvTarget, *lvOut);
+}
+
 
 void rpwa::py::exportPhysUtils() {
 
-        bp::def(
-	        "tPrime"
-	        , &tPrime_py
-	        , (bp::arg("pBeam"),
-	           bp::arg("pTarget"),
-	           bp::arg("pOut"))
+	bp::def(
+		"tPrime"
+		, &tPrime_py
+		, (bp::arg("pBeam"),
+		   bp::arg("pTarget"),
+		   bp::arg("pOut"))
 	);
 	bp::def(
 		"breakupMomentumSquared"
