@@ -58,7 +58,7 @@ namespace rpwa {
 
 		const double a = 4.*std::pow(lvBeam.P(), 2.) - 4.*std::pow(lvBeam.E()+lvTarget.M(), 2.);
 		const double b = 4.*lvBeam.P()*(lvBeam.M2() + lvOut.M2() + 2.*lvTarget.M()*lvBeam.E());
-		const double c = std::pow(lvBeam.M2() + lvOut.M2() + 2.*0.938272*lvBeam.E(), 2.) - 4.*lvOut.M2()*std::pow(lvBeam.E()+lvTarget.M(), 2.);
+		const double c = std::pow(lvBeam.M2() + lvOut.M2() + 2.*lvTarget.M()*lvBeam.E(), 2.) - 4.*lvOut.M2()*std::pow(lvBeam.E()+lvTarget.M(), 2.);
 		const double p3 = (-b/2. - sqrt(std::pow(b/2., 2.) - a*c)) / a;
 		const double tMin = lvBeam.M2() + lvOut.M2() - 2.*lvBeam.E()*sqrt(p3*p3 + lvOut.M2()) + 2.*lvBeam.P()*p3;
 
