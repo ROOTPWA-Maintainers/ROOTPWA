@@ -55,31 +55,17 @@ namespace rpwa {
 	       TLorentzVector lvTarget,  // target
 	       TLorentzVector lvOut)     // outgoing X
 	{
-		const TVector3 boostTarget = -lvTarget.BoostVector();
-		lvTarget.Boost(boostTarget);
-		lvBeam.Boost(boostTarget);
-		lvOut.Boost(boostTarget);
+		// boost into the overall center-of-mass system
+		// only in this system the scattering angle can be set to 0
+		// without changing any other quantity (not to violate the
+		// four-momentum conservation of the reaction)
+		const TVector3 boostCm(-(lvBeam+lvTarget).BoostVector());
+		lvBeam.Boost(boostCm);
+		lvOut.Boost(boostCm);
 
-		// calculate momentum of the outgoing particle assuming
-		// four-momentum conservation and zero scattering angle
-		// (three-vector of beam and outgoing particle momenta are
-		// linear)
-		// in a reaction
-		//     beam + target -> out + recoil
-		// The equations below are only valid if the Lorentz-vectors
-		// are given in a frame where the target is at rest (i.e. the
-		// laboratory system in a fixed-target experiment)
-		const double a = 4.*std::pow(lvBeam.P(), 2.) - 4.*std::pow(lvBeam.E()+lvTarget.M(), 2.);
-		const double b = 4.*lvBeam.P()*(lvBeam.M2() + lvOut.M2() + 2.*lvTarget.M()*lvBeam.E());
-		const double c = std::pow(lvBeam.M2() + lvOut.M2() + 2.*lvTarget.M()*lvBeam.E(), 2.) - 4.*lvOut.M2()*std::pow(lvBeam.E()+lvTarget.M(), 2.);
-		const double p3 = (-b/2. - sqrt(std::pow(b/2., 2.) - a*c)) / a;
+		const double tPrime = 2. * (lvBeam.P()*lvOut.P() - lvBeam.Vect()*lvOut.Vect());
 
-		const TLorentzVector lvT = lvBeam - lvOut;  // four-momentum transfer
-		const double t = lvT.Mag2();
-
-		const double tMin = lvBeam.M2() + lvOut.M2() - 2.*lvBeam.E()*sqrt(p3*p3 + lvOut.M2()) + 2.*lvBeam.P()*p3;
-
-		return tMin - t;
+		return tPrime;
 	};
 
 
