@@ -51,7 +51,7 @@ namespace rpwa {
 	       TLorentzVector lvTarget,  // target
 	       TLorentzVector lvOut)     // outgoing resonance X
 	{
-		TVector3 boostTarget = lvTarget.BoostVector();
+		TVector3 boostTarget = -lvTarget.BoostVector();
 		lvTarget.Boost(boostTarget);
 		lvBeam.Boost(boostTarget);
 		lvOut.Boost(boostTarget);
