@@ -69,12 +69,7 @@ rpwa::hli::calcAmplitude(const eventMetadata&      eventMeta,
 			++(*progressIndicator);
 		}
 
-		if(tree->LoadTree(eventIndex) < 0) {
-			break;
-		}
-		// read only required branches
-		prodKinMomentaBr->GetEntry (eventIndex);
-		decayKinMomentaBr->GetEntry(eventIndex);
+		tree->GetEntry(eventIndex);
 
 		if(not prodKinMomenta or not decayKinMomenta) {
 			printWarn << "at least one of the input data arrays is a null pointer: "

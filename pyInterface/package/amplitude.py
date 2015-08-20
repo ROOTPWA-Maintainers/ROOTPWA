@@ -18,7 +18,7 @@ def calcAmplitude(inputFileName,
 	printErr = pyRootPwa.utils.printErr
 
 	printInfo("Calculating amplitude for key file '" + keyFileName +
-	                          "' with input file '" + inputFileName + "', output file '" + outputFileName + ".")
+	                          "' with input file '" + inputFileName + "', output file '" + outputFileName + "'.")
 
 	if 'ROOTPWA' not in _os.environ:
 		printWarn("$ROOTPWA not set.")

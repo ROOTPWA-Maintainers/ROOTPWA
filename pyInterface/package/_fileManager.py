@@ -131,7 +131,7 @@ class fileManager:
 		internalEventsType = fileManager.eventsTypeFromBpEnum(eventsType)
 		if not internalEventsType in self.dataFiles:
 			pyRootPwa.utils.printErr("did not find data file with eventsType '" + str(eventsType) + "'.")
-			return False
+			return None
 		for dataFile in self.dataFiles[internalEventsType]:
 			found = True
 			if not dataFile.binningMap.keys() == self.binList[binID].keys():
@@ -140,9 +140,10 @@ class fileManager:
 				if not self.binList[binID][binningVariable] == dataFile.binningMap[binningVariable]:
 					found = False
 					break
-			if found: return dataFile
+			if found:
+				return dataFile
 		pyRootPwa.utils.printWarn("no data dataFile found for binID = " + str(binID) + "and eventsType = '" + str(eventsType) + "'.")
-		return False
+		return None
 
 
 	def getKeyFilePaths(self):
