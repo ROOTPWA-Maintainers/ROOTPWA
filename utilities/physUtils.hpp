@@ -34,6 +34,7 @@
 #ifndef PHYSUTILS_H
 #define PHYSUTILS_H
 
+
 #include <TLorentzVector.h>
 
 #include "mathUtils.hpp"
@@ -44,28 +45,29 @@
 namespace rpwa {
 
 
+	// computes tPrime
+	// tPrime is the (absolute of the) four-momentum transfer t corrected
+	// for the minimal four-momentum transfer required to provide the
+	// outgoing particle with its mass
 	inline
 	double
-	tPrime(
-		TLorentzVector          lvBeam,         // Beam
-		TLorentzVector          lvTarget,       // Target
-		TLorentzVector          lvOut){         // Outgoing resonance X
+	tPrime(TLorentzVector lvBeam,    // beam
+	       TLorentzVector lvTarget,  // target
+	       TLorentzVector lvOut)     // outgoing X
+	{
+		// boost into the overall center-of-mass system
+		// only in this system the scattering angle can be set to 0
+		// without changing any other quantity (not to violate the
+		// four-momentum conservation of the reaction)
+		const TVector3 boostCm(-(lvBeam+lvTarget).BoostVector());
+		lvBeam.Boost(boostCm);
+		lvOut.Boost(boostCm);
 
-		TVector3 boostTarget = lvTarget.BoostVector();
-		lvTarget.Boost(boostTarget);
-		lvBeam.Boost(boostTarget);
-		lvOut.Boost(boostTarget);
+		const double tPrime = 2. * (lvBeam.P()*lvOut.P() - lvBeam.Vect()*lvOut.Vect());
 
-		const double a = 4.*std::pow(lvBeam.P(), 2.) - 4.*std::pow(lvBeam.E()+lvTarget.M(), 2.);
-		const double b = 4.*lvBeam.P()*(lvBeam.M2() + lvOut.M2() + 2.*lvTarget.M()*lvBeam.E());
-		const double c = std::pow(lvBeam.M2() + lvOut.M2() + 2.*0.938272*lvBeam.E(), 2.) - 4.*lvOut.M2()*std::pow(lvBeam.E()+lvTarget.M(), 2.);
-		const double p3 = (-b/2. - sqrt(std::pow(b/2., 2.) - a*c)) / a;
-		const double tMin = lvBeam.M2() + lvOut.M2() - 2.*lvBeam.E()*sqrt(p3*p3 + lvOut.M2()) + 2.*lvBeam.P()*p3;
-
-		TLorentzVector lvT = lvBeam - lvOut;	// Four momentum transfer
-
-		return tMin - lvT.M2();
+		return tPrime;
 	};
+
 
 	// computes squared breakup momentum of 2-body decay
 	inline
