@@ -72,10 +72,14 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading config file '" + args.configFileName + "' failed. Aborting...")
 		sys.exit(1)
 	pyRootPwa.core.particleDataTable.instance.readFile(config.pdgFileName)
+	fileManager = pyRootPwa.loadFileManager(config.fileManagerPath)
+	if not fileManager:
+		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
+		sys.exit(1)
 
 	# read integral matrix from ROOT file
 	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-	integral = pyRootPwa.core.ampIntegralMatrix(integralFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName))
+	integral = pyRootPwa.core.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
 	integralFile.Close()
 	nmbNormEvents = integral.nmbEvents()
 
@@ -136,7 +140,7 @@ if __name__ == "__main__":
 		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		keyfile = keyfileDirectory + "/" + waveName + ".key"
+		keyfile = fileManager.getKeyFile(waveName)
 		if not os.path.isfile(keyfile):
 			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
