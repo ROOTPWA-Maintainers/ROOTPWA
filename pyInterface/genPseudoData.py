@@ -45,11 +45,10 @@ if __name__ == "__main__":
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
 	parser.add_argument("integralFile", type=str, metavar="integralFile", help="integral file")
-	parser.add_argument("keyfileDirectory", type=str, metavar="keyfileDir", help="directory with all keyfiles which appear in the fitResult")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
-	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
+	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
@@ -103,11 +102,6 @@ if __name__ == "__main__":
 
 	if not generatorManager.initializeGenerator():
 		printErr("could not initialize generator. Aborting...")
-		sys.exit(1)
-
-	keyfileDirectory = os.path.abspath(args.keyfileDirectory)
-	if not os.path.isdir(keyfileDirectory):
-		printErr("keyfile directory '" + keyfileDirectory + "' does not exist. Aborting...")
 		sys.exit(1)
 
 	fitResultFile = pyRootPwa.ROOT.TFile.Open(args.fitResult, "READ")
