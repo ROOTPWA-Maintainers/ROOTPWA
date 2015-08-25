@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 	# read integral matrix from ROOT file
 	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-	integral = pyRootPwa.core.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
+	integral = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
 	integralFile.Close()
 	nmbNormEvents = integral.nmbEvents()
 
