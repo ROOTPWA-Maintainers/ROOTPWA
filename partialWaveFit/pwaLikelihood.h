@@ -73,7 +73,8 @@ namespace rpwa {
 		typedef boost::multi_array<double,                                    2> waveThrArrayType;      // array for wave thresholds
 		typedef boost::multi_array<unsigned int,                              2> waveToIntMapType;      // array for mapping of waves to integral indices
 		typedef boost::multi_array<boost::tuples::tuple<int, int>,            3> ampToParMapType;       // array for mapping of amplitudes to parameters
-		typedef boost::multi_array<complexT,                                  3> ampsArrayType;         // array for production and decay amplitudes
+		typedef boost::multi_array<complexT,                                  3> prodAmpsArrayType;     // array for production and decay amplitudes
+		typedef boost::multi_array<complexT,                                  2> decayAmpsArrayType;    // with memory layout to save memory
 		typedef boost::multi_array<complexT,                                  4> normMatrixArrayType;   // array for normalization matrices
 		typedef boost::multi_array<value_type,                                2> phaseSpaceIntType;     // array for phase space integrals
 		typedef boost::multi_array<bool,                                      2> waveAmpAddedArrayType; // array for wave amplitudes read
@@ -212,12 +213,12 @@ namespace rpwa {
 
 	public:
 
-		void copyFromParArray(const double*  inPar,              // input parameter array
-		                      ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
-		                      value_type&    outFlatVal) const;  // output value corresponding to flat wave
-		void copyToParArray(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
-		                    const value_type     inFlatVal,      // value corresponding to flat wave
-		                    double*              outPar) const;  // output parameter array
+		void copyFromParArray(const double*      inPar,              // input parameter array
+		                      prodAmpsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
+		                      value_type&        outFlatVal) const;  // output value corresponding to flat wave
+		void copyToParArray(const prodAmpsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
+		                    const value_type         inFlatVal,      // value corresponding to flat wave
+		                    double*                  outPar) const;  // output parameter array
 
 	private:
 
@@ -259,7 +260,7 @@ namespace rpwa {
 		                                                // array; negative indices mean that the parameter
 		                                                // is not existing due to rank restrictions
 
-		ampsArrayType _decayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
+		decayAmpsArrayType _decayAmps[2];  // precalculated decay amplitudes [event index][reflectivity][wave index]
 
 		mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
 		mutable std::vector<double> _derivCache;  // cache for derivatives
