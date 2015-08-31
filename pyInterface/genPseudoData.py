@@ -188,7 +188,7 @@ if __name__ == "__main__":
 				success = fileWriter.initialize(
 				                                outputFile,
 				                                args.userString,
-				                                pyRootPwa.core.eventMetadata.GENERATED,
+				                                pyRootPwa.core.eventMetadata.REAL,
 				                                prodKinNames,
 				                                decayKinNames,
 # TODO: FILL THESE
