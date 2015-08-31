@@ -7,7 +7,6 @@ import pyRootPwa
 import pyRootPwa.core
 ROOT = pyRootPwa.ROOT
 
-
 def saveFileManager(fileManagerObject, path):
 	if not os.path.isfile(path):
 		try:
@@ -130,7 +129,7 @@ class fileManager:
 	def getDataFile(self, binID, eventsType):
 		internalEventsType = fileManager.eventsTypeFromBpEnum(eventsType)
 		if not internalEventsType in self.dataFiles:
-			pyRootPwa.utils.printErr("did not find data file with eventsType '" + str(eventsType) + "'.")
+			pyRootPwa.utils.printErr("did not find data file with eventsType '" + str(eventsType) + " (internal '"+str(internalEventsType)+").")
 			return False
 		for dataFile in self.dataFiles[internalEventsType]:
 			found = True
@@ -140,8 +139,9 @@ class fileManager:
 				if not self.binList[binID][binningVariable] == dataFile.binningMap[binningVariable]:
 					found = False
 					break
-			if found: return dataFile
-		pyRootPwa.utils.printWarn("no data dataFile found for binID = " + str(binID) + "and eventsType = '" + str(eventsType) + "'.")
+			if found: 
+				return dataFile
+		pyRootPwa.utils.printWarn("no data dataFile found for binID = " + str(binID) + " and eventsType = '" + str(eventsType) + "'.")
 		return False
 
 
@@ -348,15 +348,17 @@ class fileManager:
 			keyFileName = keyFileNames[keyFileID]
 			waveDescription = pyRootPwa.core.waveDescription()
 			waveDescription.parseKeyFile(keyFileName)
-			(success, amplitude) = waveDescription.constructAmplitude()
-			if not success:
-				pyRootPwa.utils.printErr("could not construct decay topology for key file '" + keyFileName + "'.")
-				return []
-			waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
-			if waveName in keyFiles:
-				pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName] + "' and '" + keyFileName + "'.")
-				return []
-			keyFiles[waveName] = keyFileName
+			nmbAmps = waveDescription.nmbAmplitudes()
+			for nAmp in range(nmbAmps):
+				(success, amplitude) = waveDescription.constructAmplitude(nAmp)
+				if not success:
+					pyRootPwa.utils.printErr("could not construct decay topology for key file '" + keyFileName + "'.")
+					return []
+				waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
+				if waveName in keyFiles:
+					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName][0] + "' and '" + keyFileName + "'.")
+					return []
+				keyFiles[waveName] = (keyFileName,nAmp)
 		return keyFiles
 
 
@@ -428,7 +430,7 @@ class fileManager:
 	def convertKeyFilesToPaths(keyFilesList):
 		allKeyFiles = []
 		for keyFile in keyFilesList:
-			allKeyFiles.append(keyFilesList[keyFile])
+			allKeyFiles.append(keyFilesList[keyFile][0])
 		return allKeyFiles
 
 

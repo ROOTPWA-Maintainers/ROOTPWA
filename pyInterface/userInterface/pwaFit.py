@@ -54,13 +54,18 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
+	keyFilesWithAmpIndex = fileManager.getKeyFiles()
+	keyFiles = {}
+	for waveName in keyFilesWithAmpIndex:
+		keyFiles[waveName] = keyFilesWithAmpIndex[waveName][0]
+
 	fitResult = pyRootPwa.pwaFit(
 	                             ampFileList = ampFileList,
 	                             normIntegralFileName = psIntegralPath,
 	                             accIntegralFileName = accIntegralPath,
 	                             binningMap = binningMap,
 	                             waveListFileName = args.waveListFileName,
-	                             keyFiles = fileManager.getKeyFiles(),
+	                             keyFiles = keyFiles,
 	                             seed = args.seed,
 	                             cauchy = args.cauchyPriors,
 	                             cauchyWidth = args.cauchyPriorWidth,
