@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# first argument specifies number of jobs to run in parallel
+# default is 1
+NMB_JOBS=${1:-1}
+
 
 if [[ ! "${BOOST_ROOT}" ]]
 then
@@ -38,9 +42,33 @@ then
 		echo "${LINE}" >> ${JAM_CONFIG_FILE_TARGET}
 fi
 
+
+function checkFail() {
+		RETURN_CODE=${?}
+		if [[ ${RETURN_CODE} != 0 ]]
+		then
+				echo "!!! error: command failure. ${1}"
+				exit ${RETURN_CODE}
+		fi
+}
+
 echo "    view result in ${LOG_FILE}"
-./bootstrap.sh --with-libraries=mpi,python,timer --prefix=. &> ${LOG_FILE}
-./b2 -a >> ${LOG_FILE} 2>&1
+echo "        ... bootstrapping"
+./bootstrap.sh --with-libraries=mpi,python,timer --prefix=. >> ${LOG_FILE}  2>&1
+checkFail "bootstrap failed; see ${LOG_FILE} for details"
+echo "        ... linking headers"  # needed for Modular Boost repositories
+./b2 -j ${NMB_JOBS} headers >> ${LOG_FILE} 2>&1
+checkFail "linking headers failed; see ${LOG_FILE} for details"
+echo "        ... building libraries; running ${NMB_JOBS} jobs in parallel"
+./b2 -j ${NMB_JOBS} -a >> ${LOG_FILE} 2>&1
+checkFail "building libraries failed; see ${LOG_FILE} for details"
 
 
-exit 0
+if grep --quiet --line-regexp "The Boost C++ Libraries were successfully built!" ${LOG_FILE}
+then
+		echo "*** success: Boost libraries were successfully built"
+		exit 0
+else
+		echo "!!! error: there were problems building the libraries; see ${LOG_FILE} for details"
+		exit 1
+fi
