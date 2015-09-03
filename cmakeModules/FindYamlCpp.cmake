@@ -103,6 +103,46 @@ endif()
 unset(_YamlCpp_LIBRARY_NAME)
 
 
+# try to get the version from the pkgconfig file
+if(YamlCpp_DIR)
+	find_file(_YamlCpp_PC_FILE
+		NAMES yaml-cpp.pc
+		PATHS ${YamlCpp_DIR}/lib/pkgconfig
+		      ${YamlCpp_DIR}/build
+		NO_DEFAULT_PATH
+		)
+else()
+	get_filename_component(_YamlCpp_DIR ${YamlCpp_LIBS} DIRECTORY)
+	find_file(_YamlCpp_PC_FILE
+		NAMES yaml-cpp.pc
+		PATHS ${_YamlCpp_DIR}/pkgconfig
+		      ${_YamlCpp_DIR}
+		NO_DEFAULT_PATH
+		)
+	unset(_YamlCpp_DIR)
+endif()
+if(_YamlCpp_PC_FILE)
+	file(STRINGS ${_YamlCpp_PC_FILE} _YamlCpp_VERSION_LINE REGEX "Version:")
+	list(LENGTH _YamlCpp_VERSION_LINE _YamlCpp_VERSION_LINES)
+	if(_YamlCpp_VERSION_LINES EQUAL 1)
+		string(REGEX MATCHALL "[0-9]+" _YamlCpp_VERSION_COMPONENTS ${_YamlCpp_VERSION_LINE})
+		foreach(_YamlCpp_VERSION_COMPONENT IN LISTS _YamlCpp_VERSION_COMPONENTS)
+			if(DEFINED YamlCpp_VERSION)
+				set(YamlCpp_VERSION "${YamlCpp_VERSION}.")
+			endif()
+			set(YamlCpp_VERSION "${YamlCpp_VERSION}${_YamlCpp_VERSION_COMPONENT}")
+		endforeach()
+		unset(_YamlCpp_VERSION_COMPONENT)
+		unset(_YamlCpp_VERSION_COMPONENTS)
+	else()
+		message(WARNING "Error while parsing yaml-cpp version from '${_YamlCpp_PC_FILE}': got ${_YamlCpp_VERSION_LINES} 'Version' lines instead of 1.")
+	endif()
+	unset(_YamlCpp_VERSION_LINE)
+	unset(_YamlCpp_VERSION_LINES)
+endif()
+unset(_YamlCpp_PC_FILE)
+
+
 # check the version
 if(NOT YamlCpp_VERSION)
 	if(YamlCpp_FIND_VERSION_EXACT)
@@ -157,4 +197,5 @@ mark_as_advanced(
 	YamlCpp_DIR
 	YamlCpp_INCLUDE_DIR
 	YamlCpp_LIBS
+	YamlCpp_VERSION
 	)
