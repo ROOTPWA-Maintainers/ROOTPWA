@@ -78,7 +78,7 @@ class TFracNum {
 	std::ostream& Print(std::ostream& out) const;
 
 	//! Return the double-precision real value
-	const double& Dval() const;
+	const double& Dval(const bool& squareRootTheResult = false) const;
 
 	//! Try square root operation
 	/*! In case of success, return true. In case this does not lead to a
