@@ -306,10 +306,10 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_c[3](0, 1) = _c[3](1, 0) = -0.2082;  // AMP Table 1, M solution: c_12^3
 	_c[4](0, 1) = _c[4](1, 0) = -0.1386;  // AMP Table 1, M solution: c_12^4
 	_c[0](1, 1) =  0.3010;                // AMP Table 1, M solution: c_22^0
-	_c[1](1, 1) = -0.5140;                // AMP Table 1, M solution: c_12^1
-	_c[2](1, 1) =  0.1176;                // AMP Table 1, M solution: c_12^2
-	_c[3](1, 1) =  0.5204;                // AMP Table 1, M solution: c_12^3
-	_c[4](1, 1) = -0.3977;                // AMP Table 1, M solution: c_12^4
+	_c[1](1, 1) = -0.5140;                // AMP Table 1, M solution: c_22^1
+	_c[2](1, 1) =  0.1176;                // AMP Table 1, M solution: c_22^2
+	_c[3](1, 1) =  0.5204;                // AMP Table 1, M solution: c_22^3
+	_c[4](1, 1) = -0.3977;                // AMP Table 1, M solution: c_22^4
 
 	_sP(0, 0) = -0.0074;  // AMP Table 1, M solution: s_0
 	_sP(0, 1) =  0.9828;  // AMP Table 1, M solution: s_1
