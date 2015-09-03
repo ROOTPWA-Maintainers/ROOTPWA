@@ -59,6 +59,186 @@ using namespace boost::assign;
 using namespace libconfig;
 using namespace rpwa;
 
+namespace {
+	const std::string binBorders = "bins";
+	const std::string expandName = "expand";
+	const std::string expandTypeName = "type";
+	const std::string expandNameName = "name";
+
+	std::vector<double>
+	getBinning(const libconfig::Setting* setting)
+	{
+		const libconfig::Setting* binningSetting = rpwa::findLibConfigList(*setting, binBorders, true);
+		if (not binningSetting){
+			printErr<<"no binning give to expand freed-isobar"<<std::endl;
+			return std::vector<double>();
+		};
+		int length = binningSetting->getLength();
+		std::vector<double> binningVector(length);
+		for (int bin=0;bin<length;++bin){
+			binningVector[bin] = (*binningSetting)[bin];
+		};
+		return binningVector;
+	};
+
+	class keyFileExpander {
+	public:
+		keyFileExpander();
+
+		void parseKeyFile(const std::string &keyFileName);
+		void parseKeyFileContent(const std::string &keyFileContent);
+
+		bool expand();
+		const std::vector<configPtr>* expandedConfigs();
+
+
+	private:
+		configPtr _config; ///< initial config 
+		std::vector<configPtr> _expandedConfigs;///< (partially) expanded configs
+		bool _fullyExpanded; ///< indicates, if keyFile is filly expanded
+
+		static libconfig::Setting* findExpand(const libconfig::Setting &setting);
+		static std::string getExpandType(const libconfig::Setting* setting);
+		static std::string getExpandName(const libconfig::Setting* setting);
+		static std::vector<configPtr> expand(const configPtr cfg);
+	};
+
+	keyFileExpander::keyFileExpander()
+		: _config(new libconfig::Config),
+		  _expandedConfigs(),
+		  _fullyExpanded(false)
+	{ };
+
+	bool keyFileExpander::expand()
+	{
+		std::vector<configPtr> configs;
+		configs.push_back(_config);
+		std::vector<configPtr> expanded;
+		while ( true ) {
+			std::vector<configPtr> nextConfigs;
+			bool changed = false;
+			for (size_t c = 0;c < configs.size();++c){
+				expanded = expand(configs[c]);
+				if (expanded.size() == 0){
+					nextConfigs.push_back(configs[c]);
+				} else {
+					for (size_t e = 0; e < expanded.size(); ++e){
+						changed = true;
+						nextConfigs.push_back(expanded[e]);
+					};
+				};
+			};
+			configs = nextConfigs;
+			if (not changed){
+				break;
+			};
+		};
+		_expandedConfigs = configs;
+		_fullyExpanded = true;
+		return true;
+	};
+
+
+	void 
+	keyFileExpander::parseKeyFile(const std::string &keyFileName)
+	{
+		_config->readFile(keyFileName.c_str());
+	};
+
+
+	void 
+	keyFileExpander::parseKeyFileContent(const std::string &keyFileContent)
+	{
+		_config->readString(keyFileContent);
+	};
+
+	const std::vector<rpwa::configPtr>* 
+	keyFileExpander::expandedConfigs()
+	{
+		if ( not _fullyExpanded ) {
+			return 0;
+		};
+		return &_expandedConfigs;
+	};
+
+
+	libconfig::Setting* 
+	keyFileExpander::findExpand(const libconfig::Setting &setting)
+	{
+		libconfig::Setting* expand  = rpwa::findLibConfigGroup(setting, expandName, false);
+		if (expand) {
+			return expand;
+		}; 
+		int length = setting.getLength();
+		for (int i=0;i<length;++i){
+			libconfig::Setting &actSetting = setting[i];
+			int actLength = actSetting.getLength();
+			if (actLength > 0) {
+				libconfig::Setting* recurse = findExpand(actSetting);
+				if (recurse) {
+					return recurse;
+				};
+			};
+		};
+		return 0;
+	};
+
+
+	std::string 
+	keyFileExpander::getExpandType(const libconfig::Setting* setting) 
+	{
+		std::string expandType;
+		if (not setting->lookupValue(expandTypeName, expandType)) {
+			printErr<<"no expand type given"<<std::endl;
+			return "";
+		};
+		return expandType;
+	};
+
+
+	std::string
+	keyFileExpander::getExpandName(const libconfig::Setting* setting)
+	{
+		std::string binningName;
+		if (not setting->lookupValue(expandNameName, binningName)) {
+			printErr<<"no binning name given"<<std::endl;
+			return "";
+		};
+		return binningName;
+	};
+
+
+	std::vector<rpwa::configPtr> 
+	keyFileExpander::expand(const rpwa::configPtr cfg)
+	{
+		libconfig::Setting &set = cfg->getRoot();
+		libconfig::Setting* expand = findExpand(set);	
+		if (not expand){
+			return std::vector<configPtr>();
+		};
+		libconfig::Setting &parent = expand->getParent();
+		std::string expandType = getExpandType(expand);
+		if (expandType == "binning"){
+			std::vector<double> binning = ::getBinning(expand);
+			const std::string binningName = getExpandName(expand);
+			parent.remove(expandName);
+			std::vector<rpwa::configPtr> expanded(binning.size()-1);
+			for (size_t bin=0;bin<binning.size()-1;++bin){
+				parent.add(binningName,libconfig::Setting::TypeList);
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin];
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+				expanded[bin] = copyConfig(cfg);
+				parent.remove(binningName);
+			};
+			return expanded;
+		} else {
+			printErr << "expand type " << expandType << " unknown" << std::endl;
+		};
+		return std::vector<rpwa::configPtr>();
+	};
+
+};
+
 
 ClassImp(waveDescription);
 

@@ -36,14 +36,13 @@
 
 
 #include<map>
-
 #include "libconfig.h++"
 
 #include "reportingUtils.hpp"
 
 
 namespace rpwa {
-
+	typedef boost::shared_ptr<libconfig::Config> configPtr;
 
 	inline
 	std::string
@@ -101,7 +100,7 @@ namespace rpwa {
 
 
 	inline
-	const libconfig::Setting*
+	libconfig::Setting*
 	findLibConfigGroup(const libconfig::Setting& parent,
 	                   const std::string&        groupName,
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
@@ -114,7 +113,7 @@ namespace rpwa {
 				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& groupKey = parent[groupName.c_str()];
+		libconfig::Setting& groupKey = parent[groupName];
 		// check that it is a group
 		if (not groupKey.isGroup()) {
 			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
@@ -307,6 +306,48 @@ namespace rpwa {
 		}
 		return true;
 	}
+
+	inline
+	std::string
+	getConfigString(const configPtr cfgIn)
+	{
+		int pipeFileDescriptors[2];
+		if (pipe(pipeFileDescriptors) == -1) {
+			printErr << "failed to create pipe. cannot write keys." << std::endl;
+			return "";
+		};
+		FILE* pipeWriteEnd = fdopen(pipeFileDescriptors[1], "wt");
+		if (!pipeWriteEnd) {
+			printErr << "could not open write end of pipe. cannot write keys." << std::endl;
+			return "";
+		};
+		cfgIn->write(pipeWriteEnd);
+		fclose(pipeWriteEnd);
+		// read keys from pipe
+		char         buf;
+		unsigned int countChar = 0;
+		std::stringstream out;
+		while (read(pipeFileDescriptors[0], &buf, 1) > 0) {
+			out << buf;
+			++countChar;
+		}
+		close(pipeFileDescriptors[0]);
+		if (countChar == 0) {
+			printWarn << "nothing was written" << std::endl;
+		};
+		return out.str();
+	};
+
+	inline
+	configPtr
+	copyConfig(const configPtr cfgIn)
+	{
+		configPtr cfg(new libconfig::Config);
+		cfg->readString(getConfigString(cfgIn));
+		return cfg;
+	};
+
+
 
 
 } // namespace rpwa
