@@ -62,8 +62,11 @@ set(SOURCES
 	)
 
 
+# library name
+lib_name_for_current_dir(THIS_LIB)
+
+
 # library
-set(THIS_LIB "RelAmpl")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
