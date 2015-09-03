@@ -114,7 +114,7 @@ namespace rpwa {
 				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& groupKey = parent[groupName];
+		const libconfig::Setting& groupKey = parent[groupName.c_str()];
 		// check that it is a group
 		if (not groupKey.isGroup()) {
 			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
@@ -139,7 +139,7 @@ namespace rpwa {
 				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& listKey = parent[listName];
+		const libconfig::Setting& listKey = parent[listName.c_str()];
 		// check that it is a list
 		if (not listKey.isList()) {
 			printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
@@ -171,7 +171,7 @@ namespace rpwa {
 				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& arrayKey = parent[arrayName];
+		const libconfig::Setting& arrayKey = parent[arrayName.c_str()];
 		// check that it is a list
 		if (not arrayKey.isArray()) {
 			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
@@ -192,24 +192,24 @@ namespace rpwa {
 	inline
 	const libconfig::Setting*
 	findLibConfigGroup(const libconfig::Setting& parent,
-	                   const int                 groupName,
+	                   const int                 groupIndex,
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
 	{
 		// find field
 
 		const libconfig::Setting* groupKey = 0;
 		try {
-			groupKey = &(parent[groupName]);
+			groupKey = &(parent[groupIndex]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
 			if (mustExist)
-				printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
-						  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				printWarn << "cannot find group[" << groupIndex << "] in '" << parent.getPath() << "' "
+				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 
 		// check that it is a group
 		if (not (*groupKey).isGroup()) {
-			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
+			printWarn << "setting[" << groupIndex << "] in '" << parent.getPath() << "' "
 			          << "of key file '" << parent.getSourceFile() << "' is not a group" << std::endl;
 			return 0;
 		}
@@ -220,23 +220,23 @@ namespace rpwa {
 	inline
 	const libconfig::Setting*
 	findLibConfigList(const libconfig::Setting& parent,
-	                  const int                 listName,
+	                  const int                 listIndex,
 	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
 	{
 		// find field
 
 		const libconfig::Setting* listKey = 0;
 		try {
-			listKey = &(parent[listName]);
+			listKey = &(parent[listIndex]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
 			if (mustExist)
-				printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
+				printWarn << "cannot find list[" << listIndex << "] in '" << parent.getPath() << "' "
 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 		// check that it is a list
 		if (not (*listKey).isList()) {
-			printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
+			printWarn << "setting[" << listIndex << "] in '" << parent.getPath() << "' "
 			          << "of key file '" << parent.getSourceFile() << "' is not a list. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
@@ -244,7 +244,7 @@ namespace rpwa {
 
 		// check that it is not empty
 		if ((*listKey).getLength() < 1) {
-			printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
+			printWarn << "list[" << listIndex << "] in '" << parent.getPath() << "' "
 			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
 			return 0;
 		}
@@ -255,31 +255,31 @@ namespace rpwa {
 	inline
 	const libconfig::Setting*
 	findLibConfigArray(const libconfig::Setting& parent,
-	                   const int                 arrayName,
+	                   const int                 arrayIndex,
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
 	{
 		// find field
 
 		const libconfig::Setting* arrayKey = 0;
 		try {
-			arrayKey = &(parent[arrayName]);
+			arrayKey = &(parent[arrayIndex]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
 			if (mustExist)
-				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
+				printWarn << "cannot find array[" << arrayIndex << "] in '" << parent.getPath() << "' "
 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 
 		// check that it is a list
 		if (not (*arrayKey).isArray()) {
-			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
+			printWarn << "setting[" << arrayIndex << "] in '" << parent.getPath() << "' "
 			          << "of key file '" << parent.getSourceFile() << "' is not an array. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
 		if ((*arrayKey).getLength() < 1) {
-			printWarn << "array '" << arrayName << "' in '" << parent.getPath() << "' "
+			printWarn << "array[" << arrayIndex << "] in '" << parent.getPath() << "' "
 			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
 			return 0;
 		}
@@ -300,7 +300,7 @@ namespace rpwa {
 				          << "in '" << (group->getName() ? group->getName() : "???") << "' section." << std::endl;
 				return false;
 			}
-			if((*group)[name].getType() != type) {
+			if((*group)[name.c_str()].getType() != type) {
 				printWarn << "'" << name << "' in section '" << (group->getName() ? group->getName() : "???") << "' has wrong type." << std::endl;
 				return false;
 			}
