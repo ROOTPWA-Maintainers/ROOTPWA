@@ -69,18 +69,21 @@ flatMassDependence::amp(const isobarDecayVertex&)
 
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
-flatRangeMassDependence::amp(const isobarDecayVertex& v)
+binnedMassDependence::amp(const isobarDecayVertex& v)
 {
 	complex<double> amp = 0.;
 
 	const particlePtr& parent = v.parent();
-	if (fabs(parent->lzVec().M() - parent->mass()) < parent->width()/2.)
+
+	const double M = parent->lzVec().M();
+
+	if (_mMin <= M && M < _mMax)
 		amp = 1.;
 
 	if (_debug)
 		printDebug << name() << " M = " << parent->lzVec().M()
-		                     << ", M0 = " << parent->mass()
-		                     << ", G0 = " << parent->width()
+		                     << ", _mMin = " << _mMin
+		                     << ", _mMax = " << _mMax
 		                     << ", amp = " << amp << endl;
 
 	return amp;

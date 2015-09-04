@@ -301,7 +301,7 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	const vector<configPtr> configs = expand(config);
 
 	vector<waveDescriptionPtr> waveDescriptions;
-	for (size_t c=0; c<configs.size(); ++c) {
+	for (size_t c = 0; c < configs.size(); ++c) {
 		const string confString = getConfigString(*configs[c]);
 
 		waveDescriptionPtr waveDesc(new waveDescription);
@@ -333,7 +333,7 @@ waveDescription::parseKeyFileContent(const string& keyFileContent)
 	const vector<configPtr> configs = expand(config);
 
 	vector<waveDescriptionPtr> waveDescriptions;
-	for (size_t c=0; c<configs.size(); ++c) {
+	for (size_t c = 0; c < configs.size(); ++c) {
 		const string confString = getConfigString(*configs[c]);
 
 		waveDescriptionPtr waveDesc(new waveDescription);
@@ -555,17 +555,40 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 	} else {
 		// recurse down decay chain
 		// first daughter
-		waveName << "=[" << currentVertex->daughter1()->name();
-		if (not topo.isFsParticle(currentVertex->daughter1()))
-			waveName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+		waveName << "=[";
+		if (topo.isFsParticle(currentVertex->daughter1()))
+			waveName << currentVertex->daughter1()->name();
+		else {
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
+			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+				const particle& P = *(currentVertex->daughter1());
+				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
+				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
+				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+			} else
+				waveName << currentVertex->daughter1()->name();
+			waveName << waveNameFromTopology(topo, vertex);
+		}
+
 		// L, S
 		waveName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+
 		// second daughter
-		waveName << currentVertex->daughter2()->name();
-		if (not topo.isFsParticle(currentVertex->daughter2()))
-			waveName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+		if (topo.isFsParticle(currentVertex->daughter2()))
+			waveName << currentVertex->daughter2()->name();
+		else {
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
+			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+				const particle& P = *(currentVertex->daughter2());
+				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
+				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
+				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+			} else
+				waveName << currentVertex->daughter2()->name();
+			waveName << waveNameFromTopology(topo, vertex);
+		}
 		waveName << "]";
 	}
 	{
@@ -814,8 +837,16 @@ waveDescription::constructParticle(const Setting& particleKey,
 
 
 massDependencePtr
-waveDescription::mapMassDependenceType(const string& massDepType)
+waveDescription::mapMassDependenceType(const Setting* massDepKey)
 {
+	string massDepType = "";
+	if (massDepKey) {
+		// NULL is a valid value for massDepKey, in this case the
+		// 'massDep' group is not present in the keyfile, and the
+		// default 'BreitWigner' is to be used.
+		massDepKey->lookupValue("name", massDepType);
+	}
+
 	massDependencePtr massDep;
 	if (   (massDepType == "relativisticBreitWigner")
 	    or (massDepType == ""))  // default mass dependence
@@ -824,8 +855,6 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createConstWidthBreitWigner();
 	else if (massDepType == "flat")
 		massDep = createFlatMassDependence();
-	else if (massDepType == "flatRange")
-		massDep = createFlatRangeMassDependence();
 	else if (massDepType == "f_0(980)")
 		massDep = createF0980BreitWigner();
 	else if (massDepType == "f_0(980)Flatte")
@@ -838,6 +867,25 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createPiPiSWaveAuMorganPenningtonKachaev();
 	else if (massDepType == "rhoPrime")
 		massDep = createRhoPrimeMassDep();
+	else if (massDepType == "binned") {
+		const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+		if (not bounds) {
+			printErr << "no bounds given for binned mass dependence." << std::endl;
+			throw;
+		}
+		const int length = bounds->getLength();
+		if (length != 2) {
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
+			throw;
+		}
+		const double mMin = (*bounds)[0];
+		const double mMax = (*bounds)[1];
+		if (mMin > mMax) {
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
+			throw;
+		}
+		massDep = createbinnedMassDependence(mMin, mMax);
+	}
 	else {
 		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
 		massDep = createRelativisticBreitWigner();
@@ -902,11 +950,8 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
-		string         massDepType = "";
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
-		if (massDepKey)
-			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependenceType(massDepType);
+		massDep = mapMassDependenceType(massDepKey);
 	}
 
 	// if there is 1 final state particle and 1 isobar put them in the
@@ -1042,6 +1087,16 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 			           << "'" << massDepName << "'" << endl;
 		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
 		massDepKey.add("name", Setting::TypeString) = massDepName;
+
+		if (massDepName == "binned") {
+			// for this mass dependence additionally the mass bound
+			// have to be stored in the keyfile.
+			const binnedMassDependence& binned = dynamic_cast<const binnedMassDependence&>(massDep);
+
+			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
+			bounds.add(Setting::TypeFloat) = binned.getMassMin();
+			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
 	}
 	return true;
 }

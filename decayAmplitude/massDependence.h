@@ -127,28 +127,35 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief trivial flat mass dependence over a range
-	class flatRangeMassDependence : public massDependence {
+	class binnedMassDependence : public massDependence {
 
 	public:
 
-		flatRangeMassDependence() : massDependence() { }
-		virtual ~flatRangeMassDependence()           { }
+		binnedMassDependence(const double mMin, const double mMax) : massDependence(), _mMin(mMin), _mMax(mMax) { }
+		virtual ~binnedMassDependence()                                                                         { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-		virtual std::string name() const { return "flatRange"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "binned"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		double getMassMin() const { return _mMin; }
+		double getMassMax() const { return _mMax; }
+
+	private:
+		double _mMin;  ///< Lower limit of the isobar mass bin
+		double _mMax;  ///< Upper limit of the isobar mass bin
 
 	};
 
 
-	typedef boost::shared_ptr<flatRangeMassDependence> flatRangeMassDependencePtr;
+	typedef boost::shared_ptr<binnedMassDependence> binnedMassDependencePtr;
 
 
 	inline
-	flatRangeMassDependencePtr
-	createFlatRangeMassDependence()
+	binnedMassDependencePtr
+	createbinnedMassDependence(double mMin, double mMax)
 	{
-		flatRangeMassDependencePtr massDep(new flatRangeMassDependence());
+		binnedMassDependencePtr massDep(new binnedMassDependence(mMin, mMax));
 		return massDep;
 	}
 

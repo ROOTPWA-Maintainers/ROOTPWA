@@ -152,7 +152,7 @@ namespace rpwa {
 		static bool constructParticle(const libconfig::Setting& particleKey,
 		                              particlePtr&              particle,
 		                              const bool                requirePartInTable = true);  ///< creates particle using name in particle key
-		static massDependencePtr mapMassDependenceType(const std::string& massDepType);  ///< creates mass dependence functor of specified type
+		static massDependencePtr mapMassDependenceType(const libconfig::Setting* massDepKey);  ///< creates mass dependence functor of type in mass-dependence key
 		static bool constructDecayVertex(const libconfig::Setting&          parentKey,
 		                                 const particlePtr&                 parentParticle,
 		                                 std::vector<isobarDecayVertexPtr>& decayVertices,
