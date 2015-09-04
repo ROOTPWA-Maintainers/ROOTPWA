@@ -59,6 +59,138 @@ using namespace boost::assign;
 using namespace libconfig;
 using namespace rpwa;
 
+namespace {
+	const std::string binBorders = "bins";
+	const std::string expandName = "expand";
+	const std::string expandTypeName = "type";
+	const std::string expandNameName = "name";
+
+
+	std::string 
+	getExpandType(const libconfig::Setting* setting) 
+	{
+		std::string expandType;
+		if (not setting->lookupValue(expandTypeName, expandType)) {
+			printErr<<"no expand type given"<<std::endl;
+			return "";
+		};
+		return expandType;
+	};
+
+
+	std::string
+	getExpandName(const libconfig::Setting* setting)
+	{
+		std::string binningName;
+		if (not setting->lookupValue(expandNameName, binningName)) {
+			printErr<<"no binning name given"<<std::endl;
+			return "";
+		};
+		return binningName;
+	};
+
+
+	libconfig::Setting* 
+	findExpand(const libconfig::Setting &setting)
+	{
+		libconfig::Setting* expand  = rpwa::findLibConfigGroup(setting, expandName, false);
+		if (expand) {
+			return expand;
+		}; 
+		int length = setting.getLength();
+		for (int i=0;i<length;++i){
+			libconfig::Setting &actSetting = setting[i];
+			int actLength = actSetting.getLength();
+			if (actLength > 0) {
+				libconfig::Setting* recurse = findExpand(actSetting);
+				if (recurse) {
+					return recurse;
+				};
+			};
+		};
+		return 0;
+	};
+
+
+
+	std::vector<double>
+	getBinning(const libconfig::Setting* setting)
+	{
+		const libconfig::Setting* binningSetting = rpwa::findLibConfigList(*setting, binBorders, true);
+		if (not binningSetting){
+			printErr<<"no binning give to expand freed-isobar"<<std::endl;
+			return std::vector<double>();
+		};
+		int length = binningSetting->getLength();
+		std::vector<double> binningVector(length);
+		for (int bin=0;bin<length;++bin){
+			binningVector[bin] = (*binningSetting)[bin];
+		};
+		return binningVector;
+	};
+
+	std::vector<rpwa::configPtr> 
+	expand(const rpwa::configPtr cfg)
+	{
+		libconfig::Setting &set = cfg->getRoot();
+		libconfig::Setting* expand = findExpand(set);	
+		if (not expand){
+			return std::vector<configPtr>();
+		};
+		libconfig::Setting &parent = expand->getParent();
+		std::string expandType = getExpandType(expand);
+		if (expandType == "binning"){
+			std::vector<double> binning = ::getBinning(expand);
+			const std::string binningName = getExpandName(expand);
+			parent.remove(expandName);
+			std::vector<rpwa::configPtr> expanded(binning.size()-1);
+			for (size_t bin=0;bin<binning.size()-1;++bin){
+				parent.add(binningName,libconfig::Setting::TypeList);
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin];
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+				expanded[bin] = copyConfig(cfg);
+				parent.remove(binningName);
+			};
+			return expanded;
+		} else {
+			printErr << "expand type " << expandType << " unknown" << std::endl;
+		};
+		return std::vector<rpwa::configPtr>();
+	};
+
+
+	std::vector<configPtr> expandKeyfiles(const std::string &keyFileName){
+
+		configPtr conf(new libconfig::Config);
+		conf->readFile(keyFileName.c_str());
+		std::vector<configPtr> configs;
+		configs.push_back(conf);
+		std::vector<configPtr> expanded;
+		while ( true ) {
+			std::vector<configPtr> nextConfigs;
+			bool changed = false;
+			for (size_t c = 0;c < configs.size();++c){
+				expanded = expand(configs[c]);
+				if (expanded.size() == 0){
+					nextConfigs.push_back(configs[c]);
+				} else {
+					for (size_t e = 0; e < expanded.size(); ++e){
+						changed = true;
+						nextConfigs.push_back(expanded[e]);
+					};
+				};
+			};
+			configs = nextConfigs;
+			if (not changed){
+				break;
+			};
+		};
+		return configs;
+	};
+
+
+};
+
 
 ClassImp(waveDescription);
 
@@ -434,7 +566,7 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
 	}
 	else if(not (topo.isFsParticle(currentVertex->daughter1())
-	             and topo.isFsParticle(currentVertex->daughter1()))){
+	             and topo.isFsParticle(currentVertex->daughter2()))){
 	  // recurse down decay chain
 	  // do this only if not both daughters are fs partiles
 
@@ -645,6 +777,40 @@ waveDescription::constructParticle(const Setting& particleKey,
 	}
 }
 
+massDependencePtr
+waveDescription::getMassDependenceType(const Setting* massDepKey) {
+		std::string massDepType = "";
+		massDependencePtr massDep;
+		if (massDepKey) {
+			massDepKey->lookupValue("name", massDepType);
+		};
+		if (massDepType != "freed-isobar") {
+			massDep = mapMassDependenceType(massDepType);
+		} else {
+			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+			if (not bounds) {
+				printErr << "no bound given for freed-isobar wave" << std::endl;
+				throw;
+			};
+			size_t length = bounds->getLength();
+			if (not length == 2){
+				printErr << "bound do not have the required length (2 != " << length << " )" << std::endl;
+				throw;
+			};
+			double mMin = (*bounds)[0];
+			double mMax = (*bounds)[1];
+			if ( mMin > mMax) {
+				printErr << "bound are not ordered: mMin(" << mMin << ") > " << "mMax(" << mMax << ")" << std::endl;
+				throw;
+			};
+			massDep = createSteplikeMassDependence(mMin,mMax);
+		};
+		if (not massDep){
+			printErr << "no massDependence gotten" << std::endl;
+			throw;
+		};
+		return massDep;
+};
 
 massDependencePtr
 waveDescription::mapMassDependenceType(const string& massDepType)
@@ -732,14 +898,10 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 		          << "using zero." << endl;
 
-	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
-		string         massDepType = "";
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
-		if (massDepKey)
-			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependenceType(massDepType);
+		massDep = getMassDependenceType(massDepKey);
 	}
 
 	// if there is 1 final state particle and 1 isobar put them in the
@@ -1040,3 +1202,16 @@ waveDescription::writeKeyFile(FILE&                  outStream,
 	}
 	return true;
 }
+
+
+std::vector<waveDescriptionPtr>
+waveDescription::getWaveDescriptionsFromKeyFile(std::string keyFile){
+	const std::vector<configPtr> configs = ::expandKeyfiles(keyFile);
+	std::vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c = 0; c < configs.size(); ++c){
+		std::string confString = getConfigString(configs[c]);
+		waveDescriptions.push_back(waveDescriptionPtr(new waveDescription()));
+		waveDescriptions[c]->parseKeyFileContent(confString);
+	};
+	return waveDescriptions;
+};

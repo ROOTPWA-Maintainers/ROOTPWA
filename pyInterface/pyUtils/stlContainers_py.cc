@@ -8,6 +8,7 @@
 #include<particleProperties.h>
 #include<interactionVertex.h>
 #include<isobarDecayVertex.h>
+#include<waveDescription.h>
 
 namespace bp = boost::python;
 
@@ -58,5 +59,9 @@ void rpwa::py::exportStlContainers() {
 	// std::vector<rpwa::amplitudeMetadata*>
 	bp::class_<std::vector<rpwa::amplitudeMetadata*> >("__vector_amplitudeMetadata")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::amplitudeMetadata*> >());
+
+	// std::vector<rpwa::waveDescription*>
+	bp::class_<std::vector<rpwa::waveDescriptionPtr> >("__vector_waveDescription")
+		.def(bp::vector_indexing_suite<std::vector<rpwa::waveDescriptionPtr>, true>());
 
 }

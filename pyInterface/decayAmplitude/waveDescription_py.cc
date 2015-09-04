@@ -16,6 +16,12 @@ namespace {
 		return sstr.str();
 	}
 
+	bp::list waveDescription_getWaveDescriptionsFromKeyFile(std::string keyFile){
+		std::vector<rpwa::waveDescriptionPtr> descriptions = rpwa::waveDescription::getWaveDescriptionsFromKeyFile(keyFile);
+		bp::list retVal(descriptions);
+		return retVal;
+	};
+
 	bp::tuple waveDescription_constructDecayTopology(const rpwa::waveDescription& self, bool fromTemplate = false) {
 		rpwa::isobarDecayTopologyPtr topo;
 		bool result = self.constructDecayTopology(topo, fromTemplate);
@@ -99,8 +105,15 @@ void rpwa::py::exportWaveDescription() {
 		)
 		.staticmethod("waveLaTeXFromTopology")
 
+		.def(
+			"getWaveDescriptionsFromKeyFile"
+			, &waveDescription_getWaveDescriptionsFromKeyFile
+		)
+		.staticmethod("getWaveDescriptionsFromKeyFile")
+
 		.def("Write", &waveDescription_Write, bp::arg("name")=0)
 
 		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
 
+	bp::register_ptr_to_python<rpwa::waveDescriptionPtr>();
 }

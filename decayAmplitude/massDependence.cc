@@ -86,6 +86,17 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 	return amp;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+steplikeMassDependence::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+	double mIsob = parent->lzVec().M();
+	if (mIsob>_mMin and mIsob<_mMax){
+		return complex<double>(1.,0.);
+	};
+	return complex<double>(0.,0.);
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>

@@ -37,16 +37,21 @@
 #define WAVEDESCRIPTION_H
 
 
+
 #include <string>
 #include <vector>
 #include <map>
-
 #include "TObject.h"
+
+#ifndef __CINT__
+#include <boost/shared_ptr.hpp>
+#endif//__CINT__
 
 #ifndef __CINT__
 #include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
-#endif
+#endif//__CINT__
+
 
 
 namespace libconfig {
@@ -58,6 +63,12 @@ namespace libconfig {
 namespace rpwa {
 
 	class amplitudeMetadata;
+
+
+#ifndef __CINT__
+	class waveDescription;
+	typedef boost::shared_ptr<waveDescription> waveDescriptionPtr;
+#endif
 
 	class waveDescription : public TObject {
 
@@ -108,7 +119,9 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-
+#ifndef __CINT__
+		static std::vector<waveDescriptionPtr> getWaveDescriptionsFromKeyFile(std::string keyFile); ///< expands a keyFile and returns all waveDescriptions
+#endif//__CINT__
 	private:
 
 		bool readKeyFileIntoLocalCopy(const std::string& keyFileName);  ///< reads key file content into _keyFileLocalCopy string
@@ -126,6 +139,7 @@ namespace rpwa {
 		                              particlePtr&              particle,
 		                              const bool                requirePartInTable = true);  ///< creates particle using name in particle key
 		static massDependencePtr mapMassDependenceType(const std::string& massDepType);  ///< creates mass dependence functor of specified type
+		static massDependencePtr getMassDependenceType(const libconfig::Setting* messDepKey); ///< gets the mass dependence type
 		static bool constructDecayVertex(const libconfig::Setting&          parentKey,
 		                                 const particlePtr&                 parentParticle,
 		                                 std::vector<isobarDecayVertexPtr>& decayVertices,
