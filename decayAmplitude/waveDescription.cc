@@ -1220,3 +1220,19 @@ waveDescription::writeKeyFile(FILE&                  outStream,
 	}
 	return true;
 }
+
+
+std::vector<waveDescriptionPtr>
+waveDescription::getWaveDescriptionsFromKeyFile(std::string keyFile){
+	::keyFileExpander expander;
+	expander.parseKeyFile(keyFile);
+	expander.expand();
+	const std::vector<configPtr>* configs = expander.expandedConfigs();
+	std::vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c = 0; c < configs->size(); ++c){
+		std::string confString = getConfigString((*configs)[c]);
+		waveDescriptions.push_back(waveDescriptionPtr(new waveDescription()));
+		waveDescriptions[c]->parseKeyFileContent(confString);
+	};
+	return waveDescriptions;
+};
