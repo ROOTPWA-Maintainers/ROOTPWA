@@ -347,19 +347,21 @@ class fileManager:
 
 		for keyFileID in range(len(keyFileNames)):
 			keyFileName = keyFileNames[keyFileID]
-			waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
-			if not waveDescription:
+			waveDescriptions = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
+			if len(waveDescriptions) == 0:
 				pyRootPwa.utils.printErr("could not read wave description from key file '" + keyFileName + "'.")
 				return []
-			(success, amplitude) = waveDescription.constructAmplitude()
-			if not success:
-				pyRootPwa.utils.printErr("could not construct decay topology for key file '" + keyFileName + "'.")
-				return []
-			waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
-			if waveName in keyFiles:
-				pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName] + "' and '" + keyFileName + "'.")
-				return []
-			keyFiles[waveName] = keyFileName
+			for waveDescriptionID in xrange(len(waveDescriptions)):
+				waveDescription = waveDescriptions[waveDescriptionID]
+				(success, amplitude) = waveDescription.constructAmplitude()
+				if not success:
+					pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
+					return []
+				waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
+				if waveName in keyFiles:
+					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName][0] + "' (index " + str(keyFiles[waveName][1]) + ") and '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
+					return []
+				keyFiles[waveName] = (keyFileName, waveDescriptionID)
 		return keyFiles
 
 
@@ -431,7 +433,8 @@ class fileManager:
 	def convertKeyFilesToPaths(keyFilesList):
 		allKeyFiles = []
 		for keyFile in keyFilesList:
-			allKeyFiles.append(keyFilesList[keyFile])
+			if not keyFilesList[keyFile][0] in allKeyFiles:
+				allKeyFiles.append(keyFilesList[keyFile][0])
 		return allKeyFiles
 
 

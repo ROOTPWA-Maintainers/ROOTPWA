@@ -101,22 +101,25 @@ main()
 		           << *part2 << endl;
 		printInfo << "comparing particles: " << (*part1 == *part2) << endl;
 
-		// const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		const string       keyFileName = "testWaveDescription.key";
-		waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
-		isobarAmplitudePtr amp;
-		if (waveDesc and waveDesc->constructAmplitude(amp)) {
-			isobarDecayTopologyPtr isoTopo = amp->decayTopology();
-			decayTopologyPtr       topo    = static_pointer_cast<decayTopology>(isoTopo);
-			// printInfo << *isoTopo << endl;
-			// printInfo << *topo    << endl;
-			isobarDecayVertexPtr isoVert = isoTopo->XIsobarDecayVertex();
-			interactionVertexPtr vert    = topo->XDecayVertex();
-			printInfo << "isobar decay vertex: " << *isoVert << endl;
-			printInfo << "interaction vertex:  " << *vert    << endl;
+		// const string               keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		const string               keyFileName = "testWaveDescription.key";
+		vector<waveDescriptionPtr> waveDescs   = waveDescription::parseKeyFile(keyFileName);
+		for (std::vector<waveDescriptionPtr>::iterator waveDescIt=waveDescs.begin(); waveDescIt!=waveDescs.end(); ++waveDescIt) {
+			waveDescriptionPtr waveDesc = *waveDescIt;
+			isobarAmplitudePtr amp;
+			if (waveDesc->constructAmplitude(amp)) {
+				isobarDecayTopologyPtr isoTopo = amp->decayTopology();
+				decayTopologyPtr       topo    = static_pointer_cast<decayTopology>(isoTopo);
+				// printInfo << *isoTopo << endl;
+				// printInfo << *topo    << endl;
+				isobarDecayVertexPtr isoVert = isoTopo->XIsobarDecayVertex();
+				interactionVertexPtr vert    = topo->XDecayVertex();
+				printInfo << "isobar decay vertex: " << *isoVert << endl;
+				printInfo << "interaction vertex:  " << *vert    << endl;
 
-			printInfo << "comparing isobar decay vertices: " << (*isoVert == *isoVert) << endl;
-			printInfo << "comparing interaction vertices: " << (*vert == *vert) << endl;
+				printInfo << "comparing isobar decay vertices: " << (*isoVert == *isoVert) << endl;
+				printInfo << "comparing interaction vertices: " << (*vert == *vert) << endl;
+			}
 		}
 
 	}

@@ -148,13 +148,13 @@ if __name__ == "__main__":
 		sys.exit(1)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
-	waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(arguments.templateFile)
+	waveDescs = pyRootPwa.core.waveDescription.parseKeyFile(arguments.templateFile)
 
-	if not waveDesc:
+	if len(waveDescs) != 1:
 		pyRootPwa.utils.printErr("could not read wave description. Aborting...")
 		sys.exit(5)
 
-	(result, topology) = waveDesc.constructDecayTopology(True)
+	(result, topology) = waveDescs[0].constructDecayTopology(True)
 
 	if not result:
 		pyRootPwa.utils.printErr("could not construct topology. Aborting...")

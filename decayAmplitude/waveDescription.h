@@ -91,8 +91,8 @@ namespace rpwa {
 		std::ostream& printKeyFileContent(std::ostream& out) const;  ///< prints key file content string from local copy with line numbers
 
 		// construction of wave description objects
-		static waveDescriptionPtr parseKeyFile       (const std::string& keyFileName   );  ///< parses key file
-		static waveDescriptionPtr parseKeyFileContent(const std::string& keyFileContent);  ///< parses key file content
+		static std::vector<waveDescriptionPtr> parseKeyFile       (const std::string& keyFileName   );  ///< parses key file
+		static std::vector<waveDescriptionPtr> parseKeyFileContent(const std::string& keyFileContent);  ///< parses key file content
 
 		// construction of decay topology and amplitude objects
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,

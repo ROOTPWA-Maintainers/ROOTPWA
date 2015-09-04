@@ -712,7 +712,9 @@ print
 
 def waveDescTestReadKeyFile():
 	path = os.path.dirname(os.path.abspath(__file__))
-	waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(path + "/test.key")
+	waveDescs = pyRootPwa.core.waveDescription.parseKeyFile(path + "/test.key")
+	assert(len(waveDescs) == 1)
+	waveDesc = waveDescs[0]
 	assert(waveDesc)
 	assert(waveDesc.keyFileParsed())
 	return waveDesc

@@ -184,9 +184,15 @@ main(int    argc,
 		printErr << "no key file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
-	waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
+	vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(keyFileName);
+	if (waveDescs.size() != 1) {
+		printErr << "problems reading wave description from key file '" << keyFileName << "'. "
+		         << "Aborting..." << endl;
+		exit(1);
+	}
+	waveDescriptionPtr waveDesc = waveDescs[0];
 	isobarAmplitudePtr amplitude;
-	if (not waveDesc or not waveDesc->constructAmplitude(amplitude)) {
+	if (not waveDesc->constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "Aborting..." << endl;
 		exit(1);

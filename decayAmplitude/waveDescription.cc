@@ -289,41 +289,62 @@ waveDescription::operator =(const waveDescription& waveDesc)
 }
 
 
-waveDescriptionPtr
+vector<waveDescriptionPtr>
 waveDescription::parseKeyFile(const string& keyFileName)
 {
-	waveDescriptionPtr waveDesc(new waveDescription);
-	waveDesc->_key = new Config();
-	if (not parseLibConfigFile(keyFileName, *waveDesc->_key, _debug)) {
+	configPtr config(new Config);
+	if (not parseLibConfigFile(keyFileName, *config, _debug)) {
 		printWarn << "problems reading key file '" << keyFileName << "'. "
 		          << "cannot construct wave description." << endl;
-		return waveDescriptionPtr();
+		return vector<waveDescriptionPtr>();
 	}
-	if (not waveDesc->readKeyFileIntoLocalCopy(keyFileName))
-		return waveDescriptionPtr();
-	waveDesc->_keyFileParsed = true;
-	return waveDesc;
+	const vector<configPtr> configs = expand(config);
+
+	vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c=0; c<configs.size(); ++c) {
+		const string confString = getConfigString(*configs[c]);
+
+		waveDescriptionPtr waveDesc(new waveDescription);
+		waveDesc->_keyFileLocalCopy = confString;
+		const bool result = waveDesc->parseKeyFileLocalCopy();
+		if (!result) // error message already printed in parseKeyFileLocalCopy
+			return vector<waveDescriptionPtr>();
+
+		waveDescriptions.push_back(waveDesc);
+	}
+	return waveDescriptions;
 }
 
 
-waveDescriptionPtr
+vector<waveDescriptionPtr>
 waveDescription::parseKeyFileContent(const string& keyFileContent)
 {
 	if (keyFileContent == "") {
 		printWarn << "empty key file content string. cannot construct wave description." << endl;
-		return waveDescriptionPtr();
+		return vector<waveDescriptionPtr>();
 	}
-	waveDescriptionPtr waveDesc(new waveDescription);
-	waveDesc->_keyFileLocalCopy = keyFileContent;
-	waveDesc->_key = new Config();
-	if (not parseLibConfigString(waveDesc->_keyFileLocalCopy, *waveDesc->_key, _debug)) {
+	configPtr config(new Config);
+	if (not parseLibConfigString(keyFileContent, *config, _debug)) {
 		printWarn << "problems reading key file content string:" << endl;
-		waveDesc->printKeyFileContent(cout);
+		printKeyFileContent(cout, keyFileContent);
 		cout << "    cannot construct wave description." << endl;
-		return waveDescriptionPtr();
+		return vector<waveDescriptionPtr>();
 	}
-	waveDesc->_keyFileParsed = true;
-	return waveDesc;
+	const vector<configPtr> configs = expand(config);
+
+	vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c=0; c<configs.size(); ++c) {
+		const string confString = getConfigString(*configs[c]);
+
+		waveDescriptionPtr waveDesc(new waveDescription);
+		waveDesc->_keyFileLocalCopy = confString;
+		const bool result = waveDesc->parseKeyFileLocalCopy();
+		if (!result) // error message already printed in parseKeyFileLocalCopy
+			return vector<waveDescriptionPtr>();
+
+		waveDescriptions.push_back(waveDesc);
+	}
+	return waveDescriptions;
 }
 
 
