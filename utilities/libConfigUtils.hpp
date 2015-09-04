@@ -36,6 +36,8 @@
 
 
 #include<map>
+#include <boost/shared_ptr.hpp>
+
 #include "libconfig.h++"
 
 #include "reportingUtils.hpp"

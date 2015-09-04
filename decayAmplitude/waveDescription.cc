@@ -65,105 +65,33 @@ namespace {
 	const std::string expandTypeName = "type";
 	const std::string expandNameName = "name";
 
-	std::vector<double>
-	getBinning(const libconfig::Setting* setting)
+
+	std::string 
+	getExpandType(const libconfig::Setting* setting) 
 	{
-		const libconfig::Setting* binningSetting = rpwa::findLibConfigList(*setting, binBorders, true);
-		if (not binningSetting){
-			printErr<<"no binning give to expand freed-isobar"<<std::endl;
-			return std::vector<double>();
+		std::string expandType;
+		if (not setting->lookupValue(expandTypeName, expandType)) {
+			printErr<<"no expand type given"<<std::endl;
+			return "";
 		};
-		int length = binningSetting->getLength();
-		std::vector<double> binningVector(length);
-		for (int bin=0;bin<length;++bin){
-			binningVector[bin] = (*binningSetting)[bin];
+		return expandType;
+	};
+
+
+	std::string
+	getExpandName(const libconfig::Setting* setting)
+	{
+		std::string binningName;
+		if (not setting->lookupValue(expandNameName, binningName)) {
+			printErr<<"no binning name given"<<std::endl;
+			return "";
 		};
-		return binningVector;
-	};
-
-	class keyFileExpander {
-	public:
-		keyFileExpander();
-
-		void parseKeyFile(const std::string &keyFileName);
-		void parseKeyFileContent(const std::string &keyFileContent);
-
-		bool expand();
-		const std::vector<configPtr>* expandedConfigs();
-
-
-	private:
-		configPtr _config; ///< initial config 
-		std::vector<configPtr> _expandedConfigs;///< (partially) expanded configs
-		bool _fullyExpanded; ///< indicates, if keyFile is filly expanded
-
-		static libconfig::Setting* findExpand(const libconfig::Setting &setting);
-		static std::string getExpandType(const libconfig::Setting* setting);
-		static std::string getExpandName(const libconfig::Setting* setting);
-		static std::vector<configPtr> expand(const configPtr cfg);
-	};
-
-	keyFileExpander::keyFileExpander()
-		: _config(new libconfig::Config),
-		  _expandedConfigs(),
-		  _fullyExpanded(false)
-	{ };
-
-	bool keyFileExpander::expand()
-	{
-		std::vector<configPtr> configs;
-		configs.push_back(_config);
-		std::vector<configPtr> expanded;
-		while ( true ) {
-			std::vector<configPtr> nextConfigs;
-			bool changed = false;
-			for (size_t c = 0;c < configs.size();++c){
-				expanded = expand(configs[c]);
-				if (expanded.size() == 0){
-					nextConfigs.push_back(configs[c]);
-				} else {
-					for (size_t e = 0; e < expanded.size(); ++e){
-						changed = true;
-						nextConfigs.push_back(expanded[e]);
-					};
-				};
-			};
-			configs = nextConfigs;
-			if (not changed){
-				break;
-			};
-		};
-		_expandedConfigs = configs;
-		_fullyExpanded = true;
-		return true;
-	};
-
-
-	void 
-	keyFileExpander::parseKeyFile(const std::string &keyFileName)
-	{
-		_config->readFile(keyFileName.c_str());
-	};
-
-
-	void 
-	keyFileExpander::parseKeyFileContent(const std::string &keyFileContent)
-	{
-		_config->readString(keyFileContent);
-	};
-
-	const std::vector<rpwa::configPtr>* 
-	keyFileExpander::expandedConfigs()
-	{
-		if ( not _fullyExpanded ) {
-			return 0;
-		};
-		return &_expandedConfigs;
+		return binningName;
 	};
 
 
 	libconfig::Setting* 
-	keyFileExpander::findExpand(const libconfig::Setting &setting)
+	findExpand(const libconfig::Setting &setting)
 	{
 		libconfig::Setting* expand  = rpwa::findLibConfigGroup(setting, expandName, false);
 		if (expand) {
@@ -184,32 +112,25 @@ namespace {
 	};
 
 
-	std::string 
-	keyFileExpander::getExpandType(const libconfig::Setting* setting) 
+
+	std::vector<double>
+	getBinning(const libconfig::Setting* setting)
 	{
-		std::string expandType;
-		if (not setting->lookupValue(expandTypeName, expandType)) {
-			printErr<<"no expand type given"<<std::endl;
-			return "";
+		const libconfig::Setting* binningSetting = rpwa::findLibConfigList(*setting, binBorders, true);
+		if (not binningSetting){
+			printErr<<"no binning give to expand freed-isobar"<<std::endl;
+			return std::vector<double>();
 		};
-		return expandType;
-	};
-
-
-	std::string
-	keyFileExpander::getExpandName(const libconfig::Setting* setting)
-	{
-		std::string binningName;
-		if (not setting->lookupValue(expandNameName, binningName)) {
-			printErr<<"no binning name given"<<std::endl;
-			return "";
+		int length = binningSetting->getLength();
+		std::vector<double> binningVector(length);
+		for (int bin=0;bin<length;++bin){
+			binningVector[bin] = (*binningSetting)[bin];
 		};
-		return binningName;
+		return binningVector;
 	};
-
 
 	std::vector<rpwa::configPtr> 
-	keyFileExpander::expand(const rpwa::configPtr cfg)
+	expand(const rpwa::configPtr cfg)
 	{
 		libconfig::Setting &set = cfg->getRoot();
 		libconfig::Setting* expand = findExpand(set);	
@@ -236,6 +157,37 @@ namespace {
 		};
 		return std::vector<rpwa::configPtr>();
 	};
+
+
+	std::vector<configPtr> expandKeyfiles(const std::string &keyFileName){
+
+		configPtr conf(new libconfig::Config);
+		conf->readFile(keyFileName.c_str());
+		std::vector<configPtr> configs;
+		configs.push_back(conf);
+		std::vector<configPtr> expanded;
+		while ( true ) {
+			std::vector<configPtr> nextConfigs;
+			bool changed = false;
+			for (size_t c = 0;c < configs.size();++c){
+				expanded = expand(configs[c]);
+				if (expanded.size() == 0){
+					nextConfigs.push_back(configs[c]);
+				} else {
+					for (size_t e = 0; e < expanded.size(); ++e){
+						changed = true;
+						nextConfigs.push_back(expanded[e]);
+					};
+				};
+			};
+			configs = nextConfigs;
+			if (not changed){
+				break;
+			};
+		};
+		return configs;
+	};
+
 
 };
 
@@ -825,6 +777,40 @@ waveDescription::constructParticle(const Setting& particleKey,
 	}
 }
 
+massDependencePtr
+waveDescription::getMassDependenceType(const Setting* massDepKey) {
+		std::string massDepType = "";
+		massDependencePtr massDep;
+		if (massDepKey) {
+			massDepKey->lookupValue("name", massDepType);
+		};
+		if (massDepType != "freed-isobar") {
+			massDep = mapMassDependenceType(massDepType);
+		} else {
+			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+			if (not bounds) {
+				printErr << "no bound given for freed-isobar wave" << std::endl;
+				throw;
+			};
+			size_t length = bounds->getLength();
+			if (not length == 2){
+				printErr << "bound do not have the required length (2 != " << length << " )" << std::endl;
+				throw;
+			};
+			double mMin = (*bounds)[0];
+			double mMax = (*bounds)[1];
+			if ( mMin > mMax) {
+				printErr << "bound are not ordered: mMin(" << mMin << ") > " << "mMax(" << mMax << ")" << std::endl;
+				throw;
+			};
+			massDep = createSteplikeMassDependence(mMin,mMax);
+		};
+		if (not massDep){
+			printErr << "no massDependence gotten" << std::endl;
+			throw;
+		};
+		return massDep;
+};
 
 massDependencePtr
 waveDescription::mapMassDependenceType(const string& massDepType)
@@ -912,34 +898,10 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 		          << "using zero." << endl;
 
-	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
-		string         massDepType = "";
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
-		if (massDepKey)
-			massDepKey->lookupValue("name", massDepType);
-		if (massDepType != "freed-isobar") {
-			massDep = mapMassDependenceType(massDepType);
-		} else {
-			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
-			if (not bounds) {
-				printErr << "no bound given for freed-isobar wave" << std::endl;
-				throw;
-			};
-			size_t length = bounds->getLength();
-			if (not length == 2){
-				printErr << "bound do not have the required length (2 != " << length << " )" << std::endl;
-				throw;
-			};
-			double mMin = (*bounds)[0];
-			double mMax = (*bounds)[1];
-			if ( mMin > mMax) {
-				printErr << "bound are not ordered: mMin(" << mMin << ") > " << "mMax(" << mMax << ")" << std::endl;
-				throw;
-			};
-			massDep = createSteplikeMassDependence(mMin,mMax);
-		};
+		massDep = getMassDependenceType(massDepKey);
 	}
 
 	// if there is 1 final state particle and 1 isobar put them in the
@@ -1244,13 +1206,10 @@ waveDescription::writeKeyFile(FILE&                  outStream,
 
 std::vector<waveDescriptionPtr>
 waveDescription::getWaveDescriptionsFromKeyFile(std::string keyFile){
-	::keyFileExpander expander;
-	expander.parseKeyFile(keyFile);
-	expander.expand();
-	const std::vector<configPtr>* configs = expander.expandedConfigs();
+	const std::vector<configPtr> configs = ::expandKeyfiles(keyFile);
 	std::vector<waveDescriptionPtr> waveDescriptions;
-	for (size_t c = 0; c < configs->size(); ++c){
-		std::string confString = getConfigString((*configs)[c]);
+	for (size_t c = 0; c < configs.size(); ++c){
+		std::string confString = getConfigString(configs[c]);
 		waveDescriptions.push_back(waveDescriptionPtr(new waveDescription()));
 		waveDescriptions[c]->parseKeyFileContent(confString);
 	};
