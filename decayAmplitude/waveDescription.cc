@@ -919,7 +919,27 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
 		if (massDepKey)
 			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependenceType(massDepType);
+		if (massDepType != "freed-isobar") {
+			massDep = mapMassDependenceType(massDepType);
+		} else {
+			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+			if (not bounds) {
+				printErr << "no bound given for freed-isobar wave" << std::endl;
+				throw;
+			};
+			size_t length = bounds->getLength();
+			if (not length == 2){
+				printErr << "bound do not have the required length (2 != " << length << " )" << std::endl;
+				throw;
+			};
+			double mMin = (*bounds)[0];
+			double mMax = (*bounds)[1];
+			if ( mMin > mMax) {
+				printErr << "bound are not ordered: mMin(" << mMin << ") > " << "mMax(" << mMax << ")" << std::endl;
+				throw;
+			};
+			massDep = createSteplikeMassDependence(mMin,mMax);
+		};
 	}
 
 	// if there is 1 final state particle and 1 isobar put them in the

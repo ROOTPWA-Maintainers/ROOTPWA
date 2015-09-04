@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <complex>
+#include <sstream>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -152,6 +153,38 @@ namespace rpwa {
 		return massDep;
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
+	/// Steplike function used for de-isobarring
+	class steplikeMassDependence : public massDependence{
+
+	public:
+
+		steplikeMassDependence()                         : massDependence(), _mMin(0.  ), _mMax(std::numeric_limits<double>::infinity()) { }
+		steplikeMassDependence(double mMin, double mMax) : massDependence(), _mMin(mMin), _mMax(mMax ){ }
+		virtual ~steplikeMassDependence() { }
+ 
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { 
+			std::stringstream stream;
+			stream << "steplikeMassDependence_"<<_mMin<<"_"<<_mMax;
+			return stream.str(); 
+		};  ///< returns label used in graph visualization, reporting, and key file
+
+	private:
+		double _mMin; ///< Lower limit of the isobar mass bin
+		double _mMax; ///< Upper limit of the isobar mass bin
+
+	};
+
+	typedef boost::shared_ptr<steplikeMassDependence> steplikeMassDependencePtr;
+
+	inline
+	steplikeMassDependencePtr
+	createSteplikeMassDependence(double mMin, double mMax){
+		steplikeMassDependencePtr massDep(new steplikeMassDependence(mMin,mMax));
+		return massDep;
+	};
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
