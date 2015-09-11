@@ -64,6 +64,9 @@ if __name__ == "__main__":
 				sys.exit(1)
 			printInfo("calculating integral matrix from " + str(len(ampFileList)) + " amplitude files:")
 			integral = pyRootPwa.calcIntegrals(ampFileList, args.nEvents, args.weightsFileName)
+			if not integral:
+				printErr("integral calculation failed. Aborting...")
+				sys.exit(1)
 
 			outputFile.cd()
 			nmbBytes = integral.Write(pyRootPwa.core.ampIntegralMatrix.integralObjectName)

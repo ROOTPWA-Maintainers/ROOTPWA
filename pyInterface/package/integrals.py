@@ -14,6 +14,7 @@ def calcIntegrals(ampFileList, maxNmbEvents=0, weightFileName=""):
 		ampFiles.append(ampFile)
 		if not ampFile:
 			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
+			return None
 		ampMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
 		ampMetas.append(ampMeta)
 		if not ampMeta:
