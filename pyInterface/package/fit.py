@@ -39,7 +39,23 @@ def readWaveList(waveListFileName, keyFiles):
 	return waveDescThres
 
 
-def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False):
+def pwaFit(ampFileList,
+           normIntegralFileName,
+           accIntegralFileName,
+           binningMap,
+           waveListFileName,
+           keyFiles,
+           seed=0,
+           cauchy=False,
+           cauchyWidth=0.5,
+           startValFileName="",
+           accEventsOverride=0,
+           checkHessian=False,
+           saveSpace=False,
+           rank=1,
+           verbose=False
+          ):
+
 	waveDescThres = readWaveList(waveListFileName, keyFiles)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2. # YOU CAN DO BETTER
 
@@ -105,7 +121,23 @@ def pwaFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, w
 	return fitResult
 
 
-def pwaNloptFit(ampFileList, normIntegralFileName, accIntegralFileName, binningMap, waveListFileName, keyFiles, seed=0, cauchy=False, cauchyWidth=0.5, startValFileName="", accEventsOverride=0, checkHessian=False, saveSpace=False, rank=1, verbose=False):
+def pwaNloptFit(ampFileList,
+                normIntegralFileName,
+                accIntegralFileName,
+                binningMap,
+                waveListFileName,
+                keyFiles,
+                seed=0,
+                cauchy=False,
+                cauchyWidth=0.5,
+                startValFileName="",
+                accEventsOverride=0,
+                checkHessian=False,
+                saveSpace=False,
+                rank=1,
+                verbose=False
+               ):
+
 	waveDescThres = readWaveList(waveListFileName, keyFiles)
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2. # YOU CAN DO BETTER
 

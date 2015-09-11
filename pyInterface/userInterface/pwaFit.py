@@ -70,7 +70,7 @@ if __name__ == "__main__":
 	                             saveSpace = args.saveSpace,
 	                             rank = args.rank,
 	                             verbose = args.verbose
-	                             )
+	                            )
 	if (not fitResult):
 		printErr("didn't get a valid fit result. Aborting...")
 		sys.exit(1)
