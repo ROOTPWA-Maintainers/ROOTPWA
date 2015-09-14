@@ -5,24 +5,14 @@
 using namespace rpwa;
 
 
-randomNumberGenerator* randomNumberGenerator::_randomNumberGenerator = NULL;
+randomNumberGenerator* randomNumberGenerator::_randomNumberGenerator = 0;
 
 
 randomNumberGenerator* randomNumberGenerator::instance() {
-	if(_randomNumberGenerator == NULL) {
+	if(not _randomNumberGenerator) {
 		_randomNumberGenerator = new randomNumberGenerator();
 	}
 	return _randomNumberGenerator;
-}
-
-
-unsigned int randomNumberGenerator::seed() {
-	return _rndGen.GetSeed();
-}
-
-
-void randomNumberGenerator::setSeed(unsigned int seed) {
-	_rndGen.SetSeed(seed);
 }
 
 

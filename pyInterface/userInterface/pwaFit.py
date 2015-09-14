@@ -17,6 +17,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
+	parser.add_argument("-N", type=int, metavar="#", dest="nAttempts", default=1, help="number of fit attempts to perform")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
@@ -54,33 +55,35 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
-	fitResult = pyRootPwa.pwaFit(
-	                             ampFileList = ampFileList,
-	                             normIntegralFileName = psIntegralPath,
-	                             accIntegralFileName = accIntegralPath,
-	                             binningMap = binningMap,
-	                             waveListFileName = args.waveListFileName,
-	                             keyFiles = fileManager.getKeyFiles(),
-	                             seed = args.seed,
-	                             cauchy = args.cauchyPriors,
-	                             cauchyWidth = args.cauchyPriorWidth,
-	                             startValFileName = args.startValFileName,
-	                             accEventsOverride = args.accEventsOverride,
-	                             checkHessian = args.checkHessian,
-	                             saveSpace = args.saveSpace,
-	                             rank = args.rank,
-	                             verbose = args.verbose
+	fitResults = pyRootPwa.pwaFit(
+	                              ampFileList = ampFileList,
+	                              normIntegralFileName = psIntegralPath,
+	                              accIntegralFileName = accIntegralPath,
+	                              binningMap = binningMap,
+	                              waveListFileName = args.waveListFileName,
+	                              keyFiles = fileManager.getKeyFiles(),
+	                              seed = args.seed,
+	                              cauchy = args.cauchyPriors,
+	                              cauchyWidth = args.cauchyPriorWidth,
+	                              startValFileName = args.startValFileName,
+	                              accEventsOverride = args.accEventsOverride,
+	                              checkHessian = args.checkHessian,
+	                              saveSpace = args.saveSpace,
+	                              rank = args.rank,
+	                              verbose = args.verbose,
+	                              attempts = args.nAttempts
 	                             )
-	if (not fitResult):
-		printErr("didn't get a valid fit result. Aborting...")
+	if (not fitResults):
+		printErr("didn't get a valid fit result(s). Aborting...")
 		sys.exit(1)
-	printInfo("writing result to '" + args.outputFileName + "'")
+	printInfo("writing result(s) to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "UPDATE")
 	if ((not outputFile) or outputFile.IsZombie()):
 		printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
+	fitResult = pyRootPwa.core.fitResult()
 	tree = outputFile.Get(valTreeName)
 	if (not tree):
 		printInfo("file '" + args.outputFileName + "' is empty. "
@@ -91,7 +94,9 @@ if __name__ == "__main__":
 			sys.exit(1)
 	else:
 		fitResult.setBranchAddress(tree, valBranchName)
-	tree.Fill()
+	for result in fitResults:
+		fitResult.fill(result)
+		tree.Fill()
 	nmbBytes = tree.Write()
 	outputFile.Close()
 	if nmbBytes == 0:

@@ -85,9 +85,9 @@ fitResult::fitResult(const fitResult& result)
 	  _normIntegral          (result.normIntegralMatrix()),
 	  _acceptedNormIntegral  (result.acceptedNormIntegralMatrix()),
 	  _normIntIndexMap       (result.normIntIndexMap()),
-	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
-	  _converged             (result._converged),
-	  _hasHessian            (result._hasHessian)
+	  _phaseSpaceIntegral    (result.phaseSpaceIntegralVector()),
+	  _converged             (result.converged()),
+	  _hasHessian            (result.hasHessian())
 { }
 
 
@@ -888,6 +888,33 @@ fitResult::fill
 			}
 		}
 	}
+}
+
+
+void
+fitResult::fill(const fitResult& result)
+{
+	_nmbEvents              = result.nmbEvents();
+	_normNmbEvents          = result.normNmbEvents();
+	_massBinCenter          = result.massBinCenter();
+	_logLikelihood          = result.logLikelihood();
+	_rank                   = result.rank();
+	_prodAmps               = result.prodAmps();
+	_prodAmpNames           = result.prodAmpNames();
+	_waveNames              = result.waveNames();
+	_covMatrixValid         = result.covMatrixValid();
+
+	const TMatrixT<double>& fitParCovMatrix = result.fitParCovMatrix();
+	_fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
+	_fitParCovMatrix        = fitParCovMatrix;
+
+	_fitParCovMatrixIndices = result.fitParCovIndices();
+	_normIntegral           = result.normIntegralMatrix();
+	_acceptedNormIntegral   = result.acceptedNormIntegralMatrix();
+	_normIntIndexMap        = result.normIntIndexMap();
+	_phaseSpaceIntegral     = result.phaseSpaceIntegralVector();
+	_converged              = result.converged();
+	_hasHessian             = result.hasHessian();
 }
 
 

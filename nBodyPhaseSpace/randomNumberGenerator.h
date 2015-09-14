@@ -12,8 +12,8 @@ namespace rpwa {
 		static randomNumberGenerator* instance();
 		TRandom3* getGenerator() { return &_rndGen; }
 
-		unsigned int seed();
-		void         setSeed(unsigned int seed);
+		unsigned int seed()                     { return _rndGen.GetSeed();     }
+		void         setSeed(unsigned int seed) {        _rndGen.SetSeed(seed); }
 
 		double rndm(); // uniform ]0, 1]
 
