@@ -140,7 +140,8 @@ namespace rpwa {
 		static bool setXQuantumNumbersKeys(libconfig::Setting& XQnKey,
 		                                   const particle&     X);  ///< puts X quantum numbers into keys
 		static bool setMassDependence(libconfig::Setting&   isobarMassDepKey,
-		                              const massDependence& massDep);  ///< puts mass dependence into key
+		                              const massDependence& massDep,
+		                              const bool            XDecay = false);  ///< puts mass dependence into key
 		static bool setXDecayKeys(libconfig::Setting&        parentDecayKey,
 		                          const isobarDecayTopology& topo,
 		                          const isobarDecayVertex&   vert);  ///< recursive function that puts X decay chain into keys
