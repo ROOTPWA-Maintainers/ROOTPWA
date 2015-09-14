@@ -867,13 +867,14 @@ waveDescription::setXQuantumNumbersKeys(Setting&        XQnKey,
 
 bool
 waveDescription::setMassDependence(Setting&              isobarDecayKey,
-                                   const massDependence& massDep)
+                                   const massDependence& massDep,
+                                   const bool            XDecay)
 {
 	const string massDepName = massDep.name();
-	if (massDepName == "flat")
+	if (XDecay && massDepName == "flat")
 		// default for X
 		return true;
-	else if (massDepName == "relativisticBreitWigner")
+	else if ((not XDecay) && massDepName == "relativisticBreitWigner")
 		// default mass dependence for isobars
 		return true;
 	else {
@@ -894,7 +895,7 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
 {
 	if (_debug)
 		printDebug << "setting keys for decay " << vert << endl;
-	setMassDependence(parentDecayKey, *vert.massDependence());
+	setMassDependence(parentDecayKey, *vert.massDependence(), *topo.XIsobarDecayVertex() == vert);
 	vector<particlePtr> fsParticles;
 	vector<particlePtr> isobars;
 	for (unsigned int i = 0; i < vert.nmbOutParticles(); ++i) {

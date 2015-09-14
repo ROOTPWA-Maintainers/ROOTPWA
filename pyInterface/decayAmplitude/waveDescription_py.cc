@@ -36,7 +36,7 @@ namespace {
 
 	bool waveDescription_writeKeyFile(const std::string& keyFileName,
 	                                  const bp::object   pyTopoOrAmp,
-							          const bool         writeProdVert = true)
+	                                  const bool         writeProdVert)
 	{
 		bp::extract<rpwa::isobarDecayTopology> get_iDT(pyTopoOrAmp);
 		if(get_iDT.check()) {
@@ -79,7 +79,7 @@ void rpwa::py::exportWaveDescription() {
 			, &waveDescription_writeKeyFile
 			, (bp::arg("keyFileName"),
 			   bp::arg("topoOrAmp"),
-			   bp::arg("writeProdVert")=false)
+			   bp::arg("writeProdVert")=true)
 		)
 		.staticmethod("writeKeyFile")
 
