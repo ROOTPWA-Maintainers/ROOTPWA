@@ -121,6 +121,7 @@ namespace rpwa {
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+		void fill(const fitResult& result);
 
 		double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
 		double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum

@@ -13,21 +13,21 @@ namespace bp = boost::python;
 
 namespace {
 
-	void fitResult_fill(rpwa::fitResult& self,
-	                    const unsigned int                        nmbEvents,
-	                    const unsigned int                        normNmbEvents,
-	                    const double                              massBinCenter,
-	                    const double                              logLikelihood,
-	                    const int                                 rank,
-	                    const bp::object&                         pyProdAmps,
-	                    const bp::object&                         pyProdAmpNames,
-	                    PyObject*                                 pyFitParCovMatrix,
-	                    const bp::object&                         pyFitParCovMatrixIndices,
-	                    const rpwa::complexMatrix&                normIntegral,
-	                    const rpwa::complexMatrix&                acceptedNormIntegral,
-	                    const bp::object&                         pyPhaseSpaceIntegral,
-	                    const bool                                converged,
-	                    const bool                                hasHessian)
+	void fitResult_fill_1(rpwa::fitResult& self,
+	                      const unsigned int                        nmbEvents,
+	                      const unsigned int                        normNmbEvents,
+	                      const double                              massBinCenter,
+	                      const double                              logLikelihood,
+	                      const int                                 rank,
+	                      const bp::object&                         pyProdAmps,
+	                      const bp::object&                         pyProdAmpNames,
+	                      PyObject*                                 pyFitParCovMatrix,
+	                      const bp::object&                         pyFitParCovMatrixIndices,
+	                      const rpwa::complexMatrix&                normIntegral,
+	                      const rpwa::complexMatrix&                acceptedNormIntegral,
+	                      const bp::object&                         pyPhaseSpaceIntegral,
+	                      const bool                                converged,
+	                      const bool                                hasHessian)
 	{
 		std::vector<std::complex<double> > prodAmps;
 		if(not rpwa::py::convertBPObjectToVector<std::complex<double> >(pyProdAmps, prodAmps)) {
@@ -62,6 +62,10 @@ namespace {
 		}
 		self.fill(nmbEvents, normNmbEvents, massBinCenter, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
 		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
+	}
+
+	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result) {
+		self.fill(result);
 	}
 
 	bp::list fitResult_evidenceComponents(const rpwa::fitResult& self) {
@@ -286,7 +290,8 @@ void rpwa::py::exportFitResult() {
 		.def(bp::init<const rpwa::fitResult&>())
 		.def(bp::self_ns::str(bp::self))
 		.def("reset", &rpwa::fitResult::reset)
-		.def("fill", &fitResult_fill)
+		.def("fill", &fitResult_fill_1)
+		.def("fill", &fitResult_fill_2)
 		.def("massBinCenter", &rpwa::fitResult::massBinCenter)
 		.def("logLikelihood", &rpwa::fitResult::logLikelihood)
 		.def("evidence", &rpwa::fitResult::evidence)
