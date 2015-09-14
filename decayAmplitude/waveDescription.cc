@@ -658,7 +658,7 @@ massDependencePtr
 waveDescription::mapMassDependenceType(const string& massDepType)
 {
 	massDependencePtr massDep;
-	if (   (massDepType == "BreitWigner")
+	if (   (massDepType == "relativisticBreitWigner")
 	    or (massDepType == ""))  // default mass dependence
 		massDep = createRelativisticBreitWigner();
 	else if (massDepType == "constWidthBreitWigner")
@@ -870,7 +870,7 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
                                    const massDependence& massDep)
 {
 	const string massDepName = massDep.name();
-	if (massDepName == "flatMassDependence")
+	if (massDepName == "flat")
 		// default for X
 		return true;
 	else if (massDepName == "relativisticBreitWigner")

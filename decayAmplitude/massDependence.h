@@ -108,7 +108,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "flat"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	};
 
@@ -136,7 +136,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-		virtual std::string name() const { return "flatRangeMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "flatRange"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	};
 
@@ -255,7 +255,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "f0980BreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "f_0(980)"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	};
 
@@ -284,7 +284,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "f0980Flatte"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "f_0(980)Flatte"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	private:
 		double _piChargedMass;
@@ -430,7 +430,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "rhoPrimeMassDep"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const { return "rhoPrime"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	};
 

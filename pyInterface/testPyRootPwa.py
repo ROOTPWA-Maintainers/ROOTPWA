@@ -470,7 +470,7 @@ do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
 
 def isobarDecVtxTestSetMD():
 	isobDecVtx.setMassDependence(pyRootPwa.core.flatMassDependence())
-	assert(isobDecVtx.massDependence().name() == "flatMassDependence")
+	assert(isobDecVtx.massDependence().name() == "flat")
 do_test(isobarDecVtxTestSetMD, "Testing isobarDecayVertex.setMassDependence()")
 
 def isobarDecVtxTestCC():
@@ -512,7 +512,7 @@ do_test(flatMassDepTestDebug, "Testing massDependence debug flag.")
 def flatMassDepTestAmp(): assert(flatMassDep.amp(isobDecVtx) == (1+0j))
 do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()")
 
-def flatMassDepTestName(): assert(flatMassDep.name() == "flatMassDependence")
+def flatMassDepTestName(): assert(flatMassDep.name() == "flat")
 do_test(flatMassDepTestName, "Testing flatMassDependence.name()")
 
 def relBreitWigTestConst(): return pyRootPwa.core.relativisticBreitWigner()
@@ -560,7 +560,7 @@ def f0980BreitWigTestAmp():
 	assert(math.isnan(amp.real) and math.isnan(amp.imag))
 do_test(f0980BreitWigTestAmp, "Testing f0980BreitWigner.amp()")
 
-def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f0980BreitWigner")
+def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f_0(980)")
 do_test(f0980BreitWigTestName, "Testing f0980BreitWigner.name()")
 
 def SAuMoPenMTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonM()
@@ -612,7 +612,7 @@ def rhoPrimeTestAmp():
 	assert(zero.imag < 1e-5)
 do_test(rhoPrimeTestAmp, "Testing rhoPrimeMassDep.amp()")
 
-def rhoPrimeTestName(): assert(rhoPrime.name() == "rhoPrimeMassDep")
+def rhoPrimeTestName(): assert(rhoPrime.name() == "rhoPrime")
 do_test(rhoPrimeTestName, "Testing rhoPrimeMassDep.name()")
 
 print
