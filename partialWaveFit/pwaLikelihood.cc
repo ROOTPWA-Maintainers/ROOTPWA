@@ -96,7 +96,7 @@ namespace {
 		}
 		const double x2 = x*x;
 		const double gamma2 = gamma*gamma;
-		return (6. * x2 * gamma2 - 2 * gamma2*gamma2) / ((gamma2 + x2) * (gamma2 + x2) + (gamma2 + x2));
+		return gamma2 / ((gamma2 + x2) * (gamma2 + x2)) * (-2. + 8. * x2 / (gamma2 + x2));
 	}
 
 }
