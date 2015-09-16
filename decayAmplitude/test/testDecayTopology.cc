@@ -327,9 +327,9 @@ main()
 	if (1) {
 		const string keyFileName = "testFindIsobarBoseSymVertices.key";
 
-		waveDescription    waveDesc;
+		waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
 		isobarAmplitudePtr amp;
-		if (not waveDesc.parseKeyFile(keyFileName) or not waveDesc.constructAmplitude(amp)) {
+		if (not waveDesc or not waveDesc->constructAmplitude(amp)) {
 			printErr << "problems constructing amplitude. exiting." << endl;
 			exit(1);
 		}

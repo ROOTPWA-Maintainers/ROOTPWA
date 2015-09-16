@@ -144,8 +144,10 @@ if __name__ == "__main__":
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
 			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		prodAmps.append(fitResult.prodAmp(waveIndex))
-		waveDescription = pyRootPwa.core.waveDescription()
-		waveDescription.parseKeyFile(keyfile)
+		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyfile)
+		if not waveDescription:
+			printErr('could not read wave description from keyfile "' + keyfile + '".')
+			sys.exit(1)
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
 			printErr('could not construct amplitude for keyfile "' + keyfile + '".')

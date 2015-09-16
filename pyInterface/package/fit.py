@@ -26,8 +26,7 @@ def readWaveList(waveListFileName, keyFiles):
 					threshold = 0
 				else:
 					threshold = lineArray[1]
-				waveDesc = pyRootPwa.core.waveDescription()
-				waveDesc.parseKeyFile(keyFiles[waveName])
+				waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(keyFiles[waveName])
 				waveDescThres.append( (waveName, waveDesc, float(threshold)) )
 			else:
 				pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "

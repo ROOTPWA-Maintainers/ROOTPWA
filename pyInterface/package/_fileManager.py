@@ -347,8 +347,10 @@ class fileManager:
 
 		for keyFileID in range(len(keyFileNames)):
 			keyFileName = keyFileNames[keyFileID]
-			waveDescription = pyRootPwa.core.waveDescription()
-			waveDescription.parseKeyFile(keyFileName)
+			waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
+			if not waveDescription:
+				pyRootPwa.utils.printErr("could not read wave description from key file '" + keyFileName + "'.")
+				return []
 			(success, amplitude) = waveDescription.constructAmplitude()
 			if not success:
 				pyRootPwa.utils.printErr("could not construct decay topology for key file '" + keyFileName + "'.")

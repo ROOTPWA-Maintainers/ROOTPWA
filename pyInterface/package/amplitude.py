@@ -44,8 +44,11 @@ def calcAmplitude(inputFileName,
 		printWarn("key file '" + keyFileName + "' not found.")
 		outputFile.Close()
 		return False
-	waveDescription = pyRootPwa.core.waveDescription()
-	waveDescription.parseKeyFile(keyFileName)
+	waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
+	if not waveDescription:
+		printWarn("could not read wave description from keyfile '" + keyFileName + "'.")
+		outputFile.Close()
+		return False
 	(result, amplitude) = waveDescription.constructAmplitude()
 	if not result:
 		printWarn("could not construct amplitude from keyfile '" + keyFileName + "'.")

@@ -92,10 +92,9 @@ bool testAmplitude(TTree*              inTree,
                    const string&       decayKinMomentaLeafName = "decayKinMomenta")
 {
 	// parse key file and create decay topology and amplitude instances
-	waveDescription        waveDesc;
+	waveDescriptionPtr     waveDesc = waveDescription::parseKeyFile(keyFileName);
 	isobarDecayTopologyPtr decayTopo;
-	if (   not waveDesc.parseKeyFile(keyFileName)
-	    or not waveDesc.constructDecayTopology(decayTopo)) {
+	if (not waveDesc or not waveDesc->constructDecayTopology(decayTopo)) {
 		printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		          << "skipping." << endl;
 		keyFileErrors.push_back("parsing errors");
@@ -127,7 +126,7 @@ bool testAmplitude(TTree*              inTree,
 
 	// construct amplitude
 	isobarAmplitudePtr amplitude;
-	waveDesc.constructAmplitude(amplitude, decayTopo);
+	waveDesc->constructAmplitude(amplitude, decayTopo);
 
 
 	// read data from tree and calculate amplitudes

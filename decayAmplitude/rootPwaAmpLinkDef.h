@@ -44,10 +44,10 @@
 // whenever waveDescription is read from file
 // see http://root.cern.ch/root/html/io/DataModelEvolution.html
 // and http://indico.cern.ch/contributionDisplay.py?contribId=210&sessionId=59&confId=35523
-#pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
+#pragma read sourceClass="rpwa::waveDescription" version="[1-]" \
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
-	code="{ newObj->parseKeyFileContent(newObj->keyFileContent()); }"
+	code="{ newObj->parseKeyFileLocalCopy(); }"
 
 
 #pragma link C++ class std::vector<std::complex<double> >+;

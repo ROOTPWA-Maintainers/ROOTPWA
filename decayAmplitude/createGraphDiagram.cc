@@ -145,10 +145,9 @@ main(int    argc,
 	for (unsigned int i = 0; i < keyFileNames.size(); ++i) {
 
 		// parse key file and create decay topology
-		waveDescription        waveDesc;
+		waveDescriptionPtr     waveDesc = waveDescription::parseKeyFile(keyFileNames[i]);
 		isobarDecayTopologyPtr decayTopo;
-		if (   not waveDesc.parseKeyFile(keyFileNames[i])
-		    or not waveDesc.constructDecayTopology(decayTopo)) {
+		if (not waveDesc or not waveDesc->constructDecayTopology(decayTopo)) {
 			printErr << "problems constructing decay topology from key file '" << keyFileNames[i] << "'. "
 			         << "skipping." << endl;
 			continue;

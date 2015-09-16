@@ -710,15 +710,13 @@ print
 #
 # ---------------------------------------------------------
 
-def waveDescTestConst():
-	return pyRootPwa.core.waveDescription()
-waveDesc = do_test(waveDescTestConst, "Testing waveDescription constuctor")
-
 def waveDescTestReadKeyFile():
 	path = os.path.dirname(os.path.abspath(__file__))
-	assert(waveDesc.parseKeyFile(path + "/test.key"))
+	waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(path + "/test.key")
+	assert(waveDesc)
 	assert(waveDesc.keyFileParsed())
-do_test(waveDescTestReadKeyFile, "Testing waveDescription.parseKeyFile()")
+	return waveDesc
+waveDesc = do_test(waveDescTestReadKeyFile, "Testing waveDescription.parseKeyFile()")
 
 def waveDescTestConstuctTopo():
 	print('\n')

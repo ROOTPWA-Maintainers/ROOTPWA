@@ -103,9 +103,9 @@ main()
 
 		// const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
 		const string       keyFileName = "testWaveDescription.key";
-		waveDescription    waveDesc;
+		waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
 		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+		if (waveDesc and waveDesc->constructAmplitude(amp)) {
 			isobarDecayTopologyPtr isoTopo = amp->decayTopology();
 			decayTopologyPtr       topo    = static_pointer_cast<decayTopology>(isoTopo);
 			// printInfo << *isoTopo << endl;

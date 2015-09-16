@@ -299,9 +299,9 @@ main()
 		//isobarAmplitude::setDebug(true);
 		//isobarHelicityAmplitude::setDebug(true);
 
-		waveDescription    waveDesc;
+		waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(newKeyFileName);
 		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(newKeyFileName) and waveDesc.constructAmplitude(amp)) {
+		if (waveDesc and waveDesc->constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			printInfo << *amp;
 			amp->init();

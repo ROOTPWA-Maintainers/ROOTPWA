@@ -41,12 +41,16 @@
 #include <vector>
 #include <map>
 
+#ifndef __CINT__
+#include <boost/shared_ptr.hpp>
+#endif  // __CINT__
+
 #include "TObject.h"
 
 #ifndef __CINT__
 #include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
-#endif
+#endif  // __CINT__
 
 
 namespace libconfig {
@@ -59,6 +63,13 @@ namespace rpwa {
 
 	class amplitudeMetadata;
 
+
+#ifndef __CINT__
+	class waveDescription;
+	typedef boost::shared_ptr<waveDescription> waveDescriptionPtr;
+#endif  // __CINT__
+
+
 	class waveDescription : public TObject {
 
 	public:
@@ -68,15 +79,10 @@ namespace rpwa {
 		waveDescription(const amplitudeMetadata* amplitudeMeta);
 		virtual ~waveDescription();
 
-		void clear();
-
 		waveDescription& operator =(const waveDescription& waveDesc);
 
 #ifndef __CINT__
 
-		// construction of decay topology and amplitude objects
-		bool parseKeyFile       (const std::string& keyFileName   );    ///< parses key file
-		bool parseKeyFileContent(const std::string& keyFileContent);    ///< parses key file
 		bool keyFileParsed() const { return _keyFileParsed; }  ///< returns whether key file was successfully parsed
 
 		std::string   keyFileContent() const { return _keyFileLocalCopy; }  ///< returns content of key file
@@ -84,6 +90,11 @@ namespace rpwa {
 		static std::ostream& printKeyFileContent(std::ostream& out, const std::string& keyFileContent);  ///< prints key file content string with line numbers
 		std::ostream& printKeyFileContent(std::ostream& out) const;  ///< prints key file content string from local copy with line numbers
 
+		// construction of wave description objects
+		static waveDescriptionPtr parseKeyFile       (const std::string& keyFileName   );  ///< parses key file
+		static waveDescriptionPtr parseKeyFileContent(const std::string& keyFileContent);  ///< parses key file content
+
+		// construction of decay topology and amplitude objects
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              fromTemplate = false) const;  ///< construct isobar decay topology from keyfile
 		bool constructAmplitude(isobarAmplitudePtr& amplitude) const;  ///< construct isobar decay amplitude from keyfile
@@ -113,7 +124,21 @@ namespace rpwa {
 
 	private:
 
+		void clear();
+
 		bool readKeyFileIntoLocalCopy(const std::string& keyFileName);  ///< reads key file content into _keyFileLocalCopy string
+
+
+#if defined(__CINT__) || defined(__CLING__) || defined(G__DICTIONARY)
+		// ROOT needs this function to be callable from the streamer
+	public:
+#else
+	private:
+#endif
+		bool parseKeyFileLocalCopy();  ///< parse key file content from _keyFileLocalCopy string
+
+
+	private:
 
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,

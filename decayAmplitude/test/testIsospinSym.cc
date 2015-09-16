@@ -63,9 +63,9 @@ calcNewAmps(const string&             rootInFileName,
             vector<complex<double> >& amps,
             const long int            maxNmbEvents)
 {
-	waveDescription    waveDesc;
+	waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
 	isobarAmplitudePtr amp;
-	if (not waveDesc.parseKeyFile(keyFileName) or not waveDesc.constructAmplitude(amp)) {
+	if (not waveDesc or not waveDesc->constructAmplitude(amp)) {
 		printErr << "problems constructing amplitude. returning 0." << endl;
 		return 0;
 	}

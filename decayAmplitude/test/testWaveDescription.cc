@@ -54,20 +54,20 @@ main()
 
 	if (1) {
 		const string       keyFileName = "testWaveDescription.key";
-		waveDescription    waveDesc;
+		waveDescriptionPtr waveDesc    = waveDescription::parseKeyFile(keyFileName);
 		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+		if (waveDesc and waveDesc->constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			printInfo << *amp;
 			topo->writeGraphViz("testWaveDescription.dot");
 			gSystem->Exec("dot -Tps -o testWaveDescription.ps testWaveDescription.dot");
-			waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
+			waveDesc->writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
 			//waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *(amp->decayTopology()));  // test key file creation
 			// test file I/O of waveDescription
-			const string waveName = waveDesc.waveNameFromTopology(*topo);
+			const string waveName = waveDesc->waveNameFromTopology(*topo);
 			{
 				TFile* outFile = TFile::Open("testWaveDescription.root", "RECREATE");
-				waveDesc.Write(waveName.c_str());
+				waveDesc->Write(waveName.c_str());
 				outFile->Close();
 			}
 			amp.reset();

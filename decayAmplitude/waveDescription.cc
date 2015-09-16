@@ -122,7 +122,7 @@ waveDescription::waveDescription(const waveDescription& waveDesc)
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 	if (waveDesc._keyFileParsed)
-		parseKeyFileContent(_keyFileLocalCopy);
+		parseKeyFileLocalCopy();
 }
 
 waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
@@ -132,7 +132,7 @@ waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
 	  _keyFileLocalCopy(amplitudeMeta->keyfileContent())
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-	parseKeyFileContent(amplitudeMeta->keyfileContent());
+	parseKeyFileLocalCopy();
 }
 
 
@@ -163,47 +163,64 @@ waveDescription::operator =(const waveDescription& waveDesc)
 		_keyFileParsed    = false;
 		_keyFileLocalCopy = waveDesc._keyFileLocalCopy;
 		if (waveDesc._keyFileParsed)
-			parseKeyFileContent(_keyFileLocalCopy);
+			parseKeyFileLocalCopy();
 	}
 	return *this;
 }
 
 
-bool
+waveDescriptionPtr
 waveDescription::parseKeyFile(const string& keyFileName)
 {
-	_keyFileParsed = false;
-	if (not _key)
-		_key = new Config();
-	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
+	waveDescriptionPtr waveDesc(new waveDescription);
+	waveDesc->_key = new Config();
+	if (not parseLibConfigFile(keyFileName, *waveDesc->_key, _debug)) {
 		printWarn << "problems reading key file '" << keyFileName << "'. "
-		          << "cannot construct decay topology." << endl;
-		delete _key;
-		_key = 0;
-		return false;
+		          << "cannot construct wave description." << endl;
+		return waveDescriptionPtr();
 	}
-	if (not readKeyFileIntoLocalCopy(keyFileName))
-		return false;
-	_keyFileParsed = true;
-	return true;
+	if (not waveDesc->readKeyFileIntoLocalCopy(keyFileName))
+		return waveDescriptionPtr();
+	waveDesc->_keyFileParsed = true;
+	return waveDesc;
+}
+
+
+waveDescriptionPtr
+waveDescription::parseKeyFileContent(const string& keyFileContent)
+{
+	if (keyFileContent == "") {
+		printWarn << "empty key file content string. cannot construct wave description." << endl;
+		return waveDescriptionPtr();
+	}
+	waveDescriptionPtr waveDesc(new waveDescription);
+	waveDesc->_keyFileLocalCopy = keyFileContent;
+	waveDesc->_key = new Config();
+	if (not parseLibConfigString(waveDesc->_keyFileLocalCopy, *waveDesc->_key, _debug)) {
+		printWarn << "problems reading key file content string:" << endl;
+		waveDesc->printKeyFileContent(cout);
+		cout << "    cannot construct wave description." << endl;
+		return waveDescriptionPtr();
+	}
+	waveDesc->_keyFileParsed = true;
+	return waveDesc;
 }
 
 
 bool
-waveDescription::parseKeyFileContent(const string& keyFileContent)
+waveDescription::parseKeyFileLocalCopy()
 {
 	_keyFileParsed = false;
-	if (keyFileContent == "") {
-		printWarn << "empty key file content string. cannot construct decay topology." << endl;
+	if (_keyFileLocalCopy == "") {
+		printWarn << "empty key file content string. cannot construct wave description." << endl;
 		return false;
 	}
-	_keyFileLocalCopy = keyFileContent;
 	if (not _key)
 		_key = new Config();
 	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
 		printWarn << "problems reading key file content string:" << endl;
 		printKeyFileContent(cout);
-		cout << "    cannot construct decay topology." << endl;
+		cout << "    cannot construct wave description." << endl;
 		delete _key;
 		_key = 0;
 		return false;

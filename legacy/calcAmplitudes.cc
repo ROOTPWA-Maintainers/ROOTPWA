@@ -184,10 +184,9 @@ main(int    argc,
 		printErr << "no key file specified. Aborting..." << endl;
 		usage(progName, 1);
 	}
-	waveDescription    waveDesc;
+	waveDescriptionPtr waveDesc = waveDescription::parseKeyFile(keyFileName);
 	isobarAmplitudePtr amplitude;
-	if (   not waveDesc.parseKeyFile(keyFileName)
-	    or not waveDesc.constructAmplitude(amplitude)) {
+	if (not waveDesc or not waveDesc->constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "Aborting..." << endl;
 		exit(1);
@@ -206,7 +205,7 @@ main(int    argc,
 
 	// create output file for amplitudes
 	if (ampFileName == "") {
-		ampFileName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology())) + ".root";
+		ampFileName = waveDescription::waveNameFromTopology(*(amplitude->decayTopology())) + ".root";
 	}
 	printInfo << "creating amplitude file '" << ampFileName << "'" << endl;
 	TFile* ampFile = TFile::Open(ampFileName.c_str(), "RECREATE");
@@ -219,7 +218,7 @@ main(int    argc,
 	const string waveName = fileNameNoExtFromPath(ampFileName);
 
 	amplitudeFileWriter ampFileWriter;
-	ampFileWriter.initialize(*ampFile, eventMetas, waveDesc.keyFileContent(), waveName);
+	ampFileWriter.initialize(*ampFile, eventMetas, waveDesc->keyFileContent(), waveName);
 	ampFileWriter.addAmplitudes(ampValues);
 	ampFileWriter.finalize();
 
