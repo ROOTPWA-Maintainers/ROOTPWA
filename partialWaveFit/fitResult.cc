@@ -516,7 +516,7 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 ///
 /// int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
 double
-fitResult::intensity(const char* waveNamePattern) const
+fitResult::intensity(const string& waveNamePattern) const
 {
 	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
 	if(waveIndices.size() == 1) {
@@ -566,7 +566,7 @@ fitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 ///
 /// error calculation is performed on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
 double
-fitResult::intensityErr(const char* waveNamePattern) const
+fitResult::intensityErr(const string& waveNamePattern) const
 {
 	// get amplitudes that correspond to wave name pattern
 	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);

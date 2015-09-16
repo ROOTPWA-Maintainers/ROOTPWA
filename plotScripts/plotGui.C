@@ -188,7 +188,7 @@ plotGuiMainFrame::plotGuiMainFrame(const TGWindow *p,
 				}
 				for(unsigned int treeIndex = 0; treeIndex < _fitResults.size(); ++treeIndex) {
 					for(unsigned int bin_i = 0; bin_i < _fitResults[treeIndex].size(); ++bin_i) {
-						const double intensity = _fitResults[treeIndex][bin_i]->intensity(waveName.c_str());
+						const double intensity = _fitResults[treeIndex][bin_i]->intensity(escapeRegExpSpecialChar(waveName));
 						if(intensity >= intensityThreshold) {
 							whitelistedWaves.insert(waveName);
 							break;
@@ -464,16 +464,16 @@ void plotGuiMainFrame::PrintSelected(const int sel1, const int sel2)
 			complex<double> rho(0., 0.);
 			TMatrixT<double> rhoCov(2, 2);
 			if(wi1 >= 0) {
-				intensity1 = result->intensity(w1.c_str());
-				intensityErr1 = result->intensityErr(w1.c_str());
+				intensity1 = result->intensity(escapeRegExpSpecialChar(w1));
+				intensityErr1 = result->intensityErr(escapeRegExpSpecialChar(w1));
 			}
 			if(wi2 >= 0) {
-				intensity2 = result->intensity(w2.c_str());
-				intensityErr2 = result->intensityErr(w2.c_str());
+				intensity2 = result->intensity(escapeRegExpSpecialChar(w2));
+				intensityErr2 = result->intensityErr(escapeRegExpSpecialChar(w2));
 			}
 			if(wi1 >= 0 and wi2 >= 0) {
-				ph = result->phase(w1.c_str(), w2.c_str());
-				phErr = result->phaseErr(w1.c_str(), w2.c_str());
+				ph = result->phase(w1, w2);
+				phErr = result->phaseErr(w1, w2);
 				rho = result->spinDensityMatrixElem(wi1, wi2);
 				rhoCov = result->spinDensityMatrixElemCov(wi1, wi2);
 			}

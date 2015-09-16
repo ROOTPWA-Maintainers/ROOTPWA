@@ -286,6 +286,9 @@ namespace {
 
 void rpwa::py::exportFitResult() {
 
+	bp::def("escapeRegExpSpecialChar", &rpwa::escapeRegExpSpecialChar);
+	bp::def("unescapeRegExpSpecialChar", &rpwa::unescapeRegExpSpecialChar);
+
 	bp::class_<rpwa::fitResult>("fitResult")
 		.def(bp::init<const rpwa::fitResult&>())
 		.def(bp::self_ns::str(bp::self))

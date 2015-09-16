@@ -62,30 +62,36 @@
 namespace rpwa {
 
 	inline
-	TString
+	std::string
 	escapeRegExpSpecialChar(const std::string& s)  ///< escapes all special characters used in regular expressions
 	{
 		TString escapedS(s);
-		const char specialChars[] = {'^', '$', '.', '[', ']', '^', '*', '+', '?'};
+		const char specialChars[] = {'^', '$', '.', '[', ']', '*', '+', '?'};
 		for (unsigned int i = 0; i < sizeof(specialChars) / sizeof(specialChars[0]); ++i) {
-			TString escapedChar = TString("\\").Append(specialChars[i]);
+			const TString escapedChar = TString("\\").Append(specialChars[i]);
 			escapedS.ReplaceAll(specialChars[i], escapedChar);
+			const TString escapedTwiceChar = TString("\\").Append(escapedChar);
+			while(escapedS.Contains(escapedTwiceChar)) {
+				escapedS.ReplaceAll(escapedTwiceChar, escapedChar);
+			}
 		}
-		return escapedS;
+		return std::string(escapedS.Data());
 	}
 
 
 	inline
-	TString
-	unescapeRegExpSpecialChar(const std::string& s)  ///< escapes all special characters used in regular expressions
+	std::string
+	unescapeRegExpSpecialChar(const std::string& s)  ///< unescapes all special characters used in regular expressions
 	{
 		TString escapedS(s);
-		const char specialChars[] = {'^', '$', '.', '[', ']', '^', '*', '+', '?'};
+		const char specialChars[] = {'^', '$', '.', '[', ']', '*', '+', '?'};
 		for (unsigned int i = 0; i < sizeof(specialChars) / sizeof(specialChars[0]); ++i) {
-			TString escapedChar = TString("\\").Append(specialChars[i]);
-			escapedS.ReplaceAll(escapedChar, specialChars[i]);
+			const TString escapedChar = TString("\\").Append(specialChars[i]);
+			while(escapedS.Contains(escapedChar)) {
+				escapedS.ReplaceAll(escapedChar, specialChars[i]);
+			}
 		}
-		return escapedS;
+		return std::string(escapedS.Data());
 	}
 
 
@@ -186,8 +192,8 @@ namespace rpwa {
 		double intensity   (const unsigned int waveIndex)         const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
 		/// returns error of intensity of single wave at index
 		double intensityErr(const unsigned int waveIndex)         const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }
-		double intensity   (const char*        waveNamePattern) const;                                ///< returns intensity of sum of waves matching name pattern
-		double intensityErr(const char*        waveNamePattern) const;                                ///< returns error of intensity of sum of waves matching name pattern
+		double intensity   (const std::string& waveNamePattern) const;                                ///< returns intensity of sum of waves matching name pattern
+		double intensityErr(const std::string& waveNamePattern) const;                                ///< returns error of intensity of sum of waves matching name pattern
 		double intensity   ()                                   const { return intensity   (".*"); }  ///< returns total intensity
 		double intensityErr()                                   const { return intensityErr(".*"); }  ///< returns error of total intensity
 
@@ -493,14 +499,9 @@ namespace rpwa {
 	std::vector<unsigned int>
 	fitResult::waveIndicesMatchingPattern(const std::string& waveNamePattern) const
 	{
-		// escape special characters:
-		TString Pattern(waveNamePattern);
-		Pattern.ReplaceAll("+","\\+");
-		Pattern.ReplaceAll("\\\\+","\\+");
-		TPRegexp Regexp(Pattern);
+		TPRegexp Regexp(waveNamePattern);
 		std::vector<unsigned int> waveIndices;
 		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
-			//std::cout<<waveName(waveIndex)<<std::endl;
 			if (waveName(waveIndex).Contains(Regexp))
 				waveIndices.push_back(waveIndex);
 		}
@@ -513,11 +514,7 @@ namespace rpwa {
 	std::vector<unsigned int>
 	fitResult::prodAmpIndicesMatchingPattern(const std::string& ampNamePattern) const
 	{
-		// escape special characters:
-		TString Pattern(ampNamePattern);
-		Pattern.ReplaceAll("+","\\+");
-		Pattern.ReplaceAll("\\\\+","\\+");
-		TPRegexp Regexp(Pattern);
+		TPRegexp Regexp(ampNamePattern);
 		std::vector<unsigned int> prodAmpIndices;
 		for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
 			if (prodAmpName(prodAmpIndex).Contains(Regexp))
