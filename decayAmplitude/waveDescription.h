@@ -80,8 +80,10 @@ namespace rpwa {
 		bool keyFileParsed() const { return _keyFileParsed; }  ///< returns whether key file was successfully parsed
 
 		std::string   keyFileContent() const { return _keyFileLocalCopy; }  ///< returns content of key file
-		std::ostream& printKeyFileContent(std::ostream&      out,
-		                                  const std::string& keyFileContent = "") const;  ///< prints key file content string with line numbers
+
+		static std::ostream& printKeyFileContent(std::ostream& out, const std::string& keyFileContent);  ///< prints key file content string with line numbers
+		std::ostream& printKeyFileContent(std::ostream& out) const;  ///< prints key file content string from local copy with line numbers
+
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              fromTemplate = false) const;  ///< construct isobar decay topology from keyfile
 		bool constructAmplitude(isobarAmplitudePtr& amplitude) const;  ///< construct isobar decay amplitude from keyfile

@@ -197,41 +197,42 @@ waveDescription::parseKeyFileContent(const string& keyFileContent)
 		printWarn << "empty key file content string. cannot construct decay topology." << endl;
 		return false;
 	}
+	_keyFileLocalCopy = keyFileContent;
 	if (not _key)
 		_key = new Config();
-	if (not parseLibConfigString(keyFileContent, *_key, _debug)) {
+	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
 		printWarn << "problems reading key file content string:" << endl;
-		printKeyFileContent(cout, keyFileContent);
+		printKeyFileContent(cout);
 		cout << "    cannot construct decay topology." << endl;
 		delete _key;
 		_key = 0;
 		return false;
 	}
-	_keyFileLocalCopy = keyFileContent;
-	_keyFileParsed    = true;
+	_keyFileParsed = true;
 	return true;
 }
 
 
-ostream&
-waveDescription::printKeyFileContent(ostream&      out,
-                                     const string& keyFileContent) const
+std::ostream&
+waveDescription::printKeyFileContent(std::ostream& out, const std::string& keyFileContent)
 {
-	string k;
-	if (keyFileContent != "")
-		k = keyFileContent;
-	else
-		k = _keyFileLocalCopy;
-	if (k != "") {
+	if (keyFileContent != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
 		char_separator<char> separator("\n");
-		tokenizer            keyFileLines(k, separator);
+		tokenizer            keyFileLines(keyFileContent, separator);
 		unsigned int         lineNumber = 0;
 		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
 			out << setw(5) << ++lineNumber << "  " << *i << endl;
 	} else
 		out << "key file content string is empty" << endl;
 	return out;
+}
+
+
+ostream&
+waveDescription::printKeyFileContent(ostream& out) const
+{
+	return printKeyFileContent(out, _keyFileLocalCopy);
 }
 
 
