@@ -231,6 +231,11 @@ namespace {
 		return retval;
 	}
 
+	bp::list fitResult_phaseSpaceIntegralVector(const rpwa::fitResult& self)
+	{
+		return bp::list(self.phaseSpaceIntegralVector());
+	}
+
 	bp::dict fitResult_normIntIndexMap(const rpwa::fitResult self)
 	{
 		bp::dict retval;
@@ -356,6 +361,7 @@ void rpwa::py::exportFitResult() {
 			, &rpwa::fitResult::acceptedNormIntegralMatrix
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
+		.def("phaseSpaceIntegralVector", &fitResult_phaseSpaceIntegralVector)
 		.def("normIntIndexMap", &fitResult_normIntIndexMap)
 		.def("printProdAmpNames", &fitResult_printProdAmpNames)
 		.def("printWaveNames", &fitResult_printWaveNames)
