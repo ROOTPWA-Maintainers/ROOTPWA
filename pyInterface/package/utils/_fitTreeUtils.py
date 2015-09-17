@@ -20,5 +20,9 @@ def getFitResultDict(fitResultTree):
 	return retval
 
 def getBestFitResults(fitResultTree):
-	return { massBin: res[0] for massBin, res in getFitResultDict(fitResultTree).iteritems() }
+	retval = { }
+	fitResultDict = getFitResultDict(fitResultTree)
+	for massBinCenter, results in fitResultDict.iteritems():
+		retval[massBinCenter] = results[0]
+	return retval
 
