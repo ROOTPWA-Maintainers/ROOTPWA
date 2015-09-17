@@ -79,6 +79,4 @@ make_shared_library(
 	)
 
 
-make_executable(convertEventFile convertEventFile.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(printMetadata    printMetadata.cc    ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 make_executable(mergeDatafiles   mergeDatafiles.cc   ${THIS_LIB} ${RPWA_UTILITIES_LIB})
