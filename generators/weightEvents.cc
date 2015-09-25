@@ -338,8 +338,8 @@ main(int    argc,
 			}
 
 			for (unsigned int iProdAmp = 0; iProdAmp < result->nmbProdAmps(); ++iProdAmp) {
-				const string prodAmpName = result->prodAmpName(iProdAmp).Data();
-				const string waveName    = result->waveNameForProdAmp(iProdAmp).Data();
+				const string prodAmpName = result->prodAmpName(iProdAmp);
+				const string waveName    = result->waveNameForProdAmp(iProdAmp);
 				const int iWave          = result->waveIndex(waveName);
 
 				// extract rank and reflectivity from wave name
