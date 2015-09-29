@@ -189,7 +189,7 @@ fitResult::evidenceComponents() const
 	set<unsigned int> thrWaveIndices;
 	for (set<unsigned int>::const_iterator it = thrProdAmpIndices.begin();
 	     it != thrProdAmpIndices.end(); ++it) {
-		const int index = waveIndex(waveNameForProdAmp(*it).Data());
+		const int index = waveIndex(waveNameForProdAmp(*it));
 		// printDebug << " wave[" << index << "] = '" << waveNameForProdAmp(*it).Data()
 		//            << "' has zero production amp[" << *it << "] = '"
 		//            << _prodAmpNames[*it] << "'" << endl;
@@ -543,8 +543,8 @@ fitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
                                   const unsigned int prodAmpIndexB) const
 {
 	// treat special case of flat wave which has no normalization integral
-	const bool flatWaveA = prodAmpName(prodAmpIndexA).Contains("flat");
-	const bool flatWaveB = prodAmpName(prodAmpIndexB).Contains("flat");
+	const bool flatWaveA = (prodAmpName(prodAmpIndexA).find("flat") != string::npos);
+	const bool flatWaveB = (prodAmpName(prodAmpIndexB).find("flat") != string::npos);
 	if (flatWaveA and flatWaveB)
 		return 1;
 	else if (flatWaveA or flatWaveB)
@@ -820,7 +820,7 @@ fitResult::fill
 		// look for index of first occurence
 		unsigned int j;
 		for (j = 0; j < _prodAmpNames.size(); ++j)
-			if (prodAmpName(j).Contains(waveName))
+			if (prodAmpName(j).find(waveName) != string::npos)
 				break;
 		_normIntIndexMap[i] = j;
 	}

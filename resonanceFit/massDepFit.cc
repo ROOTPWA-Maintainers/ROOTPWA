@@ -1606,7 +1606,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 		// amplitudes of the fit result
 		std::vector<unsigned int> prodAmpIndicesForCov(_nrWaves);
 		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
-			const std::string waveName = fit->waveNameForProdAmp(idxProdAmp).Data();
+			const std::string waveName = fit->waveNameForProdAmp(idxProdAmp);
 
 			const std::map<std::string, size_t>::const_iterator it = _waveIndices.find(waveName);
 			// most of the waves are ignored

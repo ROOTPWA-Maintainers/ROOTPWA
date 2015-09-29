@@ -141,11 +141,11 @@ namespace rpwa {
 		unsigned int nmbWaves     () const { return _waveNames.size();  }  ///< returns number of waves in fit
 		unsigned int nmbProdAmps  () const { return _prodAmps.size();   }  ///< returns number of production amplitudes
 
-		TString waveName      (const unsigned int waveIndex)    const { return _waveNames[waveIndex];                                }  ///< returns name of wave at index
-		TString waveNameEsc   (const unsigned int waveIndex)    const { return escapeRegExpSpecialChar(_waveNames[waveIndex]);       }  ///< returns name of wave at index with special regexp characters escaped
-		TString prodAmpName   (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex];                          }  ///< returns name of production amplitude at index
-		TString prodAmpNameEsc(const unsigned int prodAmpIndex) const { return escapeRegExpSpecialChar(_prodAmpNames[prodAmpIndex]); }  ///< returns name of production amplitude at index with special regexp characters escaped
-		inline TString waveNameForProdAmp(const unsigned int prodAmpIndex) const;
+		std::string waveName      (const unsigned int waveIndex)    const { return _waveNames[waveIndex];                                }  ///< returns name of wave at index
+		std::string waveNameEsc   (const unsigned int waveIndex)    const { return escapeRegExpSpecialChar(_waveNames[waveIndex]);       }  ///< returns name of wave at index with special regexp characters escaped
+		std::string prodAmpName   (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex];                          }  ///< returns name of production amplitude at index
+		std::string prodAmpNameEsc(const unsigned int prodAmpIndex) const { return escapeRegExpSpecialChar(_prodAmpNames[prodAmpIndex]); }  ///< returns name of production amplitude at index with special regexp characters escaped
+		inline std::string waveNameForProdAmp(const unsigned int prodAmpIndex) const;
 		inline int     rankOfProdAmp     (const unsigned int prodAmpIndex) const;
 
 
@@ -268,7 +268,7 @@ namespace rpwa {
 		inline std::vector<unsigned int> waveIndicesMatchingPattern   (const std::string& waveNamePattern   ) const;
 		inline std::vector<unsigned int> prodAmpIndicesMatchingPattern(const std::string& prodAmpNamePattern) const;
 		std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIndex         ) const
-		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIndex).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
+		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIndex)); }  ///< returns indices of production amplitudes that belong to wave at index
 		inline std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairsForWaves
 		(const unsigned int waveIndexA,
 		 const unsigned int waveIndexB) const;
@@ -502,7 +502,7 @@ namespace rpwa {
 		TPRegexp Regexp(waveNamePattern);
 		std::vector<unsigned int> waveIndices;
 		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
-			if (waveName(waveIndex).Contains(Regexp))
+			if (TString(waveName(waveIndex)).Contains(Regexp))
 				waveIndices.push_back(waveIndex);
 		}
 		return waveIndices;
@@ -517,7 +517,7 @@ namespace rpwa {
 		TPRegexp Regexp(ampNamePattern);
 		std::vector<unsigned int> prodAmpIndices;
 		for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
-			if (prodAmpName(prodAmpIndex).Contains(Regexp))
+			if (TString(prodAmpName(prodAmpIndex)).Contains(Regexp))
 				prodAmpIndices.push_back(prodAmpIndex);
 		return prodAmpIndices;
 	}
@@ -572,18 +572,16 @@ namespace rpwa {
 	/// "V<rank>_<wave name>" with exception "V_flat" for flat wave
 	/// <rank> is assumed to be a single-digit number
 	inline
-	TString
+	std::string
 	fitResult::waveNameForProdAmp(const unsigned int prodAmpIndex) const
 	{
-		const TString prodAmpName = _prodAmpNames[prodAmpIndex];
-		if (prodAmpName == "V_flat")
-			return "flat";
-		if (not prodAmpName.BeginsWith('V') or (prodAmpName[2] != '_')) {
+		const std::string& prodAmpName = _prodAmpNames[prodAmpIndex];
+		if (prodAmpName.length() == 0 or prodAmpName[0] != 'V' or prodAmpName.find('_') == std::string::npos) {
 			printErr << "production amplitude name '" << prodAmpName << "' does not follow the naming convention. "
 			         << "cannot deduce corresponding wave name." << std::endl;
 			return "";
 		}
-		return prodAmpName(3, prodAmpName.Length() - 3);
+		return prodAmpName.substr(prodAmpName.find('_')+1);
 	}
 
 

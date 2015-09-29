@@ -72,31 +72,6 @@ namespace {
 		return bp::list(self.evidenceComponents());
 	}
 
-	std::string fitResult_waveName(const rpwa::fitResult& self, const unsigned int waveIndex)
-	{
-		return std::string((const char*)self.waveName(waveIndex));
-	}
-
-	std::string fitResult_waveNameEsc(const rpwa::fitResult& self, const unsigned int waveIndex)
-	{
-		return std::string((const char*)self.waveNameEsc(waveIndex));
-	}
-
-	std::string fitResult_prodAmpName(const rpwa::fitResult& self, const unsigned int prodAmpIndex)
-	{
-		return std::string((const char*)self.prodAmpName(prodAmpIndex));
-	}
-
-	std::string fitResult_prodAmpNameEsc(const rpwa::fitResult& self, const unsigned int prodAmpIndex)
-	{
-		return std::string((const char*)self.prodAmpNameEsc(prodAmpIndex));
-	}
-
-	std::string fitResult_waveNameForProdAmp(const rpwa::fitResult& self, const unsigned int prodAmpIndex)
-	{
-		return std::string((const char*)self.waveNameForProdAmp(prodAmpIndex));
-	}
-
 	PyObject* fitResult_prodAmpCov_1(const rpwa::fitResult& self, const unsigned int prodAmpIndex)
 	{
 		return rpwa::py::convertToPy<TMatrixT<double> >(self.prodAmpCov(prodAmpIndex));
@@ -311,11 +286,11 @@ void rpwa::py::exportFitResult() {
 		.def("normNmbEvents", &rpwa::fitResult::normNmbEvents)
 		.def("nmbWaves", &rpwa::fitResult::nmbWaves)
 		.def("nmbProdAmps", &rpwa::fitResult::nmbProdAmps)
-		.def("waveName", &fitResult_waveName)
-		.def("waveNameEsc", &fitResult_waveNameEsc)
-		.def("prodAmpName", &fitResult_prodAmpName)
-		.def("prodAmpNameEsc", &fitResult_prodAmpNameEsc)
-		.def("waveNameForProdAmp", &fitResult_waveNameForProdAmp)
+		.def("waveName", &rpwa::fitResult::waveName)
+		.def("waveNameEsc", &rpwa::fitResult::waveNameEsc)
+		.def("prodAmpName", &rpwa::fitResult::prodAmpName)
+		.def("prodAmpNameEsc", &rpwa::fitResult::prodAmpNameEsc)
+		.def("waveNameForProdAmp", &rpwa::fitResult::waveNameForProdAmp)
 		.def("waveIndex", &rpwa::fitResult::waveIndex)
 		.def("prodAmpIndex", &rpwa::fitResult::prodAmpIndex)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
