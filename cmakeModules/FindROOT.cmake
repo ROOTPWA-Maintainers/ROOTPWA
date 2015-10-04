@@ -211,7 +211,7 @@ if(ROOT_FOUND)
 	# loop over -l entries
 	foreach(_LIBRARY ${ROOT_LIBRARIES})
 		# extract library name from compiler flag and append to list
-		string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBRARY}")
+		string(REGEX REPLACE "^-l(.*)$" "\\1" _LIBNAME "${_LIBRARY}")
 		# workaround for root-config inconsistency: if ROOT is built with --disable-builtin-zlib
 		# root-config returns the flag for the external zlib together with the internal libraries
 		if(_LIBNAME STREQUAL "z")
@@ -219,9 +219,9 @@ if(ROOT_FOUND)
 		else()
 			list(APPEND _LIBRARY_NAMES ${_LIBNAME})
 		endif()
-		unset(_LIBRARY)
 		unset(_LIBNAME)
 	endforeach()
+	unset(_LIBRARY)
 	unset(ROOT_LIBRARIES)
 
 	# append components
@@ -258,9 +258,9 @@ if(ROOT_FOUND)
 	# loop over -l entries
 	foreach(_LIBRARY ${ROOT_AUX_LIBRARIES})
 		# extract library name from compiler flag
-		string(REGEX MATCH "^-l(.*)$" _LIBNAME "${_LIBRARY}")
+		string(REGEX MATCH "^-l.*$" _LIBNAME "${_LIBRARY}")
 		if(_LIBNAME)
-			string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBNAME}")
+			string(REGEX REPLACE "^-l(.*)$" "\\1" _LIBNAME "${_LIBNAME}")
 			# check whether libraries exist
 			find_library(_AUX_LIB_${_LIBNAME}
 				NAMES ${_LIBNAME})
