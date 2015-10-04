@@ -225,10 +225,10 @@ if(ROOT_FOUND)
 	unset(ROOT_LIBRARIES)
 
 	# append components
-	list(REMOVE_DUPLICATES ROOT_FIND_COMPONENTS)
 	if(ROOT_FIND_COMPONENTS)
 		set(_LIBRARY_NAMES "${_LIBRARY_NAMES};${ROOT_FIND_COMPONENTS}")
 	endif()
+	list(REMOVE_DUPLICATES _LIBRARY_NAMES)
 
 	# check whether libraries exist
 	foreach(_LIBNAME ${_LIBRARY_NAMES})
