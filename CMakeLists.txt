@@ -64,6 +64,15 @@ include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
 
 
+# On Apples the default filename extension of a shared library is ".dylib",
+# unfortunately ROOT libraries end with ".so" so Cmake's mechanism of
+# determining whether to add a rpath breaks. Also add ".so" to the filetypes
+# to be considered as a shared library.
+if(APPLE AND "${CMAKE_SHARED_LIBRARY_SUFFIX}" STREQUAL ".dylib")
+	list(APPEND CMAKE_EXTRA_SHARED_LIBRARY_SUFFIXES ".so")
+endif()
+
+
 # force out-of-source builds.
 enforce_out_of_source_build()
 
