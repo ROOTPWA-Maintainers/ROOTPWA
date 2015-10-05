@@ -132,7 +132,7 @@ namespace rpwa {
 		double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
 		double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
 		double       evidence     () const;                                ///< returns the model evidence (OccamFactorMethod)
-		std::vector<double> evidenceComponents() const; //< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
+		std::vector<double> evidenceComponents() const; ///< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
 		bool         converged    () const { return _converged;         }  ///< returns whether fit has converged (according to minimizer)
 		bool         hasHessian   () const { return _hasHessian;        }  ///< returns whether Hessian matrix has been calculated successfully
 		unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
