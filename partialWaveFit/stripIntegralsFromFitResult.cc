@@ -157,7 +157,6 @@ main(int    argc,
 		const vector<double>           phaseSpaceIntegral;
 
 		const bool                     converged              = inResult->converged();
-		const bool                     hasHessian             = inResult->hasHessian();
 
 		outResult->reset();
 		outResult->fill(nmbEvents,
@@ -173,7 +172,7 @@ main(int    argc,
 		                accIntegral,
 		                phaseSpaceIntegral,
 		                converged,
-		                hasHessian);
+		                stripCovarianceMatrix ? false : inResult->hasHessian());
 
 		outResultTree->Fill();
 
