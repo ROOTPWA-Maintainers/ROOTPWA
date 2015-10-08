@@ -92,200 +92,211 @@ bool testAmplitude(TTree*              inTree,
                    const string&       decayKinMomentaLeafName = "decayKinMomenta")
 {
 	// parse key file and create decay topology and amplitude instances
-	waveDescription        waveDesc;
-	isobarDecayTopologyPtr decayTopo;
-	if (   not waveDesc.parseKeyFile(keyFileName)
-	    or not waveDesc.constructDecayTopology(decayTopo)) {
-		printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
-		          << "skipping." << endl;
+	vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(keyFileName);
+	if (waveDescs.size() == 0) {
+		printWarn << "problems parsing key file '" << keyFileName << "', did not get "
+		          << "at least one wave description. skipping." << endl;
 		keyFileErrors.push_back("parsing errors");
 		return false;
 	}
-
-	printInfo << "checking decay topology" << endl;
-	bool success = true;
-	if (not decayTopo->checkTopology()) {
-		keyFileErrors.push_back("problematic topology");
-		success = false;
-	}
-	if (not decayTopo->checkConsistency()) {
-		keyFileErrors.push_back("inconsistent decay");
-		success = false;
-	}
-	if (not success)
-		return false;
-
-	if (not inTree or not prodKinPartNames or not decayKinPartNames)
-		return true;  // no data; cannot check symmetry properties of amplitude
-
-	printInfo << "calculating amplitudes for ";
-	if (maxNmbEvents < 0)
-		cout << "all";
-	else
-		cout << maxNmbEvents;
-	cout << " events" << endl;
-
-	// construct amplitude
-	isobarAmplitudePtr amplitude;
-	waveDesc.constructAmplitude(amplitude, decayTopo);
-
-
-	// read data from tree and calculate amplitudes
-	vector<complex<double> > ampValues;
-	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampValues, maxNmbEvents,
-	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
-		printWarn << "problems reading tree" << endl;
-		return false;
-	}
-	if (ampValues.size() < 1) {
-		printWarn << "no amplitude were calculated" << endl;
-		return false;
-	}
-
-	// calculate amplitudes for parity transformed decay daughters
-	vector<complex<double> > ampSpaceInvValues;
-	amplitude->enableSpaceInversion(true);
-	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampSpaceInvValues, maxNmbEvents,
-	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
-		printWarn << "problems reading tree" << endl;
-		return false;
-	}
-
-	// calculate amplitudes for decay daughters reflected through production plane
-	vector<complex<double> > ampReflValues;
-	amplitude->enableSpaceInversion(false);
-	amplitude->enableReflection    (true);
-	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
-	                    amplitude, ampReflValues, maxNmbEvents,
-	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
-		printWarn << "problems reading tree" << endl;
-		return false;
-	}
-
-	if (   (ampValues.size() != ampSpaceInvValues.size())
-	    or (ampValues.size() != ampReflValues.size    ())) {
-		printWarn << "different number of amplitudes for space inverted "
-		          << "(" << ampSpaceInvValues.size() << "), reflected "
-		          << "(" << ampReflValues.size() << "), and unmodified data "
-		          << "(" << ampValues.size() << ")." << endl;
-		return false;
-	}
-
-	printInfo << "checking symmetry properties of amplitudes" << endl;
-	unsigned int countAmpZero               = 0;
-	unsigned int countAmpRatioNotOk         = 0;
-	unsigned int countSpaceInvEigenValNotOk = 0;
-	unsigned int countReflEigenValNotOk     = 0;
-	for (unsigned int i = 0; i < ampValues.size(); ++i) {
-		// check that amplitude is non-zero
-		bool ampZero = false;
-		if (ampValues[i] == complex<double>(0, 0)) {
-			ampZero = true;
-			++countAmpZero;
-		}
-		const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-		ostringstream s;
-		s.precision(nmbDigits);
-		s.setf(ios_base::scientific, ios_base::floatfield);
-		if (debug) {
-			printDebug << "amplitude [" << i << "]: " << endl;
-			s << "        ampl.            = " << ampValues[i];
-			if (ampZero)
-				s << " <! zero amplitude";
-			s << endl
-			  << "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
-			  << "        ampl. refl.      = " << ampReflValues    [i] << endl;
-			cout << s.str();
+	printInfo << "parsing key file returned " << waveDescs.size() << " wave descriptions" << endl;
+	bool successAll = true;
+	for (size_t waveDescIdx=0; waveDescIdx<waveDescs.size(); ++waveDescIdx) {
+		printInfo << "testing wave description " << waveDescIdx << " of " << waveDescs.size() << endl;
+		waveDescriptionPtr     waveDesc = waveDescs[waveDescIdx];
+		isobarDecayTopologyPtr decayTopo;
+		if (not waveDesc->constructDecayTopology(decayTopo)) {
+			printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
+			          << "skipping." << endl;
+			keyFileErrors.push_back("parsing errors");
+			continue;
 		}
 
-		// check space inversion symmetry
-		const complex<double> spaceInvRatio
-			= complex<double>((ampSpaceInvValues[i].real() != 0) ?
-			                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
-			                  (ampSpaceInvValues[i].imag() != 0) ?
-			                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
-		bool spaceInvAmpRatioOk = true;
-		if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
-		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
-			spaceInvAmpRatioOk = false;
-			++countAmpRatioNotOk;
+		printInfo << "checking decay topology" << endl;
+		bool success = true;
+		if (not decayTopo->checkTopology()) {
+			keyFileErrors.push_back("problematic topology");
+			success = false;
 		}
-		const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
-		bool      spaceInvEigenValOk = true;
-		if (   (    (spaceInvRatio.real() != 0)
-		        and (spaceInvRatio.real() / fabs(spaceInvRatio.real()) != spaceInvEigenValue))
-		    or (    (spaceInvRatio.imag() != 0)
-		        and (spaceInvRatio.imag() / fabs(spaceInvRatio.imag()) != spaceInvEigenValue))) {
-			spaceInvEigenValOk = false;
-			++countSpaceInvEigenValNotOk;
+		if (not decayTopo->checkConsistency()) {
+			keyFileErrors.push_back("inconsistent decay");
+			success = false;
 		}
-		if (debug) {
-			s.str("");
-			s << "Re[ampl.] / Re[ampl. space inv.] = " << setw(23) << spaceInvRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl. space inv.] = " << setw(23) << spaceInvRatio.imag();
-			cout << "        " << s.str();
-			if (not spaceInvAmpRatioOk)
-				cout << " <! larger than " << maxDelta;
-			if (not spaceInvEigenValOk)
-				cout << " <! eigenvalue != " << spaceInvEigenValue;
-			cout << endl;
+		if (not success)
+			continue;
+
+		if (not inTree or not prodKinPartNames or not decayKinPartNames)
+			continue;  // no data; cannot check symmetry properties of amplitude
+
+		printInfo << "calculating amplitudes for ";
+		if (maxNmbEvents < 0)
+			cout << "all";
+		else
+			cout << maxNmbEvents;
+		cout << " events" << endl;
+
+		// construct amplitude
+		isobarAmplitudePtr amplitude;
+		waveDesc->constructAmplitude(amplitude, decayTopo);
+
+		// read data from tree and calculate amplitudes
+		vector<complex<double> > ampValues;
+		if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+		                    amplitude, ampValues, maxNmbEvents,
+		                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
+			printWarn << "problems reading tree" << endl;
+			continue;
+		}
+		if (ampValues.size() < 1) {
+			printWarn << "no amplitude were calculated" << endl;
+			continue;
 		}
 
-		// check reflection symmetry through production plane
-		const complex<double> reflRatio
-			= complex<double>((ampReflValues[i].real() != 0) ?
-			                  ampValues[i].real() / ampReflValues[i].real() : 0,
-			                  (ampReflValues[i].imag() != 0) ?
-			                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
-		bool reflAmpRatioOk = true;
-		if (   (fabs(reflRatio.real()) - 1 > maxDelta)
-	      or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
-			reflAmpRatioOk = false;
-			++countAmpRatioNotOk;
+		// calculate amplitudes for parity transformed decay daughters
+		vector<complex<double> > ampSpaceInvValues;
+		amplitude->enableSpaceInversion(true);
+		if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+		                    amplitude, ampSpaceInvValues, maxNmbEvents,
+		                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
+			printWarn << "problems reading tree" << endl;
+			continue;
 		}
-		const int reflEigenValue = decayTopo->reflectionEigenValue();
-		bool      reflEigenValOk = true;
-		if (   (    (reflRatio.real() != 0)
-		        and (reflRatio.real() / fabs(reflRatio.real()) != reflEigenValue))
-		    or (    (reflRatio.imag() != 0)
-		        and (reflRatio.imag() / fabs(reflRatio.imag()) != reflEigenValue))) {
-			reflEigenValOk = false;
-			++countReflEigenValNotOk;
-		}
-		if (debug) {
-			s.str("");
-			s << "Re[ampl.] / Re[ampl. refl.]      = " << setw(23) << reflRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl. refl.]      = " << setw(23) << reflRatio.imag();
-			cout << "        " << s.str();
-			if (not reflAmpRatioOk)
-				cout << " <! larger than " << maxDelta;
-			if (not reflEigenValOk)
-				cout << " <! eigenvalue != " << reflEigenValue;
-			cout << endl;
-		}
-	}
 
-	if (countAmpZero > 0) {
-		keyFileErrors.push_back("zero amplitude");
-		success = false;
+		// calculate amplitudes for decay daughters reflected through production plane
+		vector<complex<double> > ampReflValues;
+		amplitude->enableSpaceInversion(false);
+		amplitude->enableReflection    (true);
+		if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+		                    amplitude, ampReflValues, maxNmbEvents,
+		                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
+			printWarn << "problems reading tree" << endl;
+			continue;
+		}
+
+		if (   (ampValues.size() != ampSpaceInvValues.size())
+		    or (ampValues.size() != ampReflValues.size    ())) {
+			printWarn << "different number of amplitudes for space inverted "
+			          << "(" << ampSpaceInvValues.size() << "), reflected "
+			          << "(" << ampReflValues.size() << "), and unmodified data "
+			          << "(" << ampValues.size() << ")." << endl;
+			continue;
+		}
+
+		printInfo << "checking symmetry properties of amplitudes" << endl;
+		unsigned int countAmpZero               = 0;
+		unsigned int countAmpRatioNotOk         = 0;
+		unsigned int countSpaceInvEigenValNotOk = 0;
+		unsigned int countReflEigenValNotOk     = 0;
+		for (unsigned int i = 0; i < ampValues.size(); ++i) {
+			// check that amplitude is non-zero
+			bool ampZero = false;
+			if (ampValues[i] == complex<double>(0, 0)) {
+				ampZero = true;
+				++countAmpZero;
+			}
+			const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+			ostringstream s;
+			s.precision(nmbDigits);
+			s.setf(ios_base::scientific, ios_base::floatfield);
+			if (debug) {
+				printDebug << "amplitude [" << i << "]: " << endl;
+				s << "        ampl.            = " << ampValues[i];
+				if (ampZero)
+					s << " <! zero amplitude";
+				s << endl
+				  << "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
+				  << "        ampl. refl.      = " << ampReflValues    [i] << endl;
+				cout << s.str();
+			}
+
+			// check space inversion symmetry
+			const complex<double> spaceInvRatio
+				= complex<double>((ampSpaceInvValues[i].real() != 0) ?
+				                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
+				                  (ampSpaceInvValues[i].imag() != 0) ?
+				                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
+			bool spaceInvAmpRatioOk = true;
+			if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
+			    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
+				spaceInvAmpRatioOk = false;
+				++countAmpRatioNotOk;
+			}
+			const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
+			bool      spaceInvEigenValOk = true;
+			if (   (    (spaceInvRatio.real() != 0)
+			        and (spaceInvRatio.real() / fabs(spaceInvRatio.real()) != spaceInvEigenValue))
+			    or (    (spaceInvRatio.imag() != 0)
+			        and (spaceInvRatio.imag() / fabs(spaceInvRatio.imag()) != spaceInvEigenValue))) {
+				spaceInvEigenValOk = false;
+				++countSpaceInvEigenValNotOk;
+			}
+			if (debug) {
+				s.str("");
+				s << "Re[ampl.] / Re[ampl. space inv.] = " << setw(23) << spaceInvRatio.real() << ", "
+				  << "Im[ampl.] / Im[ampl. space inv.] = " << setw(23) << spaceInvRatio.imag();
+				cout << "        " << s.str();
+				if (not spaceInvAmpRatioOk)
+					cout << " <! larger than " << maxDelta;
+				if (not spaceInvEigenValOk)
+					cout << " <! eigenvalue != " << spaceInvEigenValue;
+				cout << endl;
+			}
+
+			// check reflection symmetry through production plane
+			const complex<double> reflRatio
+				= complex<double>((ampReflValues[i].real() != 0) ?
+				                  ampValues[i].real() / ampReflValues[i].real() : 0,
+				                  (ampReflValues[i].imag() != 0) ?
+				                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
+			bool reflAmpRatioOk = true;
+			if (   (fabs(reflRatio.real()) - 1 > maxDelta)
+			      or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
+				reflAmpRatioOk = false;
+				++countAmpRatioNotOk;
+			}
+			const int reflEigenValue = decayTopo->reflectionEigenValue();
+			bool      reflEigenValOk = true;
+			if (   (    (reflRatio.real() != 0)
+			        and (reflRatio.real() / fabs(reflRatio.real()) != reflEigenValue))
+			    or (    (reflRatio.imag() != 0)
+			        and (reflRatio.imag() / fabs(reflRatio.imag()) != reflEigenValue))) {
+				reflEigenValOk = false;
+				++countReflEigenValNotOk;
+			}
+			if (debug) {
+				s.str("");
+				s << "Re[ampl.] / Re[ampl. refl.]      = " << setw(23) << reflRatio.real() << ", "
+				  << "Im[ampl.] / Im[ampl. refl.]      = " << setw(23) << reflRatio.imag();
+				cout << "        " << s.str();
+				if (not reflAmpRatioOk)
+					cout << " <! larger than " << maxDelta;
+				if (not reflEigenValOk)
+					cout << " <! eigenvalue != " << reflEigenValue;
+				cout << endl;
+			}
+		}
+
+		if (countAmpZero > 0) {
+			keyFileErrors.push_back("zero amplitude");
+			success = false;
+		}
+		if (countAmpRatioNotOk > 0) {
+			stringstream s;
+			s << "amplitude deviation in symmetry check larger than " << maxDelta;
+			keyFileErrors.push_back(s.str());
+			success = false;
+		}
+		if (countSpaceInvEigenValNotOk > 0) {
+			keyFileErrors.push_back("wrong space inversion eigenvalue");
+			success = false;
+		}
+		if (countReflEigenValNotOk > 0) {
+			keyFileErrors.push_back("wrong eigenvalue for reflection through production plane");
+			success = false;
+		}
+		successAll &= success;
 	}
-	if (countAmpRatioNotOk > 0) {
-		stringstream s;
-		s << "amplitude deviation in symmetry check larger than " << maxDelta;
-		keyFileErrors.push_back(s.str());
-		success = false;
-	}
-	if (countSpaceInvEigenValNotOk > 0) {
-		keyFileErrors.push_back("wrong space inversion eigenvalue");
-		success = false;
-	}
-	if (countReflEigenValNotOk > 0) {
-		keyFileErrors.push_back("wrong eigenvalue for reflection through production plane");
-		success = false;
-	}
-	return success;
+	return successAll;
 }
 
 

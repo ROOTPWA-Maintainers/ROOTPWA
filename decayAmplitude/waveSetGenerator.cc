@@ -71,9 +71,14 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 {
 	// construct template decay topology
 	_templateTopo.reset();
-	waveDescription waveDesc;
-	if (   not waveDesc.parseKeyFile(templateKeyFileName)
-	    or not waveDesc.constructDecayTopology(_templateTopo, true)) {
+	vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(templateKeyFileName);
+	if (waveDescs.size() != 1) {
+		printWarn << "problems while parsing template key file '" << templateKeyFileName << "'. "
+		          << "cannot generate wave set." << endl;
+		return false;
+	}
+	waveDescriptionPtr waveDesc = waveDescs[0];
+	if (not waveDesc->constructDecayTopology(_templateTopo, true)) {
 		printWarn << "problems constructing template decay topology from key file "
 		          << "'" << templateKeyFileName << "'. cannot generate wave set." << endl;
 		return false;

@@ -134,7 +134,7 @@ if __name__ == "__main__":
 		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		keyfile = fileManager.getKeyFile(waveName)
+		(keyfile, waveDescriptionID) = fileManager.getKeyFile(waveName)
 		if not os.path.isfile(keyfile):
 			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
 			sys.exit(1)
@@ -144,8 +144,7 @@ if __name__ == "__main__":
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
 			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		prodAmps.append(fitResult.prodAmp(waveIndex))
-		waveDescription = pyRootPwa.core.waveDescription()
-		waveDescription.parseKeyFile(keyfile)
+		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyfile)[waveDescriptionID]
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
 			printErr('could not construct amplitude for keyfile "' + keyfile + '".')

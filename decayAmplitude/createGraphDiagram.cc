@@ -145,10 +145,20 @@ main(int    argc,
 	for (unsigned int i = 0; i < keyFileNames.size(); ++i) {
 
 		// parse key file and create decay topology
-		waveDescription        waveDesc;
+		vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(keyFileNames[i]);
+		if (waveDescs.size() == 0) {
+			printErr << "problems parsing key file '" << keyFileNames[i] << "', did not get "
+			         << "any wave descriptions. skipping." << endl;
+			continue;
+		}
+		if (waveDescs.size() != 1) {
+			printErr << "problems parsing key file '" << keyFileNames[i] << "', got more "
+			         << "than one wave description. skipping." << endl;
+			continue;
+		}
+		waveDescriptionPtr     waveDesc = waveDescs[0];
 		isobarDecayTopologyPtr decayTopo;
-		if (   not waveDesc.parseKeyFile(keyFileNames[i])
-		    or not waveDesc.constructDecayTopology(decayTopo)) {
+		if (not waveDesc->constructDecayTopology(decayTopo)) {
 			printErr << "problems constructing decay topology from key file '" << keyFileNames[i] << "'. "
 			         << "skipping." << endl;
 			continue;

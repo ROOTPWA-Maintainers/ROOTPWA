@@ -299,88 +299,92 @@ main()
 		//isobarAmplitude::setDebug(true);
 		//isobarHelicityAmplitude::setDebug(true);
 
-		waveDescription    waveDesc;
-		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(newKeyFileName) and waveDesc.constructAmplitude(amp)) {
-			isobarDecayTopologyPtr topo = amp->decayTopology();
-			printInfo << *amp;
-			amp->init();
+		vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(newKeyFileName);
+		for (std::vector<waveDescriptionPtr>::iterator waveDescIt=waveDescs.begin(); waveDescIt!=waveDescs.end(); ++waveDescIt) {
+			waveDescriptionPtr waveDesc = *waveDescIt;
+			isobarAmplitudePtr amp;
+			if (waveDesc->constructAmplitude(amp)) {
+				isobarDecayTopologyPtr topo = amp->decayTopology();
+				printInfo << *amp;
+				amp->init();
 
-			// read data from tree
-			const string&            inTreeName               = "rootPwaEvtTree";
-			const string&            prodKinPartNamesObjName  = "prodKinParticles";
-			const string&            prodKinMomentaLeafName   = "prodKinMomenta";
-			const string&            decayKinPartNamesObjName = "decayKinParticles";
-			const string&            decayKinMomentaLeafName  = "decayKinMomenta";
-			vector<complex<double> > myAmps;
-			// open input file
-			vector<TTree*> inTrees;
-			TClonesArray*  prodKinPartNames  = 0;
-			TClonesArray*  decayKinPartNames = 0;
-			{
-				vector<string> rootFileNames(1, rootInFileName);
-				vector<string> evtFileNames;
-				if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
-				                         rootFileNames, evtFileNames,
-				                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
-				                         decayKinPartNamesObjName, decayKinMomentaLeafName, true)) {
-					printErr << "problems opening input files. Aborting..." << endl;
+				// read data from tree
+				const string&            inTreeName               = "rootPwaEvtTree";
+				const string&            prodKinPartNamesObjName  = "prodKinParticles";
+				const string&            prodKinMomentaLeafName   = "prodKinMomenta";
+				const string&            decayKinPartNamesObjName = "decayKinParticles";
+				const string&            decayKinMomentaLeafName  = "decayKinMomenta";
+				vector<complex<double> > myAmps;
+				// open input file
+				vector<TTree*> inTrees;
+				TClonesArray*  prodKinPartNames  = 0;
+				TClonesArray*  decayKinPartNames = 0;
+				{
+					vector<string> rootFileNames(1, rootInFileName);
+					vector<string> evtFileNames;
+					if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+					                         rootFileNames, evtFileNames,
+					                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+					                         decayKinPartNamesObjName, decayKinMomentaLeafName, true)) {
+						printErr << "problems opening input files. Aborting..." << endl;
+						exit(1);
+					}
+				}
+				const long int nmbEventsChain = inTrees[0]->GetEntries();
+
+				// create branch pointers and leaf variables
+				TBranch*      prodKinMomentaBr  = 0;
+				TBranch*      decayKinMomentaBr = 0;
+				TClonesArray* prodKinMomenta    = 0;
+				TClonesArray* decayKinMomenta   = 0;
+
+				// connect leaf variables to tree branches
+				inTrees[0]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
+				inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
+
+				// loop over events
+				if (not topo->initKinematicsData(*prodKinPartNames, *decayKinPartNames)) {
+					printErr << "problems initializing input data. Aborting..." << endl;
 					exit(1);
 				}
-			}
-			const long int nmbEventsChain = inTrees[0]->GetEntries();
+				const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+				                              : nmbEventsChain);
+				progress_display progressIndicator(nmbEvents);
+				timer.Reset();
+				timer.Start();
+				for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+					++progressIndicator;
 
-			// create branch pointers and leaf variables
-			TBranch*      prodKinMomentaBr  = 0;
-			TBranch*      decayKinMomentaBr = 0;
-			TClonesArray* prodKinMomenta    = 0;
-			TClonesArray* decayKinMomenta   = 0;
+					if (inTrees[0]->LoadTree(eventIndex) < 0)
+						break;
+					// read only required branches
+					prodKinMomentaBr->GetEntry (eventIndex);
+					decayKinMomentaBr->GetEntry(eventIndex);
 
-			// connect leaf variables to tree branches
-			inTrees[0]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
-			inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
+					if (not prodKinMomenta or not decayKinMomenta) {
+						printWarn << "at least one data array is null pointer: "
+						          << "prodKinMomenta = "    << prodKinMomenta    << ", "
+						          << "decayKinMomenta = "   << decayKinMomenta   << ". "
+						          << "skipping event." << endl;
+						continue;
+					}
 
-			// loop over events
-			if (not topo->initKinematicsData(*prodKinPartNames, *decayKinPartNames)) {
-				printErr << "problems initializing input data. Aborting..." << endl;
-				exit(1);
-			}
-			const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-			                              : nmbEventsChain);
-			progress_display progressIndicator(nmbEvents);
-			timer.Reset();
-			timer.Start();
-			for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-				++progressIndicator;
+					if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
+						myAmps.push_back((*amp)());
+						if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
+							printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+						topo->productionVertex()->productionAmp();
+					}
+				} // event loop
 
-				if (inTrees[0]->LoadTree(eventIndex) < 0)
-					break;
-				// read only required branches
-				prodKinMomentaBr->GetEntry (eventIndex);
-				decayKinMomentaBr->GetEntry(eventIndex);
+				timer.Stop();
+				printSucc << "read " << myAmps.size() << " events from file(s) "
+				          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
+				cout << "needed ";
+				printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
+				timer.Print();
 
-				if (not prodKinMomenta or not decayKinMomenta) {
-					printWarn << "at least one data array is null pointer: "
-					          << "prodKinMomenta = "    << prodKinMomenta    << ", "
-					          << "decayKinMomenta = "   << decayKinMomenta   << ". "
-					          << "skipping event." << endl;
-					continue;
-				}
-
-				if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-					myAmps.push_back((*amp)());
-					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
-						printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
-					topo->productionVertex()->productionAmp();
-				}
-			} // event loop
-
-			timer.Stop();
-			printSucc << "read " << myAmps.size() << " events from file(s) "
-			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
-			cout << "needed ";
-			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
-			timer.Print();
+			}  // loop over wave descriptions from keyfile
 
 		}  // parsing of key file successful
 

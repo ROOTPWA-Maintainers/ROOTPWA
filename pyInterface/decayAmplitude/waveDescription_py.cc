@@ -58,12 +58,17 @@ void rpwa::py::exportWaveDescription() {
 	bp::class_<rpwa::waveDescription>("waveDescription")
 
 		.def(bp::init<const rpwa::amplitudeMetadata*>())
-		.def("parseKeyFile", &rpwa::waveDescription::parseKeyFile)
-		.def("parseKeyFileContent", &rpwa::waveDescription::parseKeyFileContent)
 		.def("keyFileParsed", &rpwa::waveDescription::keyFileParsed)
-
-		.def("keyFileContent", &rpwa::waveDescription::keyFileContent)
+		.def("keyFileContent"
+		, &rpwa::waveDescription::keyFileContent
+		, bp::return_value_policy<bp::return_by_value>()
+		)
 		.def("printKeyFileContent", &waveDescription_printKeyFileContent)
+
+		.def("parseKeyFile", &rpwa::waveDescription::parseKeyFile)
+		.staticmethod("parseKeyFile")
+		.def("parseKeyFileContent", &rpwa::waveDescription::parseKeyFileContent)
+		.staticmethod("parseKeyFileContent")
 
 		.def(
 			"constructDecayTopology"
@@ -102,5 +107,7 @@ void rpwa::py::exportWaveDescription() {
 		.def("Write", &waveDescription_Write, bp::arg("name")=0)
 
 		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
+
+	bp::register_ptr_to_python<rpwa::waveDescriptionPtr>();
 
 }

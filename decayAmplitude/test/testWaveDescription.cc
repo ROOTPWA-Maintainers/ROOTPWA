@@ -54,40 +54,43 @@ main()
 
 	if (1) {
 		const string       keyFileName = "testWaveDescription.key";
-		waveDescription    waveDesc;
-		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
-			isobarDecayTopologyPtr topo = amp->decayTopology();
-			printInfo << *amp;
-			topo->writeGraphViz("testWaveDescription.dot");
-			gSystem->Exec("dot -Tps -o testWaveDescription.ps testWaveDescription.dot");
-			waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
-			//waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *(amp->decayTopology()));  // test key file creation
-			// test file I/O of waveDescription
-			const string waveName = waveDesc.waveNameFromTopology(*topo);
-			{
-				TFile* outFile = TFile::Open("testWaveDescription.root", "RECREATE");
-				waveDesc.Write(waveName.c_str());
-				outFile->Close();
-			}
-			amp.reset();
-			cout << endl
-			     << "--------------------------------------------------------------------------------"
-			     << endl << endl;
-			{
-				TFile*           inFile    = TFile::Open("testWaveDescription.root", "READ");
-				waveDescription* waveDesc2 = 0;
-				inFile->GetObject(waveName.c_str(), waveDesc2);
-				if (not waveDesc2)
-					printErr << "cannot find wave description '" << waveName << "'" << endl;
-				else
-					printInfo << "key file:" << endl;
-				waveDesc2->printKeyFileContent(cout);
-				waveDesc2->constructAmplitude(amp);
-				waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *amp);  // test key file creation
-				//waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *(amp->decayTopology()));  // test key file creation
+		vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(keyFileName);
+		if (waveDescs.size() == 1) {
+			waveDescriptionPtr waveDesc = waveDescs[0];
+			isobarAmplitudePtr amp;
+			if (waveDesc->constructAmplitude(amp)) {
+				isobarDecayTopologyPtr topo = amp->decayTopology();
 				printInfo << *amp;
-				inFile->Close();
+				topo->writeGraphViz("testWaveDescription.dot");
+				gSystem->Exec("dot -Tps -o testWaveDescription.ps testWaveDescription.dot");
+				waveDesc->writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
+				//waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *(amp->decayTopology()));  // test key file creation
+				// test file I/O of waveDescription
+				const string waveName = waveDesc->waveNameFromTopology(*topo);
+				{
+					TFile* outFile = TFile::Open("testWaveDescription.root", "RECREATE");
+					waveDesc->Write(waveName.c_str());
+					outFile->Close();
+				}
+				amp.reset();
+				cout << endl
+				     << "--------------------------------------------------------------------------------"
+				     << endl << endl;
+				{
+					TFile*           inFile    = TFile::Open("testWaveDescription.root", "READ");
+					waveDescription* waveDesc2 = 0;
+					inFile->GetObject(waveName.c_str(), waveDesc2);
+					if (not waveDesc2)
+						printErr << "cannot find wave description '" << waveName << "'" << endl;
+					else
+						printInfo << "key file:" << endl;
+					waveDesc2->printKeyFileContent(cout);
+					waveDesc2->constructAmplitude(amp);
+					waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *amp);  // test key file creation
+					//waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *(amp->decayTopology()));  // test key file creation
+					printInfo << *amp;
+					inFile->Close();
+				}
 			}
 		}
 	}

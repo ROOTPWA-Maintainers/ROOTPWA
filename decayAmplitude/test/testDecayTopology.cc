@@ -327,15 +327,18 @@ main()
 	if (1) {
 		const string keyFileName = "testFindIsobarBoseSymVertices.key";
 
-		waveDescription    waveDesc;
-		isobarAmplitudePtr amp;
-		if (not waveDesc.parseKeyFile(keyFileName) or not waveDesc.constructAmplitude(amp)) {
-			printErr << "problems constructing amplitude. exiting." << endl;
-			exit(1);
-		}
-		isobarDecayTopologyPtr topo = amp->decayTopology();
-		printInfo << *topo;
+		vector<waveDescriptionPtr> waveDescs = waveDescription::parseKeyFile(keyFileName);
+		for (std::vector<waveDescriptionPtr>::iterator waveDescIt=waveDescs.begin(); waveDescIt!=waveDescs.end(); ++waveDescIt) {
+			waveDescriptionPtr waveDesc = *waveDescIt;
+			isobarAmplitudePtr amp;
+			if (not waveDesc->constructAmplitude(amp)) {
+				printErr << "problems constructing amplitude. exiting." << endl;
+				exit(1);
+			}
+			isobarDecayTopologyPtr topo = amp->decayTopology();
+			printInfo << *topo;
 
-		topo->findIsobarBoseSymVertices();
+			topo->findIsobarBoseSymVertices();
+		}
 	}
 }

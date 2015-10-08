@@ -60,6 +60,126 @@ using namespace libconfig;
 using namespace rpwa;
 
 
+namespace {
+
+
+	typedef boost::shared_ptr<libconfig::Config> configPtr;
+
+
+	const std::string binBorders = "bins";
+	const std::string expandName = "expand";
+	const std::string expandTypeName = "type";
+	const std::string expandNameName = "name";
+
+
+	std::string
+	getExpandType(const libconfig::Setting* setting)
+	{
+		std::string expandType;
+		if (not setting->lookupValue(expandTypeName, expandType)) {
+			printErr << "no expand type given." << std::endl;
+			return "";
+		}
+		return expandType;
+	}
+
+
+	std::string
+	getExpandName(const libconfig::Setting* setting)
+	{
+		std::string binningName;
+		if (not setting->lookupValue(expandNameName, binningName)) {
+			printErr << "no binning name given." << std::endl;
+			return "";
+		}
+		return binningName;
+	}
+
+
+	std::vector<double>
+	getBinning(const libconfig::Setting* setting)
+	{
+		const libconfig::Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
+		if (not binningSetting) {
+			printErr << "no binning given to expand '" << expandName << "' "
+			         << "in path '" << setting->getPath() << "'." << std::endl;
+			return std::vector<double>();
+		}
+		const int length = binningSetting->getLength();
+		std::vector<double> binningVector(length);
+		for (int bin=0; bin<length; ++bin) {
+			binningVector[bin] = (*binningSetting)[bin];
+		}
+		return binningVector;
+	}
+
+
+	libconfig::Setting*
+	findExpand(const libconfig::Setting &setting)
+	{
+		libconfig::Setting* expand  = findLibConfigGroup(setting, expandName, false);
+		if (expand) {
+			return expand;
+		}
+		const int length = setting.getLength();
+		for (int i=0; i<length; ++i) {
+			libconfig::Setting &actSetting = setting[i];
+			const int actLength = actSetting.getLength();
+			if (actLength > 0) {
+				libconfig::Setting* recurse = findExpand(actSetting);
+				if (recurse) {
+					return recurse;
+				}
+			}
+		}
+		return NULL;
+	}
+
+
+	std::vector<configPtr>
+	expand(const configPtr& config)
+	{
+		std::vector<configPtr> expanded;
+
+		libconfig::Setting& root     = config->getRoot();
+		libconfig::Setting* toExpand = findExpand(root);
+		if (not toExpand) {
+			expanded.push_back(config);
+			return expanded;
+		}
+		libconfig::Setting& parent = toExpand->getParent();
+
+		const std::string expandType = getExpandType(toExpand);
+		if (expandType == "binning") {
+			const std::string         binningName = getExpandName(toExpand);
+			const std::vector<double> binning     = getBinning(toExpand);
+
+			parent.remove(expandName);
+
+			for (size_t bin=0; bin<binning.size()-1; ++bin) {
+				parent.add(binningName,libconfig::Setting::TypeList);
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin];
+				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+
+				configPtr newConfig(new libconfig::Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(binningName);
+
+				const std::vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else {
+			printErr << "expand type '" << expandType << "' unknown." << std::endl;
+		}
+
+		return expanded;
+	}
+
+
+}
+
+
 ClassImp(waveDescription);
 
 
@@ -122,7 +242,7 @@ waveDescription::waveDescription(const waveDescription& waveDesc)
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 	if (waveDesc._keyFileParsed)
-		parseKeyFileContent(_keyFileLocalCopy);
+		parseKeyFileLocalCopy();
 }
 
 waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
@@ -132,7 +252,7 @@ waveDescription::waveDescription(const amplitudeMetadata* amplitudeMeta)
 	  _keyFileLocalCopy(amplitudeMeta->keyfileContent())
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-	parseKeyFileContent(amplitudeMeta->keyfileContent());
+	parseKeyFileLocalCopy();
 }
 
 
@@ -163,75 +283,114 @@ waveDescription::operator =(const waveDescription& waveDesc)
 		_keyFileParsed    = false;
 		_keyFileLocalCopy = waveDesc._keyFileLocalCopy;
 		if (waveDesc._keyFileParsed)
-			parseKeyFileContent(_keyFileLocalCopy);
+			parseKeyFileLocalCopy();
 	}
 	return *this;
 }
 
 
-bool
+vector<waveDescriptionPtr>
 waveDescription::parseKeyFile(const string& keyFileName)
 {
+	configPtr config(new Config);
+	if (not parseLibConfigFile(keyFileName, *config, _debug)) {
+		printWarn << "problems reading key file '" << keyFileName << "'. "
+		          << "cannot construct wave description." << endl;
+		return vector<waveDescriptionPtr>();
+	}
+	const vector<configPtr> configs = expand(config);
+
+	vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c = 0; c < configs.size(); ++c) {
+		const string confString = getConfigString(*configs[c]);
+
+		waveDescriptionPtr waveDesc(new waveDescription);
+		waveDesc->_keyFileLocalCopy = confString;
+		const bool result = waveDesc->parseKeyFileLocalCopy();
+		if (!result) // error message already printed in parseKeyFileLocalCopy
+			return vector<waveDescriptionPtr>();
+
+		waveDescriptions.push_back(waveDesc);
+	}
+	return waveDescriptions;
+}
+
+
+vector<waveDescriptionPtr>
+waveDescription::parseKeyFileContent(const string& keyFileContent)
+{
+	if (keyFileContent == "") {
+		printWarn << "empty key file content string. cannot construct wave description." << endl;
+		return vector<waveDescriptionPtr>();
+	}
+	configPtr config(new Config);
+	if (not parseLibConfigString(keyFileContent, *config, _debug)) {
+		printWarn << "problems reading key file content string:" << endl;
+		printKeyFileContent(cout, keyFileContent);
+		cout << "    cannot construct wave description." << endl;
+		return vector<waveDescriptionPtr>();
+	}
+	const vector<configPtr> configs = expand(config);
+
+	vector<waveDescriptionPtr> waveDescriptions;
+	for (size_t c = 0; c < configs.size(); ++c) {
+		const string confString = getConfigString(*configs[c]);
+
+		waveDescriptionPtr waveDesc(new waveDescription);
+		waveDesc->_keyFileLocalCopy = confString;
+		const bool result = waveDesc->parseKeyFileLocalCopy();
+		if (!result) // error message already printed in parseKeyFileLocalCopy
+			return vector<waveDescriptionPtr>();
+
+		waveDescriptions.push_back(waveDesc);
+	}
+	return waveDescriptions;
+}
+
+
+bool
+waveDescription::parseKeyFileLocalCopy()
+{
 	_keyFileParsed = false;
+	if (_keyFileLocalCopy == "") {
+		printWarn << "empty key file content string. cannot construct wave description." << endl;
+		return false;
+	}
 	if (not _key)
 		_key = new Config();
-	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
-		printWarn << "problems reading key file '" << keyFileName << "'. "
-		          << "cannot construct decay topology." << endl;
+	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
+		printWarn << "problems reading key file content string:" << endl;
+		printKeyFileContent(cout);
+		cout << "    cannot construct wave description." << endl;
 		delete _key;
 		_key = 0;
 		return false;
 	}
-	if (not readKeyFileIntoLocalCopy(keyFileName))
-		return false;
 	_keyFileParsed = true;
 	return true;
 }
 
 
-bool
-waveDescription::parseKeyFileContent(const string& keyFileContent)
+std::ostream&
+waveDescription::printKeyFileContent(std::ostream& out, const std::string& keyFileContent)
 {
-	_keyFileParsed = false;
-	if (keyFileContent == "") {
-		printWarn << "empty key file content string. cannot construct decay topology." << endl;
-		return false;
-	}
-	if (not _key)
-		_key = new Config();
-	if (not parseLibConfigString(keyFileContent, *_key, _debug)) {
-		printWarn << "problems reading key file content string:" << endl;
-		printKeyFileContent(cout, keyFileContent);
-		cout << "    cannot construct decay topology." << endl;
-		delete _key;
-		_key = 0;
-		return false;
-	}
-	_keyFileLocalCopy = keyFileContent;
-	_keyFileParsed    = true;
-	return true;
-}
-
-
-ostream&
-waveDescription::printKeyFileContent(ostream&      out,
-                                     const string& keyFileContent) const
-{
-	string k;
-	if (keyFileContent != "")
-		k = keyFileContent;
-	else
-		k = _keyFileLocalCopy;
-	if (k != "") {
+	if (keyFileContent != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
 		char_separator<char> separator("\n");
-		tokenizer            keyFileLines(k, separator);
+		tokenizer            keyFileLines(keyFileContent, separator);
 		unsigned int         lineNumber = 0;
 		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
 			out << setw(5) << ++lineNumber << "  " << *i << endl;
 	} else
 		out << "key file content string is empty" << endl;
 	return out;
+}
+
+
+ostream&
+waveDescription::printKeyFileContent(ostream& out) const
+{
+	return printKeyFileContent(out, _keyFileLocalCopy);
 }
 
 
@@ -396,17 +555,40 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 	} else {
 		// recurse down decay chain
 		// first daughter
-		waveName << "=[" << currentVertex->daughter1()->name();
-		if (not topo.isFsParticle(currentVertex->daughter1()))
-			waveName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+		waveName << "=[";
+		if (topo.isFsParticle(currentVertex->daughter1()))
+			waveName << currentVertex->daughter1()->name();
+		else {
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
+			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+				const particle& P = *(currentVertex->daughter1());
+				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
+				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
+				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+			} else
+				waveName << currentVertex->daughter1()->name();
+			waveName << waveNameFromTopology(topo, vertex);
+		}
+
 		// L, S
 		waveName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+
 		// second daughter
-		waveName << currentVertex->daughter2()->name();
-		if (not topo.isFsParticle(currentVertex->daughter2()))
-			waveName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+		if (topo.isFsParticle(currentVertex->daughter2()))
+			waveName << currentVertex->daughter2()->name();
+		else {
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
+			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+				const particle& P = *(currentVertex->daughter2());
+				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
+				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
+				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+			} else
+				waveName << currentVertex->daughter2()->name();
+			waveName << waveNameFromTopology(topo, vertex);
+		}
 		waveName << "]";
 	}
 	{
@@ -436,7 +618,7 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
 	}
 	else if (not (topo.isFsParticle(currentVertex->daughter1())
-	             and topo.isFsParticle(currentVertex->daughter1()))) {
+	             and topo.isFsParticle(currentVertex->daughter2()))) {
 		// recurse down decay chain
 		// do this only if not both daughters are fs partiles
 
@@ -655,8 +837,16 @@ waveDescription::constructParticle(const Setting& particleKey,
 
 
 massDependencePtr
-waveDescription::mapMassDependenceType(const string& massDepType)
+waveDescription::mapMassDependenceType(const Setting* massDepKey)
 {
+	string massDepType = "";
+	if (massDepKey) {
+		// NULL is a valid value for massDepKey, in this case the
+		// 'massDep' group is not present in the keyfile, and the
+		// default 'BreitWigner' is to be used.
+		massDepKey->lookupValue("name", massDepType);
+	}
+
 	massDependencePtr massDep;
 	if (   (massDepType == "relativisticBreitWigner")
 	    or (massDepType == ""))  // default mass dependence
@@ -665,8 +855,6 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createConstWidthBreitWigner();
 	else if (massDepType == "flat")
 		massDep = createFlatMassDependence();
-	else if (massDepType == "flatRange")
-		massDep = createFlatRangeMassDependence();
 	else if (massDepType == "f_0(980)")
 		massDep = createF0980BreitWigner();
 	else if (massDepType == "f_0(980)Flatte")
@@ -679,6 +867,25 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createPiPiSWaveAuMorganPenningtonKachaev();
 	else if (massDepType == "rhoPrime")
 		massDep = createRhoPrimeMassDep();
+	else if (massDepType == "binned") {
+		const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+		if (not bounds) {
+			printErr << "no bounds given for binned mass dependence." << std::endl;
+			throw;
+		}
+		const int length = bounds->getLength();
+		if (length != 2) {
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
+			throw;
+		}
+		const double mMin = (*bounds)[0];
+		const double mMax = (*bounds)[1];
+		if (mMin > mMax) {
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
+			throw;
+		}
+		massDep = createbinnedMassDependence(mMin, mMax);
+	}
 	else {
 		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
 		massDep = createRelativisticBreitWigner();
@@ -743,11 +950,8 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
-		string         massDepType = "";
 		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
-		if (massDepKey)
-			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependenceType(massDepType);
+		massDep = mapMassDependenceType(massDepKey);
 	}
 
 	// if there is 1 final state particle and 1 isobar put them in the
@@ -883,6 +1087,16 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 			           << "'" << massDepName << "'" << endl;
 		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
 		massDepKey.add("name", Setting::TypeString) = massDepName;
+
+		if (massDepName == "binned") {
+			// for this mass dependence additionally the mass bound
+			// have to be stored in the keyfile.
+			const binnedMassDependence& binned = dynamic_cast<const binnedMassDependence&>(massDep);
+
+			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
+			bounds.add(Setting::TypeFloat) = binned.getMassMin();
+			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
 	}
 	return true;
 }
