@@ -139,6 +139,24 @@ namespace {
 	}
 
 
+	bp::list
+	pwaLikelihood_HessianEigenVectors(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                                  PyObject*                                   pyHessian)
+	{
+		TMatrixT<double>* hessian = rpwa::py::convertFromPy<TMatrixT<double>*>(pyHessian);
+		if(not hessian) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for hessian when executing rpwa::pwaLikelihood::HessianEigenVectors()");
+			bp::throw_error_already_set();
+		}
+		std::vector<std::pair<TVectorT<double>, double> > eigenVectors = self.HessianEigenVectors(*hessian);
+		bp::list pyEigenVectors;
+		for(std::vector<std::pair<TVectorT<double>, double> >::const_iterator it = eigenVectors.begin(); it != eigenVectors.end(); ++it) {
+			pyEigenVectors.append(bp::make_tuple(boost::python::handle<>(rpwa::py::convertToPy(it->first)), it->second));
+		}
+		return pyEigenVectors;
+	}
+
+
 	PyObject*
 	pwaLikelihood_CovarianceMatrixFromPar(rpwa::pwaLikelihood<std::complex<double> >& self,
 	                                      const bp::list&                             pyPar)
@@ -204,6 +222,7 @@ void rpwa::py::exportPwaLikelihood() {
 		.def("DoEval", ::pwaLikelihood_DoEval)
 		.def("DoDerivative", ::pwaLikelihood_DoDerivative)
 		.def("Hessian", ::pwaLikelihood_Hessian)
+		.def("HessianEigenVectors", ::pwaLikelihood_HessianEigenVectors)
 		.def("CovarianceMatrix", ::pwaLikelihood_CovarianceMatrixFromMatrix)
 		.def("CovarianceMatrix", ::pwaLikelihood_CovarianceMatrixFromPar)
 		.def("CorrectParamSigns", ::pwaLikelihood_CorrectParamSigns)

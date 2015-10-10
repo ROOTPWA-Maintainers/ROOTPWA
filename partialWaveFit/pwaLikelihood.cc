@@ -831,6 +831,60 @@ pwaLikelihood<complexT>::Hessian
 }
 
 
+/// calculates eigenvectors/-values of Hessian
+template<typename complexT>
+std::vector<std::pair<TVectorT<double>, double> >
+pwaLikelihood<complexT>::HessianEigenVectors(const TMatrixT<double>& hessian) const
+{
+	// reduce Hessian matrix by removing the rows and columns corresponding
+	// to fixed parameters
+	TMatrixT<double> hessianRed(_nmbPars - _nmbParsFixed, _nmbPars - _nmbParsFixed);
+	{
+		unsigned int iSkip = 0;
+		for (unsigned int i = 0; i < _nmbPars; ++i) {
+			if (_parFixed[i]) {
+				iSkip++;
+				continue;
+			}
+
+			unsigned int jSkip = 0;
+			for (unsigned int j = 0; j < _nmbPars; ++j) {
+				if (_parFixed[j]) {
+					jSkip++;
+					continue;
+				}
+
+				hessianRed[i - iSkip][j - jSkip] = hessian[i][j];
+			}
+		}
+	}
+
+	TVectorT<double> eigenValuesRed;
+	TMatrixT<double> eigenVectorsRed = hessianRed.EigenVectors(eigenValuesRed);
+
+	vector<pair<TVectorT<double>, double> > eigen;
+	{
+		for (unsigned int i = 0; i < _nmbPars - _nmbParsFixed; ++i) {
+			const TVectorT<double> eigenVectorRed(TMatrixTColumn_const<double>(eigenVectorsRed, i));
+			TVectorT<double> eigenVector(_nmbPars);
+
+			unsigned int jSkip = 0;
+			for (unsigned int j = 0; j < _nmbPars; ++j) {
+				if (_parFixed[j]) {
+					jSkip++;
+					eigenVector[j] = 0.;
+				} else {
+					eigenVector[j] = eigenVectorRed[j - jSkip];
+				}
+			}
+
+			eigen.push_back(make_pair(eigenVector, eigenValuesRed[i]));
+		}
+	}
+	return eigen;
+}
+
+
 /// calculates covariance matrix of function at point defined by par
 template<typename complexT>
 TMatrixT<double>

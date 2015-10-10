@@ -44,9 +44,8 @@
 #include "boost/tuple/tuple.hpp"
 
 #include "Math/IFunction.h"
-#include "TFile.h"
-#include "TH1.h"
 #include "TMatrixT.h"
+#include "TVectorT.h"
 
 #include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
@@ -132,6 +131,8 @@ namespace rpwa {
 
 		/// calculates Hessian of function at point defined by par
 		TMatrixT<double> Hessian(const double* par) const;
+		/// calculates eigenvectors/-values of Hessian
+		std::vector<std::pair<TVectorT<double>, double> > HessianEigenVectors(const TMatrixT<double>& hessian) const;
 
 		/// calculates covariance matrix of function at point defined by par
 		TMatrixT<double> CovarianceMatrix(const double* par) const;
