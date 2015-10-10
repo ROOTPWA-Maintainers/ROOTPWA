@@ -115,6 +115,10 @@ if __name__ == "__main__":
 	if args.verbose:
 		covMatrix.Print()
 
+	oldCovMatrix = result.fitParCovMatrix()
+	if oldCovMatrix.GetNcols() > 0 and oldCovMatrix.GetNrows() > 0:
+		pyRootPwa.utils.printWarn("fit result from input already has a covariance matrix. it will be overwritten.")
+
 	newResult = pyRootPwa.core.fitResult()
 	newResult.fill(result.nmbEvents(),
 	               result.normNmbEvents(),
