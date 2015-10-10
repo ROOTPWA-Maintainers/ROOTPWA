@@ -145,6 +145,12 @@ void rpwa::py::exportRootConverters() {
 		, bp::return_internal_reference<1>()
 	);
 
+	bp::def("__RootConverters_convertToPy_TVectorD", &rpwa::py::convertToPy<TVectorT<double> >);
+	bp::def(
+		"__RootConverters_convertFromPy_TVectorD", &rpwa::py::convertFromPy<TVectorT<double>*>
+		, bp::return_internal_reference<1>()
+	);
+
 	bp::def(
 		"__RootConverters_convertFromPy_TFile", &rpwa::py::convertFromPy<TFile*>
 		, bp::return_internal_reference<1>()
