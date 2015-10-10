@@ -71,8 +71,21 @@ if __name__ == "__main__":
 		parName = likelihood.parName(i);
 		pars.append(result.fitParameter(parName))
 
-	covMatrix = likelihood.CovarianceMatrix(pars)
+	# analytically calculate Hessian
+	hessian = likelihood.Hessian(pars)
+	# calculate and check eigenvalues
+	eigenVectors = likelihood.HessianEigenVectors(hessian)
 	if args.verbose:
+		pyRootPwa.utils.printInfo("eigenvalues of (analytic) Hessian:")
+	for i in xrange(len(eigenVectors)):
+		if args.verbose:
+			print("    {: .15e}".format(eigenVectors[i][1]))
+		if eigenVectors[i][1] <= 0:
+			pyRootPwa.utils.printWarn("eigenvalue {:d} of Hessian is not positive ({: .15e}).".format(i, eigenVectors[i][1]))
+
+	covMatrix = likelihood.CovarianceMatrix(hessian)
+	if args.verbose:
+		pyRootPwa.utils.printInfo("(analytic) covariance matrix:")
 		covMatrix.Print()
 
 	oldCovMatrix = result.fitParCovMatrix()
