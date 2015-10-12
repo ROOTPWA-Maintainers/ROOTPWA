@@ -4,7 +4,7 @@ from _progressBar import progressBar
 from _silencer import silencer
 from _binningMapFromArgList import binningMapFromArgList
 from _fitTreeUtils import getFitResultDict, getBestFitResults
-from _waveDescThresUtils import getWaveDescThresFromWaveList
+from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList
 
 del _printingUtils
 del _progressBar

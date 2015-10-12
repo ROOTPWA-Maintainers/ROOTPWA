@@ -28,28 +28,6 @@ def getFitResultFromFile(fitResultFileName):
 	return result
 
 
-def getWaveDescThresFromFitResult(fitResult, keyFiles):
-	waveDescThres = []
-	for waveName in fitResult.waveNames():
-		if waveName == "flat":
-			continue
-
-		waveDesc = waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(keyFiles[waveName][0])[keyFiles[waveName][1]]
-
-		thresholded = True
-		for prodAmpIndex in xrange(fitResult.nmbProdAmps()):
-			if fitResult.waveNameForProdAmp(prodAmpIndex) == waveName:
-				if fitResult.prodAmp(prodAmpIndex) != 0.:
-					tresholded = False
-
-		threshold = 0.
-		if thresholded:
-			treshold = 1.1 * fitResult.massBinCenter()
-
-		waveDescThres.append( (waveName, waveDesc, threshold) )
-	return waveDescThres
-
-
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
@@ -90,7 +68,7 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not get fit result from file '" + args.inputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	waveDescThres = getWaveDescThresFromFitResult(result, fileManager.getKeyFiles())
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getKeyFiles())
 	if not waveDescThres:
 		pyRootPwa.utils.printErr("error while getting wave names, descriptions and thresholds. Aborting...")
 		sys.exit(1)

@@ -2,6 +2,28 @@
 import pyRootPwa.core
 import pyRootPwa.utils
 
+def getWaveDescThresFromFitResult(fitResult, keyFiles):
+	waveDescThres = []
+	for waveName in fitResult.waveNames():
+		if waveName == "flat":
+			continue
+
+		waveDesc = waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(keyFiles[waveName][0])[keyFiles[waveName][1]]
+
+		thresholded = True
+		for prodAmpIndex in xrange(fitResult.nmbProdAmps()):
+			if fitResult.waveNameForProdAmp(prodAmpIndex) == waveName:
+				if fitResult.prodAmp(prodAmpIndex) != 0.:
+					tresholded = False
+
+		threshold = 0.
+		if thresholded:
+			treshold = 1.1 * fitResult.massBinCenter()
+
+		waveDescThres.append( (waveName, waveDesc, threshold) )
+	return waveDescThres
+
+
 def getWaveDescThresFromWaveList(waveListFileName, keyFiles):
 	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
 	          + "'" + waveListFileName + "'.")
