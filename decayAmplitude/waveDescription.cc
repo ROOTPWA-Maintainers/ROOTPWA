@@ -158,8 +158,8 @@ namespace {
 
 			for (size_t bin=0; bin<binning.size()-1; ++bin) {
 				parent.add(binningName,libconfig::Setting::TypeList);
-				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin];
-				parent[binningName].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin];
+				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin+1];
 
 				configPtr newConfig(new libconfig::Config);
 				copyConfig(*config, *newConfig, waveDescription::debug());

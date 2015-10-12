@@ -114,7 +114,7 @@ namespace rpwa {
 				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
-		libconfig::Setting& groupKey = parent[groupName];
+		libconfig::Setting& groupKey = parent[groupName.c_str()];
 		// check that it is a group
 		if (not groupKey.isGroup()) {
 			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "

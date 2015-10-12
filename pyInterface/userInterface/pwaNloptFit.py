@@ -23,7 +23,7 @@ if __name__ == "__main__":
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-S", type=str, metavar="path", dest="startValFileName", default="", help="path to start value fit result file (default: none)")
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
-	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from acceptance integral file)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
@@ -100,9 +100,9 @@ if __name__ == "__main__":
 	nmbBytes = tree.Write()
 	outputFile.Close()
 	if nmbBytes == 0:
-		printErr("problems writing integral to TKey 'fitResult' "
+		printErr("problems writing fit result to TKey 'fitResult' "
 		       + "in file '" + args.outputFileName + "'")
 		sys.exit(1)
 	else:
-		printSucc("wrote integral to TKey 'fitResult' "
+		printSucc("wrote fit result to TKey 'fitResult' "
 		        + "in file '" + args.outputFileName + "'")

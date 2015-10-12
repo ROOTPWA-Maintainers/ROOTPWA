@@ -6,9 +6,10 @@ from _fileManager import fileManager
 from _fileManager import saveFileManager
 from _fileManager import loadFileManager
 from amplitude import calcAmplitude
-from integrals import calcIntegrals
 from fit import pwaFit
 from fit import pwaNloptFit
+from integrals import calcIntegrals
+from likelihood import initLikelihood
 
 del _config
 del _fileManager

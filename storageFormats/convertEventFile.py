@@ -17,8 +17,10 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="convert event file")
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format without meta data")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="input file in ROOTPWA format with meta data")
-	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
+	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100'). " +
 	                                                             "You can use the argument multiple times for multiple binning variables")
+	parser.add_argument("-a", "--variable", action='append', help="add an additional variable to import from the old tree. " +
+	                                                              "You can use the argument multiple times for multiple binning variables")
 	parser.add_argument("-l", type=str, metavar="string", dest="userString", help="label which is saved to the metadata (default: output file name)")
 	parser.add_argument("-t", type=str, metavar="eventsType", dest="eventsType", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
@@ -59,6 +61,8 @@ if __name__ == "__main__":
 	if not binningMap:
 		printWarn("received no valid binning map argument")
 
+	additionalVars = [] if not args.variable else args.variable
+
 	fileWriter = pyRootPwa.core.eventFileWriter()
 	fileWriter.initialize(outputFile,
 	                      userString,
@@ -66,7 +70,7 @@ if __name__ == "__main__":
 	                      initialStateParticleNames,
 	                      finalStateParticleNames,
 	                      binningMap,
-	                      [])
+	                      additionalVars)
 
 	inputTree = inputFile.Get(inTreeName)
 	progressBar = pyRootPwa.utils.progressBar(0, inputTree.GetEntries(), sys.stdout)
@@ -79,7 +83,10 @@ if __name__ == "__main__":
 		finalStateMomenta = []
 		for particle in event.__getattr__(decayKinMomentaLeafName):
 			finalStateMomenta.append(ROOT.TVector3(particle))
-		fileWriter.addEvent(initialStateMomenta, finalStateMomenta)
+		variables = []
+		for variable in additionalVars:
+			variables.append(event.__getattr__(variable))
+		fileWriter.addEvent(initialStateMomenta, finalStateMomenta, variables)
 		progressBar.update(i)
 		i += 1
 
