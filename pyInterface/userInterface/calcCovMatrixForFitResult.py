@@ -8,26 +8,6 @@ import pyRootPwa.core
 ROOT = pyRootPwa.ROOT
 
 
-def getFitResultFromFile(fitResultFileName):
-	fitResultFile = ROOT.TFile.Open(fitResultFileName, "READ")
-	if not fitResultFile:
-		pyRootPwa.utils.printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
-		return None
-	fitResultTree = fitResultFile.Get("pwa")
-	result = pyRootPwa.core.fitResult()
-	result.setBranchAddress(fitResultTree, "fitResult_v2")
-	if fitResultTree.GetEntries() != 1:
-		pyRootPwa.utils.printErr("More than one fit result in TTree, somebody should probably implement this properly...")
-		fitResultFile.Close()
-		return None
-	fitResultTree.GetEntry(0)
-	if not result.converged():
-		pyRootPwa.utils.printErr("Fit not converged for fit result file '" + fitResultFileName + "'.")
-		fitResultFile.Close()
-		return None
-	return result
-
-
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
@@ -63,7 +43,9 @@ if __name__ == "__main__":
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
 
-	result = getFitResultFromFile(args.inputFileName)
+	result = pyRootPwa.utils.getFitResultFromFile(fitResultFileName = args.inputFileName,
+	                                              fitResultTreeName = config.fitResultTreeName,
+	                                              fitResultBranchName = config.fitResultBranchName)
 	if not result:
 		pyRootPwa.utils.printErr("could not get fit result from file '" + args.inputFileName + "'. Aborting...")
 		sys.exit(1)

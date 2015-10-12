@@ -13,28 +13,6 @@ import pyRootPwa.core
 def norm(c):
 	return (c.real*c.real + c.imag*c.imag)
 
-def getBestFitResult(massBinCenter, fitResultTree):
-	fitResult = pyRootPwa.core.fitResult()
-	fitResult.setBranchAddress(fitResultTree, config.fitResultBranchName)
-	bestIndex = 0
-	bestMass = 0.
-	bestLikeli = 0.
-	for i in range(fitResultTree.GetEntries()):
-		fitResultTree.GetEntry(i)
-		mass = fitResult.massBinCenter()
-		likeli = fitResult.logLikelihood()
-		if i == 0 or abs(massBinCenter - mass) < abs(massBinCenter - bestMass):
-			bestIndex = i
-			bestMass = mass
-			bestLikeli = likeli
-		elif abs(massBinCenter - mass) == abs(massBinCenter - bestMass):
-			if likeli < bestLikeli:
-				bestIndex = i
-				bestMass = mass
-				bestLikeli = likeli
-	fitResultTree.GetEntry(bestIndex)
-	return pyRootPwa.core.fitResult(fitResult)
-
 
 if __name__ == "__main__":
 
@@ -104,19 +82,17 @@ if __name__ == "__main__":
 		printErr("could not initialize generator. Aborting...")
 		sys.exit(1)
 
-	fitResultFile = pyRootPwa.ROOT.TFile.Open(args.fitResult, "READ")
-	if not fitResultFile:
-		printErr("could not open fit result file. Aborting...")
-		sys.exit(1)
-	fitResultTree = fitResultFile.Get(config.fitResultTreeName)
-	if not fitResultTree:
-		printErr("could not find fit result tree '" + config.fitResultTreeName +
-		         "' in file '" + args.fitResult + "'. Aborting...")
-		sys.exit(1)
 	massRange = generatorManager.getGenerator().getTPrimeAndMassPicker().massRange()
 	# unit of mass is GeV in generator, and MeV in the fit result
 	massBinCenter = 1000. * (massRange[0] + massRange[1]) / 2.
-	fitResult = getBestFitResult(massBinCenter, fitResultTree)
+	fitResult = pyRootPwa.utils.getBestFitResultFromFile(fitResultFileName = args.fitResult,
+	                                                     massBinCenter = massBinCenter,
+	                                                     fitResultTreeName = config.fitResultTreeName,
+	                                                     fitResultBranchName = config.fitResultBranchName)
+	if not fitResult:
+		printErr("could not find fit result in file '" + args.fitResult +
+		         "' for mass bin " + str(massBinCenter) + ". Aborting...")
+		sys.exit(1)
 
 	waveDescriptions = []
 	amplitudes = []
