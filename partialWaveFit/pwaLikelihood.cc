@@ -47,6 +47,7 @@
 #include "TTree.h"
 
 #include "amplitudeMetadata.h"
+#include "eventMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "complexMatrix.h"
 #include "conversionUtils.hpp"
@@ -707,7 +708,7 @@ pwaLikelihood<complexT>::Hessian
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
-						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave){
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
 							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][0]);
 							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][1]);
 							hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2] = sum(hessianAcc[iRank][iRefl][iWave][jRank][jRefl][jWave][2]);
@@ -833,7 +834,7 @@ pwaLikelihood<complexT>::Hessian
 
 /// calculates eigenvectors/-values of Hessian
 template<typename complexT>
-std::vector<std::pair<TVectorT<double>, double> >
+vector<pair<TVectorT<double>, double> >
 pwaLikelihood<complexT>::HessianEigenVectors(const TMatrixT<double>& hessian) const
 {
 	// reduce Hessian matrix by removing the rows and columns corresponding
@@ -1081,75 +1082,152 @@ pwaLikelihood<complexT>::addAccIntegral(ampIntegralMatrix& accMatrix,
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::addAmplitude(const amplitudeMetadata& meta)
+pwaLikelihood<complexT>::addAmplitude(const vector<const amplitudeMetadata*> &ampMetas)
 {
 	if (not _accIntAdded) {
-		printErr << "acceptance integral not added!" << endl
-		         << "call pwaLikelihood::addAccIntegral() before pwaLikelihood::addAmplitude()" << endl
+		printErr << "no acceptance integral found. "
+		         << "Call pwaLikelihood::addAccIntegral() before pwaLikelihood::addAmplitude(). "
 		         << "Aborting..." << endl;
 		return false;
 	}
-
-	const string waveName = meta.objectBaseName();
+	if (ampMetas.size() == 0) {
+		printErr << "no amplitudeMetadata given. Aborting..." << endl;
+		return false;
+	}
+	for (size_t iAmpMeta = 0; iAmpMeta < ampMetas.size(); ++iAmpMeta) {
+		if (not ampMetas[iAmpMeta]) {
+			printErr << "amplitudeMetadata metas[" << iAmpMeta << "] not valid. Aborting..." << endl;
+			return false;
+		}
+	}
+	const string& waveName = ampMetas[0]->objectBaseName();
+	for (size_t iAmpMeta = 0;iAmpMeta < ampMetas.size(); ++iAmpMeta) {
+		if (ampMetas[iAmpMeta]->objectBaseName() != waveName) {
+			printErr << "wave names in different amplitude metadatas do not match. Aborting..." << endl;
+			return false;
+		}
+	}
 	if (_waveParams.count(waveName) == 0) {
 		printErr << "requested to add decay amplitudes for wave '" << waveName << "' which is not in wavelist. Aborting..." << endl;
 		return false;
 	}
+
+	// counting all events
+	const bool onTheFlyBinning = not _eventFileProperties.empty();
+	size_t totalEvents = 0;
+	for (size_t iAmpMeta = 0; iAmpMeta < ampMetas.size(); ++iAmpMeta) {
+		if (onTheFlyBinning) {
+			const vector<eventMetadata>& evtMetas = ampMetas[iAmpMeta]->eventMetadata();
+			for (size_t iEvtMeta = 0; iEvtMeta < evtMetas.size(); ++iEvtMeta) {
+				totalEvents += _eventFileProperties[evtMetas[iEvtMeta].contentHash()].second.size();
+			}
+		} else {
+			totalEvents += ampMetas[iAmpMeta]->amplitudeTree()->GetEntriesFast();
+		}
+	}
+	if (totalEvents == 0) {
+		printErr << "no events to load. Aborting..." << endl;
+		return false;
+	}
+
+	{
+		// check ordering of event files
+		const bool eventFileHashOrderWasEmpty = _eventFileHashOrder.empty();
+		size_t runningEventFileIndex = 0;
+		for(size_t iAmpMeta = 0; iAmpMeta < ampMetas.size(); ++iAmpMeta) {
+			const amplitudeMetadata* ampMeta = ampMetas[iAmpMeta];
+			for(size_t iEvtMeta = 0; iEvtMeta < ampMeta->eventMetadata().size(); ++iEvtMeta) {
+				const string& eventFileHash = ampMeta->eventMetadata()[iEvtMeta].contentHash();
+				if(eventFileHashOrderWasEmpty) {
+					_eventFileHashOrder.push_back(eventFileHash);
+				} else {
+					if (runningEventFileIndex >= _eventFileHashOrder.size() or _eventFileHashOrder[runningEventFileIndex] != eventFileHash) {
+						printErr << "order of event files differs between corresponding amplitude files. Aborting..." << endl;
+						return false;
+					}
+					++runningEventFileIndex;
+				}
+				if(onTheFlyBinning) {
+					if(_eventFileProperties.count(eventFileHash) == 0) {
+						printErr << "event file hash from amplitude metadata not in "
+						         << "on-the-fly binning information. Aborting..." << endl;
+						return false;
+					}
+				}
+			}
+		}
+	}
+
+	vector<complexT> amps(totalEvents);
+	size_t eventCount = 0; // Running count for event number over all single files
+	for (size_t iAmpMeta = 0; iAmpMeta < ampMetas.size(); ++iAmpMeta) {
+		const amplitudeMetadata* ampMeta = ampMetas[iAmpMeta];
+		// connect tree leaf
+		amplitudeTreeLeaf* ampTreeLeaf = 0;
+		ampMeta->amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
+		if (not ampTreeLeaf) {
+			printWarn << "null pointer to amplitude leaf. Aborting..." << endl;
+			return false;
+		}
+
+		if (onTheFlyBinning) {
+			size_t skipEvents  = 0;
+			for(size_t iEvtMeta = 0; iEvtMeta < ampMeta->eventMetadata().size(); ++iEvtMeta) {
+				const string& eventFileHash = ampMeta->eventMetadata()[iEvtMeta].contentHash();
+				const vector<size_t>& entriesInBin = _eventFileProperties[eventFileHash].second;
+				for(size_t iEvent = 0; iEvent < entriesInBin.size(); ++iEvent, ++eventCount) {
+					ampMeta->amplitudeTree()->GetEntry(skipEvents + entriesInBin[iEvent]);
+					assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+					complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+					amps[eventCount] = amp;
+				}
+				skipEvents += _eventFileProperties[eventFileHash].first;
+			}
+		} else {
+			for(long iEvent = 0; iEvent < ampMeta->amplitudeTree()->GetEntriesFast(); ++iEvent, ++eventCount) {
+				ampMeta->amplitudeTree()->GetEntry(iEvent);
+				assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+				complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+				amps[eventCount] = amp;
+			}
+		}
+	}
+
+	if (_nmbEvents == 0) {
+		// first amplitude file read
+		_nmbEvents = totalEvents;
+		_decayAmps[0].resize(extents[_nmbEvents][_nmbWavesRefl[0]]);
+		_decayAmps[1].resize(extents[_nmbEvents][_nmbWavesRefl[1]]);
+	}
+	if (totalEvents != _nmbEvents) {
+		printWarn << "size mismatch in amplitude files: this file contains " << totalEvents
+		          << " events, previous file had " << _nmbEvents << " events." << endl;
+		return false;
+	}
+
 	const unsigned int refl = _waveParams[waveName].first;
 	const unsigned int waveIndex = _waveParams[waveName].second;
 
 	// get normalization
 	const complexT normInt = _normMatrix[refl][waveIndex][refl][waveIndex];
 
-	// connect tree leaf
-	amplitudeTreeLeaf* ampTreeLeaf = 0;
-	meta.amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
-	vector<complexT> amps;
-	for (long int eventIndex = 0; eventIndex < meta.amplitudeTree()->GetEntriesFast(); ++eventIndex) {
-		meta.amplitudeTree()->GetEntry(eventIndex);
-		if (!ampTreeLeaf) {
-			printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
-			          << "skipping." << endl;
-			continue;
-		}
-		assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
-		complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
+	// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
+	// this index scheme ensures a more linear memory access pattern in the likelihood function
+	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 		if (_useNormalizedAmps) {  // normalize data, if option is switched on
-			if (normInt == (value_type)0. && amp != (value_type)0.) {
+			if (normInt == (value_type)0. && amps[iEvt] != (value_type)0.) {
 				printErr << "normalization integral for wave '" << waveName << "' is zero, but the amplitude is not. Aborting...";
 				return false;
 			}
 			if (normInt != (value_type)0.)
-				amp /= sqrt(normInt.real());  // rescale decay amplitude
+				amps[iEvt] /= sqrt(normInt.real());  // rescale decay amplitude
 		}
-		amps.push_back(amp);
-	}
-
-	unsigned int nmbEvents = amps.size();
-	if (nmbEvents == 0) {
-		printErr << "could not read amplitudes for wave '" << waveName << "'. Aborting..." << endl;
-		return false;
-	}
-	if (_nmbEvents == 0) {
-		// first amplitude file read
-		_nmbEvents = nmbEvents;
-		_decayAmps[0].resize(extents[_nmbEvents][_nmbWavesRefl[0]]);
-		_decayAmps[1].resize(extents[_nmbEvents][_nmbWavesRefl[1]]);
-	}
-	if (nmbEvents != _nmbEvents) {
-		printWarn << "size mismatch in amplitude files: this file contains " << nmbEvents
-		          << " events, previous file had " << _nmbEvents << " events." << endl;
-		return false;
-	}
-
-	// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
-	// this index scheme ensures a more linear memory access pattern in the likelihood function
-	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 		_decayAmps[refl][iEvt][waveIndex] = amps[iEvt];
+	}
 
 	_waveAmpAdded[refl][waveIndex] = true; // note that this amplitude has been added to the likelihood
 
-	printInfo << "read decay amplitudes of " << nmbEvents << " events for wave '" << waveName << "' into memory" << endl;
+	printInfo << "read decay amplitudes of " << totalEvents << " events for wave '" << waveName << "' into memory" << endl;
 	return true;
 }
 
@@ -1225,6 +1303,50 @@ pwaLikelihood<complexT>::finishInit()
 #endif
 
 	_initFinished = true;
+	return true;
+}
+
+
+template<typename complexT>
+bool
+pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, double> >& binningMap,
+                                            const vector<const eventMetadata*>        evtMetas)
+{
+	for (size_t metaIndex = 0; metaIndex < evtMetas.size(); ++metaIndex) {
+		const eventMetadata* evtMeta = evtMetas[metaIndex];
+		if (not evtMeta) {
+			printErr << "eventMetadata not set. Aborting..." << endl;
+			return false;
+		}
+		const string& evtHash = evtMeta->contentHash();
+		map<string, double> binningVariables;
+		typedef map<string, pair<double, double> >::const_iterator it_type;
+		for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+			const string& additionalVar = iterator->first;
+			binningVariables.insert(pair<string, double>(additionalVar, 0.));
+			evtMeta->eventTree()->SetBranchAddress(additionalVar.c_str(), &binningVariables[additionalVar]);
+		}
+		vector<size_t> eventIndices;
+		for (long eventIndex = 0; eventIndex < evtMeta->eventTree()->GetEntriesFast(); ++eventIndex) {
+			evtMeta->eventTree()->GetEntry(eventIndex);
+			bool useEvent = true;
+			for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+				const string& additionalVar = iterator->first;
+				const double& lowerBound = iterator->second.first;
+				const double& upperBound = iterator->second.second;
+				const double& binVarValue = binningVariables[additionalVar];
+				if (binVarValue < lowerBound or binVarValue >= upperBound) {
+					useEvent = false;
+					break;
+				}
+			}
+			if (useEvent) {
+				eventIndices.push_back(eventIndex);
+			}
+		}
+		printInfo << "found " << eventIndices.size() << " of " << evtMeta->eventTree()->GetEntriesFast() << " in the event file to be in given bin." << endl;
+		_eventFileProperties[evtHash] = pair<size_t, vector<size_t> >(evtMeta->eventTree()->GetEntriesFast(), eventIndices);
+	}
 	return true;
 }
 

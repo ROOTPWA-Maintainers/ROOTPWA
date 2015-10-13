@@ -38,6 +38,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 #define BOOST_DISABLE_ASSERTS
 #include "boost/multi_array.hpp"
@@ -58,6 +59,7 @@ namespace rpwa {
 
 
 	class complexMatrix;
+	class eventMetadata;
 
 
 	template<typename complexT>  // type of internal variables used for intermediate results
@@ -179,9 +181,12 @@ namespace rpwa {
 
 		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, unsigned int accEventsOverride = 0);
 
-		bool addAmplitude(const rpwa::amplitudeMetadata& meta);
+		bool addAmplitude(const std::vector<const rpwa::amplitudeMetadata*> &meta);
 
 		bool finishInit();
+
+		bool setOnTheFlyBinning(const std::map<std::string, std::pair<double, double> >& binningMap,
+		                        const std::vector<const eventMetadata*>                  evtMeta);
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,
@@ -273,6 +278,8 @@ namespace rpwa {
 
 		mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
 
+		std::vector<std::string> _eventFileHashOrder;
+		std::map<std::string, std::pair<size_t, std::vector<size_t> > > _eventFileProperties;
 	};
 
 

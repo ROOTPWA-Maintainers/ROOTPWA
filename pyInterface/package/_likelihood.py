@@ -36,7 +36,7 @@ def initLikelihood(waveDescThres,
 	normIntFile.Close()
 	accIntFile = ROOT.TFile.Open(accIntegralFileName, "READ")
 	if len(accIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
+		pyRootPwa.utils.printWarn("'" + accIntegralFileName + "' does not contain exactly one TKey.")
 		return None
 	accIntMatrix = accIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
 	if (not likelihood.addAccIntegral(accIntMatrix, accEventsOverride)):
@@ -55,7 +55,7 @@ def initLikelihood(waveDescThres,
 		if not meta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return None
-		if (not likelihood.addAmplitude(meta)):
+		if (not likelihood.addAmplitude([meta])):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return None
 	if (not likelihood.finishInit()):
