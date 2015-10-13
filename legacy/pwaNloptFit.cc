@@ -361,7 +361,7 @@ main(int    argc,
 			exit(1);
 		}
 
-		if (not L.addAmplitude(*ampMeta)) {
+		if (not L.addAmplitude(std::vector<const amplitudeMetadata*>(1, ampMeta))) {
 			printErr << "error while adding amplitude of wave '" << waveName << "' to likelihood function. Aborting..." << endl;
 			exit(1);
 		}
