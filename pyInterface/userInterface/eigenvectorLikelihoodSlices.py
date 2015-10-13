@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import math
 import sys
 
 import pyRootPwa
@@ -66,66 +67,88 @@ if __name__ == "__main__":
 	                                      rank = result.rank(),
 	                                      verbose = args.verbose)
 
-	pars = []
+	minimum = ROOT.TVectorD(likelihood.nmbPars())
 	for i in range(likelihood.nmbPars()):
 		parName = likelihood.parName(i);
-		pars.append(result.fitParameter(parName))
+		minimum[i] = result.fitParameter(parName)
 
-	# analytically calculate Hessian
-	hessian = likelihood.Hessian(pars)
-	# calculate and check eigenvalues
-	eigenVectors = likelihood.HessianEigenVectors(hessian)
-	if args.verbose:
-		pyRootPwa.utils.printInfo("eigenvalues of (analytic) Hessian:")
-	for i in xrange(len(eigenVectors)):
-		if args.verbose:
-			print("    {: .15e}".format(eigenVectors[i][1]))
-		if eigenVectors[i][1] <= 0:
-			pyRootPwa.utils.printWarn("eigenvalue {:d} of Hessian is not positive ({: .15e}).".format(i, eigenVectors[i][1]))
+	minimumLikelihood = likelihood.DoEval( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
+	pyRootPwa.utils.printInfo("likelihood at minimum is {: .15e}.".format(minimumLikelihood))
 
-	covMatrix = likelihood.CovarianceMatrix(hessian)
-	if args.verbose:
-		pyRootPwa.utils.printInfo("(analytic) covariance matrix:")
-		covMatrix.Print()
+	covMatrixMinuit = result.fitParCovMatrix()
+	eigenVectorsMinuit = likelihood.HessianEigenVectors(covMatrixMinuit)
 
-	oldCovMatrix = result.fitParCovMatrix()
-	if oldCovMatrix.GetNcols() > 0 and oldCovMatrix.GetNrows() > 0:
-		pyRootPwa.utils.printWarn("fit result from input already has a covariance matrix. it will be overwritten.")
+	covMatrixAna = likelihood.CovarianceMatrix( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
+	eigenVectorsAna = likelihood.HessianEigenVectors(covMatrixAna)
 
-	newResult = pyRootPwa.core.fitResult()
-	newResult.fill(result.nmbEvents(),
-	               result.normNmbEvents(),
-	               result.massBinCenter(),
-	               result.logLikelihood(),
-	               result.rank(),
-	               result.prodAmps(),
-	               result.prodAmpNames(),
-	               covMatrix,
-	               result.fitParCovIndices(),
-	               result.normIntegralMatrix(),
-	               result.acceptedNormIntegralMatrix(),
-	               result.phaseSpaceIntegralVector(),
-	               result.converged(),
-	               True)
-	valTreeName   = "pwa"
-	valBranchName = "fitResult_v2"
-	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
+	if len(eigenVectorsMinuit) != len(eigenVectorsMinuit):
+		pyRootPwa.utils.printErr("different number of Eigenvalues for covariance matrix of Minuit vs. analytic covariance matrix.")
+		sys.exit(1)
+
+	outputFile = ROOT.TFile.Open(args.outputFileName, "NEW")
 	if ((not outputFile) or outputFile.IsZombie()):
 		pyRootPwa.utils.printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
-	pyRootPwa.utils.printInfo("file '" + args.outputFileName + "' is empty. "
-	        + "creating new tree '" + valTreeName + "' for PWA result.")
-	tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
-	if not newResult.branch(tree, valBranchName):
-		pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + args.outputFileName + "'.")
-		sys.exit(1)
-	tree.Fill()
-	nmbBytes = tree.Write()
+
+	for par in xrange(len(eigenVectorsMinuit)):
+		# The idea here is to scan the logLikelihood function from the
+		# minimum in direction of the Eigenvectors.
+		#
+		# Around the minimum p the logLikelihood can be expanded as a
+		# Taylor series:
+		#
+		# -logL(p+dp) = -logL(p) + dp^T * grad(-logL(x))|x=p + 1/2 * dp^T * hesse(-logL(x))|x=p * dp
+		#
+		# The second summand should be equal to zero at the minimum.
+		# It is assumed that the Hessian matrix of -logL is the
+		# inverse of the covariance matrix
+		#
+		# hesse(-logL(x))|x=p = C^-1
+		#
+		# Eigenvectors of the covariance matrix then are also
+		# Eigenvectors of the Hessian matrix, albeit with inverse
+		# Eigenvalues. If e is an Eigenvector of the covariance matrix
+		# with Eigenvalue l
+		#
+		# C * e = l * e
+		#
+		# then
+		#
+		# hesse(-logL(x))|x=p * e = 1/l * e
+		#
+		# We now write dp = r * sqrt(l) * e where r in the following
+		# is varied between -1 and +1. For a logLikelihood behaving
+		# nicely we then should find the parabola
+		#
+		# -logL(p+dp) = -logL(p) + 1/2 * r^2
+		#
+		# This ideal parabola is drawn for a x between -sqrt(l) and
+		# +sqrt(l) using x = r * sqrt(l).
+
+		graphLikeli = ROOT.TGraph()
+		for p in xrange(-50, 51):
+			ratio = (p/50.0) * math.sqrt(eigenVectorsMinuit[par][1])
+			pars = minimum + ratio * eigenVectorsMinuit[par][0]
+			likeli = likelihood.DoEval( [ pars[i] for i in xrange(pars.GetNrows()) ] ) - minimumLikelihood
+			graphLikeli.SetPoint(p + 50, ratio, likeli)
+
+		lowerLimit = -1.2 * math.sqrt(eigenVectorsMinuit[par][1]);
+		upperLimit =  1.2 * math.sqrt(eigenVectorsMinuit[par][1]);
+
+		# the magnitude of the eigenvector is 1. otherwise an
+		# additional factor '|eigenvector|^2' would be required
+		parabolaMinuit = ROOT.TF1("minuitParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsMinuit[par][1]), lowerLimit, upperLimit)
+		parabolaAna = ROOT.TF1("analyticParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsAna[par][1]), lowerLimit, upperLimit);
+
+		canvas = ROOT.TCanvas("eigenvectorSlice{:d}".format(par))
+		canvas.cd();
+		graphLikeli.Draw("A*");
+		parabolaMinuit.Draw("Lsame");
+		parabolaMinuit.SetLineColor(ROOT.kBlue);
+		parabolaAna.Draw("Lsame");
+		parabolaAna.SetLineColor(ROOT.kRed);
+		canvas.Write();
+
 	outputFile.Close()
-	if nmbBytes == 0:
-		pyRootPwa.utils.printErr("problems writing fit result to TKey 'fitResult' "
-		       + "in file '" + args.outputFileName + "'")
-		sys.exit(1)
-	else:
-		pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
-		        + "in file '" + args.outputFileName + "'")
+	pyRootPwa.utils.printSucc("slices successfully written to file '{}'.".format(args.outputFileName))
+	pyRootPwa.utils.printInfo("setting Minuit line color to blue, analytical solution to red.")

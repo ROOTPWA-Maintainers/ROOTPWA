@@ -6,36 +6,6 @@ import sys
 import pyRootPwa
 import pyRootPwa.core
 
-def readWaveList(waveListFileName):
-	pyRootPwa.utils.printInfo("reading amplitude names and thresholds from wave list file "
-	                        + "'" + waveListFileName + "'.")
-	try:
-		with open(waveListFileName, 'r') as waveListFile:
-			waveNamesFromWavelist = []
-			waveThresholds = []
-			lineNmb = 0
-			for line in waveListFile:
-				if (line[0] == '#'):  # comments start with #
-					continue
-				line = line.replace('\n', '')
-				lineArray = line.split(" ")
-				if(len(lineArray) >= 1 and len(lineArray) <= 2):
-					waveName = lineArray[0]
-					if(len(lineArray) == 1):
-						threshold = 0
-					else:
-						threshold = lineArray[1]
-					waveNamesFromWavelist.append(waveName)
-					waveThresholds.append(float(threshold))
-				else:
-					pyRootPwa.utils.printWarn("cannot parse line '" + line + "' in wave list file "
-					                        + "'" + waveListFileName + "'.")
-				lineNmb += 1
-	except IOError:
-		pyRootPwa.utils.printError("cannot open file '" + waveListFileName + "'. Aborting...")
-		sys.exit(1)
-	pyRootPwa.utils.printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
-	return (waveNamesFromWavelist, waveThresholds)
 
 if __name__ == "__main__":
 
@@ -72,7 +42,7 @@ if __name__ == "__main__":
 
 	waveList = []
 	if not args.wavelistFileName == "":
-		(waveList, waveThresholds) = readWaveList(args.wavelistFileName)
+		waveList = [ i[0] for i in pyRootPwa.utils.getWaveDescThresFromWaveList(args.wavelistFileName, fileManager.getKeyFiles()) ]
 	if not args.keyfileIndex == -1:
 		allWaveNames = fileManager.getWaveNameList()
 		if not args.keyfileIndex < len(allWaveNames):

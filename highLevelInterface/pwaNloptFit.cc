@@ -193,21 +193,21 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		} else {
 			printInfo << "Likelihood unchanged at " << maxPrecisionAlign(newLikelihood) << " by flipping signs according to conventions." << endl;
 		}
+
 		if (checkHessian || not saveSpace) {
+			// analytically calculate Hessian
 			TMatrixT<double> hessian = L.Hessian(correctParams.data());
-			// create and check Hessian eigenvalues
-			TVectorT<double> eigenvalues;
-			TMatrixT<double> eigenvectors;
-			partialWaveFitHelper::getEigenvectors(L, hessian, eigenvectors, eigenvalues);
+			// calculate and check Hessian eigenvalues
+			vector<pair<TVectorT<double>, double> > eigenVectors = L.HessianEigenVectors(hessian);
 			if (not quiet) {
 				printInfo << "eigenvalues of (analytic) Hessian:" << endl;
 			}
-			for(int i=0; i<eigenvalues.GetNrows(); ++i) {
+			for(size_t i=0; i<eigenVectors.size(); ++i) {
 				if (not quiet) {
-					cout << "    " << maxPrecisionAlign(eigenvalues[i]) << endl;
+					cout << "    " << maxPrecisionAlign(eigenVectors[i].second) << endl;
 				}
-				if (eigenvalues[i] <= 0.) {
-					printWarn << "eigenvalue " << i << " of (analytic) Hessian is not positive (" << maxPrecisionAlign(eigenvalues[i]) << ")." << endl;
+				if (eigenVectors[i].second <= 0.) {
+					printWarn << "eigenvalue " << i << " of (analytic) Hessian is not positive (" << maxPrecisionAlign(eigenVectors[i].second) << ")." << endl;
 					converged = false;
 				}
 			}
