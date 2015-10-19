@@ -19,6 +19,7 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", type=str, metavar="outputFile", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
+	parser.add_argument("-s", action="store_true", dest="ranWithHesse", default=False, help="indicates that the fit result contains an analytically calculated covariance matrix")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
@@ -78,12 +79,13 @@ if __name__ == "__main__":
 	covMatrixMinuit = result.fitParCovMatrix()
 	eigenVectorsMinuit = likelihood.HessianEigenVectors(covMatrixMinuit)
 
-	covMatrixAna = likelihood.CovarianceMatrix( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
-	eigenVectorsAna = likelihood.HessianEigenVectors(covMatrixAna)
+	if not args.ranWithHesse:
+		covMatrixAna = likelihood.CovarianceMatrix( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
+		eigenVectorsAna = likelihood.HessianEigenVectors(covMatrixAna)
 
-	if len(eigenVectorsMinuit) != len(eigenVectorsMinuit):
-		pyRootPwa.utils.printErr("different number of Eigenvalues for covariance matrix of Minuit vs. analytic covariance matrix.")
-		sys.exit(1)
+		if len(eigenVectorsMinuit) != len(eigenVectorsAna):
+			pyRootPwa.utils.printErr("different number of Eigenvalues for covariance matrix of Minuit vs. analytic covariance matrix.")
+			sys.exit(1)
 
 	outputFile = ROOT.TFile.Open(args.outputFileName, "NEW")
 	if ((not outputFile) or outputFile.IsZombie()):
@@ -128,7 +130,10 @@ if __name__ == "__main__":
 		graphLikeli = ROOT.TGraph()
 		for p in xrange(-50, 51):
 			ratio = (p/50.0) * math.sqrt(eigenVectorsMinuit[par][1])
-			pars = minimum + ratio * eigenVectorsMinuit[par][0]
+			# TODO: Fix this once root get's their operators in working order
+			step = ROOT.TVectorD(eigenVectorsMinuit[par][0])
+			step *= ratio
+			pars = minimum + step
 			likeli = likelihood.DoEval( [ pars[i] for i in xrange(pars.GetNrows()) ] ) - minimumLikelihood
 			graphLikeli.SetPoint(p + 50, ratio, likeli)
 
@@ -138,15 +143,17 @@ if __name__ == "__main__":
 		# the magnitude of the eigenvector is 1. otherwise an
 		# additional factor '|eigenvector|^2' would be required
 		parabolaMinuit = ROOT.TF1("minuitParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsMinuit[par][1]), lowerLimit, upperLimit)
-		parabolaAna = ROOT.TF1("analyticParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsAna[par][1]), lowerLimit, upperLimit);
+		if not args.ranWithHesse:
+			parabolaAna = ROOT.TF1("analyticParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsAna[par][1]), lowerLimit, upperLimit);
 
 		canvas = ROOT.TCanvas("eigenvectorSlice{:d}".format(par))
 		canvas.cd();
 		graphLikeli.Draw("A*");
 		parabolaMinuit.Draw("Lsame");
 		parabolaMinuit.SetLineColor(ROOT.kBlue);
-		parabolaAna.Draw("Lsame");
-		parabolaAna.SetLineColor(ROOT.kRed);
+		if not args.ranWithHesse:
+			parabolaAna.Draw("Lsame");
+			parabolaAna.SetLineColor(ROOT.kRed);
 		canvas.Write();
 
 	outputFile.Close()
