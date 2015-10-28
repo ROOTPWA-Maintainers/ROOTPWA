@@ -20,7 +20,11 @@ namespace rpwa {
 		int setBranchAddress(T objectPtr, PyObject* pyTree, const std::string& name);
 
 		template<typename T>
-		bool branch(T objectPtr, PyObject* pyTree, const std::string& name);
+		bool branch(T objectPtr,
+		            PyObject* pyTree,
+		            const std::string& name,
+		            int bufsize = 32000,
+		            int splitlevel = 99);
 
 		template<typename T>
 		T* getFromTDirectory(PyObject* pyDir, const std::string& name);

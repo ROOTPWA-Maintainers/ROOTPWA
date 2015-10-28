@@ -2,6 +2,9 @@
 
 #include <boost/python.hpp>
 
+#include <TPython.h>
+#include <TTree.h>
+
 #include "amplitudeMetadata.h"
 #include "rootConverters_py.h"
 
@@ -30,6 +33,12 @@ namespace {
 			bp::throw_error_already_set();
 		}
 		return rpwa::amplitudeMetadata::readAmplitudeFile(inputFile, objectBaseName, quiet);
+	}
+
+	PyObject* amplitudeMetadata_amplitudeTree(rpwa::amplitudeMetadata& self)
+	{
+		TTree* tree = self.amplitudeTree();
+		return TPython::ObjectProxy_FromVoidPtr(tree, tree->ClassName());
 	}
 
 }
@@ -72,6 +81,7 @@ void rpwa::py::exportAmplitudeMetadata() {
 			, bp::return_value_policy<bp::reference_existing_object>()
 		)
 		.staticmethod("readAmplitudeFile")
+		.def("amplitudeTree", &amplitudeMetadata_amplitudeTree)
 		.def_readonly("amplitudeLeafName", &rpwa::amplitudeMetadata::amplitudeLeafName)
 		;
 

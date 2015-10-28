@@ -10,6 +10,7 @@
 
 #include<ampIntegralMatrix.h>
 #include<amplitudeMetadata.h>
+#include<amplitudeTreeLeaf.h>
 #include<pwaLikelihood.h>
 #include<fitResult.h>
 
@@ -45,8 +46,12 @@ int rpwa::py::setBranchAddress(T objectPtr, PyObject* pyTree, const std::string&
 		return tree->SetBranchAddress(name.c_str(), pointerMap[objectPtr]);
 }
 
+// explicit template instantiation
+template int rpwa::py::setBranchAddress<rpwa::fitResult*>(rpwa::fitResult* objectPtr, PyObject* pyTree, const std::string& name);
+template int rpwa::py::setBranchAddress<rpwa::amplitudeTreeLeaf*>(rpwa::amplitudeTreeLeaf* objectPtr, PyObject* pyTree, const std::string& name);
+
 template<typename T>
-bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name)
+bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name, int bufsize, int splitlevel)
 {
 		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
 		if(not tree) {
@@ -58,13 +63,17 @@ bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name)
 		{
 			pointerMap[objectPtr] = new T(objectPtr);
 		}
-		TBranch* branch = tree->Branch(name.c_str(), pointerMap[objectPtr]);
+		TBranch* branch = tree->Branch(name.c_str(), pointerMap[objectPtr], bufsize, splitlevel);
 		if (branch == 0) {
 			return false;
 		} else {
 			return true;
 		}
 }
+
+// explicit template instantiation
+template bool rpwa::py::branch<rpwa::fitResult*>(rpwa::fitResult* objectPtr, PyObject* pyTree, const std::string& name, int bufsize, int splitlevel);
+template bool rpwa::py::branch<rpwa::amplitudeTreeLeaf*>(rpwa::amplitudeTreeLeaf* objectPtr, PyObject* pyTree, const std::string& name, int bufsize, int splitlevel);
 
 namespace {
 
@@ -170,9 +179,5 @@ void rpwa::py::exportRootConverters() {
 		"__RootConverters_convertFromPy_rpwaPwaLikelihood", &rpwa::py::convertFromPy<rpwa::pwaLikelihood<std::complex<double> >* >
 		, bp::return_internal_reference<1>()
 	);
-
-	rpwa::py::setBranchAddress<rpwa::fitResult*>(0, 0, "");
-	rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>(0, 0, "");
-	rpwa::py::branch<rpwa::fitResult*>(0, 0, "");
 
 }
