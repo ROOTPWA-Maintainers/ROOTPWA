@@ -134,7 +134,6 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def("readAscii", &ampIntegralMatrix_readAscii)
 
 		.def("Write", &ampIntegralMatrix_Write, bp::arg("name")=0)
-		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::ampIntegralMatrix*>)
 		.def("getFromTDirectory", &rpwa::py::getFromTDirectory<rpwa::ampIntegralMatrix>, bp::return_value_policy<bp::manage_new_object>())
 		.staticmethod("getFromTDirectory")
 

@@ -346,7 +346,15 @@ void rpwa::py::exportFitResult() {
 
 		.def("Write", &fitResult_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>)
-		.def("branch", &rpwa::py::branch<rpwa::fitResult*>);
+		.def(
+			"branch"
+			, &rpwa::py::branch<rpwa::fitResult*>
+			, (bp::arg("fitResult"),
+			   bp::arg("tree"),
+			   bp::arg("name"),
+			   bp::arg("bufsize")=32000,
+			   bp::arg("splitlevel")=99)
+		);
 
 	bp::register_ptr_to_python<rpwa::fitResultPtr>();
 
