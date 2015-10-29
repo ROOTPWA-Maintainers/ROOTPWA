@@ -144,7 +144,7 @@ namespace rpwa {
 	             bool&                   isSingular)
 	{
 		ublas::matrix<T> inverseA(A.size1(), A.size2());
-		isSingular = !invert(A, inverseA);
+		isSingular = !invertMatrix(A, inverseA);
 		return inverseA;
 	}
 
