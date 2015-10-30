@@ -55,7 +55,7 @@ def initLikelihood(waveDescThres,
 		if not meta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return None
-		if (not likelihood.addAmplitude(meta)):
+		if (not likelihood.addAmplitude([meta])):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return None
 	if (not likelihood.finishInit()):

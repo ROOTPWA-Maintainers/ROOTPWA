@@ -55,6 +55,18 @@ namespace {
 
 
 	bool
+	pwaLikelihood_addAmplitude(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                           bp::list                                    pyMetas)
+	{
+		std::vector<const rpwa::amplitudeMetadata*> metas;
+		if (not rpwa::py::convertBPObjectToVector<const rpwa::amplitudeMetadata*>(pyMetas, metas)){
+			PyErr_SetString(PyExc_TypeError, "could not extract vector of amplitude metadata");
+			bp::throw_error_already_set();
+		}
+		return self.addAmplitude(metas);
+	}
+
+	bool
 	pwaLikelihood_addAccIntegral(rpwa::pwaLikelihood<std::complex<double> >& self,
 	                             PyObject*                                   pyAccMatrix,
 	                             const unsigned int                          accEventsOverride)
@@ -195,6 +207,26 @@ namespace {
 		return bp::list(self.CorrectParamSigns(par.data()));
 	}
 
+	bool
+	pwaLikelihood_setOnTheFlyBinning(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                                 bp::dict                                    pyBinningMap,
+	                                 bp::list                                    pyEvtMetas)
+	{
+		std::map<std::string, std::pair<double, double> > binningMap;
+		const bp::list keys = pyBinningMap.keys();
+		for(unsigned int i = 0; i < bp::len(keys); i++){
+			std::string binningVar = bp::extract<std::string>(keys[i]);
+			double lowerBound      = bp::extract<double>(pyBinningMap[binningVar][0]);
+			double upperBound      = bp::extract<double>(pyBinningMap[binningVar][1]);
+			binningMap.insert(std::pair<std::string, std::pair<double, double> >(binningVar, std::pair<double, double>(lowerBound, upperBound)));
+		}
+		std::vector<const rpwa::eventMetadata*> evtMetas;
+		if (not rpwa::py::convertBPObjectToVector<const rpwa::eventMetadata*>(pyEvtMetas, evtMetas)){
+			PyErr_SetString(PyExc_TypeError, "could not extract event metadatas");
+			bp::throw_error_already_set();
+		}
+		return self.setOnTheFlyBinning(binningMap, evtMetas);
+	}
 }
 
 
@@ -215,7 +247,8 @@ void rpwa::py::exportPwaLikelihood() {
 			, (bp::arg("accMatrix"),
 			   bp::arg("accEventsOverride") = 0)
 		)
-		.def("addAmplitude", &rpwa::pwaLikelihood<std::complex<double> >::addAmplitude)
+		.def("addAmplitude", ::pwaLikelihood_addAmplitude)
+		.def("setOnTheFlyBinning", ::pwaLikelihood_setOnTheFlyBinning)
 		.def("finishInit", &rpwa::pwaLikelihood<std::complex<double> >::finishInit)
 		.def("Gradient", ::pwaLikelihood_Gradient)
 		.def("FdF", ::pwaLikelihood_FdF)
