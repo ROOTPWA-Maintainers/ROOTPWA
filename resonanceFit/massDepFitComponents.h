@@ -139,8 +139,6 @@ namespace rpwa {
 			const channel& getChannelFromBranchingIdx(const size_t i) const { return _channels[_channelsFromBranching[i]]; }
 			const channel& getChannelFromCouplingIdx(const size_t i) const { return _channels[_channelsFromCoupling[i]]; }
 			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
-			size_t getChannelIdxCoupling(const size_t i) const { return _channelsCoupling[i]; }
-			size_t getChannelIdxBranching(const size_t i) const { return _channelsBranching[i]; }
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t importCouplings(const double* par,

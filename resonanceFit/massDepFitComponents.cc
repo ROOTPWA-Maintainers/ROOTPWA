@@ -1210,10 +1210,10 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const YAML::Node& d
 
 bool
 rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
-                                            const rpwa::massDepFit::parameters& fitParameters,
-                                            const rpwa::massDepFit::parameters& fitParametersError,
-                                            const bool useBranchings,
-                                            const bool debug) const
+                                                  const rpwa::massDepFit::parameters& fitParameters,
+                                                  const rpwa::massDepFit::parameters& fitParametersError,
+                                                  const bool useBranchings,
+                                                  const bool debug) const
 {
 	if(debug) {
 		printDebug << "start writing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
@@ -1429,11 +1429,11 @@ rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
 
 
 std::complex<double>
-rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /* fitParameters */,
-                                          rpwa::massDepFit::cache& /* cache */,
-                                          const size_t /* idxBin */,
-                                          const double /* m */,
-                                          const size_t /* idxMass */) const
+rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /*fitParameters*/,
+                                          rpwa::massDepFit::cache& /*cache*/,
+                                          const size_t /*idxBin*/,
+                                          const double /*m*/,
+                                          const size_t /*idxMass*/) const
 {
 	return 1.;
 }
