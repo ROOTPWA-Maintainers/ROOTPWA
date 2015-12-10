@@ -563,7 +563,7 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 
 				// invalidate the cache
 				for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-					if (_channelsFromCoupling[idxCoupling] == _channelsCoupling[idxChannel]) {
+					if (_channelsCoupling[idxChannel] == idxCoupling) {
 						cache.setCoupling(getId(), idxChannel, idxBin, std::numeric_limits<size_t>::max(), 0.);
 						cache.setProdAmp(_channels[idxChannel].getWaveIdx(), idxBin, std::numeric_limits<size_t>::max(), 0.);
 					}
@@ -601,7 +601,7 @@ rpwa::massDepFit::component::importBranchings(const double* par,
 
 			// invalidate the cache
 			for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-				if (_channelsFromBranching[idxBranching] == _channelsBranching[idxChannel]) {
+				if (_channelsBranching[idxChannel] == idxBranching) {
 					cache.setCoupling(getId(), idxChannel, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 					cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 				}
