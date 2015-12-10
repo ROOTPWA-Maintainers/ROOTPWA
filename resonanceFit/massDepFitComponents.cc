@@ -478,7 +478,7 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 		yamlOutput << YAML::Key << "amp";
 		yamlOutput << YAML::Value << getChannel(idxDecayChannel).getWaveName();
 
-		if(idxDecayChannel == getChannelIdxCoupling(idxDecayChannel)) {
+		if(idxDecayChannel == _channelsFromCoupling[_channelsCoupling[idxDecayChannel]]) {
 			yamlOutput << YAML::Key << "couplings";
 			yamlOutput << YAML::Value;
 			yamlOutput << YAML::BeginSeq;
@@ -488,8 +488,8 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 				yamlOutput << YAML::Flow;
 				yamlOutput << YAML::BeginSeq;
 
-				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).real();
-				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).imag();
+				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).real();
+				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).imag();
 
 				yamlOutput << YAML::EndSeq;
 				yamlOutput << YAML::Block;
@@ -499,15 +499,15 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 		}
 
 		if(useBranchings && nrDecayChannels > 1) {
-			if(idxDecayChannel == getChannelIdxBranching(idxDecayChannel)) {
+			if(idxDecayChannel == _channelsFromBranching[_channelsBranching[idxDecayChannel]]) {
 				yamlOutput << YAML::Key << "branching";
 				yamlOutput << YAML::Value;
 
 				yamlOutput << YAML::Flow;
 				yamlOutput << YAML::BeginSeq;
 
-				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).real();
-				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).imag();
+				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).real();
+				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).imag();
 
 				yamlOutput << YAML::EndSeq;
 				yamlOutput << YAML::Block;
