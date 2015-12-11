@@ -204,6 +204,11 @@ namespace rpwa {
 			                         const size_t idxWave,
 			                         const size_t jdxWave,
 			                         const size_t idxBin) const;
+			bool createPlotsFsmd(const rpwa::massDepFit::model& fitModel,
+			                     const rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::cache& cache,
+			                     TDirectory* outDirectory,
+			                     const bool rangePlotting) const;
 
 			std::vector<std::string> _inFileName;
 			std::vector<std::vector<std::string> > _inOverwritePhaseSpace;

@@ -1881,22 +1881,9 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(fitModel.getFsmd() != NULL) {
-		TGraph graph;
-		graph.SetName("finalStateMassDependence");
-		graph.SetTitle("finalStateMassDependence");
-		graph.SetDrawOption("CP");
-
-		Int_t point = -1;
-		for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-			++point;
-			const double mass = _massBinCenters[idxMass];
-
-			graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, _massBinCenters[idxMass], idxMass)));
-		}
-
-		outFile->cd();
-		graph.Write();
+	if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting)) {
+		printErr << "error while creating plots for final-state mass-dependence." << std::endl;
+		return false;
 	}
 
 	if(_debug) {
@@ -2284,6 +2271,41 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	phase.Write();
 	real.Write();
 	imag.Write();
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fitModel,
+                                              const rpwa::massDepFit::parameters& fitParameters,
+                                              rpwa::massDepFit::cache& cache,
+                                              TDirectory* outDirectory,
+                                              const bool /*rangePlotting*/) const
+{
+	if(fitModel.getFsmd() == NULL) {
+		return true;
+	}
+
+	if(_debug) {
+		printDebug << "start creating plots for final-state mass-dependence." << std::endl;
+	}
+
+	TGraph graph;
+	graph.SetName("finalStateMassDependence");
+	graph.SetTitle("finalStateMassDependence");
+	graph.SetDrawOption("CP");
+
+	Int_t point = -1;
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		++point;
+		const double mass = _massBinCenters[idxMass];
+
+		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, _massBinCenters[idxMass], idxMass)));
+	}
+
+	outDirectory->cd();
+	graph.Write();
 
 	return true;
 }
