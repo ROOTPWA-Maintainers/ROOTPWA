@@ -1957,12 +1957,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		components.push_back(component);
 	}
 
-	double maxP = -std::numeric_limits<double>::max();
+	// plot data
 	double maxIE = -std::numeric_limits<double>::max();
-	Int_t point = -1;
-	Int_t pointLimit = -1;
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-		++point;
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
 		const double mass = _massBinCenters[idxMass];
 		const double halfBin = _massStep/2.;
 
@@ -1981,23 +1979,17 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			systematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 			maxIE = std::max(maxIE, maxSI);
 		}
+	}
 
-		double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
-		if(fitModel.getFsmd() != NULL) {
-			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass));
-		}
-		phaseSpace->SetPoint(point, mass, ps);
-		maxP = std::max(maxP, ps);
-
-		// check that this mass bin should be taken into account for this
-		// combination of waves
-		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second)) {
-			continue;
-		}
-		++pointLimit;
+	// plot fit, either over full or limited mass range
+	const size_t firstPoint = rangePlotting ? _waveMassBinLimits[idxWave].first : 0;
+	const size_t lastPoint = rangePlotting ? _waveMassBinLimits[idxWave].second : (_nrMassBins-1);
+	for(size_t point=firstPoint; point<=lastPoint; ++point) {
+		const size_t idxMass = point;
+		const double mass = _massBinCenters[idxMass];
 
 		const double intensity = fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
-		fit->SetPoint(pointLimit, mass, intensity);
+		fit->SetPoint(point-firstPoint, mass, intensity);
 		maxIE = std::max(maxIE, intensity);
 
 		for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
@@ -2010,11 +2002,26 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass);
 			}
 
-			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
+			components[idxComponents]->SetPoint(point-firstPoint, mass, norm(prodAmp));
 			maxIE = std::max(maxIE, norm(prodAmp));
 		}
 	}
 
+	// plot phase-space
+	double maxP = -std::numeric_limits<double>::max();
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
+		const double mass = _massBinCenters[idxMass];
+
+		double ps = pow(_inPhaseSpaceIntegrals[idxBin][idxMass][idxWave], 2);
+		if(fitModel.getFsmd() != NULL) {
+			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass));
+		}
+		phaseSpace->SetPoint(point, mass, ps);
+		maxP = std::max(maxP, ps);
+	}
+
+	// scale phase-space graph to half-height of intensity graphs
 	for(Int_t idx=0; idx<phaseSpace->GetN(); ++idx) {
 		double x, y;
 		phaseSpace->GetPoint(idx, x, y);
@@ -2123,13 +2130,9 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	imagFit->SetMarkerColor(kRed);
 	imag.Add(imagFit, "L");
 
-	// keep track of phase over full mass range
-	TGraph phaseFitAll;
-
-	Int_t point = -1;
-	Int_t pointLimit = -1;
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-		++point;
+	// plot data
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
 		const double mass = _massBinCenters[idxMass];
 		const double halfBin = _massStep/2.;
 
@@ -2178,76 +2181,84 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			imagSystematics->SetPoint(point, mass, (maxSI+minSI)/2.);
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 		}
-
-		phaseFitAll.SetPoint(point, mass, fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg());
-
-		// check that this mass bin should be taken into account for this
-		// combination of waves
-		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second)) {
-			continue;
-		}
-		++pointLimit;
-
-		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
-		realFit->SetPoint(pointLimit, mass, element.real());
-		imagFit->SetPoint(pointLimit, mass, element.imag());
 	}
 
-	// rectify phase graphs
-	point = -1;
-	pointLimit = -1;
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-		++point;
+	// plot fit, either over full or limited mass range
+	const size_t firstPoint = rangePlotting ? _wavePairMassBinLimits[idxWave][jdxWave].first : 0;
+	const size_t lastPoint = rangePlotting ? _wavePairMassBinLimits[idxWave][jdxWave].second : (_nrMassBins-1);
+	for(size_t point=firstPoint; point<=lastPoint; ++point) {
+		const size_t idxMass = point;
 		const double mass = _massBinCenters[idxMass];
 
-		double valueFit=0;
+		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
+		realFit->SetPoint(point-firstPoint, mass, element.real());
+		imagFit->SetPoint(point-firstPoint, mass, element.imag());
+	}
+
+	// keep track of phase over full mass range
+	TGraph phaseFitAll;
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
+		const double mass = _massBinCenters[idxMass];
+
+		const double phase = fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
+
 		if(point != 0) {
 			int bestOffs = 0;
 			double bestDiff = std::numeric_limits<double>::max();
 
-			double x, prev, curr;
+			double x;
+			double prev;
 			phaseFitAll.GetPoint(point-1, x, prev);
-			phaseFitAll.GetPoint(point, x, curr);
 			for(int offs=-5; offs<6; ++offs) {
-				if(abs(curr + offs*360. - prev) < bestDiff) {
-					bestDiff = abs(curr + offs*360. - prev);
+				if(abs(phase + offs*360. - prev) < bestDiff) {
+					bestDiff = abs(phase + offs*360. - prev);
 					bestOffs = offs;
 				}
 			}
 
-			valueFit = curr + bestOffs*360.;
-			phaseFitAll.SetPoint(point, x, valueFit);
+			phaseFitAll.SetPoint(point, mass, phase + bestOffs*360.);
 		} else {
-			double x;
-			phaseFitAll.GetPoint(point, x, valueFit);
+			phaseFitAll.SetPoint(point, mass, phase);
 		}
+	}
 
-		int bestOffs = 0;
-		double bestDiff = std::numeric_limits<double>::max();
+	// rectify phase graphs
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
+		const double mass = _massBinCenters[idxMass];
 
-		double x, data;
-		phaseData->GetPoint(point, x, data);
-		for(int offs=-5; offs<6; ++offs) {
-			if(abs(data + offs*360. - valueFit) < bestDiff) {
-				bestDiff = abs(data + offs*360. - valueFit);
-				bestOffs = offs;
+		double x;
+		double valueFit;
+		phaseFitAll.GetPoint(point, x, valueFit);
+
+		if (idxMass != std::numeric_limits<size_t>::max()) {
+			int bestOffs = 0;
+			double bestDiff = std::numeric_limits<double>::max();
+
+			double data;
+			phaseData->GetPoint(idxMass, x, data);
+			for(int offs=-5; offs<6; ++offs) {
+				if(abs(data + offs*360. - valueFit) < bestDiff) {
+					bestDiff = abs(data + offs*360. - valueFit);
+					bestOffs = offs;
+				}
 			}
-		}
 
-		phaseData->SetPoint(point, x, data + bestOffs*360.);
-		if(_sysPlotting) {
-			phaseSystematics->GetPoint(point, x, data);
-			phaseSystematics->SetPoint(point, x, data + bestOffs*360.);
+			phaseData->SetPoint(idxMass, x, data + bestOffs*360.);
+			if(_sysPlotting) {
+				phaseSystematics->GetPoint(idxMass, x, data);
+				phaseSystematics->SetPoint(idxMass, x, data + bestOffs*360.);
+			}
 		}
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
-		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second)) {
+		if(point < firstPoint || point > lastPoint) {
 			continue;
 		}
-		++pointLimit;
 
-		phaseFit->SetPoint(pointLimit, mass, valueFit);
+		phaseFit->SetPoint(point-firstPoint, mass, valueFit);
 	}
 
 	outDirectory->cd();
@@ -2278,9 +2289,8 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
 	graph.SetName("finalStateMassDependence");
 	graph.SetTitle("finalStateMassDependence");
 
-	Int_t point = -1;
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-		++point;
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
 		const double mass = _massBinCenters[idxMass];
 
 		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass)));
