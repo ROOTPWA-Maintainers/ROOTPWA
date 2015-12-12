@@ -1881,6 +1881,15 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
+	if (_nrBins != 1) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			if(not createPlotsWaveSum(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
+				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
+				return false;
+			}
+		}
+	}
+
 	if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning)) {
 		printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 		return false;
@@ -2031,6 +2040,108 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		double x, y;
 		phaseSpace->GetPoint(idx, x, y);
 		phaseSpace->SetPoint(idx, x, y * 0.5 * maxIE/maxP);
+	}
+
+	outDirectory->cd();
+	graphs.Write();
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& fitModel,
+                                                 const rpwa::massDepFit::parameters& fitParameters,
+                                                 rpwa::massDepFit::cache& cache,
+                                                 TDirectory* outDirectory,
+                                                 const bool rangePlotting,
+                                                 const size_t extraBinning,
+                                                 const size_t idxWave) const
+{
+	if(_debug) {
+		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
+	}
+
+	TMultiGraph graphs;
+	graphs.SetName(_waveNames[idxWave].c_str());
+	graphs.SetTitle(_waveNames[idxWave].c_str());
+
+	TGraphErrors* data = new TGraphErrors;
+	data->SetName((_waveNames[idxWave] + "__data").c_str());
+	data->SetTitle((_waveNames[idxWave] + "__data").c_str());
+	graphs.Add(data, "P");
+
+	TGraph* fit = new TGraph;
+	fit->SetName((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetTitle((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetLineColor(kRed);
+	fit->SetLineWidth(2);
+	fit->SetMarkerColor(kRed);
+	graphs.Add(fit, "L");
+
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
+	std::vector<TGraph*> components;
+	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
+		const size_t idxComponent = compChannel[idxComponents].first;
+		TGraph* component = new TGraph;
+		component->SetName((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
+
+		Color_t color = kBlue;
+		if(fitModel.getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
+			color = kMagenta;
+		}
+		component->SetLineColor(color);
+		component->SetMarkerColor(color);
+
+		graphs.Add(component, "L");
+		components.push_back(component);
+	}
+
+	// plot data
+	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+		const size_t idxMass = point;
+		const double mass = _massBinCenters[idxMass];
+		const double halfBin = _massStep/2.;
+
+		double sum = 0.;
+		double error2 = 0.;
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			sum += _inIntensities[idxBin][idxMass][idxWave][0];
+			error2 += std::pow(_inIntensities[idxBin][idxMass][idxWave][1], 2);
+		}
+		data->SetPoint(point, mass, sum);
+		data->SetPointError(point, halfBin, sqrt(error2));
+	}
+
+	// plot fit, either over full or limited mass range
+	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].first) : 0;
+	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].second) : (extraBinning*(_nrMassBins-1));
+	for(size_t point=firstPoint; point<=lastPoint; ++point) {
+		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+
+		double sum = 0.;
+		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			sum += fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
+		}
+		fit->SetPoint(point-firstPoint, mass, sum);
+
+		for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
+			const size_t idxComponent = compChannel[idxComponents].first;
+			const size_t idxChannel = compChannel[idxComponents].second;
+
+			double sum = 0.;
+			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+				std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
+				prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
+				if(fitModel.getFsmd() != NULL) {
+					prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass);
+				}
+				sum += norm(prodAmp);
+			}
+			components[idxComponents]->SetPoint(point-firstPoint, mass, sum);
+		}
 	}
 
 	outDirectory->cd();
