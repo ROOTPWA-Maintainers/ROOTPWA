@@ -91,7 +91,8 @@ namespace rpwa {
 			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 rpwa::massDepFit::cache& cache,
 			                 TFile* outFile,
-			                 const bool rangePlotting) const;
+			                 const bool rangePlotting,
+			                 const size_t extraBinning) const;
 
 // FIXME: get rid
 			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
@@ -194,6 +195,7 @@ namespace rpwa {
 			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,
 			                     const bool rangePlotting,
+			                     const size_t extraBinning,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
 			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
@@ -201,6 +203,7 @@ namespace rpwa {
 			                         rpwa::massDepFit::cache& cache,
 			                         TDirectory* outDirectory,
 			                         const bool rangePlotting,
+			                         const size_t extraBinning,
 			                         const size_t idxWave,
 			                         const size_t jdxWave,
 			                         const size_t idxBin) const;
@@ -208,7 +211,8 @@ namespace rpwa {
 			                     const rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,
-			                     const bool rangePlotting) const;
+			                     const bool rangePlotting,
+			                     const size_t extraBinning) const;
 
 			std::vector<std::string> _inFileName;
 			std::vector<std::vector<std::string> > _inOverwritePhaseSpace;

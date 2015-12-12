@@ -58,7 +58,7 @@ usage(const std::string& progName,
 	          << std::endl
 	          << "usage:" << std::endl
 	          << progName
-	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -A -B -C # -d -q -h] config file" << std::endl
+	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -F # -A -B -C # -d -q -h] config file" << std::endl
 	          << "    where:" << std::endl
 	          << "        -o file    path to output file (default: 'mDep.result.root')" << std::endl
 	          << "        -M name    minimizer (default: Minuit2)" << std::endl
@@ -74,6 +74,7 @@ usage(const std::string& progName,
 	          << "        -t #       minimizer tolerance (default: 1e-10)" << std::endl
 	          << "        -P         plotting only - no fit" << std::endl
 	          << "        -R         plot in fit range only" << std::endl
+	          << "        -F #       finer binning for plotting (default: 1)" << std::endl
 	          << "        -A         fit to the production amplitudes (default: spin-density matrix)" << std::endl
 	          << "        -B         use branchings (reducing number of couplings)" << std::endl
 	          << "        -C #       part of the covariance matrix to use:" << std::endl
@@ -117,6 +118,7 @@ main(int    argc,
 	double            minimizerTolerance = 1e-10;                  // minimizer tolerance
 	bool              onlyPlotting       = false;
 	bool              rangePlotting      = false;
+	size_t            extraBinning       = 1;
 	bool              doProdAmp          = false;
 	bool              doBranching        = false;
 	bool              debug              = false;
@@ -127,7 +129,7 @@ main(int    argc,
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRABC:dqh")) != -1) {
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRF:ABC:dqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -149,6 +151,9 @@ main(int    argc,
 			break;
 		case 'R':
 			rangePlotting = true;
+			break;
+		case 'F':
+			extraBinning = atoi(optarg);
 			break;
 		case 'A':
 			doProdAmp = true;
@@ -301,7 +306,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(compset, fitParameters, cache, outFile.get(), rangePlotting)) {
+	if(not mdepFit.createPlots(compset, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
 		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}
