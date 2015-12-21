@@ -12,6 +12,21 @@
 
 namespace bp = boost::python;
 
+namespace {
+	template<typename T, typename U>
+	std::vector<T> stdMapKeys(const std::map<T,U>& mapp) {
+		std::vector<T> listOfKeys;
+		for(std::_Rb_tree_const_iterator<std::pair<const T, U> > it = mapp.begin(); it != mapp.end(); ++it) {
+			listOfKeys.push_back(it->first);	
+		};
+		return listOfKeys;
+	};
+
+	std::vector<std::string> stringKeys(const std::map<std::string, std::pair<double, double> > &self) {
+		return stdMapKeys(self);
+	};
+};
+
 void rpwa::py::exportStlContainers() {
 
 	// std::pair<std::string, rpwa::particleProperties>
@@ -64,4 +79,11 @@ void rpwa::py::exportStlContainers() {
 	bp::class_<std::vector<rpwa::waveDescriptionPtr> >("__vector_waveDescription")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::waveDescriptionPtr>, true>());
 
+//	bp::class_<std::pair<double, double> >("__stdpair_double_double")
+//		.def_readwrite("first" , &std::pair<double,double>::first)
+//		.def_readwrite("second", &std::pair<double,double>::second);
+//
+	bp::class_<std::map<std::string, std::pair<double, double> > >("__binning_map")
+		.def(bp::map_indexing_suite<std::map<std::string, std::pair<double, double> > >())
+		.def("keys", &::stringKeys);
 }

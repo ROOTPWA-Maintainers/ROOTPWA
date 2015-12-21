@@ -63,7 +63,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
 root_generate_dictionary(
 	${ROOTPWASTORAGE_DICTIONARY}
-	amplitudeMetadata.h amplitudeTreeLeaf.h eventMetadata.h
+	amplitudeMetadata.h amplitudeTreeLeaf.h eventMetadata.h 
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaStorageLinkDef.h
 	)

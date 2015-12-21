@@ -80,6 +80,7 @@ set(SOURCES
 	${PYUTILS_SUBDIR}/rootConverters_py.cc
 	${PYUTILS_SUBDIR}/stlContainers_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrixMetadata_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/decayTopology_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/fsVertex_py.cc
