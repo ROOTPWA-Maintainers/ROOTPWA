@@ -244,9 +244,16 @@ void rpwa::py::exportPwaLikelihood() {
 			   bp::arg("massBinCenter") = 0.)
 		)
 		.def("addNormIntegral", ::pwaLikelihood_addNormIntegral)
+		.def("addNormIntegral", &rpwa::pwaLikelihood<std::complex<double> >::addNormIntegral)
 		.def(
 			"addAccIntegral"
 			, ::pwaLikelihood_addAccIntegral
+			, (bp::arg("accMatrix"),
+			   bp::arg("accEventsOverride") = 0)
+		)
+		.def(
+			"addAccIntegral"
+			, &rpwa::pwaLikelihood<std::complex<double> >::addAccIntegral
 			, (bp::arg("accMatrix"),
 			   bp::arg("accEventsOverride") = 0)
 		)
