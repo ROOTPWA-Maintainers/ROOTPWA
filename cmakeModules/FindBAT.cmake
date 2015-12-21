@@ -164,10 +164,15 @@ if(BAT_ROOT_DIR)
 endif()
 
 
+# remove leading and trailing whitespaces
+string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
+
+
 # make variables changeable
 mark_as_advanced(
 	BAT_INCLUDE_DIR
 	BAT_LIBRARIES
+	BAT_LINKER_FLAGS
 	)
 
 
