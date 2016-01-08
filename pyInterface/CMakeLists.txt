@@ -116,6 +116,7 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
 	${UTILITIES_SUBDIR}/physUtils_py.cc
 	${UTILITIES_SUBDIR}/reportingUtilsEnvironment_py.cc
+	${HIGHLEVELINTERFACE_SUBDIR}/getMassShapes_py.cc
 	)
 if(USE_NLOPT)
 	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)
