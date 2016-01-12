@@ -27,6 +27,7 @@
 #include "generatorManager_py.h"
 #include "generatorParameters_py.h"
 #include "generatorPickerFunctions_py.h"
+#include "modelIntensity_py.h"
 
 // highLevelInterface
 #include "calcAmplitude_py.h"
@@ -95,6 +96,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportGeneratorParameters();
 	rpwa::py::exportGeneratorPickerFunctions();
 	rpwa::py::exportBeamAndVertexGenerator();
+	rpwa::py::exportModelIntensity();
 	rpwa::py::exportComplexMatrix();
 	rpwa::py::exportFitResult();
 	rpwa::py::exportPartialWaveFitHelper();

@@ -57,6 +57,7 @@ set(SOURCES
 	diffractivePhaseSpace.cc
 	beamAndVertexGenerator.cc
 	generatorPickerFunctions.cc
+	modelIntensity.cc
 	)
 
 
