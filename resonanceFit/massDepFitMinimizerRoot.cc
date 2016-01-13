@@ -228,22 +228,45 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 					prefixName << channel.getWaveName();
 				}
 
+				bool free = false;
+				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
+				   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "coupling")!=tokenizeFreeParameters.end() ) {
+					free = true;
+				}
+				bool fix = not free;
+
 				const std::complex<double> parameter = fitParameters.getCoupling(idxComponent, idxCoupling, idxBin);
 
-				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
-				_minimizer->SetVariable(parcount,
-				                        prefixName.str() + "__real",
-				                        parameter.real(),
-				                        0.1);
-				++parcount;
+				if (fix) {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << std::endl;
+					_minimizer->SetFixedVariable(parcount,
+					                             prefixName.str() + "__real",
+					                             parameter.real());
+					++parcount;
 
-				if(not channel.isAnchor()) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
+					if(not channel.isAnchor()) {
+						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
+						_minimizer->SetFixedVariable(parcount,
+						                             prefixName.str() + "__imag",
+						                             parameter.imag());
+						++parcount;
+					}
+				} else {
+					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
 					_minimizer->SetVariable(parcount,
-					                        prefixName.str() + "__imag",
-					                        parameter.imag(),
+					                        prefixName.str() + "__real",
+					                        parameter.real(),
 					                        0.1);
 					++parcount;
+
+					if(not channel.isAnchor()) {
+						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
+						_minimizer->SetVariable(parcount,
+						                        prefixName.str() + "__imag",
+						                        parameter.imag(),
+						                        0.1);
+						++parcount;
+					}
 				}
 			}
 		} // end loop over channels

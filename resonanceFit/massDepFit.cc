@@ -226,8 +226,8 @@ rpwa::massDepFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 		}
 	} else {
 		_freeParameters.clear();
-		_freeParameters.push_back("branching");
-		_freeParameters.push_back("branching mass m0");
+		_freeParameters.push_back("coupling branching");
+		_freeParameters.push_back("coupling branching mass m0");
 		_freeParameters.push_back("*");
 	}
 
