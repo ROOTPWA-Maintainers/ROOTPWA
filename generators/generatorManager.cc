@@ -33,7 +33,19 @@ generatorManager::generatorManager()
 
 generatorManager::~generatorManager() {
 	delete _generator;
-};
+}
+
+
+#ifdef USE_BAT
+rpwa::importanceSampler generatorManager::getImportanceSampler(rpwa::modelIntensityPtr model) {
+	std::pair<double, double> massRange = _pickerFunction->massRange();
+	rpwa::importanceSampler sampler(massRange.first, massRange.second, model);
+	if (!sampler.initializeProductionGenerator(_beam, _target, _beamAndVertexGenerator, _pickerFunction)) {
+		printErr << "could not initializeProductionGenerator() for the importance sampler" << std::endl;
+	}
+	return sampler;
+}
+#endif
 
 
 unsigned int generatorManager::event() {

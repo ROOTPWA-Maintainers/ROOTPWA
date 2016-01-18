@@ -71,6 +71,12 @@ include_directories(
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)
+if(USE_BAT)
+	include_directories(
+		SYSTEM
+		${BAT_INCLUDE_DIR}
+	)
+endif()
 
 
 # source files that are compiled into library
@@ -121,6 +127,9 @@ set(SOURCES
 	${UTILITIES_SUBDIR}/reportingUtilsEnvironment_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/getMassShapes_py.cc
 	)
+if(USE_BAT)
+	LIST(APPEND SOURCES ${GENERATORS_SUBDIR}/importanceSampler_py.cc)
+endif()
 if(USE_NLOPT)
 	LIST(APPEND SOURCES ${HIGHLEVELINTERFACE_SUBDIR}/pwaNloptFit_py.cc)
 endif()

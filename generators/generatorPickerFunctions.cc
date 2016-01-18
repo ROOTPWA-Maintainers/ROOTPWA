@@ -35,6 +35,15 @@ const std::pair<double, double>& massAndTPrimePicker::massRange() const {
 }
 
 
+const std::pair<double, double>& massAndTPrimePicker::tPrimeRange() const {
+	if(not _initialized) {
+		printErr << "cannot call tPrimeRange on uninitialized massAndTPrimePicker." << endl;
+		throw;
+	}
+	return _tPrimeRange;
+}
+
+
 bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& setting) {
 	if(_initialized) {
 		printErr << "trying to initialize a massAndTPrimePicker class twice." << endl;
@@ -176,12 +185,25 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
 		return false;
 	}
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
+	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
+	if (not pickTPrimeForMass(invariantMass, tPrime)) {
+		printErr << "error while generating t'." << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool uniformMassExponentialTPicker::pickTPrimeForMass(const double invariantMass, double& tPrime) {
+	if (not _initialized) {
+		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
+		return false;
+	}
 	if(_tSlopesForMassBins.empty()) {
 		printErr << "no t' slopes to generate t' from." << endl;
 		return false;
 	}
-	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
-	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
 	vector<double> param;
 	if(_tSlopesForMassBins.size() == 1) {
 		param = _tSlopesForMassBins.begin()->second;
@@ -207,7 +229,8 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 		printErr << "error when calculating the parameters for t'-slope." << endl;
 		return false;
 	}
-        // short-cut for one exponential, then t can analytically be calculated
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
+	// short-cut for one exponential, then t can analytically be calculated
 	if (_nExponential == 1) {
 		const double r = randomNumbers->Uniform();
 		const double Fmin = exp(param[0] * _tPrimeRange.first);
@@ -294,7 +317,7 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 		}
 		restarts++;
 		if(restarts >= 5 && not done) {
-                            printErr << restarts << " attempts to generate t' failed." << endl;
+			printErr << restarts << " attempts to generate t' failed." << endl;
 			return false;
 		}
 	}
@@ -417,8 +440,21 @@ bool polynomialMassAndTPrimeSlopePicker::operator()(double& invariantMass, doubl
 		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
 		return false;
 	}
-	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
 	invariantMass = _massPolynomial.GetRandom(_massRange.first, _massRange.second);
+	if (not pickTPrimeForMass(invariantMass, tPrime)) {
+		printErr << "error while generating t'." << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool polynomialMassAndTPrimeSlopePicker::pickTPrimeForMass(const double invariantMass, double& tPrime) {
+	if (not _initialized) {
+		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
+		return false;
+	}
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
 	double tPrimeSlope = _tPrimeSlopePolynomial.Eval(invariantMass);
 	do {
 		tPrime = randomNumbers->Exp(1. / tPrimeSlope);

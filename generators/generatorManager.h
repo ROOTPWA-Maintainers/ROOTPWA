@@ -7,6 +7,9 @@
 #include "generatorParameters.hpp"
 #include "generatorPickerFunctions.h"
 #include "beamAndVertexGenerator.h"
+#ifdef USE_BAT
+#include "importanceSampler.h"
+#endif
 
 
 class TVector3;
@@ -25,6 +28,10 @@ namespace rpwa {
 		unsigned int event();
 
 		const rpwa::generator& getGenerator() const { return *_generator; }
+
+#ifdef USE_BAT
+		rpwa::importanceSampler getImportanceSampler(rpwa::modelIntensityPtr model);
+#endif
 
 		bool readReactionFile(const std::string& fileName);
 
