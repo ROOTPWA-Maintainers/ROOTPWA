@@ -73,6 +73,9 @@ make_shared_library(
 
 if(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.6.3))
 	# workaround for presumably a compiler bug
+	set_source_files_properties(massDepFit.cc
+	                            PROPERTIES
+	                            COMPILE_FLAGS "-Wno-uninitialized")
 	set_source_files_properties(massDepFitComponents.cc
 	                            PROPERTIES
 	                            COMPILE_FLAGS "-Wno-uninitialized")

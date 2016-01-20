@@ -2018,7 +2018,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 	}
 
-	boost::multi_array<double, 2>::const_array_view<1>::type view = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range()][idxWave]];
+	boost::multi_array<double, 3>::const_array_view<1>::type view = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range()][idxWave]];
 	ROOT::Math::Interpolator phaseSpaceInterpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
 
 	// plot phase-space
