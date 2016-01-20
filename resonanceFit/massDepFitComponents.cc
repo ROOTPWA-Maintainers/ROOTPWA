@@ -478,7 +478,7 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 		yamlOutput << YAML::Key << "amp";
 		yamlOutput << YAML::Value << getChannel(idxDecayChannel).getWaveName();
 
-		if(idxDecayChannel == getChannelIdxCoupling(idxDecayChannel)) {
+		if(idxDecayChannel == _channelsFromCoupling[_channelsCoupling[idxDecayChannel]]) {
 			yamlOutput << YAML::Key << "couplings";
 			yamlOutput << YAML::Value;
 			yamlOutput << YAML::BeginSeq;
@@ -488,8 +488,8 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 				yamlOutput << YAML::Flow;
 				yamlOutput << YAML::BeginSeq;
 
-				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).real();
-				yamlOutput << fitParameters.getCoupling(getId(), idxDecayChannel, idxBin).imag();
+				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).real();
+				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).imag();
 
 				yamlOutput << YAML::EndSeq;
 				yamlOutput << YAML::Block;
@@ -499,15 +499,15 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 		}
 
 		if(useBranchings && nrDecayChannels > 1) {
-			if(idxDecayChannel == getChannelIdxBranching(idxDecayChannel)) {
+			if(idxDecayChannel == _channelsFromBranching[_channelsBranching[idxDecayChannel]]) {
 				yamlOutput << YAML::Key << "branching";
 				yamlOutput << YAML::Value;
 
 				yamlOutput << YAML::Flow;
 				yamlOutput << YAML::BeginSeq;
 
-				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).real();
-				yamlOutput << fitParameters.getBranching(getId(), idxDecayChannel).imag();
+				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).real();
+				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).imag();
 
 				yamlOutput << YAML::EndSeq;
 				yamlOutput << YAML::Block;
@@ -563,7 +563,7 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 
 				// invalidate the cache
 				for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-					if (_channelsFromCoupling[idxCoupling] == _channelsCoupling[idxChannel]) {
+					if (_channelsCoupling[idxChannel] == idxCoupling) {
 						cache.setCoupling(getId(), idxChannel, idxBin, std::numeric_limits<size_t>::max(), 0.);
 						cache.setProdAmp(_channels[idxChannel].getWaveIdx(), idxBin, std::numeric_limits<size_t>::max(), 0.);
 					}
@@ -601,7 +601,7 @@ rpwa::massDepFit::component::importBranchings(const double* par,
 
 			// invalidate the cache
 			for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-				if (_channelsFromBranching[idxBranching] == _channelsBranching[idxChannel]) {
+				if (_channelsBranching[idxChannel] == idxBranching) {
 					cache.setCoupling(getId(), idxChannel, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 					cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 				}
@@ -1210,10 +1210,10 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const YAML::Node& d
 
 bool
 rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
-                                            const rpwa::massDepFit::parameters& fitParameters,
-                                            const rpwa::massDepFit::parameters& fitParametersError,
-                                            const bool useBranchings,
-                                            const bool debug) const
+                                                  const rpwa::massDepFit::parameters& fitParameters,
+                                                  const rpwa::massDepFit::parameters& fitParametersError,
+                                                  const bool useBranchings,
+                                                  const bool debug) const
 {
 	if(debug) {
 		printDebug << "start writing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
@@ -1429,11 +1429,11 @@ rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
 
 
 std::complex<double>
-rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /* fitParameters */,
-                                          rpwa::massDepFit::cache& /* cache */,
-                                          const size_t /* idxBin */,
-                                          const double /* m */,
-                                          const size_t /* idxMass */) const
+rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /*fitParameters*/,
+                                          rpwa::massDepFit::cache& /*cache*/,
+                                          const size_t /*idxBin*/,
+                                          const double /*m*/,
+                                          const size_t /*idxMass*/) const
 {
 	return 1.;
 }
