@@ -60,6 +60,7 @@ endif()
 set(SOURCES
 	calcAmplitude.cc
 	pwaFit.cc
+	getMassShapes.cc
 	)
 if(USE_NLOPT)
 	LIST(APPEND SOURCES pwaNloptFit.cc)

@@ -29,6 +29,7 @@
 
 // highLevelInterface
 #include "calcAmplitude_py.h"
+#include "getMassShapes_py.h"
 #include "pwaFit_py.h"
 #ifdef USE_NLOPT
 #include "pwaNloptFit_py.h"
@@ -101,6 +102,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportCalcAmplitude();
 	rpwa::py::exportPwaLikelihood();
 	rpwa::py::exportPwaFit();
+	rpwa::py::exportGetMassShapes();
 #ifdef USE_NLOPT
 	rpwa::py::exportPwaNloptFit();
 #endif
