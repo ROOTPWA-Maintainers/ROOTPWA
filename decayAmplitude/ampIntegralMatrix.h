@@ -123,6 +123,10 @@ namespace rpwa {
 		                             const std::string& waveNameJ)  const  ///< returns integral matrix element divided by number of events defined by pair of wave names
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
+		bool setWaveNames(const std::vector<std::string> &waveNames);
+		bool addEvent(std::map<std::string, std::complex<double> > &ampltides);
+
+
 		bool integrate(const std::vector<const rpwa::amplitudeMetadata*>& ampMetadata,
 		               const unsigned long                                maxNmbEvents   = 0,
 		               const std::string&                                 weightFileName = "");

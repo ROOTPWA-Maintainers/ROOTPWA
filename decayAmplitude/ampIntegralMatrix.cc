@@ -256,6 +256,54 @@ ampIntegralMatrix::element(const unsigned int waveIndexI,
 	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
 }
 
+bool
+ampIntegralMatrix::setWaveNames(const std::vector<std::string> &waveNames)
+{
+	if (_nmbWaves > 0 ) {
+		if (waveNames.size() == _nmbWaves ) {
+			for (size_t w = 0; w < _nmbWaves; ++w) {
+				if (_waveNames[w] != waveNames[w]) {
+					printErr << "alreadySet _waveNames are different than new waveNames. Abort..." << std::endl;
+					return false;
+				}
+			}
+			printInfo << "_waveNames were already set but match new ones." << std::endl;
+			return true;
+		} else {
+			printErr << "number of already set waveNames does not match number new waveNames. Abort..." << std::endl;
+			return false; 
+		}
+
+	}
+	_waveNames = waveNames;
+	_nmbWaves = waveNames.size();
+	for (size_t w = 0; w < _nmbWaves; ++w) {
+		_waveNameToIndexMap.insert(std::pair<std::string, unsigned int> (_waveNames[w], w));
+	}
+	return true;
+}
+
+bool
+ampIntegralMatrix::addEvent(std::map<std::string, std::complex<double> > &amplitudes)
+{
+	for (size_t iWave = 0; iWave < _nmbWaves; ++iWave) {
+		std::string waveName = _waveNames[iWave];
+		if (not amplitudes.count(waveName)) {
+			printErr << "waveNames '" << waveName << "' not in amplitudes" << std::endl;
+			return false;
+		}
+	}
+	for (size_t iWave = 0; iWave < _nmbWaves; ++iWave) {
+		std::string iWaveName = _waveNames[iWave];
+		std::complex<double> iAmp = amplitudes[iWaveName];
+		for (size_t jWave = 0; jWave < _nmbWaves; ++jWave) {
+			std::string jWaveName = _waveNames[jWave];
+			std::complex<double> jAmp = amplitudes[jWaveName];
+			_integrals[iWave][jWave] = iAmp * conj(jAmp);
+		}
+	}
+	return true;
+}
 
 bool
 ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata,
@@ -268,11 +316,24 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 		printWarn << "did not receive any amplitude trees. cannot calculate integral." << endl;
 		return false;
 	}
-	for(unsigned int i=0; i < ampMetadata.size(); i++) {
-		const string waveName = ampMetadata[i]->objectBaseName();
-		_nmbWaves += 1;
-		_waveNames.push_back(waveName);
-		_waveNameToIndexMap.insert( std::pair<std::string, unsigned int> (waveName, _nmbWaves-1) );
+	if (_waveNames.size() == 0) {
+		for(unsigned int i=0; i < ampMetadata.size(); i++) {
+			const string waveName = ampMetadata[i]->objectBaseName();
+			_nmbWaves += 1;
+			_waveNames.push_back(waveName);
+			_waveNameToIndexMap.insert( std::pair<std::string, unsigned int> (waveName, _nmbWaves-1) );
+		}
+	} else if (_waveNames.size() == ampMetadata.size() ) {
+		for(unsigned int i=0; i < ampMetadata.size(); i++) {
+			const string waveName = ampMetadata[i]->objectBaseName();
+			if (waveName != _waveNames[i] ) {
+				printErr << "already set _waveNames differ from waveNames in the ampMetadata. Abort..." << std::endl;
+				return false;
+			}
+		}
+	} else {
+		printErr << "waveNames already set, but with wrong size. Abort... " << std::endl;
+		return false;
 	}
 	const unsigned long nmbEvents = (unsigned long) ampMetadata[0]->amplitudeTree()->GetEntries();
 	if (nmbEvents == 0) {
