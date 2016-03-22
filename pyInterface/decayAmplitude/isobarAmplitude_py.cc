@@ -51,7 +51,6 @@ namespace {
 			rpwa::isobarAmplitude::printParameters(sstr);
 			return sstr.str();
 		}
-
 	};
 
 	rpwa::isobarDecayTopology& isobarAmplitude_decayTopology(const rpwa::isobarAmplitude& self) {
@@ -105,6 +104,7 @@ void rpwa::py::exportIsobarAmplitude() {
 
 		.def("__call__", &rpwa::isobarAmplitude::operator())
 
+		.def("enableBoseSymmetrization", &rpwa::isobarAmplitude::enableBoseSymmetrization)
 		.def("name", &isobarAmplitudeWrapper::name, &isobarAmplitudeWrapper::default_name)
 		.def("name", &isobarAmplitude::name)
 		.def("printParameters", &isobarAmplitudeWrapper::printParameters__, &isobarAmplitudeWrapper::default_printParameters__)
