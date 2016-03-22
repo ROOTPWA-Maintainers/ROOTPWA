@@ -152,20 +152,16 @@ diffractivePhaseSpace::event()
 
 	bool done = false;
 	do {
-		double tPrime;
-		double xMass;
 		do {
-			if(not (*_pickerFunction)(xMass, tPrime)) {
+			if(not (*_pickerFunction)(_xMass, _tPrime)) {
 				printErr << "could not generate X mass and t'. Aborting..." << endl;
 				throw;
 			}
-		} while(xMass + _target.recoilParticle.mass() > overallCm.M());
-		// t' should be negative (why?)
-		tPrime *= -1;
+		} while(_xMass + _target.recoilParticle.mass() > overallCm.M());
 
 		{
 			unsigned int i = 0;
-			for(; xMass > _maxXMassSlices[i]; ++i);
+			for(; _xMass > _maxXMassSlices[i]; ++i);
 			_phaseSpace.setMaxWeight(_maxWeightsForXMasses[i]);
 		}
 
@@ -173,7 +169,7 @@ diffractivePhaseSpace::event()
 		const double s            = overallCm.Mag2();
 		const double sqrtS        = sqrt(s);
 		const double recoilMass2  = _target.recoilParticle.mass2();
-		const double xMass2       = xMass * xMass;
+		const double xMass2       = _xMass * _xMass;
 		const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
 		const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
 		const double beamMass2    = _beam.particle.mass2();
@@ -181,8 +177,8 @@ diffractivePhaseSpace::event()
 		const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
 		const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
 		const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
-		                            (xMomCM - beamMomCM) * (xMomCM - beamMomCM);
-		const double t            = t0 + tPrime;
+		                            (xMomCM - beamMomCM) * (xMomCM - beamMomCM); // t0 <= 0
+		const double t            = t0 - _tPrime;
 		// reject events outside of allowed kinematic region
 		if(t > t0) {
 			continue;
@@ -215,16 +211,16 @@ diffractivePhaseSpace::event()
 			// generate n-body phase space for X system
 			++attempts;
 
-			_phaseSpace.pickMasses(xMass);
+			_phaseSpace.pickMasses(_xMass);
 
 			// correct weight for phase space splitting
 			// and for 2-body phase space beam-target
 			// (1 / 4pi) * q(sqrt(s), m_x, m_recoil) / sqrt(s)
 			const double ps2bodyWMax = breakupMomentum(sqrtS, xMassMax, _target.targetParticle.mass())/sqrtS;
-			const double ps2bodyW = breakupMomentum(sqrtS, xMass, _target.targetParticle.mass())/sqrtS;
+			const double ps2bodyW = breakupMomentum(sqrtS, _xMass, _target.targetParticle.mass())/sqrtS;
 
 			const double maxPsWeight = _phaseSpace.maxWeight()  * xMassMax * ps2bodyWMax;
-			const double psWeight    = _phaseSpace.calcWeight() * xMass* ps2bodyW;
+			const double psWeight    = _phaseSpace.calcWeight() * _xMass   * ps2bodyW;
 
 			if((psWeight / maxPsWeight) < random->Rndm()) {
 				continue;

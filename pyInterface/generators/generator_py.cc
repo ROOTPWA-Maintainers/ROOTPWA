@@ -257,6 +257,8 @@ void rpwa::py::exportGenerator() {
 			, &generatorWrapper::default_getGeneratedVertex__
 		)
 		.def("getGeneratedVertex", &generator_getGeneratedVertex)
+		.def("getGeneratedXMass", &rpwa::generator::getGeneratedXMass)
+		.def("getGeneratedTPrime", &rpwa::generator::getGeneratedTPrime)
 		.def("setBeam", &generatorWrapper::setBeam, &generatorWrapper::default_setBeam)
 		.def("setBeam", &rpwa::generator::setBeam)
 		.def("setTarget", &generatorWrapper::setTarget, &generatorWrapper::default_setTarget)

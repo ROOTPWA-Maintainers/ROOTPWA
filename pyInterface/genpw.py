@@ -24,6 +24,8 @@ if __name__ == "__main__":
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
+	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)", default="mass,tPrime")
+	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
 	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
@@ -110,6 +112,14 @@ if __name__ == "__main__":
 		beam = generator.getGeneratedBeam()
 		finalState = generator.getGeneratedFinalState()
 
+		massTPrimeVariables = []
+		if not args.noStoreMassTPrime:
+			if len(args.massTPrimeVariableNames.split(',')) == 2:
+				massTPrimeVariables = args.massTPrimeVariableNames.split(',')
+			else:
+				printErr("Option --massTPrimeVariableNames has wrong format '{0}'. Aborting...".format(args.massTPrimeVariableNames))
+				sys.exit(1)
+
 		prodKinNames = [ beam.name ]
 		decayKinNames = [ particle.name for particle in finalState ]
 		success = fileWriter.initialize(
@@ -118,9 +128,8 @@ if __name__ == "__main__":
 		                                pyRootPwa.core.eventMetadata.GENERATED,
 		                                prodKinNames,
 		                                decayKinNames,
-# TODO: FILL THESE
-		                                {},
-		                                []
+		                                {}, # TODO: FILL THESE
+		                                massTPrimeVariables,
 		                                )
 		if not success:
 			printErr('could not initialize file writer. Aborting...')
@@ -131,11 +140,15 @@ if __name__ == "__main__":
 			if args.maxAttempts and attempts > args.maxAttempts:
 				printWarn("reached maximum attempts. Aborting...")
 				break
+
 			beam = generator.getGeneratedBeam()
 			finalState = generator.getGeneratedFinalState()
 			prodKin = [ beam.lzVec.Vect() ]
 			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
-			fileWriter.addEvent(prodKin, decayKin)
+			additionalVariables = []
+			if not args.noStoreMassTPrime:
+				additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
+			fileWriter.addEvent(prodKin, decayKin, additionalVariables)
 
 			if args.comgeantOutput:
 				recoil = generator.getGeneratedRecoil()
