@@ -280,6 +280,7 @@ ampIntegralMatrix::setWaveNames(const std::vector<std::string> &waveNames)
 	for (size_t w = 0; w < _nmbWaves; ++w) {
 		_waveNameToIndexMap.insert(std::pair<std::string, unsigned int> (_waveNames[w], w));
 	}
+	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
 	return true;
 }
 
@@ -299,9 +300,10 @@ ampIntegralMatrix::addEvent(std::map<std::string, std::complex<double> > &amplit
 		for (size_t jWave = 0; jWave < _nmbWaves; ++jWave) {
 			std::string jWaveName = _waveNames[jWave];
 			std::complex<double> jAmp = amplitudes[jWaveName];
-			_integrals[iWave][jWave] = iAmp * conj(jAmp);
+			_integrals[iWave][jWave] += iAmp * conj(jAmp);
 		}
 	}
+	++_nmbEvents;
 	return true;
 }
 

@@ -54,11 +54,14 @@ namespace rpwa {
 			bool check() const;
 			bool hasAmplitudeHash(const std::string& hash) const;
 			bool hasKeyFileContent(const std::string& content) const;
-			bool writeToFile(TFile* outputFile) const;
+			bool writeToFile(TFile* outputFile);
+
+			bool setAllZeroHash();
 		private:
 			std::string                          _contentHash;
 			std::string                          _rootpwaGitHash;
 			std::string                          _objectBaseName;
+			std::string                          _allZeroHash;
 			mutable ampIntegralMatrix*           _ampIntegralMatrix; //!
 
 			std::vector<std::string>             _amplitudeHashes;

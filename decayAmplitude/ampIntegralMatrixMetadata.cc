@@ -7,6 +7,7 @@ rpwa::ampIntegralMatrixMetadata::ampIntegralMatrixMetadata():
 	_contentHash(""),
 	_rootpwaGitHash(""),
 	_objectBaseName(""),
+	_allZeroHash(""),
 	_ampIntegralMatrix(0),
 	_amplitudeHashes(),
 	_keyFileContents(),
@@ -51,13 +52,12 @@ const rpwa::ampIntegralMatrixMetadata* rpwa::ampIntegralMatrixMetadata::readInte
 		};
 		return 0;
 	};
-	integralMeta->_ampIntegralMatrix = (rpwa::ampIntegralMatrix*)inputFile->Get(objectNames.first.c_str());
+	integralMeta->_ampIntegralMatrix = (rpwa::ampIntegralMatrix*)inputFile->Get(rpwa::ampIntegralMatrix::integralObjectName.c_str());
 	if(not integralMeta->_ampIntegralMatrix) {
 		if(not quiet) {
 			printWarn << "could not find ampIntegralMatrix." << std::endl;
 		};
-		printWarn << "in final implementation, remove comment from 'return 0'" << std::endl;
-//		return 0;
+		return 0;
 	};
 	return integralMeta;
 };
@@ -78,20 +78,22 @@ std::pair<std::string, std::string> rpwa::ampIntegralMatrixMetadata::getObjectNa
 Int_t rpwa::ampIntegralMatrixMetadata::Write(const char* name, Int_t option, Int_t bufsize) const {
 	Int_t retval = 0;
 	if(_ampIntegralMatrix) {
-		retval = _ampIntegralMatrix->Write();
+		retval = _ampIntegralMatrix->Write(rpwa::ampIntegralMatrix::integralObjectName.c_str());
 	};
 	return retval + TObject::Write(name, option, bufsize);
 };
 
+
 bool rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix(const ampIntegralMatrixMetadata& second) {
 	ampIntegralMatrix* secondMatrix = second.getAmpIntegralMatrix();
 	if (secondMatrix->nmbWaves() != _ampIntegralMatrix->nmbWaves()) {
-		printErr << "nmbWave() dies not match" << std::endl;
+		printErr << "nmbWave() does not match" << std::endl;
 		return false;
 	};
 	if (second.rootpwaGitHash() != rootpwaGitHash()) {
 		printErr << "gitHashes differ" << std::endl;
 		return false;
+
 	};
 	{
 		std::vector<std::string> secondKeyFileContents = second.getKeyFileContents();
@@ -135,10 +137,14 @@ bool rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix(const ampIntegralMatri
 
 bool rpwa::ampIntegralMatrixMetadata::setAmpIntegralMatrix(ampIntegralMatrix* matrix) {
 	if (!matrix) {
-		printErr << "not matrix given" << std::endl;
+		printErr << "no matrix given" << std::endl;
 		return false;
 	};
-	_ampIntegralMatrix = matrix;
+	_ampIntegralMatrix = matrix;	
+	if (!setAllZeroHash()) {
+		printErr << "could not set _allZeroHash" << std::endl;
+		return false;
+	};
 	return true;
 };
 
@@ -202,13 +208,15 @@ bool rpwa::ampIntegralMatrixMetadata::mergeBinningMap(const std::map<std::string
 		printErr << "sizes of _binningMap and newMap do not match. numbers of binning variables do not match" << std::endl;
 		return false;
 	};
-	printErr << "not written yet" << std::endl;
 	_binningMap = newMap;
-	return false;
+	return true;
 };
 
 
 bool rpwa::ampIntegralMatrixMetadata::addAmplitudeHash(const std::string &hash) {
+	if (hash == _allZeroHash) {
+		return true; // Do not add the allZerohash, but allow it
+	}
 	for (size_t i = 0; i < _amplitudeHashes.size(); ++i) {
 		if (_amplitudeHashes[i] == hash) {
 			printErr << "hash " << hash << " already in _amplitudeHashes" << std::endl;
@@ -218,6 +226,22 @@ bool rpwa::ampIntegralMatrixMetadata::addAmplitudeHash(const std::string &hash) 
 	_amplitudeHashes.push_back(hash);
 	return true;
 };
+
+
+bool rpwa::ampIntegralMatrixMetadata::setAllZeroHash() {
+	if (!_ampIntegralMatrix) {
+		_allZeroHash = "";
+		printErr << "not integralMatrix set" << std::endl;
+		return false;
+	}
+	size_t nEvts = _ampIntegralMatrix->nmbEvents();
+	hashCalculator heWhoHashes;
+	for (size_t i = 0; i < nEvts; ++i) {
+		heWhoHashes.Update(std::complex<double>(0.,0.));
+	}
+	_allZeroHash = heWhoHashes.hash();
+	return true;
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata& evtMeta, size_t eventMin, size_t eventMax) {
@@ -321,13 +345,17 @@ bool rpwa::ampIntegralMatrixMetadata::hasKeyFileContent(const std::string& conte
 };
 
 
-bool rpwa::ampIntegralMatrixMetadata::writeToFile(TFile* outputFile) const {
+bool rpwa::ampIntegralMatrixMetadata::writeToFile(TFile* outputFile) {
+	if (!setHash()) {
+		printErr << "could not setHash. Abort writing..." << std::endl;
+		return false;
+	};
 	if (!check()) {
 		printErr << "check failed" << std::endl;
 		return false;
 	};	
 	outputFile->cd();
-	if (Write(getObjectNames(_objectBaseName).second.c_str()) != 0){
+	if (Write(getObjectNames(_objectBaseName).second.c_str()) == 0){
 		printErr << "write failed" << std::endl;
 		return false;
 	};

@@ -115,6 +115,7 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/hashCalculator_py.cc
 	${UTILITIES_SUBDIR}/physUtils_py.cc
 	${UTILITIES_SUBDIR}/reportingUtilsEnvironment_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/getMassShapes_py.cc

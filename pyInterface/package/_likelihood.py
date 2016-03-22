@@ -26,19 +26,15 @@ def initLikelihood(waveDescThres,
 		return None
 
 	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
-	if len(normIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
-		return None
-	normIntMatrix = normIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
+	normIntMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(normIntFile)
+	normIntMatrix = normIntMeta.getAmpIntegralMatrix()
 	if not likelihood.addNormIntegral(normIntMatrix):
 		pyRootPwa.utils.printErr("could not add normalization integral. Aborting...")
 		return None
 	normIntFile.Close()
 	accIntFile = ROOT.TFile.Open(accIntegralFileName, "READ")
-	if len(accIntFile.GetListOfKeys()) != 1:
-		pyRootPwa.utils.printWarn("'" + accIntegralFileName + "' does not contain exactly one TKey.")
-		return None
-	accIntMatrix = accIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
+	accIntMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(accIntFile)
+	accIntMatrix = accIntMeta.getAmpIntegralMatrix()
 	if not likelihood.addAccIntegral(accIntMatrix, accEventsOverride):
 		pyRootPwa.utils.printErr("could not add acceptance integral. Aborting...")
 		return None

@@ -57,6 +57,7 @@
 #include "amplitudeTreeLeaf_py.h"
 #include "eventFileWriter_py.h"
 #include "eventMetadata_py.h"
+#include "hashCalculator_py.h"
 
 // utilities
 #include "physUtils_py.h"
@@ -99,6 +100,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportReportingUtilsEnvironment();
 	rpwa::py::exportEventFileWriter();
 	rpwa::py::exportEventMetadata();
+	rpwa::py::exportHashCalculator();
 	rpwa::py::exportAmplitudeFileWriter();
 	rpwa::py::exportAmplitudeMetadata();
 	rpwa::py::exportCalcAmplitude();

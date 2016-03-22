@@ -155,6 +155,10 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		     , &ampIntegralMatrix_setWaveNames
 		     , bp::arg("waveNames"))
 
+		.def("addEvent"
+		     , &::ampIntegralMatrix_addEvent
+		     , bp::arg("waveNameAmplitudeMap"))
+
 		.def("renormalize", &rpwa::ampIntegralMatrix::renormalize)
 		.def("writeAscii", &ampIntegralMatrix_writeAscii)
 		.def("readAscii", &ampIntegralMatrix_readAscii)

@@ -7,6 +7,7 @@ from _fileManager import loadFileManager
 from _fit import pwaFit
 from _fit import pwaNloptFit
 from _integrals import calcIntegrals
+from _integralsOnTheFly import calcIntegralsOnTheFly
 from _likelihood import initLikelihood
 
 import utils
@@ -18,6 +19,7 @@ del _config
 del _fileManager
 del _fit
 del _integrals
+del _integralsOnTheFly
 del _likelihood
 
 config = None
