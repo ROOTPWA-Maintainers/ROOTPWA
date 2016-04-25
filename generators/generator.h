@@ -22,7 +22,9 @@ namespace rpwa {
 
 		generator()
 			: _pickerFunction(massAndTPrimePickerPtr()),
-			  _beamAndVertexGenerator(beamAndVertexGeneratorPtr()) { }
+			  _beamAndVertexGenerator(beamAndVertexGeneratorPtr()),
+			  _xMass(0.0),
+			  _tPrime(0.0) { }
 
 		virtual ~generator() { }
 
@@ -32,6 +34,8 @@ namespace rpwa {
 		virtual const rpwa::particle& getGeneratedRecoil() const { return _target.recoilParticle; }
 		virtual const std::vector<rpwa::particle>& getGeneratedFinalState() const { return _decayProducts; }
 		virtual const TVector3& getGeneratedVertex() const { return _vertex; }
+		virtual double getGeneratedXMass() const { return _xMass; }
+		virtual double getGeneratedTPrime() const { return _tPrime; }
 
 		virtual void setBeam(const rpwa::Beam& beam) { _beam = beam; }
 		virtual void setTarget(const rpwa::Target& target) { _target = target; }
@@ -69,6 +73,8 @@ namespace rpwa {
 		beamAndVertexGeneratorPtr _beamAndVertexGenerator;
 		std::vector<rpwa::particle> _decayProducts;
 		TVector3 _vertex;
+		double _xMass;
+		double _tPrime;
 
 	};
 
