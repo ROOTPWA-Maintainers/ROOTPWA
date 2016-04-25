@@ -8,9 +8,9 @@ ROOTPWA is a toolkit for partial-wave analysis of multi-particle final states pr
 
 Please note that ROOTPWA is still in development and currently in a transition phase from an old deprecated code basis using a mixture of C++, bash, and ROOT scripts to a new system that is based on C++ and Python. The new system is intended to be faster, more versatile, more flexible, and easier to maintain. The transition will also encompass the migration of the main I/O data formats towards efficient and self-describing ROOT data structures. We will try to minimize incompatibilities and disruptions of workflows that will inevitably occur along the way.
 
-ROOTPWA is distributed under the [GPLv3](http://www.gnu.org/licenses/gpl.html). For details please see the LICENSE file contained in this package. ROOTPWA is hosted at SourceForge and can be found at
+ROOTPWA is distributed under the [GPLv3](http://www.gnu.org/licenses/gpl.html). For details please see the LICENSE file contained in this package. ROOTPWA is hosted at GitHub and can be found at
 
-<http://sourceforge.net/projects/rootpwa/>
+<https://github.com/ROOTPWA-Maintainers/ROOTPWA>
 
 Below you will find instructions on how to install the external libraries needed by ROOTPWA, how to get the ROOTPWA sources, how to install the program, and how to contribute to the project.
 
@@ -37,7 +37,7 @@ CMake is a cross-platform, open-source build system available from <http://cmake
 *   <http://rachid.koucha.free.fr/tech_corner/cmake_manual.html>
 *   <http://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started>
 
-The minimum required CMake version is 3.0.0. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can quite easily compile CMake yourself...
+The minimum required CMake version is 3.0.0. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can either quite easily compile and install CMake yourself:
 
 1.  Download the latest CMake release from <http://www.cmake.org/cmake/resources/software.html>
 
@@ -53,7 +53,7 @@ The minimum required CMake version is 3.0.0. In case your system offers only out
 
 4.  Add `<install directory>/bin` to your path or create an alias for `cmake`.
 
-...or use the binary distribution package...
+...or use the binary distribution package:
 
 1.  Download the latest CMake binary (`.tar.gz`) from <http://www.cmake.org/cmake/resources/software.html> and unpack it to your preferred binary directory (e.g. `~/bin/`).
 
@@ -62,9 +62,12 @@ The minimum required CMake version is 3.0.0. In case your system offers only out
 
 ### Boost ###
 
-Part of the code relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.56.0 or higher is required; it is recommended to use the latest Boots release. If you have administrator privileges, just install the respective Boost packages for your platform and you are set.
+Part of the ROOTPWA code and of the external libraries relies on the Boost C++ template library which is available at <http://www.boost.org>. Version 1.56.0 or higher is required; it is recommended to use the latest Boots release.
 
-If you only have normal user privileges there are two ways of installing Boost: The most convenient way is to download and extract the tarball of the desired Boost version. However, one can also clone the Boost git repository by running
+
+#### Getting Boost ####
+
+If you have administrator privileges, just install the respective Boost packages for your platform and you are set. In case you only have normal user privileges there are two ways of installing Boost: The most convenient way is to download the tarball of the desired Boost version from the Boost website and extract it to a place of your choice. However, one can also clone the Boost git repository by running
 
     > git clone --recursive https://github.com/boostorg/boost.git
     > cd boost
@@ -73,12 +76,24 @@ This has the advantage that switching to different (usually updated) Boost versi
 
     > git tag
 
-The Boost git repository is split into multiple submodules. Therefore, after choosing the tag (here `boost-1.58.0`), the checkout has to be performed for the main directory _and_ for each submodule. This can be done by running the following commands (be sure to be in the main Boost directory)
+The Boost git repository is split into multiple submodules. Therefore, after choosing the tag (here e.g. `boost-1.58.0`), the checkout has to be performed for the main directory _and_ for each submodule. This can be done by running the following commands (be sure to be in the main Boost directory)
 
     > git checkout boost-1.58.0
     > git submodule foreach 'git checkout --force boost-1.58.0 || true'
 
-Note, that although Boost is to a large extend a header-only library, some parts like the Python bindings used by ROOTPWA need to be compiled (see "Building ROOTPWA" below). So, be always sure to (re)compile the Boost libraries after having switched to a different Boost version.
+
+#### Compiling Boost Library ####
+
+If the Boost library was _not_ installed in the system directories, you have to define the `BOOST_ROOT` environment variable such that it points to the Boost top-level directory (e.g. `export BOOST_ROOT=some/path/boost`), so that the build systems of ROOTPWA and the external libraries know where they can find the Boost files.
+
+Note, that although Boost is to a large extend a header-only library, some parts need to be compiled. Make sure that (re)compilation includes the `Boost.Pyhton`, `Boost.Timer`, and optionally the `Boost.MPI` libraries. If you checked out the Boost Git repository, you also have to (re)generate the folder structure for the header files. It is highly recommended to run the `compileBoostLibraries.sh` script found in the ROOTPWA root directory, which performs all the above tasks. The script takes an optional argument, which is the number of parallel processes the Boost build system should run. If you run e.g. on a 4-core machine you should run
+
+    > compileBoostLibraries.sh 4
+
+The script relies on the `BOOST_ROOT` environment variable discussed above. Be always sure to (re)compile the Boost libraries after having switched to a different Boost and/or Python version.
+
+
+#### Updating Boost (Git version) ####
 
 In order to find out the current Boost version (branch tag) run
 
@@ -101,6 +116,21 @@ A full update of the Boost git repository is performed by running (be sure to be
 After this you choose the Boost version as described above. It is _not_ recommended to work with the `master` branch of Boost.
 
 
+### yaml-cpp ###
+
+As YAML parser we use _yaml-cpp_ written by Jesse Beder available from <https://github.com/jbeder/yaml-cpp>. Version 0.5 or higher is required.
+
+In case you do not have administrator privileges, the easiest way to install yaml-cpp from source is:
+
+    > git clone https://github.com/jbeder/yaml-cpp.git
+    > cd yaml-cpp
+    > mkdir build; cd build
+    > cmake .. -DBUILD_SHARED_LIBS=ON
+    > make
+
+Like ROOTPWA also yaml-cpp relies on Boost. By default the yaml-cpp build system prefers the system-installed Boost version, if present. In case you run into problems when compiling ROOTPWA that point to yaml-cpp and Boost, consider running `cmake` with the `-DBoost_NO_SYSTEM_PATHS=ON` flag in order to force CMake to use the Boost libraries pointed to by the `BOOST_ROOT` environment variable (see also "Compiling Boost Library" above).
+
+
 ### ROOT ###
 
 ROOT is an open-source data-analysis framework for high-energy and nuclear physics and is available from <http://root.cern.ch>. Version 5.26 or higher is required and it must have been built with the configure options
@@ -118,19 +148,6 @@ We use the _libconfig_ config file parser written by Mark A. Lindner available f
     > make && make install
 
 
-### yaml-cpp ###
-
-As YAML parser we use _yaml-cpp_ written by Jesse Beder available from <https://github.com/jbeder/yaml-cpp>. Version 0.5 or higher is required. Unfortunately there is no way to check the version in the current release, so please do this manually. The easiest way to install yaml-cpp from source (assuming you have no administrator privileges) is: 
-
-    > git clone https://github.com/jbeder/yaml-cpp.git
-    > cd yaml-cpp
-    > mkdir build; cd build
-    > cmake .. -DBUILD_SHARED_LIBS=ON
-    > make
-
-Like ROOTPWA also yaml-cpp uses Boost. By default the build system prefers the system-installed Boost version, if present. In case you run into problems when compiling ROOTPWA that point to yaml-cpp and Boost, consider running `cmake` with the `-DBoost_NO_SYSTEM_PATHS=ON` flag in order to force the Boost libraries pointed to by the `BOOST_ROOT` environment variable (see also "Building ROOTPWA" below).
-
-
 ### Python ###
 
 In order to make scripting more powerful and flexible, some of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
@@ -145,7 +162,7 @@ The build system tries to find your Python installation automatically. For this 
 
     Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `` --prefix=`pwd -P` ``). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
 
-In addition you also need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Building ROOTPWA" below). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
+In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
 ### CUDA (optional) ###
@@ -181,7 +198,7 @@ The command will download the code into the `ROOTPWA` directory. This working co
 
 ROOTPWA is developed in multiple code branches, most of which contain work in progress that might not work as expected. However, there are dedicated stable branches that are intended to be used for real analyses. Tested versions of these branches are identified by tags.
 
-By default you will be in the `master` branch after you cloned the repository. This branch is used for development and will contain the latest features. More conservative users are recommended to use a more stable branch. At the moment the latest stable branch is called `_v2`. You may also checkout tagged versions. The list of tags is given by
+By default you will be in the `master` branch after you cloned the repository. This branch is used for development and will contain the latest features. More conservative users are recommended to use stable branches. Note, however, that new features will not be backported to stable branches. At the moment the latest stable branch is called `_v3`. Note that ROOTPWA's data format has changed after `_v3`, so `_v3` will be the last version able to read the older ROOTPWA files. However, the files generated by this version will not be compatible with later versions. You may also checkout tagged versions. The list of tags is given by
 
     > git tag
 
@@ -210,17 +227,13 @@ Finally you are ready to build ROOTPWA from the sources.
 
 1.  Make sure that you have installed all the packages mentioned above for the correct architecture: If you compile on a 32 bit machine, _all_ external libraries need also to be compiled for 32 bit. Similarly for 64 bit machines _all_ libraries (including ROOT!) have to be compiled for 64 bit. Mixed 32/64 bit compilation is not supported and will result in linker errors.
 
-2.  Make sure that your ROOT environment is setup correctly. The build system utilizes the `root-config` executable to determine the ROOT environment and expects it to be in the path.
+2.  If the Boost library was _not_ installed in the system directories, make sure you defined the `BOOST_ROOT` environment variable such that it points to the Boost top-level directory (see also "Compiling Boost Library" above).
 
-3.  Define the `LIBCONFIG` environment variable and point it to the libconfig installation directory. The build system expects the include files in `${LIBCONFIG}/include` and the libraries in `${LIBCONFIG}/lib`. `${LIBCONFIG}/lib` should be added to the `LD_LIBRARY_PATH` environment variable.
+3.  Make sure that your ROOT environment is setup correctly. The build system utilizes the `root-config` executable to determine the ROOT environment and expects it to be in the path.
 
-3.  Define the `YAML_CPP` environment variable and point it to the yaml-cpp installation directory. The build system expects the include files in `${YAML_CPP}/include/yaml-cpp` and the libraries in `${YAML_CPP}/lib` or `${YAML_CPP}/build`. The library directory should be added to the `LD_LIBRARY_PATH` environment variable.
+4.  Define the `LIBCONFIG` environment variable and point it to the libconfig installation directory. The build system expects the include files in `${LIBCONFIG}/include` and the libraries in `${LIBCONFIG}/lib`. `${LIBCONFIG}/lib` should be added to the `LD_LIBRARY_PATH` environment variable.
 
-4.  If the Boost library was _not_ installed in the system directories you have to tell the build system, where it can find the Boost files by defining the `BOOST_ROOT` environment variable such that it points to the Boost top level directory (e.g. `export BOOST_ROOT=some/path/boost`).
-
-5.  If you installed Boost from source, make sure that you (re)compiled the `Boost.Pyhton`, `Boost.Timer`, and optionally the `Boost.MPI` libraries. If you checked out the Boost Git repository, you also have to (re)generate the folder structure for the header files. It is highly recommended to run the supplied `compileBoostLibraries.sh`, which performs all these tasks. The script takes an optional argument, which is the number of parallel processes the Boost build system should run. If you run e.g. on a 4-core machine you should run
-
-    `> git pull ./compileBoostLibraries.sh 4`
+5.  Define the `YAML_CPP` environment variable and point it to the yaml-cpp installation directory. The build system expects the include files in `${YAML_CPP}/include/yaml-cpp` and the libraries in `${YAML_CPP}/lib` or `${YAML_CPP}/build`. The library directory should be added to the `LD_LIBRARY_PATH` environment variable.
 
 6.  Set the `ROOTPWA` environment variable to the path of the ROOTPWA top level directory. This usually is your git working copy.
 
@@ -291,7 +304,7 @@ This injects the -m32 flag into all the necessary compiler invocations. Running 
 instead of the normal configure call.
 
 
-#### Using other Compilers ####
+#### Switching Compilers ####
 
 Other compilers like LLVM Clang are supported as long as they understand gcc compiler flags. In order to switch the compiler suite you have to define the environment variables `CC` and `CXX`. For example, switching to LLVM Clang would be achieved by executing
 
@@ -300,6 +313,14 @@ Other compilers like LLVM Clang are supported as long as they understand gcc com
     `> export CXX=$(which clang++)`
 
 prior to initializing the build directory by calling `cmake ..`.
+
+Sometimes (e.g. in SLC 6.x environments) CMake chooses the system gcc version although a different version is in the system `PATH`. This can be cured by executing
+
+    `> export CC=gcc`
+
+    `> export CXX=g++`
+
+prior to the initialization of the build directory.
 
 
 ***
@@ -312,9 +333,9 @@ Contributions to the development of ROOTPWA are very welcome and can be made in 
 
 ## Bug Reports / Feature Requests ##
 
-If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file a [bug report](https://sourceforge.net/p/rootpwa/bugs/) or a [feature request](https://sourceforge.net/p/rootpwa/feature-requests/) on our website. Before submitting a report, please check if your item has not already been submitted by somebody else. Note that you can vote on both bug reports and feature requests if you feel that their resolution is of help to you.
+If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file an [issue report](https://github.com/ROOTPWA-Maintainers/ROOTPWA/issues) via the ROOTPWA GitHub website. Before submitting an issue report, please check that your issue has not already been submitted by someone else.
 
-If you already have a solution for a particular bug or have already implemented a new feature, feel free to attach a patch to the corresponding request. The ROOTPWA developers will review your changes and consider them for implementation to the repository.
+If you already have a solution for a particular bug or have implemented a new feature, feel to submit a pull request so that the ROOTPWA developers can review your changes (see also "Contributing Code" below).
 
 
 ## Contributing Code ##
