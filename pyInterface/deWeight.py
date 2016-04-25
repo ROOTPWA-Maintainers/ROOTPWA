@@ -49,7 +49,7 @@ if __name__ == "__main__":
 	fileWriter = pyRootPwa.core.eventFileWriter()
 	if not fileWriter.initialize(outputFile,
 	                             metaData.userString(),
-	                             pyRootPwa.core.eventMetadata.GENERATED,
+	                             pyRootPwa.core.eventMetadata.REAL,
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
 	                             metaData.binningMap(),
