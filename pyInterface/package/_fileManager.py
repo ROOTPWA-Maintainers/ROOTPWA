@@ -1,11 +1,11 @@
+#pylint: skip-file
 
 import glob
 import os
 import cPickle as pickle
 
-import pyRootPwa
-import pyRootPwa.core
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 
 def saveFileManager(fileManagerObject, path):
@@ -66,7 +66,7 @@ class fileManager:
 	dataFiles       = {}
 	keyFiles        = {}
 	amplitudeFiles  = {}
-	intergalFiles   = {}
+	integralFiles   = {}
 	globalAxes = {}
 	binList = []
 
@@ -161,7 +161,7 @@ class fileManager:
 	def getAmplitudeFilePaths(self, binID, eventsType):
 		ampFileList = {}
 		for key in sorted(self.amplitudeFiles):
-			if (key[0] == binID and key[2] == eventsType):
+			if key[0] == binID and key[2] == eventsType:
 				ampFileList[key[1]] = self.amplitudeDirectory + "/" + self.amplitudeFiles[key]
 		return ampFileList
 
@@ -224,7 +224,7 @@ class fileManager:
 			binAxes[binningVariable] = sorted(binAxes[binningVariable], key=lambda t: t[0])
 			bins = binAxes[binningVariable]
 			if not bins:
-				pyRootPwa.util.printErr("no bins found for variable '" + binningVariable + "'.")
+				pyRootPwa.utils.printErr("no bins found for variable '" + binningVariable + "'.")
 				return {}
 			bound = bins[0]
 			for currentBin in bins[1:]:
@@ -254,7 +254,7 @@ class fileManager:
 						globalBinList.append(currentBin)
 			globalBinList = sorted(globalBinList, key=lambda t: t[0])
 			if not globalBinList:
-				pyRootPwa.util.printErr("global currentBin list empty for '" + binningVariable + "'.")
+				pyRootPwa.utils.printErr("global currentBin list empty for '" + binningVariable + "'.")
 				return {}
 			bound = globalBinList[0]
 			for currentBin in globalBinList[1:]:

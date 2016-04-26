@@ -1,23 +1,24 @@
-
+from __future__ import print_function
 import inspect as _inspect
 import multiprocessing as _multiprocessing
 import sys as _sys
-
-import pyRootPwa.utils
 
 # making the output nice for multi-threading
 stdoutisatty = _sys.stdout.isatty()
 stderrisatty = _sys.stderr.isatty()
 
-def printPrintingSummary(printingCounter):
-	print
-	print("Number of errors printed:    " + str(printingCounter[0]))
-	print("Number of warnings printed:  " + str(printingCounter[1]))
-	print("Number of infos printed:     " + str(printingCounter[3]))
-	print("Number of successes printed: " + str(printingCounter[2]))
-	print("Number of debugs printed:    " + str(printingCounter[4]))
+def printPrintingSummary(printingCounterVar):
+	print('')
+	print("Number of errors printed:    " + str(printingCounterVar[0]))
+	print("Number of warnings printed:  " + str(printingCounterVar[1]))
+	print("Number of infos printed:     " + str(printingCounterVar[3]))
+	print("Number of successes printed: " + str(printingCounterVar[2]))
+	print("Number of debugs printed:    " + str(printingCounterVar[4]))
 
-class _printClass:
+class _printClass(object):
+
+	def __init__(self):
+		pass
 
 	_terminalColorStrings = {}
 	_terminalColorStrings['normal']     = "\033[0m"
@@ -46,38 +47,38 @@ class _printClass:
 		frame = _inspect.currentframe().f_back.f_back
 		if frame is None:
 			printErr("This method cannot be called directly.")
-		(filename, lineno, function, code_contex, index) = _inspect.getframeinfo(frame)
+		(filename, lineno, function, _, _) = _inspect.getframeinfo(frame)
 		if function == "<module>":
 			function = "__main__"
 		string = ""
 		if level == "err":
-			if pyRootPwa.utils.stderrisatty: string += self._terminalColorStrings['fgRed']
+			if stderrisatty: string += self._terminalColorStrings['fgRed']
 			string += "!!! "
 			string += function + " [" + filename + ":" + str(lineno) + "]: "
 			string += "error: "
-			if pyRootPwa.utils.stderrisatty: string += self._terminalColorStrings['normal']
+			if stderrisatty: string += self._terminalColorStrings['normal']
 			string += msg
 		elif level == "warn":
-			if pyRootPwa.utils.stderrisatty: string += self._terminalColorStrings['fgYellow']
+			if stderrisatty: string += self._terminalColorStrings['fgYellow']
 			string += "??? "
 			string += function + " [" + filename + ":" + str(lineno) + "]: "
 			string += "warning: "
-			if pyRootPwa.utils.stderrisatty: string += self._terminalColorStrings['normal']
+			if stderrisatty: string += self._terminalColorStrings['normal']
 			string += msg
 		elif level == "suc":
-			if pyRootPwa.utils.stdoutisatty: string += self._terminalColorStrings['fgGreen']
+			if stdoutisatty: string += self._terminalColorStrings['fgGreen']
 			string += "*** "
 			string += function + ": success: "
-			if pyRootPwa.utils.stdoutisatty: string += self._terminalColorStrings['normal']
+			if stdoutisatty: string += self._terminalColorStrings['normal']
 			string += msg
 		elif level == "info":
-			if pyRootPwa.utils.stdoutisatty: string += self._terminalColorStrings['bold']
+			if stdoutisatty: string += self._terminalColorStrings['bold']
 			string += ">>> "
 			string += function + ": info: "
-			if pyRootPwa.utils.stdoutisatty: string += self._terminalColorStrings['normal']
+			if stdoutisatty: string += self._terminalColorStrings['normal']
 			string += msg
 		elif level == "debug":
-			if pyRootPwa.utils.stdoutisatty: string += self._terminalColorStrings['fgMangenta']
+			if stdoutisatty: string += self._terminalColorStrings['fgMangenta']
 			string += "+++ "
 			string += function + ": debug: "
 			string += self._terminalColorStrings['normal']
@@ -93,6 +94,7 @@ class _printClass:
 class printErrClass(_printClass):
 
 	def __init__(self, counter):
+		_printClass.__init__(self)
 		self.counter = counter
 
 	def __call__(self, msg):
@@ -102,6 +104,7 @@ class printErrClass(_printClass):
 class printWarnClass(_printClass):
 
 	def __init__(self, counter):
+		_printClass.__init__(self)
 		self.counter = counter
 
 	def __call__(self, msg):
@@ -111,6 +114,7 @@ class printWarnClass(_printClass):
 class printSuccClass(_printClass):
 
 	def __init__(self, counter):
+		_printClass.__init__(self)
 		self.counter = counter
 
 	def __call__(self, msg):
@@ -120,6 +124,7 @@ class printSuccClass(_printClass):
 class printInfoClass(_printClass):
 
 	def __init__(self, counter):
+		_printClass.__init__(self)
 		self.counter = counter
 
 	def __call__(self, msg):
@@ -129,6 +134,7 @@ class printInfoClass(_printClass):
 class printDebugClass(_printClass):
 
 	def __init__(self, counter):
+		_printClass.__init__(self)
 		self.counter = counter
 
 	def __call__(self, msg):

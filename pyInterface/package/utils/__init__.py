@@ -6,9 +6,14 @@ from _binningMapFromArgList import binningMapFromArgList
 from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile
 from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList
 
+import _root
+ROOT = _root.ROOT
+
+# pylint: disable=E0602
 del _printingUtils
 del _progressBar
 del _silencer
 del _binningMapFromArgList
 del _fitTreeUtils
 del _waveDescThresUtils
+del _root
