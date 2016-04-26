@@ -1,11 +1,11 @@
+#pylint: skip-file
 
 import glob
 import os
 import cPickle as pickle
 
-import pyRootPwa
-import pyRootPwa.core
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 
 def saveFileManager(fileManagerObject, path):

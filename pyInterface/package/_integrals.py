@@ -1,8 +1,6 @@
-import os
-
-import pyRootPwa
 import pyRootPwa.core
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 def calcIntegrals(ampFileList, maxNmbEvents=0, weightFileName=""):
 	integralMatrix = pyRootPwa.core.ampIntegralMatrix()

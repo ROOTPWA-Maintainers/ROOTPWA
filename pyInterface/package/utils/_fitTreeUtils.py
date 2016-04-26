@@ -1,7 +1,9 @@
+from _printingUtils import printErr, printWarn
 
+import pyRootPwa.core
 
-import pyRootPwa
-ROOT = pyRootPwa.ROOT
+import _root
+ROOT = _root.ROOT
 
 
 def getFitResultFromFile(fitResultFileName,
@@ -10,26 +12,26 @@ def getFitResultFromFile(fitResultFileName,
                         ):
 	fitResultFile = ROOT.TFile.Open(fitResultFileName, "READ")
 	if not fitResultFile:
-		pyRootPwa.utils.printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
+		printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
 		return None
 
 	fitResultTree = fitResultFile.Get(fitResultTreeName)
 	if not fitResultTree:
-		pyRootPwa.utils.printErr("could not find fit result tree '" + fitResultTreeName +
-		                         "' in file '" + args.fitResult + "'. Aborting...")
+		printErr("could not find fit result tree '" + fitResultTreeName +
+		                         "' in file '" + fitResultFileName + "'. Aborting...")
 		return None
 
 	result = pyRootPwa.core.fitResult()
 	result.setBranchAddress(fitResultTree, fitResultBranchName)
 
 	if fitResultTree.GetEntries() != 1:
-		pyRootPwa.utils.printErr("More than one fit result in TTree, somebody should probably implement this properly...")
+		printErr("More than one fit result in TTree, somebody should probably implement this properly...")
 		fitResultFile.Close()
 		return None
 	fitResultTree.GetEntry(0)
 
 	if not result.converged():
-		pyRootPwa.utils.printErr("Fit not converged for fit result file '" + fitResultFileName + "'.")
+		printErr("Fit not converged for fit result file '" + fitResultFileName + "'.")
 		return None
 
 	fitResultFile.Close()
@@ -42,13 +44,13 @@ def getBestFitResultsFromFile(fitResultFileName,
                              ):
 	fitResultFile = ROOT.TFile.Open(fitResultFileName, "READ")
 	if not fitResultFile:
-		pyRootPwa.utils.printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
+		printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
 		return None
 
 	fitResultTree = fitResultFile.Get(fitResultTreeName)
 	if not fitResultTree:
-		pyRootPwa.utils.printErr("could not find fit result tree '" + fitResultTreeName +
-		                         "' in file '" + args.fitResult + "'. Aborting...")
+		printErr("could not find fit result tree '" + fitResultTreeName +
+		                         "' in file '" + fitResultFileName + "'. Aborting...")
 		return None
 
 	result = pyRootPwa.core.fitResult()
@@ -81,13 +83,13 @@ def getBestFitResultFromFile(fitResultFileName,
                             ):
 	fitResultFile = ROOT.TFile.Open(fitResultFileName, "READ")
 	if not fitResultFile:
-		pyRootPwa.utils.printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
+		printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
 		return None
 
 	fitResultTree = fitResultFile.Get(fitResultTreeName)
 	if not fitResultTree:
-		pyRootPwa.utils.printErr("could not find fit result tree '" + fitResultTreeName +
-		                         "' in file '" + args.fitResult + "'. Aborting...")
+		printErr("could not find fit result tree '" + fitResultTreeName +
+		         "' in file '" + fitResultFileName + "'. Aborting...")
 		return None
 
 	result = pyRootPwa.core.fitResult()
@@ -106,9 +108,9 @@ def getBestFitResultFromFile(fitResultFileName,
 			bestResult = pyRootPwa.core.fitResult(result)
 		elif massBinCenter is None:
 			if bestResult.massBinCenter() != result.massBinCenter():
-				pyRootPwa.utils.printWarn("fit result file '" + fitResultFileName + "' " +
-				                          "contains more than one mass bin, return the " +
-				                          "fit result with the best likelihood.")
+				printWarn("fit result file '" + fitResultFileName + "' " +
+				          "contains more than one mass bin, return the " +
+				          "fit result with the best likelihood.")
 				if result.logLikelihood() < bestResult.logLikelihood():
 					bestResult = pyRootPwa.core.fitResult(result)
 		else:

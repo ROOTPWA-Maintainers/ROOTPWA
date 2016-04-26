@@ -1,12 +1,12 @@
-from pyRootPwa.utils import printInfo
-from pyRootPwa.utils import printErr
+from _printingUtils import printInfo
+from _printingUtils import printErr
 
 def binningMapFromArgList(argList):
 	binningMap = {}
 	if argList:
-		for bin in argList:
+		for binArg in argList:
 			try:
-				splitUp = bin.split(";")
+				splitUp = binArg.split(";")
 				if len(splitUp)==3:
 					binningMap[splitUp[0]] = (float(splitUp[1]), float(splitUp[2]))
 					printInfo("adding to binning map: " + splitUp[0] + " -> (" + splitUp[1] + "," + splitUp[2] + ")")
