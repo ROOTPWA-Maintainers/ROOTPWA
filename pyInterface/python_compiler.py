@@ -1,4 +1,4 @@
-
+#pylint: disable=C0103
 import compileall
 import os
 import sys

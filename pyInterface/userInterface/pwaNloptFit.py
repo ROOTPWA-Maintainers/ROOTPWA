@@ -23,7 +23,8 @@ if __name__ == "__main__":
 	parser.add_argument("-w", type=str, metavar="path", dest="waveListFileName", default="", help="path to wavelist file (default: none)")
 	parser.add_argument("-S", type=str, metavar="path", dest="startValFileName", default="", help="path to start value fit result file (default: none)")
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
-	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
+	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
@@ -80,12 +81,12 @@ if __name__ == "__main__":
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "UPDATE")
-	if ((not outputFile) or outputFile.IsZombie()):
+	if (not outputFile) or outputFile.IsZombie():
 		printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 	fitResult = pyRootPwa.core.fitResult()
 	tree = outputFile.Get(valTreeName)
-	if (not tree):
+	if not tree:
 		printInfo("file '" + args.outputFileName + "' is empty. "
 		        + "creating new tree '" + valTreeName + "' for PWA result.")
 		tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)

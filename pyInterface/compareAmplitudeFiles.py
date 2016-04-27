@@ -10,7 +10,7 @@ ROOT = pyRootPwa.ROOT
 
 def getDiffListAbs(list1, list2):
 	diff = []
-	for i in range(len(list1)):
+	for i, _ in enumerate(list1):
 		diff.append(list1[i] - list2[i])
 	return diff
 
@@ -43,8 +43,7 @@ def saveTree(path, name, title, lst):
 	for element in lst:
 		arr[0] = element
 		tree.Fill()
-	hist = ROOT.TH1D(name + "_hist", title, 301, -1e-11, 1e-11)
-	tree.Draw("diff>>" + name + "_hist")
+	tree.Draw("diff>>" + name + "_hist(301, -1e-11, 1e-11)")
 	rootFile.Write()
 	rootFile.Close()
 

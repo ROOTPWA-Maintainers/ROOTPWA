@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import multiprocessing
 import os.path
 import sys
 
@@ -17,14 +16,19 @@ if __name__ == "__main__":
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-a", type=int, metavar="#", dest="maxAttempts", default=0, help="(max) number of attempts to do (default: infinity)")
-	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="", help="ROOT output file (if not specified, generated automatically)")
-	parser.add_argument("-p", type=str, metavar="<particleDataTable>", dest="particleDataTableFileName", default="./particleDataTable.txt", help="path to particle data table file (default: ./particleDataTable.txt)")
-	parser.add_argument("-c", action="store_true", dest="comgeantOutput", help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
+	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="",
+	                    help="ROOT output file (if not specified, generated automatically)")
+	parser.add_argument("-p", type=str, metavar="<particleDataTable>", dest="particleDataTableFileName", default="./particleDataTable.txt",
+	                    help="path to particle data table file (default: ./particleDataTable.txt)")
+	parser.add_argument("-c", action="store_true", dest="comgeantOutput",
+	                    help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
-	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
+	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
+	                    help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
-	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)", default="mass,tPrime")
+	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
+	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
@@ -101,7 +105,7 @@ if __name__ == "__main__":
 		printInfo("opened output comgeant file: " + args.outputFileName)
 
 	try:
-		print(generatorManager)
+		printInfo(generatorManager)
 		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
 		progressBar.start()
 		attempts = 0

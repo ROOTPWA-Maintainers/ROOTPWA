@@ -20,7 +20,8 @@ if __name__ == "__main__":
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
-	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
+	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -68,7 +69,7 @@ if __name__ == "__main__":
 
 	pars = []
 	for i in range(likelihood.nmbPars()):
-		parName = likelihood.parName(i);
+		parName = likelihood.parName(i)
 		pars.append(result.fitParameter(parName))
 
 	# analytically calculate Hessian
@@ -79,7 +80,7 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printInfo("eigenvalues of (analytic) Hessian:")
 	for i in xrange(len(eigenVectors)):
 		if args.verbose:
-			print("    {: .15e}".format(eigenVectors[i][1]))
+			pyRootPwa.utils.printInfo("    {: .15e}".format(eigenVectors[i][1]))
 		if eigenVectors[i][1] <= 0:
 			pyRootPwa.utils.printWarn("eigenvalue {:d} of Hessian is not positive ({: .15e}).".format(i, eigenVectors[i][1]))
 
@@ -110,7 +111,7 @@ if __name__ == "__main__":
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
-	if ((not outputFile) or outputFile.IsZombie()):
+	if (not outputFile) or outputFile.IsZombie():
 		pyRootPwa.utils.printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 	pyRootPwa.utils.printInfo("file '" + args.outputFileName + "' is empty. "
