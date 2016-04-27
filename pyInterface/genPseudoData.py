@@ -2,16 +2,14 @@
 
 import argparse
 import math
-import multiprocessing
-import numpy
 import os.path
 import sys
 
 import pyRootPwa
 import pyRootPwa.core
 
-def norm(c):
-	return (c.real*c.real + c.imag*c.imag)
+def norm(cNumber):
+	return cNumber.real*cNumber.real + cNumber.imag*cNumber.imag
 
 
 if __name__ == "__main__":
@@ -24,10 +22,12 @@ if __name__ == "__main__":
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
 	parser.add_argument("integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
-	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
+	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName",
+	                    help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
-	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
+	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
+	                    help="lower boundary of mass range in MeV (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 	waveNames = []
 	waveNames = fitResult.waveNames()
 
-	if(fitResult.nmbProdAmps() != len(waveNames)):
+	if fitResult.nmbProdAmps() != len(waveNames):
 		pyRootPwa.utils.printErr('Number of production amplitudes (' + str(fitResult.nmbProdAmps()) +
 		                         ') not equal to number of wave names (' + str(len(waveNames)) + '). Aborting...')
 		sys.exit(1)
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 			printErr('could not construct amplitude for keyfile "' + keyfile + '".')
 			sys.exit(1)
 		amplitude.init()
-		print(amplitude)
+		printInfo(amplitude)
 		waveDescriptions.append(waveDescription)
 		amplitudes.append(amplitude)
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
 	printInfo("opened output root file: " + args.outputFile)
 	try:
-		print(generatorManager)
+		printInfo(generatorManager)
 		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
 		progressBar.start()
 		attempts = 0
@@ -150,6 +150,7 @@ if __name__ == "__main__":
 		first = True
 		weight = 0.
 
+		eventsGenerated = 0
 		for eventsGenerated in range(args.nEvents):
 
 			attempts += generatorManager.event()
@@ -187,7 +188,7 @@ if __name__ == "__main__":
 			posReflAmpSum = 0
 			negReflAmpSum = 0
 
-			for i in range(len(amplitudes)):
+			for i, _ in enumerate(amplitudes):
 				amplitude = amplitudes[i]
 				topo = amplitude.decayTopology()
 				if not topo.readKinematicsData(prodKin, decayKin):

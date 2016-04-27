@@ -5,12 +5,12 @@ import sys
 
 import pyRootPwa
 
-class EventFile:
+class EventFile(object):
 
 	evtFile = None
 
-	def __init__(self, inputFile):
-		self.evtFile = inputFile
+	def __init__(self, evtFile):
+		self.evtFile = evtFile
 
 
 	def getEvent(self):
@@ -18,7 +18,7 @@ class EventFile:
 		if linesToRead == "":
 			return None
 		lines = [linesToRead]
-		for i in range(0, int(linesToRead)):
+		for _ in range(0, int(linesToRead)):
 			lines.append(self.evtFile.readline()[:-1])
 			if lines[-1] == "":
 				raise Exception("Unexpected end of file")
@@ -29,7 +29,7 @@ class EventFile:
 		for line in event.lines:
 			self.evtFile.write(line + "\n")
 
-class Event:
+class Event(object):
 
 	lines = []
 
@@ -46,8 +46,8 @@ class Event:
 		newlines.append(self.lines[0])
 		newlines.append(self.lines[1])
 
-		for i in range(len(targetDecayNames)):
-			for j in range(len(currentDecayNames)):
+		for i, _ in enumerate(targetDecayNames):
+			for j, _ in enumerate(currentDecayNames):
 				if currentDecayNames[j] == targetDecayNames[i]:
 					newlines.append(self.lines[j+2])
 					currentDecayNames[j]=""
@@ -105,8 +105,9 @@ if __name__ == "__main__":
 	parser.add_argument("outputFileName", help="The .root file to be written")
 	parser.add_argument("-u", "--userstring", help="User string", default="")
 	parser.add_argument("-t", "--type", dest="eventsTypeString", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')", default="other")
-	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
-	                                                             "You can use the argument multiple times for multiple binning variables")
+	parser.add_argument("-b", "--binning", action='append',
+	                    help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
+	                         "You can use the argument multiple times for multiple binning variables")
 
 	args = parser.parse_args()
 
