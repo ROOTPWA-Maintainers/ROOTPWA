@@ -509,15 +509,15 @@ isobarDecayTopology::getIsospinSymmetrization()
 	// group are saved.
 	vector< vector<unsigned int> > groups;
 	for(unsigned int i = 0; i < fsParts.size(); ++i) {
-		const particlePtr& particle = fsParts.at(i);
+		const particlePtr& particle = fsParts[i];
 		bool inserted = false;
 		for(unsigned int j = 0; j < groups.size(); ++j) {
-			const particlePtr& compPart = fsParts.at(groups.at(j).at(0));
+			const particlePtr& compPart = fsParts.at(groups[j][0]);
 			if(particle->isospin() == compPart->isospin() &&
 			   particle->J() == compPart->J() &&
 			   particle->P() == compPart->P())
 			{
-				groups.at(j).push_back(i);
+				groups[j].push_back(i);
 				inserted = true;
 			}
 		}
@@ -530,9 +530,9 @@ isobarDecayTopology::getIsospinSymmetrization()
 		printDebug << "Found isospin symmetrization groups:" << endl;
 		for(unsigned int i = 0; i < groups.size(); ++i) {
 			printDebug << "Group " << i << endl;
-			for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
-				printDebug << j << ": " << groups.at(i).at(j)
-				           << " (" << fsParts.at(groups.at(i).at(j))->name() << ")" << endl;
+			for(unsigned int j = 0; j < groups[i].size(); ++j) {
+				printDebug << j << ": " << groups[i][j]
+				           << " (" << fsParts.at(groups[i][j])->name() << ")" << endl;
 			}
 		}
 	}
@@ -542,7 +542,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	// Needed to reset everything as it was at the end.
 	vector<int> isospinProjs;
 	for(unsigned int j = 0; j < fsParts.size(); ++j) {
-		isospinProjs.push_back(fsParts.at(j)->isospinProj());
+		isospinProjs.push_back(fsParts[j]->isospinProj());
 	}
 
 	// A vector to save the found permutations and their Clebsch-Gordans
@@ -569,19 +569,19 @@ isobarDecayTopology::getIsospinSymmetrization()
 		bool breaking = false;
 		for(unsigned int j = 0; j < map.size(); ++j) {
 
-			if (j == map.at(j)) {
+			if (j == map[j]) {
 				continue; // particle j was not swapped -> go on with check of next particle
 			}
 
 			// Make sure we are not swapping two indistinguishable particles.
-			if(fsParts.at(j)->name() == fsParts.at(map.at(j))->name()) {
+			if(fsParts.at(j)->name() == fsParts.at(map[j])->name()) {
 				breaking = true;
 				break;
 			}
 
 			// Check if two particles from the same isobar are being swapped.
 			for(unsigned int k = 0; k < map.size(); ++k) {
-				if ((map.at(k) == k) or (j == k)) {
+				if ((map[k] == k) or (j == k)) {
 					continue;
 				}
 				if(fromVertex(fsParts.at(j)) == fromVertex(fsParts.at(k))) {
@@ -600,15 +600,15 @@ isobarDecayTopology::getIsospinSymmetrization()
 
 		// Set the isospin of the final-state particles as given by the permutation.
 		for(unsigned int j = 0; j < map.size(); ++j) {
-			fsParts.at(j)->setIsospinProj(isospinProjs.at(map.at(j)));
+			fsParts.at(j)->setIsospinProj(isospinProjs.at(map[j]));
 		}
 		calcIsobarCharges(false);
 
 		// Check for isospin consistency in all vertices.
 		for(unsigned int j = 0; j < _isobarVertices.size(); ++j) {
-			const particlePtr d1 = _isobarVertices.at(j)->daughter1();
-			const particlePtr d2 = _isobarVertices.at(j)->daughter2();
-			const particlePtr p  = _isobarVertices.at(j)->parent();
+			const particlePtr d1 = _isobarVertices[j]->daughter1();
+			const particlePtr d2 = _isobarVertices[j]->daughter2();
+			const particlePtr p  = _isobarVertices[j]->parent();
 			if(not spinStatesCanCouple(d1->isospin(), d1->isospinProj(),
 			       d2->isospin(), d2->isospinProj(),
 			       p->isospin(),  p->isospinProj())) {
@@ -619,7 +619,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 		// If something is amiss, reset everything and proceed to the next permutation.
 		if(breaking) {
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
-				fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+				fsParts[j]->setIsospinProj(isospinProjs.at(j));
 			}
 			calcIsobarCharges();
 			continue;
@@ -634,7 +634,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 		if(_debug) {
 			printDebug << "Found valid permutation: ";
 			for(unsigned int j = 0; j < map.size(); ++j) {
-				cout << map.at(j);
+				cout << map[j];
 			}
 			cout << " (";
 			for(unsigned int j = 0; j < map.size(); ++j) {
@@ -645,7 +645,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 
 		// Resetting isospins for the next permutation
 		for(unsigned int j = 0; j < fsParts.size(); ++j) {
-			fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+			fsParts[j]->setIsospinProj(isospinProjs.at(j));
 		}
 		calcIsobarCharges();
 
