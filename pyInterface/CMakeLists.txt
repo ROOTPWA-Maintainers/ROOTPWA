@@ -163,3 +163,14 @@ add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
 
 
 add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
+
+# pylint tests
+find_program(PYLINT_EXECUTABLE pylint)
+if(PYLINT_EXECUTABLE)
+    add_test(pyLintPyRootPwa ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa)
+    file(GLOB PYLINT_PYTHONFILES  "${CMAKE_CURRENT_SOURCE_DIR}/*.py" "${CMAKE_CURRENT_SOURCE_DIR}/userInterface/*.py")
+    foreach(PYLINT_PYTHONFILE ${PYLINT_PYTHONFILES})
+        get_filename_component( PYLINT_PYTHONFILE_NAME ${PYLINT_PYTHONFILE} NAME_WE)
+        add_test(NAME pyLint${PYLINT_PYTHONFILE_NAME} COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${PYLINT_PYTHONFILE})
+    endforeach()
+endif()
