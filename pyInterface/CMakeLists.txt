@@ -264,3 +264,18 @@ add_custom_target(
 
 # test functionality of 'pyRootPwa' package
 add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
+
+
+# pylint tests
+if(PYLINT_EXECUTABLE)
+	# check 'pyRootPwa' package
+	add_test(pyLintPyRootPwa ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa)
+
+	# check scripts
+	foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
+		get_filename_component(_FILENAME ${_FILE} NAME_WE)
+		add_test(NAME pyLint${_FILENAME} COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${CMAKE_CURRENT_SOURCE_DIR}/${_FILE})
+	endforeach()
+	unset(_FILE)
+	unset(_FILENAME)
+endif()

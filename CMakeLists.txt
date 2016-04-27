@@ -289,6 +289,17 @@ set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
 message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 
 
+# setup pylint (optional)
+message(STATUS "")
+message(STATUS ">>> Setting up pylint.")
+find_program(PYLINT_EXECUTABLE pylint)
+if(NOT PYLINT_EXECUTABLE)
+	message(STATUS "Cannot find pylint executable. Quality of python code will no be assessed.")
+else()
+	message(STATUS "Using pylint executable '${PYLINT_EXECUTABLE}'.")
+endif()
+
+
 # setup CUDA (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
