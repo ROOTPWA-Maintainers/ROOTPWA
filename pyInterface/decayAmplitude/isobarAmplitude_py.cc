@@ -95,6 +95,7 @@ void rpwa::py::exportIsobarAmplitude() {
 
 		.add_property("reflectivityBasis", &rpwa::isobarAmplitude::reflectivityBasis, &rpwa::isobarAmplitude::enableReflectivityBasis)
 		.add_property("boseSymmetrization", &rpwa::isobarAmplitude::boseSymmetrization, &rpwa::isobarAmplitude::enableBoseSymmetrization)
+		.add_property("isospinSymmetrization", &rpwa::isobarAmplitude::isospinSymmetrization, &rpwa::isobarAmplitude::enableIsospinSymmetrization)
 		.add_property("doSpaceInversion", &rpwa::isobarAmplitude::doSpaceInversion, &rpwa::isobarAmplitude::enableSpaceInversion)
 		.add_property("doReflection", &rpwa::isobarAmplitude::doReflection, &rpwa::isobarAmplitude::enableReflection)
 
