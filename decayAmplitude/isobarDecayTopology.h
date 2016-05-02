@@ -48,6 +48,15 @@ namespace rpwa {
 			: factor       (f),
 			  fsPartPermMap(m)
 		{ }
+		symTermMap(const std::complex<double>& f,
+		           const unsigned int&         nmbFsParticles)
+			: factor       (f),
+			  fsPartPermMap(nmbFsParticles)
+		{
+			for(unsigned int i = 0; i < nmbFsParticles; ++i) {
+				fsPartPermMap[i] = i;
+			}
+		}
 		std::complex<double>      factor;         ///< factor to be applied to symmetrization term
 		std::vector<unsigned int> fsPartPermMap;  ///< final-state-particle permutation map
 	};

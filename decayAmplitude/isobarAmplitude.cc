@@ -296,7 +296,7 @@ isobarAmplitude::symTermAmp(const vector<unsigned int>& fsPartPermMap) const
 bool
 isobarAmplitude::initSymTermMaps()
 {
-
+	_symTermMaps.clear();
 	vector<symTermMap> isoSymTermMaps;
 	vector<symTermMap> boseSymTermMaps;
 	unsigned int nmbIsoSymTerms = 0;
@@ -327,6 +327,10 @@ isobarAmplitude::initSymTermMaps()
 				return false;
 			printInfo << "Found " << nmbIsoSymTerms << " isospin symmetrization terms." << endl;
 		}
+	} else {
+		printInfo << "isospin symmetrization disabled." << endl;
+		isoSymTermMaps.push_back(symTermMap(1., _decay->nmbFsParticles()));
+		nmbIsoSymTerms = 1;
 	}
 	if(_boseSymmetrize) {
 		boseSymTermMaps = _decay->getBoseSymmetrization();
@@ -341,13 +345,14 @@ isobarAmplitude::initSymTermMaps()
 		} else {
 			printInfo << "Found " << nmbBoseSymTerms << " Bose symmetrization terms." << endl;
 		}
-	}
-	if(nmbIsoSymTerms + nmbBoseSymTerms > 0) {
-		_symTermMaps.clear();
+	} else {
+		printInfo << "bose symmetrization disabled." << endl;
+		boseSymTermMaps.push_back(symTermMap(1., _decay->nmbFsParticles()));
+		nmbBoseSymTerms = 1;
 	}
 	for(unsigned int iso_i = 0; iso_i < nmbIsoSymTerms; ++iso_i) {
-			complex<double> isoFactor = isoSymTermMaps[iso_i].factor;
-			vector<unsigned int> isoSymTermMap = isoSymTermMaps[iso_i].fsPartPermMap;
+		complex<double> isoFactor = isoSymTermMaps[iso_i].factor;
+		vector<unsigned int> isoSymTermMap = isoSymTermMaps[iso_i].fsPartPermMap;
 		for(unsigned int bose_i = 0; bose_i < nmbBoseSymTerms; ++bose_i) {
 			complex<double> boseFactor = boseSymTermMaps[bose_i].factor;
 			vector<unsigned int> boseSymTermMap = boseSymTermMaps[bose_i].fsPartPermMap;
