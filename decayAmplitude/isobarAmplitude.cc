@@ -328,19 +328,22 @@ isobarAmplitude::initSymTermMaps()
 			printInfo << "Found " << nmbIsoSymTerms << " isospin symmetrization terms." << endl;
 		}
 	}
-	if(_boseSymmetrize) {
-		boseSymTermMaps = _decay->getBoseSymmetrization();
+	boseSymTermMaps = _decay->getBoseSymmetrization();
+	nmbBoseSymTerms = boseSymTermMaps.size();
+	if (nmbBoseSymTerms < 1) {
+		printErr << "array of Bose-symmetrization terms is empty. "
+		         << "cannot Bose-symmetrize amplitude." << endl;
+		return false;
+	}
+	if (nmbBoseSymTerms == 1) {
+		printInfo << "no Bose symmetrization needed for this amplitude." << endl;
+	} else {
+		printInfo << "Found " << nmbBoseSymTerms << " Bose symmetrization terms." << endl;
+	}
+	if (not _boseSymmetrize) {
+		printInfo << "Bose symmetrization disabled. Reduce boseSymTermMaps to first entry." << std::endl;
+		boseSymTermMaps = vector<symTermMap>(1, boseSymTermMaps[0]);
 		nmbBoseSymTerms = boseSymTermMaps.size();
-		if (nmbBoseSymTerms < 1) {
-			printErr << "array of Bose-symmetrization terms is empty. "
-			         << "cannot Bose-symmetrize amplitude." << endl;
-			return false;
-		}
-		if (nmbBoseSymTerms == 1) {
-			printInfo << "no Bose symmetrization needed for this amplitude." << endl;
-		} else {
-			printInfo << "Found " << nmbBoseSymTerms << " Bose symmetrization terms." << endl;
-		}
 	}
 	if(nmbIsoSymTerms + nmbBoseSymTerms > 0) {
 		_symTermMaps.clear();
