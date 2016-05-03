@@ -47,6 +47,14 @@ void rpwa::py::exportPhysUtils() {
 		   bp::arg("m2"))
 	);
 	bp::def(
+		"breakupMomentumSquared"
+		, &rpwa::breakupMomentumSquared
+		, (bp::arg("M"),
+		   bp::arg("m1"),
+		   bp::arg("m2"),
+		   bp::arg("allowSubThr")=false)
+	);
+	bp::def(
 		"barrierFactorSquared"
 		, &rpwa::barrierFactorSquared
 		, (bp::arg("L"),
