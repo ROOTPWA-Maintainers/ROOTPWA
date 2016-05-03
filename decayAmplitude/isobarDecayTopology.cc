@@ -41,7 +41,7 @@ namespace {
 	// Returns a list with all possible permutations of all groups of particles
 	// groupsExt is a vector of groups where each group is a vector of particle ids that belong to that group ( [<group>][<particleInGroup>] )
 	// The return value is a list of all permutations where each permutation is a list of groups
-    // where each group is a vector of particle ids that belong to that group ( [<permutation>][<group>][<particleInGroup>] )
+	// where each group is a vector of particle ids that belong to that group ( [<permutation>][<group>][<particleInGroup>] )
 	std::vector< std::vector< std::vector<unsigned int> > > getAllGroupPermutations(const std::vector< std::vector<unsigned int> >& groupsExt);
 }
 
