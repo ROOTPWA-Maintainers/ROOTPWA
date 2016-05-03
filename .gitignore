@@ -4,3 +4,6 @@ html-doc
 .project
 *.d
 *.so
+.cproject
+.pydevproject
+.settings
