@@ -52,6 +52,13 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printInfo("using keyfile index " + str(args.keyfileIndex) + " resulting in the wave name '" + waveList[0] + "'.")
 	if len(waveList) == 0:
 		waveList = fileManager.getWaveNameList()
+	if not args.keyfileIndex == -1:
+		allWaveNames = fileManager.getWaveNameList()
+		if not args.keyfileIndex < len(allWaveNames):
+			pyRootPwa.utils.printErr("keyfileIndex from command line argument out of range. Maximum value is " + str(len(allWaveNames)-1) + ". Aborting...")
+			sys.exit(1)
+		waveList = [allWaveNames[args.keyfileIndex]]
+		pyRootPwa.utils.printInfo("using keyfile index " + str(args.keyfileIndex) + " resulting in the wave name '" + waveList[0] + "'.")
 
 	binIDList = fileManager.getBinIDList()
 	if (not args.massBin == -1):
