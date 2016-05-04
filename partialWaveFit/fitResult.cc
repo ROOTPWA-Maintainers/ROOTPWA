@@ -569,14 +569,21 @@ double
 fitResult::intensityErr(const string& waveNamePattern) const
 {
 	// get amplitudes that correspond to wave name pattern
-	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
-	const unsigned int         nmbAmps        = prodAmpIndices.size();
-	if (not _covMatrixValid or (nmbAmps == 0)) {
+	const vector<unsigned int> waveIndices    = waveIndicesMatchingPattern(waveNamePattern);
+	const unsigned int         nmbWaves       = waveIndices.size();
+	if (not _covMatrixValid or (nmbWaves == 0)) {
 		return 0.;
 	}
-	if(nmbAmps == 1) {
-		return intensityErr(prodAmpIndices[0]);
+	if(nmbWaves == 1) {
+		return intensityErr(waveIndices[0]);
 	}
+
+	vector<unsigned int> prodAmpIndices;
+	for (unsigned int i = 0; i < nmbWaves; ++i) {
+		const vector<unsigned int> prodAmpIndicesWave = prodAmpIndicesForWave(waveIndices[i]);
+		prodAmpIndices.insert(prodAmpIndices.end(), prodAmpIndicesWave.begin(), prodAmpIndicesWave.end());
+	}
+	const unsigned int nmbAmps = prodAmpIndices.size();
 	// build Jacobian for intensity, which is a 1 x 2n matrix composed of n sub-Jacobians:
 	// J = (JA_0, ..., JA_{n - 1}), where n is the number of production amplitudes
 	TMatrixT<double> jacobian(1, 2 * nmbAmps);
