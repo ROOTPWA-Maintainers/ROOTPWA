@@ -595,7 +595,7 @@ fitResult::intensityErr(const string& waveNamePattern) const
 		for (unsigned int j = 0; j < nmbAmps; ++j) {
 			if (rankOfProdAmp(prodAmpIndices[j]) != currentRank)
 				continue;
-			ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(j, i);  // order of indices is essential
+			ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(prodAmpIndices[j], prodAmpIndices[i]);  // order of indices is essential
 		}
 		jacobian[0][2 * i    ] = ampNorm.real();
 		jacobian[0][2 * i + 1] = ampNorm.imag();
