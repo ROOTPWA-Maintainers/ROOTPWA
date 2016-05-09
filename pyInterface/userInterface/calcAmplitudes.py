@@ -22,7 +22,8 @@ if __name__ == "__main__":
 	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
-	parser.add_argument("-k", "--keyfileIndex", type=int, metavar="#", default=-1, help="keyfile index to calculate amplitude for (overrides settings from the config file, index from 0 to number of keyfiles - 1)")
+	parser.add_argument("-k", "--keyfileIndex", type=int, metavar="#", default=-1,
+	                    help="keyfile index to calculate amplitude for (overrides settings from the config file, index from 0 to number of keyfiles - 1)")
 	parser.add_argument("-w", type=str, metavar="wavelistFileName", default="", dest="wavelistFileName", help="path to wavelist file (default: none)")
 	args = parser.parse_args()
 
@@ -54,17 +55,17 @@ if __name__ == "__main__":
 		waveList = fileManager.getWaveNameList()
 
 	binIDList = fileManager.getBinIDList()
-	if (not args.massBin == -1):
+	if not args.massBin == -1:
 		binIDList = [args.massBin]
 
 	eventsTypes = []
-	if (args.eventsType == "real"):
+	if args.eventsType == "real":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.REAL ]
-	elif (args.eventsType == "generated"):
+	elif args.eventsType == "generated":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED ]
-	elif (args.eventsType == "accepted"):
+	elif args.eventsType == "accepted":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.ACCEPTED ]
-	elif (args.eventsType == "all"):
+	elif args.eventsType == "all":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.REAL,
 		                pyRootPwa.core.eventMetadata.GENERATED,
 		                pyRootPwa.core.eventMetadata.ACCEPTED ]
@@ -78,5 +79,6 @@ if __name__ == "__main__":
 				dataFile = fileManager.getDataFile(binID, eventsType)
 				if not dataFile:
 					continue
-				if not pyRootPwa.calcAmplitude(dataFile.dataFileName, fileManager.getKeyFile(waveName)[0], fileManager.getKeyFile(waveName)[1], fileManager.getAmplitudeFilePath(binID, waveName, eventsType), args.maxNmbEvents, not args.noProgressBar):
+				if not pyRootPwa.calcAmplitude(dataFile.dataFileName, fileManager.getKeyFile(waveName)[0], fileManager.getKeyFile(waveName)[1],
+				                               fileManager.getAmplitudeFilePath(binID, waveName, eventsType), args.maxNmbEvents, not args.noProgressBar):
 					pyRootPwa.utils.printWarn("could not calculate amplitude.")

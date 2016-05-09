@@ -19,7 +19,8 @@ if __name__ == "__main__":
 	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
-	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
+	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 
 	pars = []
 	for i in range(likelihood.nmbPars()):
-		parName = likelihood.parName(i);
+		parName = likelihood.parName(i)
 		pars.append(result.fitParameter(parName))
 
 	pyRootPwa.utils.printSucc("likelihood is {: .15e}.".format(likelihood.DoEval(pars)))

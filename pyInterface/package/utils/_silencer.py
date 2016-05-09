@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 
-class silencer():
+class silencer(object):
 
 	output = ""
 
@@ -24,7 +24,7 @@ class silencer():
 		os.dup2(self._outputStream.fileno(), 2)
 		return self
 
-	def __exit__(self, type, value, traceback):
+	def __exit__(self, exitType, value, traceback):
 		if not self._silence:
 			self.output = ""
 			return

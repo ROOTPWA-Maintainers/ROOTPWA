@@ -1,5 +1,5 @@
-import pyRootPwa
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 def initLikelihood(waveDescThres,
                    massBinCenter,
@@ -14,7 +14,7 @@ def initLikelihood(waveDescThres,
                   ):
 	likelihood = pyRootPwa.core.pwaLikelihood()
 	likelihood.useNormalizedAmps(True)
-	if (not verbose):
+	if not verbose:
 		likelihood.setQuiet()
 	if cauchy:
 		likelihood.setPriorType(pyRootPwa.core.HALF_CAUCHY)
@@ -22,7 +22,7 @@ def initLikelihood(waveDescThres,
 	if (not likelihood.init(waveDescThres,
 	                        rank,
 	                        massBinCenter)):
-		printErr("could not initialize likelihood. Aborting...")
+		pyRootPwa.utils.printErr("could not initialize likelihood. Aborting...")
 		return None
 
 	normIntFile = ROOT.TFile.Open(normIntegralFileName, "READ")
@@ -30,7 +30,7 @@ def initLikelihood(waveDescThres,
 		pyRootPwa.utils.printWarn("'" + normIntegralFileName + "' does not contain exactly one TKey.")
 		return None
 	normIntMatrix = normIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	if (not likelihood.addNormIntegral(normIntMatrix)):
+	if not likelihood.addNormIntegral(normIntMatrix):
 		pyRootPwa.utils.printErr("could not add normalization integral. Aborting...")
 		return None
 	normIntFile.Close()
@@ -39,7 +39,7 @@ def initLikelihood(waveDescThres,
 		pyRootPwa.utils.printWarn("'" + accIntegralFileName + "' does not contain exactly one TKey.")
 		return None
 	accIntMatrix = accIntFile.Get(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	if (not likelihood.addAccIntegral(accIntMatrix, accEventsOverride)):
+	if not likelihood.addAccIntegral(accIntMatrix, accEventsOverride):
 		pyRootPwa.utils.printErr("could not add acceptance integral. Aborting...")
 		return None
 	accIntFile.Close()
@@ -55,10 +55,10 @@ def initLikelihood(waveDescThres,
 		if not meta:
 			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
 			return None
-		if (not likelihood.addAmplitude([meta])):
+		if not likelihood.addAmplitude([meta]):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return None
-	if (not likelihood.finishInit()):
+	if not likelihood.finishInit():
 		pyRootPwa.utils.printErr("could not finish initialization of likelihood. Aborting...")
 		return None
 

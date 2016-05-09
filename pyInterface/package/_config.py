@@ -4,7 +4,7 @@ import os
 
 import pyRootPwa.utils
 
-class rootPwaConfig:
+class rootPwaConfig(object):
 
 	config = None
 	configFileName = ""
@@ -15,6 +15,7 @@ class rootPwaConfig:
 	dataDirectory                          = ""
 	keyDirectory                           = ""
 	ampDirectory                           = ""
+	intDirectory                           = ""
 	limitFilesPerDir                       = -1
 
 	# fit section

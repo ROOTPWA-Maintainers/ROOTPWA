@@ -36,15 +36,15 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	binIDList = fileManager.getBinIDList()
-	if (not args.massBin == -1):
+	if not args.massBin == -1:
 		binIDList = [args.massBin]
 
 	eventsTypes = []
-	if (args.eventsType == "generated"):
+	if args.eventsType == "generated":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED ]
-	elif (args.eventsType == "accepted"):
+	elif args.eventsType == "accepted":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.ACCEPTED ]
-	elif (args.eventsType == "all"):
+	elif args.eventsType == "all":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.GENERATED,
 		                pyRootPwa.core.eventMetadata.ACCEPTED ]
 	else:

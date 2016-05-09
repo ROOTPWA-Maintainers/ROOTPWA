@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# pylint: disable=line-too-long
 import sys
 import urllib
 import os
