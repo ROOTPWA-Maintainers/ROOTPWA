@@ -136,7 +136,7 @@ complex<double> complexMatrix::determinant() const
 
 complexMatrix rpwa::operator*(const complexMatrix& c1, const complexMatrix& c2)
 {
-	return complexMatrix(c1._matrix * c2._matrix);
+	return complexMatrix(bnu::prod(c1._matrix, c2._matrix));
 }
 
 
