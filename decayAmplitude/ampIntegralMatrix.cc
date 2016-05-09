@@ -65,7 +65,6 @@ bool ampIntegralMatrix::_debug = false;
 ampIntegralMatrix::ampIntegralMatrix()
 	: TObject               (),
 	  _nmbWaves             (0),
-	  _waveNameToIndexMap   (),
 	  _waveNames            (),
 	  _nmbEvents            (0),
 	  _integrals            (),
@@ -94,7 +93,6 @@ ampIntegralMatrix::clear()
 {
 	_nmbWaves  = 0;
 	_nmbEvents = 0;
-	_waveNameToIndexMap.clear();
 	_waveNames.clear();
 	_integrals.resize(extents[0][0]);
 	_intStorageShape.clear();
@@ -110,7 +108,6 @@ ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 	if (this != &integral) {
 		TObject::operator   =(integral);
 		_nmbWaves           = integral._nmbWaves;
-		_waveNameToIndexMap = integral._waveNameToIndexMap;
 		_waveNames          = integral._waveNames;
 		_nmbEvents          = integral._nmbEvents;
 		// multiarray's = operator does not seem to set shape correctly
@@ -189,22 +186,19 @@ ampIntegralMatrix::operator /=(const double factor)
 bool
 ampIntegralMatrix::containsWave(const string& waveName) const
 {
-	waveNameToIndexMapIterator entry = _waveNameToIndexMap.find(waveName);
-	if (entry == _waveNameToIndexMap.end())
-		return false;
-	return true;
+	return (std::find(_waveNames.begin(), _waveNames.end(), waveName) != _waveNames.end());
 }
 
 
 unsigned int
 ampIntegralMatrix::waveIndex(const string& waveName) const
 {
-	waveNameToIndexMapIterator entry = _waveNameToIndexMap.find(waveName);
-	if (entry == _waveNameToIndexMap.end()) {
+	const unsigned int waveIndex = std::find(_waveNames.begin(), _waveNames.end(), waveName) - _waveNames.begin();
+	if(waveIndex >= _waveNames.size()) {
 		printErr << "cannot find wave '" << waveName << "' in integral matrix. Aborting..." << endl;
 		throw;
 	}
-	return entry->second;
+	return waveIndex;
 }
 
 
@@ -277,9 +271,6 @@ ampIntegralMatrix::setWaveNames(const vector<string> &waveNames)
 	}
 	_waveNames = waveNames;
 	_nmbWaves = waveNames.size();
-	for (size_t w = 0; w < _nmbWaves; ++w) {
-		_waveNameToIndexMap.insert(std::pair<std::string, unsigned int> (_waveNames[w], w));
-	}
 	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
 	return true;
 }
@@ -319,7 +310,6 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 		for(size_t i = 0; i < ampMetadata.size(); ++i) {
 			const string waveName = ampMetadata[i]->objectBaseName();
 			_waveNames.push_back(waveName);
-			_waveNameToIndexMap.insert( std::pair<std::string, unsigned int> (waveName, _nmbWaves-1) );
 		}
 	} else if (_waveNames.size() == ampMetadata.size() ) {
 		for(size_t i = 0; i < ampMetadata.size(); i++) {
@@ -486,11 +476,11 @@ ampIntegralMatrix::writeAscii(ostream& out) const
 			out << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << "\t";
 		out << endl;
 	}
-	// write wave name -> index map
-	out << _waveNameToIndexMap.size() << endl;
-	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
-	     i != _waveNameToIndexMap.end(); ++i)
-		out << i->first << " " << i->second << endl;
+	// write wave names
+	out << _waveNames.size() << endl;
+	for(size_t i = 0; i < _nmbWaves; ++i) {
+		cout << _waveNames[i] << " " << i << endl;
+	}
 	return true;
 }
 
@@ -519,8 +509,13 @@ ampIntegralMatrix::readAscii(istream& in)
 			}
 		}
 	// read wave name -> index map
+	_waveNames.resize(_nmbWaves);
 	unsigned int mapSize;
 	in >> mapSize;
+	if(mapSize != _nmbWaves) {
+		printErr << "mismatch between integral dimensions and number of wave names." << endl;
+		return false;
+	}
 	while ((mapSize > 0) and in) {
 		string       waveName;
 		unsigned int waveIndex;
@@ -528,13 +523,9 @@ ampIntegralMatrix::readAscii(istream& in)
 			printErr << "could not read wave name -> index map. stream seems truncated." << endl;
 			return false;
 		}
-		_waveNameToIndexMap[waveName] = waveIndex;
+		_waveNames[waveIndex] = waveName;
 		--mapSize;
 	}
-	_waveNames.resize(_nmbWaves);
-	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
-	     i != _waveNameToIndexMap.end(); ++i)
-		_waveNames[i->second] = i->first;
 	return true;
 }
 
@@ -584,10 +575,10 @@ ampIntegralMatrix::print(ostream&   out,
 	out << "amplitude integral matrix:"  << endl
 	    << "    number of waves .... " << _nmbWaves  << endl
 	    << "    number of events ... " << _nmbEvents << endl
-	    << "    wave name -> index map:" << endl;
-	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
-	     i != _waveNameToIndexMap.end(); ++i)
-		out << "        " << i->first << " -> " << i->second << " -> " << _waveNames[i->second] << endl;
+	    << "    wave names:" << endl;
+	for(size_t i = 0; i < _nmbWaves; ++i) {
+		out << "        " << i << " -> " << _waveNames[i] << endl;
+	}
 	if (printIntegralValues) {
 		out << "    integral matrix values:" << endl;
 		for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
@@ -596,19 +587,6 @@ ampIntegralMatrix::print(ostream&   out,
 				    << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << endl;
 	}
 	return out;
-}
-
-
-void
-ampIntegralMatrix::rebuildWaveNameToIndexMap()
-{
-	_waveNameToIndexMap.clear();
-	for (unsigned int i = 0; i < _waveNames.size(); ++i)
-		if (not containsWave(_waveNames[i]))
-			_waveNameToIndexMap[_waveNames[i]] = i;
-		else
-			printWarn << "wave '" << _waveNames[i] << "' already exists in integral matrix. "
-			          << "ignoring wave." << endl;
 }
 
 
@@ -670,7 +648,6 @@ ampIntegralMatrix::Streamer(TBuffer& R__b)
 	if (R__b.IsReading()) {
 		R__b.ReadClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
 		readMultiArray();
-		rebuildWaveNameToIndexMap();
 	} else {
 		storeMultiArray();
 		R__b.WriteClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
