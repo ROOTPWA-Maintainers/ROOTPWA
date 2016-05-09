@@ -58,7 +58,7 @@ using namespace rpwa;
 ClassImp(ampIntegralMatrix);
 
 
-const std::string rpwa::ampIntegralMatrix::integralObjectName = "integral";
+const string rpwa::ampIntegralMatrix::integralObjectName = "integral";
 bool ampIntegralMatrix::_debug = false;
 
 
@@ -257,21 +257,21 @@ ampIntegralMatrix::element(const unsigned int waveIndexI,
 }
 
 bool
-ampIntegralMatrix::setWaveNames(const std::vector<std::string> &waveNames)
+ampIntegralMatrix::setWaveNames(const vector<string> &waveNames)
 {
 	if (_nmbWaves > 0 ) {
 		if (waveNames.size() == _nmbWaves ) {
 			for (size_t w = 0; w < _nmbWaves; ++w) {
 				if (_waveNames[w] != waveNames[w]) {
-					printErr << "alreadySet _waveNames are different than new waveNames. Abort..." << std::endl;
+					printErr << "integral matrix was already initialized, but with different wave names. Aborting..." << endl;
 					return false;
 				}
 			}
-			printInfo << "_waveNames were already set but match new ones." << std::endl;
+			printInfo << "integral matrix was already initialized. All " << _nmbWaves << " wave names match." << endl;
 			return true;
 		} else {
-			printErr << "number of already set waveNames does not match number new waveNames. Abort..." << std::endl;
-			return false; 
+			printErr << "integral matrix was already initialized, but with a different number of waves. Aborting..." << endl;
+			return false;
 		}
 
 	}
@@ -285,21 +285,18 @@ ampIntegralMatrix::setWaveNames(const std::vector<std::string> &waveNames)
 }
 
 bool
-ampIntegralMatrix::addEvent(std::map<std::string, std::complex<double> > &amplitudes)
+ampIntegralMatrix::addEvent(map<string, complex<double> > &amplitudes)
 {
 	for (size_t iWave = 0; iWave < _nmbWaves; ++iWave) {
-		std::string waveName = _waveNames[iWave];
-		if (not amplitudes.count(waveName)) {
-			printErr << "waveNames '" << waveName << "' not in amplitudes" << std::endl;
+		if (not containsWave(_waveNames[iWave])) {
+			printErr << "waveNames '" << _waveNames[iWave] << "' not in amplitudes" << endl;
 			return false;
 		}
 	}
 	for (size_t iWave = 0; iWave < _nmbWaves; ++iWave) {
-		std::string iWaveName = _waveNames[iWave];
-		std::complex<double> iAmp = amplitudes[iWaveName];
+		complex<double> iAmp = amplitudes[_waveNames[iWave]];
 		for (size_t jWave = 0; jWave < _nmbWaves; ++jWave) {
-			std::string jWaveName = _waveNames[jWave];
-			std::complex<double> jAmp = amplitudes[jWaveName];
+			complex<double> jAmp = amplitudes[_waveNames[jWave]];
 			_integrals[iWave][jWave] += iAmp * conj(jAmp);
 		}
 	}
@@ -312,29 +309,29 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
                              const unsigned long                     maxNmbEvents,
                              const string&                           weightFileName)
 {
-	if (ampMetadata.size() > 0)
-		printInfo << "calculating integral for " << ampMetadata.size() << " amplitude(s)" << endl;
-	else {
+	if (ampMetadata.empty()) {
 		printWarn << "did not receive any amplitude trees. cannot calculate integral." << endl;
 		return false;
 	}
-	if (_waveNames.size() == 0) {
-		for(unsigned int i=0; i < ampMetadata.size(); i++) {
+	printInfo << "calculating integral for " << ampMetadata.size() << " amplitude(s)" << endl;
+	if (_waveNames.empty()) {
+		_nmbWaves = ampMetadata.size();
+		for(size_t i = 0; i < ampMetadata.size(); ++i) {
 			const string waveName = ampMetadata[i]->objectBaseName();
-			_nmbWaves += 1;
 			_waveNames.push_back(waveName);
 			_waveNameToIndexMap.insert( std::pair<std::string, unsigned int> (waveName, _nmbWaves-1) );
 		}
 	} else if (_waveNames.size() == ampMetadata.size() ) {
-		for(unsigned int i=0; i < ampMetadata.size(); i++) {
+		for(size_t i = 0; i < ampMetadata.size(); i++) {
 			const string waveName = ampMetadata[i]->objectBaseName();
 			if (waveName != _waveNames[i] ) {
-				printErr << "already set _waveNames differ from waveNames in the ampMetadata. Abort..." << std::endl;
+				printErr << "integral matrix was already initialized, but with different wave names. Aborting..." << endl;
 				return false;
 			}
 		}
+		printInfo << "integral matrix was already initialized. All " << _nmbWaves << " wave names match." << endl;
 	} else {
-		printErr << "waveNames already set, but with wrong size. Abort... " << std::endl;
+		printErr << "integral matrix was already initialized, but with a different number of waves. Aborting..." << endl;
 		return false;
 	}
 	const unsigned long nmbEvents = (unsigned long) ampMetadata[0]->amplitudeTree()->GetEntries();
@@ -342,7 +339,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 		printWarn << "amplitude trees contain no amplitudes values. cannot calculate integral." << endl;
 		return false;
 	}
-	for (unsigned int i=1; i < ampMetadata.size(); i++) {
+	for (size_t i = 1; i < ampMetadata.size(); i++) {
 		if (nmbEvents != (unsigned int) ampMetadata[i]->amplitudeTree()->GetEntries()) {
 			printErr << "amplitude trees do not all have the same entry count." << endl;
 			return false;
@@ -354,7 +351,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 		_nmbEvents = min(nmbEvents, maxNmbEvents);
 	// set amplitude tree leafs
 	vector<amplitudeTreeLeaf*> ampTreeLeafs(_nmbWaves);
-	for(unsigned int waveIndex = 0; waveIndex < _nmbWaves; waveIndex++) {
+	for(size_t waveIndex = 0; waveIndex < _nmbWaves; waveIndex++) {
 		ampTreeLeafs[waveIndex] = NULL;
 		ampMetadata[waveIndex]->amplitudeTree()->SetBranchAddress(rpwa::amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeafs[waveIndex]);
 	}
@@ -518,7 +515,7 @@ ampIntegralMatrix::readAscii(istream& in)
 		for (unsigned int j = 0; j < nmbCols; ++j) {
 			if (not (in >> _integrals[i][j]) or in.eof()) {
 				printErr << "could not read integral values. stream seems truncated." << endl;
-				throw;
+				return false;
 			}
 		}
 	// read wave name -> index map
