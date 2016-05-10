@@ -286,8 +286,6 @@ endif()
 set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
 message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
 set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
-file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
 message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 
 
