@@ -403,7 +403,7 @@ if (NOT USE_MPI)
 endif()
 
 
-# setup BAT
+# setup BAT (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up BAT.")
 option(USE_BAT "En/Disables usage of BAT" OFF)
@@ -450,7 +450,7 @@ if(GIT_FOUND)
 endif()
 
 
-# setup nlopt
+# setup nlopt (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
 find_package(NLopt)
@@ -470,7 +470,7 @@ endif()
 add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
 
 
-# setup doxygen
+# setup doxygen (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)
