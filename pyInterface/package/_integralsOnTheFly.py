@@ -14,16 +14,16 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 
 	outFile = pyRootPwa.ROOT.TFile.Open(integralFile, "CREATE")
 	if not outFile: # Do this up here. Without the output file, nothing else makes sense
-		pyRootPwa.utils.printErr("could not open outFile. Abort...")
+		pyRootPwa.utils.printErr("could not open output file. Aborting...")
 		return False
 
 	for keyFile in keyFileList:
 		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFile[0])[keyFile[1]]
 		if not metadataObject.addKeyFileContent(waveDescription.keyFileContent()):
-			pyRootPwa.utils.printWarn("found same keyFileContent twice")
+			pyRootPwa.utils.printWarn("could not add keyfile content.")
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
-			pyRootPwa.utils.printErr('could not construct amplitude for keyfile "' + keyFile[0] + '" (ID '+str(keyFile[1])+'). Abort...')
+			pyRootPwa.utils.printErr('could not construct amplitude for keyfile "' + keyFile[0] + '" (ID '+str(keyFile[1])+'). Aborting...')
 			return False
 		amplitude.init()
 		amplitudes.append(amplitude)
@@ -32,21 +32,18 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 
 	eventFile = pyRootPwa.ROOT.TFile.Open(eventFileName, "READ")
 
-
 	if not eventFile:
-		pyRootPwa.utils.printErr("could not open eventFile. Abort...")
+		pyRootPwa.utils.printErr("could not open event file. Aborting...")
 		return False
 	eventMeta  = pyRootPwa.core.eventMetadata.readEventFile(eventFile)
 
-	if not metadataObject.setBinningMap(eventMeta.binningMap()):
-		pyRootPwa.utils.printErr("could not setBinningMap. Abort...")
-		return False
+	metadataObject.setBinningMap(eventMeta.binningMap())
 	prodNames  = eventMeta.productionKinematicsParticleNames()
 	decayNames = eventMeta.decayKinematicsParticleNames()
 	for amplitude in amplitudes:
 		topo = amplitude.decayTopology()
 		if not topo.initKinematicsData(prodNames, decayNames):
-			pyRootPwa.utils.printErr("could not initKinematicsData(). Abort...")
+			pyRootPwa.utils.printErr("could not initialize the decay topology with the kinematics data. Aborting...")
 			return False
 
 	eventTree = eventMeta.eventTree()
@@ -56,11 +53,9 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 	if maxNmbEvents	> -1:
 		maxEvent = min(maxEvent, startEvent + maxNmbEvents)
 	if not metadataObject.addEventMetadata(eventMeta, minEvent, maxEvent):
-		pyRootPwa.utils.printErr("could not addEventMetadata. Abort...")
+		pyRootPwa.utils.printErr("could not add event metadata to integral metadata. Aborting...")
 		return False
-	if not metadataObject.setBinningMap(binningMap):
-		pyRootPwa.utils.printErr("could not setBinningMap. Abort...")
-		return False
+	metadataObject.setBinningMap(binningMap)
 
 	prodKinMomenta  = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
@@ -77,37 +72,39 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 
 	for waveName in waveNames:
 		ampWaveNameMap[waveName] = 0.+0.j
-	pyRootPwa.utils.printInfo("starting event loop")
+	pyRootPwa.utils.printInfo("starting event loop.")
 	skippedEvents = 0
-	for evt in range(minEvent, maxEvent):
-		if evt%100 == 0:
-			pyRootPwa.utils.printInfo("event index = " + str(evt))
-		eventTree.GetEvent(evt)
+	progressBar = pyRootPwa.utils.progressBar(minEvent, maxEvent)
+	progressBar.start()
+	for evt_i in range(minEvent, maxEvent):
+		progressBar.update(evt_i)
+		eventTree.GetEvent(evt_i)
 		for key in binningMap:
 			if binningVariables[key] < binningMap[key][0] or  binningVariables[key] >= binningMap[key][1]:
 				skippedEvents += 1
 				continue
-		for a, amplitude in enumerate(amplitudes):
+		for amp_i, amplitude in enumerate(amplitudes):
 			topo = amplitude.decayTopology()
 			if not topo.readKinematicsData(prodKinMomenta, decayKinMomenta):
-				pyRootPwa.utils.printErr("could not loadKinemaricsData. Abort...")
+				pyRootPwa.utils.printErr("could not load kinematics data. Aborting...")
 				return False
 			ampl = amplitude()
-			hashers[a].Update(ampl)
-			ampWaveNameMap[waveNames[a]] = ampl
+			hashers[amp_i].Update(ampl)
+			ampWaveNameMap[waveNames[amp_i]] = ampl
 		if not integralMatrix.addEvent(ampWaveNameMap):
-			pyRootPwa.utils.printErr("could not addEvent. Abort...")
+			pyRootPwa.utils.printErr("could not add event to integral matrix. Aborting...")
 			return False
 	if not metadataObject.setAmpIntegralMatrix(integralMatrix):
-		pyRootPwa.utils.printErr("could not setAmpIntegralMatrix. Abort...")
+		pyRootPwa.utils.printErr("could not add the integral matrix to the metadata object. Aborting...")
 		return False
 	for hasher in hashers:
 		if not metadataObject.addAmplitudeHash(hasher.hash()):
-			pyRootPwa.utils.printWarn("could not addAmplitudehash")
-	if not  metadataObject.writeToFile(outFile):
-		pyRootPwa.utils.printErr("could not writeToFile. Abort...")
+			# !!! why is this not a fatal problem?
+			pyRootPwa.utils.printWarn("could not add the amplitude hash.")
+	if not metadataObject.writeToFile(outFile):
+		pyRootPwa.utils.printErr("could not write integral objects to file. Aborting...")
 		return False
 
 	outFile.Close()
 	eventFile.Close()
-	pyRootPwa.utils.printInfo(str(skippedEvents) + "events rejected due the binning")
+	pyRootPwa.utils.printInfo(str(skippedEvents) + "events rejected because they are outside the binning.")
