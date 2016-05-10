@@ -16,7 +16,7 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 	if not outFile: # Do this up here. Without the output file, nothing else makes sense
 		pyRootPwa.utils.printErr("could not open outFile. Abort...")
 		return False
-		
+
 	for keyFile in keyFileList:
 		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFile[0])[keyFile[1]]
 		if not metadataObject.addKeyFileContent(waveDescription.keyFileContent()):
@@ -74,7 +74,7 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 	for key in binningMap:
 		binningVariables[key] = numpy.array(1, dtype = float)
 		eventTree.SetBranchAddress(key, binningVariables[key])
-	
+
 	for waveName in waveNames:
 		ampWaveNameMap[waveName] = 0.+0.j
 	pyRootPwa.utils.printInfo("starting event loop")
@@ -111,7 +111,3 @@ def calcIntegralsOnTheFly(eventFileName, keyFileList, integralFile, binningMap =
 	outFile.Close()
 	eventFile.Close()
 	pyRootPwa.utils.printInfo(str(skippedEvents) + "events rejected due the binning")
-
-
-
-

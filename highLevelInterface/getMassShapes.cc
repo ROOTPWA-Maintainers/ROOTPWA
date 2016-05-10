@@ -4,8 +4,8 @@
 
 namespace {
 	std::complex<double> getSingleMassShape(const rpwa::isobarDecayVertexPtr& vertex,           // vertex
-        	                                const double                      mass,             // mass
-        	                                const bool                        useBarrierFactors) {
+	                                        const double                      mass,             // mass
+	                                        const bool                        useBarrierFactors) {
 
 		rpwa::particlePtr& parent    = vertex->parent();
 		rpwa::particlePtr& daughter1 = vertex->daughter1();
@@ -65,5 +65,3 @@ std::vector<std::complex<double> > rpwa::getMassShapes(isobarDecayTopologyPtr &t
 
 	return ::getMassShapesRecursive(topo->XIsobarDecayVertex(), topo, mass, useBarrierFactors);
 }
-
-

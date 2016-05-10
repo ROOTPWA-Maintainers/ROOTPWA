@@ -67,7 +67,7 @@ set(SOURCES
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
 	ampIntegralMatrix.cc
-	ampIntegralMatrixMetadata.cc 
+	ampIntegralMatrixMetadata.cc
 	waveSetGenerator.cc
 	phaseSpaceIntegral.cc
 	)
