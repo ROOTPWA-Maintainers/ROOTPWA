@@ -8,11 +8,11 @@ namespace bp = boost::python;
 
 namespace {
 	void hashCalculator_Update1(rpwa::hashCalculator& self,
-	                       double                val) {
+	                            double                val) {
 		self.Update(val);
 	}
 	void hashCalculator_Update2(rpwa::hashCalculator& self,
-	                       std::complex<double>  val) {
+	                            std::complex<double>  val) {
 		self.Update(val);
 	}
 }

@@ -56,7 +56,7 @@ namespace {
 		}
 		return self.integrate(amplitudeMeta, maxNmbEvents, weightFileName);
 	}
-	
+
 	bool ampIntegralMatrix_setWaveNames(rpwa::ampIntegralMatrix& self,
 	                                    const bp::object&        waveNamesPy)
 	{
@@ -71,11 +71,11 @@ namespace {
 	bool ampIntegralMatrix_addEvent(rpwa::ampIntegralMatrix& self,
 	                                const bp::dict           pyAmplitudes) {
 		std::map<std::string, std::complex<double> > amplitudes;
-		const bp::list keys = pyAmplitudes.keys();		
+		const bp::list keys = pyAmplitudes.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
 			std::string waveName = bp::extract<std::string>(keys[i]);
 			std::complex<double> ampl = bp::extract<std::complex<double> >(pyAmplitudes[waveName]);
-			amplitudes.insert(std::pair<std::string, std::complex<double> >(waveName, ampl));
+			amplitudes[waveName] = ampl;
 		}
 		return self.addEvent(amplitudes);
 	}
