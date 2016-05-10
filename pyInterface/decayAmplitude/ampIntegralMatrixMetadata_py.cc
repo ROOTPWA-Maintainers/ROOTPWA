@@ -50,18 +50,18 @@ namespace {
 		return dictionary;
 	};
 
-	bool ampIntegralMatrixMetadata_setBinningMap(rpwa::ampIntegralMatrixMetadata& self, bp::dict pyBinningMap) {
+	void ampIntegralMatrixMetadata_setBinningMap(rpwa::ampIntegralMatrixMetadata& self, bp::dict pyBinningMap) {
 		std::map<std::string, std::pair<double, double> > binningMap;
-		const bp::list keys = pyBinningMap.keys();		
+		const bp::list keys = pyBinningMap.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
 			std::string binningVar = bp::extract<std::string>(keys[i]);
 			double lowerBound      = bp::extract<double>(pyBinningMap[binningVar][0]);
 			double upperBound      = bp::extract<double>(pyBinningMap[binningVar][1]);
 			binningMap.insert(std::pair<std::string, std::pair<double, double> >(binningVar, std::pair<double, double>(lowerBound, upperBound)));
 		};
-		return self.setBinningMap(binningMap);
 	};
-	
+		self.setBinningMap(binningMap);
+
 	const rpwa::ampIntegralMatrixMetadata* ampIntegralMatrixeMetadata_readIntegralFile(PyObject* pyInputFile,
 	                                                                   const std::string& objectBaseName,
 	                                                                   const bool& quiet = false) {
@@ -101,7 +101,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("getKeyFileContents", &::ampIntegralMatrixMetadata_getKeyFileContents)
 		.def("getKeyAmplitudeHashes", &::ampIntegralMatrixMetadata_getAmplitudeHashes)
 		.def(     "readIntegralFile"
-		        , &::ampIntegralMatrixeMetadata_readIntegralFile			
+		        , &::ampIntegralMatrixeMetadata_readIntegralFile
 		        , (bp::arg("inputFile"), bp::arg("objectBaseName") = "", bp::arg("quiet")=false)
 		        , bp::return_value_policy<bp::reference_existing_object>()
 		)
@@ -117,7 +117,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("rootpwaGitHash", &::ampIntegralMatrixMetadata_rootpwaGitHash)
 		.def("mergeIntegralMatrix", &rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix, bp::arg("secondMatrix"))
 
-		.def("objectBaseName", &::ampIntegralMatrixMetadata_objectBaseName)		
+		.def("objectBaseName", &::ampIntegralMatrixMetadata_objectBaseName)
 		.def("setObjectBaseName", &ampIntegralMatrixMetadata::setObjectBaseName, bp::arg("objectBaseName"))
 		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, (bp::arg("eventMetadata"), bp::arg("minEvent"), bp::arg("maxEvent")))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))

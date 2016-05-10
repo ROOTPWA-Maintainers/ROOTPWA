@@ -1,363 +1,354 @@
 #include"ampIntegralMatrixMetadata.h"
+
 #include"waveDescription.h"
 #include"hashCalculator.h"
+
 #include<TFile.h>
 
-rpwa::ampIntegralMatrixMetadata::ampIntegralMatrixMetadata():
-	_contentHash(""),
-	_rootpwaGitHash(""),
-	_objectBaseName(""),
-	_allZeroHash(""),
-	_ampIntegralMatrix(0),
-	_amplitudeHashes(),
-	_keyFileContents(),
-	_evtMetas(){};
 
-rpwa::ampIntegralMatrixMetadata::~ampIntegralMatrixMetadata(){};
+using namespace std;
 
-std::string rpwa::ampIntegralMatrixMetadata::recalculateHash() const {
-	if (!_ampIntegralMatrix) {
-		printErr << "no ampIntegralMatrix given" << std::endl;
+
+rpwa::ampIntegralMatrixMetadata::ampIntegralMatrixMetadata()
+	: _contentHash(""),
+	  _rootpwaGitHash(""),
+	  _objectBaseName(""),
+	  _allZeroHash(""),
+	  _ampIntegralMatrix(0),
+	  _amplitudeHashes(),
+	  _keyFileContents(),
+	  _evtMetas() { }
+
+rpwa::ampIntegralMatrixMetadata::~ampIntegralMatrixMetadata() { }
+
+
+string rpwa::ampIntegralMatrixMetadata::recalculateHash() const {
+	if (not _ampIntegralMatrix) {
+		printWarn << "trying to calculate hash without an integral matrix." << endl;
 		return "";
-	};
-	hashCalculator heWhoHashes;
+	}
+	hashCalculator sheWhoHashes;
 	size_t nWaves = _ampIntegralMatrix->nmbWaves();
 	for (size_t i = 0; i < nWaves; ++i) {
 		for (size_t j = 0; j < nWaves; ++j) {
-			heWhoHashes.Update(_ampIntegralMatrix->element(i,j));
-		};
-	};	
-	return heWhoHashes.hash();
-};
+			sheWhoHashes.Update(_ampIntegralMatrix->element(i,j));
+		}
+	}
+	return sheWhoHashes.hash();
+}
 
-std::ostream& rpwa::ampIntegralMatrixMetadata::print(std::ostream& out) const {
-	out << "ampIntegralMatrixMetadata:" << std::endl
-	    << "    contentHash ......... '" << _contentHash << "'"        << std::endl
-	    << "    object base name .... '" << _objectBaseName << "'"     << std::endl
-	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << std::endl;
+
+ostream& rpwa::ampIntegralMatrixMetadata::print(ostream& out) const {
+	out << "ampIntegralMatrixMetadata:"                                << endl
+	    << "    contentHash ......... '" << _contentHash << "'"        << endl
+	    << "    object base name .... '" << _objectBaseName << "'"     << endl
+	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << endl;
 	if(_ampIntegralMatrix) {
-		out << "    nmbwaves ... "  << _ampIntegralMatrix->nmbWaves() << std::endl;
-	};
-	out << std::endl;
+		out << "    nmbwaves ... "  << _ampIntegralMatrix->nmbWaves()  << endl;
+	}
+	out << endl;
 	return out;
-};
+}
 
 
-const rpwa::ampIntegralMatrixMetadata* rpwa::ampIntegralMatrixMetadata::readIntegralFile(TFile* inputFile, const std::string& objectBaseName, const bool& quiet) {
-	const std::pair<std::string, std::string> objectNames = ampIntegralMatrixMetadata::getObjectNames(objectBaseName);
+const rpwa::ampIntegralMatrixMetadata*
+rpwa::ampIntegralMatrixMetadata::readIntegralFile(TFile* inputFile,
+                                                  const string& objectBaseName,
+                                                  const bool& quiet)
+{
+	const pair<string, string> objectNames = ampIntegralMatrixMetadata::getObjectNames(objectBaseName);
 	rpwa::ampIntegralMatrixMetadata* integralMeta = (ampIntegralMatrixMetadata*)inputFile->Get(objectNames.second.c_str());
 	if(not integralMeta) {
 		if(not quiet) {
-			printWarn << "could not find amplitude metadata." << std::endl;
-		};
+			printWarn << "could not find amplitude metadata object '" << objectNames.second << "'." << endl;
+		}
 		return 0;
-	};
+	}
 	integralMeta->_ampIntegralMatrix = (rpwa::ampIntegralMatrix*)inputFile->Get(rpwa::ampIntegralMatrix::integralObjectName.c_str());
 	if(not integralMeta->_ampIntegralMatrix) {
 		if(not quiet) {
-			printWarn << "could not find ampIntegralMatrix." << std::endl;
-		};
+			printWarn << "could not find ampIntegralMatrix '" << rpwa::ampIntegralMatrix::integralObjectName << "'." << endl;
+		}
 		return 0;
-	};
+	}
 	return integralMeta;
-};
+}
 
 
-std::pair<std::string, std::string> rpwa::ampIntegralMatrixMetadata::getObjectNames(const std::string& objectBaseName) {
-	std::stringstream sstr;
+// !!! Is the first entry of the pair used anywhere??
+pair<string, string>
+rpwa::ampIntegralMatrixMetadata::getObjectNames(const string& objectBaseName)
+{
+	stringstream sstr;
 	sstr << objectBaseName << ".amp";
-	std::pair<std::string, std::string> retval = std::pair<std::string, std::string>();
+	pair<string, string> retval = pair<string, string>();
 	retval.first = sstr.str();
 	sstr.str("");
 	sstr << objectBaseName << ".meta";
 	retval.second = sstr.str();
 	return retval;
-};
+}
 
 
 Int_t rpwa::ampIntegralMatrixMetadata::Write(const char* name, Int_t option, Int_t bufsize) const {
 	Int_t retval = 0;
 	if(_ampIntegralMatrix) {
 		retval = _ampIntegralMatrix->Write(rpwa::ampIntegralMatrix::integralObjectName.c_str());
-	};
+	}
 	return retval + TObject::Write(name, option, bufsize);
-};
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix(const ampIntegralMatrixMetadata& second) {
-	ampIntegralMatrix* secondMatrix = second.getAmpIntegralMatrix();
+	const ampIntegralMatrix* secondMatrix = second.getAmpIntegralMatrix();
 	if (secondMatrix->nmbWaves() != _ampIntegralMatrix->nmbWaves()) {
-		printErr << "nmbWave() does not match" << std::endl;
+		printErr << "mismatch in number of waves (" << secondMatrix->nmbWaves()
+		         << "!=" << _ampIntegralMatrix->nmbWaves() << ")." << endl;
 		return false;
-	};
+	}
 	if (second.rootpwaGitHash() != rootpwaGitHash()) {
-		printErr << "gitHashes differ" << std::endl;
+		printErr << "mismatch in git hashes." << endl;
 		return false;
 
-	};
+	}
 	{
-		std::vector<std::string> secondKeyFileContents = second.getKeyFileContents();
-		for (size_t cont = 0; cont < secondKeyFileContents.size(); ++cont) {
-			if (!hasKeyFileContent(secondKeyFileContents[cont])) {
-				printErr << "unknown keyFileContent found" << std::endl;
+		const vector<string> secondKeyFileContents = second.getKeyFileContents();
+		for (size_t keyfiles_i = 0; keyfiles_i < secondKeyFileContents.size(); ++keyfiles_i) {
+			if (not hasKeyFileContent(secondKeyFileContents[keyfiles_i])) {
+				printErr << "mismatch in keyfiles." << endl;
 				return false;
-			};
-		};
-	};{
-		std::vector<std::string> secondAmplitudeHashes = second.getAmplitudeHashes();
-		for (size_t hash = 0; hash < secondAmplitudeHashes.size(); ++hash) {
-			if (!addAmplitudeHash(secondAmplitudeHashes[hash])) {
-				printErr << "hash already known. cant use same amplitudes twice" << std::endl;
-				return false;
-			};
-		};
-	};
-	if (!mergeBinningMap(second.binningMap())) {
-		printErr << "could not merge binningMaps" << std::endl;
-		return false;
-	};
+			}
+		}
+	}
 	{
-		std::vector<std::pair<rpwa::eventMetadata, std::vector<std::pair<size_t, size_t> > > > secondMetas = second.evtMetas();
-		for (size_t meta = 0; meta < secondMetas.size(); ++meta) {
-			for (size_t range = 0; range < secondMetas[meta].second.size(); ++range) {
-				if (!addEventMetadata(secondMetas[meta].first, secondMetas[meta].second[range].first, secondMetas[meta].second[range].second)) {
-					printErr << "could not add eventMetadata" << std::endl;
-					return false;	
-				};
-			};
-		};
-	};
-	*_ampIntegralMatrix+=*secondMatrix;
-	if (!setHash()) {
-		printErr << "could not set hash" << std::endl;
+		const vector<string> secondAmplitudeHashes = second.getAmplitudeHashes();
+		for (size_t hash_i = 0; hash_i < secondAmplitudeHashes.size(); ++hash_i) {
+			if (not addAmplitudeHash(secondAmplitudeHashes[hash_i])) {
+				printErr << "could not add amplitude hash." << endl;
+				return false;
+			}
+		}
+	}
+	if (not mergeBinningMap(second.binningMap())) {
+		printErr << "could not merge binning maps." << endl;
 		return false;
-	};
+	}
+	{
+		vector<pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > > > secondMetas = second.evtMetas();
+		for (size_t meta_i = 0; meta_i < secondMetas.size(); ++meta_i) {
+			for (size_t range_i = 0; range_i < secondMetas[meta_i].second.size(); ++range_i) {
+				const pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > >& elem = secondMetas[meta_i];
+				if (not addEventMetadata(elem.first,
+				                         elem.second[range_i].first,
+				                         elem.second[range_i].second))
+				{
+					printErr << "could not add event metadata." << endl;
+					return false;
+				}
+			}
+		}
+	}
+	*_ampIntegralMatrix += *secondMatrix;
+	if (not setHash()) {
+		printErr << "could not set hash." << endl;
+		return false;
+	}
 	return true;
-};
+}
+
 
 bool rpwa::ampIntegralMatrixMetadata::setAmpIntegralMatrix(ampIntegralMatrix* matrix) {
-	if (!matrix) {
-		printErr << "no matrix given" << std::endl;
+	if (not matrix) {
+		printErr << "got null-pointer." << endl;
 		return false;
-	};
-	_ampIntegralMatrix = matrix;	
-	if (!setAllZeroHash()) {
-		printErr << "could not set _allZeroHash" << std::endl;
+	}
+	_ampIntegralMatrix = matrix;
+	if (not setAllZeroHash()) {
+		printErr << "could not set the hash for zero-amplitudes." << endl;
 		return false;
-	};
+	}
 	return true;
-};
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::setHash() {
-	if (!_ampIntegralMatrix) {
-		printErr << "no ampIntegralMatrix set" << std::endl;
+	if (not _ampIntegralMatrix) {
+		printWarn << "integral matrix has not been set." << endl;
 		return false;
-	};
+	}
 	_contentHash = recalculateHash();
 	if (_contentHash == ""){
-		printErr << "_contentHash is empty" << std::endl;
+		printWarn << "hash calculation failed." << endl;
 		return false;
-	};
+	}
 	return true;
-};
+}
 
 
-bool rpwa::ampIntegralMatrixMetadata::setGitHash(const std::string &gitHash) {
-	_rootpwaGitHash = gitHash;
-	return true;
-};
-
-
-bool rpwa::ampIntegralMatrixMetadata::setObjectBaseName(const std::string &baseName){
-	_objectBaseName = baseName;
-	return true;
-};
-
-
-bool rpwa::ampIntegralMatrixMetadata::addKeyFileContent(const std::string &content) {
-	for (size_t key = 0; key < _keyFileContents.size(); ++key) {
-		if (_keyFileContents[key] == content) {
-			printWarn << "keyFileContent already set" << std::endl;
-			return false;
-		};
-	};
+bool rpwa::ampIntegralMatrixMetadata::addKeyFileContent(const string& content) {
+	if (hasKeyFileContent(content)) {
+		printWarn << "cannot add keyfile content: already present." << endl;
+		return false;
+	}
 	_keyFileContents.push_back(content);
 	return true;
-};
+}
 
 
-bool rpwa::ampIntegralMatrixMetadata::setBinningMap(const std::map<std::string, std::pair<double, double> > &binningMap) {
-	_binningMap = binningMap;
-	return true;
-};
-
-
-bool rpwa::ampIntegralMatrixMetadata::mergeBinningMap(const std::map<std::string, std::pair<double, double> > &binningMapIn) {
-	std::map<std::string, std::pair<double, double> > newMap;
-	typedef std::map<std::string, std::pair<double, double> >::const_iterator it_type;
-	for(it_type iterator = binningMapIn.begin(); iterator != binningMapIn.end(); ++iterator) {
-		const std::string binningVariable = iterator->first;
-		if (!_binningMap.count(binningVariable)) {
-			printErr << binningVariable << " not in _binningMap" << std::endl;
-			return false;
-		};	
-		newMap[binningVariable] = std::pair<double, double>(std::min(iterator->second.first, _binningMap[binningVariable].first), std::max(iterator->second.second, _binningMap[binningVariable].second));
-	};
-	if (newMap.size() != _binningMap.size()) {
-		printErr << "sizes of _binningMap and newMap do not match. numbers of binning variables do not match" << std::endl;
+bool rpwa::ampIntegralMatrixMetadata::mergeBinningMap(const map<string, pair<double, double> >& binningMap) {
+	if (binningMap.size() != _binningMap.size()) {
+		printErr << "numbers of binning variables do not match." << endl;
 		return false;
-	};
+	}
+	map<string, pair<double, double> > newMap;
+	typedef map<string, pair<double, double> >::const_iterator it_type;
+	for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+		const string binningVariable = iterator->first;
+		if (_binningMap.find(binningVariable) == _binningMap.end()) {
+			printErr << "variable '" << binningVariable << "' not in binning map." << endl;
+			return false;
+		}
+		newMap[binningVariable] = pair<double, double>(std::min(iterator->second.first, _binningMap[binningVariable].first),
+		                                               std::max(iterator->second.second, _binningMap[binningVariable].second));
+	}
 	_binningMap = newMap;
 	return true;
-};
+}
 
 
-bool rpwa::ampIntegralMatrixMetadata::addAmplitudeHash(const std::string &hash) {
+bool rpwa::ampIntegralMatrixMetadata::addAmplitudeHash(const string& hash) {
 	if (hash == _allZeroHash) {
-		return true; // Do not add the allZerohash, but allow it
+		return true;  // Do not add the allZerohash, but allow it
 	}
-	for (size_t i = 0; i < _amplitudeHashes.size(); ++i) {
-		if (_amplitudeHashes[i] == hash) {
-			printErr << "hash " << hash << " already in _amplitudeHashes" << std::endl;
-			return false;
-		};
-	};
+	if (std::find(_amplitudeHashes.begin(), _amplitudeHashes.end(), hash) != _amplitudeHashes.end()) {
+		printWarn << "hash '" << hash << "' already in amplitude hashes." << endl;
+		return false;
+	}
 	_amplitudeHashes.push_back(hash);
 	return true;
-};
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::setAllZeroHash() {
-	if (!_ampIntegralMatrix) {
+	if (not _ampIntegralMatrix) {
 		_allZeroHash = "";
-		printErr << "not integralMatrix set" << std::endl;
+		printErr << "integral matrix has not been set." << endl;
 		return false;
 	}
-	size_t nEvts = _ampIntegralMatrix->nmbEvents();
-	hashCalculator heWhoHashes;
-	for (size_t i = 0; i < nEvts; ++i) {
-		heWhoHashes.Update(std::complex<double>(0.,0.));
+	hashCalculator sheWhoHashes;
+	for (size_t i = 0; i < _ampIntegralMatrix->nmbEvents(); ++i) {
+		sheWhoHashes.Update(complex<double>(0.,0.));
 	}
-	_allZeroHash = heWhoHashes.hash();
+	_allZeroHash = sheWhoHashes.hash();
 	return true;
 }
 
 
 bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata& evtMeta, size_t eventMin, size_t eventMax) {
 	if (eventMin >= eventMax) {
-		printErr << "given event number borders are not sorted" << std::endl;
+		printErr << "given event number bounds are not ordered correctly." << endl;
 		return false;
-	};
-	std::string hash = evtMeta.contentHash();
-	for (size_t meta = 0; meta < _evtMetas.size(); ++meta) {
-		if (_evtMetas[meta].first.contentHash() == hash) {
-			std::vector<std::pair<size_t, size_t> > newRanges;
+	}
+	string hash = evtMeta.contentHash();
+	for (size_t meta_i = 0; meta_i < _evtMetas.size(); ++meta_i) {
+		if (_evtMetas[meta_i].first.contentHash() == hash) {
+			vector<pair<size_t, size_t> > newRanges;
 			bool isIn = false;
-			for (size_t set = 0; set < _evtMetas[meta].second.size(); ++set) {
-				if (eventMin == _evtMetas[meta].second[set].first) {
-					printErr << "two ranges start at the same event index" << std::endl;
+			for (size_t set_i = 0; set_i < _evtMetas[meta_i].second.size(); ++set_i) {
+				if (eventMin == _evtMetas[meta_i].second[set_i].first) {
+					printErr << "two ranges start at the same event index" << endl;
 					return false;
-				};
-				if (eventMin < _evtMetas[meta].second[set].first && !isIn) {
+				}
+				if (eventMin < _evtMetas[meta_i].second[set_i].first and (not isIn)) {
 					isIn = true;
-					newRanges.push_back(std::pair<size_t, size_t>(eventMin, eventMax));
-				};
-				newRanges.push_back(_evtMetas[meta].second[set]);
-			};
-			if (!isIn) {
-				newRanges.push_back(std::pair<size_t, size_t>(eventMin, eventMax));
-			};
-			for (size_t  set = 1; set < newRanges.size(); ++set) {
-				if (newRanges[set-1].second > newRanges[set].first) {
-					printErr << "overlapping ranges found" << std::endl;
+					newRanges.push_back(pair<size_t, size_t>(eventMin, eventMax));
+				}
+				newRanges.push_back(_evtMetas[meta_i].second[set_i]);
+			}
+			if (not isIn) {
+				newRanges.push_back(pair<size_t, size_t>(eventMin, eventMax));
+			}
+			for (size_t  set_i = 1; set_i < newRanges.size(); ++set_i) {
+				if (newRanges[set_i-1].second > newRanges[set_i].first) {
+					printErr << "overlapping ranges found" << endl;
 					return false;
-				};
-			};
-			_evtMetas[meta].second = std::vector<std::pair<size_t, size_t> >(1, newRanges[0]);
-			for (size_t set = 1; set < newRanges.size(); ++set) {
-				if (newRanges[set].first == _evtMetas[meta].second[_evtMetas[meta].second.size()-1].second) {
-					_evtMetas[meta].second[_evtMetas[meta].second.size()-1].second = newRanges[set].second;
+				}
+			}
+			_evtMetas[meta_i].second = vector<pair<size_t, size_t> >(1, newRanges[0]);
+			for (size_t set_i = 1; set_i < newRanges.size(); ++set_i) {
+				if (newRanges[set_i].first == _evtMetas[meta_i].second[_evtMetas[meta_i].second.size()-1].second) {
+					_evtMetas[meta_i].second[_evtMetas[meta_i].second.size()-1].second = newRanges[set_i].second;
 				} else {
-					_evtMetas[meta].second.push_back(newRanges[set]);
-				};
-			};
+					_evtMetas[meta_i].second.push_back(newRanges[set_i]);
+				}
+			}
 			return true;
-		};
-	};
-	std::pair<eventMetadata, std::vector<std::pair<size_t, size_t> > > newEvtMeta(evtMeta, std::vector<std::pair<size_t, size_t> >(1, std::pair<size_t, size_t>(eventMin, eventMax)));
+		}
+	}
+	// !!! this is not used anywhere????
+	pair<eventMetadata, vector<pair<size_t, size_t> > > newEvtMeta(evtMeta, vector<pair<size_t, size_t> >(1, pair<size_t, size_t>(eventMin, eventMax)));
 	return true;
-};
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::check() const {
-	if (!_ampIntegralMatrix) {
-		printErr << "no _ampIntegralMatrix" << std::endl;
+	if (not _ampIntegralMatrix) {
+		printWarn << "integral matrix not set." << endl;
 		return false;
-	};
-	std::vector<std::string> waveNamesFromKeyFiles;
+	}
+	vector<string> waveNamesFromKeyFiles;
 	bool retVal = true;
-	for (size_t key = 0; key < _keyFileContents.size(); ++key){ 
-		std::vector<waveDescriptionPtr> waveDescriptions = rpwa::waveDescription::parseKeyFileContent(_keyFileContents[key]);
-		for (size_t wave = 0; wave < waveDescriptions.size(); ++wave) {
+	for (size_t keyfile_i = 0; keyfile_i < _keyFileContents.size(); ++keyfile_i){
+		vector<waveDescriptionPtr> waveDescriptions = rpwa::waveDescription::parseKeyFileContent(_keyFileContents[keyfile_i]);
+		for (size_t wave_i = 0; wave_i < waveDescriptions.size(); ++wave_i) {
 			isobarDecayTopologyPtr topo;
-			if (!waveDescriptions[wave]->constructDecayTopology(topo)) {
-				printErr << "problems constructiong decayTopology" << std::endl;
+			if (not waveDescriptions[wave_i]->constructDecayTopology(topo)) {
+				printWarn << "problems constructiong decayTopology" << endl;
 				retVal = false;
 				continue;
-			};
+			}
 			waveNamesFromKeyFiles.push_back(rpwa::waveDescription::waveNameFromTopology(*topo));
-		};
-	};
-	for (size_t name = 0; name < waveNamesFromKeyFiles.size(); ++name) {
-		if (!_ampIntegralMatrix->containsWave(waveNamesFromKeyFiles[name])) {
-			printErr << "_ampIntegralMatrix does not have wave name: " << waveNamesFromKeyFiles[name] << std::endl;
+		}
+	}
+	for (size_t name_i = 0; name_i < waveNamesFromKeyFiles.size(); ++name_i) {
+		if (not _ampIntegralMatrix->containsWave(waveNamesFromKeyFiles[name_i])) {
+			printWarn << "_ampIntegralMatrix does not have wave '" << waveNamesFromKeyFiles[name_i] << "'."<< endl;
 			retVal = false;
-		};
-	};
+		}
+	}
 	size_t nmbWaves = _ampIntegralMatrix->nmbWaves();
 	if (nmbWaves != waveNamesFromKeyFiles.size()) {
-		printErr << nmbWaves << " = nmbWaves != waveNamesFromKeyFiles.size() = " << waveNamesFromKeyFiles.size() << std::endl;
+		printWarn << "mismatch between number of keyfiles (" << waveNamesFromKeyFiles.size() << ")"
+		         << "and number of waves in matrix (" << nmbWaves << ")." << endl;
 		retVal = false;
-	};
+	}
 	return retVal;
-};
+}
 
 
-
-bool rpwa::ampIntegralMatrixMetadata::hasAmplitudeHash(const std::string& hash) const {
-	for (size_t amp = 0; amp < _amplitudeHashes.size(); ++amp) { 
-		if (_amplitudeHashes[amp] == hash) {
-			return true;
-		};
-	};
-	return false;
-};
+bool rpwa::ampIntegralMatrixMetadata::hasAmplitudeHash(const string& hash) const {
+	return (std::find(_amplitudeHashes.begin(), _amplitudeHashes.end(), hash) != _amplitudeHashes.end());
+}
 
 
-bool rpwa::ampIntegralMatrixMetadata::hasKeyFileContent(const std::string& content) const {
-	for (size_t cont = 0; cont < _keyFileContents.size(); ++cont) {
-		if (_keyFileContents[cont] == content) {
-			return true;
-		};
-	};
-	return false;
-};
+bool rpwa::ampIntegralMatrixMetadata::hasKeyFileContent(const string& content) const {
+	return (std::find(_keyFileContents.begin(), _keyFileContents.end(), content) != _keyFileContents.end());
+}
 
 
 bool rpwa::ampIntegralMatrixMetadata::writeToFile(TFile* outputFile) {
-	if (!setHash()) {
-		printErr << "could not setHash. Abort writing..." << std::endl;
+	if (not setHash()) {
+		printErr << "could not setHash, not writing to file." << endl;
 		return false;
-	};
-	if (!check()) {
-		printErr << "check failed" << std::endl;
+	}
+	if (not check()) {
+		printErr << "metadata invalid, not writing to file." << endl;
 		return false;
-	};	
+	}
 	outputFile->cd();
-	if (Write(getObjectNames(_objectBaseName).second.c_str()) == 0){
-		printErr << "write failed" << std::endl;
+	if (Write(getObjectNames(_objectBaseName).second.c_str()) == 0) {
+		printErr << "write failed." << endl;
 		return false;
-	};
+	}
 	return true;
-};
+}
