@@ -219,5 +219,48 @@ add_custom_target(
 )
 
 
+# scripts
+set(RPWA_PYTHON_SCRIPTS_FILES
+#	amplitudeBenchmark.py    # do not link tests
+#	compareAmplitudeFiles.py # do not link tests
+	convertEvtToTree.py
+	convertTreeToEvt.py
+	deWeight.py
+	genPseudoData.py
+	genpw.py
+#	integralBenchmark.py     # do not link tests
+	plotAngles.py
+#	testFileManager.py       # do not link tests
+#	testPyRootPwa.py         # do not link tests
+	userInterface/calcAmplitudes.py
+	userInterface/calcCovMatrixForFitResult.py
+	userInterface/calcIntegrals.py
+	userInterface/createFileManager.py
+	userInterface/eigenvectorLikelihoodSlices.py
+	userInterface/likelihoodPointCalculator.py
+	userInterface/pwaFit.py
+	userInterface/pwaNloptFit.py
+)
+
+set(RPWA_PYTHON_SCRIPTS_LINKS)
+foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
+	get_filename_component(_FILENAME "${_FILE}" NAME)
+	# list of files to link
+	list(APPEND RPWA_PYTHON_SCRIPTS_LINKS "${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}")
+	add_custom_command(
+		OUTPUT ${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}
+		COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${_FILE} ${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}
+	)
+endforeach()
+unset(_FILE)
+unset(_FILENAME)
+
+# target to link the python files
+add_custom_target(
+	pyRootPwaScriptsLinks ALL
+	DEPENDS ${RPWA_PYTHON_SCRIPTS_LINKS}
+)
+
+
 # test functionality of 'pyRootPwa' package
 add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
