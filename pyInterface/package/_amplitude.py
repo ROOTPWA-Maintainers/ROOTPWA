@@ -1,9 +1,9 @@
 
 import os as _os
 
-import pyRootPwa
 import pyRootPwa.core
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 def calcAmplitude(inputFileName,
                   keyFileName,
@@ -12,14 +12,12 @@ def calcAmplitude(inputFileName,
                   maxNumberOfEvents = -1,
                   printProgress = True):
 
-	printDebug = pyRootPwa.utils.printDebug
 	printInfo = pyRootPwa.utils.printInfo
 	printSucc = pyRootPwa.utils.printSucc
 	printWarn = pyRootPwa.utils.printWarn
-	printErr = pyRootPwa.utils.printErr
 
 	printInfo("Calculating amplitude for key file '" + keyFileName + "' (index " + str(waveDescriptionID) +
-	                          ") with input file '" + inputFileName + "', output file '" + outputFileName + "'.")
+	          ") with input file '" + inputFileName + "', output file '" + outputFileName + "'.")
 
 	if 'ROOTPWA' not in _os.environ:
 		printWarn("$ROOTPWA not set.")

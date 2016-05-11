@@ -103,7 +103,8 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass in GeV/c^{2} for the histograms (default: 0)")
 	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV/c^{2} for the histograms (default: 10)")
 	parser.add_argument("-t", "--type", type=str, metavar="type", default="data", dest="type", help='type of input, can be "data", "gen" or "acc" (default: "data")')
-	parser.add_argument("-m", "--mass-hist", type=str, metavar="xMassHist", dest="xMassHistogramPath", help='histogram of the X mass, specified as pathToRootFile.root/pathOfHistInRootFile')
+	parser.add_argument("-m", "--mass-hist", type=str, metavar="xMassHist", dest="xMassHistogramPath",
+	                    help='histogram of the X mass, specified as pathToRootFile.root/pathOfHistInRootFile')
 	parser.add_argument("--weighted", action="store_true", dest="useWeightInformation", help="weight information available")
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
@@ -233,9 +234,12 @@ if __name__ == "__main__":
 			hists[rangeName].append([pyRootPwa.ROOT.TH1D("m_" + parent.name, massTitle, arguments.nHistogramBins, arguments.massMin, arguments.massMax),
 									 pyRootPwa.ROOT.TH1D(name + "_phi", phiTitle, arguments.nHistogramBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
 			                         pyRootPwa.ROOT.TH1D(name + "_cosTheta", thetaTitle, arguments.nHistogramBins, -1, 1),
-			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_m_" + parent.name, phiVsMassTitle, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
-			                         pyRootPwa.ROOT.TH2D(name + "_cosTheta_vs_m_" + parent.name, thetaVsMassTitle, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, -1, 1),
-			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_cosTheta", phiVsThetaTitle, arguments.nHistogram2DBins, -1, 1, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi())])
+			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_m_" + parent.name, phiVsMassTitle, arguments.nHistogram2DBins, arguments.massMin,
+			                                             arguments.massMax, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
+			                         pyRootPwa.ROOT.TH2D(name + "_cosTheta_vs_m_" + parent.name, thetaVsMassTitle, arguments.nHistogram2DBins, arguments.massMin,
+			                                             arguments.massMax, arguments.nHistogram2DBins, -1, 1),
+			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_cosTheta", phiVsThetaTitle, arguments.nHistogram2DBins, -1, 1, arguments.nHistogram2DBins,
+			                                             -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi())])
 			for hist in hists[rangeName][-1]:
 				hist.SetMinimum(0)
 		isobarCombinationHistograms[rangeName] = {}
@@ -254,9 +258,11 @@ if __name__ == "__main__":
 			else:
 				zAxisTitle = str(nEntries) + " entries per event"
 			histName = "m(" + isobar2Name + ") vs. m(" + isobar1Name + ");m(" + isobar1Name + ") [GeV/c^{2}];m(" + isobar2Name + ") [GeV/c^{2}];" + zAxisTitle
-			isobarCombinationHistograms[rangeName][isobarCombination] = pyRootPwa.ROOT.TH2D("m_" + isobar2Name + "_vs_m_" + isobar1Name, histName, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax)
+			isobarCombinationHistograms[rangeName][isobarCombination] = pyRootPwa.ROOT.TH2D("m_" + isobar2Name + "_vs_m_" + isobar1Name, histName, arguments.nHistogram2DBins,
+			                                                                                arguments.massMin, arguments.massMax, arguments.nHistogram2DBins,
+			                                                                                arguments.massMin, arguments.massMax)
 
-	assert(inputFileRanges.keys() == hists.keys())
+	assert inputFileRanges.keys() == hists.keys()
 
 	for rangeName in inputFileRanges.keys():
 
@@ -272,9 +278,15 @@ if __name__ == "__main__":
 
 			if arguments.useWeightInformation:
 				if arguments.type == "gen":
-					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)] + pyRootPwa.config.phaseSpaceWeightFileExtensionQualifier + dataFileName[dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)+len(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier):]
+					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)] \
+					                 + pyRootPwa.config.phaseSpaceWeightFileExtensionQualifier \
+					                 + dataFileName[dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier) \
+					                 + len(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier):]
 				elif arguments.type == "acc":
-					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)] + pyRootPwa.config.accCorrPSWeightFileExtensionQualifier + dataFileName[dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)+len(pyRootPwa.config.accCorrPSEventFileExtensionQualifier):]
+					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)] \
+					                 + pyRootPwa.config.accCorrPSWeightFileExtensionQualifier \
+					                 + dataFileName[dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier) \
+					                 + len(pyRootPwa.config.accCorrPSEventFileExtensionQualifier):]
 				else:
 					pyRootPwa.utils.printErr("weighting can only be used for data type 'gen' or 'acc'. Aborting...")
 					sys.exit(5)
@@ -332,11 +344,11 @@ if __name__ == "__main__":
 						parent = vertex.parent()
 						mass = parent.lzVec.M()
 						masses.append(mass)
-						if(permutations[permutationKey][hist_i][0]):
+						if permutations[permutationKey][hist_i][0]:
 							hists[rangeName][hist_i][0].Fill(mass, weight)
 							if hist_i == 0 and xMassHistogram is not None:
 								massSliceHistogram.Fill(mass, weight)
-						if(permutations[permutationKey][hist_i][1]):
+						if permutations[permutationKey][hist_i][1]:
 							daughter = vertex.daughter1()
 							phi = daughter.lzVec.Phi()
 							theta = daughter.lzVec.Theta()

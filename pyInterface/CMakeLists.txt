@@ -145,21 +145,137 @@ if(USE_NLOPT)
 endif()
 
 
+# 'pyRootPwa' package
+set(RPWA_PYTHON_PACKAGE_FILES
+	__init__.py
+	_amplitude.py
+	_config.py
+	_fileManager.py
+	_fit.py
+	_integrals.py
+	_likelihood.py
+	core.py
+	utils/__init__.py
+	utils/_binningMapFromArgList.py
+	utils/_fitTreeUtils.py
+	utils/_printingUtils.py
+	utils/_progressBar.py
+	utils/_root.py
+	utils/_silencer.py
+	utils/_waveDescThresUtils.py
+)
+
+set(RPWA_PYTHON_PACKAGE_BYTECODES)
+set(RPWA_PYTHON_PACKAGE_DIRS)
+set(RPWA_PYTHON_PACKAGE_LINKS)
+foreach(_FILE ${RPWA_PYTHON_PACKAGE_FILES})
+	get_filename_component(_DIR "${_FILE}" DIRECTORY)
+	# list of directories to create
+	list(APPEND RPWA_PYTHON_PACKAGE_DIRS "${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_DIR}")
+	add_custom_command(
+		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_DIR}
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_DIR}
+	)
+	# list of files to link
+	list(APPEND RPWA_PYTHON_PACKAGE_LINKS "${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}")
+	add_custom_command(
+		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
+		COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/package/${_FILE} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
+		DEPENDS pyRootPwaPackageDirs
+	)
+	# list of files containing bytecode
+	list(APPEND RPWA_PYTHON_PACKAGE_BYTECODES "${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}c")
+	add_custom_command(
+		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}c
+		COMMAND ${PYTHON_EXECUTABLE} -m py_compile ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
+		DEPENDS pyRootPwaPackageLinks package/${_FILE}
+	)
+endforeach()
+unset(_DIR)
+unset(_FILE)
+
+# target to create the package directory structure
+add_custom_target(
+	pyRootPwaPackageDirs ALL
+	DEPENDS ${RPWA_PYTHON_PACKAGE_DIRS}
+)
+# target to link the python files
+add_custom_target(
+	pyRootPwaPackageLinks ALL
+	DEPENDS pyRootPwaPackageDirs ${RPWA_PYTHON_PACKAGE_LINKS}
+)
+# target to create python bytecode
+add_custom_target(
+	pyRootPwaPackageBytecodes ALL
+	DEPENDS pyRootPwaPackageLinks ${RPWA_PYTHON_PACKAGE_BYTECODES}
+)
+
+
 # link the shared library with the python bindings
 add_custom_target(
 	libRootPwaPyLink ALL
-	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}RootPwaPy${CMAKE_SHARED_LIBRARY_SUFFIX}	${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}RootPwaPy${CMAKE_SHARED_LIBRARY_SUFFIX} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
+	DEPENDS RootPwaPy pyRootPwaPackageDirs
 )
 
 
-# produce python byte-code and move it to the build directory
+# scripts
+set(RPWA_PYTHON_SCRIPTS_FILES
+#	amplitudeBenchmark.py    # do not link tests
+#	compareAmplitudeFiles.py # do not link tests
+	convertEvtToTree.py
+	convertTreeToEvt.py
+	deWeight.py
+	genPseudoData.py
+	genpw.py
+#	integralBenchmark.py     # do not link tests
+	plotAngles.py
+#	testFileManager.py       # do not link tests
+#	testPyRootPwa.py         # do not link tests
+	userInterface/calcAmplitudes.py
+	userInterface/calcCovMatrixForFitResult.py
+	userInterface/calcIntegrals.py
+	userInterface/createFileManager.py
+	userInterface/eigenvectorLikelihoodSlices.py
+	userInterface/likelihoodPointCalculator.py
+	userInterface/pwaFit.py
+	userInterface/pwaNloptFit.py
+)
+
+set(RPWA_PYTHON_SCRIPTS_LINKS)
+foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
+	get_filename_component(_FILENAME "${_FILE}" NAME)
+	# list of files to link
+	list(APPEND RPWA_PYTHON_SCRIPTS_LINKS "${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}")
+	add_custom_command(
+		OUTPUT ${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}
+		COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/${_FILE} ${EXECUTABLE_OUTPUT_PATH}/${_FILENAME}
+	)
+endforeach()
+unset(_FILE)
+unset(_FILENAME)
+
+# target to link the python files
 add_custom_target(
-	pyRootPwaPackageLinks ALL
-	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/python_compiler.py ${CMAKE_SOURCE_DIR}/pyInterface/package ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa
+	pyRootPwaScriptsLinks ALL
+	DEPENDS ${RPWA_PYTHON_SCRIPTS_LINKS}
 )
 
 
-add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
-
-
+# test functionality of 'pyRootPwa' package
 add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
+
+
+# pylint tests
+if(PYLINT_EXECUTABLE)
+	# check 'pyRootPwa' package
+	add_test(pyLintPyRootPwa ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa)
+
+	# check scripts
+	foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
+		get_filename_component(_FILENAME ${_FILE} NAME_WE)
+		add_test(NAME pyLint${_FILENAME} COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${CMAKE_CURRENT_SOURCE_DIR}/${_FILE})
+	endforeach()
+	unset(_FILE)
+	unset(_FILENAME)
+endif()

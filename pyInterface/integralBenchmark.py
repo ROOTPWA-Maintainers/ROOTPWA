@@ -4,7 +4,6 @@ import sys
 import urllib
 import os
 import argparse
-import numpy
 
 import pyRootPwa
 import pyRootPwa.core

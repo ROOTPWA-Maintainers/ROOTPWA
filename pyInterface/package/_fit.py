@@ -1,9 +1,8 @@
-import os
 import random
 
-import pyRootPwa
 import pyRootPwa.core
-ROOT = pyRootPwa.ROOT
+import pyRootPwa.utils
+ROOT = pyRootPwa.utils.ROOT
 
 def pwaFit(ampFileList,
            normIntegralFileName,

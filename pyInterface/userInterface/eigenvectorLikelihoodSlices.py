@@ -22,7 +22,8 @@ if __name__ == "__main__":
 	parser.add_argument("-s", action="store_true", dest="ranWithHesse", default=False, help="indicates that the fit result contains an analytically calculated covariance matrix")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
-	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0, help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
+	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
 	minimum = ROOT.TVectorD(likelihood.nmbPars())
 	for i in range(likelihood.nmbPars()):
-		parName = likelihood.parName(i);
+		parName = likelihood.parName(i)
 		minimum[i] = result.fitParameter(parName)
 
 	minimumLikelihood = likelihood.DoEval( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
@@ -88,7 +89,7 @@ if __name__ == "__main__":
 			sys.exit(1)
 
 	outputFile = ROOT.TFile.Open(args.outputFileName, "NEW")
-	if ((not outputFile) or outputFile.IsZombie()):
+	if (not outputFile) or outputFile.IsZombie():
 		pyRootPwa.utils.printErr("cannot open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 
@@ -137,24 +138,24 @@ if __name__ == "__main__":
 			likeli = likelihood.DoEval( [ pars[i] for i in xrange(pars.GetNrows()) ] ) - minimumLikelihood
 			graphLikeli.SetPoint(p + 50, ratio, likeli)
 
-		lowerLimit = -1.2 * math.sqrt(eigenVectorsMinuit[par][1]);
-		upperLimit =  1.2 * math.sqrt(eigenVectorsMinuit[par][1]);
+		lowerLimit = -1.2 * math.sqrt(eigenVectorsMinuit[par][1])
+		upperLimit =  1.2 * math.sqrt(eigenVectorsMinuit[par][1])
 
 		# the magnitude of the eigenvector is 1. otherwise an
 		# additional factor '|eigenvector|^2' would be required
 		parabolaMinuit = ROOT.TF1("minuitParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsMinuit[par][1]), lowerLimit, upperLimit)
 		if not args.ranWithHesse:
-			parabolaAna = ROOT.TF1("analyticParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsAna[par][1]), lowerLimit, upperLimit);
+			parabolaAna = ROOT.TF1("analyticParabola", "0.5 / {:.15e} * x*x".format(eigenVectorsAna[par][1]), lowerLimit, upperLimit)
 
 		canvas = ROOT.TCanvas("eigenvectorSlice{:d}".format(par))
-		canvas.cd();
-		graphLikeli.Draw("A*");
-		parabolaMinuit.Draw("Lsame");
-		parabolaMinuit.SetLineColor(ROOT.kBlue);
+		canvas.cd()
+		graphLikeli.Draw("A*")
+		parabolaMinuit.Draw("Lsame")
+		parabolaMinuit.SetLineColor(ROOT.kBlue)
 		if not args.ranWithHesse:
-			parabolaAna.Draw("Lsame");
-			parabolaAna.SetLineColor(ROOT.kRed);
-		canvas.Write();
+			parabolaAna.Draw("Lsame")
+			parabolaAna.SetLineColor(ROOT.kRed)
+		canvas.Write()
 
 	outputFile.Close()
 	pyRootPwa.utils.printSucc("slices successfully written to file '{}'.".format(args.outputFileName))

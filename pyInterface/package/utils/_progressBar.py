@@ -1,7 +1,7 @@
 
 import sys
 
-class progressBar:
+class progressBar(object):
 
 	minimum = 0.0
 	maximum = 100.0

@@ -286,9 +286,18 @@ endif()
 set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
 message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
 set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
-file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
 message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+
+
+# setup pylint (optional)
+message(STATUS "")
+message(STATUS ">>> Setting up pylint.")
+find_program(PYLINT_EXECUTABLE pylint)
+if(NOT PYLINT_EXECUTABLE)
+	message(STATUS "Cannot find pylint executable. Quality of python code will no be assessed.")
+else()
+	message(STATUS "Using pylint executable '${PYLINT_EXECUTABLE}'.")
+endif()
 
 
 # setup CUDA (optional)
@@ -403,7 +412,7 @@ if (NOT USE_MPI)
 endif()
 
 
-# setup BAT
+# setup BAT (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up BAT.")
 option(USE_BAT "En/Disables usage of BAT" OFF)
@@ -450,7 +459,7 @@ if(GIT_FOUND)
 endif()
 
 
-# setup nlopt
+# setup nlopt (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
 find_package(NLopt)
@@ -470,7 +479,7 @@ endif()
 add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
 
 
-# setup doxygen
+# setup doxygen (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)

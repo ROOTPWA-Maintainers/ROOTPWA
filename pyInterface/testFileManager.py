@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import pprint
-import random
 import sys
 
 import pyRootPwa
@@ -31,14 +29,14 @@ if __name__ == "__main__":
 	#print f.areDataFilesSynced()
 	#print f.areKeyFilesSynced()
 
-	for binID in f.getBinIDList():
-		for keyFileID in f.getKeyFileIDList():
-			for eventsType in [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
-				dataFile = f.getDataFile(binID, eventsType)
-				keyFile = f.getKeyFile(keyFileID)
-				if not dataFile:
-					continue
-				print str(binID) + "	" + str(keyFileID) + "	" + f.getAmplitudeFilePath(binID, keyFileID, eventsType)
-				#print "submit job: calcAmplitudes(" + keyFile.keyFileName + ", " + dataFile.dataFileName + ", -o " + f.getAmplitudeFilePath(binID, keyFileID, eventsType) + ")"
-	print ">> found " + str(len(f.getBinIDList())) + " binIDs and " + str(len(f.getKeyFilePaths())) + " keyFiles."
-	print ">> submitted " + str(len(f.getBinIDList()) * len(f.getKeyFilePaths()) * len(f.dataFiles)) + " jobs."
+#	for binID in f.getBinIDList():
+#		for keyFileID in f.getKeyFileIDList():
+#			for eventsType in [ pyRootPwa.core.eventMetadata.REAL, pyRootPwa.core.eventMetadata.GENERATED, pyRootPwa.core.eventMetadata.ACCEPTED ]:
+#				dataFile = f.getDataFile(binID, eventsType)
+#				keyFile = f.getKeyFile(keyFileID)
+#				if not dataFile:
+#					continue
+#				print str(binID) + "	" + str(keyFileID) + "	" + f.getAmplitudeFilePath(binID, keyFileID, eventsType)
+#				#print "submit job: calcAmplitudes(" + keyFile.keyFileName + ", " + dataFile.dataFileName + ", -o " + f.getAmplitudeFilePath(binID, keyFileID, eventsType) + ")"
+#	print ">> found " + str(len(f.getBinIDList())) + " binIDs and " + str(len(f.getKeyFilePaths())) + " keyFiles."
+#	print ">> submitted " + str(len(f.getBinIDList()) * len(f.getKeyFilePaths()) * len(f.dataFiles)) + " jobs."
