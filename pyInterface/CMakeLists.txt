@@ -155,6 +155,7 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	_fileManager.py
 	_fit.py
 	_integrals.py
+	_integralsOnTheFly.py
 	_likelihood.py
 	core.py
 	utils/__init__.py

@@ -279,7 +279,7 @@ bool
 ampIntegralMatrix::addEvent(map<string, complex<double> > &amplitudes)
 {
 	for (size_t iWave = 0; iWave < _nmbWaves; ++iWave) {
-		if (not containsWave(_waveNames[iWave])) {
+		if (not amplitudes.count(_waveNames[iWave])) {
 			printErr << "waveNames '" << _waveNames[iWave] << "' not in amplitudes" << endl;
 			return false;
 		}

@@ -57,12 +57,16 @@ namespace {
 		return rpwa::ampIntegralMatrixMetadata::readIntegralFile(inputFile, objectBaseName, quiet);
 	}
 
-	bool ampIntegralMatrixMetadata_setAmpIntegralMatrix(rpwa::ampIntegralMatrixMetadata& self, PyObject* integralMatrixPy) {
+	bool ampIntegralMatrixMetadata_setAmpIntegralMatrix_1(rpwa::ampIntegralMatrixMetadata& self, PyObject* integralMatrixPy) {
 		rpwa::ampIntegralMatrix* integralMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>(integralMatrixPy);
 		if(not integralMatrix) {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for ampIntegralMatrix when executing rpwa::ampIntegralMatrixMetadata::setAmpIntegralMatrix()");
 			bp::throw_error_already_set();
 		}
+		return self.setAmpIntegralMatrix(integralMatrix);
+	}
+
+	bool ampIntegralMatrixMetadata_setAmpIntegralMatrix_2(rpwa::ampIntegralMatrixMetadata& self, rpwa::ampIntegralMatrix* integralMatrix) {
 		return self.setAmpIntegralMatrix(integralMatrix);
 	}
 
@@ -86,7 +90,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("getKeyAmplitudeHashes", &::ampIntegralMatrixMetadata_getAmplitudeHashes)
 		.def("readIntegralFile"
 		     , &::ampIntegralMatrixeMetadata_readIntegralFile
-		     , (bp::arg("inputFile"), bp::arg("objectBaseName") = "", bp::arg("quiet")=false)
+		     , (bp::arg("inputFile"), bp::arg("objectNameInFile") = rpwa::ampIntegralMatrixMetadata::objectNameInFile, bp::arg("quiet")=false)
 		     , bp::return_value_policy<bp::reference_existing_object>()
 		)
 		.staticmethod("readIntegralFile")
@@ -94,8 +98,8 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 
 		.def("writeToFile", &::ampIntegralMatrixMetadata_writeToFile, bp::arg("outputFile"))
 
-		.def("setAmpIntegralMatrix", &::ampIntegralMatrixMetadata_setAmpIntegralMatrix      , bp::arg("integralMatrix"))
-		.def("setAmpIntegralMatrix", &rpwa::ampIntegralMatrixMetadata::setAmpIntegralMatrix , bp::arg("integralMatrix"))
+		.def("setAmpIntegralMatrix", &::ampIntegralMatrixMetadata_setAmpIntegralMatrix_1, bp::with_custodian_and_ward<1,2>(), bp::arg("integralMatrix"))
+		.def("setAmpIntegralMatrix", &::ampIntegralMatrixMetadata_setAmpIntegralMatrix_2, bp::with_custodian_and_ward<1,2>(), bp::arg("integralMatrix"))
 
 		.def("contentHash", &rpwa::ampIntegralMatrixMetadata::contentHash, bp::return_value_policy<bp::return_by_value>())
 		.def("rootpwaGitHash", &rpwa::ampIntegralMatrixMetadata::rootpwaGitHash, bp::return_value_policy<bp::return_by_value>())
@@ -110,6 +114,6 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 
 		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
 
-		.def("addKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::addKeyFileContent);
-
+		.def("addKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::addKeyFileContent)
+		.def_readonly("integralObjectName", &rpwa::ampIntegralMatrixMetadata::objectNameInFile);
 }

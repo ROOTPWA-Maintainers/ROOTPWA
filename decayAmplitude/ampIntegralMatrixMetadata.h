@@ -57,6 +57,8 @@ namespace rpwa {
 			bool writeToFile(TFile* outputFile);
 
 			bool setAllZeroHash();
+
+			static const std::string objectNameInFile;
 		private:
 			std::string                          _contentHash;
 			std::string                          _rootpwaGitHash;
@@ -70,8 +72,6 @@ namespace rpwa {
 			std::map<std::string, std::pair<double, double> > _binningMap;
 			std::vector<std::pair<rpwa::eventMetadata, std::vector<std::pair<size_t, size_t> > > > _evtMetas;
 
-
-			static std::pair<std::string, std::string> getObjectNames(const std::string& objectBaseName);
 			ClassDef(ampIntegralMatrixMetadata, 1);
 	};  // class ampIntegralMatrixMetadata
 

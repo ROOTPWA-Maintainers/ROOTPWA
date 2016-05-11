@@ -8,6 +8,7 @@
 
 using namespace std;
 
+const string rpwa::ampIntegralMatrixMetadata::objectNameInFile = "integralMetadata";
 
 rpwa::ampIntegralMatrixMetadata::ampIntegralMatrixMetadata()
 	: _contentHash(""),
@@ -27,14 +28,14 @@ string rpwa::ampIntegralMatrixMetadata::recalculateHash() const {
 		printWarn << "trying to calculate hash without an integral matrix." << endl;
 		return "";
 	}
-	hashCalculator sheWhoHashes;
+	hashCalculator hashor;
 	size_t nWaves = _ampIntegralMatrix->nmbWaves();
 	for (size_t i = 0; i < nWaves; ++i) {
 		for (size_t j = 0; j < nWaves; ++j) {
-			sheWhoHashes.Update(_ampIntegralMatrix->element(i,j));
+			hashor.Update(_ampIntegralMatrix->element(i,j));
 		}
 	}
-	return sheWhoHashes.hash();
+	return hashor.hash();
 }
 
 
@@ -56,11 +57,10 @@ rpwa::ampIntegralMatrixMetadata::readIntegralFile(TFile* inputFile,
                                                   const string& objectBaseName,
                                                   const bool& quiet)
 {
-	const pair<string, string> objectNames = ampIntegralMatrixMetadata::getObjectNames(objectBaseName);
-	rpwa::ampIntegralMatrixMetadata* integralMeta = (ampIntegralMatrixMetadata*)inputFile->Get(objectNames.second.c_str());
+	rpwa::ampIntegralMatrixMetadata* integralMeta = (ampIntegralMatrixMetadata*)inputFile->Get(objectNameInFile.c_str());
 	if(not integralMeta) {
 		if(not quiet) {
-			printWarn << "could not find amplitude metadata object '" << objectNames.second << "'." << endl;
+			printWarn << "could not find amplitude metadata object '" << objectNameInFile << "'." << endl;
 		}
 		return 0;
 	}
@@ -72,21 +72,6 @@ rpwa::ampIntegralMatrixMetadata::readIntegralFile(TFile* inputFile,
 		return 0;
 	}
 	return integralMeta;
-}
-
-
-// !!! Is the first entry of the pair used anywhere??
-pair<string, string>
-rpwa::ampIntegralMatrixMetadata::getObjectNames(const string& objectBaseName)
-{
-	stringstream sstr;
-	sstr << objectBaseName << ".amp";
-	pair<string, string> retval = pair<string, string>();
-	retval.first = sstr.str();
-	sstr.str("");
-	sstr << objectBaseName << ".meta";
-	retval.second = sstr.str();
-	return retval;
 }
 
 
@@ -235,11 +220,11 @@ bool rpwa::ampIntegralMatrixMetadata::setAllZeroHash() {
 		printErr << "integral matrix has not been set." << endl;
 		return false;
 	}
-	hashCalculator sheWhoHashes;
+	hashCalculator hashor;
 	for (size_t i = 0; i < _ampIntegralMatrix->nmbEvents(); ++i) {
-		sheWhoHashes.Update(complex<double>(0.,0.));
+		hashor.Update(complex<double>(0.,0.));
 	}
-	_allZeroHash = sheWhoHashes.hash();
+	_allZeroHash = hashor.hash();
 	return true;
 }
 
@@ -249,9 +234,8 @@ bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata
 		printErr << "given event number bounds are not ordered correctly." << endl;
 		return false;
 	}
-	string hash = evtMeta.contentHash();
 	for (size_t meta_i = 0; meta_i < _evtMetas.size(); ++meta_i) {
-		if (_evtMetas[meta_i].first.contentHash() == hash) {
+		if (_evtMetas[meta_i].first == evtMeta) {
 			vector<pair<size_t, size_t> > newRanges;
 			bool isIn = false;
 			for (size_t set_i = 0; set_i < _evtMetas[meta_i].second.size(); ++set_i) {
@@ -285,8 +269,8 @@ bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata
 			return true;
 		}
 	}
-	// !!! this is not used anywhere????
 	pair<eventMetadata, vector<pair<size_t, size_t> > > newEvtMeta(evtMeta, vector<pair<size_t, size_t> >(1, pair<size_t, size_t>(eventMin, eventMax)));
+	_evtMetas.push_back(newEvtMeta);
 	return true;
 }
 
@@ -346,7 +330,7 @@ bool rpwa::ampIntegralMatrixMetadata::writeToFile(TFile* outputFile) {
 		return false;
 	}
 	outputFile->cd();
-	if (Write(getObjectNames(_objectBaseName).second.c_str()) == 0) {
+	if (Write(objectNameInFile.c_str()) == 0) {
 		printErr << "write failed." << endl;
 		return false;
 	}

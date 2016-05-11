@@ -54,27 +54,13 @@ if __name__ == "__main__":
 	for binID in binIDList:
 		for eventsType in eventsTypes:
 			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
-			outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "NEW")
-			if not outputFile:
-				printWarn("cannot open output file '" + outputFileName + "'. Skipping...")
-				continue
 			ampFileList = fileManager.getAmplitudeFilePaths(binID, eventsType)
 			if not ampFileList:
 				printErr("could not retrieve valid amplitude file list. Aborting...")
 				sys.exit(1)
 			printInfo("calculating integral matrix from " + str(len(ampFileList)) + " amplitude files:")
-			integral = pyRootPwa.calcIntegrals(ampFileList, args.nEvents, args.weightsFileName)
-			if not integral:
+			if not pyRootPwa.calcIntegrals(outputFileName, ampFileList, args.nEvents, args.weightsFileName):
 				printErr("integral calculation failed. Aborting...")
 				sys.exit(1)
-
-			outputFile.cd()
-			nmbBytes = integral.Write(pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-			outputFile.Close()
-			if nmbBytes == 0:
-				printErr("problems writing integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
-				       + "in file '" + outputFileName + "'")
-				continue
-			else:
-				printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
+			printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
 				        + "in file '" + outputFileName + "'")

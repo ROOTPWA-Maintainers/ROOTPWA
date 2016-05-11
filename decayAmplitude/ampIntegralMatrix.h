@@ -121,7 +121,7 @@ namespace rpwa {
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
 		bool setWaveNames(const std::vector<std::string> &waveNames);
-		bool addEvent(std::map<std::string, std::complex<double> > &ampltides);
+		bool addEvent(std::map<std::string, std::complex<double> > &amplitudes);
 
 
 		bool integrate(const std::vector<const rpwa::amplitudeMetadata*>& ampMetadata,

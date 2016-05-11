@@ -69,7 +69,7 @@ namespace {
 	}
 
 	bool ampIntegralMatrix_addEvent(rpwa::ampIntegralMatrix& self,
-	                                const bp::dict           pyAmplitudes) {
+	                                const bp::dict&          pyAmplitudes) {
 		std::map<std::string, std::complex<double> > amplitudes;
 		const bp::list keys = pyAmplitudes.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
