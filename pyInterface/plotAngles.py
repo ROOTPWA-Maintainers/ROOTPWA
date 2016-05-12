@@ -1,18 +1,36 @@
 #!/usr/bin/env python
 
 import argparse
-import glob
 import itertools
-import numpy
 import os
 import sys
 
+import numpy
+
 import pyRootPwa
 import pyRootPwa.utils
+ROOT = pyRootPwa.ROOT
+
+
+def combineSyms(boseSyms, isoSyms):
+	newSyms = []
+	for isoSym in isoSyms:
+		for boseSym in boseSyms:
+			if len(isoSym["fsPartPermMap"]) != len(boseSym["fsPartPermMap"]):
+				pyRootPwa.utils.printErr("final state particle mismatch when combining symmetrizations. Aborting...")
+				sys.exit(1)
+			newPerm = { "fsPartPermMap": [], "factor": boseSym["factor"]*isoSym["factor"] }
+			for i in xrange(len(isoSym["fsPartPermMap"])):
+				newPerm["fsPartPermMap"].append(boseSym["fsPartPermMap"][isoSym["fsPartPermMap"][i]])
+			newSyms.append(newPerm)
+	return newSyms
 
 
 def getPermutations(topology):
 	boseSyms = topology.getBoseSymmetrization()
+	isoSyms = topology.getIsospinSymmetrization()
+	if isoSyms:
+		boseSyms = combineSyms(boseSyms, isoSyms)
 	keys = [tuple(x["fsPartPermMap"]) for x in boseSyms]
 	permutations = {}
 	for key in keys:
@@ -63,6 +81,9 @@ def getPermutations(topology):
 
 def getPermutationsForIsobarCombinations(topology, isobarCombinations):
 	boseSyms = topology.getBoseSymmetrization()
+	isoSyms = topology.getIsospinSymmetrization()
+	if isoSyms:
+		boseSyms = combineSyms(boseSyms, isoSyms)
 	keys = [tuple(x["fsPartPermMap"]) for x in boseSyms]
 	permutations = {}
 	for key in keys:
@@ -94,6 +115,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
 	                                 description="No help text available."
 	                                )
+	parser.add_argument("inputFile", type=str, metavar="inputFile", dest="inputFile", help="inputFile")
 	parser.add_argument("outputFile", metavar="output-file", help="path to output file")
 	parser.add_argument("templateFile", metavar="template-file", help="path to template file")
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
@@ -105,8 +127,8 @@ if __name__ == "__main__":
 	parser.add_argument("-t", "--type", type=str, metavar="type", default="data", dest="type", help='type of input, can be "data", "gen" or "acc" (default: "data")')
 	parser.add_argument("-m", "--mass-hist", type=str, metavar="xMassHist", dest="xMassHistogramPath",
 	                    help='histogram of the X mass, specified as pathToRootFile.root/pathOfHistInRootFile')
-	parser.add_argument("--weighted", action="store_true", dest="useWeightInformation", help="weight information available")
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
+	parser.add_argument("--weight-file", type=str, metavar="weightFile", dest="weightFile", help="weightFile")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
 		arguments.massBins.append("all")
@@ -187,12 +209,17 @@ if __name__ == "__main__":
 	cosBinWidth = '%.2f' % (2000.0 / arguments.nHistogramBins)
 	thetaBinWidth = '%.2f' % (pyRootPwa.ROOT.TMath.TwoPi() / arguments.nHistogramBins)
 	for binRange in arguments.massBins:
-		allMassBins = sorted(glob.glob(pyRootPwa.config.dataDirectory + '/' + pyRootPwa.config.massBinDirectoryNamePattern))
-		massBins = pyRootPwa.utils.parseMassBinArgs(allMassBins, binRange)
-		rangeName = massBins[0].rsplit('/', 1)[-1] + '_' + massBins[-1].rsplit('/', 1)[-1]
-		inputFileRanges[rangeName] = pyRootPwa.utils.getListOfInputFiles(massBins)[inputTypeIndex[arguments.type]]
+		rangeName = ""
+		eventFile = ROOT.TFile.Open(arguments.inputFile)
+		evtMeta = pyRootPwa.core.eventMetadata.readEventFile(eventFile)
+		if 'mass' not in evtMeta.binningMap():
+			pyRootPwa.utils.printErr("'mass' is not in the binning map. Aborting...")
+			sys.exit(1)
+		rangeName = str(int(round((evtMeta.binningMap()['mass'][0] + evtMeta.binningMap()['mass'][1])/2.)))
+		inputFileRanges[rangeName] = [ arguments.inputFile ]
+		eventFile.Close()
 		if not inputFileRanges[rangeName]:
-			pyRootPwa.utils.printErr("No input files found for mass bins " + str(massBins) + ".")
+			pyRootPwa.utils.printErr("no input files found for mass bins " + str(rangeName) + ".")
 		outputFile.mkdir(rangeName)
 		outputFile.cd(rangeName)
 		hists[rangeName] = []
@@ -274,36 +301,22 @@ if __name__ == "__main__":
 			# Do all the initialization
 			pyRootPwa.utils.printInfo("Opening input file " + dataFileName)
 			dataFile = pyRootPwa.ROOT.TFile.Open(dataFileName)
-			dataTree = dataFile.Get(pyRootPwa.config.inTreeName)
+			evtMeta = pyRootPwa.core.eventMetadata.readEventFile(dataFile)
+			dataTree = evtMeta.eventTree()
 
-			if arguments.useWeightInformation:
-				if arguments.type == "gen":
-					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier)] \
-					                 + pyRootPwa.config.phaseSpaceWeightFileExtensionQualifier \
-					                 + dataFileName[dataFileName.rfind(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier) \
-					                 + len(pyRootPwa.config.phaseSpaceEventFileExtensionQualifier):]
-				elif arguments.type == "acc":
-					weightFileName = dataFileName[:dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier)] \
-					                 + pyRootPwa.config.accCorrPSWeightFileExtensionQualifier \
-					                 + dataFileName[dataFileName.rfind(pyRootPwa.config.accCorrPSEventFileExtensionQualifier) \
-					                 + len(pyRootPwa.config.accCorrPSEventFileExtensionQualifier):]
-				else:
-					pyRootPwa.utils.printErr("weighting can only be used for data type 'gen' or 'acc'. Aborting...")
-					sys.exit(5)
-				dataTree.AddFriend(pyRootPwa.config.weightTreeName, weightFileName)
+			if arguments.weightFile is not None:
+				dataTree.AddFriend(pyRootPwa.config.weightTreeName, arguments.weightFile)
 
-			prodKinParticles = dataFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
-			decayKinParticles = dataFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
-			topology.initKinematicsData(prodKinParticles, decayKinParticles)
+			topology.initKinematicsData(evtMeta.productionKinematicsParticleNames(), evtMeta.decayKinematicsParticleNames())
 			nEvents = dataTree.GetEntries()
 			prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 			decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
-			dataTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
-			dataTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
+			dataTree.SetBranchAddress(pyRootPwa.core.eventMetadata.productionKinematicsMomentaBranchName, prodKinMomenta)
+			dataTree.SetBranchAddress(pyRootPwa.core.eventMetadata.decayKinematicsMomentaBranchName, decayKinMomenta)
 
 			# Handle weighted MC
 			weight = numpy.array(1, dtype = float)
-			if arguments.useWeightInformation:
+			if arguments.weightFile is not None:
 				dataTree.SetBranchAddress("weight", weight)
 			else:
 				weight = 1.
