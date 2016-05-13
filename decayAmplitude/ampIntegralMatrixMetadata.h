@@ -29,7 +29,6 @@ namespace rpwa {
 			std::ostream& print(std::ostream& out) const;
 
 			static const ampIntegralMatrixMetadata* readIntegralFile(TFile* inputFile,
-			                                                         const std::string& objectBaseName,
 			                                                         const bool& quiet = false);
 
 			ampIntegralMatrix* getAmpIntegralMatrix() const { return _ampIntegralMatrix; }

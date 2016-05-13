@@ -91,7 +91,7 @@ namespace {
 }
 
 template<typename T>
-T* rpwa::py::getFromTDirectory(PyObject* pyDir, const std::string& name)
+T* rpwa::py::getFromTDirectory(PyObject* /* pyDir */, const std::string& /* name */)
 {
 	printErr<<"Because of boost::python, this function has to be explicitly instantiated."<<std::endl;
 	throw;

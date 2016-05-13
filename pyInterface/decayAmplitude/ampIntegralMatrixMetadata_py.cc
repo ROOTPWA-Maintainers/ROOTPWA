@@ -46,7 +46,6 @@ namespace {
 	}
 
 	const rpwa::ampIntegralMatrixMetadata* ampIntegralMatrixeMetadata_readIntegralFile(PyObject* pyInputFile,
-	                                                                                   const std::string& objectBaseName,
 	                                                                                   const bool& quiet = false)
 	{
 		TFile* inputFile = rpwa::py::convertFromPy<TFile*>(pyInputFile);
@@ -54,7 +53,7 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for inputFile when executing rpwa::ampIntegralMatrixMetadata::readIntegralFile()");
 			bp::throw_error_already_set();
 		}
-		return rpwa::ampIntegralMatrixMetadata::readIntegralFile(inputFile, objectBaseName, quiet);
+		return rpwa::ampIntegralMatrixMetadata::readIntegralFile(inputFile, quiet);
 	}
 
 	bool ampIntegralMatrixMetadata_setAmpIntegralMatrix_1(rpwa::ampIntegralMatrixMetadata& self, PyObject* integralMatrixPy) {
@@ -90,7 +89,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("getKeyAmplitudeHashes", &::ampIntegralMatrixMetadata_getAmplitudeHashes)
 		.def("readIntegralFile"
 		     , &::ampIntegralMatrixeMetadata_readIntegralFile
-		     , (bp::arg("inputFile"), bp::arg("objectNameInFile") = rpwa::ampIntegralMatrixMetadata::objectNameInFile, bp::arg("quiet")=false)
+		     , (bp::arg("inputFile"), bp::arg("quiet")=false)
 		     , bp::return_value_policy<bp::reference_existing_object>()
 		)
 		.staticmethod("readIntegralFile")

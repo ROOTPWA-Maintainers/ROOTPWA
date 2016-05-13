@@ -54,7 +54,6 @@ ostream& rpwa::ampIntegralMatrixMetadata::print(ostream& out) const {
 
 const rpwa::ampIntegralMatrixMetadata*
 rpwa::ampIntegralMatrixMetadata::readIntegralFile(TFile* inputFile,
-                                                  const string& objectBaseName,
                                                   const bool& quiet)
 {
 	rpwa::ampIntegralMatrixMetadata* integralMeta = (ampIntegralMatrixMetadata*)inputFile->Get(objectNameInFile.c_str());
