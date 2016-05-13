@@ -6,6 +6,7 @@
 
 // decayAmplitude
 #include "ampIntegralMatrix_py.h"
+#include "ampIntegralMatrixMetadata_py.h"
 #include "decayTopology_py.h"
 #include "diffractiveDissVertex_py.h"
 #include "fsVertex_py.h"
@@ -56,6 +57,7 @@
 #include "amplitudeTreeLeaf_py.h"
 #include "eventFileWriter_py.h"
 #include "eventMetadata_py.h"
+#include "hashCalculator_py.h"
 
 // utilities
 #include "physUtils_py.h"
@@ -82,6 +84,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportWaveDescription();
 	rpwa::py::exportAmplitudeTreeLeaf();
 	rpwa::py::exportAmpIntegralMatrix();
+	rpwa::py::exportAmpIntegralMatrixMetadata();
 	rpwa::py::exportPhaseSpaceIntegral();
 	rpwa::py::exportNBodyPhaseSpaceGen();
 	rpwa::py::exportRandomNumberGenerator();
@@ -97,6 +100,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportReportingUtilsEnvironment();
 	rpwa::py::exportEventFileWriter();
 	rpwa::py::exportEventMetadata();
+	rpwa::py::exportHashCalculator();
 	rpwa::py::exportAmplitudeFileWriter();
 	rpwa::py::exportAmplitudeMetadata();
 	rpwa::py::exportCalcAmplitude();

@@ -56,6 +56,13 @@ namespace {
 		return rpwa::eventMetadata::readEventFile(inputFile, quiet);
 	}
 
+	bool eventMetadata___eq__(rpwa::eventMetadata& self, PyObject* otherEventMetaPy) {
+		rpwa::eventMetadata* otherEventMeta = rpwa::py::convertFromPy<rpwa::eventMetadata*>(otherEventMetaPy);
+		if(not otherEventMeta) {
+			return false;
+		}
+		return self == *otherEventMeta;
+	}
 }
 
 void rpwa::py::exportEventMetadata() {
@@ -79,6 +86,8 @@ void rpwa::py::exportEventMetadata() {
 			, &rpwa::eventMetadata::eventsType
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
+		.def("__eq__", &::eventMetadata___eq__)
+		.def("__eq__", &rpwa::eventMetadata::operator==)
 		.def("binningMap", &eventMetadata_binningMap)
 		.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
 		.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)

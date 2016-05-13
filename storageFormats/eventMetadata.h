@@ -30,6 +30,9 @@ namespace rpwa {
 
 		~eventMetadata();
 
+		bool operator==(const eventMetadata& rhs) const;
+		bool operator!=(const eventMetadata& rhs) const { return not (*this == rhs); }
+
 		const std::string& userString() const { return _userString; }
 		const std::string& contentHash() const { return _contentHash; }
 		const eventsTypeEnum& eventsType() const { return _eventsType; }

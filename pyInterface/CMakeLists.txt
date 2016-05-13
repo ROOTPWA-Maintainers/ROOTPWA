@@ -80,6 +80,7 @@ set(SOURCES
 	${PYUTILS_SUBDIR}/rootConverters_py.cc
 	${PYUTILS_SUBDIR}/stlContainers_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${DECAYAMPLITUDE_SUBDIR}/ampIntegralMatrixMetadata_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/decayTopology_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
 	${DECAYAMPLITUDE_SUBDIR}/fsVertex_py.cc
@@ -114,6 +115,7 @@ set(SOURCES
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/eventMetadata_py.cc
+	${STORAGEFORMATS_SUBDIR}/hashCalculator_py.cc
 	${UTILITIES_SUBDIR}/physUtils_py.cc
 	${UTILITIES_SUBDIR}/reportingUtilsEnvironment_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/getMassShapes_py.cc
@@ -153,6 +155,7 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	_fileManager.py
 	_fit.py
 	_integrals.py
+	_integralsOnTheFly.py
 	_likelihood.py
 	core.py
 	utils/__init__.py

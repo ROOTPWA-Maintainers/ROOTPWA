@@ -60,6 +60,33 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 }
 
 
+bool rpwa::eventMetadata::operator==(const eventMetadata& rhs) const
+{
+	if (_userString != rhs._userString) {
+		return false;
+	}
+	if (_contentHash != rhs._contentHash) {
+		return false;
+	}
+	if (_eventsType != rhs._eventsType) {
+		return false;
+	}
+	if (_productionKinematicsParticleNames != rhs._productionKinematicsParticleNames) {
+		return false;
+	}
+	if (_decayKinematicsParticleNames != rhs._decayKinematicsParticleNames) {
+		return false;
+	}
+	if (_binningMap != rhs._binningMap) {
+		return false;
+	}
+	if (_additionalSavedVariableLabels != rhs._additionalSavedVariableLabels) {
+		return false;
+	}
+	return true;
+}
+
+
 void rpwa::eventMetadata::appendToUserString(const string& userString,
                                              const string& delimiter)
 {

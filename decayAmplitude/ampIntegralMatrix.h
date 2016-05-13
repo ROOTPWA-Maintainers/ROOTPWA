@@ -65,9 +65,6 @@ namespace rpwa {
 	class ampIntegralMatrix : public TObject {
 
 
-		typedef std::map<std::string, unsigned int>::const_iterator waveNameToIndexMapIterator;
-
-
 	public:
 
 
@@ -123,6 +120,10 @@ namespace rpwa {
 		                             const std::string& waveNameJ)  const  ///< returns integral matrix element divided by number of events defined by pair of wave names
 		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
 
+		bool setWaveNames(const std::vector<std::string> &waveNames);
+		bool addEvent(std::map<std::string, std::complex<double> > &amplitudes);
+
+
 		bool integrate(const std::vector<const rpwa::amplitudeMetadata*>& ampMetadata,
 		               const unsigned long                                maxNmbEvents   = 0,
 		               const std::string&                                 weightFileName = "");
@@ -144,15 +145,12 @@ namespace rpwa {
 
 	private:
 
-		void rebuildWaveNameToIndexMap();  ///< rebuilds the wave name -> index map from _waveNames
-
 		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
 
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 		unsigned int                        _nmbWaves;            ///< number of waves in integral
-		std::map<std::string, unsigned int> _waveNameToIndexMap;  //! ///< maps wave names to wave indices
 		std::vector<std::string>            _waveNames;           ///< maps wave indices to wave names
 		unsigned long                       _nmbEvents;           ///< number of events in integral matrix
 
