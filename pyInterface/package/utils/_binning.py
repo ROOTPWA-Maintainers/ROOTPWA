@@ -1,9 +1,30 @@
 from _printingUtils import printDebug
 
+
 class multiBin(object):
 
-	def __init__(self, boundaries):
-		self.boundaries = boundaries # { "binningVariable": (lowerBound, upperBound) }
+	def __init__(self, boundaries): # boundaries = { "binningVariable": (lowerBound, upperBound) }
+		if not isinstance(boundaries, dict):
+			raise TypeError("Boundaries is not of type 'dict'.")
+		if not boundaries:
+			raise ValueError("Bin boundaries are empty.")
+		for key in boundaries.keys():
+			if not isinstance(key, str):
+				raise TypeError("Binning variable name is not of type 'str'.")
+			binRange = boundaries[key]
+			if not isinstance(binRange, tuple):
+				raise TypeError("Binning range is not of type 'tuple' for binning variable '" + key + "'.")
+			if len(binRange) != 2:
+				raise ValueError("Binning range does not have two entries for binning variable '" + key + "'.")
+			if not (isinstance(binRange[0], float) or isinstance(binRange[0], int)):
+				raise TypeError("Lower bound of bin range is not a number for binning variable '" + key + "'.")
+			if not (isinstance(binRange[1], float) or isinstance(binRange[1], int)):
+				raise TypeError("Upper bound of bin range is not a number for binning variable '" + key + "'.")
+			if binRange[0] >= binRange[1]:
+				raise ValueError("Lower bound of bin range (" + str(binRange[0]) + ") is larger or equal to upper bound of bin range (" + str(binRange[1]) + ").")
+			if isinstance(binRange[0], int) or isinstance(binRange[1], int):
+				boundaries[key] = (float(binRange[0]), float(binRange[1]))
+		self.boundaries = boundaries
 
 
 	def __lt__(self, other):
