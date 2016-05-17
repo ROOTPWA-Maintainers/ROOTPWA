@@ -3,6 +3,7 @@ from _printingUtils import printDebug
 
 class multiBin(object):
 
+
 	def __init__(self, boundaries): # boundaries = { "binningVariable": (lowerBound, upperBound) }
 		if not isinstance(boundaries, dict):
 			raise TypeError("Boundaries is not of type 'dict'.")
@@ -78,6 +79,20 @@ class multiBin(object):
 			if self.boundaries[key][1] <= other.boundaries[key][0]:
 				return False
 			if self.boundaries[key][0] >= other.boundaries[key][1]:
+				return False
+		return True
+
+
+	def sameBinningVariables(self, other):
+		return sorted(self.boundaries.keys()) == sorted(other.boundaries.keys())
+
+
+	def inBin(self, binningInfo):
+		# binningInfo = { "variableName": value }
+		if sorted(binningInfo.keys()) != sorted(self.boundaries.keys()):
+			return False
+		for variableName, value in binningInfo.iteritems():
+			if value < self.boundaries[variableName][0] or value >= self.boundaries[variableName][1]:
 				return False
 		return True
 

@@ -124,6 +124,11 @@ def _readBinning(binningString):
 	# Case 3. should be converted to case 2. and case 2. to case 1.
 	#
 	# returns list of bins as in 1. or empty list in case of errors.
+	if binningString.startswith("\""):
+		binningString = binningString[1:]
+	if binningString.endswith("\""):
+		binningString = binningString[:-1]
+	binningString.replace("\\\"", "\"")
 	try:
 		inputVal = ast.literal_eval(binningString)
 	except (SyntaxError, ValueError):
@@ -158,6 +163,11 @@ def _readBinning(binningString):
 	else:
 		pyRootPwa.utils.printWarn("binning string is neither a list nor a dict.")
 		return []
+	if retval:
+		for multiBin in retval:
+			if not multiBin.sameBinningVariables(retval[0]):
+				pyRootPwa.utils.printWarn("not all bins have the same binning variables.")
+				return []
 	return retval
 
 
