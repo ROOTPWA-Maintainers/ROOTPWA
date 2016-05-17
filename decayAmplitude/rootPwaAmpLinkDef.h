@@ -58,8 +58,15 @@
 
 #pragma link C++ class std::map<std::string, std::pair<double, double> >+;
 #pragma link C++ class pair<string,pair<double,double> >+;
-#pragma link C++ class std::vector<std::pair<rpwa::eventMetadata, std::vector<std::pair<size_t, size_t> > > >+;
 
+#pragma link C++ class vector<pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > > >+;
+#pragma link C++ class vector<pair<rpwa::eventMetadata, vector<pair<unsigned long, unsigned long> > > >+;
+#pragma link C++ class pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > >+;
+#pragma link C++ class pair<rpwa::eventMetadata, vector<pair<unsigned long, unsigned long> > >+;
+#pragma link C++ class vector<pair<size_t, size_t> >+;
+#pragma link C++ class vector<pair<unsigned long, unsigned long> >+;
+#pragma link C++ class pair<size_t, size_t>+;
+#pragma link C++ class pair<unsigned long, unsigned long>+;
 
 
 #endif
