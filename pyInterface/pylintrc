@@ -202,7 +202,7 @@ module-rgx=_?[a-z][a-zA-Z0-9]{2,80}$$
 module-name-hint=_?[a-z][a-zA-Z0-9]{2,80}$$
 
 # Regular expression matching correct method names
-method-rgx=(([a-z][a-zA-Z0-9]{2,80})|(__.*__))$
+method-rgx=(_?([a-z][a-zA-Z0-9]{2,80})|(__.*__))$
 
 # Naming hint for method names
 method-name-hint=(([a-z][a-zA-Z0-9]{2,80})|(__.*__))$

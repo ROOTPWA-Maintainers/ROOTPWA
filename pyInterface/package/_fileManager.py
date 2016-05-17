@@ -1,5 +1,4 @@
-#pylint: skip-file
-
+import collections
 import glob
 import os
 import cPickle as pickle
@@ -39,36 +38,39 @@ def loadFileManager(path):
 	return fileManagerObject
 
 
-class InputFile:
-	dataFileName = ""
-	binningMap = {}
-	eventsType = None
-	def __init__(self, dataFileName, binningMap, eventsType):
+class InputFile(object):
+
+	def __init__(self, dataFileName, binningMap, eventsType, additionalVariables):
 		self.dataFileName = dataFileName
 		self.binningMap = binningMap
 		self.eventsType = eventsType
+		self.additionalVariables = additionalVariables
 
 
-class EventsType:
+class EventsType(object):
+# pylint: disable=C0103
 	OTHER     = 0
 	REAL      = 1
 	GENERATED = 2
 	ACCEPTED  = 3
+# pylint: enable=C0103
 
 
-class fileManager:
-	dataDirectory      = ""
-	keyDirectory       = ""
-	amplitudeDirectory = ""
-	integralDirectory  = ""
-	limitFilesInDir = -1
+class fileManager(object):
 
-	dataFiles       = {}
-	keyFiles        = {}
-	amplitudeFiles  = {}
-	integralFiles   = {}
-	globalAxes = {}
-	binList = []
+
+	def __init__(self):
+		self.dataDirectory      = ""
+		self.keyDirectory       = ""
+		self.amplitudeDirectory = ""
+		self.integralDirectory  = ""
+		self.limitFilesInDir = -1
+
+		self.dataFiles       = collections.OrderedDict()
+		self.keyFiles        = collections.OrderedDict()
+		self.amplitudeFiles  = collections.OrderedDict()
+		self.integralFiles   = collections.OrderedDict()
+		self.binList = []
 
 
 	def initialize(self, configObject):
@@ -81,21 +83,28 @@ class fileManager:
 		pyRootPwa.utils.printInfo("amplitude file dir read from config file: '" + self.amplitudeDirectory + "'.")
 		pyRootPwa.utils.printInfo("integral file dir read from config file: '" + self.integralDirectory + "'.")
 
+		self.binList = sorted(configObject.integralBinning)
+		if not self.binList:
+			pyRootPwa.utils.printErr("no bins found.")
+			return False
+		pyRootPwa.utils.printInfo("created a list with " + str(len(self.binList)) + " bins from config file.")
 		self.dataFiles = self._openDataFiles()
-		allAxes = []
-		for eventsType in self.dataFiles:
-			allAxes.append(self._getBinningAxes(self.dataFiles[eventsType]))
-		self.globalAxes = self._combineAxes(allAxes)
-		self.binList = self._createBinIDs()
+		if not self.dataFiles:
+			pyRootPwa.utils.printErr("no event files found.")
+			return False
+		for _, inputFiles in self.dataFiles.iteritems():
+			for inputFile in inputFiles:
+				for variableName in self.binList[0].boundaries.keys():
+					if variableName not in inputFile.additionalVariables:
+						pyRootPwa.utils.printErr("variable '" + str(variableName) + "' required by binning, but not " +
+						                         "in additional variables of event file '" + inputFile.dataFileName + "' (found " + str(inputFile.binningMap.keys()) + ").")
+						return False
 		self.keyFiles = self._openKeyFiles()
-		if len(self.keyFiles) == 0:
+		if not self.keyFiles:
 			pyRootPwa.utils.printErr("error loading keyfiles.")
 			return False
 
-		if int(configObject.limitFilesPerDir) == 0:
-			self.limitFilesInDir = len(self.keyFiles) * len(self.dataFiles)
-			pyRootPwa.utils.printInfo("limit for files per directory set to " + str(self.limitFilesInDir))
-		elif int(configObject.limitFilesPerDir) == -1:
+		if int(configObject.limitFilesPerDir) <= 0:
 			self.limitFilesInDir = -1
 			pyRootPwa.utils.printInfo("limit for files per directory set to infinite")
 		else:
@@ -108,187 +117,165 @@ class fileManager:
 		return True
 
 
-	def getMissingBins(self):
-		missingBins = []
-		for binID in self.getBinIDList():
-			currentBin = self.binList[binID]
-			for eventsType in self.dataFiles:
-				found = False
-				for dataFile in self.dataFiles[eventsType]:
-					if dataFile.binningMap == currentBin:
-						found = True
-						break
-				if not found:
-					missingBins.append(binID)
-		return missingBins
+	def checkBinning(self):
+		raise Exception("not implemented. " + repr(self))
 
 
 	def getDataFilePaths(self):
-		return fileManager.convertDataFilesToPaths(self.dataFiles)
+		retval = []
+		for _, inputFiles in self.dataFiles.iteritems():
+			for inputFile in inputFiles:
+				retval.append(inputFile.dataFileName)
+		return retval
 
 
-	def getDataFile(self, binID, eventsType):
-		internalEventsType = fileManager.eventsTypeFromBpEnum(eventsType)
-		if not internalEventsType in self.dataFiles:
-			pyRootPwa.utils.printErr("did not find data file with eventsType '" + str(eventsType) + "'.")
-			return None
-		for dataFile in self.dataFiles[internalEventsType]:
-			found = True
-			if not dataFile.binningMap.keys() == self.binList[binID].keys():
-				continue
-			for binningVariable in dataFile.binningMap:
-				if not self.binList[binID][binningVariable] == dataFile.binningMap[binningVariable]:
-					found = False
-					break
-			if found:
-				return dataFile
-		pyRootPwa.utils.printWarn("no data dataFile found for binID = " + str(binID) + "and eventsType = '" + str(eventsType) + "'.")
-		return None
+	def getEventFileId(self, dataFilePath):
+		raise Exception("not implemented. " + repr(self) + dataFilePath)
 
 
 	def getKeyFilePaths(self):
-		return fileManager.convertKeyFilesToPaths(self.keyFiles)
-
-
-	def getKeyFiles(self):
-		return self.keyFiles
+		retval = []
+		for _, keyfilePath in self.keyFiles.iteritems():
+			if keyfilePath not in retval:
+				retval.append(keyfilePath)
+		return retval
 
 
 	def getKeyFile(self, waveName):
 		return self.keyFiles[waveName]
 
 
-	def getAmplitudeFilePaths(self, binID, eventsType):
-		ampFileList = {}
-		for key in sorted(self.amplitudeFiles):
-			if key[0] == binID and key[2] == eventsType:
-				ampFileList[key[1]] = self.amplitudeDirectory + "/" + self.amplitudeFiles[key]
-		return ampFileList
+	def getWaveDescription(self, waveName):
+		if waveName not in self.keyFiles:
+			pyRootPwa.utils.printErr("wave name '" + str(waveName) + "' cannot be produced by any of the keyfiles.")
+			return None
+		keyFileName = self.keyFiles[waveName]
+		waveDescriptions = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
+		for waveDescriptionID, waveDescription in enumerate(waveDescriptions):
+			(success, amplitude) = waveDescription.constructAmplitude()
+			if not success:
+				pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
+				return collections.OrderedDict()
+			constructedWaveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
+			if waveName == constructedWaveName:
+				return waveDescription
+		pyRootPwa.utils.printErr("none of the constructed topologies matched the given wave name.")
+		return None
 
 
-	def getAmplitudeFilePath(self, binID, waveName, eventsType):
-		return self.amplitudeDirectory + "/" + self.amplitudeFiles[(binID, waveName, fileManager.eventsTypeFromBpEnum(eventsType))]
+#	def getAmplitudeFilePaths(self, eventFileId, eventsType):
+#		eventsType = fileManager.pyEventsType(eventsType)
+#		retval = {}
+#		for waveName_i, waveName in enumerate(self.keyFiles.keys()):
+#			if (eventsType, eventFileId, waveName_i) in self.amplitudeFiles:
+#				retval[waveName] = self.amplitudeDirectory + "/" + self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
+#		return ampFileList
+
+
+#	def getAmplitudeFilePath(self, eventFileId, waveName, eventsType):
+#		eventsType = fileManager.pyEventsType(eventsType)
+#		if (eventsType, eventFileId, waveName) not in self.amplitudeFiles:
+#			pyRootPwa.utils.printWarn("no matching amplitude found.")
+#			return ""
+#		return self.amplitudeDirectory + "/" + self.amplitudeFiles[(eventsType, eventFileId, self.keyFiles.keys().index(waveName))]
 
 
 	def getIntegralFilePath(self, binID, eventsType):
-		return self.integralFiles[(binID, fileManager.eventsTypeFromBpEnum(eventsType))]
+		eventsType = fileManager.pyEventsType(eventsType)
+		return self.integralFiles[(binID, eventsType)]
 
 
-	def getBinID(self, binInformation):
-		foundBins = []
-		for binID in range(len(self.binList)):
-			found = True
-			currentBin = self.binList[binID]
-			for binningVariable in binInformation:
-				lower = currentBin[binningVariable][0]
-				upper = currentBin[binningVariable][1]
-				given = binInformation[binningVariable]
-				if lower > given or upper < given:
-					found = False
-					break
-			if found: foundBins.append(binID)
-		return foundBins
+	def getBinIndex(self, binningInfo, checkConsistency = True):
+		# binInformation = { "variableName": value }
+		if not self.binList:
+			pyRootPwa.utils.printWarn("bin list is empty.")
+			return -1
+		foundIndex = -1
+		for binIndex, multiBin in enumerate(self.binList):
+			if multiBin.inBin(binningInfo):
+				if not checkConsistency:
+					return binIndex
+				if foundIndex > 0:
+					pyRootPwa.utils.printWarn("point " + str(binningInfo) + " lies in at least two bins: " + str(binIndex) + " and " + str(foundIndex))
+					return -1
+				foundIndex = binIndex
+		pyRootPwa.utils.printWarn("point " + str(binningInfo) + " does not lay in any bin.")
+		return -1
 
 
-	def getBinFromID(self, binID):
-		if binID not in self.getBinIDList():
-			pyRootPwa.utils.printErr("binID not found: " + str(binID) + ".")
-			raise Exception("do this properly")
-		return self.binList[binID]
+	def getBin(self, binningInfo, checkConsistency = True):
+		binIndex = self.getBinIndex(binningInfo, checkConsistency)
+		if binIndex < 0:
+			return None
+		return self.binList[self.getBinIndex(binningInfo, checkConsistency)]
 
 
-	def getBinIDList(self):
-		return range(len(self.binList))
+	def getEventFileIds(self, multiBin, eventsType = None):
+		eventFileIds = collections.OrderedDict()
+		if eventsType is not None:
+			eventsTypes = [ fileManager.pyEventsType(eventsType) ]
+		else:
+			eventsTypes = self.dataFiles.keys()
+		for evTyp in eventsTypes:
+			eventFileIds[evTyp] = []
+		for evTyp in eventsTypes:
+			for eventFileId, inputFile in enumerate(self.dataFiles[evTyp]):
+				found = True
+				for variableName in inputFile.binningMap:
+					if variableName in multiBin.boundaries:
+						if (inputFile.binningMap[variableName][1] < multiBin.boundaries[variableName][0]) or \
+						   (inputFile.binningMap[variableName][0] > multiBin.boundaries[variableName][1]):
+							found = False
+							break
+				if found:
+					eventFileIds[evTyp].append(eventFileId)
+		return eventFileIds
+
+
+	def getEventFilePaths(self, multiBin, eventsType = None):
+		eventFileIds = self.getEventFileIds(multiBin, eventsType)
+		retval = collections.OrderedDict()
+		for evTyp, evFileIds in eventFileIds.iteritems():
+			retval[evTyp] = []
+			for evFileId in evFileIds:
+				retval[evTyp].append(self.dataFiles[evTyp][evFileId])
+		return retval
 
 
 	def getWaveNameList(self):
 		return self.keyFiles.keys()
 
 
-	def _getBinningAxes(self, fileList):
-		if not fileList:
-			pyRootPwa.utils.printErr("got no input files")
-			raise Exception("do this properly")
-		binAxes = {}
-		for binningVariable in fileList[0].binningMap:
-			binAxes[binningVariable] = []
-		for inputFile in fileList:
-			if inputFile.binningMap.keys() != binAxes.keys():
-				pyRootPwa.utils.printErr("data file '" + inputFile.dataFileName +
-				                         "' seems to have different binning variables.")
-				return {}
-			for key in inputFile.binningMap:
-				if inputFile.binningMap[key] not in binAxes[key]:
-					binAxes[key].append(inputFile.binningMap[key])
-		for binningVariable in binAxes:
-			binAxes[binningVariable] = sorted(binAxes[binningVariable], key=lambda t: t[0])
-			bins = binAxes[binningVariable]
-			if not bins:
-				pyRootPwa.utils.printErr("no bins found for variable '" + binningVariable + "'.")
-				return {}
-			bound = bins[0]
-			for currentBin in bins[1:]:
-				if bound[1] < currentBin[0]:
-					pyRootPwa.utils.printWarn("gap in bin structure found for binned variable '" +
-					                          binningVariable + "' between bin '" + str(bound) +
-					                          "' and bin '" + str(currentBin) + "'.")
-				bound = currentBin
-		return binAxes
-
-
-	def _combineAxes(self, axes):
-		if not axes:
-			pyRootPwa.utils.printErr("got no axes.")
-			return {}
-		binningVariables = axes[0].keys()
-		for axis in axes:
-			if not axis.keys() == binningVariables:
-				pyRootPwa.utils.printWarn("found different binning variables in different axes.")
-		globalAxes = {}
-		for binningVariable in binningVariables:
-			binAxes = [ axis[binningVariable] for axis in axes if binningVariable in axis.keys() ]
-			globalBinList = []
-			for axis in binAxes:
-				for currentBin in axis:
-					if currentBin not in globalBinList:
-						globalBinList.append(currentBin)
-			globalBinList = sorted(globalBinList, key=lambda t: t[0])
-			if not globalBinList:
-				pyRootPwa.utils.printErr("global currentBin list empty for '" + binningVariable + "'.")
-				return {}
-			bound = globalBinList[0]
-			for currentBin in globalBinList[1:]:
-				if bound[1] > currentBin[0]:
-					pyRootPwa.utils.printErr("overlap in bin structure found for binned variable '" +
-					                         binningVariable + "' between bin '" + str(bound) +
-					                         "' and bin '" + str(currentBin) + "'.")
-					return {}
-				bound = currentBin
-			globalAxes[binningVariable] = globalBinList
-		pyRootPwa.utils.printSucc("combined currentBin axes: " + str(globalAxes.keys()))
-		return globalAxes
+	def _nmbAmplitudeFiles(self):
+		nmbEventFiles = 0
+		for key in self.dataFiles:
+			nmbEventFiles += len(self.dataFiles[key])
+		return nmbEventFiles * len(self.keyFiles)
 
 
 	def _getAmplitudeFilePaths(self):
 		amplitudeFiles = {}
-		overLimit = self.isFilePerDirLimitReached()
+		if not self.dataFiles:
+			pyRootPwa.utils.printWarn("cannot create amplitude file path collection without data files.")
+			return {}
+		needSubdirs = self.limitFilesInDir != -1 and self._nmbAmplitudeFiles() > self.limitFilesInDir
 		fileCount = 0
 		dirSet = []
-		for binID in self.getBinIDList():
-			for waveName in self.keyFiles:
-				for eventsType in self.dataFiles:
-					if overLimit:
+		for eventsType in self.dataFiles:
+			for inputFile_i, _ in enumerate(self.dataFiles[eventsType]):
+				for waveName_i, waveName in enumerate(self.keyFiles.keys()):
+					amplitudeFileName = waveName + "_eventFileId-" + str(inputFile_i) + "_" + str(eventsType) + ".root"
+					if needSubdirs:
 						subDir = fileCount/self.limitFilesInDir
 						fullDir = self.amplitudeDirectory + "/" + str(subDir)
 						if not fullDir in dirSet:
 							dirSet.append(fullDir)
-						amplitudeFiles[(binID, waveName, eventsType)] = str(subDir) + "/" + waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+						amplitudeFileName = str(subDir) + "/" + amplitudeFileName
 						fileCount += 1
-					elif not overLimit:
-						amplitudeFiles[(binID, waveName, eventsType)] = waveName + "_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+					amplitudeFiles[(eventsType, inputFile_i, waveName_i)] = amplitudeFileName
 
 		# make sure directories exist (create if neccessary) and check if they are empty
-		if overLimit:
+		if needSubdirs:
 			for subDir in dirSet:
 				if not os.path.isdir(subDir):
 					os.mkdir(subDir)
@@ -304,40 +291,36 @@ class fileManager:
 
 
 	def _getIntegralFilePaths(self):
-		integralFiles = {}
-		for binID in self.getBinIDList():
+		integralFiles = collections.OrderedDict()
+		for binID, _ in enumerate(self.binList):
 			for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
 				integralFiles[(binID, eventsType)] = self.integralDirectory + "/integral_binID-" + str(binID) + "_" + str(eventsType) + ".root"
 		return integralFiles
 
 
 	def _openDataFiles(self):
-		dataFileNames = glob.glob(self.dataDirectory + "/*.root")
+		dataFileNames = sorted(glob.glob(self.dataDirectory + "/*.root"))
 		inputFiles = {}
-
 		for dataFileName in dataFileNames:
 			dataFile = ROOT.TFile.Open(dataFileName, "READ")
 			if not dataFile:
 				pyRootPwa.utils.printErr("could not open event file '" + dataFileName + "'.")
-				return {}
+				return collections.OrderedDict()
 			eventMeta = pyRootPwa.core.eventMetadata.readEventFile(dataFile)
 			if not eventMeta:
 				pyRootPwa.utils.printErr("could not find metadata in event file '" + dataFileName + "'.")
-				return {}
-			inputFile = InputFile(dataFileName, eventMeta.binningMap(), fileManager.eventsTypeFromBpEnum(eventMeta.eventsType()))
+				return  collections.OrderedDict()
+			inputFile = InputFile(dataFileName,
+			                      eventMeta.binningMap(),
+			                      fileManager.pyEventsType(eventMeta.eventsType()),
+			                      eventMeta.additionalSavedVariableLables())
 			if inputFile.eventsType not in inputFiles:
 				inputFiles[inputFile.eventsType] = []
 			inputFiles[inputFile.eventsType].append(inputFile)
 			dataFile.Close()
-
-		if not inputFiles:
-			pyRootPwa.utils.printErr("no binning maps found.")
-			return {}
-		for eventsType in inputFiles:
-			if not inputFiles[eventsType]:
-				pyRootPwa.utils.printErr("no binning maps found for eventsType '" + eventsType + "'.")
-				return {}
-
+		retval =  collections.OrderedDict()
+		for eventsType in sorted(inputFiles.keys()):
+			retval[eventsType] = inputFiles[eventsType]
 		return inputFiles
 
 
@@ -345,61 +328,47 @@ class fileManager:
 		keyFileNames = glob.glob(self.keyDirectory + "/*.key")
 		keyFiles = {}
 
-		for keyFileID in range(len(keyFileNames)):
-			keyFileName = keyFileNames[keyFileID]
+		for keyFileName in keyFileNames:
 			waveDescriptions = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)
-			if len(waveDescriptions) == 0:
+			if not waveDescriptions:
 				pyRootPwa.utils.printErr("could not read wave description from key file '" + keyFileName + "'.")
-				return []
-			for waveDescriptionID in xrange(len(waveDescriptions)):
-				waveDescription = waveDescriptions[waveDescriptionID]
+				return collections.OrderedDict()
+			for waveDescriptionID, waveDescription in enumerate(waveDescriptions):
 				(success, amplitude) = waveDescription.constructAmplitude()
 				if not success:
 					pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
-					return []
+					return collections.OrderedDict()
 				waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
-				if waveName in keyFiles:
-					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName][0] + "' (index " + str(keyFiles[waveName][1]) + ") and '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
-					return []
-				keyFiles[waveName] = (keyFileName, waveDescriptionID)
-		return keyFiles
-
-
-	def _createBinIDs(self):
-		binList = self._iterateBins(0, {}, [])
-		return binList
-
-
-	def _iterateBins(self, dim, currentBin, result):
-		keys = self.globalAxes.keys()
-		if dim < len(self.globalAxes):
-			for newBin in self.globalAxes[keys[dim]]:
-				newCurrentBin = currentBin.copy()
-				newCurrentBin[keys[dim]] = newBin
-				result = self._iterateBins(dim+1, newCurrentBin, result)
-		elif dim == len(self.globalAxes):
-			result.append(currentBin)
-			return result
-		else: raise Exception("do this properly")
-		return result
+				if waveName in keyFiles.keys():
+					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName +"' from files '" +
+					                         keyFiles[waveName][0] + "' (index " + str(keyFiles[waveName][1]) +
+					                         ") and '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
+					return collections.OrderedDict()
+				keyFiles[waveName] = keyFileName
+		retval = collections.OrderedDict()
+		for waveName in sorted(keyFiles.keys()):
+			retval[waveName] = keyFiles[waveName]
+		return retval
 
 
 	def __repr__(self):
 		retStr = "keyfiles:\n"
-		for waveName in self.keyFiles:
+		for waveName in self.keyFiles.keys():
 			retStr += waveName + " >> " + self.keyFiles[waveName] + "\n"
-		retStr += "\ndatafiles:\n"
+		retStr += "\nDataFiles:\n"
 		for eventsType in self.dataFiles:
 			for dataFile in self.dataFiles[eventsType]:
-				retStr += "eventsType [" + str(eventsType) + "], bin [" + str(dataFile.binningMap) + "] >> " + dataFile.dataFileName + "\n"
-		retStr += "\nampfiles:\n"
+				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(dataFile.binningMap) +
+				           "] >> " + dataFile.dataFileName + "\n")
+		retStr += "\nAmpFiles:\n"
 		for eventsType in self.dataFiles:
-			for binID in self.getBinIDList():
-				for waveName in self.keyFiles:
-					retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "], wavename [" + waveName + "] >> " + self.amplitudeFiles[(binID, waveName, eventsType)] + "\n"
-		retStr += "\nintfiles:\n"
+			for eventFileId, _ in enumerate(self.dataFiles[eventsType]):
+				for waveName_i, waveName in enumerate(self.keyFiles.keys()):
+					retStr += ("eventsType [" + str(eventsType) + "], eventFileId [" + str(eventFileId) +
+					           "], waveName [" + waveName + "] >> " + self.amplitudeFiles[(eventsType, eventFileId, waveName_i)] + "\n")
+		retStr += "\nIntFiles:\n"
 		for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
-			for binID in self.getBinIDList():
+			for binID, _ in enumerate(self.binList):
 				retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "] >> " + self.integralFiles[(binID, eventsType)] + "\n"
 		return retStr
 
@@ -421,46 +390,16 @@ class fileManager:
 
 
 	@staticmethod
-	def convertDataFilesToPaths(dataFilesDict):
-		allDataFiles = []
-		for eventsType in dataFilesDict:
-			for dataFile in dataFilesDict[eventsType]:
-				allDataFiles.append(dataFile.dataFileName)
-		return allDataFiles
-
-
-	@staticmethod
-	def convertKeyFilesToPaths(keyFilesList):
-		allKeyFiles = []
-		for keyFile in keyFilesList:
-			if not keyFilesList[keyFile][0] in allKeyFiles:
-				allKeyFiles.append(keyFilesList[keyFile][0])
-		return allKeyFiles
-
-
-	@staticmethod
-	def eventsTypeFromBpEnum(eventsTypeBP):
-		if eventsTypeBP == pyRootPwa.core.eventMetadata.OTHER:
+	def pyEventsType(eventsType):
+		if not isinstance(eventsType, pyRootPwa.core.eventMetadata.eventsTypeEnum):
+			return eventsType
+		if eventsType == pyRootPwa.core.eventMetadata.OTHER:
 			return EventsType.OTHER
-		elif eventsTypeBP == pyRootPwa.core.eventMetadata.REAL:
+		elif eventsType == pyRootPwa.core.eventMetadata.REAL:
 			return EventsType.REAL
-		elif eventsTypeBP == pyRootPwa.core.eventMetadata.GENERATED:
+		elif eventsType == pyRootPwa.core.eventMetadata.GENERATED:
 			return EventsType.GENERATED
-		elif eventsTypeBP == pyRootPwa.core.eventMetadata.ACCEPTED:
+		elif eventsType == pyRootPwa.core.eventMetadata.ACCEPTED:
 			return EventsType.ACCEPTED
-		else:
-			return -1
-
-
-	@staticmethod
-	def eventsTypeToBpEnum(eventsType):
-		if eventsType == EventsType.OTHER:
-			return pyRootPwa.core.eventMetadata.OTHER
-		elif eventsType == EventsType.REAL:
-			return pyRootPwa.core.eventMetadata.REAL
-		elif eventsType == EventsType.GENERATED:
-			return pyRootPwa.core.eventMetadata.GENERATED
-		elif eventsType == EventsType.ACCEPTED:
-			return pyRootPwa.core.eventMetadata.ACCEPTED
 		else:
 			return -1
