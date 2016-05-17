@@ -168,7 +168,7 @@ if __name__ == "__main__":
 				                                prodKinNames,
 				                                decayKinNames,
 # TODO: FILL THESE
-				                                {},
+				                                {"mass":( 1000. * massRange[0], 1000. * massRange[1] )},
 				                                ["weight"]
 				                                )
 				if not success:
