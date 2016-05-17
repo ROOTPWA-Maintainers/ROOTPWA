@@ -56,6 +56,7 @@
 class TTree;
 namespace rpwa {
 	class amplitudeTreeLeaf;
+	class eventMetadata;
 }
 
 
@@ -122,11 +123,11 @@ namespace rpwa {
 
 		bool setWaveNames(const std::vector<std::string> &waveNames);
 		bool addEvent(std::map<std::string, std::complex<double> > &amplitudes);
-
-
-		bool integrate(const std::vector<const rpwa::amplitudeMetadata*>& ampMetadata,
-		               const unsigned long                                maxNmbEvents   = 0,
-		               const std::string&                                 weightFileName = "");
+		bool integrate(const std::vector<const rpwa::amplitudeMetadata*>&       ampMetadata,
+		               const unsigned long                                      maxNmbEvents   = 0,
+		               const std::string&                                       weightFileName = "",
+		               const rpwa::eventMetadata*                               eventMeta = 0,
+		               const std::map<std::string, std::pair<double, double> >& otfBin = std::map<std::string, std::pair<double, double> >());
 
 		void renormalize(const unsigned long nmbEventsRenorm);
 

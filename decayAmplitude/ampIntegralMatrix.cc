@@ -47,6 +47,7 @@
 #include "amplitudeTreeLeaf.h"
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
+#include "eventMetadata.h"
 
 
 using namespace std;
@@ -58,7 +59,7 @@ using namespace rpwa;
 ClassImp(ampIntegralMatrix);
 
 
-const string rpwa::ampIntegralMatrix::integralObjectName = "integral";
+const string ampIntegralMatrix::integralObjectName = "integral";
 bool ampIntegralMatrix::_debug = false;
 
 
@@ -296,9 +297,11 @@ ampIntegralMatrix::addEvent(map<string, complex<double> > &amplitudes)
 }
 
 bool
-ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata,
-                             const unsigned long                     maxNmbEvents,
-                             const string&                           weightFileName)
+ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetadata,
+                             const unsigned long                       maxNmbEvents,
+                             const string&                             weightFileName,
+                             const rpwa::eventMetadata*                eventMeta,
+                             const map<string, pair<double, double> >& otfBin)
 {
 	if (ampMetadata.empty()) {
 		printWarn << "did not receive any amplitude trees. cannot calculate integral." << endl;
@@ -355,7 +358,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
 
 	// open importance sampling weight file
-	//!!! this should be provided as a friend tree for the amlitudes
+	//!!! this should be provided as a friend tree for the amplitudes
 	ifstream weightFile;
 	bool     useWeight = false;
 	if (weightFileName != "") {
@@ -370,6 +373,41 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 		useWeight = true;
 	}
 
+	TTree* eventTree = 0;
+	vector<double> binningVariables(otfBin.size());
+	vector<pair<double, double> > bounds(otfBin.size());
+	if(eventMeta) {
+		if(otfBin.empty()) {
+			printErr << "got event metadata but the binning map is emtpy." << endl;
+			return false;
+		}
+		eventTree = eventMeta->eventTree();
+		if(eventTree->GetEntries() != (long)nmbEvents) {
+			printErr << "event number mismatch between amplitudes and data file ("
+			         << nmbEvents << " != " << eventTree->GetEntries() << ")." << endl;
+			return false;
+		}
+		unsigned int otfBinIndex = 0;
+		for(map<string, pair<double, double> >::const_iterator elem = otfBin.begin(); elem != otfBin.end(); ++elem) {
+			printInfo << "using on-the-fly bin '"
+			          << elem->first << ": ["
+			          << elem->second.first << ", "
+			          << elem->second.second << "]'." << endl;
+			int err = eventTree->SetBranchAddress(elem->first.c_str(), &binningVariables[otfBinIndex]);
+			bounds[otfBinIndex] = elem->second;
+			++otfBinIndex;
+			if(err < 0) {
+				printErr << "could not set branch address for branch '" << elem->first << "' (error code " << err << ")." << endl;
+				return false;
+			}
+		}
+		if(binningVariables.size() != bounds.size()) {
+			printErr << "size mismatch between binning variables and bounds ("
+			         << binningVariables.size() << "!= " << bounds.size() << ")." << endl;
+			return false;
+		}
+	}
+
 	// loop over events and calculate integral matrix
 	accumulator_set<double, stats<tag::sum(compensated)> > weightAcc;
 	typedef accumulator_set<complex<double>, stats<tag::sum(compensated)> > complexAcc;
@@ -378,8 +416,24 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	vector<vector<complex<double> > > amps(_nmbWaves);
 	progress_display progressIndicator(_nmbEvents, cout, "");
 	bool             success = true;
+	unsigned long eventCounter = 0;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
+
+		if(eventTree) {
+			eventTree->GetEntry(iEvent);
+			bool veto = false;
+			for(unsigned int iBinVar = 0; iBinVar < binningVariables.size(); ++iBinVar) {
+				if(binningVariables[iBinVar] < bounds[iBinVar].first or binningVariables[iBinVar] >= bounds[iBinVar].second) {
+					veto = true;
+					break;
+				}
+			}
+			if(veto) {
+				continue;
+			}
+		}
+		++eventCounter;
 
 		// sum up importance sampling weight
 		double w = 1;
@@ -432,6 +486,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 				ampProdAcc[waveIndexI][waveIndexJ](val);
 			}
 	}  // event loop
+	_nmbEvents = eventCounter;
 
 	// copy values from accumulators and (if necessary) renormalize to
 	// integral of importance sampling weights
