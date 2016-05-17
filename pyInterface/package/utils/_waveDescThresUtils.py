@@ -35,7 +35,7 @@ def getWaveDescThresFromWaveList(waveListFileName, keyFiles):
 				continue
 			line = line.replace('\n', '')
 			lineArray = line.split(" ")
-			if lineArray in [1, 2]:
+			if len(lineArray) in [1, 2]:
 				waveName = lineArray[0]
 				if len(lineArray) == 1:
 					threshold = 0
