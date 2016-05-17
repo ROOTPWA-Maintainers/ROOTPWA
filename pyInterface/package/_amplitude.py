@@ -7,7 +7,7 @@ ROOT = pyRootPwa.utils.ROOT
 
 def calcAmplitude(inputFileName,
                   keyFileName,
-                  waveDescriptionID,
+                  waveDescription,
                   outputFileName,
                   maxNumberOfEvents = -1,
                   printProgress = True):
@@ -16,8 +16,8 @@ def calcAmplitude(inputFileName,
 	printSucc = pyRootPwa.utils.printSucc
 	printWarn = pyRootPwa.utils.printWarn
 
-	printInfo("Calculating amplitude for key file '" + keyFileName + "' (index " + str(waveDescriptionID) +
-	          ") with input file '" + inputFileName + "', output file '" + outputFileName + "'.")
+	printInfo("Calculating amplitude for key file '" + keyFileName + "'" +
+	          " with input file '" + inputFileName + "', output file '" + outputFileName + "'.")
 
 	if 'ROOTPWA' not in _os.environ:
 		printWarn("$ROOTPWA not set.")
@@ -43,10 +43,9 @@ def calcAmplitude(inputFileName,
 		printWarn("key file '" + keyFileName + "' not found.")
 		outputFile.Close()
 		return False
-	waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyFileName)[waveDescriptionID]
 	(result, amplitude) = waveDescription.constructAmplitude()
 	if not result:
-		printWarn("could not construct amplitude from keyfile '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
+		printWarn("could not construct amplitude from keyfile '" + keyFileName + "'.")
 		outputFile.Close()
 		return False
 

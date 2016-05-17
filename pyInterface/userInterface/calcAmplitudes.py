@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="configFileName", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
-	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
+	parser.add_argument("-b", type=int, metavar="eventFileId", default=-1, dest="eventFileId", help="event file id to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 	parser.add_argument("-k", "--keyfileIndex", type=int, metavar="#", default=-1,
@@ -57,10 +57,6 @@ if __name__ == "__main__":
 	if len(waveList) == 0:
 		waveList = fileManager.getWaveNameList()
 
-	binIDList = fileManager.getBinIDList()
-	if not args.massBin == -1:
-		binIDList = [args.massBin]
-
 	eventsTypes = []
 	if args.eventsType == "real":
 		eventsTypes = [ pyRootPwa.core.eventMetadata.REAL ]
@@ -76,12 +72,12 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("Invalid events type given ('" + args.eventsType + "'). Aborting...")
 		sys.exit(1)
 
-	for binID in binIDList:
-		for waveName in waveList:
-			for eventsType in eventsTypes:
-				dataFile = fileManager.getDataFile(binID, eventsType)
-				if not dataFile:
-					continue
-				if not pyRootPwa.calcAmplitude(dataFile.dataFileName, fileManager.getKeyFile(waveName)[0], fileManager.getKeyFile(waveName)[1],
-				                               fileManager.getAmplitudeFilePath(binID, waveName, eventsType), args.maxNmbEvents, not args.noProgressBar):
+	for waveName in waveList:
+		for eventsType in eventsTypes:
+			eventAmpFilePairs = fileManager.getEventAndAmplitudePairPaths(eventsType, waveName)
+			if args.eventFileId >= 0:
+				eventAmpFilePairs = eventAmpFilePairs[args.eventFileId:args.eventFileId+1]
+			for eventFilePath, amplitudeFilePath in eventAmpFilePairs:
+				if not pyRootPwa.calcAmplitude(eventFilePath, fileManager.getKeyFile(waveName), fileManager.getWaveDescription(waveName),
+				                               amplitudeFilePath, args.maxNmbEvents, not args.noProgressBar):
 					pyRootPwa.utils.printWarn("could not calculate amplitude.")

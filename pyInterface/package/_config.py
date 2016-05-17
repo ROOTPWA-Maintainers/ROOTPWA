@@ -77,8 +77,7 @@ class rootPwaConfig(object):
 
 			self.integralBinning = _readBinning(self.config.get("general", "integralBinning"))
 			if not self.integralBinning:
-				pyRootPwa.utils.printErr("could not read integral binning string.")
-				return False
+				pyRootPwa.utils.printWarn("could not read integral binning string.")
 
 			self.phaseSpaceIntegralDirectory = self.config.get("amplitude", "phaseSpaceIntegralDirectory")
 			self.phaseSpaceUpperMassBound    = float(self.config.get("amplitude", "phaseSpaceUpperMassBound"))
@@ -133,6 +132,8 @@ def _readBinning(binningString):
 		inputVal = ast.literal_eval(binningString)
 	except (SyntaxError, ValueError):
 		pyRootPwa.utils.printWarn("error when converting binning string to python.")
+		return []
+	if not inputVal:
 		return []
 	retval = []
 	if isinstance(inputVal, list): # case 1.

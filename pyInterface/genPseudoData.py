@@ -2,7 +2,6 @@
 
 import argparse
 import math
-import os.path
 import sys
 
 import pyRootPwa
@@ -113,20 +112,16 @@ if __name__ == "__main__":
 		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		(keyfile, waveDescriptionID) = fileManager.getKeyFile(waveName)
-		if not os.path.isfile(keyfile):
-			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
-			sys.exit(1)
+		waveDescription = fileManager.getWaveDescription(waveName)
 		reflectivities.append(pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName))
 		waveIndex = fitResult.waveIndex(waveName)
 
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
 			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		prodAmps.append(fitResult.prodAmp(waveIndex))
-		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyfile)[waveDescriptionID]
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
-			printErr('could not construct amplitude for keyfile "' + keyfile + '".')
+			printErr('could not construct amplitude for wave "' + waveName + '".')
 			sys.exit(1)
 		amplitude.init()
 		printInfo(amplitude)
