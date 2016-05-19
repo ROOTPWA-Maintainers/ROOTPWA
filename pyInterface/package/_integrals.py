@@ -55,8 +55,11 @@ def calcIntegrals(integralFileName, ampFileNameList, maxNmbEvents=0, weightFileN
 				pyRootPwa.utils.printErr("amplitude files with non-matching event metadatas. Aborting...")
 				return False
 		if not integralMetaData.addAmplitudeHash(ampMeta.contentHash()):
-			pyRootPwa.utils.printWarn("could not add the amplitude hash. Aborting...")
-			return False
+			pyRootPwa.utils.printWarn("could not add the amplitude hash.")
+			# This error is not fatal, since in special cases the same hash can appear twice:
+			# e.g. in freed-isobar analyses with spin zero, the angular dependences are constant
+			# and the shape is either 0 or 1. If two such waves accidentally have the same number
+			# of events, both will also have the same hash.
 	if not integralMetaData.setAmpIntegralMatrix(integralMatrix):
 		pyRootPwa.utils.printErr("could not add the integral matrix to the metadata object. Aborting...")
 		return False
