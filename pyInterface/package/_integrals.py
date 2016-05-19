@@ -2,7 +2,7 @@ import pyRootPwa.core
 import pyRootPwa.utils
 ROOT = pyRootPwa.utils.ROOT
 
-def calcIntegrals(integralFileName, ampFileNameList, maxNmbEvents=0, weightFileName=""):
+def calcIntegrals(integralFileName, ampFileDict, maxNmbEvents=0, weightFileName=""):
 	integralMatrix = pyRootPwa.core.ampIntegralMatrix()
 	ampFiles = []
 	ampMetas = []
@@ -10,8 +10,8 @@ def calcIntegrals(integralFileName, ampFileNameList, maxNmbEvents=0, weightFileN
 	if not outputFile:
 		pyRootPwa.utils.printWarn("cannot open output file '" + integralFileName + "'. Aborting...")
 		return False
-	for waveName in ampFileNameList:
-		ampFileName = ampFileNameList[waveName]
+	for waveName in ampFileDict:
+		ampFileName = ampFileDict[waveName]
 		ampFile = ROOT.TFile.Open(ampFileName, "READ")
 		ampFiles.append(ampFile)
 		if not ampFile:

@@ -101,7 +101,7 @@ class fileManager(object):
 					for variableName in self.binList[0].boundaries.keys():
 						if variableName not in inputFile.additionalVariables:
 							pyRootPwa.utils.printErr("variable '" + str(variableName) + "' required by binning, but not " +
-							                         "in additional variables of event file '" + inputFile.dataFileName + "' (found " + str(inputFile.binningMap.keys()) + ").")
+							                         "in additional variables of event file '" + inputFile.dataFileName + "' (found " + str(inputFile.additionalVariables) + ").")
 							return False
 		self.keyFiles = self._openKeyFiles()
 		if not self.keyFiles:
@@ -181,16 +181,29 @@ class fileManager(object):
 #		return self.amplitudeDirectory + "/" + self.amplitudeFiles[(eventsType, eventFileId, self.keyFiles.keys().index(waveName))]
 
 
-	def getAllAmplitudeFilePaths(self):
-		retval = []
-		for _, amplitudeFilePath in self.amplitudeFiles.iteritems():
-			retval.append(amplitudeFilePath)
+#	def getAllAmplitudeFilePaths(self):
+#		retval = []
+#		for _, amplitudeFilePath in self.amplitudeFiles.iteritems():
+#			retval.append(amplitudeFilePath)
+#		return retval
+
+
+	def getAmplitudeFilePaths(self, multiBin, eventsType):
+		eventsType = fileManager.pyEventsType(eventsType)
+		eventFileIds = self._getEventFileIdsForIntegralBin(multiBin, eventsType)
+		if not eventFileIds:
+			pyRootPwa.utils.printWarn("no matching event files found in bin '" + str(multiBin) + "' and events type '" + str(eventsType) + "'.")
+			return collections.OrderedDict()
+		retval = collections.OrderedDict()
+		for waveName_i, waveName in enumerate(self.keyFiles.keys()):
+			for eventFileId in eventFileIds:
+				retval[waveName] = self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
 		return retval
 
 
-	def getIntegralFilePath(self, binID, eventsType):
+	def getIntegralFilePath(self, multiBin, eventsType):
 		eventsType = fileManager.pyEventsType(eventsType)
-		return self.integralFiles[(binID, eventsType)]
+		return self.integralFiles[(self.binList.index(multiBin), eventsType)]
 
 
 #	def getBinIndex(self, binningInfo, checkConsistency = True):
@@ -216,30 +229,27 @@ class fileManager(object):
 #		if binIndex < 0:
 #			return None
 #		return self.binList[self.getBinIndex(binningInfo, checkConsistency)]
-#
-#
-#	def getEventFileIdsForIntegralBin(self, multiBin, eventsType = None):
-#		eventFileIds = collections.OrderedDict()
-#		if eventsType is not None:
-#			eventsTypes = [ fileManager.pyEventsType(eventsType) ]
-#		else:
-#			eventsTypes = self.dataFiles.keys()
-#		for evTyp in eventsTypes:
-#			eventFileIds[evTyp] = []
-#		for evTyp in eventsTypes:
-#			for eventFileId, inputFile in enumerate(self.dataFiles[evTyp]):
-#				found = True
-#				for variableName in inputFile.binningMap:
-#					if variableName in multiBin.boundaries:
-#						if (inputFile.binningMap[variableName][1] < multiBin.boundaries[variableName][0]) or \
-#						   (inputFile.binningMap[variableName][0] > multiBin.boundaries[variableName][1]):
-#							found = False
-#							break
-#				if found:
-#					eventFileIds[evTyp].append(eventFileId)
-#		return eventFileIds
-#
-#
+
+
+	def _getEventFileIdsForIntegralBin(self, multiBin, eventsType):
+		eventsType = fileManager.pyEventsType(eventsType)
+		if eventsType not in self.dataFiles:
+			pyRootPwa.utils.printWarn("events type '" + str(eventsType) + "' not in data files.")
+			return []
+		eventFileIds = []
+		for eventFileId, inputFile in enumerate(self.dataFiles[eventsType]):
+			found = True
+			for variableName in inputFile.binningMap:
+				if variableName in multiBin.boundaries:
+					if (inputFile.binningMap[variableName][1] < multiBin.boundaries[variableName][0]) or \
+					   (inputFile.binningMap[variableName][0] > multiBin.boundaries[variableName][1]):
+						found = False
+						break
+			if found:
+				eventFileIds.append(eventFileId)
+		return eventFileIds
+
+
 #	def getEventFilePathsForForIntegralBin(self, multiBin, eventsType = None):
 #		eventFileIds = self.getEventFileIds(multiBin, eventsType)
 #		retval = collections.OrderedDict()

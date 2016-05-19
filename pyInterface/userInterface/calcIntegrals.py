@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=0, help="maximum number of events to process (default: all)")
-	parser.add_argument("-b", type=int, metavar="massBin", default=-1, dest="massBin", help="mass bin to be calculated (default: all)")
+	parser.add_argument("-b", type=int, metavar="integralBin", default=-1, dest="integralBin", help="bin to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('generated' or 'accepted', default: both)")
 	parser.add_argument("-w", type=str, metavar="path", dest="weightsFileName", default="", help="path to MC weight file for de-weighting (default: none)")
 	args = parser.parse_args()
@@ -35,9 +35,14 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	binIDList = fileManager.getBinIDList()
-	if not args.massBin == -1:
-		binIDList = [args.massBin]
+	if args.integralBin >= 0:
+		if args.integralBin >= len(fileManager.binList):
+			pyRootPwa.utils.printErr("bin out of range (" + str(args.integralBin) + ">=" + str(len(fileManager.binList)) + "). Aborting...")
+			sys.exit(1)
+		binList = [ fileManager.binList[args.integralBin] ]
+	else:
+		binList = fileManager.binList
+	printDebug(binList)
 
 	eventsTypes = []
 	if args.eventsType == "generated":
@@ -51,15 +56,15 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("Invalid events type given ('" + args.eventsType + "'). Aborting...")
 		sys.exit(1)
 
-	for binID in binIDList:
+	for multiBin in binList:
 		for eventsType in eventsTypes:
-			outputFileName = fileManager.getIntegralFilePath(binID, eventsType)
-			ampFileList = fileManager.getAmplitudeFilePaths(binID, eventsType)
-			if not ampFileList:
+			outputFileName = fileManager.getIntegralFilePath(multiBin, eventsType)
+			ampFileDict = fileManager.getAmplitudeFilePaths(multiBin, eventsType)
+			if not ampFileDict:
 				printErr("could not retrieve valid amplitude file list. Aborting...")
 				sys.exit(1)
-			printInfo("calculating integral matrix from " + str(len(ampFileList)) + " amplitude files:")
-			if not pyRootPwa.calcIntegrals(outputFileName, ampFileList, args.nEvents, args.weightsFileName):
+			printInfo("calculating integral matrix from " + str(len(ampFileDict)) + " amplitude files:")
+			if not pyRootPwa.calcIntegrals(outputFileName, ampFileDict, args.nEvents, args.weightsFileName):
 				printErr("integral calculation failed. Aborting...")
 				sys.exit(1)
 			printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
