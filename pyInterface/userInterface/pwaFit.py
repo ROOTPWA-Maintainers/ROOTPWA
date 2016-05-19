@@ -25,6 +25,7 @@ if __name__ == "__main__":
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
 	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("--noAcceptance", help="do not take acceptance into account (default: false)", action="store_true")
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
@@ -54,7 +55,20 @@ if __name__ == "__main__":
 	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
 
 	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
-	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+	accIntegralPath = psIntegralPath
+	if not args.noAcceptance:
+		accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+	elif args.accEventsOverride != 0:
+		# for a fit without acceptance corrections the number of events
+		# the acceptance matrix is normalized to needs to be equal to
+		# the number of events in the normalization matrix
+		intFile = pyRootPwa.ROOT.TFile.Open(psIntegralPath, "READ")
+		intMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(intFile)
+		intMatrix = intMeta.getAmpIntegralMatrix()
+		if args.accEventsOverride != intMatrix.nmbEvents():
+			printErr("incorrect number of events for normalization of integral matrix for "
+			         "a fit without acceptance (got: {:d}, expected: {:d}). Aborting...".format(args.accEventsOverride, intMatrix.nmbEvents()))
+			sys.exit(1)
 
 	fitResults = pyRootPwa.pwaFit(
 	                              ampFileList = ampFileList,
@@ -75,7 +89,7 @@ if __name__ == "__main__":
 	                              attempts = args.nAttempts
 	                             )
 	if not fitResults:
-		printErr("didn't get a valid fit result(s). Aborting...")
+		printErr("didn't get valid fit result(s). Aborting...")
 		sys.exit(1)
 	printInfo("writing result(s) to '" + args.outputFileName + "'")
 	valTreeName   = "pwa"
