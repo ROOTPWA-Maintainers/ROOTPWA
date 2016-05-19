@@ -2,9 +2,8 @@
 
 [[ -z ${DESTINATION_DIR} ]] && DESTINATION_DIR="keyfiles"
 [[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../../particleData/particleDataTable.txt"
+[[ -z ${TEMPLATE_KEY_FILES} ]] && TEMPLATE_KEY_FILES="template.key"
 [[ -z ${WAVESET_FILES} ]] && WAVESET_FILES=""
-
-TEMPLATE_KEY_FILES="template.key"
 
 # if WAVESET_FILES is not empty, only keep those keyfiles actually used in one
 # of the wavesets.
