@@ -159,6 +159,16 @@ namespace {
 		return bp::list(self.findIsobarBoseSymVertices());
 	}
 
+	rpwa::isobarDecayTopologyPtr createIsobarDecayTopology_1(const rpwa::decayTopology& topo)
+	{
+		return rpwa::createIsobarDecayTopology(topo);
+	}
+
+	rpwa::isobarDecayTopologyPtr createIsobarDecayTopology_2(const rpwa::isobarDecayTopology& topo)
+	{
+		return rpwa::createIsobarDecayTopology(topo);
+	}
+
 }
 
 void rpwa::py::exportIsobarDecayTopology() {
@@ -237,5 +247,14 @@ void rpwa::py::exportIsobarDecayTopology() {
 		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);
 
 	bp::register_ptr_to_python<rpwa::isobarDecayTopologyPtr>();
+
+	bp::def(
+		"createIsobarDecayTopology"
+		, &createIsobarDecayTopology_1
+	);
+	bp::def(
+		"createIsobarDecayTopology"
+		, &createIsobarDecayTopology_2
+	);
 
 }
