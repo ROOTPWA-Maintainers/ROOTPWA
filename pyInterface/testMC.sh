@@ -153,34 +153,30 @@ if ! ${ROOTPWA}/build/bin/calcAmplitudes.py -e real; then
 	exit 1
 fi
 
-# 'fake' accepeted integrals -> acceptance = 1
-echo "'Fake' accepted integrals ..."
-ln -s "${TESTDIR}/ints/integral_binID-0_2.root" "${TESTDIR}/ints/integral_binID-0_3.root"
-
 #-- END MONTE CARLO GENERATION --#
 
 ### BEGIN FIT TEST ###
 
 echo "Test pwaFit.py without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_NOPRIOR.root" -z -w wavelist.compass.2008.88waves; then
+if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves; then
 	echo "pwaFit was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaFit.py with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" -z -w wavelist.compass.2008.88waves -C -P 0.5; then
+if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5; then
 	echo "pwaFit with prior was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaNloptFit.py without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_NOPRIOR.root" -z -w wavelist.compass.2008.88waves; then
+if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves; then
 	echo "pwaNloptFit was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaNloptFit.py with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" -z -w wavelist.compass.2008.88waves -C -P 0.5; then
+if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5; then
 	echo "pwaNloptFit with prior was not successful. Aborting..."
 	exit 1
 fi
