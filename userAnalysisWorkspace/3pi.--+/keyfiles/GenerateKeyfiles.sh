@@ -127,13 +127,14 @@ then
 		then
 			echo "Waveset file '${WAVESET_FILE}' does not exist."
 		else
-			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE} ]]
+			WAVESET_FILE_BASENAME=`basename ${WAVESET_FILE}`
+			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME} ]]
 			then
-				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE}
-				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}"
 			else
-				echo "Waveset file '${WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
-				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+				echo "Waveset file '${WAVESET_FILE_BASENAME}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}"
 			fi
 		fi
 	done
@@ -141,7 +142,7 @@ then
 	do
 		if [[ -e ${WAVESET_FILE} ]]
 		then
-			NEW_WAVESET_FILE="${WAVESET_FILE}.f0980bw"
+			NEW_WAVESET_FILE="`basename ${WAVESET_FILE}`.f0980bw"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
 				sed -e 's/f0_980_0=/f0_980_0bw=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
@@ -155,7 +156,7 @@ then
 				echo "Waveset file '${NEW_WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
 				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}"
 			fi
-			NEW_WAVESET_FILE="${WAVESET_FILE}.f0980fl"
+			NEW_WAVESET_FILE="`basename ${WAVESET_FILE}`.f0980fl"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
 				sed -e 's/f0_980_0=/f0_980_0fl=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}

@@ -31,13 +31,14 @@ then
 		then
 			echo "Waveset file '${WAVESET_FILE}' does not exist."
 		else
-			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE} ]]
+			WAVESET_FILE_BASENAME=`basename ${WAVESET_FILE}`
+			if [[ ! -e ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME} ]]
 			then
-				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE}
-				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+				cp ${WAVESET_FILE} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}"
 			else
-				echo "Waveset file '${WAVESET_FILE}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
-				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE}"
+				echo "Waveset file '${WAVESET_FILE_BASENAME}' already exists in '${DESTINATION_DIR}'. Check manually that this file is correct."
+				ALL_WAVESET_FILES="${ALL_WAVESET_FILES} ${DESTINATION_DIR}/${WAVESET_FILE_BASENAME}"
 			fi
 		fi
 	done
