@@ -11,6 +11,8 @@
 		# number of phase space events to generate 
 		NMB_PS_EVENTS=500	
 
+		SEED_PS=123456
+
 	#-- END PHASE SPACE --#
 
 	### BEGIN PARTICLE DATA ###
@@ -25,8 +27,21 @@
 		# number of weighted pseudo data events to generate
 		NMB_PSEUDO_EVENTS=500
 
+		SEED_PSEUDO=654321
+
 	#-- END PSEUDO DATA --#
 
+	### BEGIN DEWEIGHT ###
+		
+		SEED_DEWEIGHT=789012
+
+	#-- END DEWEIGHT --#
+
+	### BEGIN FIT ###
+
+		SEED_FIT=210987
+
+	#-- END FIT --#
 
 #-- END CONFIGURATION --#
 
@@ -79,7 +94,7 @@ cp "${ROOTPWA}/pyInterface/mcTest/reference_fit/bin65_c2pap_bestfits_converged_M
 
 # generate phase space data
 echo "Generating phase space ..."
-if ! ${ROOTPWA}/build/bin/genpw.py -n $NMB_PS_EVENTS -p "${PARTICLE_DATA_TABLE}" -M $MASS -B $BINWIDTH "./generator_noBeamSimulation.conf" -o "./data/phase_space_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PS_EVENTS}.root"; then
+if ! ${ROOTPWA}/build/bin/genpw.py -s $SEED_PS -n $NMB_PS_EVENTS -p "${PARTICLE_DATA_TABLE}" -M $MASS -B $BINWIDTH "./generator_noBeamSimulation.conf" -o "./data/phase_space_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PS_EVENTS}.root"; then
 	echo "Generation of phase space was not successful. Aborting..."
 	exit 1
 fi
@@ -123,14 +138,14 @@ fi
 
 # generate weighted MC pseudo data
 echo "Generate weighted MC pseudo data ..."
-if ! ${ROOTPWA}/build/bin/genPseudoData.py "./generator_noBeamSimulation.conf" "${TESTDIR}/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root" "./ints/integral_binID-0_2.root" "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" -s 654321 -n ${NMB_PSEUDO_EVENTS} -M ${MASS} -B ${BINWIDTH}; then 
+if ! ${ROOTPWA}/build/bin/genPseudoData.py "./generator_noBeamSimulation.conf" "${TESTDIR}/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root" "./ints/integral_binID-0_2.root" "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" -s $SEED_PSEUDO -n ${NMB_PSEUDO_EVENTS} -M ${MASS} -B ${BINWIDTH}; then 
 	echo "Generation of weighted MC pseudo data was not successful. Aborting..."
 	exit 1
 fi
 
 # deweight the pseudo data
 echo "Deweight pseudo data ..."
-if ! ${ROOTPWA}/build/bin/deWeight.py "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" "./data/pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root"; then
+if ! ${ROOTPWA}/build/bin/deWeight.py "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" "./data/pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" -s $SEED_DEWEIGHT; then
 	echo "Deweighting of weighted MC pseudo data was not successful. Aborting..."
 	exit 1
 fi
@@ -158,25 +173,25 @@ fi
 ### BEGIN FIT TEST ###
 
 echo "Test pwaFit.py without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves; then
+if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves -s $SEED_FIT; then
 	echo "pwaFit was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaFit.py with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5; then
+if ! ${ROOTPWA}/build/bin/pwaFit.py "./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5 -s $SEED_FIT; then
 	echo "pwaFit with prior was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaNloptFit.py without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves; then
+if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves -s $SEED_FIT; then
 	echo "pwaNloptFit was not successful. Aborting..."
 	exit 1
 fi
 
 echo "Test pwaNloptFit.py with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5; then
+if ! ${ROOTPWA}/build/bin/pwaNloptFit.py "./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5 -s $SEED_FIT; then
 	echo "pwaNloptFit with prior was not successful. Aborting..."
 	exit 1
 fi
