@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+import numpy
+
 import pyRootPwa
 import pyRootPwa.core
 
@@ -33,9 +35,16 @@ if __name__ == "__main__":
 	inputTree = metaData.eventTree()
 	maxWeight = 0.
 
-	for event in inputTree:
-		if event.weight > maxWeight:
-			maxWeight = event.weight
+	additionalVariableLabels = metaData.additionalSavedVariableLables()
+	additionalVariables = [numpy.zeros(1, dtype=float)] * len(additionalVariableLabels)
+	weightIndex = additionalVariableLabels.index("weight")
+	for i, additionalVariableLabel in enumerate(additionalVariableLabels):
+		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
+
+	for i in xrange(inputTree.GetEntries()):
+		inputTree.GetEntry(i)
+		if additionalVariables[weightIndex] > maxWeight:
+			maxWeight = additionalVariables[weightIndex]
 
 	printInfo("maxWeight: " + str(maxWeight))
 	maxWeight *= args.weightFactor
@@ -53,7 +62,7 @@ if __name__ == "__main__":
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
 	                             metaData.binningMap(),
-	                             ["weight"]):
+	                             additionalVariableLabels):
 		printErr("could not initialize fileWriter. Aborting...")
 		inputFile.Close()
 		sys.exit(1)
@@ -61,11 +70,17 @@ if __name__ == "__main__":
 	acceptedEntries = 0
 	overallEntries = 0
 
-	for event in inputTree:
-		normWeight = event.weight / maxWeight
+	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.productionKinematicsMomentaBranchName, prodKinMomenta)
+	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.decayKinematicsMomentaBranchName, decayKinMomenta)
+
+	for i in xrange(inputTree.GetEntries()):
+		inputTree.GetEntry(i)
+		normWeight = additionalVariables[weightIndex] / maxWeight
 		cut = pyRootPwa.ROOT.gRandom.Rndm()
 		if normWeight > cut:
-			fileWriter.addEvent(event.prodKinMomenta, event.decayKinMomenta, [event.weight])
+			fileWriter.addEvent(prodKinMomenta, decayKinMomenta, [float(variable) for variable in additionalVariables])
 			acceptedEntries += 1
 		overallEntries += 1
 	fileWriter.finalize()
