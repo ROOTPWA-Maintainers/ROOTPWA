@@ -76,6 +76,9 @@ if __name__ == "__main__":
 		for eventsType in eventsTypes:
 			eventAmpFilePairs = fileManager.getEventAndAmplitudePairPaths(eventsType, waveName)
 			if args.eventFileId >= 0:
+				if args.eventFileId >= len(eventAmpFilePairs):
+					pyRootPwa.utils.printErr("event file id out of range (" + str(args.eventFileId) + ">=" + str(len(eventAmpFilePairs)) + "). Aborting...")
+					sys.exit(1)
 				eventAmpFilePairs = eventAmpFilePairs[args.eventFileId:args.eventFileId+1]
 			for eventFilePath, amplitudeFilePath in eventAmpFilePairs:
 				if not pyRootPwa.calcAmplitude(eventFilePath, fileManager.getKeyFile(waveName), fileManager.getWaveDescription(waveName),
