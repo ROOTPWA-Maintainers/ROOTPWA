@@ -125,7 +125,7 @@ class fileManager(object):
 		raise Exception("not implemented. " + repr(self))
 
 
-	def getEventAndAmplitudePairPaths(self, eventsType, waveName):
+	def getEventAndAmplitudePairPathsForWave(self, eventsType, waveName):
 		eventsType = fileManager.pyEventsType(eventsType)
 		retval = []
 		if eventsType not in self.dataFiles:
