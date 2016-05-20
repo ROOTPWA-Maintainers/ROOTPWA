@@ -118,17 +118,11 @@ bool rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix(const ampIntegralMatri
 		return false;
 	}
 	{
-		vector<pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > > > secondMetas = second.evtMetas();
+		vector<rpwa::eventMetadata> secondMetas = second.evtMetas();
 		for (size_t meta_i = 0; meta_i < secondMetas.size(); ++meta_i) {
-			for (size_t range_i = 0; range_i < secondMetas[meta_i].second.size(); ++range_i) {
-				const pair<rpwa::eventMetadata, vector<pair<size_t, size_t> > >& elem = secondMetas[meta_i];
-				if (not addEventMetadata(elem.first,
-				                         elem.second[range_i].first,
-				                         elem.second[range_i].second))
-				{
-					printErr << "could not add event metadata." << endl;
-					return false;
-				}
+			if (not addEventMetadata(secondMetas[meta_i])) {
+			        printErr << "could not add event metadata." << endl;
+			        return false;
 			}
 		}
 	}
@@ -228,48 +222,12 @@ bool rpwa::ampIntegralMatrixMetadata::setAllZeroHash() {
 }
 
 
-bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata& evtMeta, size_t eventMin, size_t eventMax) {
-	if (eventMin >= eventMax) {
-		printErr << "given event number bounds are not ordered correctly." << endl;
+bool rpwa::ampIntegralMatrixMetadata::addEventMetadata(const rpwa::eventMetadata& evtMeta) {
+	if (std::find(_evtMetas.begin(), _evtMetas.end(), evtMeta) != _evtMetas.end()) {
+		printWarn << "event metadata object has already been added." << endl;
 		return false;
 	}
-	for (size_t meta_i = 0; meta_i < _evtMetas.size(); ++meta_i) {
-		if (_evtMetas[meta_i].first == evtMeta) {
-			vector<pair<size_t, size_t> > newRanges;
-			bool isIn = false;
-			for (size_t set_i = 0; set_i < _evtMetas[meta_i].second.size(); ++set_i) {
-				if (eventMin == _evtMetas[meta_i].second[set_i].first) {
-					printErr << "two ranges start at the same event index" << endl;
-					return false;
-				}
-				if (eventMin < _evtMetas[meta_i].second[set_i].first and (not isIn)) {
-					isIn = true;
-					newRanges.push_back(pair<size_t, size_t>(eventMin, eventMax));
-				}
-				newRanges.push_back(_evtMetas[meta_i].second[set_i]);
-			}
-			if (not isIn) {
-				newRanges.push_back(pair<size_t, size_t>(eventMin, eventMax));
-			}
-			for (size_t  set_i = 1; set_i < newRanges.size(); ++set_i) {
-				if (newRanges[set_i-1].second > newRanges[set_i].first) {
-					printErr << "overlapping ranges found" << endl;
-					return false;
-				}
-			}
-			_evtMetas[meta_i].second = vector<pair<size_t, size_t> >(1, newRanges[0]);
-			for (size_t set_i = 1; set_i < newRanges.size(); ++set_i) {
-				if (newRanges[set_i].first == _evtMetas[meta_i].second[_evtMetas[meta_i].second.size()-1].second) {
-					_evtMetas[meta_i].second[_evtMetas[meta_i].second.size()-1].second = newRanges[set_i].second;
-				} else {
-					_evtMetas[meta_i].second.push_back(newRanges[set_i]);
-				}
-			}
-			return true;
-		}
-	}
-	pair<eventMetadata, vector<pair<size_t, size_t> > > newEvtMeta(evtMeta, vector<pair<size_t, size_t> >(1, pair<size_t, size_t>(eventMin, eventMax)));
-	_evtMetas.push_back(newEvtMeta);
+	_evtMetas.push_back(evtMeta);
 	return true;
 }
 
@@ -302,7 +260,7 @@ bool rpwa::ampIntegralMatrixMetadata::check() const {
 	size_t nmbWaves = _ampIntegralMatrix->nmbWaves();
 	if (nmbWaves != waveNamesFromKeyFiles.size()) {
 		printWarn << "mismatch between number of keyfiles (" << waveNamesFromKeyFiles.size() << ")"
-		         << "and number of waves in matrix (" << nmbWaves << ")." << endl;
+		          << " and number of waves in matrix (" << nmbWaves << ")." << endl;
 		retVal = false;
 	}
 	return retVal;

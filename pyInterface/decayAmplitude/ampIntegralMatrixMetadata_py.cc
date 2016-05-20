@@ -107,7 +107,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("objectBaseName", &rpwa::ampIntegralMatrixMetadata::objectBaseName, bp::return_value_policy<bp::return_by_value>())
 		.def("binningMap", &ampIntegralMatrixMetadata_binningMap)
 		.def("setObjectBaseName", &ampIntegralMatrixMetadata::setObjectBaseName, bp::arg("objectBaseName"))
-		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, (bp::arg("eventMetadata"), bp::arg("minEvent"), bp::arg("maxEvent")))
+		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, bp::arg("eventMetadata"))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)
 
