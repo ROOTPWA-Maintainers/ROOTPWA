@@ -79,8 +79,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef NBODYPHASESPACEGEN_HH
-#define NBODYPHASESPACEGEN_HH
+#ifndef NBODYPHASESPACEGENERATOR_HH
+#define NBODYPHASESPACEGENERATOR_HH
 
 
 #include <iostream>
@@ -100,12 +100,12 @@
 namespace rpwa {
 
 
-	class nBodyPhaseSpaceGen {
+	class nBodyPhaseSpaceGenerator {
 
 	  public:
 
-		nBodyPhaseSpaceGen();
-		virtual ~nBodyPhaseSpaceGen();
+		nBodyPhaseSpaceGenerator();
+		virtual ~nBodyPhaseSpaceGenerator();
 
 		//----------------------------------------------------------------------------
 		// generator setup
@@ -187,8 +187,8 @@ namespace rpwa {
 
 
 		std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
-		friend std::ostream& operator << (std::ostream&             out,
-		                                  const nBodyPhaseSpaceGen& gen) { return gen.print(out); }
+		friend std::ostream& operator << (std::ostream&                   out,
+		                                  const nBodyPhaseSpaceGenerator& gen) { return gen.print(out); }
 
 	  private:
 
@@ -221,7 +221,7 @@ namespace rpwa {
 		double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
 		kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
 
-		ClassDef(nBodyPhaseSpaceGen, 2)
+		ClassDef(nBodyPhaseSpaceGenerator, 1)
 
 	};
 
@@ -230,7 +230,7 @@ namespace rpwa {
 
 inline
 void
-rpwa::nBodyPhaseSpaceGen::pickAngles()
+rpwa::nBodyPhaseSpaceGenerator::pickAngles()
 {
 	randomNumberGenerator* random = randomNumberGenerator::instance();
 	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
@@ -242,7 +242,7 @@ rpwa::nBodyPhaseSpaceGen::pickAngles()
 
 inline
 bool
-rpwa::nBodyPhaseSpaceGen::eventAccepted(const double maxWeight)  // if maxWeight > 0, given value is used as maximum weight, otherwise _maxWeight
+rpwa::nBodyPhaseSpaceGenerator::eventAccepted(const double maxWeight)  // if maxWeight > 0, given value is used as maximum weight, otherwise _maxWeight
 {
 	if (_weightType == FLAT)
 		return true;  // no weighting
@@ -259,8 +259,8 @@ rpwa::nBodyPhaseSpaceGen::eventAccepted(const double maxWeight)  // if maxWeight
 
 inline
 double
-rpwa::nBodyPhaseSpaceGen::F(const double x,
-                            const double y)
+rpwa::nBodyPhaseSpaceGenerator::F(const double x,
+                                  const double y)
 {
 	const double val = 1 + (x - y) * (x - y) - 2 * (x + y);
 	if (val < 0)
@@ -270,4 +270,4 @@ rpwa::nBodyPhaseSpaceGen::F(const double x,
 }
 
 
-#endif  // NBODYPHASESPACEGEN_H
+#endif  // NBODYPHASESPACEGENERATOR_H

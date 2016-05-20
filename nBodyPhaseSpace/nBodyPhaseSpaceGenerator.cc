@@ -86,17 +86,17 @@
 #include "reportingUtilsRoot.hpp"
 #include "physUtils.hpp"
 #include "factorial.hpp"
-#include "nBodyPhaseSpaceGen.h"
+#include "nBodyPhaseSpaceGenerator.h"
 
 
 using namespace std;
 using namespace rpwa;
 
 
-ClassImp(nBodyPhaseSpaceGen);
+ClassImp(nBodyPhaseSpaceGenerator);
 
 
-nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
+nBodyPhaseSpaceGenerator::nBodyPhaseSpaceGenerator()
 	: _weight           (0),
 	  _n                (0),
 	  _weightType       (S_U_CHUNG),
@@ -107,13 +107,13 @@ nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
 { }
 
 
-nBodyPhaseSpaceGen::~nBodyPhaseSpaceGen()
+nBodyPhaseSpaceGenerator::~nBodyPhaseSpaceGenerator()
 { }
 
 
 // sets decay constants and prepares internal variables
 bool
-nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of daughter particle masses
+nBodyPhaseSpaceGenerator::setDecay(const vector<double>& daughterMasses)  // array of daughter particle masses
 {
 	_n = daughterMasses.size();
 	if (_n < 2) {
@@ -172,8 +172,8 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
 
 // set decay constants and prepare internal variables
 bool
-nBodyPhaseSpaceGen::setDecay(const unsigned int nmbOfDaughters,  // number of daughter particles
-                             const double*      daughterMasses)  // array of daughter particle masses
+nBodyPhaseSpaceGenerator::setDecay(const unsigned int nmbOfDaughters,  // number of daughter particles
+                                   const double*      daughterMasses)  // array of daughter particle masses
 {
 	vector <double> m;
 	m.resize(nmbOfDaughters, 0);
@@ -187,7 +187,7 @@ nBodyPhaseSpaceGen::setDecay(const unsigned int nmbOfDaughters,  // number of da
 // generates event with certain n-body mass and momentum and returns event weigth
 // general purpose function
 double
-nBodyPhaseSpaceGen::generateDecay(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
+nBodyPhaseSpaceGenerator::generateDecay(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
 {
 	_weight = 1;
 	const double nBodyMass = nBody.M();
@@ -211,8 +211,8 @@ nBodyPhaseSpaceGen::generateDecay(const TLorentzVector& nBody)  // Lorentz vecto
 // generates full event with certain n-body mass and momentum only, when event is accepted (return value = true)
 // this function is more efficient, if only weighted evens are needed
 bool
-nBodyPhaseSpaceGen::generateDecayAccepted(const TLorentzVector& nBody,      // Lorentz vector of n-body system in lab frame
-                                          const double          maxWeight)  // if positive, given value is used as maximum weight, otherwise _maxWeight
+nBodyPhaseSpaceGenerator::generateDecayAccepted(const TLorentzVector& nBody,      // Lorentz vector of n-body system in lab frame
+                                                const double          maxWeight)  // if positive, given value is used as maximum weight, otherwise _maxWeight
 {
 	const double nBodyMass = nBody.M();
 	if (_n < 2) {
@@ -236,7 +236,7 @@ nBodyPhaseSpaceGen::generateDecayAccepted(const TLorentzVector& nBody,      // L
 
 // randomly choses the (n - 2) effective masses of the respective (i + 1)-body systems
 void
-nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the system in its RF
+nBodyPhaseSpaceGenerator::pickMasses(const double nBodyMass)  // total energy of the system in its RF
 {
 	_M[_n - 1] = nBodyMass;
 	switch (_weightType) {
@@ -297,7 +297,7 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 // computes event weight (= integrand value) and breakup momenta
 // uses vector of intermediate two-body masses prepared by pickMasses()
 double
-nBodyPhaseSpaceGen::calcWeight()
+nBodyPhaseSpaceGenerator::calcWeight()
 {
 	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
 		_breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
@@ -360,7 +360,7 @@ nBodyPhaseSpaceGen::calcWeight()
 // systems, the Lorentz vector of the decaying system, and the decay angles
 // uses the break-up momenta calculated by calcWeight()
 void
-nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
+nBodyPhaseSpaceGenerator::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
 {
 	switch (_kinematicsType) {
 		case RAUBOLD_LYNCH:
@@ -444,8 +444,8 @@ nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz
 
 // calculates maximum weight for given n-body mass
 double
-nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // sic!
-                                      const unsigned int nmbOfIterations)  // number of generated events
+nBodyPhaseSpaceGenerator::estimateMaxWeight(const double       nBodyMass,        // sic!
+                                            const unsigned int nmbOfIterations)  // number of generated events
 {
 	double maxWeight = 0;
 	for (unsigned int i = 0; i < nmbOfIterations; ++i) {
@@ -458,9 +458,9 @@ nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // si
 
 
 ostream&
-nBodyPhaseSpaceGen::print(ostream& out) const
+nBodyPhaseSpaceGenerator::print(ostream& out) const
 {
-	out << "nBodyPhaseSpaceGen parameters:" << endl
+	out << "nBodyPhaseSpaceGenerator parameters:" << endl
 	    << "    number of daughter particles ............... " << _n                 << endl
 //	    << "    masses of the daughter particles ........... " << _m                 << endl
 //	    << "    sums of daughter particle masses ........... " << _mSum              << endl

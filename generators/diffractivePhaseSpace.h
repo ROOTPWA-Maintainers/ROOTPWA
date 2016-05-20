@@ -34,7 +34,7 @@
 
 #include "generator.h"
 #include "generatorParameters.hpp"
-#include "nBodyPhaseSpaceGen.h"
+#include "nBodyPhaseSpaceGenerator.h"
 #include "particle.h"
 #include "beamAndVertexGenerator.h"
 
@@ -69,7 +69,7 @@ namespace rpwa {
 
 		void buildDaughterList();
 
-		rpwa::nBodyPhaseSpaceGen _phaseSpace;
+		rpwa::nBodyPhaseSpaceGenerator _phaseSpace;
 
 		std::vector<double> _maxXMassSlices;
 		std::vector<double> _maxWeightsForXMasses;
