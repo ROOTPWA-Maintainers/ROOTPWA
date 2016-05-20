@@ -38,6 +38,7 @@
 
 // nBodyPhaseSpace
 #include "nBodyPhaseSpaceGenerator_py.h"
+#include "nBodyPhaseSpaceKinematics_py.h"
 #include "randomNumberGenerator_py.h"
 
 // partialWaveFit
@@ -86,6 +87,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportAmpIntegralMatrix();
 	rpwa::py::exportAmpIntegralMatrixMetadata();
 	rpwa::py::exportPhaseSpaceIntegral();
+	rpwa::py::exportNBodyPhaseSpaceKinematics();
 	rpwa::py::exportNBodyPhaseSpaceGenerator();
 	rpwa::py::exportRandomNumberGenerator();
 	rpwa::py::exportGeneratorManager();

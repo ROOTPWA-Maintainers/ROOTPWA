@@ -267,8 +267,8 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 	// create phase-space generator and set some options
 	// currently those are in any case the default values, but just to be safe
 	nBodyPhaseSpaceGenerator psGen;
-	psGen.setKinematicsType(rpwa::nBodyPhaseSpaceGenerator::BLOCK);
-	psGen.setWeightType(rpwa::nBodyPhaseSpaceGenerator::S_U_CHUNG);
+	psGen.setKinematicsType(rpwa::nBodyPhaseSpaceKinematics::BLOCK);
+	psGen.setWeightType(rpwa::nBodyPhaseSpaceKinematics::S_U_CHUNG);
 
 	psGen.setDecay(daughterMasses);
 	const TLorentzVector parent(0., 0., 0., M);
