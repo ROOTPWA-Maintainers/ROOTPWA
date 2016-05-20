@@ -188,16 +188,19 @@ class fileManager(object):
 #		return retval
 
 
-	def getAmplitudeFilePaths(self, multiBin, eventsType):
+	def getEventAndAmplitudeFilePathsInBin(self, multiBin, eventsType):
+		# returns { "dataFileName" : { "waveName" : "amplitudeFileName" } }
 		eventsType = fileManager.pyEventsType(eventsType)
 		eventFileIds = self._getEventFileIdsForIntegralBin(multiBin, eventsType)
 		if not eventFileIds:
 			pyRootPwa.utils.printWarn("no matching event files found in bin '" + str(multiBin) + "' and events type '" + str(eventsType) + "'.")
 			return collections.OrderedDict()
 		retval = collections.OrderedDict()
-		for waveName_i, waveName in enumerate(self.keyFiles.keys()):
-			for eventFileId in eventFileIds:
-				retval[waveName] = self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
+		for eventFileId in eventFileIds:
+			eventFileName = self.dataFiles[eventsType][eventFileId].dataFileName
+			retval[eventFileName] = collections.OrderedDict()
+			for waveName_i, waveName in enumerate(self.keyFiles.keys()):
+				retval[eventFileName][waveName] = self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
 		return retval
 
 

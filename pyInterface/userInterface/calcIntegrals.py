@@ -59,12 +59,12 @@ if __name__ == "__main__":
 	for multiBin in binList:
 		for eventsType in eventsTypes:
 			outputFileName = fileManager.getIntegralFilePath(multiBin, eventsType)
-			ampFileDict = fileManager.getAmplitudeFilePaths(multiBin, eventsType)
-			if not ampFileDict:
+			eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, eventsType)
+			if not eventAndAmpFileDict:
 				printErr("could not retrieve valid amplitude file list. Aborting...")
 				sys.exit(1)
-			printInfo("calculating integral matrix from " + str(len(ampFileDict)) + " amplitude files:")
-			if not pyRootPwa.calcIntegrals(outputFileName, ampFileDict, args.nEvents, args.weightsFileName):
+			printInfo("calculating integral matrix from " + str(len(eventAndAmpFileDict)) + " amplitude files:")
+			if not pyRootPwa.calcIntegrals(outputFileName, eventAndAmpFileDict, multiBin, args.nEvents, args.weightsFileName):
 				printErr("integral calculation failed. Aborting...")
 				sys.exit(1)
 			printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
