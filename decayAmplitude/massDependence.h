@@ -41,6 +41,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include <TFormula.h>
+
 
 namespace ublas = boost::numeric::ublas;
 
@@ -142,6 +144,7 @@ namespace rpwa {
 		double getMassMax() const { return _mMax; }
 
 	private:
+
 		double _mMin;  ///< Lower limit of the isobar mass bin
 		double _mMax;  ///< Upper limit of the isobar mass bin
 
@@ -153,9 +156,136 @@ namespace rpwa {
 
 	inline
 	binnedMassDependencePtr
-	createbinnedMassDependence(double mMin, double mMax)
+	createBinnedMassDependence(const double mMin, const double mMax)
 	{
 		binnedMassDependencePtr massDep(new binnedMassDependence(mMin, mMax));
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief polynomial mass dependence with flexible coefficients
+	class polynomialMassDependence : public massDependence {
+
+	public:
+
+		polynomialMassDependence(const std::vector<std::complex<double> >& coefficients, const double mMin, const double mMax)
+			: massDependence(),
+			  _mMin(mMin),
+			  _mMax(mMax),
+			  _coefficients(coefficients) { }
+		virtual ~polynomialMassDependence()   { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { return "polynomial"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		const std::vector<std::complex<double> >& getCoefficients() const { return _coefficients; }
+		double                                    getMassMin()      const { return _mMin;         }
+		double                                    getMassMax()      const { return _mMax;         }
+
+	private:
+
+		double                             _mMin;          ///< Mass point that gets scaled to -1. // mMin = -1, mMax = 1 -> no scaling
+		double                             _mMax;          ///< Mass point that gets scaled to  1.
+
+		std::vector<std::complex<double> > _coefficients;  ///< Coefficients of the polynomial
+
+	};
+
+
+	typedef boost::shared_ptr<polynomialMassDependence> polynomialMassDependencePtr;
+
+
+	inline
+	polynomialMassDependencePtr
+	createPolynomialMassDependencePtr(const std::vector<std::complex<double> >& coefficients, const double mMin, const double mMax)
+	{
+		polynomialMassDependencePtr massDep(new polynomialMassDependence(coefficients, mMin, mMax));
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief complex exponential mass dependence with certain degree
+	class complexExponentialMassDependence : public massDependence {
+
+	public:
+
+		complexExponentialMassDependence(const int degree, const double mMin, const double mMax) : massDependence(), _degree(degree), _mMin(mMin), _mMax(mMax) { }
+		virtual ~complexExponentialMassDependence()                                                                                                            { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { return "complexExponential"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		int    getDegree()  const { return _degree; }
+		double getMassMin() const { return _mMin;   }
+		double getMassMax() const { return _mMax;   }
+
+	private:
+
+		int    _degree;  ///< Degree of the expansion
+		double _mMin;    ///< Mass point that gets scaled to 0.
+		double _mMax;    ///< Mass point that gets scaled to 2.
+
+	};
+
+
+	typedef boost::shared_ptr<complexExponentialMassDependence> complexExponentialMassDependencePtr;
+
+
+	inline
+	complexExponentialMassDependencePtr
+	createComplexExponentialMassDependencePtr(const int degree, const double mMin, const double mMax)
+	{
+		complexExponentialMassDependencePtr massDep(new complexExponentialMassDependence(degree, mMin, mMax));
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief complex TF1 mass dependence with arbitrary function
+	class arbitraryFunctionMassDependence : public massDependence {
+
+	public:
+
+		arbitraryFunctionMassDependence(const std::string& name, const std::string& realPart, const std::string& imagPart)
+			: massDependence(),
+			  _name(name),
+			  _realFunctionString(realPart),
+			  _imagFunctionString(imagPart),
+			  _realPart((name+"_real").c_str(), realPart.c_str()),
+			  _imagPart((name+"_imag").c_str(), imagPart.c_str()) { }
+		virtual ~arbitraryFunctionMassDependence()                    { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { return "arbitraryFunction"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		const std::string& getName()               const { return _name;               }
+		const std::string& getRealFunctionString() const { return _realFunctionString; }
+		const std::string& getImagFunctionString() const { return _imagFunctionString; }
+
+	private:
+
+		std::string _name;                ///< Function name
+		std::string _realFunctionString;  ///< Function string of the real part
+		std::string _imagFunctionString;  ///< Function string of the imag part
+		TFormula    _realPart;            ///< Function describing the real part
+		TFormula    _imagPart;            ///< Function describing the imag part
+
+	};
+
+
+	typedef boost::shared_ptr<arbitraryFunctionMassDependence> arbitraryFunctionMassDependencePtr;
+
+
+	inline
+	arbitraryFunctionMassDependencePtr
+	createArbitraryFunctionMassDependencePtr(const std::string& name, const std::string& realPart, const std::string& imagPart)
+	{
+		arbitraryFunctionMassDependencePtr massDep(new arbitraryFunctionMassDependence(name, realPart, imagPart));
 		return massDep;
 	}
 

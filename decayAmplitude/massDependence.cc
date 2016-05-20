@@ -77,14 +77,89 @@ binnedMassDependence::amp(const isobarDecayVertex& v)
 
 	const double M = parent->lzVec().M();
 
-	if (_mMin <= M && M < _mMax)
+	if (_mMin <= M and M < _mMax)
 		amp = 1.;
 
 	if (_debug)
-		printDebug << name() << " M = " << parent->lzVec().M()
-		                     << ", _mMin = " << _mMin
-		                     << ", _mMax = " << _mMax
-		                     << ", amp = " << amp << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2) = "
+		           << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+polynomialMassDependence::amp(const isobarDecayVertex& v)
+{
+	complex<double> amp = 0.;
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const double x = 2. * (M - _mMin) / (_mMax - _mMin) - 1.;
+
+	double xToN = 1.;
+
+	for (size_t i = 0; i < _coefficients.size(); ++i) {
+		amp += _coefficients[i] * xToN;
+		xToN *= x;
+	}
+
+	if (_debug) {
+		ostringstream out;
+		out << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		    << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2";
+		for (size_t i = 0; i < _coefficients.size(); ++i) {
+			out << ", c" << i << " = " << maxPrecisionDouble(_coefficients[i]) << " (GeV/c^2)^(-" << i << ")";
+		}
+		out << ") = " << maxPrecisionDouble(amp);
+
+		printDebug << out.str() << endl;
+	}
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+complexExponentialMassDependence::amp(const isobarDecayVertex& v)
+{
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const complex<double> amp = polar<double>(1., 2. * M_PI * (M - _mMin)/(_mMax - _mMin) * _degree);
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2, degree = " << _degree
+		           << ") = " << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+arbitraryFunctionMassDependence::amp(const isobarDecayVertex& v)
+{
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const complex<double> amp(_realPart.Eval(M), _imagPart.Eval(M));
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, name = '" << _name
+		           << "', function for real part = '" << _realFunctionString
+		           << "', function for imaginary part = '" << _imagFunctionString
+		           << "') = " << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }

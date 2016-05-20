@@ -371,8 +371,8 @@ waveDescription::parseKeyFileLocalCopy()
 }
 
 
-std::ostream&
-waveDescription::printKeyFileContent(std::ostream& out, const std::string& keyFileContent)
+ostream&
+waveDescription::printKeyFileContent(ostream& out, const string& keyFileContent)
 {
 	if (keyFileContent != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
@@ -504,7 +504,7 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	bool   useReflectivityBasis = true;
 	// find amplitude group
 	const Setting&            rootKey      = _key->getRoot();
-	const libconfig::Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	const Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
 	if (amplitudeKey) {
 		if (amplitudeKey->lookupValue("formalism", formalism) and _debug)
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
@@ -536,6 +536,49 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 }
 
 
+namespace {
+
+
+	string
+	nameForMassDependence(const particlePtr          P,
+	                      const isobarDecayVertexPtr vertex)
+	{
+		ostringstream name;
+		if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+			binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+			name << "binned[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "polynomial") {
+			polynomialMassDependencePtr massDep = static_pointer_cast<polynomialMassDependence>(vertex->massDependence());
+			name << "polynomial[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax();
+			const vector<complex<double> >& coefficients = massDep->getCoefficients();
+			for (size_t i = 0; i < coefficients.size(); ++i) {
+				name << ",[" << coefficients[i].real() << "," << coefficients[i].imag() << "]";
+			}
+			name << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "complexExponential") {
+			complexExponentialMassDependencePtr massDep = static_pointer_cast<complexExponentialMassDependence>(vertex->massDependence());
+			name << "complexExponential[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getDegree() << "," << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "arbitraryFunction") {
+			arbitraryFunctionMassDependencePtr massDep = static_pointer_cast<arbitraryFunctionMassDependence>(vertex->massDependence());
+			name << "arbitrary[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getRealFunctionString() << "," << massDep->getImagFunctionString() << "]";
+		} else
+			name << P->name();
+
+		return name.str();
+	}
+
+
+}
+
+
 string
 waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
                                       const isobarDecayVertexPtr& currentVertex)
@@ -559,15 +602,9 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		if (topo.isFsParticle(currentVertex->daughter1()))
 			waveName << currentVertex->daughter1()->name();
 		else {
-			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter1());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter1()->name();
+			particlePtr P = currentVertex->daughter1();
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(P));
+			waveName << nameForMassDependence(P, vertex);
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 
@@ -578,15 +615,9 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		if (topo.isFsParticle(currentVertex->daughter2()))
 			waveName << currentVertex->daughter2()->name();
 		else {
-			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter2());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter2()->name();
+			particlePtr P = currentVertex->daughter2();
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(P));
+			waveName << nameForMassDependence(P, vertex);
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 		waveName << "]";
@@ -659,7 +690,7 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 
 
 bool
-waveDescription::readKeyFileIntoLocalCopy(const std::string& keyFileName)
+waveDescription::readKeyFileIntoLocalCopy(const string& keyFileName)
 {
 	// read key file content into string
 	ifstream keyFile(keyFileName.c_str());
@@ -868,23 +899,98 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 	else if (massDepType == "rhoPrime")
 		massDep = createRhoPrimeMassDep();
 	else if (massDepType == "binned") {
-		const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+		const Setting* bounds = findLibConfigList(*massDepKey, "bounds" , false);
 		if (not bounds) {
-			printErr << "no bounds given for binned mass dependence." << std::endl;
+			printErr << "no bounds given for binned mass dependence." << endl;
 			throw;
 		}
 		const int length = bounds->getLength();
 		if (length != 2) {
-			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << endl;
 			throw;
 		}
 		const double mMin = (*bounds)[0];
 		const double mMax = (*bounds)[1];
 		if (mMin > mMax) {
-			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << endl;
 			throw;
 		}
-		massDep = createbinnedMassDependence(mMin, mMax);
+		massDep = createBinnedMassDependence(mMin, mMax);
+	}
+	else if (massDepType == "polynomial") {
+		double mMin = 0.;
+		bool mMinFound = massDepKey->lookupValue("mMin", mMin);
+		double mMax = 0.;
+		bool mMaxFound = massDepKey->lookupValue("mMax", mMax);
+		if (mMinFound != mMaxFound) {
+			printErr << "something wrong with the setting of the mass boundaries. Aborting..." << endl;
+			throw;
+		}
+		if (not mMinFound) {
+			mMin = -1.; // No mass boundaries were given. So no scaling is set.
+			mMax =  1.; // This is achieved by setting mMin = -1. and mMax = 1.
+		}
+		const Setting* realCoefficients = findLibConfigList(*massDepKey, "realCoefficients" , false);
+		if (not realCoefficients) {
+			printErr << "no real coefficients given for polynomial mass dependence" << endl;
+			throw;
+		}
+		const int length = realCoefficients->getLength();
+		bool hasImagCoefficients = true;
+		const Setting* imagCoefficients = findLibConfigList(*massDepKey, "imagCoefficients" , false);
+		if (not imagCoefficients) {
+			hasImagCoefficients = false;
+		} else {
+			if (length != imagCoefficients->getLength()) {
+				printErr << "different number of real and imag coefficients given." << endl;
+				throw;
+			}
+		}
+		vector<complex<double> > coefficients;
+		for (int i = 0; i < length; ++i) {
+			if (hasImagCoefficients) {
+				coefficients.push_back(complex<double>((*realCoefficients)[i], (*imagCoefficients)[i]));
+			} else {
+				coefficients.push_back(complex<double>((*realCoefficients)[i], 0.));
+			}
+		}
+		massDep = createPolynomialMassDependencePtr(coefficients, mMin, mMax);
+	}
+	else if (massDepType == "complexExponential") {
+		int degree = 0;
+		if (not massDepKey->lookupValue("degree", degree)) {
+			printErr << "no degree specified" << endl;
+			throw;
+		}
+		double mMin = 0.;
+		if (not massDepKey->lookupValue("mMin", mMin)) {
+			printErr << "no mMin specified" << endl;
+			throw;
+
+		}
+		double mMax = 0.;
+		if (not massDepKey->lookupValue("mMax", mMax)) {
+			printErr << "no mMax specified" << endl;
+			throw;
+		}
+		massDep = createComplexExponentialMassDependencePtr(degree, mMin, mMax);
+	}
+	else if (massDepType == "arbitraryFunction") {
+		string functionName = "";
+		if (not massDepKey->lookupValue("functionName", functionName)) {
+			printErr << "no functionName specified" << endl;
+			throw;
+		}
+		string realFunctionString = "";
+		if (not massDepKey->lookupValue("realFunction", realFunctionString)) {
+			printErr << "no realFuntion specified" << endl;
+			throw;
+		}
+		string imagFunctionString = "";
+		if (not massDepKey->lookupValue("imagFunction", imagFunctionString)) {
+			imagFunctionString = "0.";
+		}
+		massDep = createArbitraryFunctionMassDependencePtr(functionName, realFunctionString, imagFunctionString);
 	}
 	else {
 		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
@@ -1096,6 +1202,34 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
 			bounds.add(Setting::TypeFloat) = binned.getMassMin();
 			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
+		if (massDepName == "polynomial") {
+			// for this mass dependence additionally the polynomial coefficients have to be stored
+			const polynomialMassDependence& polynomial = dynamic_cast<const polynomialMassDependence&>(massDep);
+			const vector<complex<double> >& coefficients = polynomial.getCoefficients();
+			Setting& realCoefficients = massDepKey.add("realCoefficients", Setting::TypeList);
+			Setting& imagCoefficients = massDepKey.add("imagCoefficients", Setting::TypeList);
+			for (size_t i = 0; i < coefficients.size(); ++i) {
+				realCoefficients.add(Setting::TypeFloat) = coefficients[i].real();
+				imagCoefficients.add(Setting::TypeFloat) = coefficients[i].imag();
+			}
+			massDepKey.add("mMin", Setting::TypeFloat) = polynomial.getMassMin();
+			massDepKey.add("mMax", Setting::TypeFloat) = polynomial.getMassMax();
+		}
+		if (massDepName == "complexExponential") {
+			// for this mass dependence additionally the degree and range have to be stored
+			const complexExponentialMassDependence& exponential = dynamic_cast<const complexExponentialMassDependence&>(massDep);
+			massDepKey.add("degree", Setting::TypeInt) = exponential.getDegree();
+			massDepKey.add("mMin", Setting::TypeFloat) = exponential.getMassMin();
+			massDepKey.add("mMax", Setting::TypeFloat) = exponential.getMassMax();
+		}
+		if (massDepName == "arbitraryFunction") {
+			// For this mass dependence, the function definitions have to be stored
+			const arbitraryFunctionMassDependence& arbitrary = dynamic_cast<const arbitraryFunctionMassDependence&>(massDep);
+			massDepKey.add("functionName", Setting::TypeString) = arbitrary.getName();
+			massDepKey.add("realFunction", Setting::TypeString) = arbitrary.getRealFunctionString();
+			massDepKey.add("imagFunction", Setting::TypeString) = arbitrary.getImagFunctionString();
+
 		}
 	}
 	return true;
