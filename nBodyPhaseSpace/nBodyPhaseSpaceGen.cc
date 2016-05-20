@@ -103,8 +103,7 @@ nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
 	  _norm             (0),
 	  _maxWeightObserved(0),
 	  _maxWeight        (0),
-	  _kinematicsType   (BLOCK),
-	  _verbose          (false)
+	  _kinematicsType   (BLOCK)
 { }
 
 
@@ -205,9 +204,6 @@ nBodyPhaseSpaceGen::generateDecay(const TLorentzVector& nBody)  // Lorentz vecto
 		pickAngles();
 		calcEventKinematics(nBody);
 	}
-#if DEBUG
-	print();
-#endif
 	return _weight;
 }
 

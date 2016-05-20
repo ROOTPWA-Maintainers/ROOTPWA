@@ -96,8 +96,6 @@
 
 #include "randomNumberGenerator.h"
 
-#define DEBUG 0
-
 
 namespace rpwa {
 
@@ -146,8 +144,6 @@ namespace rpwa {
 		void               setKinematicsType(const kinematicsTypeEnum kinematicsType) { _kinematicsType = kinematicsType; }  ///< selects algorithm used to calculate event kinematics
 		kinematicsTypeEnum kinematicsType   () const                                  { return _kinematicsType;           }  ///< returns algorithm used to calculate event kinematics
 
-
-		void setVerbose(bool flag){_verbose=flag;}
 
 		//----------------------------------------------------------------------------
 		// weight routines
@@ -224,8 +220,6 @@ namespace rpwa {
 		double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
 		double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
 		kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
-
-		bool _verbose;
 
 		ClassDef(nBodyPhaseSpaceGen, 2)
 

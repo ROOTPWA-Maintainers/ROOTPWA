@@ -58,8 +58,6 @@ namespace rpwa {
 		void setDecayProducts(const std::vector<rpwa::particle>& particles);
 		void addDecayProduct(const rpwa::particle& particle);
 
-		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
-
 		/** @brief generates one event
 		 *
 		 * returns number of attempts to generate this event and beam

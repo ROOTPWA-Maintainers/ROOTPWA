@@ -94,8 +94,6 @@ void rpwa::py::exportNBodyPhaseSpaceGen() {
 		.def("setKinematicsType", &rpwa::nBodyPhaseSpaceGen::setKinematicsType)
 		.def("kinematicsType", &rpwa::nBodyPhaseSpaceGen::kinematicsType)
 
-		.def("setVerbose", &rpwa::nBodyPhaseSpaceGen::setVerbose)
-
 		.def("setWeightType", &rpwa::nBodyPhaseSpaceGen::setWeightType)
 		.def("weightType", &rpwa::nBodyPhaseSpaceGen::weightType)
 
