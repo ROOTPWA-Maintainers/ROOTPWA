@@ -42,7 +42,6 @@ if __name__ == "__main__":
 		binList = [ fileManager.binList[args.integralBin] ]
 	else:
 		binList = fileManager.binList
-	printDebug(binList)
 
 	eventsTypes = []
 	if args.eventsType == "generated":
