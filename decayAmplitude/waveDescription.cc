@@ -68,6 +68,8 @@ namespace {
 
 	const string binBorders     = "bins";
 	const string degreeName     = "degree";
+	const string mMinName       = "mMin";
+	const string mMaxName       = "mMax";
 	const string realCoeffName  = "realCoefficients";
 	const string imagCoeffName  = "imagCoefficients";
 	const string expandName     = "expand";
@@ -193,6 +195,24 @@ namespace {
 
 				parent.remove(realCoeffName);
 				parent.remove(imagCoeffName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "fourier") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = -degree; i < degree+1; ++i) {
+				parent.add(degreeName.c_str(), Setting::TypeInt) = i;
+
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(degreeName);
 
 				const vector<configPtr> newExpanded = expand(newConfig);
 				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
