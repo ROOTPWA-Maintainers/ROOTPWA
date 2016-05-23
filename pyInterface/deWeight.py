@@ -33,18 +33,20 @@ if __name__ == "__main__":
 	if metaData == 0:
 		printErr("error reading metaData. Input file is not a RootPWA root file.")
 	inputTree = metaData.eventTree()
-	maxWeight = 0.
 
 	additionalVariableLabels = metaData.additionalSavedVariableLables()
-	additionalVariables = [numpy.zeros(1, dtype=float)] * len(additionalVariableLabels)
+	additionalVariables = [None] * len(additionalVariableLabels)
 	weightIndex = additionalVariableLabels.index("weight")
 	for i, additionalVariableLabel in enumerate(additionalVariableLabels):
+		print(i, additionalVariableLabel)
+		additionalVariables[i] = numpy.array(1, dtype = float)
 		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
 
+	maxWeight = 0.
 	for i in xrange(inputTree.GetEntries()):
 		inputTree.GetEntry(i)
-		if additionalVariables[weightIndex] > maxWeight:
-			maxWeight = additionalVariables[weightIndex]
+		if float(additionalVariables[weightIndex]) > maxWeight:
+			maxWeight = float(additionalVariables[weightIndex])
 
 	printInfo("maxWeight: " + str(maxWeight))
 	maxWeight *= args.weightFactor
