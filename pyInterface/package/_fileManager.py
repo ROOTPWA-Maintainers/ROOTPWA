@@ -103,7 +103,13 @@ class fileManager(object):
 		if not self.binList:
 			for _, inputFiles in self.dataFiles.iteritems():
 				for inputFile in inputFiles:
-					self.binList.append(inputFile.binningMap)
+					pyRootPwa.utils.printInfo("adding bin '" + str(inputFile.binningMap) + "'.")
+					try:
+						self.binList.append(pyRootPwa.utils.multiBin(inputFile.binningMap))
+					except (TypeError, ValueError):
+						pyRootPwa.utils.printErr("no binning given in config file and no binning map" +
+						                         " found in data file '" + str(inputFile.dataFileName) + "'.")
+						return False
 		else:
 			for _, inputFiles in self.dataFiles.iteritems():
 				for inputFile in inputFiles:
