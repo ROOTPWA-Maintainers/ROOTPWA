@@ -49,3 +49,30 @@ def getWaveDescThresFromWaveList(waveListFileName, keyFiles):
 			lineNmb += 1
 		printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
 	return waveDescThres
+
+
+def getWaveThresFromWaveList(waveListFileName, waveDescriptions):
+	printInfo("reading amplitude names and thresholds from wave list file "
+	          + "'" + waveListFileName + "'.")
+	waveDescThres = []
+	with open(waveListFileName, 'r') as waveListFile:
+		lineNmb = 0
+		for line in waveListFile:
+			if line[0] == '#':  # comments start with #
+				continue
+			line = line.replace('\n', '')
+			lineArray = line.split(" ")
+			if len(lineArray) in [1, 2]:
+				waveName = lineArray[0]
+				if len(lineArray) == 1:
+					threshold = 0
+				else:
+					threshold = lineArray[1]
+				waveDesc = waveDescriptions[waveName]
+				waveDescThres.append( (waveName, waveDesc, float(threshold)) )
+			else:
+				printWarn("cannot parse line '" + line + "' in wave list file "
+				          + "'" + waveListFileName + "'.")
+			lineNmb += 1
+		printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
+	return waveDescThres
