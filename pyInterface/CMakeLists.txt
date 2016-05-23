@@ -101,7 +101,8 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/calcAmplitude_py.cc
 	${HIGHLEVELINTERFACE_SUBDIR}/pwaFit_py.cc
-	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGen_py.cc
+	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceGenerator_py.cc
+	${NBODYPHASESPACE_SUBDIR}/nBodyPhaseSpaceKinematics_py.cc
 	${NBODYPHASESPACE_SUBDIR}/randomNumberGenerator_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/complexMatrix_py.cc
 	${PARTIALWAVEFIT_SUBDIR}/fitResult_py.cc

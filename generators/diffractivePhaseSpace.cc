@@ -48,8 +48,8 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 	  _maxXMassSlices(),
 	  _maxWeightsForXMasses()
 {
-	_phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
-	_phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
+	_phaseSpace.setWeightType    (nBodyPhaseSpaceKinematics::S_U_CHUNG);
+	_phaseSpace.setKinematicsType(nBodyPhaseSpaceKinematics::BLOCK);
 }
 
 

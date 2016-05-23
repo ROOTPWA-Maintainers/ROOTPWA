@@ -37,6 +37,7 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class rpwa::nBodyPhaseSpaceGen+;
-//#pragma link C++ class rpwa::diffractivePhaseSpace+;
+#pragma link C++ class rpwa::nBodyPhaseSpaceGenerator+;
+#pragma link C++ class rpwa::nBodyPhaseSpaceKinematics+;
+
 #endif

@@ -15,7 +15,7 @@
 #include"factorial.hpp"
 #include"isobarHelicityAmplitude.h"
 #include"mathUtils.hpp"
-#include"nBodyPhaseSpaceGen.h"
+#include"nBodyPhaseSpaceGenerator.h"
 #include"physUtils.hpp"
 #include"waveDescription.h"
 
@@ -266,9 +266,9 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 
 	// create phase-space generator and set some options
 	// currently those are in any case the default values, but just to be safe
-	nBodyPhaseSpaceGen psGen;
-	psGen.setKinematicsType(rpwa::nBodyPhaseSpaceGen::BLOCK);
-	psGen.setWeightType(rpwa::nBodyPhaseSpaceGen::S_U_CHUNG);
+	nBodyPhaseSpaceGenerator psGen;
+	psGen.setKinematicsType(rpwa::nBodyPhaseSpaceKinematics::BLOCK);
+	psGen.setWeightType(rpwa::nBodyPhaseSpaceKinematics::S_U_CHUNG);
 
 	psGen.setDecay(daughterMasses);
 	const TLorentzVector parent(0., 0., 0., M);

@@ -46,7 +46,8 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
-	nBodyPhaseSpaceGen.cc
+	nBodyPhaseSpaceGenerator.cc
+	nBodyPhaseSpaceKinematics.cc
 	randomNumberGenerator.cc
 	)
 
@@ -59,7 +60,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
 root_generate_dictionary(
 	${ROOTPWAGEN_DICTIONARY}
-	nBodyPhaseSpaceGen.h
+	nBodyPhaseSpaceGenerator.h nBodyPhaseSpaceKinematics.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaGenLinkDef.h
 	)

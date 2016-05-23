@@ -81,58 +81,45 @@
 
 #include <algorithm>
 
-#include "TMath.h"
-
+#include "factorial.hpp"
+#include "nBodyPhaseSpaceKinematics.h"
 #include "reportingUtilsRoot.hpp"
 #include "physUtils.hpp"
-#include "factorial.hpp"
-#include "nBodyPhaseSpaceGen.h"
 
 
 using namespace std;
 using namespace rpwa;
 
 
-ClassImp(nBodyPhaseSpaceGen);
-
-
-nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
-	: _weight           (0),
-	  _n                (0),
-	  _weightType       (S_U_CHUNG),
-	  _norm             (0),
-	  _maxWeightObserved(0),
-	  _maxWeight        (0),
+nBodyPhaseSpaceKinematics::nBodyPhaseSpaceKinematics()
+	: _weightType       (S_U_CHUNG),
 	  _kinematicsType   (BLOCK),
-	  _verbose          (false)
+	  _n                (0),
+	  _norm             (0),
+	  _weight           (0),
+	  _maxWeightObserved(0)
 { }
 
 
-nBodyPhaseSpaceGen::~nBodyPhaseSpaceGen()
+nBodyPhaseSpaceKinematics::~nBodyPhaseSpaceKinematics()
 { }
 
 
 // sets decay constants and prepares internal variables
 bool
-nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of daughter particle masses
+nBodyPhaseSpaceKinematics::setDecay(const vector<double>& daughterMasses)  // array of daughter particle masses
 {
+	// set number of daughters
 	_n = daughterMasses.size();
 	if (_n < 2) {
 		printErr << "number of daughters = " << _n << " does not make sense." << endl;
 		return false;
 	}
+
 	// copy daughter masses
 	_m.clear();
 	_m = daughterMasses;
-	// prepare effective mass vector
-	_M.clear();
-	_M.resize(_n, 0);
-	_M[0] = _m[0];
-	// prepare angle vectors
-	_cosTheta.clear();
-	_cosTheta.resize(_n, 0);
-	_phi.clear();
-	_phi.resize(_n, 0);
+
 	// calculate daughter mass sums
 	_mSum.clear();
 	_mSum.resize(_n, 0);
@@ -140,12 +127,7 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
 	for (unsigned int i = 1; i < _n; ++i) {
 		_mSum[i] = _mSum[i - 1] + _m[i];
 	}
-	// prepare breakup momentum vector
-	_breakupMom.clear();
-	_breakupMom.resize(_n, 0);
-	// prepare vector for daughter Lorentz vectors
-	_daughters.clear();
-	_daughters.resize(_n, TLorentzVector(0, 0, 0, 0));
+
 	// calculate normalization
 	switch (_weightType) {
 		case S_U_CHUNG:
@@ -158,7 +140,8 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
 				_norm = 8 / (pow(fourPi, 2 * (int)_n + 1) * fact * fact * (_n - 1));
 			}
 			break;
-		case GENBOD: case FLAT:
+		case GENBOD:
+		case FLAT:
 			_norm = 1;
 			break;
 		default:
@@ -166,15 +149,33 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
 			_norm = 1;
 			break;
 	}
+
+	// prepare effective mass vector
+	_M.clear();
+	_M.resize(_n, 0);
+	_M[0] = _m[0];
+	// prepare angle vectors
+	_cosTheta.clear();
+	_cosTheta.resize(_n, 0);
+	_phi.clear();
+	_phi.resize(_n, 0);
+	// prepare breakup momentum vector
+	_breakupMom.clear();
+	_breakupMom.resize(_n, 0);
+	// prepare vector for daughter Lorentz vectors
+	_daughters.clear();
+	_daughters.resize(_n, TLorentzVector(0, 0, 0, 0));
+
 	resetMaxWeightObserved();
+
 	return true;
 }
 
 
 // set decay constants and prepare internal variables
 bool
-nBodyPhaseSpaceGen::setDecay(const unsigned int nmbOfDaughters,  // number of daughter particles
-                             const double*      daughterMasses)  // array of daughter particle masses
+nBodyPhaseSpaceKinematics::setDecay(const unsigned int nmbOfDaughters,  // number of daughter particles
+                                    const double*      daughterMasses)  // array of daughter particle masses
 {
 	vector <double> m;
 	m.resize(nmbOfDaughters, 0);
@@ -185,123 +186,43 @@ nBodyPhaseSpaceGen::setDecay(const unsigned int nmbOfDaughters,  // number of da
 }
 
 
-// generates event with certain n-body mass and momentum and returns event weigth
-// general purpose function
-double
-nBodyPhaseSpaceGen::generateDecay(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
-{
-	_weight = 1;
-	const double nBodyMass = nBody.M();
-	if (_n < 2) {
-		printWarn << "number of daughter particles = " << _n << " is smaller than 2. weight is set to 0." << endl;
-		_weight = 0;
-	} else if (nBodyMass < _mSum[_n - 1]) {
-		printWarn << "n-body mass = " << nBodyMass << " is smaller than sum of daughter masses = "
-			<< _mSum[_n - 1] << ". weight is set to 0." << endl;
-		_weight = 0;
-	} else {
-		pickMasses(nBodyMass);
-		calcWeight();
-		pickAngles();
-		calcEventKinematics(nBody);
-	}
-#if DEBUG
-	print();
-#endif
-	return _weight;
-}
-
-
-// generates full event with certain n-body mass and momentum only, when event is accepted (return value = true)
-// this function is more efficient, if only weighted evens are needed
-bool
-nBodyPhaseSpaceGen::generateDecayAccepted(const TLorentzVector& nBody,      // Lorentz vector of n-body system in lab frame
-                                          const double          maxWeight)  // if positive, given value is used as maximum weight, otherwise _maxWeight
-{
-	const double nBodyMass = nBody.M();
-	if (_n < 2) {
-		printWarn << "number of daughter particles = " << _n << " is smaller than 2. no event generated." << endl;
-		return false;
-	} else if (nBodyMass < _mSum[_n - 1]) {
-		printWarn << "n-body mass = " << nBodyMass << " is smaller than sum of daughter masses = "
-			<< _mSum[_n - 1] << ". no event generated." << endl;
-		return false;
-	}
-	pickMasses(nBodyMass);
-	calcWeight();
-	if (!eventAccepted(maxWeight)) {
-		return false;
-	}
-	pickAngles();
-	calcEventKinematics(nBody);
-	return true;
-}
-
-
-// randomly choses the (n - 2) effective masses of the respective (i + 1)-body systems
+// copy effective masses of (i + 1)-body systems
 void
-nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the system in its RF
+nBodyPhaseSpaceKinematics::setMasses(const std::vector<double>& M)
 {
-	_M[_n - 1] = nBodyMass;
-	switch (_weightType) {
-		case NUPHAZ:
-			{	// the NUPHAZ algorithm calculates part of the weight along with the effective isobar masses
-				// for better readability notation was slightly changed w.r.t to Block's paper
-				// \mathcal{F} -> F
-				// \xi         -> x
-				// U           -> u
-				// p_i         -> prob
-				_weight = 1;
-				for (unsigned int i = _n - 1; i >= 2; --i) {  // loop over 3- to n-bodies
-					// generate variable for (i + 1)-body decay that follows importance sampling distribution as defined in eq. (12)
-					//
-					// 1) calculate probability
-					const double sqrtU  = _m[i] / _M[i];                                  // cf. eq. (39) and (51)
-					const double u      = sqrtU * sqrtU;
-					const double xMin   = _mSum[i - 1] * _mSum[i - 1] / (_M[i] * _M[i]);  // cf. eq. (8)
-					const double xMax   = (1 - sqrtU) * (1 - sqrtU);
-					const double deltaX = xMax - xMin;
-					const double term   = 1 + u - xMin;
-					const double prob   = 1 / (i - (i - 1) * deltaX / term);              // cf. eq. (20)
-					// 2) calculate generator for distribution
-					double x;
-					randomNumberGenerator* random = randomNumberGenerator::instance();
-					if (random->rndm() < prob) {
-						x = xMin + deltaX * pow(random->rndm(), 1 / (double)i) * pow(random->rndm(), 1 / (double)(i - 1));  // cf. eq. (21)
-					} else {
-						x = xMin + deltaX * pow(random->rndm(), 1 / (double)i);  // cf. eq. (22)
-					}
-					// 3) calculate weight factor
-					const double deltaZ = (i * term - (i - 1) * deltaX) * pow(deltaX, (int)i - 1);  // cf. eq. (17) and (18)
-					_weight *= deltaZ * pow(x / (x - xMin), (int)i - 2) * F(x, u) / (1 + u - x);    // cf. eq. (24)
-					// 4) set effective isobar mass of i-body using x_i = _M(i - 1)^2 / _Mi^2
-					_M[i - 1] = _M[i] * sqrt(x);
-				}
-			}
-			break;
-		default:
-			{
-				// create vector of sorted random values
-				vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
-				for (unsigned int i = 0; i < (_n - 2); ++i) {
-					r[i] = randomNumberGenerator::instance()->rndm();
-				}
-				sort(r.begin(), r.end());
-				// set effective masses of (intermediate) two-body decays
-				const double massInterval = nBodyMass - _mSum[_n - 1];    // kinematically allowed mass interval
-				for (unsigned int i = 1; i < (_n - 1); ++i) {             // loop over intermediate 2- to (n - 1)-bodies
-					_M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
-				}
-			} // end default mass picking
-			break;
+	if (M.size() != _n) {
+		printErr << "trying to set wrong number of effective two-body masses. Aborting...";
+		throw;
 	}
+
+	_M = M;
+}
+
+
+// copy angles of the 2-body decay of the (i + 1)-body systems
+void
+nBodyPhaseSpaceKinematics::setAngles(const std::vector<double>& cosTheta,
+                                     const std::vector<double>& phi)
+{
+	if (cosTheta.size() != _n) {
+		printErr << "trying to set wrong number of two-body decay angles (cos(theta)). Aborting...";
+		throw;
+	}
+	if (phi.size() != _n) {
+		printErr << "trying to set wrong number of two-body decay angles (phi). Aborting...";
+		throw;
+	}
+
+	_cosTheta = cosTheta;
+	_phi      = phi;
 }
 
 
 // computes event weight (= integrand value) and breakup momenta
-// uses vector of intermediate two-body masses prepared by pickMasses()
+// uses vector of intermediate two-body masses prepared by setting
+// _m either directly or via setMasses
 double
-nBodyPhaseSpaceGen::calcWeight()
+nBodyPhaseSpaceKinematics::calcWeight()
 {
 	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
 		_breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
@@ -319,9 +240,26 @@ nBodyPhaseSpaceGen::calcWeight()
 			break;
 		case NUPHAZ:
 			{  // NUPHAZ's weight
+				_weight = 1;
+				for (unsigned int i = nmbOfDaughters() - 1; i >= 2; --i) {  // loop over 3- to n-bodies
+					// generate variable for (i + 1)-body decay that follows importance sampling distribution as defined in eq. (12)
+					//
+					// 1) calculate probability
+					const double sqrtU  = _m[i] / _M[i];                                  // cf. eq. (39) and (51)
+					const double u      = sqrtU * sqrtU;
+					const double xMin   = _mSum[i - 1] * _mSum[i - 1] / (_M[i] * _M[i]);  // cf. eq. (8)
+					const double xMax   = (1 - sqrtU) * (1 - sqrtU);
+					const double deltaX = xMax - xMin;
+					const double term   = 1 + u - xMin;
+					// 2) calculate generator for distribution
+					const double sqrtX = _M[i - 1] / _M[i];
+					const double x     = sqrtX * sqrtX;
+					// 3) calculate weight factor
+					const double deltaZ = (i * term - (i - 1) * deltaX) * pow(deltaX, (int)i - 1);  // cf. eq. (17) and (18)
+					_weight *= deltaZ * pow(x / (x - xMin), (int)i - 2) * F(x, u) / (1 + u - x);    // cf. eq. (24)
+				}
 				const double M2 = _M[1] * _M[1];
 				_weight *= _norm * pow(_M[_n - 1], 2 * (int)_n - 4) * F(_m[1] * _m[1] / M2, _m[0] * _m[0] / M2);
-				//_weight *= F(_m[1] * _m[1] / M2, _m[0] * _m[0] / M2);
 			}
 			break;
 		case GENBOD:
@@ -364,7 +302,7 @@ nBodyPhaseSpaceGen::calcWeight()
 // systems, the Lorentz vector of the decaying system, and the decay angles
 // uses the break-up momenta calculated by calcWeight()
 void
-nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
+nBodyPhaseSpaceKinematics::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
 {
 	switch (_kinematicsType) {
 		case RAUBOLD_LYNCH:
@@ -446,38 +384,16 @@ nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz
 }
 
 
-// calculates maximum weight for given n-body mass
-double
-nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // sic!
-                                      const unsigned int nmbOfIterations)  // number of generated events
-{
-	double maxWeight = 0;
-	for (unsigned int i = 0; i < nmbOfIterations; ++i) {
-		pickMasses(nBodyMass);
-		calcWeight();
-		maxWeight = max(_weight, maxWeight);
-	}
-	return maxWeight;
-}
-
-
 ostream&
-nBodyPhaseSpaceGen::print(ostream& out) const
+nBodyPhaseSpaceKinematics::print(ostream& out) const
 {
-	out << "nBodyPhaseSpaceGen parameters:" << endl
-	    << "    number of daughter particles ............... " << _n                 << endl
-//	    << "    masses of the daughter particles ........... " << _m                 << endl
-//	    << "    sums of daughter particle masses ........... " << _mSum              << endl
-//	    << "    effective masses of (i + 1)-body systems ... " << _M                 << endl
-//	    << "    cos(polar angle) in (i + 1)-body systems ... " << _cosTheta          << endl
-//	    << "    azimuth in (i + 1)-body systems ............ " << _phi               << endl
-//	    << "    breakup momenta in (i + 1)-body systems .... " << _breakupMom        << endl
+	out << "nBodyPhaseSpaceKinematics parameters:" << endl
 	    << "    weight formula ............................. " << _weightType        << endl
+	    << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
+	    << "    number of daughter particles ............... " << _n                 << endl
 	    << "    normalization value ........................ " << _norm              << endl
 	    << "    weight of generated event .................. " << _weight            << endl
-	    << "    maximum weight used in hit-miss MC ......... " << _maxWeight         << endl
 	    << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
-	    << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
 	    << "    daughter four-momenta:" << endl;
 
 	for (unsigned int i = 0; i < _n; ++i) {

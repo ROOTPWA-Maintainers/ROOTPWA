@@ -79,35 +79,25 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef NBODYPHASESPACEGEN_HH
-#define NBODYPHASESPACEGEN_HH
+#ifndef NBODYPHASESPACEKINEMATICS_HH
+#define NBODYPHASESPACEKINEMATICS_HH
 
 
 #include <iostream>
 #include <vector>
 
-#include "TLorentzVector.h"
-#include "TRandom3.h"
-
-#ifndef __CINT__
-#include "reportingUtils.hpp"
-#include "mathUtils.hpp"
-#endif
-
-#include "randomNumberGenerator.h"
-
-#define DEBUG 0
+#include <TLorentzVector.h>
 
 
 namespace rpwa {
 
 
-	class nBodyPhaseSpaceGen {
+	class nBodyPhaseSpaceKinematics {
 
-	  public:
+	public:
 
-		nBodyPhaseSpaceGen();
-		virtual ~nBodyPhaseSpaceGen();
+		nBodyPhaseSpaceKinematics();
+		virtual ~nBodyPhaseSpaceKinematics();
 
 		//----------------------------------------------------------------------------
 		// generator setup
@@ -116,65 +106,42 @@ namespace rpwa {
 		bool setDecay(const unsigned int   nmbOfDaughters,   // number of daughter particles
 		              const double*        daughterMasses);  // array of daughter particle masses
 
-		// high-level generator interface
-		/// generates full event with certain n-body mass and momentum and returns event weight
-		double generateDecay        (const TLorentzVector& nBody);          // Lorentz vector of n-body system in lab frame
-		/// \brief generates full event with certain n-body mass and momentum only when event is accepted (return value = true)
-		/// this function is more efficient, if only weighted events are needed
-		bool   generateDecayAccepted(const TLorentzVector& nBody,           // Lorentz vector of n-body system in lab frame
-		                             const double          maxWeight = 0);  // if positive, given value is used as maximum weight, otherwise _maxWeight
-
 
 		//----------------------------------------------------------------------------
 		// low-level generator interface
-		/// randomly choses the (n - 2) effective masses of the respective (i + 1)-body systems
-		virtual void pickMasses(const double nBodyMass);  // total energy of n-body system in its RF
+
+		// copy effective masses of (i + 1)-body systems
+		void setMasses(const std::vector<double>& M);
+
+		// copy angles of the 2-body decay of the (i + 1)-body systems
+		void setAngles(const std::vector<double>& cosTheta,
+		               const std::vector<double>& phi);
+
+		enum weightTypeEnum {S_U_CHUNG = 1,   // gives physically correct mass dependence
+		                     NUPHAZ    = 2,   // weight used in nuphaz
+		                     GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
+		                     FLAT      = 4};   // uniform mass distribution; warning: produces distorted angular distribution
+		void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
+		weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
 
 		/// \brief computes event weight and breakup momenta
-		/// operates on vector of intermediate two-body masses prepared by pickMasses()
+		/// operates on vector of intermediate two-body masses
 		double calcWeight();
-
-		/// randomly choses the (n - 1) polar and (n - 1) azimuthal angles in the respective (i + 1)-body RFs
-		inline void pickAngles();
-
-		/// \brief calculates full event kinematics from the effective masses of the (i + 1)-body systems and the Lorentz vector of the decaying system
-		/// uses the break-up momenta calculated by calcWeight() and angles from pickAngles()
-		void calcEventKinematics(const TLorentzVector& nBody);  // Lorentz vector of n-body system in lab frame
 
 		enum kinematicsTypeEnum {BLOCK         = 1,   // method for calculation of event kinematics used in nuphaz (faster)
 		                         RAUBOLD_LYNCH = 2};  // method for calculation of event kinematics used in genbod
 		void               setKinematicsType(const kinematicsTypeEnum kinematicsType) { _kinematicsType = kinematicsType; }  ///< selects algorithm used to calculate event kinematics
 		kinematicsTypeEnum kinematicsType   () const                                  { return _kinematicsType;           }  ///< returns algorithm used to calculate event kinematics
 
-
-		void setVerbose(bool flag){_verbose=flag;}
-
-		//----------------------------------------------------------------------------
-		// weight routines
-		enum weightTypeEnum {S_U_CHUNG = 1,   // gives physically correct mass dependence
-		                     NUPHAZ    = 2,   // weight used in nuphaz
-		                     GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
-		                     FLAT      = 4};   // uniform mass distribution; warning: produces distorted angular distribution
-		void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
-
-		weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
+		/// \brief calculates full event kinematics from the effective masses of the (i + 1)-body systems and the Lorentz vector of the decaying system
+		/// uses the break-up momenta calculated by calcWeight() and angles from pickAngles()
+		void calcEventKinematics(const TLorentzVector& nBody);  // Lorentz vector of n-body system in lab frame
 
 
-		void   setMaxWeight          (const double maxWeight) { _maxWeight = maxWeight;    }  ///< sets maximum weight used for hit-miss MC
-		double maxWeight             () const                 { return _maxWeight;         }  ///< returns maximum weight used for hit-miss MC
 		double normalization         () const                 { return _norm;              }  ///< returns normalization used in weight calculation
 		double eventWeight           () const                 { return _weight;            }  ///< returns weight of generated event
 		double maxWeightObserved     () const                 { return _maxWeightObserved; }  ///< returns maximum observed weight since instantiation
 		void   resetMaxWeightObserved()                       { _maxWeightObserved = 0;    }  ///< sets maximum observed weight back to zero
-
-		/// estimates maximum weight for given n-body mass
-		double estimateMaxWeight(const double       nBodyMass,                 // sic!
-		                         const unsigned int nmbOfIterations = 10000);  // number of generated events
-
-		/// \brief applies event weight in form of hit-miss MC
-		/// assumes that event weight has been already calculated by calcWeight()
-		/// if maxWeight > 0 value is used as maximum weight, otherwise _maxWeight value is used
-		inline bool eventAccepted(const double maxWeight = 0);
 
 		//----------------------------------------------------------------------------
 		// trivial accessors
@@ -189,45 +156,42 @@ namespace rpwa {
 		double                             phi                (const int index) const { return _phi[index];        }  ///< returns azimuth in (index + 1)-body RF
 
 
+		virtual std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
+		friend std::ostream& operator << (std::ostream&                    out,
+		                                  const nBodyPhaseSpaceKinematics& gen) { return gen.print(out); }
 
-		std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
-		friend std::ostream& operator << (std::ostream&             out,
-		                                  const nBodyPhaseSpaceGen& gen) { return gen.print(out); }
-
-	  private:
+	private:
 
 		/// \brief reduced 2-body phase-space factor = 2 * q / M
 		/// needed for NUPHAS weight calculation
 		static inline double F(const double x,
 		                       const double y);
 
-		// external parameters
-		std::vector<double> _m;  ///< masses of daughter particles
-
-	  protected:
-
-		// internal variables that might need to be modified by pickMasses
-		std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
-		double                      _weight;             ///< phase space weight of generated event
-
-	  private:
-
-		// internal variables
-		unsigned int                _n;                  ///< number of daughter particles
-		std::vector<double>         _cosTheta;           ///< cosine of polar angle of the 2-body decay of the (i + 1)-body system
-		std::vector<double>         _phi;                ///< azimuthal angle of the 2-body decay of the (i + 1)-body system
-		std::vector<double>         _mSum;               ///< sums of daughter particle masses
-		std::vector<double>         _breakupMom;         ///< breakup momenta for the two-body decays: (i + 1)-body --> daughter_(i + 1) + i-body
-		std::vector<TLorentzVector> _daughters;          ///< Lorentz vectors of the daughter particles
+		// parameters and constants
 		weightTypeEnum              _weightType;         ///< switches between different weight formulas
-		double                      _norm;               ///< normalization value
-		double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
-		double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
 		kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
 
-		bool _verbose;
+		unsigned int                _n;                  ///< number of daughter particles
+		std::vector<double>         _m;                  ///< masses of daughter particles
+		std::vector<double>         _mSum;               ///< sums of daughter particle masses
+		double                      _norm;               ///< normalization value
 
-		ClassDef(nBodyPhaseSpaceGen, 2)
+	protected:
+
+		// variables that can be changed by inheriting classes
+		std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
+		std::vector<double>         _cosTheta;           ///< cosine of polar angle of the 2-body decay of the (i + 1)-body system
+		std::vector<double>         _phi;                ///< azimuthal angle of the 2-body decay of the (i + 1)-body system
+
+	private:
+
+		// variables
+		std::vector<double>         _breakupMom;         ///< breakup momenta for the two-body decays: (i + 1)-body --> daughter_(i + 1) + i-body
+		std::vector<TLorentzVector> _daughters;          ///< Lorentz vectors of the daughter particles
+		double                      _weight;             ///< phase space weight of generated event
+		double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
+
+		ClassDef(nBodyPhaseSpaceKinematics, 1)
 
 	};
 
@@ -235,38 +199,9 @@ namespace rpwa {
 
 
 inline
-void
-rpwa::nBodyPhaseSpaceGen::pickAngles()
-{
-	randomNumberGenerator* random = randomNumberGenerator::instance();
-	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
-		_cosTheta[i] = 2 * random->rndm() - 1;  // range [-1,    1]
-		_phi[i]      = rpwa::twoPi * random->rndm();  // range [ 0, 2 pi]
-	}
-}
-
-
-inline
-bool
-rpwa::nBodyPhaseSpaceGen::eventAccepted(const double maxWeight)  // if maxWeight > 0, given value is used as maximum weight, otherwise _maxWeight
-{
-	if (_weightType == FLAT)
-		return true;  // no weighting
-	const double max = (maxWeight <= 0) ? _maxWeight : maxWeight;
-	if (max <= 0) {
-		printErr << "maximum weight = " << max << " does not make sense. rejecting event." << std::endl;
-		return false;
-	}
-	if ((_weight / max) > randomNumberGenerator::instance()->rndm())
-		return true;
-	return false;
-}
-
-
-inline
 double
-rpwa::nBodyPhaseSpaceGen::F(const double x,
-                            const double y)
+rpwa::nBodyPhaseSpaceKinematics::F(const double x,
+                                   const double y)
 {
 	const double val = 1 + (x - y) * (x - y) - 2 * (x + y);
 	if (val < 0)
@@ -276,4 +211,4 @@ rpwa::nBodyPhaseSpaceGen::F(const double x,
 }
 
 
-#endif  // NBODYPHASESPACEGEN_H
+#endif  // NBODYPHASESPACEKINEMATICS_H
