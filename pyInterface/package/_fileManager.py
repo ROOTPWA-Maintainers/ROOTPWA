@@ -186,30 +186,6 @@ class fileManager(object):
 		return retval
 
 
-#	def getAmplitudeFilePaths(self, eventFileId, eventsType):
-#		eventsType = fileManager.pyEventsType(eventsType)
-#		retval = {}
-#		for waveName_i, waveName in enumerate(self.keyFiles.keys()):
-#			if (eventsType, eventFileId, waveName_i) in self.amplitudeFiles:
-#				retval[waveName] = self.amplitudeDirectory + "/" + self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
-#		return ampFileList
-
-
-#	def getAmplitudeFilePath(self, eventFileId, waveName, eventsType):
-#		eventsType = fileManager.pyEventsType(eventsType)
-#		if (eventsType, eventFileId, waveName) not in self.amplitudeFiles:
-#			pyRootPwa.utils.printWarn("no matching amplitude found.")
-#			return ""
-#		return self.amplitudeDirectory + "/" + self.amplitudeFiles[(eventsType, eventFileId, self.keyFiles.keys().index(waveName))]
-
-
-#	def getAllAmplitudeFilePaths(self):
-#		retval = []
-#		for _, amplitudeFilePath in self.amplitudeFiles.iteritems():
-#			retval.append(amplitudeFilePath)
-#		return retval
-
-
 	def getEventAndAmplitudeFilePathsInBin(self, multiBin, eventsType):
 		# returns { "dataFileName" : { "waveName" : "amplitudeFileName" } }
 		eventsType = fileManager.pyEventsType(eventsType)
@@ -231,31 +207,6 @@ class fileManager(object):
 		return self.integralFiles[(self.binList.index(multiBin), eventsType)]
 
 
-#	def getBinIndex(self, binningInfo, checkConsistency = True):
-#		# binInformation = { "variableName": value }
-#		if not self.binList:
-#			pyRootPwa.utils.printWarn("bin list is empty.")
-#			return -1
-#		foundIndex = -1
-#		for binIndex, multiBin in enumerate(self.binList):
-#			if multiBin.inBin(binningInfo):
-#				if not checkConsistency:
-#					return binIndex
-#				if foundIndex > 0:
-#					pyRootPwa.utils.printWarn("point " + str(binningInfo) + " lies in at least two bins: " + str(binIndex) + " and " + str(foundIndex))
-#					return -1
-#				foundIndex = binIndex
-#		pyRootPwa.utils.printWarn("point " + str(binningInfo) + " does not lay in any bin.")
-#		return -1
-#
-#
-#	def getBin(self, binningInfo, checkConsistency = True):
-#		binIndex = self.getBinIndex(binningInfo, checkConsistency)
-#		if binIndex < 0:
-#			return None
-#		return self.binList[self.getBinIndex(binningInfo, checkConsistency)]
-
-
 	def _getEventFileIdsForIntegralBin(self, multiBin, eventsType):
 		eventsType = fileManager.pyEventsType(eventsType)
 		if eventsType not in self.dataFiles:
@@ -273,16 +224,6 @@ class fileManager(object):
 			if found:
 				eventFileIds.append(eventFileId)
 		return eventFileIds
-
-
-#	def getEventFilePathsForForIntegralBin(self, multiBin, eventsType = None):
-#		eventFileIds = self.getEventFileIds(multiBin, eventsType)
-#		retval = collections.OrderedDict()
-#		for evTyp, evFileIds in eventFileIds.iteritems():
-#			retval[evTyp] = []
-#			for evFileId in evFileIds:
-#				retval[evTyp].append(self.dataFiles[evTyp][evFileId])
-#		return retval
 
 
 	def getWaveNameList(self):
