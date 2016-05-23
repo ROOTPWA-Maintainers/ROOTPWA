@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
 	parser.add_argument("outputFileName", type=str, metavar="fileName", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
-	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
+	parser.add_argument("-b", type=int, metavar="#", dest="integralBin", default=0, help="integral bin id of fit (default: 0)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random seed (default: 0)")
 	parser.add_argument("-N", type=int, metavar="#", dest="nAttempts", default=1, help="number of fit attempts to perform")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
@@ -47,17 +47,23 @@ if __name__ == "__main__":
 		printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	ampFileList = fileManager.getAmplitudeFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
-	if not ampFileList:
+	if args.integralBin < 0:
+		pyRootPwa.utils.printErr("bin < 0 (" + str(args.integralBin) + "). Aborting...")
+		sys.exit(1)
+	elif args.integralBin >= len(fileManager.binList):
+		pyRootPwa.utils.printErr("bin out of range (" + str(args.integralBin) + ">=" + str(len(fileManager.binList)) + "). Aborting...")
+		sys.exit(1)
+	multiBin = fileManager.binList[args.integralBin]
+	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2.
+	eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL)
+	if not eventAndAmpFileDict:
 		printErr("could not retrieve valid amplitude file list. Aborting...")
 		sys.exit(1)
-	binningMap = fileManager.getBinFromID(args.binID)
-	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2.
 
-	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
+	psIntegralPath  = fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED)
 	accIntegralPath = psIntegralPath
 	if not args.noAcceptance:
-		accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+		accIntegralPath = fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.ACCEPTED)
 	elif args.accEventsOverride != 0:
 		# for a fit without acceptance corrections the number of events
 		# the acceptance matrix is normalized to needs to be equal to
@@ -71,12 +77,12 @@ if __name__ == "__main__":
 			sys.exit(1)
 
 	fitResults = pyRootPwa.pwaNloptFit(
-	                                   ampFileList = ampFileList,
+	                                   eventAndAmpFileDict = eventAndAmpFileDict,
 	                                   normIntegralFileName = psIntegralPath,
 	                                   accIntegralFileName = accIntegralPath,
-	                                   binningMap = binningMap,
+	                                   multiBin = multiBin,
 	                                   waveListFileName = args.waveListFileName,
-	                                   keyFiles = fileManager.getKeyFiles(),
+	                                   waveDescriptions = fileManager.getWaveDescriptions(),
 	                                   seed = args.seed,
 	                                   cauchy = args.cauchyPriors,
 	                                   cauchyWidth = args.cauchyPriorWidth,
