@@ -63,50 +63,53 @@ using namespace rpwa;
 namespace {
 
 
-	typedef boost::shared_ptr<libconfig::Config> configPtr;
+	typedef boost::shared_ptr<Config> configPtr;
 
 
-	const std::string binBorders = "bins";
-	const std::string expandName = "expand";
-	const std::string expandTypeName = "type";
-	const std::string expandNameName = "name";
+	const string binBorders     = "bins";
+	const string degreeName     = "degree";
+	const string realCoeffName  = "realCoefficients";
+	const string imagCoeffName  = "imagCoefficients";
+	const string expandName     = "expand";
+	const string expandTypeName = "type";
+	const string expandNameName = "name";
 
 
-	std::string
-	getExpandType(const libconfig::Setting* setting)
+	string
+	getExpandType(const Setting* setting)
 	{
-		std::string expandType;
+		string expandType;
 		if (not setting->lookupValue(expandTypeName, expandType)) {
-			printErr << "no expand type given." << std::endl;
+			printErr << "no expand type given." << endl;
 			return "";
 		}
 		return expandType;
 	}
 
 
-	std::string
-	getExpandName(const libconfig::Setting* setting)
+	string
+	getExpandName(const Setting* setting)
 	{
-		std::string binningName;
+		string binningName;
 		if (not setting->lookupValue(expandNameName, binningName)) {
-			printErr << "no binning name given." << std::endl;
+			printErr << "no binning name given." << endl;
 			return "";
 		}
 		return binningName;
 	}
 
 
-	std::vector<double>
-	getBinning(const libconfig::Setting* setting)
+	vector<double>
+	getBinning(const Setting* setting)
 	{
-		const libconfig::Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
+		const Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
 		if (not binningSetting) {
 			printErr << "no binning given to expand '" << expandName << "' "
-			         << "in path '" << setting->getPath() << "'." << std::endl;
-			return std::vector<double>();
+			         << "in path '" << setting->getPath() << "'." << endl;
+			return vector<double>();
 		}
 		const int length = binningSetting->getLength();
-		std::vector<double> binningVector(length);
+		vector<double> binningVector(length);
 		for (int bin=0; bin<length; ++bin) {
 			binningVector[bin] = (*binningSetting)[bin];
 		}
@@ -114,19 +117,19 @@ namespace {
 	}
 
 
-	libconfig::Setting*
-	findExpand(const libconfig::Setting &setting)
+	Setting*
+	findExpand(const Setting &setting)
 	{
-		libconfig::Setting* expand  = findLibConfigGroup(setting, expandName, false);
+		Setting* expand  = findLibConfigGroup(setting, expandName, false);
 		if (expand) {
 			return expand;
 		}
 		const int length = setting.getLength();
 		for (int i=0; i<length; ++i) {
-			libconfig::Setting &actSetting = setting[i];
+			Setting &actSetting = setting[i];
 			const int actLength = actSetting.getLength();
 			if (actLength > 0) {
-				libconfig::Setting* recurse = findExpand(actSetting);
+				Setting* recurse = findExpand(actSetting);
 				if (recurse) {
 					return recurse;
 				}
@@ -136,41 +139,66 @@ namespace {
 	}
 
 
-	std::vector<configPtr>
+	vector<configPtr>
 	expand(const configPtr& config)
 	{
-		std::vector<configPtr> expanded;
+		vector<configPtr> expanded;
 
-		libconfig::Setting& root     = config->getRoot();
-		libconfig::Setting* toExpand = findExpand(root);
+		Setting& root     = config->getRoot();
+		Setting* toExpand = findExpand(root);
 		if (not toExpand) {
 			expanded.push_back(config);
 			return expanded;
 		}
-		libconfig::Setting& parent = toExpand->getParent();
+		Setting& parent = toExpand->getParent();
 
-		const std::string expandType = getExpandType(toExpand);
+		const string expandType = getExpandType(toExpand);
 		if (expandType == "binning") {
-			const std::string         binningName = getExpandName(toExpand);
-			const std::vector<double> binning     = getBinning(toExpand);
+			const string         binningName = getExpandName(toExpand);
+			const vector<double> binning     = getBinning(toExpand);
 
 			parent.remove(expandName);
 
 			for (size_t bin=0; bin<binning.size()-1; ++bin) {
-				parent.add(binningName,libconfig::Setting::TypeList);
-				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin];
-				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+				parent.add(binningName,Setting::TypeList);
+				parent[binningName.c_str()].add(Setting::TypeFloat) = binning[bin];
+				parent[binningName.c_str()].add(Setting::TypeFloat) = binning[bin+1];
 
-				configPtr newConfig(new libconfig::Config);
+				configPtr newConfig(new Config);
 				copyConfig(*config, *newConfig, waveDescription::debug());
 
 				parent.remove(binningName);
 
-				const std::vector<configPtr> newExpanded = expand(newConfig);
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "taylor") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = 0; i < degree+1; ++i) {
+				parent.add(realCoeffName, Setting::TypeList);
+				parent.add(imagCoeffName, Setting::TypeList);
+				for (int j = 0; j < i; ++j) {
+					parent[realCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+					parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				}
+				parent[realCoeffName.c_str()].add(Setting::TypeFloat) = 1.;
+				parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(realCoeffName);
+				parent.remove(imagCoeffName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
 				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
 			}
 		} else {
-			printErr << "expand type '" << expandType << "' unknown." << std::endl;
+			printErr << "expand type '" << expandType << "' unknown." << endl;
 		}
 
 		return expanded;
