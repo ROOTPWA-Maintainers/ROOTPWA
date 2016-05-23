@@ -4,12 +4,12 @@ import pyRootPwa.core
 import pyRootPwa.utils
 ROOT = pyRootPwa.utils.ROOT
 
-def pwaFit(ampFileList,
+def pwaFit(eventAndAmpFileDict,
            normIntegralFileName,
            accIntegralFileName,
-           binningMap,
+           multiBin,
            waveListFileName,
-           keyFiles,
+           waveDescriptions,
            seed=0,
            cauchy=False,
            cauchyWidth=0.5,
@@ -22,14 +22,15 @@ def pwaFit(ampFileList,
            attempts=1
           ):
 
-	waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, keyFiles)
-	massBinCenter = (binningMap['mass'][1] + binningMap['mass'][0]) / 2. # YOU CAN DO BETTER
+	waveDescThres = pyRootPwa.utils.getWaveThresFromWaveList(waveListFileName, waveDescriptions)
+	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2. # YOU CAN DO BETTER
 
 	likelihood = pyRootPwa.initLikelihood(waveDescThres = waveDescThres,
 	                                      massBinCenter = massBinCenter,
-	                                      ampFileList = ampFileList,
+	                                      eventAndAmpFileDict = eventAndAmpFileDict,
 	                                      normIntegralFileName = normIntegralFileName,
 	                                      accIntegralFileName = accIntegralFileName,
+	                                      multiBin = multiBin,
 	                                      accEventsOverride = accEventsOverride,
 	                                      cauchy = cauchy,
 	                                      cauchyWidth = cauchyWidth,
@@ -39,8 +40,8 @@ def pwaFit(ampFileList,
 		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
 		return [ ]
 
-	lowerBound = binningMap[binningMap.keys()[0]][0]
-	upperBound = binningMap[binningMap.keys()[0]][1]
+	lowerBound = multiBin.boundaries['mass'][0]
+	upperBound = multiBin.boundaries['mass'][1]
 
 	if attempts == 1:
 		seeds = [ seed ]

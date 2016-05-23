@@ -47,6 +47,15 @@ class InputFile(object):
 		self.additionalVariables = additionalVariables
 
 
+	def __str__(self):
+		retval = ""
+		retval += "'" + self.dataFileName + "': ("
+		retval += str(self.binningMap) + ", "
+		retval += str(self.eventsType) + ", "
+		retval += str(self.additionalVariables) + ")"
+		return retval
+
+
 class EventsType(object):
 # pylint: disable=C0103
 	OTHER     = 0
@@ -162,6 +171,13 @@ class fileManager(object):
 				return waveDescription
 		pyRootPwa.utils.printErr("none of the constructed topologies matched the given wave name.")
 		return None
+
+
+	def getWaveDescriptions(self):
+		retval = collections.OrderedDict()
+		for waveName in self.keyFiles:
+			retval[waveName] = self.getWaveDescription(waveName)
+		return retval
 
 
 #	def getAmplitudeFilePaths(self, eventFileId, eventsType):
