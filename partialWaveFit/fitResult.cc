@@ -96,7 +96,7 @@ fitResult::~fitResult()
 
 
 fitResult*
-fitResult::variedProdAmps() {
+fitResult::variedProdAmps() const {
 	// copy complete info
 	fitResult* result = new fitResult(*this);
 
