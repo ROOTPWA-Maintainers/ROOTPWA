@@ -523,7 +523,7 @@ enable_testing()
 #   RPWA_<FOLDER>_LIB that holds the library name
 #
 # * compilation of each directory can be switched off by defining a
-#   variable with name DO_NOT_COMILE_RPWA_<FOLDER> and setting it to
+#   variable with name DO_NOT_COMPILE_RPWA_<FOLDER> and setting it to
 #   a non-empty value
 
 set(_SRC_DIRS
