@@ -54,7 +54,6 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("bin out of range (" + str(args.integralBin) + ">=" + str(len(fileManager.binList)) + "). Aborting...")
 		sys.exit(1)
 	multiBin = fileManager.binList[args.integralBin]
-	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2.
 	eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL)
 	if not eventAndAmpFileDict:
 		printErr("could not retrieve valid amplitude file list. Aborting...")

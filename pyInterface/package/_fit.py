@@ -22,7 +22,7 @@ def pwaFit(eventAndAmpFileDict,
            attempts=1
           ):
 
-	waveDescThres = pyRootPwa.utils.getWaveThresFromWaveList(waveListFileName, waveDescriptions)
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
 	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2. # YOU CAN DO BETTER
 
 	likelihood = pyRootPwa.initLikelihood(waveDescThres = waveDescThres,
@@ -89,7 +89,7 @@ def pwaNloptFit(eventAndAmpFileDict,
                 attempts=1
                ):
 
-	waveDescThres = pyRootPwa.utils.getWaveThresFromWaveList(waveListFileName, waveDescriptions)
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
 	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2. # YOU CAN DO BETTER
 
 	likelihood = pyRootPwa.initLikelihood(waveDescThres = waveDescThres,

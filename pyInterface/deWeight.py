@@ -38,7 +38,6 @@ if __name__ == "__main__":
 	additionalVariables = [None] * len(additionalVariableLabels)
 	weightIndex = additionalVariableLabels.index("weight")
 	for i, additionalVariableLabel in enumerate(additionalVariableLabels):
-		print(i, additionalVariableLabel)
 		additionalVariables[i] = numpy.array(1, dtype = float)
 		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
 
@@ -64,7 +63,8 @@ if __name__ == "__main__":
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
 	                             metaData.binningMap(),
-	                             additionalVariableLabels):
+	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableLabels)
+	                                                           if i != weightIndex ]):
 		printErr("could not initialize fileWriter. Aborting...")
 		inputFile.Close()
 		sys.exit(1)
@@ -77,12 +77,13 @@ if __name__ == "__main__":
 	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.productionKinematicsMomentaBranchName, prodKinMomenta)
 	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.decayKinematicsMomentaBranchName, decayKinMomenta)
 
-	for i in xrange(inputTree.GetEntries()):
-		inputTree.GetEntry(i)
+	for eventIndex in xrange(inputTree.GetEntries()):
+		inputTree.GetEntry(eventIndex)
 		normWeight = additionalVariables[weightIndex] / maxWeight
 		cut = pyRootPwa.ROOT.gRandom.Rndm()
 		if normWeight > cut:
-			fileWriter.addEvent(prodKinMomenta, decayKinMomenta, [float(variable) for variable in additionalVariables])
+			fileWriter.addEvent(prodKinMomenta, decayKinMomenta,
+			                    [float(variable) for i, variable in enumerate(additionalVariables) if i != weightIndex])
 			acceptedEntries += 1
 		overallEntries += 1
 	fileWriter.finalize()

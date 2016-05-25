@@ -30,7 +30,7 @@ class multiBin(object):
 
 	def __lt__(self, other):
 		keys = sorted(self.boundaries.keys())
-		if keys != sorted(self.boundaries.keys()):
+		if keys != sorted(other.boundaries.keys()):
 			return False
 		for key in keys:
 			selfCenter = (self.boundaries[key][0] + self.boundaries[key][1]) / 2.
@@ -73,7 +73,7 @@ class multiBin(object):
 
 	def overlap(self, other):
 		keys = sorted(self.boundaries.keys())
-		if keys != sorted(self.boundaries.keys()):
+		if keys != sorted(other.boundaries.keys()):
 			return False
 		for key in keys:
 			if self.boundaries[key][1] <= other.boundaries[key][0]:

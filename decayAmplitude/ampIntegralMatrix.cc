@@ -300,7 +300,7 @@ bool
 ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetadata,
                              const unsigned long                       maxNmbEvents,
                              const string&                             weightFileName,
-                             const rpwa::eventMetadata*                eventMeta,
+                             const eventMetadata*                      eventMeta,
                              const map<string, pair<double, double> >& otfBin)
 {
 	if (ampMetadata.empty()) {
@@ -346,7 +346,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 	vector<amplitudeTreeLeaf*> ampTreeLeafs(_nmbWaves);
 	for(size_t waveIndex = 0; waveIndex < _nmbWaves; waveIndex++) {
 		ampTreeLeafs[waveIndex] = NULL;
-		ampMetadata[waveIndex]->amplitudeTree()->SetBranchAddress(rpwa::amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeafs[waveIndex]);
+		ampMetadata[waveIndex]->amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeafs[waveIndex]);
 	}
 
 	// make sure that either all or none of the waves have description (needed?)
@@ -401,11 +401,6 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 				return false;
 			}
 		}
-		if(binningVariables.size() != bounds.size()) {
-			printErr << "size mismatch between binning variables and bounds ("
-			         << binningVariables.size() << "!= " << bounds.size() << ")." << endl;
-			return false;
-		}
 	}
 
 	// loop over events and calculate integral matrix
@@ -415,8 +410,8 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 	// process weight file and amplitudes
 	vector<vector<complex<double> > > amps(_nmbWaves);
 	progress_display progressIndicator(_nmbEvents, cout, "");
-	bool             success = true;
-	unsigned long eventCounter = 0;
+	bool             success      = true;
+	unsigned long    eventCounter = 0;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
 
@@ -701,10 +696,10 @@ void
 ampIntegralMatrix::Streamer(TBuffer& R__b)
 {
 	if (R__b.IsReading()) {
-		R__b.ReadClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
+		R__b.ReadClassBuffer(ampIntegralMatrix::Class(), this);
 		readMultiArray();
 	} else {
 		storeMultiArray();
-		R__b.WriteClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
+		R__b.WriteClassBuffer(ampIntegralMatrix::Class(), this);
 	}
 }

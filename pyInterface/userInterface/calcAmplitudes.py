@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
 	waveList = []
 	if not args.wavelistFileName == "":
-		waveList = [ i[0] for i in pyRootPwa.utils.getWaveDescThresFromWaveList(args.wavelistFileName, fileManager.getKeyFiles()) ]
+		waveList = [ i[0] for i in pyRootPwa.utils.getWaveDescThresFromWaveList(args.wavelistFileName, fileManager.getWaveDescriptions()) ]
 	if not args.keyfileIndex == -1:
 		allWaveNames = fileManager.getWaveNameList()
 		if not args.keyfileIndex < len(allWaveNames):
@@ -81,6 +81,6 @@ if __name__ == "__main__":
 					sys.exit(1)
 				eventAmpFilePairs = eventAmpFilePairs[args.eventFileId:args.eventFileId+1]
 			for eventFilePath, amplitudeFilePath in eventAmpFilePairs:
-				if not pyRootPwa.calcAmplitude(eventFilePath, fileManager.getKeyFile(waveName), fileManager.getWaveDescription(waveName),
+				if not pyRootPwa.calcAmplitude(eventFilePath, waveName, fileManager.getWaveDescription(waveName),
 				                               amplitudeFilePath, args.maxNmbEvents, not args.noProgressBar):
 					pyRootPwa.utils.printWarn("could not calculate amplitude.")

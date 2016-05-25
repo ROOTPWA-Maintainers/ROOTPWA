@@ -52,9 +52,7 @@ def initLikelihood(waveDescThres,
 			pyRootPwa.utils.printErr("could not read metadata from event file '" + eventFileName + "'. Aborting...")
 			return False
 		eventMetas.append(eventMeta)
-	print(multiBin.boundaries)
 	likelihood.setOnTheFlyBinning(multiBin.boundaries, eventMetas)
-	nmbAmplitudes = len(eventAndAmpFileDict[eventAndAmpFileDict.keys()[0]].keys())
 	for waveName in eventAndAmpFileDict[eventAndAmpFileDict.keys()[0]]:
 		ampMetas = []
 		for eventFileName in eventAndAmpFileDict:

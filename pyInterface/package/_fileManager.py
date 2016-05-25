@@ -136,10 +136,6 @@ class fileManager(object):
 		return True
 
 
-	def checkBinning(self):
-		raise Exception("not implemented. " + repr(self))
-
-
 	def getEventAndAmplitudePairPathsForWave(self, eventsType, waveName):
 		eventsType = fileManager.pyEventsType(eventsType)
 		retval = []
@@ -171,7 +167,7 @@ class fileManager(object):
 			(success, amplitude) = waveDescription.constructAmplitude()
 			if not success:
 				pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
-				return collections.OrderedDict()
+				return None
 			constructedWaveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
 			if waveName == constructedWaveName:
 				return waveDescription
@@ -266,7 +262,7 @@ class fileManager(object):
 						fullDir = self.amplitudeDirectory + "/" + str(subDir)
 						if not fullDir in dirSet:
 							dirSet.append(fullDir)
-						amplitudeFileName = str(subDir) + "/" + amplitudeFileName
+						amplitudeFileName = fullDir + "/" + amplitudeFileName
 						fileCount += 1
 					else:
 						amplitudeFileName = self.amplitudeDirectory + "/" + amplitudeFileName
