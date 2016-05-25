@@ -14,14 +14,10 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=
 		integrals.append(pyRootPwa.core.ampIntegralMatrix())
 		garbageCollectorCheater = []
 		ampMetas = []
-		eventFile = ROOT.TFile.Open(eventFileName, "READ")
+		(eventFile, eventMeta) = pyRootPwa.utils.openEventFile(eventFileName)
 		garbageCollectorCheater.append(eventFile)
-		if not eventFile:
+		if not eventFile or not eventMeta:
 			pyRootPwa.utils.printErr("could not open event file '" + eventFileName + "'. Aborting...")
-			return False
-		eventMeta = pyRootPwa.core.eventMetadata.readEventFile(eventFile)
-		if not eventMeta:
-			pyRootPwa.utils.printErr("could not read metadata from event file '" + eventFileName + "'. Aborting...")
 			return False
 		if not integralMetaData.addEventMetadata(eventMeta):
 			pyRootPwa.utils.printErr("could not add event metadata from event file '" + eventFileName + "' to integral metadata. Aborting...")

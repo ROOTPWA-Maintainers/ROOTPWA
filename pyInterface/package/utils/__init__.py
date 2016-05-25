@@ -4,6 +4,7 @@ from _progressBar import progressBar
 from _silencer import silencer
 from _binningMapFromArgList import binningMapFromArgList
 from _binning import multiBin
+from _fileUtils import openEventFile
 from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile
 from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList
 
