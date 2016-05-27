@@ -4,10 +4,10 @@
 #include "boost/python/suite/indexing/map_indexing_suite.hpp"
 
 #include<amplitudeMetadata.h>
-#include<particle.h>
-#include<particleProperties.h>
 #include<interactionVertex.h>
 #include<isobarDecayVertex.h>
+#include<particle.h>
+#include<particleProperties.h>
 #include<waveDescription.h>
 
 namespace bp = boost::python;

@@ -278,18 +278,18 @@ void rpwa::py::exportPwaLikelihood() {
 		)
 		.def("nmbPars", &rpwa::pwaLikelihood<std::complex<double> >::nmbPars)
 		.def("nmbParsFixed", &rpwa::pwaLikelihood<std::complex<double> >::nmbParsFixed)
-		.def("parName", &rpwa::pwaLikelihood<std::complex<double> >::parName)
+		.def(
+			"parName"
+			, &rpwa::pwaLikelihood<std::complex<double> >::parName
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def("parThreshold", &rpwa::pwaLikelihood<std::complex<double> >::parThreshold)
 		.def("parFixed", &rpwa::pwaLikelihood<std::complex<double> >::parFixed)
 		.def("useNormalizedAmps", &rpwa::pwaLikelihood<std::complex<double> >::useNormalizedAmps)
 		.def("setPriorType", &rpwa::pwaLikelihood<std::complex<double> >::setPriorType)
 		.def("priorType", &rpwa::pwaLikelihood<std::complex<double> >::priorType)
 		.def("setCauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::setCauchyWidth)
-		.def(
-			"cauchyWidth"
-			, &rpwa::pwaLikelihood<std::complex<double> >::cauchyWidth
-			, bp::return_value_policy<bp::copy_const_reference>()
-		)
+		.def("cauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::cauchyWidth)
 		.def(
 			"setQuiet"
 			, &rpwa::pwaLikelihood<std::complex<double> >::setQuiet

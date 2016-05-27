@@ -35,22 +35,22 @@
 
 #include "pwaLikelihood.h"
 
-#include <iomanip>
-#include <fstream>
-#include <complex>
 #include <cassert>
+#include <complex>
+#include <fstream>
+#include <iomanip>
 #include <limits>
 
+#include "TStopwatch.h"
 #include "TString.h"
 #include "TSystem.h"
-#include "TStopwatch.h"
 #include "TTree.h"
 
 #include "amplitudeMetadata.h"
-#include "eventMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "complexMatrix.h"
 #include "conversionUtils.hpp"
+#include "eventMetadata.h"
 #include "fileUtils.hpp"
 #include "reportingUtils.hpp"
 #ifdef USE_CUDA

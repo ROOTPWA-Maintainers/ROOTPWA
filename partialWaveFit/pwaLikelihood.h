@@ -35,10 +35,10 @@
 #define PWALIKELIHOOD_H
 
 
-#include <vector>
-#include <string>
 #include <iostream>
 #include <map>
+#include <string>
+#include <vector>
 
 #define BOOST_DISABLE_ASSERTS
 #include "boost/multi_array.hpp"
@@ -48,8 +48,8 @@
 #include "TMatrixT.h"
 #include "TVectorT.h"
 
-#include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
+#include "sumAccumulators.hpp"
 
 
 class TString;
@@ -148,7 +148,7 @@ namespace rpwa {
 		unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
 		unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
 		unsigned int             nmbParsFixed()                                    const { return _nmbParsFixed;            }  ///< returns number of fixed parameters
-		std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
+		const std::string&       parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
 		double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
 		bool                     parFixed    (const unsigned int parIndex)         const { return _parFixed[parIndex];      }  ///< returns whether likelihood parameter at parIndex is fixed due to mass threshold
 
@@ -168,7 +168,7 @@ namespace rpwa {
 		void          setPriorType     (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
 		priorEnum     priorType        () const                            { return _priorType;              }
 		void          setCauchyWidth   (const double    cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
-		const double& cauchyWidth      () const                            { return _cauchyWidth;            }
+		double        cauchyWidth      () const                            { return _cauchyWidth;            }
 		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
