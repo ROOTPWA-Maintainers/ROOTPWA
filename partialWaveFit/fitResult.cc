@@ -536,33 +536,6 @@ fitResult::fitParameter(const string& parName) const
 }
 
 
-/// returns fit parameter error by parameter name
-double
-fitResult::fitParameterErr(const string& parName) const
-{
-	if (not covMatrixValid()) {
-		printWarn << "fitResult does not have a valid error matrix. Returning zero error for fit parameter." << endl;
-		return 0;
-	}
-	// check if parameter corresponds to real or imaginary part of production amplitude
-	TString    name(parName);
-	const bool realPart = (name.Contains("RE") or name.Contains("flat"));
-	// find corresponding production amplitude
-	if (realPart)
-		name.ReplaceAll("_RE", "");
-	else
-		name.ReplaceAll("_IM", "");
-	const int index = prodAmpIndex(name.Data());
-	if (index >= 0) {
-		if (realPart)
-			return sqrt(prodAmpCov(index)[0][0]);
-		else
-			return sqrt(prodAmpCov(index)[1][1]);
-	}
-	return 0;  // not found
-}
-
-
 /// \brief constructs 2n x 2n covariance matrix of production amplitudes specified by index list
 // where n is the number of amplitudes
 // layout:
@@ -597,7 +570,7 @@ fitResult::prodAmpCov(const vector<unsigned int>& prodAmpIndices) const
 			const int i = parCovIndices[row];
 			const int j = parCovIndices[col];
 			if ((i >= 0) and (j >= 0))
-				prodAmpCov[row][col] = fitParameterCov(i, j);
+				prodAmpCov[row][col] = _fitParCovMatrix(i, j);
 		}
 	return prodAmpCov;
 }

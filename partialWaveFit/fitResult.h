@@ -155,11 +155,7 @@ namespace rpwa {
 		int waveIndex   (const std::string& waveName   ) const;  ///< returns wave index corresponding to wave name
 		int prodAmpIndex(const std::string& prodAmpName) const;  ///< returns production amplitude index corresponding to production amplitude name
 
-		double fitParameter   (const std::string& parName  ) const;  ///< returns value of fit parameter with name
-		double fitParameterErr(const std::string& parName  ) const;  ///< returns error of fit parameter with name
-		/// returns covariance of fit parameters at index A and B
-		double fitParameterCov(const unsigned int parIndexA,
-		                       const unsigned int parIndexB) const { return _fitParCovMatrix[parIndexA][parIndexB]; }
+		double fitParameter(const std::string& parName) const;  ///< returns value of fit parameter with name
 
 		/// returns production amplitude value at index
 		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }

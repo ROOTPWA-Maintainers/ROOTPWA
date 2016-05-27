@@ -341,8 +341,6 @@ void rpwa::py::exportFitResult() {
 		.def("waveIndex", &rpwa::fitResult::waveIndex)
 		.def("prodAmpIndex", &rpwa::fitResult::prodAmpIndex)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
-		.def("fitParameterErr", &rpwa::fitResult::fitParameterErr)
-		.def("fitParameterCov", &rpwa::fitResult::fitParameterCov)
 		.def("prodAmp", &fitResult::prodAmp)
 		.def("prodAmpCov", &fitResult_prodAmpCov_2)
 		.def("prodAmpCov", &fitResult_prodAmpCov_1)
