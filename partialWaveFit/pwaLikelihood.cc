@@ -1502,10 +1502,13 @@ template<typename complexT>
 void
 pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
                                              complexMatrix&  accMatrix,
-                                             vector<double>& phaseSpaceIntegral) const
+                                             vector<double>& phaseSpaceIntegral,
+                                             const bool      withFlat) const
 {
-	phaseSpaceIntegral.clear();
-	phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
+	const unsigned int size = _nmbWaves + (withFlat ? 1 : 0);
+	normMatrix.resizeTo(size, size);
+	accMatrix.resizeTo(size, size);
+	phaseSpaceIntegral.resize(size, 0);
 	unsigned int iIndex = 0;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
@@ -1523,17 +1526,19 @@ pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 			++iIndex;
 		}
 	}
-	// set unused entries to 0
-	for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
-		normMatrix.set(_nmbWaves, i, 0);
-		normMatrix.set(i, _nmbWaves, 0);
-		accMatrix.set (_nmbWaves, i, 0);
-		accMatrix.set (i, _nmbWaves, 0);
+	if (withFlat) {
+		// set unused entries to 0
+		for (unsigned int i = 0; i < normMatrix.nCols(); ++i) {
+			normMatrix.set(_nmbWaves, i, 0);
+			normMatrix.set(i, _nmbWaves, 0);
+			accMatrix.set (_nmbWaves, i, 0);
+			accMatrix.set (i, _nmbWaves, 0);
+		}
+		// add flat
+		normMatrix.set(_nmbWaves, _nmbWaves, 1.);
+		accMatrix.set (_nmbWaves, _nmbWaves, _totAcc);
+		phaseSpaceIntegral[_nmbWaves] = 1.;
 	}
-	// add flat
-	normMatrix.set(_nmbWaves, _nmbWaves, 1.);
-	accMatrix.set (_nmbWaves, _nmbWaves, _totAcc);
-	phaseSpaceIntegral[_nmbWaves] = 1.;
 }
 
 

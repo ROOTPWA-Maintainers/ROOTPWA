@@ -294,9 +294,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	complexMatrix accIntegral (0, 0);                 // normalization integral over full phase space with acceptance
 	vector<double> phaseSpaceIntegral;
 	if (not saveSpace) {
-		normIntegral.resizeTo(nmbWaves, nmbWaves);
-		accIntegral.resizeTo(nmbWaves, nmbWaves);
-		L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
+		L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral, true);
 	}
 	const int normNmbEvents = 1;  // number of events to normalize to
 

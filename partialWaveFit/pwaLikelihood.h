@@ -189,7 +189,8 @@ namespace rpwa {
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,
-		                         std::vector<double>&       phaseSpaceIntegral) const;
+		                         std::vector<double>&       phaseSpaceIntegral,
+		                         const bool                 withFlat = false) const;
 
 		// note: amplitudes which do not exist in higher ranks are NOT built!
 		void buildProdAmpArrays(const double*                       inPar,
