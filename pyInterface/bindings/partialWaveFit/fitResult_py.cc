@@ -308,13 +308,6 @@ namespace {
 		return sstr.str();
 	}
 
-	std::string fitResult_printAmpsGenPW(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printAmpsGenPW(sstr);
-		return sstr.str();
-	}
-
 	int fitResult_Write(const rpwa::fitResult& self, const char* name = 0)
 	{
 		return self.Write(name);
@@ -418,7 +411,6 @@ void rpwa::py::exportFitResult() {
 		.def("printWaveNames", &fitResult_printWaveNames)
 		.def("printProdAmps", &fitResult_printProdAmps)
 		.def("printWaves", &fitResult_printWaves)
-		.def("printAmpsGenPW", &fitResult_printAmpsGenPW)
 
 		.def("Write", &fitResult_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>)
