@@ -292,8 +292,6 @@ namespace rpwa {
 
 		// helper functions
 
-		inline static TMatrixT<double> matrixRepr(const std::complex<double>& c);
-
 		std::complex<double> normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 		                                            const unsigned int prodAmpIndexB) const;
 
@@ -488,23 +486,6 @@ namespace rpwa {
 			out << "        prod. amp [" << std::setw(3) << i->first << "] "
 			    << "-> norm. int. [" << std::setw(3) << i->second << "]" << std::endl;
 		return out;
-	}
-
-
-	/// \brief returns matrix representation of complex number
-	///
-	///   c.re  -c.im
-	///   c.im   c.re
-	// !!! possible optimization: return TMatrixTLazy
-	inline
-	TMatrixT<double>
-	fitResult::matrixRepr(const std::complex<double>& c)
-	{
-		TMatrixT<double> m(2, 2);
-		m[0][0] = m[1][1] = c.real();
-		m[0][1] = -c.imag();
-		m[1][0] =  c.imag();
-		return m;
 	}
 
 

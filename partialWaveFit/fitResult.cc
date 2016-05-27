@@ -56,6 +56,29 @@ using namespace rpwa;
 ClassImp(fitResult);
 
 
+namespace {
+
+
+	/// \brief returns matrix representation of complex number
+	///
+	///   c.re  -c.im
+	///   c.im   c.re
+	// !!! possible optimization: return TMatrixTLazy
+	inline
+	TMatrixT<double>
+	matrixRepr(const std::complex<double>& c)
+	{
+		TMatrixT<double> m(2, 2);
+		m[0][0] = m[1][1] = c.real();
+		m[0][1] = -c.imag();
+		m[1][0] =  c.imag();
+		return m;
+	}
+
+
+}
+
+
 fitResult::fitResult()
 	: _nmbEvents     (0),
 	  _normNmbEvents (0),
