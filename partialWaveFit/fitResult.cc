@@ -240,15 +240,55 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
 		          << "does not match number of production amplitude names "
 		          << "(" << _prodAmpNames.size() << ")." << endl;
+	if (_waveNames.size() > _prodAmpNames.size())
+		printWarn << "number of wave names (" << _waveNames.size() << ") "
+		          << "larger than number of production amplitude names "
+		          << "(" << _prodAmpNames.size() << ")." << endl;
+	if (_fitParCovMatrix.GetNrows() != _fitParCovMatrix.GetNcols())
+		printWarn << "covariance matrix is not a square matrix "
+		          << "(" << _fitParCovMatrix.GetNrows() << ", " << _fitParCovMatrix.GetNcols() << ")." << endl;
 	if (_prodAmps.size() != _fitParCovMatrixIndices.size())
 		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
 		          << "does not match number of covariance matrix indices "
 		          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+	for (unsigned int i=0; i<_fitParCovMatrixIndices.size(); ++i) {
+		if (_fitParCovMatrixIndices[i].first < 0)
+			printWarn << "entry in covariance matrix for real part of production "
+			          << "amplitude " << i << " does not exist." << endl;
+		if (_fitParCovMatrixIndices[i].first >= _fitParCovMatrix.GetNrows())
+			printWarn << "real part of production amplitude " << i << " is mapped to "
+			          << "entry in covariance matrix outside covariance matrix size "
+			          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+		if (_fitParCovMatrixIndices[i].second >= _fitParCovMatrix.GetNrows())
+			printWarn << "imaginary part of production amplitude " << i << " is mapped to "
+			          << "entry in covariance matrix outside covariance matrix size "
+			          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+	}
 	if (   (_waveNames.size() != _normIntegral.nRows())
 	    or (_waveNames.size() != _normIntegral.nCols()))
 		printWarn << "number of waves (" << _waveNames.size() << ") "
 		          << "does not match size of normalization integral "
 		          << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
+	if (   (_waveNames.size() != _acceptedNormIntegral.nRows())
+	    or (_waveNames.size() != _acceptedNormIntegral.nCols()))
+		printWarn << "number of waves (" << _waveNames.size() << ") "
+		          << "does not match size of acceptance integral "
+		          << "(" << _acceptedNormIntegral.nRows() << ", " << _acceptedNormIntegral.nCols() << ")." << endl;
+	if (_waveNames.size() != _phaseSpaceIntegral.size())
+		printWarn << "number of waves (" << _waveNames.size() << ") "
+		          << "does not match size of phase-space integral "
+		          << "(" << _phaseSpaceIntegral.size() << ")." << endl;
+	if (_prodAmps.size() != _normIntIndexMap.size())
+		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
+		          << "does not match number of mappings from production amplitudes to indices in integrals "
+		          << "(" << _normIntIndexMap.size() << ")." << endl;
+	for (unsigned int i=0; i<_prodAmps.size(); ++i) {
+		if (_normIntIndexMap.count(i) != 1)
+			printWarn << "production amplitude at index " << i << " is not mapped to any index in integrals." << endl;
+		if (_normIntIndexMap[i] < 0 or _normIntIndexMap[i] >= (int)_waveNames.size())
+			printWarn << "production amplitude at index " << i << " is mapped to integrals "
+			             "at index " << _normIntIndexMap[i] <<", which does not exist." << endl;
+	}
 }
 
 
