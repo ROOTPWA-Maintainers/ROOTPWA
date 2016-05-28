@@ -235,7 +235,7 @@ namespace {
 
 void rpwa::py::exportPwaLikelihood() {
 
-	bp::class_<rpwa::pwaLikelihood<std::complex<double> > >("pwaLikelihood")
+	bp::scope theScope = bp::class_<rpwa::pwaLikelihood<std::complex<double> > >("pwaLikelihood")
 		.def(
 			"init"
 			, ::pwaLikelihood_init
