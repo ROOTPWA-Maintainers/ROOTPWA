@@ -8,6 +8,7 @@
 #include<isobarDecayVertex.h>
 #include<particle.h>
 #include<particleProperties.h>
+#include<pwaLikelihood.h>
 #include<waveDescription.h>
 
 namespace bp = boost::python;
@@ -63,5 +64,9 @@ void rpwa::py::exportStlContainers() {
 	// std::vector<rpwa::waveDescriptionPtr>
 	bp::class_<std::vector<rpwa::waveDescriptionPtr> >("__vector_waveDescription")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::waveDescriptionPtr>, true>());
+
+	// std::vector<rpwa::pwaLikelihood<double>::fitParameter>
+	bp::class_<std::vector<rpwa::pwaLikelihood<std::complex<double> >::fitParameter> >("__vector_pwaLikelihood_fitParameter")
+		.def(bp::vector_indexing_suite<std::vector<rpwa::pwaLikelihood<std::complex<double> >::fitParameter>, true>());
 
 }

@@ -136,7 +136,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	vector<double>params(nmbPar);
 	{
 		for (unsigned int i = 0; i < nmbPar; ++i) {
-			const string& parName = L.parName(i);
+			const string parName = L.parameter(i).parName();
 			if (parName.length() > maxParNameLength)
 				maxParNameLength = parName.length();
 		}
@@ -146,7 +146,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		TRandom3     random(seed);
 		const double sqrtNmbEvts = sqrt((double)nmbEvts);
 		for (unsigned int i = 0; i < nmbPar; ++i) {
-			const string& parName = L.parName(i);
+			const string parName = L.parameter(i).parName();
 
 			double startVal;
 			{
@@ -157,7 +157,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 			}
 
 			// check if parameter needs to be fixed
-			if (not L.parFixed(i)) {
+			if (not L.parameter(i).fixed()) {
 				cout << "    setting parameter [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
 				params[i] = startVal;
@@ -268,7 +268,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	printInfo << "minimization result:" << endl;
 	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(i) << " = "
+		     << setw(maxParNameLength) << L.parameter(i).parName() << " = "
 		     << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
 		if(not saveSpace) {
 			cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));

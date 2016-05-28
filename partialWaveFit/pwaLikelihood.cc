@@ -104,6 +104,24 @@ namespace {
 
 
 template<typename complexT>
+string
+pwaLikelihood<complexT>::fitParameter::parName() const
+{
+	ostringstream parName;
+	parName << "V";
+	if (_waveName != "flat")
+		parName << _rank;
+	parName << "_" << _waveName;
+	if (_realPart) {
+		parName << "_RE";
+	} else {
+		parName << "_IM";
+	}
+	return parName.str();
+}
+
+
+template<typename complexT>
 pwaLikelihood<complexT>::pwaLikelihood()
 	: _nmbEvents        (0),
 	  _rank             (1),
@@ -784,9 +802,9 @@ pwaLikelihood<complexT>::Hessian
 
 				if (r1 < 0)
 					continue;
-				if (_parFixed[r1])
+				if (_parameters[r1].fixed())
 					continue;
-				assert(i1 < 0 || not _parFixed[i1]);
+				assert(i1 < 0 || not _parameters[i1].fixed());
 
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
@@ -797,9 +815,9 @@ pwaLikelihood<complexT>::Hessian
 
 							if (r2 < 0)
 								continue;
-							if (_parFixed[r2])
+							if (_parameters[r2].fixed())
 								continue;
-							assert(i2 < 0 || not _parFixed[i2]);
+							assert(i2 < 0 || not _parameters[i2].fixed());
 
 							hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
 							if (i2 >= 0) // real/imaginary derivative
@@ -843,14 +861,14 @@ pwaLikelihood<complexT>::HessianEigenVectors(const TMatrixT<double>& hessian) co
 	{
 		unsigned int iSkip = 0;
 		for (unsigned int i = 0; i < _nmbPars; ++i) {
-			if (_parFixed[i]) {
+			if (_parameters[i].fixed()) {
 				iSkip++;
 				continue;
 			}
 
 			unsigned int jSkip = 0;
 			for (unsigned int j = 0; j < _nmbPars; ++j) {
-				if (_parFixed[j]) {
+				if (_parameters[j].fixed()) {
 					jSkip++;
 					continue;
 				}
@@ -871,7 +889,7 @@ pwaLikelihood<complexT>::HessianEigenVectors(const TMatrixT<double>& hessian) co
 
 			unsigned int jSkip = 0;
 			for (unsigned int j = 0; j < _nmbPars; ++j) {
-				if (_parFixed[j]) {
+				if (_parameters[j].fixed()) {
 					jSkip++;
 					eigenVector[j] = 0.;
 				} else {
@@ -907,14 +925,14 @@ pwaLikelihood<complexT>::CovarianceMatrix(const TMatrixT<double>& hessian) const
 	{
 		unsigned int iSkip = 0;
 		for (unsigned int i = 0; i < _nmbPars; ++i) {
-			if (_parFixed[i]) {
+			if (_parameters[i].fixed()) {
 				iSkip++;
 				continue;
 			}
 
 			unsigned int jSkip = 0;
 			for (unsigned int j = 0; j < _nmbPars; ++j) {
-				if (_parFixed[j]) {
+				if (_parameters[j].fixed()) {
 					jSkip++;
 					continue;
 				}
@@ -933,14 +951,14 @@ pwaLikelihood<complexT>::CovarianceMatrix(const TMatrixT<double>& hessian) const
 	{
 		unsigned int iSkip = 0;
 		for (unsigned int i = 0; i < _nmbPars; ++i) {
-			if (_parFixed[i]) {
+			if (_parameters[i].fixed()) {
 				iSkip++;
 				continue;
 			}
 
 			unsigned int jSkip = 0;
 			for (unsigned int j = 0; j < _nmbPars; ++j) {
-				if (_parFixed[j]) {
+				if (_parameters[j].fixed()) {
 					jSkip++;
 					continue;
 				}
@@ -1431,51 +1449,43 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
 	_nmbPars += 1;  // additonal flat wave
 	printInfo << "dimension of likelihood function is " << _nmbPars << "." << endl;
 	_nmbParsFixed = 0;
-	_parNames.resize     (_nmbPars, "");
-	_parThresholds.resize(_nmbPars, 0);
-	_parFixed.resize     (_nmbPars, false);
-	_parCache.resize     (_nmbPars, 0);
-	_derivCache.resize   (_nmbPars, 0);
+	_parameters.resize(_nmbPars);
+	_parCache.resize  (_nmbPars, 0);
+	_derivCache.resize(_nmbPars, 0);
 	_prodAmpToFuncParMap.resize(extents[_rank][2][_nmbWavesReflMax]);
 	// build parameter names
 	unsigned int parIndex = 0;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				ostringstream parName;
+				bool fixed = false;
+				if (_waveThresholds[iRefl][iWave] != 0 && _waveThresholds[iRefl][iWave] >= massBinCenter) {
+					fixed = true;
+				}
 				if (iWave < iRank)  // production amplitude is zero
 					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(-1, -1);
 				else if (iWave == iRank) {  // production amplitude is real
-					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave] << "_RE";
-					_parNames     [parIndex]                  = parName.str();
-					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
-					if (_parThresholds[parIndex] != 0 && _parThresholds[parIndex] >= massBinCenter) {
-						_parFixed[parIndex] = true;
+					_parameters[parIndex] = fitParameter(_waveNames[iRefl][iWave], iRank, _waveThresholds[iRefl][iWave],
+					                                     fixed, true);
+					if (fixed) {
 						++_nmbParsFixed;
 					}
 					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(parIndex, -1);
 					++parIndex;
 				} else {  // production amplitude is complex
-					parName << "V" << iRank << "_" << _waveNames[iRefl][iWave];
-					_parNames     [parIndex]                  = parName.str() + "_RE";
-					_parThresholds[parIndex]                  = _waveThresholds[iRefl][iWave];
-					if (_parThresholds[parIndex] != 0 && _parThresholds[parIndex] >= massBinCenter) {
-						_parFixed[parIndex] = true;
-						++_nmbParsFixed;
-					}
-					_parNames     [parIndex + 1]              = parName.str() + "_IM";
-					_parThresholds[parIndex + 1]              = _waveThresholds[iRefl][iWave];
-					if (_parThresholds[parIndex + 1] != 0 && _parThresholds[parIndex + 1] >= massBinCenter) {
-						_parFixed[parIndex + 1] = true;
-						++_nmbParsFixed;
+					_parameters[parIndex  ] = fitParameter(_waveNames[iRefl][iWave], iRank, _waveThresholds[iRefl][iWave],
+					                                       fixed, true);
+					_parameters[parIndex+1] = fitParameter(_waveNames[iRefl][iWave], iRank, _waveThresholds[iRefl][iWave],
+					                                       fixed, false);
+					if (fixed) {
+						_nmbParsFixed += 2;
 					}
 					_prodAmpToFuncParMap[iRank][iRefl][iWave] = bt::make_tuple(parIndex, parIndex + 1);
 					parIndex += 2;
 				}
 			}
 	// flat wave
-	_parNames     [parIndex] = "V_flat";
-	_parThresholds[parIndex] = 0;
+	_parameters[parIndex] = fitParameter("flat", 0, 0., false, true);
 	return true;
 }
 
@@ -1680,8 +1690,8 @@ pwaLikelihood<complexT>::print(ostream& out) const
 			    << _waveThresholds[iRefl][iWave] << " GeV/c^2" << endl;
 	out << "list of function parameters: " << endl;
 	for (unsigned int iPar = 0; iPar < _nmbPars; ++iPar)
-		out << "        [" << setw(3) << iPar << "] " << _parNames[iPar] << "    "
-		    << "threshold = " << _parThresholds[iPar] << " GeV/c^2" << endl;
+		out << "        [" << setw(3) << iPar << "] " << _parameters[iPar].parName() << "    "
+		    << "threshold = " << _parameters[iPar].threshold() << " GeV/c^2" << endl;
 	return out;
 }
 

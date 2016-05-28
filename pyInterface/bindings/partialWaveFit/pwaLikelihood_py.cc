@@ -279,12 +279,15 @@ void rpwa::py::exportPwaLikelihood() {
 		.def("nmbPars", &rpwa::pwaLikelihood<std::complex<double> >::nmbPars)
 		.def("nmbParsFixed", &rpwa::pwaLikelihood<std::complex<double> >::nmbParsFixed)
 		.def(
-			"parName"
-			, &rpwa::pwaLikelihood<std::complex<double> >::parName
-			, bp::return_value_policy<bp::copy_const_reference>()
+			"parameter"
+			, &rpwa::pwaLikelihood<std::complex<double> >::parameter
+			, bp::return_internal_reference<>()
 		)
-		.def("parThreshold", &rpwa::pwaLikelihood<std::complex<double> >::parThreshold)
-		.def("parFixed", &rpwa::pwaLikelihood<std::complex<double> >::parFixed)
+		.def(
+			"parameters"
+			, &rpwa::pwaLikelihood<std::complex<double> >::parameters
+			, bp::return_internal_reference<>()
+		)
 		.def("useNormalizedAmps", &rpwa::pwaLikelihood<std::complex<double> >::useNormalizedAmps)
 		.def("setPriorType", &rpwa::pwaLikelihood<std::complex<double> >::setPriorType)
 		.def("priorType", &rpwa::pwaLikelihood<std::complex<double> >::priorType)
@@ -297,6 +300,20 @@ void rpwa::py::exportPwaLikelihood() {
 		)
 		.staticmethod("setQuiet")
 		.def(bp::self_ns::str(bp::self))
+		;
+
+
+	bp::class_<rpwa::pwaLikelihood<std::complex<double> >::fitParameter>("fitParameter", bp::no_init)
+		.def(
+			"waveName"
+			, &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::waveName
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
+		.def("rank", &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::rank)
+		.def("threshold", &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::threshold)
+		.def("fixed", &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::fixed)
+		.def("realPart", &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::realPart)
+		.def("parName", &rpwa::pwaLikelihood<std::complex<double> >::fitParameter::parName)
 		;
 
 

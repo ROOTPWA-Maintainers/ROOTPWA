@@ -206,7 +206,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
 	{
 		for (unsigned int i = 0; i < nmbPar; ++i) {
-			const string& parName = L.parName(i);
+			const string parName = L.parameter(i).parName();
 			if (parName.length() > maxParNameLength)
 				maxParNameLength = parName.length();
 		}
@@ -217,7 +217,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 		const double sqrtNmbEvts = sqrt((double)nmbEvts);
 		bool         success     = true;
 		for (unsigned int i = 0; i < nmbPar; ++i) {
-			const string& parName = L.parName(i);
+			const string parName = L.parameter(i).parName();
 
 			double startVal;
 			if (startValValid) {
@@ -232,7 +232,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 			}
 
 			// check if parameter needs to be fixed
-			if (not L.parFixed(i)) {
+			if (not L.parameter(i).fixed()) {
 				if (startVal == 0) {
 					cout << "    read start value 0 for parameter " << parName << ". "
 					     << "using default start value." << endl;
@@ -344,8 +344,8 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	printInfo << "minimization result:" << endl;
 	for (unsigned int i = 0; i < nmbPar; ++i) {
 		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parName(i) << " = ";
-		if (L.parFixed(i))
+		     << setw(maxParNameLength) << L.parameter(i).parName() << " = ";
+		if (L.parameter(i).fixed())
 			cout << correctParams[i] << " (fixed)";
 		else {
 			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
