@@ -26,32 +26,11 @@
 //-------------------------------------------------------------------------
 
 
+#include <iostream>
+#include <string>
+
 #include "partialWaveFitHelper.h"
-
-#include "fitResult.h"
-
-void
-rpwa::partialWaveFitHelper::extractWaveList(const rpwa::fitResult& result,
-                                            std::ostream& waveList)
-{
-	for(unsigned int i = 0; i < result.nmbWaves(); ++i) {
-		const std::string waveName(result.waveName(i));
-		if(waveName != "flat") {
-			waveList << waveName;
-
-			// test whether this wave is thresholded
-			bool thresholded = true;
-			for (unsigned int prodAmpIndex = 0; prodAmpIndex < result.nmbProdAmps(); ++prodAmpIndex)
-				if (result.waveNameForProdAmp(prodAmpIndex) == waveName)
-					thresholded &= (result.prodAmp(prodAmpIndex) == 0.);
-			// set the threshold to something higher than the current mass bin
-			if (thresholded)
-				waveList << " " << 1.1 * result.massBinCenter();
-
-			waveList << std::endl;
-		}
-	}
-}
+#include "reportingUtils.hpp"
 
 
 int
