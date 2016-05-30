@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="convert event file")
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format without meta data")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="input file in ROOTPWA format with meta data")
-	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100'). " +
+	parser.add_argument("-b", "--binning", action='append', help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1.0;1.1'). " +
 	                                                             "You can use the argument multiple times for multiple binning variables")
 	parser.add_argument("-a", "--variable", action='append', help="add an additional variable to import from the old tree. " +
 	                                                              "You can use the argument multiple times for multiple binning variables")

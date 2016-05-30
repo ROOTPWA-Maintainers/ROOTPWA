@@ -1404,7 +1404,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 			return false;
 		}
 		//FIXME: this would also be the place to select the best fit in case one file contains more than one fit result per mass bin
-		const double mass = fit->massBinCenter() / 1000.;
+		const double mass = fit->massBinCenter();
 
 		if(_debug) {
 			printDebug << "entry " << idx << ": center of mass bin at " << mass << " GeV/c^2" << std::endl;
@@ -1479,7 +1479,7 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 			printErr << "error while reading entry " << idx << " from tree." << std::endl;
 			return false;
 		}
-		const double newMass = fit->massBinCenter() / 1000.;
+		const double newMass = fit->massBinCenter();
 
 		if(_debug) {
 			printDebug << "entry " << idx << ": center of mass bin at " << newMass << " GeV/c^2" << std::endl;
@@ -1746,9 +1746,9 @@ rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const std::vector<s
 		for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
 			sFileName << overwritePhaseSpace[idxPart];
 			if(idxPart == 0) {
-				sFileName << (_massMin + idxMass*_massStep) * 1000.;
+				sFileName << (_massMin + idxMass*_massStep);
 			} else if(idxPart == 1) {
-				sFileName << (_massMin + (idxMass+1)*_massStep) * 1000.;
+				sFileName << (_massMin + (idxMass+1)*_massStep);
 			}
 		}
 		const std::string fileName = sFileName.str();

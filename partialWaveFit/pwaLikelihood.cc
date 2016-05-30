@@ -1667,11 +1667,11 @@ pwaLikelihood<complexT>::print(ostream& out) const
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 			out << "        [" << setw(2) << sign((int)iRefl * 2 - 1) << " " << setw(3) << iWave << "] "
 			    << _waveNames[iRefl][iWave] << "    threshold = "
-			    << _waveThresholds[iRefl][iWave] << " MeV/c^2" << endl;
+			    << _waveThresholds[iRefl][iWave] << " GeV/c^2" << endl;
 	out << "list of function parameters: " << endl;
 	for (unsigned int iPar = 0; iPar < _nmbPars; ++iPar)
 		out << "        [" << setw(3) << iPar << "] " << _parNames[iPar] << "    "
-		    << "threshold = " << _parThresholds[iPar] << " MeV/c^2" << endl;
+		    << "threshold = " << _parThresholds[iPar] << " GeV/c^2" << endl;
 	return out;
 }
 
