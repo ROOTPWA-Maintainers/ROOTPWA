@@ -18,6 +18,10 @@ class rootPwaConfig(object):
 	intDirectory                           = ""
 	limitFilesPerDir                       = -1
 
+	# amplitude section
+	phaseSpaceIntegralDirectory            = ""
+	phaseSpaceUpperMassBound               = 0.
+
 	# fit section
 	fitResultTreeName                      = ""
 	fitResultBranchName                    = ""
@@ -64,9 +68,12 @@ class rootPwaConfig(object):
 			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
 
 			if self.config.has_option('general', 'limitFilesPerDir'):
-				self.limitFilesPerDir                   = self.config.get('general', 'limitFilesPerDir')
+				self.limitFilesPerDir                   = int(self.config.get('general', 'limitFilesPerDir'))
 			else:
 				self.limitFilesPerDir                   = -1
+
+			self.phaseSpaceIntegralDirectory = self.config.get("amplitude", "phaseSpaceIntegralDirectory")
+			self.phaseSpaceUpperMassBound    = float(self.config.get("amplitude", "phaseSpaceUpperMassBound"))
 
 			self.fitResultTreeName = self.config.get('fit', 'treeName')
 			self.fitResultBranchName = self.config.get('fit', 'fitResultBranch')
@@ -77,6 +84,9 @@ class rootPwaConfig(object):
 			self.accCorrPSAmpDirectoryName              = self.config.get('other', 'accCorrPSAmpDirectoryName')
 			self.weightTreeName                         = self.config.get('other', 'weightTreeName')
 
+		except ValueError as exc:
+			pyRootPwa.utils.printErr("a variable had the wrong type ('" + str(exc) + "').")
+			return False
 		except ConfigParser.Error as exc:
 			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "').")
 			return False

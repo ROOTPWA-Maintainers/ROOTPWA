@@ -97,13 +97,13 @@ namespace {
 }
 
 
+string integralTableContainer::_directory = "";
+double integralTableContainer::_upperBound = 0.;
 const string integralTableContainer::TREE_NAME = "psint";
-const string integralTableContainer::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
 const int integralTableContainer::N_POINTS = 50;
 const int integralTableContainer::N_MC_EVENTS = 1000000;
 const int integralTableContainer::N_MC_EVENTS_FOR_M0 = 10000000;
 const int integralTableContainer::MC_SEED = 987654321;
-const double integralTableContainer::UPPER_BOUND = 4.5;
 const bool integralTableContainer::CALCULATE_ERRORS = true;
 
 
@@ -156,7 +156,12 @@ integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
 	_subWaveName = getSubWaveNameFromVertex(vertex, _vertex, _subDecay);
 
 	stringstream sstr;
-	sstr<<DIRECTORY<<"/"<<__waveNameFromTopology(*_subDecay)<<".root";
+	if(_directory == "" or _upperBound <= 0.) {
+		printErr << "not initialized correctly, either the directory ('" << _directory
+		         << "') or the upper mass bound (" << _upperBound << ") are not set. Aborting..." << endl;
+		throw;
+	}
+	sstr<<_directory<<"/"<<__waveNameFromTopology(*_subDecay)<<".root";
 	_fullPathToFile = sstr.str();
 
 	readIntegralFile();
@@ -427,12 +432,17 @@ void integralTableContainer::fillIntegralTable() {
 		printErr << "trying to fill an already filled integral Table. Aborting..." << endl;
 		throw;
 	}
+	if(_directory == "" or _upperBound <= 0.) {
+		printErr << "not initialized correctly, either the directory ('" << _directory
+		         << "') or the upper mass bound (" << _upperBound << ") are not set. Aborting..." << endl;
+		throw;
+	}
 
 	double M = 0.;
 	for(unsigned int i = 0; i < _subDecay->nmbFsParticles(); ++i) {
 		M += _subDecay->fsParticles()[i]->mass();
 	}
-	const double step = (UPPER_BOUND - M) / (N_POINTS);
+	const double step = (_upperBound - M) / (N_POINTS);
 	_integralTable.push_back(integralTablePoint(M));
 	M += step;
 
@@ -441,7 +451,7 @@ void integralTableContainer::fillIntegralTable() {
 	          << _vertex->parent()->name() << " with M0=" << M0 << endl;
 	_M0s.push_back(M0);
 
-	for(; M <= UPPER_BOUND; M += step) {
+	for(; M <= _upperBound; M += step) {
 		if((M0 > (M-step)) and (M0 < M)) {
 			_integralTable.push_back(evalInt(M0, N_MC_EVENTS_FOR_M0));
         }

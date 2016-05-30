@@ -37,6 +37,15 @@ void rpwa::py::exportPhaseSpaceIntegral() {
 
 		.def("__call__", &rpwa::integralTableContainer::operator())
 
+		.def("directory", &rpwa::integralTableContainer::directory, bp::return_value_policy<bp::copy_const_reference>())
+		.def("setDirectory", &rpwa::integralTableContainer::setDirectory)
+		.def("upperMassBound", &rpwa::integralTableContainer::upperMassBound, bp::return_value_policy<bp::copy_const_reference>())
+		.def("setUpperMassBound", &rpwa::integralTableContainer::setUpperMassBound)
+		.staticmethod("directory")
+		.staticmethod("setDirectory")
+		.staticmethod("upperMassBound")
+		.staticmethod("setUpperMassBound")
+
 		.def("getSubWaveNameFromVertex", &integralTableContainer_getSubWaveNameFromVertex)
 		.staticmethod("getSubWaveNameFromVertex");
 
