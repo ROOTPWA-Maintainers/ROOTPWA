@@ -54,6 +54,9 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	pyRootPwa.core.integralTableContainer.setDirectory(config.phaseSpaceIntegralDirectory)
+	pyRootPwa.core.integralTableContainer.setUpperMassBound(config.phaseSpaceUpperMassBound)
+
 	# read integral matrix from ROOT file
 	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
 	integral = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)

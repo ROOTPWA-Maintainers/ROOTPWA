@@ -42,6 +42,12 @@ namespace rpwa {
 		                                            isobarDecayVertexPtr& vertexPtr,
 		                                            isobarDecayTopologyPtr& subDecay);
 
+		static const std::string& directory() { return _directory; }
+		static void setDirectory(const std::string& directory) { _directory = directory; }
+
+		static const double& upperMassBound() { return _upperBound; }
+		static void setUpperMassBound(const double& upperBound) { _upperBound = upperBound; }
+
 	  private:
 
 		double dyn(double M, double M0);
@@ -66,15 +72,16 @@ namespace rpwa {
 
 		bool _init;
 
+		static std::string _directory;
+		static double _upperBound;
+
 		const static int N_POINTS;
 		const static int N_MC_EVENTS;
 		const static int N_MC_EVENTS_FOR_M0;
 		const static int MC_SEED;
-		const static double UPPER_BOUND;
 		const static bool NEW_FILENAME_CONVENTION;
 		const static bool CALCULATE_ERRORS;
 
-		const static std::string DIRECTORY;
 		const static std::string TREE_NAME;
 
 	};

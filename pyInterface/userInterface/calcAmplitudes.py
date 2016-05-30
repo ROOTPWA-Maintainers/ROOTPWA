@@ -37,6 +37,9 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	pyRootPwa.core.integralTableContainer.setDirectory(config.phaseSpaceIntegralDirectory)
+	pyRootPwa.core.integralTableContainer.setUpperMassBound(config.phaseSpaceUpperMassBound)
+
 	if not args.wavelistFileName == "" and not args.keyfileIndex == -1:
 		pyRootPwa.utils.printErr("Setting both options -k and -w is conflicting. Aborting...")
 		sys.exit(1)
