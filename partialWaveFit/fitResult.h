@@ -110,7 +110,7 @@ namespace rpwa {
 		fitResult(const fitResult& result);
 		virtual ~fitResult();
 
-		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix
+		fitResult* variedProdAmps() const;  ///< create a copy with production amplitudes varied according to covariance matrix
 
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin

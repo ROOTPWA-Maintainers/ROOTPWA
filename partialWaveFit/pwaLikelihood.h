@@ -72,7 +72,6 @@ namespace rpwa {
 		// define array types
 		typedef boost::multi_array<std::string,                               2> waveNameArrayType;     // array for wave names
 		typedef boost::multi_array<double,                                    2> waveThrArrayType;      // array for wave thresholds
-		typedef boost::multi_array<unsigned int,                              2> waveToIntMapType;      // array for mapping of waves to integral indices
 		typedef boost::multi_array<boost::tuples::tuple<int, int>,            3> ampToParMapType;       // array for mapping of amplitudes to parameters
 		typedef boost::multi_array<complexT,                                  3> prodAmpsArrayType;     // array for production and decay amplitudes
 		typedef boost::multi_array<complexT,                                  2> decayAmpsArrayType;    // with memory layout to save memory
@@ -128,8 +127,8 @@ namespace rpwa {
 
 		// overload private IGradientFunctionMultiDim member functions
 		virtual double DoEval      (const double* par) const;
-		virtual double DoDerivative(const double* par,
-		                            unsigned int  derivativeIndex) const;
+		virtual double DoDerivative(const double*      par,
+		                            const unsigned int derivativeIndex) const;
 
 		/// calculates Hessian of function at point defined by par
 		TMatrixT<double> Hessian(const double* par) const;
@@ -168,7 +167,7 @@ namespace rpwa {
 		void          useNormalizedAmps(const bool      useNorm    = true) { _useNormalizedAmps = useNorm;   }
 		void          setPriorType     (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
 		priorEnum     priorType        () const                            { return _priorType;              }
-		void          setCauchyWidth   (const double&   cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
+		void          setCauchyWidth   (const double    cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
 		const double& cauchyWidth      () const                            { return _cauchyWidth;            }
 		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
@@ -179,14 +178,14 @@ namespace rpwa {
 
 		bool addNormIntegral(const rpwa::ampIntegralMatrix& normMatrix);
 
-		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, unsigned int accEventsOverride = 0);
+		bool addAccIntegral(rpwa::ampIntegralMatrix& accMatrix, const unsigned int accEventsOverride = 0);
 
 		bool addAmplitude(const std::vector<const rpwa::amplitudeMetadata*>& meta);
 
 		bool finishInit();
 
 		bool setOnTheFlyBinning(const std::map<std::string, std::pair<double, double> >& binningMap,
-		                        const std::vector<const eventMetadata*>                  evtMeta);
+		                        const std::vector<const eventMetadata*>&                 evtMeta);
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,

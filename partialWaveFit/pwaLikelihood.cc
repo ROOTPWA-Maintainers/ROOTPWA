@@ -410,8 +410,8 @@ pwaLikelihood<complexT>::DoEval(const double* par) const
 
 template<typename complexT>
 double
-pwaLikelihood<complexT>::DoDerivative(const double* par,
-                                      unsigned int  derivativeIndex) const
+pwaLikelihood<complexT>::DoDerivative(const double*      par,
+                                      const unsigned int derivativeIndex) const
 {
 	if (not _initFinished) {
 		printErr << "pwaLikelihood::finishInit has not been called. Aborting..." << endl;
@@ -1059,7 +1059,7 @@ pwaLikelihood<complexT>::addNormIntegral(const ampIntegralMatrix& normMatrix)
 template<typename complexT>
 bool
 pwaLikelihood<complexT>::addAccIntegral(ampIntegralMatrix& accMatrix,
-                                        unsigned int accEventsOverride)
+                                        const unsigned int accEventsOverride)
 {
 	if (not _normIntAdded) {
 		printErr << "normalization integral not added before acceptance integral!" << endl
@@ -1310,7 +1310,7 @@ pwaLikelihood<complexT>::finishInit()
 template<typename complexT>
 bool
 pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, double> >& binningMap,
-                                            const vector<const eventMetadata*>        evtMetas)
+                                            const vector<const eventMetadata*>&       evtMetas)
 {
 	for (size_t metaIndex = 0; metaIndex < evtMetas.size(); ++metaIndex) {
 		const eventMetadata* evtMeta = evtMetas[metaIndex];
