@@ -630,14 +630,11 @@ fitResult::phaseErr(const unsigned int waveIndexA,
 	// construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
 	const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
 	TMatrixT<double>      jacobian(1, 2);  // phase is real valued function, so J has only one row
-	{
-		const double x = spinDens.real();
-		const double y = spinDens.imag();
-		if ((x != 0) or (y != 0)) {
-			jacobian[0][0] = 1 / (x + y * y / x);
-			jacobian[0][1] = -y / (x * x + y * y);
-		}
+	if (norm(spinDens) != 0) {
+		jacobian[0][0] = -spinDens.imag() / norm(spinDens);
+		jacobian[0][1] =  spinDens.real() / norm(spinDens);
 	}
+
 	// calculate variance
 	const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
 	return sqrt(phaseVariance) * TMath::RadToDeg();
