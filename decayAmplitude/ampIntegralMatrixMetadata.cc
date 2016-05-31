@@ -41,11 +41,25 @@ string rpwa::ampIntegralMatrixMetadata::recalculateHash() const {
 ostream& rpwa::ampIntegralMatrixMetadata::print(ostream& out) const {
 	out << "ampIntegralMatrixMetadata:"                                << endl
 	    << "    contentHash ......... '" << _contentHash << "'"        << endl
-	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << endl;
+	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << endl
+	    << "    binning map";
+	if(_binningMap.empty()) {
+		out << " ......... " << "<empty>" << endl;
+	} else {
+		out << ": " << endl;
+		for(binningMapType::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
+			out << "        variable '" << it->first << "' range " << it->second << endl;
+		}
+	}
 	if(_ampIntegralMatrix) {
-		out << "    nmbwaves ... "  << _ampIntegralMatrix->nmbWaves()  << endl;
+		out << "    nmbwaves ............ " << _ampIntegralMatrix->nmbWaves() << endl;
 	}
 	out << endl;
+	out << "connected event metadata information:" << endl;
+	for(unsigned int i = 0; i < _evtMetas.size(); ++i) {
+		out << _evtMetas[i];
+		out << endl;
+	}
 	return out;
 }
 
