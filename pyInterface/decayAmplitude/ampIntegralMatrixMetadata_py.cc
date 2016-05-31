@@ -104,9 +104,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("rootpwaGitHash", &rpwa::ampIntegralMatrixMetadata::rootpwaGitHash, bp::return_value_policy<bp::return_by_value>())
 		.def("mergeIntegralMatrix", &rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix, bp::arg("secondMatrix"))
 
-		.def("objectBaseName", &rpwa::ampIntegralMatrixMetadata::objectBaseName, bp::return_value_policy<bp::return_by_value>())
 		.def("binningMap", &ampIntegralMatrixMetadata_binningMap)
-		.def("setObjectBaseName", &ampIntegralMatrixMetadata::setObjectBaseName, bp::arg("objectBaseName"))
 		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, bp::arg("eventMetadata"))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)

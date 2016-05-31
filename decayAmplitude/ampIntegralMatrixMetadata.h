@@ -20,7 +20,6 @@ namespace rpwa {
 
 			const std::string& contentHash()       const { return _contentHash; }
 			const std::string& rootpwaGitHash()    const { return _rootpwaGitHash; }
-			const std::string& objectBaseName()    const { return _objectBaseName; }
 			const std::map<std::string, std::pair<double, double> >& binningMap() const { return _binningMap; }
 			const std::vector<rpwa::eventMetadata>& evtMetas() const { return _evtMetas; }
 
@@ -43,7 +42,6 @@ namespace rpwa {
 			bool setAmpIntegralMatrix(ampIntegralMatrix* matrix);
 			bool setHash();
 			void setGitHash(const std::string& gitHash) { _rootpwaGitHash = gitHash; }
-			void setObjectBaseName(const std::string& baseName) { _objectBaseName = baseName; }
 			void setBinningMap(const std::map<std::string, std::pair<double, double> >& binningMap) { _binningMap = binningMap; }
 			bool addKeyFileContent(const std::string& content);
 			bool mergeBinningMap(const std::map<std::string, std::pair<double, double> >& binnignMapIn);
@@ -61,7 +59,6 @@ namespace rpwa {
 		private:
 			std::string                          _contentHash;
 			std::string                          _rootpwaGitHash;
-			std::string                          _objectBaseName;
 			std::string                          _allZeroHash;
 			mutable ampIntegralMatrix*           _ampIntegralMatrix; //!
 
@@ -71,7 +68,7 @@ namespace rpwa {
 			std::map<std::string, std::pair<double, double> > _binningMap;
 			std::vector<rpwa::eventMetadata> _evtMetas;
 
-			ClassDef(ampIntegralMatrixMetadata, 1);
+			ClassDef(ampIntegralMatrixMetadata, 2);
 	};  // class ampIntegralMatrixMetadata
 
 	inline

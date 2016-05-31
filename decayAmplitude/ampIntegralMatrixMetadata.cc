@@ -13,7 +13,6 @@ const string rpwa::ampIntegralMatrixMetadata::objectNameInFile = "integralMetada
 rpwa::ampIntegralMatrixMetadata::ampIntegralMatrixMetadata()
 	: _contentHash(""),
 	  _rootpwaGitHash(""),
-	  _objectBaseName(""),
 	  _allZeroHash(""),
 	  _ampIntegralMatrix(0),
 	  _amplitudeHashes(),
@@ -42,7 +41,6 @@ string rpwa::ampIntegralMatrixMetadata::recalculateHash() const {
 ostream& rpwa::ampIntegralMatrixMetadata::print(ostream& out) const {
 	out << "ampIntegralMatrixMetadata:"                                << endl
 	    << "    contentHash ......... '" << _contentHash << "'"        << endl
-	    << "    object base name .... '" << _objectBaseName << "'"     << endl
 	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << endl;
 	if(_ampIntegralMatrix) {
 		out << "    nmbwaves ... "  << _ampIntegralMatrix->nmbWaves()  << endl;
