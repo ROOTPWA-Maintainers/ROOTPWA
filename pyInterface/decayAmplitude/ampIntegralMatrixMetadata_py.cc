@@ -83,6 +83,9 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 
 	bp::class_<rpwa::ampIntegralMatrixMetadata>("ampIntegralMatrixMetadata")
 		.def(bp::init<const  rpwa::ampIntegralMatrixMetadata&>())
+
+		.def(bp::self_ns::str(bp::self))
+
 		.def("Write", &::ampIntegralMatrixMetadata_write, bp::arg("name")=0)
 
 		.def("getKeyFileContents", &::ampIntegralMatrixMetadata_getKeyFileContents)
@@ -108,6 +111,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, bp::arg("eventMetadata"))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)
+		.def("recalculateHash", &rpwa::ampIntegralMatrixMetadata::recalculateHash)
 
 		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
 

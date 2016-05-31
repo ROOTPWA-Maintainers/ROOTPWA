@@ -61,6 +61,23 @@ if __name__ == "__main__":
 
 		print(amplitudeMeta)
 
-	if not eventMeta and not amplitudeMeta:
+	# try to read amplitude integral matrix metadata
+	ampIntegralMatrixMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(inputFile, True)
+	if ampIntegralMatrixMeta:
+		if args.recalculateHash:
+			pyRootPwa.utils.printInfo("recalculating hash...")
+			calcHash = ampIntegralMatrixMeta.recalculateHash()
+			if calcHash != ampIntegralMatrixMeta.contentHash():
+				pyRootPwa.utils.printErr("hash verification failed, hash from metadata '" +
+				                         ampIntegralMatrixMeta.contentHash() +"' does not match with " +
+				                         "calculated hash '" + calcHash + "'.")
+			else:
+				print("")
+				pyRootPwa.utils.printSucc("recalculated hash matches with hash from metadata.")
+				print("")
+
+		print(ampIntegralMatrixMeta)
+
+	if not eventMeta and not amplitudeMeta and not ampIntegralMatrixMeta:
 		pyRootPwa.utils.printErr("could not read any metadata")
 		sys.exit(1)
