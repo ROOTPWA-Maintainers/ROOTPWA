@@ -44,7 +44,7 @@ if __name__ == "__main__":
 	# try to read amplitude metadata
 	amplitudeObjectBaseName = args.amplitudeObjectBaseName
 	if not amplitudeObjectBaseName:
-		amplitudeObjectBaseName = os.path.basename(args.inputFile).split("_binID")[0]
+		amplitudeObjectBaseName = os.path.basename(args.inputFile).split("_eventFileId")[0]
 	amplitudeMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(inputFile, amplitudeObjectBaseName, True)
 	if amplitudeMeta:
 		if args.recalculateHash:
