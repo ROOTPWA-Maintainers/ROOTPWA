@@ -298,7 +298,7 @@ ampIntegralMatrix::addEvent(map<string, complex<double> > &amplitudes)
 
 bool
 ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetadata,
-                             const unsigned long                       maxNmbEvents,
+                             const long                                maxNmbEvents,
                              const string&                             weightFileName,
                              const eventMetadata*                      eventMeta,
                              const map<string, pair<double, double> >& otfBin)
@@ -327,18 +327,18 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 		printErr << "integral matrix was already initialized, but with a different number of waves. Aborting..." << endl;
 		return false;
 	}
-	const unsigned long nmbEvents = (unsigned long) ampMetadata[0]->amplitudeTree()->GetEntries();
+	const long nmbEvents = ampMetadata[0]->amplitudeTree()->GetEntries();
 	if (nmbEvents == 0) {
 		printWarn << "amplitude trees contain no amplitudes values. cannot calculate integral." << endl;
 		return false;
 	}
 	for (size_t i = 1; i < ampMetadata.size(); i++) {
-		if (nmbEvents != (unsigned int) ampMetadata[i]->amplitudeTree()->GetEntries()) {
+		if (nmbEvents != ampMetadata[i]->amplitudeTree()->GetEntries()) {
 			printErr << "amplitude trees do not all have the same entry count." << endl;
 			return false;
 		}
 	}
-	if (maxNmbEvents == 0)
+	if (maxNmbEvents <= 0)
 		_nmbEvents = nmbEvents;
 	else
 		_nmbEvents = min(nmbEvents, maxNmbEvents);

@@ -2,7 +2,7 @@ import pyRootPwa.core
 import pyRootPwa.utils
 ROOT = pyRootPwa.utils.ROOT
 
-def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=0, weightFileName=""):
+def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, weightFileName=""):
 	outputFile = pyRootPwa.ROOT.TFile.Open(integralFileName, "NEW")
 	if not outputFile:
 		pyRootPwa.utils.printWarn("cannot open output file '" + integralFileName + "'. Aborting...")
@@ -37,7 +37,7 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=
 				# and the shape is either 0 or 1. If two such waves accidentally have the same number
 				# of events, both will also have the same hash.
 				pyRootPwa.utils.printWarn("could not add the amplitude hash.")
-		if not integrals[-1].integrate(ampMetas, maxNmbEvents, weightFileName, eventMeta, multiBin.boundaries):
+		if not integrals[-1].integrate(ampMetas, -1, weightFileName, eventMeta, multiBin.boundaries):
 			pyRootPwa.utils.printErr("could not run integration. Aborting...")
 			return False
 	integralMatrix = integrals[0]

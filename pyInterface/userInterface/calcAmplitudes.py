@@ -18,7 +18,6 @@ if __name__ == "__main__":
 	                                )
 
 	parser.add_argument("-c", type=str, metavar="configFileName", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
-	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
 	parser.add_argument("-b", type=int, metavar="eventFileId", default=-1, dest="eventFileId", help="event file id to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('real', 'generated' or 'accepted', default: all)")
 	parser.add_argument("-f", "--no-progress-bar", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
@@ -82,5 +81,5 @@ if __name__ == "__main__":
 				eventAmpFilePairs = eventAmpFilePairs[args.eventFileId:args.eventFileId+1]
 			for eventFilePath, amplitudeFilePath in eventAmpFilePairs:
 				if not pyRootPwa.calcAmplitude(eventFilePath, waveName, fileManager.getWaveDescription(waveName),
-				                               amplitudeFilePath, args.maxNmbEvents, not args.noProgressBar):
+				                               amplitudeFilePath, not args.noProgressBar):
 					pyRootPwa.utils.printWarn("could not calculate amplitude.")

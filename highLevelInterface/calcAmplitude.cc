@@ -60,9 +60,9 @@ rpwa::hli::calcAmplitude(const eventMetadata&      eventMeta,
 		printWarn << "problems initializing input data. cannot read input data." << endl;
 		return retval;
 	}
-	const long int    nmbEventsTree     = tree->GetEntries();
-	const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-	                                       : nmbEventsTree);
+	const long nmbEventsTree     = tree->GetEntries();
+	const long nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+	                                : nmbEventsTree);
 	boost::progress_display* progressIndicator = (printProgress) ? new boost::progress_display(nmbEvents, cout, "") : 0;
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		if(progressIndicator) {

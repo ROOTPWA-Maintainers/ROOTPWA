@@ -9,7 +9,6 @@ def calcAmplitude(inputFileName,
                   waveName,
                   waveDescription,
                   outputFileName,
-                  maxNumberOfEvents = -1,
                   printProgress = True):
 
 	printInfo = pyRootPwa.utils.printInfo
@@ -31,9 +30,6 @@ def calcAmplitude(inputFileName,
 	if not eventMeta:
 		printWarn("could not read metadata from input file '" + inputFileName + "'.")
 		return False
-	nEvents = eventMeta.eventTree().GetEntries()
-	if maxNumberOfEvents > 0:
-		nEvents = min(nEvents, maxNumberOfEvents)
 	outputFile = ROOT.TFile.Open(outputFileName, "NEW")
 	if not outputFile:
 		printWarn("could not open output file '" + outputFileName + "'.")
@@ -51,11 +47,12 @@ def calcAmplitude(inputFileName,
 		printWarn("could not initialize amplitudeFileWriter.")
 		outputFile.Close()
 		return False
-	amplitudes = pyRootPwa.core.calcAmplitude(eventMeta, amplitude, nEvents, printProgress)
+	amplitudes = pyRootPwa.core.calcAmplitude(eventMeta, amplitude, -1, printProgress)
 	if not amplitudes:
 		printWarn("could not calculate amplitudes.")
 		outputFile.Close()
 		return False
+	nEvents = eventMeta.eventTree().GetEntries()
 	if nEvents != len(amplitudes):
 		printWarn("number of events (" + str(nEvents) +
 		          ") does not match with number of amplitudes (" + str(len(amplitudes)) + ").")

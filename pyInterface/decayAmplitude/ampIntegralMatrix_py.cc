@@ -46,7 +46,7 @@ namespace {
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
 	                                 const bp::object& pyAmplitudeMetadata,
-	                                 const unsigned long maxNmbEvents,
+	                                 const long maxNmbEvents,
 	                                 const std::string& weightFileName,
 	                                 const rpwa::eventMetadata* eventMeta,
 	                                 const bp::dict& pyOtfBin)
