@@ -71,14 +71,22 @@ class multiBin(object):
 		return retval
 
 
-	def overlap(self, other):
+	def overlap(self, other, strict=True):
+		def comparator(left, right, direction):
+			if direction == ">":
+				right, left = left, right
+			if strict:
+				return left < right
+			else:
+				return left <= right
+
 		keys = sorted(self.boundaries.keys())
 		if keys != sorted(other.boundaries.keys()):
 			return False
 		for key in keys:
-			if self.boundaries[key][1] <= other.boundaries[key][0]:
+			if comparator(self.boundaries[key][1], other.boundaries[key][0], "<"):
 				return False
-			if self.boundaries[key][0] >= other.boundaries[key][1]:
+			if comparator(self.boundaries[key][0], other.boundaries[key][1], ">"):
 				return False
 		return True
 
