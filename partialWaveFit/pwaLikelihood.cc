@@ -1318,17 +1318,22 @@ pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, doubl
 			printErr << "eventMetadata not set. Aborting..." << endl;
 			return false;
 		}
+		TTree* evtTree = evtMeta->eventTree();
+		if(not evtTree) {
+			printErr << "event tree invalid. Aborting..." << endl;
+			return false;
+		}
 		const string& evtHash = evtMeta->contentHash();
 		map<string, double> binningVariables;
 		typedef map<string, pair<double, double> >::const_iterator it_type;
 		for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
 			const string& additionalVar = iterator->first;
-			binningVariables.insert(pair<string, double>(additionalVar, 0.));
-			evtMeta->eventTree()->SetBranchAddress(additionalVar.c_str(), &binningVariables[additionalVar]);
+			binningVariables[additionalVar] = 0.;
+			evtTree->SetBranchAddress(additionalVar.c_str(), &binningVariables[additionalVar]);
 		}
 		vector<size_t> eventIndices;
-		for (long eventIndex = 0; eventIndex < evtMeta->eventTree()->GetEntriesFast(); ++eventIndex) {
-			evtMeta->eventTree()->GetEntry(eventIndex);
+		for (long eventIndex = 0; eventIndex < evtTree->GetEntriesFast(); ++eventIndex) {
+			evtTree->GetEntry(eventIndex);
 			bool useEvent = true;
 			for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
 				const string& additionalVar = iterator->first;
