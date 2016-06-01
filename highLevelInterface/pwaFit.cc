@@ -95,7 +95,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaFit with the following parameters:" << endl;
-	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] MeV/c^2" << endl
+	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl
 	     << "    seed for random start values ................... "  << seed                    << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)

@@ -161,6 +161,8 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	core.py
 	utils/__init__.py
 	utils/_binningMapFromArgList.py
+	utils/_binning.py
+	utils/_fileUtils.py
 	utils/_fitTreeUtils.py
 	utils/_printingUtils.py
 	utils/_progressBar.py

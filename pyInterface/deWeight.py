@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+import numpy
+
 import pyRootPwa
 import pyRootPwa.core
 
@@ -31,11 +33,19 @@ if __name__ == "__main__":
 	if metaData == 0:
 		printErr("error reading metaData. Input file is not a RootPWA root file.")
 	inputTree = metaData.eventTree()
-	maxWeight = 0.
 
-	for event in inputTree:
-		if event.weight > maxWeight:
-			maxWeight = event.weight
+	additionalVariableLabels = metaData.additionalSavedVariableLables()
+	additionalVariables = [None] * len(additionalVariableLabels)
+	weightIndex = additionalVariableLabels.index("weight")
+	for i, additionalVariableLabel in enumerate(additionalVariableLabels):
+		additionalVariables[i] = numpy.array(1, dtype = float)
+		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
+
+	maxWeight = 0.
+	for i in xrange(inputTree.GetEntries()):
+		inputTree.GetEntry(i)
+		if float(additionalVariables[weightIndex]) > maxWeight:
+			maxWeight = float(additionalVariables[weightIndex])
 
 	printInfo("maxWeight: " + str(maxWeight))
 	maxWeight *= args.weightFactor
@@ -53,7 +63,8 @@ if __name__ == "__main__":
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
 	                             metaData.binningMap(),
-	                             ["weight"]):
+	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableLabels)
+	                                                           if i != weightIndex ]):
 		printErr("could not initialize fileWriter. Aborting...")
 		inputFile.Close()
 		sys.exit(1)
@@ -61,11 +72,18 @@ if __name__ == "__main__":
 	acceptedEntries = 0
 	overallEntries = 0
 
-	for event in inputTree:
-		normWeight = event.weight / maxWeight
+	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.productionKinematicsMomentaBranchName, prodKinMomenta)
+	inputTree.SetBranchAddress(pyRootPwa.core.eventMetadata.decayKinematicsMomentaBranchName, decayKinMomenta)
+
+	for eventIndex in xrange(inputTree.GetEntries()):
+		inputTree.GetEntry(eventIndex)
+		normWeight = additionalVariables[weightIndex] / maxWeight
 		cut = pyRootPwa.ROOT.gRandom.Rndm()
 		if normWeight > cut:
-			fileWriter.addEvent(event.prodKinMomenta, event.decayKinMomenta, [event.weight])
+			fileWriter.addEvent(prodKinMomenta, decayKinMomenta,
+			                    [float(variable) for i, variable in enumerate(additionalVariables) if i != weightIndex])
 			acceptedEntries += 1
 		overallEntries += 1
 	fileWriter.finalize()

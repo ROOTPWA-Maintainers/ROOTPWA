@@ -24,16 +24,16 @@ def getWaveDescThresFromFitResult(fitResult, keyFiles):
 	return waveDescThres
 
 
-def getWaveDescThresFromWaveList(waveListFileName, keyFiles):
+def getWaveDescThresFromWaveList(waveListFileName, waveDescriptions):
 	printInfo("reading amplitude names and thresholds from wave list file "
 	          + "'" + waveListFileName + "'.")
 	waveDescThres = []
 	with open(waveListFileName, 'r') as waveListFile:
 		lineNmb = 0
 		for line in waveListFile:
+			line = line.strip()
 			if line[0] == '#':  # comments start with #
 				continue
-			line = line.replace('\n', '')
 			lineArray = line.split(" ")
 			if len(lineArray) in [1, 2]:
 				waveName = lineArray[0]
@@ -41,7 +41,7 @@ def getWaveDescThresFromWaveList(waveListFileName, keyFiles):
 					threshold = 0
 				else:
 					threshold = lineArray[1]
-				waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(keyFiles[waveName][0])[keyFiles[waveName][1]]
+				waveDesc = waveDescriptions[waveName]
 				waveDescThres.append( (waveName, waveDesc, float(threshold)) )
 			else:
 				printWarn("cannot parse line '" + line + "' in wave list file "

@@ -98,7 +98,7 @@ void rpwa::py::exportEventMetadata() {
 			"readEventFile"
 			, &eventMetadata_readEventFile
 			, (bp::arg("inputFile"), bp::arg("quiet")=false)
-			, bp::return_value_policy<bp::reference_existing_object>()
+			, bp::return_value_policy<bp::manage_new_object, bp::with_custodian_and_ward_postcall<0, 1> >()
 		)
 		.staticmethod("readEventFile")
 		.def_readonly("objectNameInFile", &rpwa::eventMetadata::objectNameInFile)

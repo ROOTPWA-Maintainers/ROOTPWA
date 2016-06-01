@@ -2,7 +2,6 @@
 
 import argparse
 import math
-import os.path
 import sys
 
 import pyRootPwa
@@ -27,9 +26,15 @@ if __name__ == "__main__":
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
-	                    help="lower boundary of mass range in MeV (overwrites values from reaction file)")
-	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
+	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
+	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
+	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
+	                    default="mass,tPrime")
+	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
+	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
+	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
+	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
 
 	args = parser.parse_args()
 
@@ -73,6 +78,8 @@ if __name__ == "__main__":
 	pyRootPwa.core.randomNumberGenerator.instance.setSeed(args.seed)
 
 	generatorManager = pyRootPwa.core.generatorManager()
+	if args.beamFileName is not None:
+		generatorManager.overrideBeamFile(args.beamFileName)
 
 	if not generatorManager.readReactionFile(args.reactionFile):
 		printErr("could not read reaction file. Aborting...")
@@ -80,14 +87,18 @@ if __name__ == "__main__":
 
 	if overrideMass:
 		generatorManager.overrideMassRange(args.massLowerBinBoundary / 1000., (args.massLowerBinBoundary + args.massBinWidth) / 1000.)
+	if args.noRandomBeam:
+		generatorManager.readBeamfileSequentially()
+	if args.randomBlockBeam:
+		generatorManager.readBeamfileSequentially()
+		generatorManager.randomizeBeamfileStartingPosition()
 
 	if not generatorManager.initializeGenerator():
 		printErr("could not initialize generator. Aborting...")
 		sys.exit(1)
 
 	massRange = generatorManager.getGenerator().getTPrimeAndMassPicker().massRange()
-	# unit of mass is GeV in generator, and MeV in the fit result
-	massBinCenter = 1000. * (massRange[0] + massRange[1]) / 2.
+	massBinCenter = (massRange[0] + massRange[1]) / 2.
 	fitResult = pyRootPwa.utils.getBestFitResultFromFile(fitResultFileName = args.fitResult,
 	                                                     massBinCenter = massBinCenter,
 	                                                     fitResultTreeName = config.fitResultTreeName,
@@ -113,20 +124,16 @@ if __name__ == "__main__":
 		waveNames.remove('flat')  # ignore flat wave
 
 	for waveName in waveNames:
-		(keyfile, waveDescriptionID) = fileManager.getKeyFile(waveName)
-		if not os.path.isfile(keyfile):
-			printErr('keyfile "' + keyfile + '" does not exist. Aborting...')
-			sys.exit(1)
+		waveDescription = fileManager.getWaveDescription(waveName)
 		reflectivities.append(pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName))
 		waveIndex = fitResult.waveIndex(waveName)
 
 		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
 			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
 		prodAmps.append(fitResult.prodAmp(waveIndex))
-		waveDescription = pyRootPwa.core.waveDescription.parseKeyFile(keyfile)[waveDescriptionID]
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
-			printErr('could not construct amplitude for keyfile "' + keyfile + '".')
+			printErr('could not construct amplitude for wave "' + waveName + '".')
 			sys.exit(1)
 		amplitude.init()
 		printInfo(amplitude)
@@ -147,6 +154,7 @@ if __name__ == "__main__":
 		printInfo(generatorManager)
 		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
 		progressBar.start()
+		massTPrimeVariables = []
 		attempts = 0
 		decayKin = None
 		prodKin = None
@@ -162,6 +170,13 @@ if __name__ == "__main__":
 			finalState = generator.getGeneratedFinalState()
 
 			if first:
+				if not args.noStoreMassTPrime:
+					if len(args.massTPrimeVariableNames.split(',')) == 2:
+						massTPrimeVariables = args.massTPrimeVariableNames.split(',')
+					else:
+						printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
+						sys.exit(1)
+
 				prodKinNames = [ beam.name ]
 				decayKinNames = [ particle.name for particle in finalState]
 				success = fileWriter.initialize(
@@ -171,8 +186,8 @@ if __name__ == "__main__":
 				                                prodKinNames,
 				                                decayKinNames,
 # TODO: FILL THESE
-				                                { "mass": (1000. * massRange[0], 1000. * massRange[1]) },
-				                                ["weight"]
+				                                { "mass": (massRange[0], massRange[1]) },
+				                                massTPrimeVariables + ["weight"]
 				                                )
 				if not success:
 					printErr('could not initialize file writer. Aborting...')
@@ -206,7 +221,11 @@ if __name__ == "__main__":
 					negReflAmpSum += amp
 
 			weight = norm(posReflAmpSum) + norm(negReflAmpSum)
-			fileWriter.addEvent(prodKin, decayKin, [weight])
+
+			additionalVariables = []
+			if not args.noStoreMassTPrime:
+				additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
+			fileWriter.addEvent(prodKin, decayKin, additionalVariables + [weight])
 
 			progressBar.update(eventsGenerated)
 	except:

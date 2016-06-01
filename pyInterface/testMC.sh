@@ -88,6 +88,10 @@ cp "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/wavelist.compass.2008.88wa
 cp "${ROOTPWA}/pyInterface/rootpwa.config" "./"
 cp "${ROOTPWA}/pyInterface/mcTest/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root.example" "./reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root"
 
+# make sure the integral binning in the config file is set correctly
+sed -i.bak 's/^integralBinning.*$/integralBinning                        = [ { "mass": (1.8, 1.82) } ]/' rootpwa.config
+rm -f rootpwa.config.bak
+
 #-- END PREPARATION --#
 
 ### BEGIN MONTE CARLO GENERATION ###

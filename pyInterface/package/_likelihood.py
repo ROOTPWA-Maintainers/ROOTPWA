@@ -3,9 +3,10 @@ ROOT = pyRootPwa.utils.ROOT
 
 def initLikelihood(waveDescThres,
                    massBinCenter,
-                   ampFileList,
+                   eventAndAmpFileDict,
                    normIntegralFileName,
                    accIntegralFileName,
+                   multiBin,
                    accEventsOverride = 0,
                    cauchy = False,
                    cauchyWidth = 0.5,
@@ -40,18 +41,28 @@ def initLikelihood(waveDescThres,
 		return None
 	accIntFile.Close()
 
-	for wave in waveDescThres:
-		waveName = wave[0]
-		ampFileName = ampFileList[waveName]
-		ampFile = ROOT.TFile.Open(ampFileName, "READ")
-		if not ampFile:
-			pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
-			return None
-		meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
-		if not meta:
-			pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
-			return None
-		if not likelihood.addAmplitude([meta]):
+	eventMetas = []
+	for eventFileName in eventAndAmpFileDict.keys():
+		eventFile, eventMeta = pyRootPwa.utils.openEventFile(eventFileName)
+		if not eventFile or not eventMeta:
+			pyRootPwa.utils.printErr("could not open event file '" + eventFileName + "'. Aborting...")
+			return False
+		eventMetas.append(eventMeta)
+	likelihood.setOnTheFlyBinning(multiBin.boundaries, eventMetas)
+	for waveName in eventAndAmpFileDict[eventAndAmpFileDict.keys()[0]]:
+		ampMetas = []
+		for eventFileName in eventAndAmpFileDict:
+			ampFileName = eventAndAmpFileDict[eventFileName][waveName]
+			ampFile = ROOT.TFile.Open(ampFileName, "READ")
+			if not ampFile:
+				pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
+				return None
+			meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
+			if not meta:
+				pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
+				return None
+			ampMetas.append(meta)
+		if not likelihood.addAmplitude(ampMetas):
 			pyRootPwa.utils.printErr("could not add amplitude '" + waveName + "'. Aborting...")
 			return None
 	if not likelihood.finishInit():

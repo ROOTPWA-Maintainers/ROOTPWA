@@ -83,6 +83,9 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 
 	bp::class_<rpwa::ampIntegralMatrixMetadata>("ampIntegralMatrixMetadata")
 		.def(bp::init<const  rpwa::ampIntegralMatrixMetadata&>())
+
+		.def(bp::self_ns::str(bp::self))
+
 		.def("Write", &::ampIntegralMatrixMetadata_write, bp::arg("name")=0)
 
 		.def("getKeyFileContents", &::ampIntegralMatrixMetadata_getKeyFileContents)
@@ -104,12 +107,11 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("rootpwaGitHash", &rpwa::ampIntegralMatrixMetadata::rootpwaGitHash, bp::return_value_policy<bp::return_by_value>())
 		.def("mergeIntegralMatrix", &rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix, bp::arg("secondMatrix"))
 
-		.def("objectBaseName", &rpwa::ampIntegralMatrixMetadata::objectBaseName, bp::return_value_policy<bp::return_by_value>())
 		.def("binningMap", &ampIntegralMatrixMetadata_binningMap)
-		.def("setObjectBaseName", &ampIntegralMatrixMetadata::setObjectBaseName, bp::arg("objectBaseName"))
-		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, (bp::arg("eventMetadata"), bp::arg("minEvent"), bp::arg("maxEvent")))
+		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, bp::arg("eventMetadata"))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)
+		.def("recalculateHash", &rpwa::ampIntegralMatrixMetadata::recalculateHash)
 
 		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
 

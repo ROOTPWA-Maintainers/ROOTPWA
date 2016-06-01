@@ -24,8 +24,8 @@ if __name__ == "__main__":
 	                    help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
-	                    help="lower boundary of mass range in MeV (overwrites values from reaction file)")
-	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV")
+	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
+	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
 	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
 	                    default="mass,tPrime")
