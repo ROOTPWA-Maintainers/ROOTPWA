@@ -12,10 +12,8 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=
 	integrals = []
 	for eventFileName, ampFileDict in eventAndAmpFileDict.iteritems():
 		integrals.append(pyRootPwa.core.ampIntegralMatrix())
-		garbageCollectorCheater = []
 		ampMetas = []
 		(eventFile, eventMeta) = pyRootPwa.utils.openEventFile(eventFileName)
-		garbageCollectorCheater.append(eventFile)
 		if not eventFile or not eventMeta:
 			pyRootPwa.utils.printErr("could not open event file '" + eventFileName + "'. Aborting...")
 			return False
@@ -24,7 +22,6 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=
 			return False
 		for waveName, ampFileName in ampFileDict.iteritems():
 			ampFile = ROOT.TFile.Open(ampFileName, "READ")
-			garbageCollectorCheater.append(ampFile)
 			if not ampFile:
 				pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'. Aborting...")
 				return False
@@ -43,7 +40,6 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, maxNmbEvents=
 		if not integrals[-1].integrate(ampMetas, maxNmbEvents, weightFileName, eventMeta, multiBin.boundaries):
 			pyRootPwa.utils.printErr("could not run integration. Aborting...")
 			return False
-		del garbageCollectorCheater
 	integralMatrix = integrals[0]
 	if len(integrals) > 1:
 		for integral in integrals[1:]:
