@@ -46,7 +46,6 @@
 #include "TRandom3.h"
 
 #include "fitResult.h"
-#include "partialWaveFitHelper.h"
 
 
 using namespace std;

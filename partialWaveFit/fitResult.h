@@ -56,6 +56,7 @@
 
 #include "complexMatrix.h"
 #include "conversionUtils.hpp"
+#include "partialWaveFitHelper.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 
@@ -541,20 +542,26 @@ namespace rpwa {
 	                                     const unsigned int waveIndexB) const
 	{
 		std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairs;
+		// return empty vector if the two waves have different reflectivities
+		if (rpwa::partialWaveFitHelper::getReflectivity(waveName(waveIndexA))
+		    != rpwa::partialWaveFitHelper::getReflectivity(waveName(waveIndexB))) {
+			return prodAmpIndexPairs;
+		}
+
 		const std::vector<unsigned int> prodAmpIndicesA = prodAmpIndicesForWave(waveIndexA);
 		const std::vector<unsigned int> prodAmpIndicesB = prodAmpIndicesForWave(waveIndexB);
 		for (unsigned int countAmpA = 0; countAmpA < prodAmpIndicesA.size(); ++countAmpA) {
 			const unsigned int ampIndexA = prodAmpIndicesA[countAmpA];
 			const int          ampRankA  = rankOfProdAmp(ampIndexA);
 			// find production amplitude of wave B with same rank
-			int ampIndexB = -1;
-			for (unsigned int countAmpB = 0; countAmpB < prodAmpIndicesB.size(); ++countAmpB)
-				if (rankOfProdAmp(prodAmpIndicesB[countAmpB]) == ampRankA) {
-					ampIndexB = prodAmpIndicesB[countAmpB];
+			for (unsigned int countAmpB = 0; countAmpB < prodAmpIndicesB.size(); ++countAmpB) {
+				const unsigned int ampIndexB = prodAmpIndicesB[countAmpB];
+				const int          ampRankB  = rankOfProdAmp(ampIndexB);
+				if (ampRankA == ampRankB) {
+					prodAmpIndexPairs.push_back(std::make_pair(ampIndexA, ampIndexB));
 					break;
 				}
-			if (ampIndexB >=0)
-				prodAmpIndexPairs.push_back(std::make_pair(ampIndexA, (unsigned int)ampIndexB));
+			}
 		}
 		return prodAmpIndexPairs;
 	}
