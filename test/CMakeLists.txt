@@ -21,25 +21,23 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for generator library tests
+#//      build file for amplitude library
+#//
+#//
+#// Author List:
+#//      Boris Grube          TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
 
 
-# set include directories
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
-	${RPWA_GENERATORS_INCLUDE_DIR}
-	${RPWA_NBODYPHASESPACE_INCLUDE_DIR}
-	${RPWA_UTILITIES_INCLUDE_DIR}
-	SYSTEM
-	${Boost_INCLUDE_DIRS}
-	${Libconfig_INCLUDE_DIR}
-	${ROOT_INCLUDE_DIR}
-	)
+message_setup_this_dir()
+
+add_subdirectory(decayAmplitude)
+add_subdirectory(generators)
+add_subdirectory(partialWaveFit)
+add_subdirectory(utilities)
 
 
-# executables
-make_executable(testMassAndTPrimePicker   testMassAndTPrimePicker.cc   "${RPWA_GENERATORS_LIB}")
+# test functionality of 'pyRootPwa' module
+add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)

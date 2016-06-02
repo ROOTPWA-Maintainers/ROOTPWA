@@ -27,8 +27,6 @@
 
 
 #pragma link C++ class rpwa::fitResult+;
-#pragma link C++ class rpwa::pwaPlotter+;
-#pragma link C++ class rpwa::TPwaFitGraphErrors+;
 #pragma link C++ class rpwa::complexMatrix-;
 
 
