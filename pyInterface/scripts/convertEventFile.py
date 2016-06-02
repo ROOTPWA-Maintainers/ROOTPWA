@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
 	binningMap = pyRootPwa.utils.binningMapFromArgList(args.binning)
 	if not binningMap:
-		printWarn("received no valid binning map argument")
+		pyRootPwa.utils.printWarn("received no valid binning map argument")
 
 	additionalVars = [] if not args.variable else args.variable
 

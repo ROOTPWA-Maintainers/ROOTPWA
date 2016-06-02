@@ -40,4 +40,4 @@ add_subdirectory(utilities)
 
 
 # test functionality of 'pyRootPwa' module
-add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
+add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/testPyRootPwa.py)
