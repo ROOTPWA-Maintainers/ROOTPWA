@@ -532,15 +532,12 @@ set(_SRC_DIRS
 	fortran
 	generators
 	highLevelInterface
-	legacy
-#	mpi
 	nBodyPhaseSpace
 	partialWaveFit
 	particleData
 	pyInterface
 	relativisticAmpCorrections
 	resonanceFit
-#	sandBox
 	storageFormats
 	utilities
 	)
@@ -585,17 +582,8 @@ if(USE_CUDA)
 	add_subdirectory(cuda)
 endif()
 
-# MPI
-if(USE_MPI)
-	add_subdirectory(mpi)
-endif()
 
-# compilation of sandBox is optional
-option(COMPILE_SANDBOX "en/disable compilation of code in sandBox directory" OFF)
-if(COMPILE_SANDBOX)
-	add_subdirectory(sandBox)
-endif()
-add_feature_info(sandBox COMPILE_SANDBOX "The sandBox feature provides untested code that is under development.")
+add_subdirectory(test)
 
 
 # print package and feature summary

@@ -54,7 +54,6 @@ set(SOURCES
 	fitResult.cc
 	complexMatrix.cc
 	pwaLikelihood.cc
-	pwaPlotter.cc
 	parameterSpace.cc
 	partialWaveFitHelper.cc
 	)
@@ -68,7 +67,7 @@ lib_name_for_current_dir(THIS_LIB)
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 root_generate_dictionary(
 	${ROOTPWA_DICTIONARY}
-	fitResult.h pwaPlotter.h complexMatrix.h
+	fitResult.h complexMatrix.h
 	MODULE ${THIS_LIB}
 	LINKDEF rootPwaLinkDef.h
 	)
@@ -88,12 +87,5 @@ make_shared_library(
 
 
 # executables
-make_executable(pwaplot                        pwaplots.cc                        ${THIS_LIB})
-
 make_executable(stripIntegralsFromFitResult    stripIntegralsFromFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
 make_executable(addIntegralsToFitResult        addIntegralsToFitResult.cc         ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(compareFitResultsIntegrals     compareFitResultsIntegrals.cc      ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-
-
-# build tests
-add_subdirectory(test)

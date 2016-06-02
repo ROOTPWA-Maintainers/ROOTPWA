@@ -87,7 +87,3 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	)
 add_dependencies(${THIS_LIB} environment)
-
-
-# build tests
-add_subdirectory(test)
