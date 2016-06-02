@@ -91,7 +91,7 @@ def calcIntegralsOnTheFly(integralFileName, eventFileName, keyFileNameList, binn
 	maxEvent = nEvents
 	if maxNmbEvents	> -1:
 		maxEvent = min(maxEvent, startEvent + maxNmbEvents)
-	if not metadataObject.addEventMetadata(eventMeta, minEvent, maxEvent):
+	if not metadataObject.addEventMetadata(eventMeta):
 		pyRootPwa.utils.printErr("could not add event metadata to integral metadata. Aborting...")
 		return False
 	if not binningMap:
