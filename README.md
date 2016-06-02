@@ -150,7 +150,7 @@ We use the _libconfig_ config file parser written by Mark A. Lindner available f
 
 ### Python ###
 
-In order to make scripting more powerful and flexible, some of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
+In order to make scripting more powerful and flexible, most of the ROOTPWA classes are Python-ified, so that they can be interfaced directly in Python. In the long term much of the house-keeping and user-interface code that is currently scattered across several C++ programs, shell scripts, and ROOT scripts will be reimplemented in Python.
 
 The build system tries to find your Python installation automatically. For this to work you need to have the `python` executable in your path. ROOTPWA requires Python 2.7. Python 3 is currently not supported. In case you do not have the possibility to install the Python 2.7 packages for your operating system, you may install Python from source as outlined below:
 
@@ -360,10 +360,3 @@ ROOTPWA follows a policy for the commit messages, which is close to the standard
 - The first line of the commit message must not be longer than 80 characters.
 - The second line of the commit message must be empty
 - All remaining lines (of which there must be at least one) must not be longer than 80 characters.
-
-Please note that the ROOTPWA git repository uses a server hook to enforce this policy. Should any of the commits you would like to see integrated not fulfill these requirements, all of them will be rejected and you will have to re-edit the problematic messages. To reduce problems, there is a git hook in the repository which you can use on the client side to check all the commit messages already when committing. You can install it by running
-
-    > cd $ROOTPWA/gitUtils
-    > ./installClientHook.sh
-
-Please note that the `ROOTPWA` environment variable has to be set for the script to work.
