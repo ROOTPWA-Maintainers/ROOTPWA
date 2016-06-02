@@ -102,6 +102,34 @@ namespace {
 
 
 	vector<double>
+	getChebyshevCoefficients(const size_t n)
+	{
+		vector<double> coefficientsNMinus2(1,1.);
+		if (n == 0) {
+			return coefficientsNMinus2;
+		}
+		vector<double> coefficientsNMinus1(1,0.);
+		coefficientsNMinus1.push_back(1.);
+		if (n == 1) {
+			return coefficientsNMinus1;
+		}
+		vector<double> coefficientsN;
+		for (size_t degree = 2; degree < n+1; ++degree) {
+			coefficientsN = vector<double>(degree+1,0.); // A polynomial of degree n has n+1 coefficients
+			coefficientsN[0] = -coefficientsNMinus2[0];
+			for (size_t i = 1; i < degree-1; ++i) {
+				coefficientsN[i] = 2*coefficientsNMinus1[i-1] - coefficientsNMinus2[i];
+			}
+			coefficientsN[degree-1] = 2*coefficientsNMinus1[degree-2];
+			coefficientsN[degree  ]  = 2*coefficientsNMinus1[degree-1];
+			coefficientsNMinus2 = coefficientsNMinus1;
+			coefficientsNMinus1 = coefficientsN;
+		}
+		return coefficientsN;
+	}
+
+
+	vector<double>
 	getBinning(const Setting* setting)
 	{
 		const Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
@@ -213,6 +241,30 @@ namespace {
 				copyConfig(*config, *newConfig, waveDescription::debug());
 
 				parent.remove(degreeName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "chebyshev") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = 0; i < degree; ++i) {
+				parent.add(realCoeffName, Setting::TypeList);
+				parent.add(imagCoeffName, Setting::TypeList);
+				vector<double> coefficients = getChebyshevCoefficients(i);
+				for (int j = 0; j < i+1; ++j) {
+					parent[realCoeffName.c_str()].add(Setting::TypeFloat) = coefficients[j];
+					parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				}
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(realCoeffName);
+				parent.remove(imagCoeffName);
 
 				const vector<configPtr> newExpanded = expand(newConfig);
 				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
