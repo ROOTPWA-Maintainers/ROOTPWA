@@ -46,7 +46,7 @@ def initLikelihood(waveDescThres,
 		eventFile, eventMeta = pyRootPwa.utils.openEventFile(eventFileName)
 		if not eventFile or not eventMeta:
 			pyRootPwa.utils.printErr("could not open event file '" + eventFileName + "'. Aborting...")
-			return False
+			return None
 		eventMetas.append(eventMeta)
 	likelihood.setOnTheFlyBinning(multiBin.boundaries, eventMetas)
 	for waveName in eventAndAmpFileDict[eventAndAmpFileDict.keys()[0]]:

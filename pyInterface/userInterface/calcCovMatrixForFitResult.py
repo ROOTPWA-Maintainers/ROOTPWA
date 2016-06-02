@@ -17,11 +17,12 @@ if __name__ == "__main__":
 	parser.add_argument("inputFileName", type=str, metavar="inputFile", help="path to fit result")
 	parser.add_argument("outputFileName", type=str, metavar="outputFile", help="path to output file")
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
-	parser.add_argument("-b", type=int, metavar="#", dest="binID", default=0, help="bin ID of fit (default: 0)")
+	parser.add_argument("-b", type=int, metavar="#", dest="integralBin", default=0, help="integral bin id of fit (default: 0)")
 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
 	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("--noAcceptance", help="do not take acceptance into account (default: false)", action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
 
@@ -35,14 +36,27 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
-	ampFileList = fileManager.getAmplitudeFilePaths(args.binID, pyRootPwa.core.eventMetadata.REAL)
-	if not ampFileList:
+	multiBin = fileManager.binList[args.integralBin]
+	eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL)
+	if not eventAndAmpFileDict:
 		pyRootPwa.utils.printErr("could not retrieve valid amplitude file list. Aborting...")
 		sys.exit(1)
-	binningMap = fileManager.getBinFromID(args.binID)
 
-	psIntegralPath  = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.GENERATED)
-	accIntegralPath = fileManager.getIntegralFilePath(args.binID, pyRootPwa.core.eventMetadata.ACCEPTED)
+	psIntegralPath  = fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED)
+	accIntegralPath = psIntegralPath
+	if not args.noAcceptance:
+		accIntegralPath = fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.ACCEPTED)
+	elif args.accEventsOverride != 0:
+		# for a fit without acceptance corrections the number of events
+		# the acceptance matrix is normalized to needs to be equal to
+		# the number of events in the normalization matrix
+		intFile = pyRootPwa.ROOT.TFile.Open(psIntegralPath, "READ")
+		intMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(intFile)
+		intMatrix = intMeta.getAmpIntegralMatrix()
+		if args.accEventsOverride != intMatrix.nmbEvents():
+			pyRootPwa.utils.printErr("incorrect number of events for normalization of integral matrix for "
+			                         "a fit without acceptance (got: {:d}, expected: {:d}). Aborting...".format(args.accEventsOverride, intMatrix.nmbEvents()))
+			sys.exit(1)
 
 	result = pyRootPwa.utils.getFitResultFromFile(fitResultFileName = args.inputFileName,
 	                                              fitResultTreeName = config.fitResultTreeName,
@@ -51,21 +65,25 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not get fit result from file '" + args.inputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getKeyFiles())
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getWaveDescriptions())
 	if not waveDescThres:
 		pyRootPwa.utils.printErr("error while getting wave names, descriptions and thresholds. Aborting...")
 		sys.exit(1)
 
 	likelihood = pyRootPwa.initLikelihood(waveDescThres = waveDescThres,
 	                                      massBinCenter = result.massBinCenter(),
-	                                      ampFileList = ampFileList,
+	                                      eventAndAmpFileDict = eventAndAmpFileDict,
 	                                      normIntegralFileName = psIntegralPath,
 	                                      accIntegralFileName = accIntegralPath,
+	                                      multiBin = multiBin,
 	                                      accEventsOverride = args.accEventsOverride,
 	                                      cauchy = args.cauchyPriors,
 	                                      cauchyWidth = args.cauchyPriorWidth,
 	                                      rank = result.rank(),
 	                                      verbose = args.verbose)
+	if not likelihood:
+		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
+		sys.exit(1)
 
 	pars = []
 	for i in range(likelihood.nmbPars()):
