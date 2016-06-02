@@ -350,9 +350,9 @@ namespace rpwa {
 		TMatrixT<double> cov(2, 2);
 		if(not covMatrixValid()) {
 			printWarn << "no valid covariance matrix to return, return 0-matrix." << std::endl;
-			cov = 0.;
 			return cov;
 		}
+
 		// get parameter indices
 		const int i = _fitParCovMatrixIndices[prodAmpIndex].first;
 		const int j = _fitParCovMatrixIndices[prodAmpIndex].second;
@@ -548,8 +548,10 @@ namespace rpwa {
 	                           const unsigned int      waveIndexB,
 	                           const TMatrixT<double>& jacobian) const  // Jacobian of real valued function (d f/ d Re[rho]   d f / d Im[rho])
 	{
-		if (!covMatrixValid())
+		if (!covMatrixValid()) {
+			printWarn << "fitResult does not have a valid error matrix. Returning zero error for real-valued function." << std::endl;
 			return 0;
+		}
 
 		const TMatrixT<double> spinDensCov = spinDensityMatrixElemCov(waveIndexA, waveIndexB);  // 2 x 2 matrix
 		const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);              // 2 x 1 matrix

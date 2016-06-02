@@ -540,6 +540,10 @@ fitResult::fitParameter(const string& parName) const
 double
 fitResult::fitParameterErr(const string& parName) const
 {
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero error for fit parameter." << endl;
+		return 0;
+	}
 	// check if parameter corresponds to real or imaginary part of production amplitude
 	TString    name(parName);
 	const bool realPart = (name.Contains("RE") or name.Contains("flat"));
@@ -660,6 +664,13 @@ TMatrixT<double>
 fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
                                     const unsigned int waveIndexB) const
 {
+	// covariance matrix has to be present
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero covariance matrix for spin-density matrix element." << endl;
+		const TMatrixT<double> spinDensCov(2, 2);
+		return spinDensCov;
+	}
+
 	// spin density matrix element is 0 if the two waves have different
 	// reflectivities
 	if (partialWaveFitHelper::getReflectivity(waveName(waveIndexA))
@@ -671,7 +682,7 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 	// get pairs of amplitude indices with the same rank for waves A and B
 	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
 		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
-	if (not covMatrixValid() or (prodAmpIndexPairs.size() == 0)) {
+	if (prodAmpIndexPairs.size() == 0) {
 		const TMatrixT<double> spinDensCov(2, 2);
 		return spinDensCov;
 	}
@@ -730,7 +741,12 @@ double
 fitResult::phaseErr(const unsigned int waveIndexA,
                     const unsigned int waveIndexB) const
 {
-	if (not covMatrixValid() or (waveIndexA == waveIndexB))
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero error for phase." << endl;
+		return 0;
+	}
+
+	if (waveIndexA == waveIndexB)
 		return 0;
 
 	// construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
@@ -764,10 +780,15 @@ double
 fitResult::coherenceErr(const unsigned int waveIndexA,
                         const unsigned int waveIndexB) const
 {
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero error for coherence." << endl;
+		return 0;
+	}
+
 	// get amplitude indices for waves A and B
 	const vector<unsigned int> prodAmpIndicesA = prodAmpIndicesForWave(waveIndexA);
 	const vector<unsigned int> prodAmpIndicesB = prodAmpIndicesForWave(waveIndexB);
-	if (not covMatrixValid() or (prodAmpIndicesA.size() == 0) or (prodAmpIndicesB.size() == 0))
+	if ((prodAmpIndicesA.size() == 0) or (prodAmpIndicesB.size() == 0))
 		return 0;
 
 	// build Jacobian for coherence, which is a 1 x 2(n + m) matrix composed of (n + m) sub-Jacobians:
@@ -847,8 +868,10 @@ double
 fitResult::overlapErr(const unsigned int waveIndexA,
                       const unsigned int waveIndexB) const
 {
-	if (not covMatrixValid())
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero error for overlap." << endl;
 		return 0;
+	}
 
 	const complex<double> normInt = normIntegral(waveIndexA, waveIndexB);
 	TMatrixT<double> jacobian(1, 2);  // overlap is real valued function, so J has only one row
@@ -891,10 +914,15 @@ fitResult::intensity(const string& waveNamePattern) const
 double
 fitResult::intensityErr(const string& waveNamePattern) const
 {
+	if (not covMatrixValid()) {
+		printWarn << "fitResult does not have a valid error matrix. Returning zero error for intensity." << endl;
+		return 0.;
+	}
+
 	// get amplitudes that correspond to wave name pattern
 	const vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
 	const unsigned int         nmbWaves    = waveIndices.size();
-	if (not covMatrixValid() or (nmbWaves == 0)) {
+	if (nmbWaves == 0) {
 		return 0;
 	}
 	if (nmbWaves == 1) {
