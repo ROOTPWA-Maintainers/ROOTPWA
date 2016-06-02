@@ -91,6 +91,28 @@ binnedMassDependence::amp(const isobarDecayVertex& v)
 
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
+sawtoothMassDependence::amp(const isobarDecayVertex& v)
+{
+	complex<double> amp = 0.;
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	if (_mMin <= M and M < _mMax)
+		amp = 2. * (M - _mMin) / (_mMax - _mMin) - 1.;
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2) = "
+		           << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
 polynomialMassDependence::amp(const isobarDecayVertex& v)
 {
 	complex<double> amp = 0.;

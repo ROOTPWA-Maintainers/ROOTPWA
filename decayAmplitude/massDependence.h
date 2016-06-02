@@ -164,6 +164,42 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
+	/// Brief trivial sawtooth mass dependence over a range
+	class sawtoothMassDependence : public massDependence {
+
+	public:
+
+		sawtoothMassDependence(const double mMin, const double mMax) : massDependence(), _mMin(mMin), _mMax(mMax) { }
+		virtual ~sawtoothMassDependence()                                                                         { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { return "sawtooth"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		double getMassMin() const { return _mMin; }
+		double getMassMax() const { return _mMax; }
+
+	private:
+
+		double _mMin;  ///< Lower limit of the isobar mass bin
+		double _mMax;  ///< Upper limit of the isobar mass bin
+
+	};
+
+
+	typedef boost::shared_ptr<sawtoothMassDependence> sawtoothMassDependencePtr;
+
+
+	inline
+	sawtoothMassDependencePtr
+	createSawtoothMassDependence(const double mMin, const double mMax)
+	{
+		sawtoothMassDependencePtr massDep(new sawtoothMassDependence(mMin, mMax));
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
 	/// Brief polynomial mass dependence with flexible coefficients
 	class polynomialMassDependence : public massDependence {
 

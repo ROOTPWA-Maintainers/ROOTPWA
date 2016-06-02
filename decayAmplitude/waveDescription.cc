@@ -649,6 +649,11 @@ namespace {
 			name << "binned[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
 			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
 			     << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if(vertex->massDependence() && vertex->massDependence()->name() == "sawtooth") {
+			sawtoothMassDependencePtr massDep = static_pointer_cast<sawtoothMassDependence>(vertex->massDependence());
+			name << "sawtooth[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
 		} else if (vertex->massDependence() && vertex->massDependence()->name() == "polynomial") {
 			polynomialMassDependencePtr massDep = static_pointer_cast<polynomialMassDependence>(vertex->massDependence());
 			name << "polynomial[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
@@ -1017,6 +1022,25 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 		}
 		massDep = createBinnedMassDependence(mMin, mMax);
 	}
+	else if (massDepType == "sawtooth") {
+		const Setting* bounds = findLibConfigList(*massDepKey, "bounds" , false);
+		if (not bounds) {
+			printErr << "no bounds given for sawtooth mass dependence." << endl;
+			throw;
+		}
+		const int length = bounds->getLength();
+		if (length != 2) {
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << endl;
+			throw;
+		}
+		const double mMin = (*bounds)[0];
+		const double mMax = (*bounds)[1];
+		if (mMin > mMax) {
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << endl;
+			throw;
+		}
+		massDep = createSawtoothMassDependence(mMin, mMax);
+	}
 	else if (massDepType == "polynomial") {
 		double mMin = 0.;
 		bool mMinFound = massDepKey->lookupValue("mMin", mMin);
@@ -1295,9 +1319,18 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 		massDepKey.add("name", Setting::TypeString) = massDepName;
 
 		if (massDepName == "binned") {
-			// for this mass dependence additionally the mass bound
+			// for this mass dependence additionally the mass bounds
 			// have to be stored in the keyfile.
 			const binnedMassDependence& binned = dynamic_cast<const binnedMassDependence&>(massDep);
+
+			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
+			bounds.add(Setting::TypeFloat) = binned.getMassMin();
+			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
+		if (massDepName == "sawtooth") {
+			// for this mass dependence additionally the mass bounds
+			// have to be stored in the keyfile.
+			const sawtoothMassDependence& binned = dynamic_cast<const sawtoothMassDependence&>(massDep);
 
 			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
 			bounds.add(Setting::TypeFloat) = binned.getMassMin();
