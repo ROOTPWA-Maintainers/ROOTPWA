@@ -280,20 +280,6 @@ namespace {
 		return retval;
 	}
 
-	std::string fitResult_printProdAmpNames(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printProdAmpNames(sstr);
-		return sstr.str();
-	}
-
-	std::string fitResult_printWaveNames(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printWaveNames(sstr);
-		return sstr.str();
-	}
-
 	std::string fitResult_printProdAmps(const rpwa::fitResult self)
 	{
 		std::stringstream sstr;
@@ -407,8 +393,6 @@ void rpwa::py::exportFitResult() {
 		)
 		.def("phaseSpaceIntegralVector", &fitResult_phaseSpaceIntegralVector)
 		.def("normIntIndexMap", &fitResult_normIntIndexMap)
-		.def("printProdAmpNames", &fitResult_printProdAmpNames)
-		.def("printWaveNames", &fitResult_printWaveNames)
 		.def("printProdAmps", &fitResult_printProdAmps)
 		.def("printWaves", &fitResult_printWaves)
 

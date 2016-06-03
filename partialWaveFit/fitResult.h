@@ -280,8 +280,6 @@ namespace rpwa {
 		const std::map<Int_t, Int_t>&                normIntIndexMap           () const { return _normIntIndexMap;        }
 
 
-		inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
-		inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
 		inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
 		inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
 
@@ -407,30 +405,6 @@ namespace rpwa {
 	}
 
 
-	// prints all production amplitude names
-	inline
-	std::ostream&
-	fitResult::printProdAmpNames(std::ostream& out) const
-	{
-		out << "    Production amplitude names:" << std::endl;
-		for (unsigned int i = 0; i < nmbProdAmps(); ++i)
-			out << "        " << std::setw(3) << i << " " << _prodAmpNames[i] << std::endl;
-		return out;
-	}
-
-
-	// prints all wave names
-	inline
-	std::ostream&
-	fitResult::printWaveNames(std::ostream& out) const
-	{
-		out << "    Wave names:" << std::endl;
-		for (unsigned int i = 0; i < nmbWaves(); ++i)
-			out << "        " << std::setw(3) << i << " " << waveName(i) << std::endl;
-		return out;
-	}
-
-
 	// prints all production amplitudes and their covariance matrix
 	inline
 	std::ostream&
@@ -474,7 +448,7 @@ namespace rpwa {
 		    << "    fit has converged .................... " << rpwa::yesNo(converged())      << std::endl
 		    << "    Hessian matrix has been calculated ... " << rpwa::yesNo(hasHessian())     << std::endl;
 		printProdAmps(out);
-		printWaveNames(out);
+		printWaves(out);
 		out << "    covariance matrix:" << std::endl << _fitParCovMatrix << std::endl;
 		out << "    covariance matrix indices:" << std::endl;
 		for (unsigned int i = 0; i < _fitParCovMatrixIndices.size(); ++i)
