@@ -89,7 +89,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("Write", &::ampIntegralMatrixMetadata_write, bp::arg("name")=0)
 
 		.def("getKeyFileContents", &::ampIntegralMatrixMetadata_getKeyFileContents)
-		.def("getKeyAmplitudeHashes", &::ampIntegralMatrixMetadata_getAmplitudeHashes)
+		.def("getAmplitudeHashes", &::ampIntegralMatrixMetadata_getAmplitudeHashes)
 		.def("readIntegralFile"
 		     , &::ampIntegralMatrixeMetadata_readIntegralFile
 		     , (bp::arg("inputFile"), bp::arg("quiet")=false)
