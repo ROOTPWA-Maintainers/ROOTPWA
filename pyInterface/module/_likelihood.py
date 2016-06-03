@@ -49,7 +49,7 @@ def initLikelihood(waveDescThres,
 			return None
 		eventMetas.append(eventMeta)
 	likelihood.setOnTheFlyBinning(multiBin.boundaries, eventMetas)
-	for waveName in eventAndAmpFileDict[eventAndAmpFileDict.keys()[0]]:
+	for (waveName, _, _) in waveDescThres:
 		ampMetas = []
 		for eventFileName in eventAndAmpFileDict:
 			ampFileName = eventAndAmpFileDict[eventFileName][waveName]
