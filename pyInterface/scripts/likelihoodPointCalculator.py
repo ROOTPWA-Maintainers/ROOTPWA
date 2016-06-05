@@ -64,7 +64,7 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not get fit result from file '" + args.inputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getKeyFiles())
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getWaveDescriptions())
 	if not waveDescThres:
 		pyRootPwa.utils.printErr("error while getting wave names, descriptions and thresholds. Aborting...")
 		sys.exit(1)
