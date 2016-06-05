@@ -591,8 +591,11 @@ fitResult::intensityErr(const string& waveNamePattern) const
 		// build sub-Jacobian for each amplitude; intensity is real valued function, so J has only one row
 		// JA_ir = 2 * sum_j (A_jr Norm_ji)
 		complex<double>  ampNorm     = 0;  // sum_j (A_jr Norm_ji)
+		const int        currentRefl = partialWaveFitHelper::getReflectivity(waveNameForProdAmp(prodAmpIndices[i]));
 		const int        currentRank = rankOfProdAmp(prodAmpIndices[i]);
 		for (unsigned int j = 0; j < nmbAmps; ++j) {
+			if (partialWaveFitHelper::getReflectivity(waveNameForProdAmp(prodAmpIndices[j])) != currentRefl)
+				continue;
 			if (rankOfProdAmp(prodAmpIndices[j]) != currentRank)
 				continue;
 			ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(prodAmpIndices[j], prodAmpIndices[i]);  // order of indices is essential
