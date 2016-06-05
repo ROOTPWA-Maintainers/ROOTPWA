@@ -821,15 +821,11 @@ fitResult::fill
 	// get wave list from production amplitudes and fill map for
 	// production-amplitude indices to indices in normalization integral
 	for (unsigned int i = 0; i < _prodAmpNames.size(); ++i) {
-		const TString waveName = waveNameForProdAmp(i);
-		if (find(_waveNames.begin(), _waveNames.end(), waveName.Data()) == _waveNames.end())
-			_waveNames.push_back(waveName.Data());
-		// look for index of first occurence
-		unsigned int j;
-		for (j = 0; j < _prodAmpNames.size(); ++j)
-			if (prodAmpName(j).find(waveName) != string::npos)
-				break;
-		_normIntIndexMap[i] = j;
+		const string waveName = waveNameForProdAmp(i);
+		const size_t waveIdx  = find(_waveNames.begin(), _waveNames.end(), waveName) - _waveNames.begin();
+		if (waveIdx == _waveNames.size())
+			_waveNames.push_back(waveName);
+		_normIntIndexMap[i] = waveIdx;
 	}
 
 	// check consistency
