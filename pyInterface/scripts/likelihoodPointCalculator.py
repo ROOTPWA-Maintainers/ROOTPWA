@@ -35,6 +35,12 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 		sys.exit(1)
 
+	if args.integralBin < 0:
+		pyRootPwa.utils.printErr("bin < 0 (" + str(args.integralBin) + "). Aborting...")
+		sys.exit(1)
+	elif args.integralBin >= len(fileManager.binList):
+		pyRootPwa.utils.printErr("bin out of range (" + str(args.integralBin) + ">=" + str(len(fileManager.binList)) + "). Aborting...")
+		sys.exit(1)
 	multiBin = fileManager.binList[args.integralBin]
 	eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL)
 	if not eventAndAmpFileDict:
@@ -64,7 +70,7 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not get fit result from file '" + args.inputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getKeyFiles())
+	waveDescThres = pyRootPwa.utils.getWaveDescThresFromFitResult(result, fileManager.getWaveDescriptions())
 	if not waveDescThres:
 		pyRootPwa.utils.printErr("error while getting wave names, descriptions and thresholds. Aborting...")
 		sys.exit(1)
@@ -80,6 +86,9 @@ if __name__ == "__main__":
 	                                      cauchyWidth = args.cauchyPriorWidth,
 	                                      rank = result.rank(),
 	                                      verbose = args.verbose)
+	if not likelihood:
+		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
+		sys.exit(1)
 
 	pars = []
 	for i in range(likelihood.nmbPars()):

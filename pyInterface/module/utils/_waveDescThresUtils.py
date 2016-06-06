@@ -2,13 +2,13 @@
 import pyRootPwa.core
 from _printingUtils import printInfo, printWarn
 
-def getWaveDescThresFromFitResult(fitResult, keyFiles):
+def getWaveDescThresFromFitResult(fitResult, waveDescriptions):
 	waveDescThres = []
 	for waveName in fitResult.waveNames():
 		if waveName == "flat":
 			continue
 
-		waveDesc = waveDesc = pyRootPwa.core.waveDescription.parseKeyFile(keyFiles[waveName][0])[keyFiles[waveName][1]]
+		waveDesc = waveDescriptions[waveName]
 
 		thresholded = True
 		for prodAmpIndex in xrange(fitResult.nmbProdAmps()):
