@@ -591,8 +591,11 @@ fitResult::intensityErr(const string& waveNamePattern) const
 		// build sub-Jacobian for each amplitude; intensity is real valued function, so J has only one row
 		// JA_ir = 2 * sum_j (A_jr Norm_ji)
 		complex<double>  ampNorm     = 0;  // sum_j (A_jr Norm_ji)
+		const int        currentRefl = partialWaveFitHelper::getReflectivity(waveNameForProdAmp(prodAmpIndices[i]));
 		const int        currentRank = rankOfProdAmp(prodAmpIndices[i]);
 		for (unsigned int j = 0; j < nmbAmps; ++j) {
+			if (partialWaveFitHelper::getReflectivity(waveNameForProdAmp(prodAmpIndices[j])) != currentRefl)
+				continue;
 			if (rankOfProdAmp(prodAmpIndices[j]) != currentRank)
 				continue;
 			ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(prodAmpIndices[j], prodAmpIndices[i]);  // order of indices is essential
@@ -630,14 +633,11 @@ fitResult::phaseErr(const unsigned int waveIndexA,
 	// construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
 	const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
 	TMatrixT<double>      jacobian(1, 2);  // phase is real valued function, so J has only one row
-	{
-		const double x = spinDens.real();
-		const double y = spinDens.imag();
-		if ((x != 0) or (y != 0)) {
-			jacobian[0][0] = 1 / (x + y * y / x);
-			jacobian[0][1] = -y / (x * x + y * y);
-		}
+	if (norm(spinDens) != 0) {
+		jacobian[0][0] = -spinDens.imag() / norm(spinDens);
+		jacobian[0][1] =  spinDens.real() / norm(spinDens);
 	}
+
 	// calculate variance
 	const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
 	return sqrt(phaseVariance) * TMath::RadToDeg();
@@ -821,15 +821,11 @@ fitResult::fill
 	// get wave list from production amplitudes and fill map for
 	// production-amplitude indices to indices in normalization integral
 	for (unsigned int i = 0; i < _prodAmpNames.size(); ++i) {
-		const TString waveName = waveNameForProdAmp(i);
-		if (find(_waveNames.begin(), _waveNames.end(), waveName.Data()) == _waveNames.end())
-			_waveNames.push_back(waveName.Data());
-		// look for index of first occurence
-		unsigned int j;
-		for (j = 0; j < _prodAmpNames.size(); ++j)
-			if (prodAmpName(j).find(waveName) != string::npos)
-				break;
-		_normIntIndexMap[i] = j;
+		const string waveName = waveNameForProdAmp(i);
+		const size_t waveIdx  = find(_waveNames.begin(), _waveNames.end(), waveName) - _waveNames.begin();
+		if (waveIdx == _waveNames.size())
+			_waveNames.push_back(waveName);
+		_normIntIndexMap[i] = waveIdx;
 	}
 
 	// check consistency
