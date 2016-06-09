@@ -218,15 +218,25 @@ nBodyPhaseSpaceKinematics::setAngles(const std::vector<double>& cosTheta,
 }
 
 
+// computes breakup momenta
+// uses vector of intermediate two-body masses prepared by setting
+// _m either directly or via setMasses
+void
+nBodyPhaseSpaceKinematics::calcBreakupMomenta()
+{
+	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
+		_breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
+	}
+}
+
+
 // computes event weight (= integrand value) and breakup momenta
 // uses vector of intermediate two-body masses prepared by setting
 // _m either directly or via setMasses
 double
 nBodyPhaseSpaceKinematics::calcWeight()
 {
-	for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
-		_breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
-	}
+	calcBreakupMomenta();
 	switch (_weightType) {
 		case S_U_CHUNG:
 			{  // S. U. Chung's weight
