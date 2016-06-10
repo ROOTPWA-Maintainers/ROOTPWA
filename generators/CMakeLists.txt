@@ -67,6 +67,7 @@ set(SOURCES
 	)
 if(USE_BAT)
 	LIST(APPEND SOURCES importanceSampler.cc)
+	set_source_files_properties(importanceSampler.cc PROPERTIES COMPILE_FLAGS "${BAT_CXX_FLAGS}")
 endif()
 
 

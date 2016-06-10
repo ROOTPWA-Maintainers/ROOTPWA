@@ -106,6 +106,9 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 double
 rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parameters)
 {
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	++(_funcCallInfo[LOGAPRIORIPROBABILITY].nmbCalls);
 	TStopwatch timerTot;
 	timerTot.Start();
@@ -118,6 +121,9 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 	const double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
 
 	timerTot.Stop();
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	_funcCallInfo[LOGAPRIORIPROBABILITY].totalTime += timerTot.RealTime();
 
 	return std::log(phaseSpace);
@@ -127,6 +133,9 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 double
 rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 {
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	++(_funcCallInfo[LOGLIKELIHOOD].nmbCalls);
 	TStopwatch timerTot;
 	timerTot.Start();
@@ -148,9 +157,18 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 		decayKinMomenta[part] = nBodyPhaseSpace.daughter(part).Vect();
 	}
 
-	const double intensity = _model->getIntensity(decayKinMomenta);
+	double intensity;
+#ifdef _OPENMP
+#pragma omp critical(model)
+#endif
+	{
+		intensity = _model->getIntensity(decayKinMomenta);
+	}
 
 	timerTot.Stop();
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	_funcCallInfo[LOGLIKELIHOOD].totalTime += timerTot.RealTime();
 
 	return std::log(intensity);
@@ -160,6 +178,9 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 void
 rpwa::importanceSampler::CalculateObservables(const std::vector<double>& parameters)
 {
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	++(_funcCallInfo[CALCULATEOBSERVABLES].nmbCalls);
 	TStopwatch timerTot;
 	timerTot.Start();
@@ -190,7 +211,12 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 		double         tPrime;
 		TLorentzVector pBeam;
 		TLorentzVector pX;
-		boost::tuples::tie(valid, tPrime, pBeam, pX) = getProductionKinematics(parameters[3*_nPart-6]);
+#ifdef _OPENMP
+#pragma omp critical(prodKin)
+#endif
+		{
+			boost::tuples::tie(valid, tPrime, pBeam, pX) = getProductionKinematics(parameters[3*_nPart-6]);
+		}
 		if (not valid) {
 			printErr << "generation of production failed" << std::endl;
 			throw;
@@ -210,10 +236,18 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 			var.push_back(tPrime);
 		}
 		std::vector<TVector3> prodKinMomenta(1, pBeam.Vect());
-		_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
+#ifdef _OPENMP
+#pragma omp critical(fileWriter)
+#endif
+		{
+			_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
+		}
 	}
 
 	timerTot.Stop();
+#ifdef _OPENMP
+#pragma omp atomic
+#endif
 	_funcCallInfo[CALCULATEOBSERVABLES].totalTime += timerTot.RealTime();
 }
 
