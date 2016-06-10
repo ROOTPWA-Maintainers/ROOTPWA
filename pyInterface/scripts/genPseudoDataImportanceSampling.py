@@ -126,13 +126,21 @@ if __name__ == "__main__":
 		modelSampler.setPhaseSpaceOnly()
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
-	modelSampler.initializeFileWriter(outputFile)
+	if len(args.massTPrimeVariableNames.split(',')) != 2:
+		printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
+		sys.exit(1)
+	modelSampler.initializeFileWriter(outputFile,
+	                                  not args.noStoreMassTPrime,
+	                                  args.massTPrimeVariableNames.split(',')[0],
+	                                  args.massTPrimeVariableNames.split(',')[1])
 
 	modelSampler.SetNChains(args.nChains)
 	modelSampler.SetNIterationsRun(args.nEvents/args.nChains*args.lag)
 	modelSampler.SetNLag(args.lag)
 	modelSampler.SetRandomSeed(args.seed)
 	modelSampler.MarginalizeAll()
+
+	modelSampler.finalizeFileWriter()
 
 	modelSampler.PrintAllMarginalized(args.outputFile.replace(".root",".pdf").replace(".ROOT",".pdf"),2,4)
 	modelSampler.PrintCorrelationMatrix(args.outputFile.replace(".root","_coma.pdf").replace(".ROOT","_coma.pdf"))
@@ -149,7 +157,3 @@ if __name__ == "__main__":
 		printWarn("high efficiency encountered. Try increasing the lag to avoid correlations")
 	elif realEfficiency > 1.:
 		printErr("efficiency > 1 encountered. Data are highly correlated. Increase the lag.")
-
-	modelSampler.finalizeFileWriter()
-	outputFile.Close()
-	integralFile.Close()

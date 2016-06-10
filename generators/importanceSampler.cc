@@ -204,12 +204,10 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 			decayKinMomenta[part] = p.Vect();
 		}
 
-		std::vector<double> var(3+_nPart);
-		var[0] = tPrime;
-		var[1] = pX.M();
-		var[2] = pX.E();
-		for (size_t part = 0; part < _nPart; ++part) {
-			var[part + 3] = nBodyPhaseSpace.daughter(part).E();
+		std::vector<double> var;
+		if (_storeMassAndTPrime) {
+			var.push_back(pX.M());
+			var.push_back(tPrime);
 		}
 		std::vector<TVector3> prodKinMomenta(1, pBeam.Vect());
 		_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
@@ -221,8 +219,13 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 
 
 bool
-rpwa::importanceSampler::initializeFileWriter(TFile* outFile)
+rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
+                                              const bool         storeMassAndTPrime,
+                                              const std::string& massVariableName,
+                                              const std::string& tPrimeVariableName)
 {
+	_storeMassAndTPrime = storeMassAndTPrime;
+
 	std::string userString("importanceSampledEvents");
 
 	std::vector<std::string> prodKinParticleNames(1);
@@ -233,15 +236,12 @@ rpwa::importanceSampler::initializeFileWriter(TFile* outFile)
 	}
 
 	std::map<std::string, std::pair<double, double> > binning;
-	binning["mass"]   = _massAndTPrimePicker->massRange();
-	binning["tPrime"] = _massAndTPrimePicker->tPrimeRange();
-	std::vector<std::string> var(1, "tPrime");
-	var.push_back("mass");
-	var.push_back("EXlab");
-	for (size_t part = 0; part < _nPart; ++part) {
-		std::stringstream name;
-		name << "E" << part+1;
-		var.push_back(name.str());
+	binning[massVariableName]   = _massAndTPrimePicker->massRange();
+	binning[tPrimeVariableName] = _massAndTPrimePicker->tPrimeRange();
+	std::vector<std::string> var;
+	if (_storeMassAndTPrime) {
+		var.push_back(massVariableName);
+		var.push_back(tPrimeVariableName);
 	}
 
 	const bool valid = _fileWriter.initialize(*outFile,

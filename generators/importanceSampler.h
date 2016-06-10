@@ -39,7 +39,10 @@ namespace rpwa {
 		double LogLikelihood(const std::vector<double>& parameters);
 		void CalculateObservables(const std::vector<double>& parameters);
 
-		bool initializeFileWriter(TFile* outFile);
+		bool initializeFileWriter(TFile*             outFile,
+		                          const bool         storeMassAndTPrime = true,
+		                          const std::string& massVariableName   = "mass",
+		                          const std::string& tPrimeVariableName = "tPrime");
 		bool finalizeFileWriter();
 
 		void setPhaseSpaceOnly(const bool input = true) { _phaseSpaceOnly = input; }
@@ -66,6 +69,7 @@ namespace rpwa {
 		bool                            _phaseSpaceOnly;
 
 		rpwa::eventFileWriter           _fileWriter;
+		bool                            _storeMassAndTPrime;
 
 
 		// function call statistics (copied from pwaLikelihood)
