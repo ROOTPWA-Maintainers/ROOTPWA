@@ -26,6 +26,13 @@ namespace {
 	}
 
 
+	void
+	importanceSampler_printFuncInfo(rpwa::importanceSampler& self)
+	{
+		self.printFuncInfo(std::cout);
+	}
+
+
 	double
 	importanceSampler_LogLikelihood(rpwa::importanceSampler& self,
 	                                const bp::list&          pyParameters)
@@ -140,6 +147,8 @@ void rpwa::py::exportImportanceSampler() {
 		)
 
 		.def("nCalls", &rpwa::importanceSampler::nCalls)
+		.def("resetFuncInfo", &rpwa::importanceSampler::resetFuncInfo)
+		.def("printFuncInfo", &importanceSampler_printFuncInfo)
 
 		// From here BAT stuff. Therefore names start with capital letters
 		.def(

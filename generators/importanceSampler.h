@@ -44,8 +44,6 @@ namespace rpwa {
 
 		void setPhaseSpaceOnly(const bool input = true) { _phaseSpaceOnly = input; }
 
-		unsigned int nCalls() const { return _nCalls; }
-
 	private:
 
 		boost::tuples::tuple<bool, double, TLorentzVector, TLorentzVector> getProductionKinematics(const double mass) const;
@@ -70,7 +68,23 @@ namespace rpwa {
 		rpwa::eventFileWriter           _fileWriter;
 
 
-		static size_t                   _nCalls;
+		// function call statistics (copied from pwaLikelihood)
+	public:
+		unsigned int nCalls() const { return _funcCallInfo[LOGLIKELIHOOD].nmbCalls; }
+		void resetFuncInfo();
+		std::ostream& printFuncInfo(std::ostream& out = std::cout) const;
+	private:
+		enum functionCallEnum {
+			LOGAPRIORIPROBABILITY = 0,
+			LOGLIKELIHOOD         = 1,
+			CALCULATEOBSERVABLES  = 2,
+			NMB_FUNCTIONCALLENUM  = 3
+		};
+		struct functionCallInfo {
+			unsigned int nmbCalls;   // number of times function was called
+			double       totalTime;  // total execution time of function
+		};
+		mutable functionCallInfo        _funcCallInfo[NMB_FUNCTIONCALLENUM];
 
 
 	};

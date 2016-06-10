@@ -3,15 +3,13 @@
 #include<sstream>
 
 #include<TFile.h>
+#include<TStopwatch.h>
 
 #include<BAT/BCMath.h>
 
 #include"importanceSampler.h"
 #include"nBodyPhaseSpaceKinematics.h"
 #include"randomNumberGenerator.h"
-
-
-size_t rpwa::importanceSampler::_nCalls = 0;
 
 
 rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model,
@@ -100,6 +98,7 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 		}
 	}
 
+	resetFuncInfo();
 	BCAux::SetStyle();
 }
 
@@ -107,12 +106,19 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 double
 rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parameters)
 {
+	++(_funcCallInfo[LOGAPRIORIPROBABILITY].nmbCalls);
+	TStopwatch timerTot;
+	timerTot.Start();
+
 	rpwa::nBodyPhaseSpaceKinematics nBodyPhaseSpace;
 	if (not initializeNBodyPhaseSpace(nBodyPhaseSpace, parameters, false)) {
 		return -std::numeric_limits<double>::infinity();
 	}
 
 	const double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
+
+	timerTot.Stop();
+	_funcCallInfo[LOGAPRIORIPROBABILITY].totalTime += timerTot.RealTime();
 
 	return std::log(phaseSpace);
 }
@@ -121,7 +127,9 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 double
 rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 {
-	++_nCalls;
+	++(_funcCallInfo[LOGLIKELIHOOD].nmbCalls);
+	TStopwatch timerTot;
+	timerTot.Start();
 
 	if (_phaseSpaceOnly) {
 		return -1;
@@ -142,6 +150,9 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 
 	const double intensity = _model->getIntensity(decayKinMomenta);
 
+	timerTot.Stop();
+	_funcCallInfo[LOGLIKELIHOOD].totalTime += timerTot.RealTime();
+
 	return std::log(intensity);
 }
 
@@ -149,6 +160,10 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 void
 rpwa::importanceSampler::CalculateObservables(const std::vector<double>& parameters)
 {
+	++(_funcCallInfo[CALCULATEOBSERVABLES].nmbCalls);
+	TStopwatch timerTot;
+	timerTot.Start();
+
 	rpwa::nBodyPhaseSpaceKinematics nBodyPhaseSpace;
 	if (not initializeNBodyPhaseSpace(nBodyPhaseSpace, parameters, true)) {
 		printErr << "error while initializing n-body phase space. Aborting..." << std::endl;
@@ -199,6 +214,9 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 		std::vector<TVector3> prodKinMomenta(1, pBeam.Vect());
 		_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
 	}
+
+	timerTot.Stop();
+	_funcCallInfo[CALCULATEOBSERVABLES].totalTime += timerTot.RealTime();
 }
 
 
@@ -337,4 +355,27 @@ rpwa::importanceSampler::initializeNBodyPhaseSpace(rpwa::nBodyPhaseSpaceKinemati
 	}
 
 	return true;
+}
+
+
+void
+rpwa::importanceSampler::resetFuncInfo()
+{
+	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i) {
+		_funcCallInfo[i].nmbCalls  = 0;
+		_funcCallInfo[i].totalTime = 0;
+	}
+}
+
+
+std::ostream&
+rpwa::importanceSampler::printFuncInfo(std::ostream& out) const
+{
+	const std::string funcNames[NMB_FUNCTIONCALLENUM] = {"LogAPrioriProbability", "LogLikelihood", "CalculateObservables"};
+	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
+		if (_funcCallInfo[i].nmbCalls > 0)
+			out << "importanceSampler::" << funcNames[i] << "():" << std::endl
+			    << "    number of calls ... " << _funcCallInfo[i].nmbCalls << std::endl
+			    << "    total time ........ " << _funcCallInfo[i].totalTime << " sec" << std::endl;
+	return out;
 }

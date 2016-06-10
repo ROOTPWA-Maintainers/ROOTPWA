@@ -137,6 +137,8 @@ if __name__ == "__main__":
 	modelSampler.PrintAllMarginalized(args.outputFile.replace(".root",".pdf").replace(".ROOT",".pdf"),2,4)
 	modelSampler.PrintCorrelationMatrix(args.outputFile.replace(".root","_coma.pdf").replace(".ROOT","_coma.pdf"))
 
+	modelSampler.printFuncInfo()
+
 	realEfficiency = float(args.nEvents)/float(modelSampler.nCalls())
 	printInfo("generated "+str(args.nEvents)+" with "+str(args.nChains)+" chains, needed "+str(modelSampler.nCalls()) + " actual calls => efficiency:"+str(realEfficiency))
 	if realEfficiency < .5 and realEfficiency > .3:
