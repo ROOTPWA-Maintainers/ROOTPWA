@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import argparse
-import os.path
 import sys
 
 import pyRootPwa
@@ -66,7 +65,6 @@ if __name__ == "__main__":
 	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
 	integral = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
 	integralFile.Close()
-	nmbNormEvents = integral.nmbEvents()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
 
@@ -109,44 +107,30 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	waveNames = fitResult.waveNames()
-
-	if fitResult.nmbProdAmps() != len(waveNames):
-		pyRootPwa.utils.printErr('Number of production amplitudes (' + str(fitResult.nmbProdAmps()) +
-		                         ') not equal to number of wave names (' + str(len(waveNames)) + '). Aborting...')
-		sys.exit(1)
-
 	if 'flat' in waveNames:
 		waveNames.remove('flat')  # ignore flat wave
 
-	model = pyRootPwa.core.modelIntensity()
-
+	model = pyRootPwa.core.modelIntensity(fitResult)
 	for waveName in waveNames:
 		waveDescription = fileManager.getWaveDescription(waveName)
-		reflectivity = pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName)
-		waveIndex = fitResult.waveIndex(waveName)
-
-		if not waveName == fitResult.waveNameForProdAmp(waveIndex):
-			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.waveNameForProdAmp(waveIndex) + "'. Aborting...")
-		prodAmp = fitResult.prodAmp(waveIndex)
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
 			printErr('could not construct amplitude for wave "' + waveName + '".')
 			sys.exit(1)
-		model.addAmplitude(prodAmp, amplitude, reflectivity)
-
-	model.loadIntegrals(integral)
-	model.initAmplitudes()
-
+		if not model.addAmplitude(amplitude):
+			printErr('could not add amplitude for wave "' + waveName + '".')
+	model.addIntegral(integral)
 
 	modelSampler = generatorManager.getImportanceSampler(model)
-	modelOutput =  pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
-	modelSampler.initializeFileWriter(modelOutput)
-	modelSampler.SetNChains(args.nChains)
-	modelSampler.SetNIterationsRun(args.nEvents/args.nChains*args.lag)
-	modelSampler.SetNLag(args.lag)
 	if args.phaseSpaceOnly:
 		modelSampler.setPhaseSpaceOnly()
 
+	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
+	modelSampler.initializeFileWriter(outputFile)
+
+	modelSampler.SetNChains(args.nChains)
+	modelSampler.SetNIterationsRun(args.nEvents/args.nChains*args.lag)
+	modelSampler.SetNLag(args.lag)
 	modelSampler.SetRandomSeed(args.seed)
 	modelSampler.MarginalizeAll()
 
@@ -165,5 +149,5 @@ if __name__ == "__main__":
 		printErr("efficiency > 1 encountered. Data are highly correlated. Increase the lag.")
 
 	modelSampler.finalizeFileWriter()
-	modelOutput.Close()
+	outputFile.Close()
 	integralFile.Close()

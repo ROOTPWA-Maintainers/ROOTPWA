@@ -30,7 +30,7 @@ namespace rpwa {
 		const rpwa::generator& getGenerator() const { return *_generator; }
 
 #ifdef USE_BAT
-		rpwa::importanceSampler getImportanceSampler(rpwa::modelIntensityPtr model);
+		rpwa::importanceSamplerPtr getImportanceSampler(rpwa::modelIntensityPtr model);
 #endif
 
 		bool readReactionFile(const std::string& fileName);

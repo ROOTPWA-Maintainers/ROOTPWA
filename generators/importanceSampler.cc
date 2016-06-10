@@ -8,45 +8,54 @@
 
 #include"importanceSampler.h"
 #include"nBodyPhaseSpaceKinematics.h"
-#include"physUtils.hpp"
 #include"randomNumberGenerator.h"
 
 
 size_t rpwa::importanceSampler::_nCalls = 0;
 
 
-rpwa::importanceSampler::importanceSampler(const double            mMin,
-                                           const double            mMax,
-                                           rpwa::modelIntensityPtr model)
+rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model,
+                                           rpwa::beamAndVertexGeneratorPtr beamAndVertexGenerator,
+                                           rpwa::massAndTPrimePickerPtr    massAndTPrimePicker,
+                                           const rpwa::Beam&               beam,
+                                           const rpwa::Target&             target,
+                                           const rpwa::FinalState&         finalState)
 	: BCModel("phaseSpaceImportanceSampling"),
-	  _phaseSpaceOnly(false),
-	  _productionGeneratorInitialized(false),
-	  _nPart(0),
-	  _mMin(mMin),
-	  _mMax(mMax),
-	  _masses(model->finalStateMasses()),
-	  _mSum(0.),
 	  _model(model),
-	  _fileWriter(),
-	  _beamAndVertexGenerator(beamAndVertexGeneratorPtr(new beamAndVertexGenerator())),
-	  _pickerFunction(massAndTPrimePickerPtr())
+	  _beamAndVertexGenerator(beamAndVertexGenerator),
+	  _massAndTPrimePicker(massAndTPrimePicker),
+	  _beam(beam),
+	  _target(target),
+	  _finalState(finalState),
+	  _nPart(_finalState.particles.size()),
+	  _phaseSpaceOnly(false)
 {
-	_nPart = _model->nFinalState();
+	std::vector<std::string> decayKinParticleNames(_nPart);
+	_masses.resize(_nPart);
+	_mSum = 0;
+	for (size_t part = 0; part < _nPart; ++part) {
+		decayKinParticleNames[part] = _finalState.particles[part].name();
+		_masses              [part] = _finalState.particles[part].mass();
+		_mSum                      += _finalState.particles[part].mass();
+	}
+
+	_model->initAmplitudes(decayKinParticleNames);
+
 	if (_nPart < 2) {
 		printErr << "less than two particles to sample. Four-momentum conservation leaves no d.o.f.. No sampling necessary. Aborting..." << std::endl;
 		throw;
 	}
-	if (_mMin > _mMax) {
-		printErr << "_mMin = " << _mMin << " > _mMax " << _mMax << ". Aborting..." << std::endl;
+	const double mMin = _massAndTPrimePicker->massRange().first;
+	const double mMax = _massAndTPrimePicker->massRange().second;
+	if (mMin > mMax) {
+		printErr << "mMin = " << mMin << " > mMax = " << mMax << ". Aborting..." << std::endl;
 		throw;
 	}
 
 	// follow the convention of the nBodyPhaseSpace classes
 	double mMinPar = _masses[0];
-	_mSum          = _masses[0];
 	for (size_t part = 1; part < _nPart; ++part) {
 		mMinPar += _masses[part];
-		_mSum   += _masses[part];
 
 		std::stringstream nameM;
 		std::stringstream texM;
@@ -57,13 +66,13 @@ rpwa::importanceSampler::importanceSampler(const double            mMin,
 			texM << p;
 		}
 		texM << "}";
-		BCParameter param(nameM.str(), mMinPar, _mMax, texM.str());
+		BCParameter param(nameM.str(), mMinPar, mMax, texM.str());
 		if (part == _nPart-1) {
-			if (_mMin == _mMax) {
+			if (mMin == mMax) {
 				// X mass is fixed to one value
-				param.Fix(_mMax);
+				param.Fix(mMax);
 			} else {
-				param.SetLimits(_mMin, _mMax);
+				param.SetLimits(mMin, mMax);
 			}
 		}
 		AddParameter(param);
@@ -87,9 +96,10 @@ rpwa::importanceSampler::importanceSampler(const double            mMin,
 			std::stringstream tex;
 			name << "M" << qart+1 << part+1 << 2;
 			tex << "m^{2}_{" << qart+1 << part+1 << "}";
-			AddObservable(name.str(), 0., _mMax*_mMax, tex.str());
+			AddObservable(name.str(), 0., mMax*mMax, tex.str());
 		}
 	}
+
 	BCAux::SetStyle();
 }
 
@@ -103,6 +113,7 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 	}
 
 	const double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
+
 	return std::log(phaseSpace);
 }
 
@@ -111,6 +122,7 @@ double
 rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 {
 	++_nCalls;
+
 	if (_phaseSpaceOnly) {
 		return -1;
 	}
@@ -129,6 +141,7 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 	}
 
 	const double intensity = _model->getIntensity(decayKinMomenta);
+
 	return std::log(intensity);
 }
 
@@ -136,12 +149,6 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 void
 rpwa::importanceSampler::CalculateObservables(const std::vector<double>& parameters)
 {
-	if (!_productionGeneratorInitialized) {
-		printErr << "Production kinematics not initilized. Cannot generate beam." << std::endl;
-		throw;
-	}
-
-
 	rpwa::nBodyPhaseSpaceKinematics nBodyPhaseSpace;
 	if (not initializeNBodyPhaseSpace(nBodyPhaseSpace, parameters, true)) {
 		printErr << "error while initializing n-body phase space. Aborting..." << std::endl;
@@ -164,30 +171,32 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 			return; // apply lag
 		}
 
-		std::pair<std::pair<bool, double>, std::vector<TLorentzVector> > production = getProductionKinematics(parameters[3*_nPart-6]);
-		if (!production.first.first) {
+		bool           valid;
+		double         tPrime;
+		TLorentzVector pBeam;
+		TLorentzVector pX;
+		boost::tuples::tie(valid, tPrime, pBeam, pX) = getProductionKinematics(parameters[3*_nPart-6]);
+		if (not valid) {
 			printErr << "generation of production failed" << std::endl;
 			throw;
 		}
 
-		const TLorentzRotation toLab = rpwa::isobarAmplitude::gjTransform(production.second[0], production.second[1]).Inverse();
+		const TLorentzRotation toLab = rpwa::isobarAmplitude::gjTransform(pBeam, pX).Inverse();
 		std::vector<TVector3> decayKinMomenta(_nPart);
-		TLorentzVector pX(0.,0.,0.,0.);
 		for (size_t part = 0; part < _nPart; ++part) {
 			TLorentzVector p = nBodyPhaseSpace.daughter(part);
 			p.Transform(toLab);
 			decayKinMomenta[part] = p.Vect();
-			pX += p;
 		}
 
-		std::vector<double>var(3+_nPart);
-		var[0] = production.first.second;
+		std::vector<double> var(3+_nPart);
+		var[0] = tPrime;
 		var[1] = pX.M();
 		var[2] = pX.E();
 		for (size_t part = 0; part < _nPart; ++part) {
 			var[part + 3] = nBodyPhaseSpace.daughter(part).E();
 		}
-		std::vector<TVector3> prodKinMomenta(1, production.second[0].Vect());
+		std::vector<TVector3> prodKinMomenta(1, pBeam.Vect());
 		_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
 	}
 }
@@ -197,11 +206,17 @@ bool
 rpwa::importanceSampler::initializeFileWriter(TFile* outFile)
 {
 	std::string userString("importanceSampledEvents");
-	std::map<std::string, std::pair<double, double> > binning;
-	binning["mass"] = std::pair<double, double> (_mMin, _mMax); // Use own mass range, since the range of the picker will be overridden
-	if (_productionGeneratorInitialized) {
-		binning["tPrime"] = _pickerFunction->tPrimeRange(); // Use tPicker t' range, since the actual sampling is decoupled from t'.
+
+	std::vector<std::string> prodKinParticleNames(1);
+	prodKinParticleNames[0] = _beam.particle.name();
+	std::vector<std::string> decayKinParticleNames(_finalState.particles.size());
+	for (size_t part = 0; part < _nPart; ++part) {
+		decayKinParticleNames[part] = _finalState.particles[part].name();
 	}
+
+	std::map<std::string, std::pair<double, double> > binning;
+	binning["mass"]   = _massAndTPrimePicker->massRange();
+	binning["tPrime"] = _massAndTPrimePicker->tPrimeRange();
 	std::vector<std::string> var(1, "tPrime");
 	var.push_back("mass");
 	var.push_back("EXlab");
@@ -210,13 +225,16 @@ rpwa::importanceSampler::initializeFileWriter(TFile* outFile)
 		name << "E" << part+1;
 		var.push_back(name.str());
 	}
-	return _fileWriter.initialize(*outFile,
-	                              userString,
-	                              rpwa::eventMetadata::GENERATED,
-	                              _model->initialStateParticles(),
-	                              _model->finalStateParticles(),
-	                              binning,
-	                              var);
+
+	const bool valid = _fileWriter.initialize(*outFile,
+	                                          userString,
+	                                          rpwa::eventMetadata::REAL,
+	                                          prodKinParticleNames,
+	                                          decayKinParticleNames,
+	                                          binning,
+	                                          var);
+
+	return valid;
 }
 
 
@@ -227,43 +245,22 @@ rpwa::importanceSampler::finalizeFileWriter()
 }
 
 
-bool
-rpwa::importanceSampler::initializeProductionGenerator(rpwa::Beam&                     beam,
-                                                       rpwa::Target&                   target,
-                                                       rpwa::beamAndVertexGeneratorPtr generator,
-                                                       rpwa::massAndTPrimePickerPtr    picker)
+boost::tuples::tuple<bool, double, TLorentzVector, TLorentzVector>
+rpwa::importanceSampler::getProductionKinematics(const double xMass) const
 {
-	_productionGeneratorInitialized = false;
-	_target = rpwa::Target(target);
-	_beam   = rpwa::Beam(beam);
-	_beamAndVertexGenerator = rpwa::beamAndVertexGeneratorPtr(generator);
-	_pickerFunction = rpwa::massAndTPrimePickerPtr(picker);
-	_productionGeneratorInitialized = true;
-	return true;
-}
-
-
-std::pair<std::pair<bool, double>, std::vector<TLorentzVector> >
-rpwa::importanceSampler::getProductionKinematics(const double xMass)
-{
-	if (!_productionGeneratorInitialized) {
-		printErr << "poduction generators not initalized" << std::endl;
-		return std::pair<std::pair<bool, double>, std::vector<TLorentzVector> >(std::pair<bool, double>(false, 0.), std::vector<TLorentzVector>(2));
-	}
 	if(not _beamAndVertexGenerator->event(_target, _beam)) {
 		printErr << "could not generate vertex/beam. Aborting..." << std::endl;
-		return std::pair<std::pair<bool, double>, std::vector<TLorentzVector> >(std::pair<bool, double>(false, 0.), std::vector<TLorentzVector>(2));;
+		return boost::tuples::make_tuple(false, 0., TLorentzVector(), TLorentzVector());
 	}
 	const TLorentzVector targetLab(0., 0., 0., _target.targetParticle.mass());
-	_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
-	const TLorentzVector& beamLorentzVector = _beam.particle.lzVec();
+	const TLorentzVector beamLorentzVector = _beamAndVertexGenerator->getBeam();
 	const TLorentzVector overallCm = beamLorentzVector + targetLab;  // beam-target center-of-mass system
 
 
 	double tPrime;
-	if (not _pickerFunction->pickTPrimeForMass(xMass, tPrime)) {
+	if (not _massAndTPrimePicker->pickTPrimeForMass(xMass, tPrime)) {
 		printErr << "t' pick failed" << std::endl;
-		return std::pair<std::pair<bool, double>, std::vector<TLorentzVector> >(std::pair<bool, double>(false, 0.), std::vector<TLorentzVector>(2));
+		return boost::tuples::make_tuple(false, 0., TLorentzVector(), TLorentzVector());
 	}
 	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
 
@@ -299,12 +296,9 @@ rpwa::importanceSampler::getProductionKinematics(const double xMass)
 	                                           xMomLab * xCosThetaLab,
 	                                           xEnergyLab);
 
-	TVector3 beamDir = _beam.particle.momentum().Unit();
+	TVector3 beamDir = beamLorentzVector.Vect().Unit();
 	xSystemLab.RotateUz(beamDir);
-	std::vector<TLorentzVector> kinematics(2);
-	kinematics[0] = beamLorentzVector;
-	kinematics[1] = xSystemLab;
-	return std::pair<std::pair<bool, double>, std::vector<TLorentzVector> >(std::pair<bool, double>(true, tPrime), kinematics);
+	return boost::tuples::make_tuple(true, tPrime, beamLorentzVector, xSystemLab);
 }
 
 

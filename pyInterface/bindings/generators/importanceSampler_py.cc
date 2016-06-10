@@ -11,6 +11,21 @@ namespace bp = boost::python;
 
 namespace {
 
+
+	bool
+	importanceSampler_initializeFileWriter(rpwa::importanceSampler& self,
+	                                       PyObject*                outFilePy)
+	{
+		TFile* outputFile = rpwa::py::convertFromPy<TFile*>(outFilePy);
+		if(not outputFile) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for outputFile when executing rpwa::importanceSampler::initializeFileWriter(...)");
+			bp::throw_error_already_set();
+		}
+
+		return self.initializeFileWriter(outputFile);
+	}
+
+
 	double
 	importanceSampler_LogLikelihood(rpwa::importanceSampler& self,
 	                                const bp::list&          pyParameters)
@@ -85,19 +100,6 @@ namespace {
 	}
 
 
-	bool
-	importanceSampler_initializeFileWriter(rpwa::importanceSampler& self,
-	                                       PyObject*                outFilePy)
-	{
-		TFile* outputFile = rpwa::py::convertFromPy<TFile*>(outFilePy);
-		if(not outputFile) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for outputFile when executing rpwa::importanceSampler::initializeFileWriter(...)");
-			bp::throw_error_already_set();
-		}
-
-		return self.initializeFileWriter(outputFile);
-	}
-
 	void
 	importanceSampler_SetInitialPositions(rpwa::importanceSampler& self,
 	                                      const bp::list&          positionPy)
@@ -111,26 +113,35 @@ namespace {
 		self.SetInitialPositions(position);
 	}
 
+
 }
 
 
 void rpwa::py::exportImportanceSampler() {
 
-	bp::class_<rpwa::importanceSampler>("importanceSampler", bp::init<const double, const double, modelIntensityPtr>())
+	bp::class_<rpwa::importanceSampler>("importanceSampler", bp::init<rpwa::modelIntensityPtr,
+	                                                                  rpwa::beamAndVertexGeneratorPtr,
+	                                                                  rpwa::massAndTPrimePickerPtr,
+	                                                                  const rpwa::Beam&,
+	                                                                  const rpwa::Target&,
+	                                                                  const rpwa::FinalState&>())
 
-		.def(
-			"setPhaseSpaceOnly"
-			, &rpwa::importanceSampler::setPhaseSpaceOnly
-			, (bp::arg("inputValue") = true)
-		)
 		.def(
 			"initializeFileWriter"
 			, &::importanceSampler_initializeFileWriter
 			, (bp::arg("outFile"))
 		)
 		.def("finalizeFileWriter", &rpwa::importanceSampler::finalizeFileWriter)
+
+		.def(
+			"setPhaseSpaceOnly"
+			, &rpwa::importanceSampler::setPhaseSpaceOnly
+			, (bp::arg("inputValue") = true)
+		)
+
 		.def("nCalls", &rpwa::importanceSampler::nCalls)
-	// From here BAT stuff. Therefore names start with capital letters
+
+		// From here BAT stuff. Therefore names start with capital letters
 		.def(
 			"LogLikelihood"
 			, &::importanceSampler_LogLikelihood
@@ -197,5 +208,7 @@ void rpwa::py::exportImportanceSampler() {
 		)
 
 	;
+
+	bp::register_ptr_to_python<rpwa::importanceSamplerPtr>();
 
 }

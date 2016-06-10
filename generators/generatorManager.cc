@@ -37,13 +37,22 @@ generatorManager::~generatorManager() {
 
 
 #ifdef USE_BAT
-rpwa::importanceSampler generatorManager::getImportanceSampler(rpwa::modelIntensityPtr model) {
-	std::pair<double, double> massRange = _pickerFunction->massRange();
-	rpwa::importanceSampler sampler(massRange.first, massRange.second, model);
-	if (!sampler.initializeProductionGenerator(_beam, _target, _beamAndVertexGenerator, _pickerFunction)) {
-		printErr << "could not initializeProductionGenerator() for the importance sampler" << std::endl;
+rpwa::importanceSamplerPtr generatorManager::getImportanceSampler(rpwa::modelIntensityPtr model) {
+
+	if(not _reactionFileRead) {
+		printErr << "trying to initialize importance sampler before reading reaction file." << endl;
+		return rpwa::importanceSamplerPtr();
 	}
+
+	rpwa::importanceSamplerPtr sampler(new importanceSampler(model,
+	                                                         _beamAndVertexGenerator,
+	                                                         _pickerFunction,
+	                                                         _beam,
+	                                                         _target,
+	                                                         _finalState));
+
 	return sampler;
+
 }
 #endif
 
