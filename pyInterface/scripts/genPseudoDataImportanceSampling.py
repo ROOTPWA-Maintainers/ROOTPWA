@@ -121,6 +121,10 @@ if __name__ == "__main__":
 			printErr('could not add amplitude for wave "' + waveName + '".')
 	model.addIntegral(integral)
 
+	# do not let BAT create histograms in the eventfile, otherwise this script
+	# will exit with a segmentation violation due to ROOT ownership
+	pyRootPwa.ROOT.TH1.AddDirectory(False)
+
 	modelSampler = generatorManager.getImportanceSampler(model)
 	if args.phaseSpaceOnly:
 		modelSampler.setPhaseSpaceOnly()
