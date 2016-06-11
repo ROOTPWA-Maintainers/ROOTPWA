@@ -336,11 +336,11 @@ void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
 void generatorManager::randomizeBeamfileStartingPosition() {
 
 	if(not _reactionFileRead) {
-		printErr << "reaction file has to have been read to set this option (readBeamfileSequentially)." << endl;
+		printErr << "reaction file has to have been read to set this option (randomizeBeamfileStartingPosition)." << endl;
 		throw;
 	}
 	if(not _beamAndVertexGenerator) {
-		printErr << "beam and vertex package seems to be disabled, unable to read beamfile sequentially." << endl;
+		printErr << "beam and vertex package seems to be disabled, unable to randomize beamfile starting position." << endl;
 		throw;
 	}
 	_beamAndVertexGenerator->randomizeBeamfileStartingPosition();
