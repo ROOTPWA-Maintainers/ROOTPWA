@@ -15,10 +15,10 @@ if __name__ == "__main__":
 
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
-	parser.add_argument("integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName",
 	                    help="path to config file (default: ./rootpwa.config)")
+	parser.add_argument("-i", "--integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-C", type=int, metavar="#", dest="nChains", default=5, help="number od MCMC chains to be run")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
@@ -60,11 +60,6 @@ if __name__ == "__main__":
 
 	pyRootPwa.core.integralTableContainer.setDirectory(config.phaseSpaceIntegralDirectory)
 	pyRootPwa.core.integralTableContainer.setUpperMassBound(config.phaseSpaceUpperMassBound)
-
-	# read integral matrix from ROOT file
-	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-	integral = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	integralFile.Close()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
 
@@ -119,7 +114,13 @@ if __name__ == "__main__":
 			sys.exit(1)
 		if not model.addAmplitude(amplitude):
 			printErr('could not add amplitude for wave "' + waveName + '".')
-	model.addIntegral(integral)
+
+	# overwrite integral matrix from fit result with one read from a file
+	if args.integralFile:
+		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile, "READ")
+		integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
+		integral = integralMeta.getAmpIntegralMatrix()
+		model.addIntegral(integral)
 
 	# do not let BAT create histograms in the eventfile, otherwise this script
 	# will exit with a segmentation violation due to ROOT ownership

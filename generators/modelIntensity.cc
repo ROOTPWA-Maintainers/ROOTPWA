@@ -12,6 +12,11 @@ rpwa::modelIntensity::modelIntensity(fitResultPtr fitResult)
 	  _integrals(fitResult->nmbWaves()),
 	  _amplitudesFromXDecay(false)
 {
+	// use the phase-space integrals from fit result if available
+	if (fitResult->phaseSpaceIntegralVector().size() == fitResult->nmbWaves()) {
+		_integralsLoaded = true;
+		_integrals       = fitResult->phaseSpaceIntegralVector();
+	}
 }
 
 
