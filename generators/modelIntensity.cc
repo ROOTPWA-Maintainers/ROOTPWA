@@ -17,6 +17,8 @@ rpwa::modelIntensity::modelIntensity(fitResultPtr fitResult)
 		_integralsLoaded = true;
 		_integrals       = fitResult->phaseSpaceIntegralVector();
 	}
+
+	_waveIndicesWithoutFlat = fitResult->waveIndicesMatchingPattern("^(?!flat$).*$");
 }
 
 
@@ -139,24 +141,12 @@ rpwa::modelIntensity::initAmplitudes(const std::vector<std::string>& prodKinPart
 
 
 double
-rpwa::modelIntensity::getIntensity(const std::vector<TVector3>& decayKinMomenta) const
-{
-	if (not _amplitudesFromXDecay) {
-		printErr << "amplitudes not starting from X decay, but not production kinematics provided. Aborting..." << std::endl;
-		throw;
-	}
-
-	return getIntensity(std::vector<TVector3>(1), decayKinMomenta);
-}
-
-
-double
-rpwa::modelIntensity::getIntensity(const std::vector<TVector3>& prodKinMomenta,
-                                   const std::vector<TVector3>& decayKinMomenta) const
+rpwa::modelIntensity::getIntensity(const std::vector<unsigned int>& waveIndices,
+                                   const std::vector<TVector3>&     prodKinMomenta,
+                                   const std::vector<TVector3>&     decayKinMomenta) const
 {
 	const std::vector<std::complex<double> > amplitudes = getAmplitudes(prodKinMomenta, decayKinMomenta);
 
-	std::vector<unsigned int> waveIndices; for (unsigned int i=0; i<_amplitudes.size()-1; ++i) waveIndices.push_back(i);
 	double intensity = 0;
 	for (std::set<int>::const_iterator it=_allRefls.begin(); it!=_allRefls.end(); ++it) {
 		std::complex<double> amp = 0;
