@@ -131,14 +131,20 @@ if __name__ == "__main__":
 		modelSampler.setPhaseSpaceOnly()
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
+	if not outputFile:
+		printErr("could not open output file. Aborting...")
+		sys.exit(1)
 	if len(args.massTPrimeVariableNames.split(',')) != 2:
 		printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
 		sys.exit(1)
-	modelSampler.initializeFileWriter(outputFile,
-	                                  args.userString,
-	                                  not args.noStoreMassTPrime,
-	                                  args.massTPrimeVariableNames.split(',')[0],
-	                                  args.massTPrimeVariableNames.split(',')[1])
+	success = modelSampler.initializeFileWriter(outputFile,
+	                                            args.userString,
+	                                            not args.noStoreMassTPrime,
+	                                            args.massTPrimeVariableNames.split(',')[0],
+	                                            args.massTPrimeVariableNames.split(',')[1])
+	if not success:
+		printErr('could not initialize file writer. Aborting...')
+		sys.exit(1)
 
 	modelSampler.SetNChains(args.nChains)
 	modelSampler.SetNIterationsRun(args.nEvents/args.nChains*args.lag)
