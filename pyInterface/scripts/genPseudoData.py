@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
 import argparse
-import math
 import sys
 
 import pyRootPwa
 import pyRootPwa.core
-
-def norm(cNumber):
-	return cNumber.real*cNumber.real + cNumber.imag*cNumber.imag
 
 
 if __name__ == "__main__":
@@ -19,16 +15,16 @@ if __name__ == "__main__":
 
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
-	parser.add_argument("integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName",
 	                    help="path to config file (default: ./rootpwa.config)")
+	parser.add_argument("-i", "--integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
-	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
+	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="phaseSpaceEvents")
 	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
 	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
@@ -61,12 +57,6 @@ if __name__ == "__main__":
 
 	pyRootPwa.core.integralTableContainer.setDirectory(config.phaseSpaceIntegralDirectory)
 	pyRootPwa.core.integralTableContainer.setUpperMassBound(config.phaseSpaceUpperMassBound)
-
-	# read integral matrix from ROOT file
-	integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile)
-	integral = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	integralFile.Close()
-	nmbNormEvents = integral.nmbEvents()
 
 	overrideMass = (args.massLowerBinBoundary is not None) or (args.massBinWidth is not None)
 
@@ -108,39 +98,26 @@ if __name__ == "__main__":
 		         "' for mass bin " + str(massBinCenter) + ". Aborting...")
 		sys.exit(1)
 
-	waveDescriptions = []
-	amplitudes = []
-	reflectivities = []
-	prodAmps = []
-	waveNames = []
 	waveNames = fitResult.waveNames()
-
-	if fitResult.nmbProdAmps() != len(waveNames):
-		pyRootPwa.utils.printErr('Number of production amplitudes (' + str(fitResult.nmbProdAmps()) +
-		                         ') not equal to number of wave names (' + str(len(waveNames)) + '). Aborting...')
-		sys.exit(1)
-
 	if 'flat' in waveNames:
 		waveNames.remove('flat')  # ignore flat wave
 
+	model = pyRootPwa.core.modelIntensity(fitResult)
 	for waveName in waveNames:
 		waveDescription = fileManager.getWaveDescription(waveName)
-		reflectivities.append(pyRootPwa.core.partialWaveFitHelper.getReflectivity(waveName))
-		waveIndex = fitResult.waveIndex(waveName)
-
-		if not waveName == fitResult.prodAmpName(waveIndex)[3:]:
-			printErr("mismatch between waveName '" + waveName + "' and prodAmpName '" + fitResult.prodAmpName(waveIndex)[3:] + "'. Aborting...")
-		prodAmps.append(fitResult.prodAmp(waveIndex))
 		(result, amplitude) = waveDescription.constructAmplitude()
 		if not result:
 			printErr('could not construct amplitude for wave "' + waveName + '".')
 			sys.exit(1)
-		amplitude.init()
-		printInfo(amplitude)
-		waveDescriptions.append(waveDescription)
-		amplitudes.append(amplitude)
+		if not model.addAmplitude(amplitude):
+			printErr('could not add amplitude for wave "' + waveName + '".')
 
-	printSucc("read and constructed amplitudes for " + str(len(waveDescriptions)) + " keyfiles.")
+	# overwrite integral matrix from fit result with one read from a file
+	if args.integralFile:
+		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile, "READ")
+		integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
+		integral = integralMeta.getAmpIntegralMatrix()
+		model.addIntegral(integral)
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
 	if not outputFile:
@@ -193,34 +170,15 @@ if __name__ == "__main__":
 					printErr('could not initialize file writer. Aborting...')
 					sys.exit(1)
 
-				for amplitude in amplitudes:
-					topo = amplitude.decayTopology()
-					if not topo.initKinematicsData(prodKinNames, decayKinNames):
-						printErr('could not initialize kinematics Data. Aborting...')
-						sys.exit(1)
+				if not model.initAmplitudes(prodKinNames, decayKinNames):
+					printErr('could not initialize kinematics Data. Aborting...')
+					sys.exit(1)
 				first = False
 
 			prodKin = [ beam.lzVec.Vect() ]
 			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
 
-			posReflAmpSum = 0
-			negReflAmpSum = 0
-
-			for i, _ in enumerate(amplitudes):
-				amplitude = amplitudes[i]
-				topo = amplitude.decayTopology()
-				if not topo.readKinematicsData(prodKin, decayKin):
-					progressBar.cancel()
-					printErr('could not read kinematics data. Aborting...')
-					sys.exit(1)
-
-				amp = (amplitude() * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
-				if reflectivities[i] > 0:
-					posReflAmpSum += amp
-				else:
-					negReflAmpSum += amp
-
-			weight = norm(posReflAmpSum) + norm(negReflAmpSum)
+			weight = model.getIntensity(prodKin, decayKin)
 
 			additionalVariables = []
 			if not args.noStoreMassTPrime:
