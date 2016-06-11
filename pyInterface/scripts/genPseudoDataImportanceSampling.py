@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
-	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
+	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="importanceSampledEvents")
 	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
 	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
@@ -135,6 +135,7 @@ if __name__ == "__main__":
 		printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
 		sys.exit(1)
 	modelSampler.initializeFileWriter(outputFile,
+	                                  args.userString,
 	                                  not args.noStoreMassTPrime,
 	                                  args.massTPrimeVariableNames.split(',')[0],
 	                                  args.massTPrimeVariableNames.split(',')[1])

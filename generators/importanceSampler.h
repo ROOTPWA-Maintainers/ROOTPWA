@@ -40,6 +40,7 @@ namespace rpwa {
 		void CalculateObservables(const std::vector<double>& parameters);
 
 		bool initializeFileWriter(TFile*             outFile,
+		                          const std::string& userString         = "importanceSampledEvents",
 		                          const bool         storeMassAndTPrime = true,
 		                          const std::string& massVariableName   = "mass",
 		                          const std::string& tPrimeVariableName = "tPrime");

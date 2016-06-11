@@ -220,13 +220,12 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 
 bool
 rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
+                                              const std::string& userString,
                                               const bool         storeMassAndTPrime,
                                               const std::string& massVariableName,
                                               const std::string& tPrimeVariableName)
 {
 	_storeMassAndTPrime = storeMassAndTPrime;
-
-	std::string userString("importanceSampledEvents");
 
 	std::vector<std::string> prodKinParticleNames(1);
 	prodKinParticleNames[0] = _beam.particle.name();
