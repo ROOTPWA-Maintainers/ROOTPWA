@@ -26,9 +26,6 @@ namespace rpwa {
 		            int bufsize = 32000,
 		            int splitlevel = 99);
 
-		template<typename T>
-		T* getFromTDirectory(PyObject* pyDir, const std::string& name);
-
 		void exportRootConverters();
 
 	}
