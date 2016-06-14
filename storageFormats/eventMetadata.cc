@@ -232,12 +232,9 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
 				additionalSavedVariables.resize(mergee->additionalSavedVariableLables().size(), 0.);
 				for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-					if(inputTree->SetBranchAddress(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
-					{
-						printWarn << "could not set address for branch '" << mergee->additionalSavedVariableLables()[i] << "'." << endl;
-						delete mergee->_eventTree;
-						return 0;
-					}
+					stringstream strStr;
+					strStr << mergee->additionalSavedVariableLables()[i] << "/D";
+					mergee->_eventTree->Branch(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i], strStr.str().c_str());
 				}
 			}
 		}
