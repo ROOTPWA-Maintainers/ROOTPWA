@@ -1,5 +1,4 @@
 
-import pyRootPwa.core
 from _printingUtils import printInfo, printWarn
 
 def getWaveDescThresFromFitResult(fitResult, waveDescriptions):
