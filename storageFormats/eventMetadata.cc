@@ -312,9 +312,10 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 			}
 			mergee->_eventTree->Fill();
 		}
-
 	}
-	mergee->setBinningMap(mergedBinningMap);
+	if(mergeDiffMeta) {
+		mergee->setBinningMap(mergedBinningMap);
+	}
 	mergee->setContentHash(hashor.hash());
 	return mergee;
 }
