@@ -26,7 +26,8 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 	  _target(target),
 	  _finalState(finalState),
 	  _nPart(_finalState.particles.size()),
-	  _phaseSpaceOnly(false)
+	  _phaseSpaceOnly(false),
+	  _massPrior(0)
 {
 	std::vector<std::string> decayKinParticleNames(_nPart);
 	_masses.resize(_nPart);
@@ -118,7 +119,15 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 		return -std::numeric_limits<double>::infinity();
 	}
 
-	const double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
+	double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
+	if (_massPrior) {
+#ifdef _OPENMP
+#pragma omp critical(massPrior)
+#endif
+		{
+			phaseSpace *= _massPrior->Eval(parameters[3*_nPart-6]);
+		}
+	}
 
 	timerTot.Stop();
 #ifdef _OPENMP

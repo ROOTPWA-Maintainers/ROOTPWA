@@ -1,6 +1,7 @@
 #include "rootConverters_py.h"
 
 #include<TClonesArray.h>
+#include<TF1.h>
 #include<TFile.h>
 #include<TLorentzRotation.h>
 #include<TPython.h>
@@ -126,6 +127,11 @@ void rpwa::py::exportRootConverters() {
 
 	bp::def(
 		"__RootConverters_convertFromPy_TFile", &rpwa::py::convertFromPy<TFile*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_TF1", &rpwa::py::convertFromPy<TF1*>
 		, bp::return_internal_reference<1>()
 	);
 

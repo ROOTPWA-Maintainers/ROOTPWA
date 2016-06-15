@@ -31,6 +31,23 @@ namespace {
 
 
 	void
+	importanceSampler_setMassPrior(rpwa::importanceSampler& self,
+	                               bp::object&              pyPrior)
+	{
+		TF1* prior = 0;
+		if(not pyPrior.is_none()) {
+			prior = rpwa::py::convertFromPy<TF1*>(pyPrior.ptr());
+			if(not prior) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for prior when executing rpwa::importanceSampler::setMassPrior(...)");
+				bp::throw_error_already_set();
+			}
+		}
+
+		self.setMassPrior(prior);
+	}
+
+
+	void
 	importanceSampler_printFuncInfo(rpwa::importanceSampler& self)
 	{
 		self.printFuncInfo(std::cout);
@@ -152,6 +169,12 @@ void rpwa::py::exportImportanceSampler() {
 			"setPhaseSpaceOnly"
 			, &rpwa::importanceSampler::setPhaseSpaceOnly
 			, (bp::arg("inputValue") = true)
+		)
+		.def(
+			"setMassPrior"
+			, &importanceSampler_setMassPrior
+			, bp::with_custodian_and_ward<1,2>()
+			, (bp::arg("prior") = boost::python::object())
 		)
 
 		.def("nCalls", &rpwa::importanceSampler::nCalls)

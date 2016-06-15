@@ -47,6 +47,7 @@ namespace rpwa {
 		bool finalizeFileWriter();
 
 		void setPhaseSpaceOnly(const bool input = true) { _phaseSpaceOnly = input; }
+		void setMassPrior     (TF1*       prior = 0   ) { _massPrior      = prior; }
 
 	private:
 
@@ -68,6 +69,7 @@ namespace rpwa {
 		std::vector<double>             _masses;
 		double                          _mSum;
 		bool                            _phaseSpaceOnly;
+		TF1*                            _massPrior;
 
 		rpwa::eventFileWriter           _fileWriter;
 		bool                            _storeMassAndTPrime;
