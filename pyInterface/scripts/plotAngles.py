@@ -115,7 +115,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
 	                                 description="No help text available."
 	                                )
-	parser.add_argument("inputFile", type=str, metavar="inputFile", dest="inputFile", help="inputFile")
+	parser.add_argument("inputFile", type=str, metavar="inputFile", help="inputFile")
 	parser.add_argument("outputFile", metavar="output-file", help="path to output file")
 	parser.add_argument("templateFile", metavar="template-file", help="path to template file")
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
