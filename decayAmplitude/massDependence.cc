@@ -278,7 +278,7 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 	// A = sqrt(M0 * Gamma0 * (m / q0) * F)
 	const double          B  = M0 * M0 - M * M;
 	const double          C  = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
@@ -310,7 +310,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 	const double          C  = M0 * Gamma;
 	const double          A  = C * M / q;
 	const double          B  = M0 * M0 - M * M;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
@@ -354,18 +354,18 @@ f0980Flatte::amp(const isobarDecayVertex& v)
 	const double g2g1 = 4.21;
 
 	// break-up momenta
-	const std::complex<double> kPi = breakupMomentumComplex(M, _piChargedMass,   _piChargedMass);
-	const std::complex<double> kK  = breakupMomentumComplex(M, _kaonChargedMass, _kaonChargedMass);
+	const complex<double> kPi = breakupMomentumComplex(M, _piChargedMass,   _piChargedMass);
+	const complex<double> kK  = breakupMomentumComplex(M, _kaonChargedMass, _kaonChargedMass);
 
 	// phase space factors
-	const std::complex<double> rhoPi = 2. * kPi / M;
-	const std::complex<double> rhoK  = 2. * kK  / M;
+	const complex<double> rhoPi = 2. * kPi / M;
+	const complex<double> rhoK  = 2. * kK  / M;
 
-	std::complex<double> denom(M0*M0 - M*M, 0.);
+	complex<double> denom(M0*M0 - M*M, 0.);
 
 	denom -= imag * g1 * (rhoPi + g2g1*rhoK);
 
-	const std::complex<double> amp(1. / denom);
+	const complex<double> amp(1. / denom);
 
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
