@@ -82,6 +82,186 @@ namespace {
 
 	};
 
+	struct binnedMassDependenceWrapper : public rpwa::binnedMassDependence,
+	                                            bp::wrapper<rpwa::binnedMassDependence>
+	{
+
+		binnedMassDependenceWrapper(const double mMin, const double mMax)
+			: rpwa::binnedMassDependence(mMin, mMax),
+			  bp::wrapper<rpwa::binnedMassDependence>() { }
+
+		binnedMassDependenceWrapper(const rpwa::binnedMassDependence& dep)
+			: rpwa::binnedMassDependence(dep),
+			  bp::wrapper<rpwa::binnedMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::binnedMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::binnedMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::binnedMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::binnedMassDependence::name();
+		}
+
+	};
+
+	struct sawtoothMassDependenceWrapper : public rpwa::sawtoothMassDependence,
+	                                              bp::wrapper<rpwa::sawtoothMassDependence>
+	{
+
+		sawtoothMassDependenceWrapper(const double mMin, const double mMax)
+			: rpwa::sawtoothMassDependence(mMin, mMax),
+			  bp::wrapper<rpwa::sawtoothMassDependence>() { }
+
+		sawtoothMassDependenceWrapper(const rpwa::sawtoothMassDependence& dep)
+			: rpwa::sawtoothMassDependence(dep),
+			  bp::wrapper<rpwa::sawtoothMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::sawtoothMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::sawtoothMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::sawtoothMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::sawtoothMassDependence::name();
+		}
+
+	};
+
+	struct polynomialMassDependenceWrapper : public rpwa::polynomialMassDependence,
+	                                                bp::wrapper<rpwa::polynomialMassDependence>
+	{
+
+		polynomialMassDependenceWrapper(const std::vector<std::complex<double> >& coefficients, const double mMin, const double mMax)
+			: rpwa::polynomialMassDependence(coefficients, mMin, mMax),
+			  bp::wrapper<rpwa::polynomialMassDependence>() { }
+
+		polynomialMassDependenceWrapper(const rpwa::polynomialMassDependence& dep)
+			: rpwa::polynomialMassDependence(dep),
+			  bp::wrapper<rpwa::polynomialMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::polynomialMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::polynomialMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::polynomialMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::polynomialMassDependence::name();
+		}
+
+	};
+
+	struct complexExponentialMassDependenceWrapper : public rpwa::complexExponentialMassDependence,
+	                                                        bp::wrapper<rpwa::complexExponentialMassDependence>
+	{
+
+		complexExponentialMassDependenceWrapper(const int degree, const double mMin, const double mMax)
+			: rpwa::complexExponentialMassDependence(degree, mMin, mMax),
+			  bp::wrapper<rpwa::complexExponentialMassDependence>() { }
+
+		complexExponentialMassDependenceWrapper(const rpwa::complexExponentialMassDependence& dep)
+			: rpwa::complexExponentialMassDependence(dep),
+			  bp::wrapper<rpwa::complexExponentialMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::complexExponentialMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::complexExponentialMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::complexExponentialMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::complexExponentialMassDependence::name();
+		}
+
+	};
+
+	struct arbitraryFunctionMassDependenceWrapper : public rpwa::arbitraryFunctionMassDependence,
+	                                                       bp::wrapper<rpwa::arbitraryFunctionMassDependence>
+	{
+
+		arbitraryFunctionMassDependenceWrapper(const std::string& name, const std::string& realPart, const std::string& imagPart)
+			: rpwa::arbitraryFunctionMassDependence(name, realPart, imagPart),
+			  bp::wrapper<rpwa::arbitraryFunctionMassDependence>() { }
+
+		arbitraryFunctionMassDependenceWrapper(const rpwa::arbitraryFunctionMassDependence& dep)
+			: rpwa::arbitraryFunctionMassDependence(dep),
+			  bp::wrapper<rpwa::arbitraryFunctionMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::arbitraryFunctionMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::arbitraryFunctionMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::arbitraryFunctionMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::arbitraryFunctionMassDependence::name();
+		}
+
+	};
+
 	struct relativisticBreitWignerWrapper : public rpwa::relativisticBreitWigner,
 	                                               bp::wrapper<rpwa::relativisticBreitWigner>
 	{
@@ -394,6 +574,41 @@ void rpwa::py::exportMassDependence() {
 		.def("name", &flatMassDependenceWrapper::name, &flatMassDependenceWrapper::default_name)
 		.def("name", &rpwa::flatMassDependence::name);
 
+	bp::class_<binnedMassDependenceWrapper, bp::bases<rpwa::massDependence> >("binnedMassDependence", bp::init<const double, const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &binnedMassDependenceWrapper::amp, &binnedMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::binnedMassDependence::amp)
+		.def("name", &binnedMassDependenceWrapper::name, &binnedMassDependenceWrapper::default_name)
+		.def("name", &rpwa::binnedMassDependence::name);
+
+	bp::class_<sawtoothMassDependenceWrapper, bp::bases<rpwa::massDependence> >("sawtoothMassDependence", bp::init<const double, const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &sawtoothMassDependenceWrapper::amp, &sawtoothMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::sawtoothMassDependence::amp)
+		.def("name", &sawtoothMassDependenceWrapper::name, &sawtoothMassDependenceWrapper::default_name)
+		.def("name", &rpwa::sawtoothMassDependence::name);
+
+	bp::class_<polynomialMassDependenceWrapper, bp::bases<rpwa::massDependence> >("polynomialMassDependence", bp::init<const std::vector<std::complex<double> >&, const double, const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &polynomialMassDependenceWrapper::amp, &polynomialMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::polynomialMassDependence::amp)
+		.def("name", &polynomialMassDependenceWrapper::name, &polynomialMassDependenceWrapper::default_name)
+		.def("name", &rpwa::polynomialMassDependence::name);
+
+	bp::class_<complexExponentialMassDependenceWrapper, bp::bases<rpwa::massDependence> >("complexExponentialMassDependence", bp::init<const int, const double, const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &complexExponentialMassDependenceWrapper::amp, &complexExponentialMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::complexExponentialMassDependence::amp)
+		.def("name", &complexExponentialMassDependenceWrapper::name, &complexExponentialMassDependenceWrapper::default_name)
+		.def("name", &rpwa::complexExponentialMassDependence::name);
+
+	bp::class_<arbitraryFunctionMassDependenceWrapper, bp::bases<rpwa::massDependence> >("arbitraryFunctionMassDependence", bp::init<const std::string&, const std::string&, const std::string&>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &arbitraryFunctionMassDependenceWrapper::amp, &arbitraryFunctionMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::arbitraryFunctionMassDependence::amp)
+		.def("name", &arbitraryFunctionMassDependenceWrapper::name, &arbitraryFunctionMassDependenceWrapper::default_name)
+		.def("name", &rpwa::arbitraryFunctionMassDependence::name);
+
 	bp::class_<relativisticBreitWignerWrapper, bp::bases<rpwa::massDependence> >("relativisticBreitWigner")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &relativisticBreitWignerWrapper::amp, &relativisticBreitWignerWrapper::default_amp)
@@ -452,6 +667,11 @@ void rpwa::py::exportMassDependence() {
 
 	bp::register_ptr_to_python<rpwa::massDependencePtr>();
 	bp::register_ptr_to_python<rpwa::flatMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::binnedMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::sawtoothMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::polynomialMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::complexExponentialMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::arbitraryFunctionMassDependencePtr>();
 	bp::register_ptr_to_python<rpwa::relativisticBreitWignerPtr>();
 	bp::register_ptr_to_python<rpwa::constWidthBreitWignerPtr>();
 	bp::register_ptr_to_python<rpwa::rhoBreitWignerPtr>();
