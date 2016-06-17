@@ -178,7 +178,7 @@ arbitraryFunctionMassDependence::amp(const isobarDecayVertex& v)
 	const complex<double> amp(_realPart.Eval(M), _imagPart.Eval(M));
 
 	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, name = '" << _name
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, functionName = '" << _functionName
 		           << "', function for real part = '" << _realFunctionString
 		           << "', function for imaginary part = '" << _imagFunctionString
 		           << "') = " << maxPrecisionDouble(amp) << endl;

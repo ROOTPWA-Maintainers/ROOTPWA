@@ -286,26 +286,26 @@ namespace rpwa {
 
 	public:
 
-		arbitraryFunctionMassDependence(const std::string& name, const std::string& realPart, const std::string& imagPart)
+		arbitraryFunctionMassDependence(const std::string& functionName, const std::string& realPart, const std::string& imagPart)
 			: massDependence(),
-			  _name(name),
+			  _functionName(functionName),
 			  _realFunctionString(realPart),
 			  _imagFunctionString(imagPart),
-			  _realPart((name+"_real").c_str(), realPart.c_str()),
-			  _imagPart((name+"_imag").c_str(), imagPart.c_str()) { }
+			  _realPart((functionName+"_real").c_str(), realPart.c_str()),
+			  _imagPart((functionName+"_imag").c_str(), imagPart.c_str()) { }
 		virtual ~arbitraryFunctionMassDependence()                    { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "arbitraryFunction"; }  ///< returns label used in graph visualization, reporting, and key file
 
-		const std::string& getName()               const { return _name;               }
+		const std::string& getFunctionName()       const { return _functionName;       }
 		const std::string& getRealFunctionString() const { return _realFunctionString; }
 		const std::string& getImagFunctionString() const { return _imagFunctionString; }
 
 	private:
 
-		std::string _name;                ///< Function name
+		std::string _functionName;        ///< Function name
 		std::string _realFunctionString;  ///< Function string of the real part
 		std::string _imagFunctionString;  ///< Function string of the imag part
 		TFormula    _realPart;            ///< Function describing the real part

@@ -673,7 +673,7 @@ namespace {
 			arbitraryFunctionMassDependencePtr massDep = static_pointer_cast<arbitraryFunctionMassDependence>(vertex->massDependence());
 			name << "arbitrary[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
 			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
-			     << massDep->getRealFunctionString() << "," << massDep->getImagFunctionString() << "]";
+			     << massDep->getFunctionName() << "]";
 		} else
 			name << P->name();
 
@@ -1359,7 +1359,7 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 		if (massDepName == "arbitraryFunction") {
 			// For this mass dependence, the function definitions have to be stored
 			const arbitraryFunctionMassDependence& arbitrary = dynamic_cast<const arbitraryFunctionMassDependence&>(massDep);
-			massDepKey.add("functionName", Setting::TypeString) = arbitrary.getName();
+			massDepKey.add("functionName", Setting::TypeString) = arbitrary.getFunctionName();
 			massDepKey.add("realFunction", Setting::TypeString) = arbitrary.getRealFunctionString();
 			massDepKey.add("imagFunction", Setting::TypeString) = arbitrary.getImagFunctionString();
 
