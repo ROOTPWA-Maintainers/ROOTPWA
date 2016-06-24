@@ -242,8 +242,8 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 		size_t couplingIndex = _nrCouplings;
 		size_t branchingIndex = _nrBranchings;
 		if(useBranchings && nrDecayChannels > 1) {
-			const std::string waveQN = waveName.substr(0, 7);
-			const std::string waveDecay = waveName.substr(7);
+			const std::string waveQN = waveName.substr(0, waveName.find("="));
+			const std::string waveDecay = waveName.substr(waveName.find("=")+1);
 			if(debug) {
 				printDebug << "extracted quantum numbers '" << waveQN << "' and decay chain '" << waveDecay << "' from wave name '" << waveName << "'." << std::endl;
 			}
