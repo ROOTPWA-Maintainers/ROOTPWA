@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 //    Copyright 2010-2012 Sebastian Neubert (TUM)
-//    Copyright 2014,2015 Sebastian Uhl (TUM)
+//    Copyright 2014-2016 Sebastian Uhl (TUM)
 //
 //    This file is part of ROOTPWA
 //
@@ -40,7 +40,7 @@
 
 #include <boost/multi_array.hpp>
 
-#include <Rtypes.h>
+#include <TMatrixT.h>
 
 namespace YAML {
 	class Emitter;
@@ -178,9 +178,9 @@ namespace rpwa {
 			                           rpwa::fitResult* fit,
 			                           const std::vector<Long64_t>& mapping,
 			                           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
-			                           boost::multi_array<double, 5>& productionAmplitudesCovariance,
+			                           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
 			                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-			                           boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+			                           boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
 			                           boost::multi_array<double, 3>& intensities,
 			                           boost::multi_array<double, 4>& phases) const;
 			bool readFitResultIntegrals(TTree* tree,
@@ -247,16 +247,16 @@ namespace rpwa {
 			std::string _anchorComponentName;
 
 			boost::multi_array<std::complex<double>, 3> _inProductionAmplitudes;
-			boost::multi_array<double, 6> _inProductionAmplitudesCovariance;
+			boost::multi_array<TMatrixT<double>, 2> _inProductionAmplitudesCovariance;
 			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
-			boost::multi_array<double, 6> _inSpinDensityCovarianceMatrices;
+			boost::multi_array<TMatrixT<double>, 2> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
 
 			boost::multi_array<double, 4> _inIntensities;
 			boost::multi_array<double, 5> _inPhases;
 
 			boost::multi_array<std::complex<double>, 4> _sysSpinDensityMatrices;
-			boost::multi_array<double, 6> _sysSpinDensityCovarianceMatrices;
+			boost::multi_array<TMatrixT<double>, 2> _sysSpinDensityCovarianceMatrices;
 
 			boost::multi_array<double, 4> _sysIntensities;
 			boost::multi_array<double, 5> _sysPhases;
