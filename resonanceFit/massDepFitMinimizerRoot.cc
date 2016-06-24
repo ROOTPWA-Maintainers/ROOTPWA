@@ -222,7 +222,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 				           << comp->getName()
 				           << "__";
 				if(_fitModel.useBranchings() && comp->getNrChannels() > 1) {
-					const std::string waveQN = channel.getWaveName().substr(0, 7);
+					const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
 					prefixName << waveQN;
 				} else {
 					prefixName << channel.getWaveName();
@@ -279,7 +279,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 			// branching with idxChannel 0 is always real and fixed to 1
 			for(size_t idxBranching=1; idxBranching<comp->getNrBranchings(); ++idxBranching) {
 				const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
-				const std::string waveDecay = channel.getWaveName().substr(7);
+				const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
 				std::ostringstream prefixName;
 				prefixName << "branching__"
 				           << comp->getName()
