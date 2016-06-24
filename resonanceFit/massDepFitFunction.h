@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 //    Copyright 2010-2012 Sebastian Neubert (TUM)
-//    Copyright 2014,2015 Sebastian Uhl (TUM)
+//    Copyright 2014-2016 Sebastian Uhl (TUM)
 //
 //    This file is part of ROOTPWA
 //
@@ -69,9 +69,9 @@ namespace rpwa {
 			bool init(rpwa::massDepFit::model* compset,
 			          const std::vector<double>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-			          const boost::multi_array<double, 6>& productionAmplitudesCovariance,
+			          const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
-			          const boost::multi_array<double, 6>& spinDensityCovarianceMatrices,
+			          const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
 
 			size_t getNrParameters() const;
@@ -110,11 +110,9 @@ namespace rpwa {
 			std::vector<double> _massBinCenters;
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
-			boost::multi_array<double, 6> _productionAmplitudesCovariance;
 			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
 
 			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
-			boost::multi_array<double, 6> _spinDensityCovarianceMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _spinDensityMatricesCovMatInv;
 
 			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
