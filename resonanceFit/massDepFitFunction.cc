@@ -217,15 +217,15 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 							const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 							const Int_t colSkip = 2*(jdxWave-jdxSkip) + ((jdxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 
-							reducedCovMat(rowSkip + 0, colSkip + 0) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave, 2*jdxWave);
+							reducedCovMat(rowSkip, colSkip) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave, 2*jdxWave);
 							if(jdxWave != _idxAnchorWave) {
-								reducedCovMat(rowSkip + 0, colSkip + 1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave, 2*jdxWave+1);
+								reducedCovMat(rowSkip, colSkip+1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave, 2*jdxWave+1);
 							}
 							if(idxWave != _idxAnchorWave) {
-								reducedCovMat(rowSkip + 1, colSkip + 0) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave);
+								reducedCovMat(rowSkip+1, colSkip) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave);
 							}
 							if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
-								reducedCovMat(rowSkip + 1, colSkip + 1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave+1);
+								reducedCovMat(rowSkip+1, colSkip+1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave+1);
 							}
 						}
 					}
@@ -245,10 +245,10 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 								continue;
 							}
 
-							covariance(2*(idxWave-idxSkip) + 0, 2*(jdxWave-jdxSkip) + 0) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*jdxWave  );
-							covariance(2*(idxWave-idxSkip) + 0, 2*(jdxWave-jdxSkip) + 1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*jdxWave+1);
-							covariance(2*(idxWave-idxSkip) + 1, 2*(jdxWave-jdxSkip) + 0) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave  );
-							covariance(2*(idxWave-idxSkip) + 1, 2*(jdxWave-jdxSkip) + 1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave+1);
+							covariance(2*(idxWave-idxSkip),   2*(jdxWave-jdxSkip)  ) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*jdxWave  );
+							covariance(2*(idxWave-idxSkip),   2*(jdxWave-jdxSkip)+1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*jdxWave+1);
+							covariance(2*(idxWave-idxSkip)+1, 2*(jdxWave-jdxSkip)  ) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave  );
+							covariance(2*(idxWave-idxSkip)+1, 2*(jdxWave-jdxSkip)+1) = productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*jdxWave+1);
 
 							const double n = abs(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave]);
 							const double n3 = std::pow(n, 3);
@@ -259,20 +259,18 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 							const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 							if(idxWave == _idxAnchorWave && jdxWave == _idxAnchorWave) {
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) = xa1 / n;
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) = xa2 / n;
+								jacobian(rowSkip, 2*(jdxWave-jdxSkip)  ) = xa1 / n;
+								jacobian(rowSkip, 2*(jdxWave-jdxSkip)+1) = xa2 / n;
 							} else if(jdxWave == _idxAnchorWave) {
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) = xi1 / n - xa1 * (xi1*xa1 + xi2*xa2) / n3;
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) = xi2 / n - xa2 * (xi1*xa1 + xi2*xa2) / n3;
-								if(idxWave != _idxAnchorWave) {
-									jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 0) =   xi2 / n - xa1 * (xi2*xa1 - xi1*xa2) / n3;
-									jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 1) = - xi1 / n - xa2 * (xi2*xa1 - xi1*xa2) / n3;
-								}
+								jacobian(rowSkip,   2*(jdxWave-jdxSkip)  ) =   xi1 / n - xa1 * (xi1*xa1 + xi2*xa2) / n3;
+								jacobian(rowSkip,   2*(jdxWave-jdxSkip)+1) =   xi2 / n - xa2 * (xi2*xa2 + xi1*xa1) / n3;
+								jacobian(rowSkip+1, 2*(jdxWave-jdxSkip)  ) =   xi2 / n - xa1 * (xi2*xa1 - xi1*xa2) / n3;
+								jacobian(rowSkip+1, 2*(jdxWave-jdxSkip)+1) = - xi1 / n - xa2 * (xi2*xa1 - xi1*xa2) / n3;
 							} else if(idxWave == jdxWave) {
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 0) =   xa1 / n;
-								jacobian(rowSkip + 0, 2*(jdxWave-jdxSkip) + 1) =   xa2 / n;
-								jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 0) = - xa2 / n;
-								jacobian(rowSkip + 1, 2*(jdxWave-jdxSkip) + 1) =   xa1 / n;
+								jacobian(rowSkip  , 2*(jdxWave-jdxSkip)  ) =   xa1 / n;
+								jacobian(rowSkip  , 2*(jdxWave-jdxSkip)+1) =   xa2 / n;
+								jacobian(rowSkip+1, 2*(jdxWave-jdxSkip)  ) = - xa2 / n;
+								jacobian(rowSkip+1, 2*(jdxWave-jdxSkip)+1) =   xa1 / n;
 							}
 						}
 					}
@@ -282,10 +280,52 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					reducedCovMat = jacobian * covariance * jacobianT;
 				}
 
+				// set entries in covariance matrix to zero according to which parts are to be used
+				if(_useCovariance != useFullCovarianceMatrix) {
+					for(size_t idxWave = 0, idxSkip = 0; idxWave < _nrWaves; ++idxWave) {
+						if(idxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
+							++idxSkip;
+							continue;
+						}
+
+						for(size_t jdxWave = 0, jdxSkip = 0; jdxWave < _nrWaves; ++jdxWave) {
+							if(jdxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
+								++jdxSkip;
+								continue;
+							}
+
+							const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave and not skipAnchor) ? -1 : 0);
+							const Int_t colSkip = 2*(jdxWave-jdxSkip) + ((jdxWave>_idxAnchorWave and not skipAnchor) ? -1 : 0);
+
+							if(idxWave == jdxWave) {
+								if(_useCovariance == useDiagnalElementsOnly) {
+									if(jdxWave != _idxAnchorWave) {
+										reducedCovMat(rowSkip, colSkip+1) = 0;
+									}
+									if(idxWave != _idxAnchorWave) {
+										reducedCovMat(rowSkip+1, colSkip) = 0;
+									}
+								}
+							} else {
+								reducedCovMat(rowSkip, colSkip) = 0;
+								if(jdxWave != _idxAnchorWave) {
+									reducedCovMat(rowSkip, colSkip+1) = 0;
+								}
+								if(idxWave != _idxAnchorWave) {
+									reducedCovMat(rowSkip+1, colSkip) = 0;
+								}
+								if(idxWave != _idxAnchorWave and jdxWave != _idxAnchorWave) {
+									reducedCovMat(rowSkip+1, colSkip+1) = 0;
+								}
+							}
+						}
+					}
+				}
+
 				reducedCovMat.Invert();
 
 				// import covariance matrix of production amplitudes
-				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves - 1, 2*_nrWaves - 1);
+				_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(2*_nrWaves, 2*_nrWaves);
 
 				for(size_t idxWave=0, idxSkip=0; idxWave<_nrWaves; ++idxWave) {
 					if(idxSkip < zeroWaves[idxBin][idxMass].size() && zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
@@ -299,24 +339,18 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 							continue;
 						}
 
-						if(idxWave != jdxWave && _useCovariance != useFullCovarianceMatrix) {
-							continue;
-						}
-
-						const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
-						const Int_t col = 2*jdxWave + (jdxWave>_idxAnchorWave ? -1 : 0);
 						const Int_t rowSkip = 2*(idxWave-idxSkip) + ((idxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 						const Int_t colSkip = 2*(jdxWave-jdxSkip) + ((jdxWave>_idxAnchorWave && !skipAnchor) ? -1 : 0);
 
-						_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 0) = reducedCovMat(rowSkip + 0, colSkip + 0);
-						if(jdxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 0, col + 1) = reducedCovMat(rowSkip + 0, colSkip + 1);
+						_productionAmplitudesCovMatInv[idxBin][idxMass](2*idxWave, 2*jdxWave) = reducedCovMat(rowSkip, colSkip);
+						if(jdxWave != _idxAnchorWave) {
+							_productionAmplitudesCovMatInv[idxBin][idxMass](2*idxWave, 2*jdxWave+1) = reducedCovMat(rowSkip, colSkip+1);
 						}
-						if(idxWave != _idxAnchorWave && _useCovariance != useDiagnalElementsOnly) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 0) = reducedCovMat(rowSkip + 1, colSkip + 0);
+						if(idxWave != _idxAnchorWave) {
+							_productionAmplitudesCovMatInv[idxBin][idxMass](2*idxWave+1, 2*jdxWave) = reducedCovMat(rowSkip+1, colSkip);
 						}
 						if(idxWave != _idxAnchorWave && jdxWave != _idxAnchorWave) {
-							_productionAmplitudesCovMatInv[idxBin][idxMass](row + 1, col + 1) = reducedCovMat(rowSkip + 1, colSkip + 1);
+							_productionAmplitudesCovMatInv[idxBin][idxMass](2*idxWave+1, 2*jdxWave+1) = reducedCovMat(rowSkip+1, colSkip+1);
 						}
 					}
 				}
@@ -702,7 +736,7 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 			const std::complex<double> anchorFit = _compset->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
-			TVectorT<double> prodAmpDiffVect(2*_nrWaves - 1);
+			TVectorT<double> prodAmpDiffVect(2*_nrWaves);
 
 			// sum over the contributions to chi2
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
@@ -717,10 +751,10 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 
 				const std::complex<double> prodAmpDiff = prodAmpFit - _productionAmplitudes[idxBin][idxMass][idxWave];
 
-				const Int_t row = 2*idxWave + (idxWave>_idxAnchorWave ? -1 : 0);
-				prodAmpDiffVect(row + 0) = prodAmpDiff.real();
+				const Int_t row = 2*idxWave;
+				prodAmpDiffVect(row) = prodAmpDiff.real();
 				if(idxWave != _idxAnchorWave) {
-					prodAmpDiffVect(row + 1) = prodAmpDiff.imag();
+					prodAmpDiffVect(row+1) = prodAmpDiff.imag();
 				}
 			} // end loop over idxWave
 
@@ -760,16 +794,16 @@ rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::p
 
 					const size_t idx = _nrWaves*(_nrWaves+1) - (_nrWaves-idxWave)*(_nrWaves-idxWave+1) + 2*(jdxWave-idxWave);
 					if(idxWave==jdxWave) {
-						chi2 += norm(rhoDiff) * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx, idx);
+						chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx, idx) * rhoDiff.real();
 					} else {
 						if (_useCovariance == useDiagnalElementsOnly) {
-							chi2 += rhoDiff.real()*rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  );
-							chi2 += rhoDiff.imag()*rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1);
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  ) * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1) * rhoDiff.imag();
 						} else if(_useCovariance == useComplexDiagnalElementsOnly) {
-							chi2 += rhoDiff.real()*rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  );
-							chi2 += rhoDiff.real()*rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx+1);
-							chi2 += rhoDiff.real()*rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx  );
-							chi2 += rhoDiff.imag()*rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1);
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  ) * rhoDiff.real();
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx+1) * rhoDiff.imag();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx  ) * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1) * rhoDiff.imag();
 						} else {
 							// this should have returned an error during the call to init()
 							assert(false);
