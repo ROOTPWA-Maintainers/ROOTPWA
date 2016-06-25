@@ -52,7 +52,6 @@
 #include <TRandom3.h>
 #include <TStopwatch.h>
 
-#include "ampIntegralMatrix.h"
 #include "fileUtils.hpp"
 #include "fitResult.h"
 #include "massDepFitComponents.h"
@@ -247,7 +246,6 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& config
 	}
 
 	_inFileName.clear();
-	_inOverwritePhaseSpace.clear();
 
 	const size_t nrFitResults = configInputFitResults.size();
 	for(size_t idxFitResult=0; idxFitResult<nrFitResults; ++idxFitResult) {
@@ -279,43 +277,6 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& config
 		if(_debug) {
 			printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
 		}
-
-		std::vector<std::string> overwritePhaseSpace;
-
-		const YAML::Node& configOverwrite = configInputFitResult["overwritePhaseSpace"];
-		if(configOverwrite) {
-			if(not configOverwrite.IsSequence()) {
-				printErr << "'overwritePhaseSpace' of 'fitresults' entry at index " << idxFitResult << " is not a YAML sequence." << std::endl;
-				return false;
-			}
-
-			const size_t nrParts = configOverwrite.size();
-			for(size_t idxPart=0; idxPart<nrParts; ++idxPart) {
-				if(not checkVariableType(configOverwrite[idxPart], YamlCppUtils::TypeString)) {
-					printErr << "'overwritePhaseSpace' entry at index " << idxPart
-					         << " of 'fitresults' entry at index " << idxFitResult << " is not a string." << std::endl;
-					return false;
-				}
-
-				const std::string fileName = configOverwrite[idxPart].as<std::string>();
-				overwritePhaseSpace.push_back(fileName);
-			}
-
-			if(_debug) {
-				std::ostringstream output;
-				output << "[ '";
-				for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
-					if(idxPart > 0) {
-						output << "', '";
-					}
-					output << overwritePhaseSpace[idxPart];
-				}
-				output << "' ]";
-				printDebug << "phase-space integrals will be overwritten with files from this pattern: " << output.str() << " (" << overwritePhaseSpace.size() << " parts)" << std::endl;
-			}
-		}
-
-		_inOverwritePhaseSpace.push_back(overwritePhaseSpace);
 	}
 
 	_nrBins = _inFileName.size();
@@ -864,13 +825,6 @@ rpwa::massDepFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutp
 		yamlOutput << YAML::Key << "tPrimeMean";
 		yamlOutput << YAML::Value << _tPrimeMeans[idxBin];
 
-		if(_inOverwritePhaseSpace[idxBin].size() > 0) {;
-			yamlOutput << YAML::Key << "overwritePhaseSpace";
-			yamlOutput << YAML::Flow;
-			yamlOutput << YAML::Value << _inOverwritePhaseSpace[idxBin];
-			yamlOutput << YAML::Block;
-		}
-
 		yamlOutput << YAML::EndMap;
 	}
 
@@ -1164,14 +1118,6 @@ rpwa::massDepFit::massDepFit::readInFileFirst(const std::string& valTreeName,
 		delete inFile;
 		return false;
 	}
-
-	if(_inOverwritePhaseSpace[0].size() > 0) {
-		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace[0], tempPhaseSpaceIntegrals)) {
-			printErr << "error while reading phase-space integrals from integral matrices." << std::endl;
-			delete inFile;
-			return false;
-		}
-	}
 	_inPhaseSpaceIntegrals[0] = tempPhaseSpaceIntegrals;
 
 	delete inFile;
@@ -1257,14 +1203,6 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
-	}
-
-	if(_inOverwritePhaseSpace[idxBin].size() > 0) {
-		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace[idxBin], tempPhaseSpaceIntegrals)) {
-			printErr << "error while reading phase-space integrals from integral matrices." << std::endl;
-			delete inFile;
-			return false;
-		}
 	}
 	_inPhaseSpaceIntegrals[idxBin] = tempPhaseSpaceIntegrals;
 
@@ -1426,7 +1364,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 		bool found = false;
 		size_t idxMass=0;
 		while(idxMass<_nrMassBins) {
-			if(abs(_massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
+			if(std::abs(_massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
 				found = true;
 				break;
 			}
@@ -1500,7 +1438,7 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 
 		bool found = false;
 		for(size_t idxMass=0; idxMass<_massBinCenters.size(); ++idxMass) {
-			if(abs(_massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
+			if(std::abs(_massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
 				found = true;
 				if(_debug) {
 					printDebug << "this center of mass bin already was encountered before." << std::endl;
@@ -1524,7 +1462,7 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 
 	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
 	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
-		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
+		if(std::abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
 			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " GeV/c^2) and "
 			         << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
 			         << _massStep << " GeV/c^2" << std::endl;
@@ -1727,55 +1665,6 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
-			phaseSpaceIntegrals[idxMass][idxWave] = ps;
-		}
-	}
-
-	if(_debug) {
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			std::ostringstream output;
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
-			}
-			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << std::endl;
-		}
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const std::vector<std::string>& overwritePhaseSpace,
-                                                             boost::multi_array<double, 2>& phaseSpaceIntegrals) const
-{
-	phaseSpaceIntegrals.resize(boost::extents[_nrMassBins][_nrWaves]);
-
-	if(_debug) {
-		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from integral matrices." << std::endl;
-	}
-
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-		std::ostringstream sFileName;
-		for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
-			sFileName << overwritePhaseSpace[idxPart];
-			if(idxPart == 0) {
-				sFileName << (_massMin + idxMass*_massStep);
-			} else if(idxPart == 1) {
-				sFileName << (_massMin + (idxMass+1)*_massStep);
-			}
-		}
-		const std::string fileName = sFileName.str();
-
-		if(_debug) {
-			printDebug << "reading phase-space integrals for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from file '" << fileName << "'." << std::endl;
-		}
-
-		ampIntegralMatrix intMatrix;
-		intMatrix.readAscii(fileName);
-
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			const double ps = sqrt(abs(intMatrix.element(_waveNames[idxWave], _waveNames[idxWave])));
 			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
@@ -2291,9 +2180,9 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 
 			for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
 				double sysP = _sysPhases[idxSystematics][idxMass][idxWave][jdxWave][0];
-				if(abs(sysP+360.-dataP) < abs(sysP-dataP)) {
+				if(std::abs(sysP+360.-dataP) < std::abs(sysP-dataP)) {
 					sysP = sysP+360;
-				} else if(abs(sysP-360.-dataP) < abs(sysP-dataP)) {
+				} else if(std::abs(sysP-360.-dataP) < std::abs(sysP-dataP)) {
 					sysP = sysP-360;
 				}
 				maxSP = std::max(maxSP, sysP);
@@ -2344,8 +2233,8 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			double prev;
 			phaseFitAll.GetPoint(point-1, x, prev);
 			for(int offs=-5; offs<6; ++offs) {
-				if(abs(phase + offs*360. - prev) < bestDiff) {
-					bestDiff = abs(phase + offs*360. - prev);
+				if(std::abs(phase + offs*360. - prev) < bestDiff) {
+					bestDiff = std::abs(phase + offs*360. - prev);
 					bestOffs = offs;
 				}
 			}
@@ -2372,8 +2261,8 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 			double data;
 			phaseData->GetPoint(idxMass, x, data);
 			for(int offs=-5; offs<6; ++offs) {
-				if(abs(data + offs*360. - valueFit) < bestDiff) {
-					bestDiff = abs(data + offs*360. - valueFit);
+				if(std::abs(data + offs*360. - valueFit) < bestDiff) {
+					bestDiff = std::abs(data + offs*360. - valueFit);
 					bestOffs = offs;
 				}
 			}

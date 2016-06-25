@@ -187,8 +187,6 @@ namespace rpwa {
 			                            rpwa::fitResult* fit,
 			                            const std::vector<Long64_t>& mapping,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
-			bool readPhaseSpaceIntegralMatrices(const std::vector<std::string>& overwritePhaseSpace,
-			                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
 			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
 			                     const rpwa::massDepFit::parameters& fitParameters,
@@ -222,7 +220,6 @@ namespace rpwa {
 			                     const size_t extraBinning) const;
 
 			std::vector<std::string> _inFileName;
-			std::vector<std::vector<std::string> > _inOverwritePhaseSpace;
 
 			bool _sysPlotting;
 			std::vector<std::string> _sysFileNames;
