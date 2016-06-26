@@ -165,7 +165,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			bool realThisWave = true;
 			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-				for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				for(size_t idxMass = _idxMassMin; idxMass <= _idxMassMax; ++idxMass) {
 					realThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
 					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*idxWave+1) == 0.);
 					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
