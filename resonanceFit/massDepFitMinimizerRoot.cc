@@ -203,9 +203,9 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	_minimizer->Clear();
 
 	// changes status of variables (fixed/released)
-	// * couplings are always free
+	// * couplings have to be freed explicitely by adding 'coupling' to freeParameters
+	// * branchings also have to be freed explicitely with the keyword 'branching'
 	// * additional parameters can be freed with freeParameters
-	// * branchings also have to be freed explicitely
 	// * fixed values from config remain fixed
 
 	size_t parcount=0;

@@ -1900,7 +1900,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].second) : (extraBinning*(_nrMassBins-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		const double intensity = fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		fit->SetPoint(point-firstPoint, mass, intensity);
@@ -1928,7 +1928,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	double maxP = -std::numeric_limits<double>::max();
 	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
 		if(fitModel.getFsmd() != NULL) {
@@ -2022,7 +2022,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].second) : (extraBinning*(_nrMassBins-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		double sum = 0.;
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
@@ -2210,7 +2210,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	const size_t lastPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxWave][jdxWave].second) : (extraBinning*(_nrMassBins-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 		realFit->SetPoint(point-firstPoint, mass, element.real());
@@ -2221,7 +2221,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	TGraph phaseFitAll;
 	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		const double phase = fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
 
@@ -2248,7 +2248,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	// rectify phase graphs
 	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		double x;
 		double valueFit;
@@ -2314,7 +2314,7 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
 
 	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning)*(_massBinCenters[point/extraBinning + 1] - _massBinCenters[point/extraBinning]) / extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
 		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass)));
 	}
