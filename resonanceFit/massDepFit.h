@@ -217,7 +217,8 @@ namespace rpwa {
 			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,
 			                     const bool rangePlotting,
-			                     const size_t extraBinning) const;
+			                     const size_t extraBinning,
+			                     const size_t idxBin) const;
 
 			std::vector<std::string> _inFileName;
 
