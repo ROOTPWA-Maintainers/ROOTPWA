@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 //    Copyright 2010-2012 Sebastian Neubert (TUM)
-//    Copyright 2015 Sebastian Uhl (TUM)
+//    Copyright 2015-2016 Sebastian Uhl (TUM)
 //
 //    This file is part of ROOTPWA
 //
@@ -36,6 +36,8 @@
 #include <limits>
 #include <vector>
 
+#include <boost/multi_array.hpp>
+
 namespace YAML {
 	class Emitter;
 	class Node;
@@ -59,6 +61,7 @@ namespace rpwa {
 			bool init(const YAML::Node& configComponent,
 			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::parameters& fitParametersError,
+			          const size_t nrBins,
 			          const bool debug);
 
 			bool write(YAML::Emitter& yamlOutput,
@@ -66,21 +69,25 @@ namespace rpwa {
 			           const rpwa::massDepFit::parameters& fitParametersError,
 			           const bool debug) const;
 
-			size_t getNrParameters() const { return _nrParameters; }
+			size_t getNrBins() const { return _nrBins; }
+
+			size_t getNrParameters(const size_t idxBin) const { return _nrParameters[idxBin]; }
+			size_t getParameterIndex(const size_t idxBin) const { return _parametersIndex[idxBin]; }
 			size_t importParameters(const double* par,
 			                        rpwa::massDepFit::parameters& fitParameters,
 			                        rpwa::massDepFit::cache& cache);
 
-			bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
-			double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
-			bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
-			double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
-			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
-			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
-			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
+			bool getParameterFixed(const size_t idxBin, const size_t idxParameter) const { return _parametersFixed[idxBin][idxParameter]; }
+			double getParameterLimitLower(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitLower[idxBin][idxParameter]; }
+			bool getParameterLimitedLower(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitedLower[idxBin][idxParameter]; }
+			double getParameterLimitUpper(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitUpper[idxBin][idxParameter]; }
+			bool getParameterLimitedUpper(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitedUpper[idxBin][idxParameter]; }
+			const std::string& getParameterName(const size_t idxBin, const size_t idxParameter) const { return _parametersName[idxBin][idxParameter]; }
+			double getParameterStep(const size_t idxBin, const size_t idxParameter) const { return _parametersStep[idxBin][idxParameter]; }
 
 			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                         rpwa::massDepFit::cache& cache,
+			                         const size_t idxBin,
 			                         const double mass,
 			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
@@ -88,19 +95,38 @@ namespace rpwa {
 
 		private:
 
+			bool initBin(const YAML::Node& configComponent,
+			             rpwa::massDepFit::parameters& fitParameters,
+			             rpwa::massDepFit::parameters& fitParametersError,
+			             const size_t idxBin,
+			             const bool debug);
+
+			bool writeBin(YAML::Emitter& yamlOutput,
+			              const rpwa::massDepFit::parameters& fitParameters,
+			              const rpwa::massDepFit::parameters& fitParametersError,
+			              const size_t idxBin,
+			              const bool debug) const;
+
+			std::ostream& printBin(const size_t idxBin,
+			                       std::ostream& out = std::cout) const;
+
 			const size_t _id;
 
-			TFormula* _function;
+			size_t _nrBins;
+			size_t _maxParameters;
 
-			size_t _nrParameters;
+			std::vector<std::shared_ptr<TFormula> > _functions;
 
-			std::vector<bool> _parametersFixed;
-			std::vector<double> _parametersLimitLower;
-			std::vector<bool> _parametersLimitedLower;
-			std::vector<double> _parametersLimitUpper;
-			std::vector<bool> _parametersLimitedUpper;
-			std::vector<std::string> _parametersName;
-			std::vector<double> _parametersStep;
+			std::vector<size_t> _nrParameters;
+			std::vector<size_t> _parametersIndex;
+
+			boost::multi_array<bool, 2> _parametersFixed;
+			boost::multi_array<double, 2> _parametersLimitLower;
+			boost::multi_array<bool, 2> _parametersLimitedLower;
+			boost::multi_array<double, 2> _parametersLimitUpper;
+			boost::multi_array<bool, 2> _parametersLimitedUpper;
+			boost::multi_array<std::string, 2> _parametersName;
+			boost::multi_array<double, 2> _parametersStep;
 		};
 
 		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::fsmd& fsmd);

@@ -646,8 +646,8 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 		printErr << "'configFsmd' is not a valid YAML node." << std::endl;
 		return false;
 	}
-	if(not configFsmd.IsMap()) {
-		printErr << "'finalStateMassDependence' is not a YAML map." << std::endl;
+	if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
+		printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
 		return false;
 	}
 
@@ -656,7 +656,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 	}
 
 	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
-	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _debug)) {
+	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
@@ -1782,6 +1782,13 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 				}
 			}
 		}
+
+		if(fitModel.getFsmd() and fitModel.getFsmd()->getNrBins() != 1) {
+			if(not createPlotsFsmd(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
+				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
+				return false;
+			}
+		}
 	}
 
 	if (_nrBins != 1) {
@@ -1793,9 +1800,11 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning)) {
-		printErr << "error while creating plots for final-state mass-dependence." << std::endl;
-		return false;
+	if(fitModel.getFsmd() and fitModel.getFsmd()->getNrBins() == 1) {
+		if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
+			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
+			return false;
+		}
 	}
 
 	if(_debug) {
@@ -1913,7 +1922,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 			if(fitModel.getFsmd() != NULL) {
-				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass);
+				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 			}
 
 			components[idxComponents]->SetPoint(point-firstPoint, mass, norm(prodAmp));
@@ -1932,7 +1941,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
 		if(fitModel.getFsmd() != NULL) {
-			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass));
+			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass));
 		}
 		phaseSpace->SetPoint(point, mass, ps);
 		maxP = std::max(maxP, ps);
@@ -2039,7 +2048,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 				std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 				prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 				if(fitModel.getFsmd() != NULL) {
-					prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass);
+					prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 				}
 				sum += norm(prodAmp);
 			}
@@ -2298,12 +2307,9 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
                                               rpwa::massDepFit::cache& cache,
                                               TDirectory* outDirectory,
                                               const bool /*rangePlotting*/,
-                                              const size_t extraBinning) const
+                                              const size_t extraBinning,
+                                              const size_t idxBin) const
 {
-	if(fitModel.getFsmd() == NULL) {
-		return true;
-	}
-
 	if(_debug) {
 		printDebug << "start creating plots for final-state mass-dependence." << std::endl;
 	}
@@ -2316,7 +2322,7 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
 
-		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, mass, idxMass)));
+		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass)));
 	}
 
 	outDirectory->cd();

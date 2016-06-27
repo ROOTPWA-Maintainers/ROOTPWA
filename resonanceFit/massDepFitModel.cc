@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 //
 //    Copyright 2010-2012 Sebastian Neubert (TUM)
-//    Copyright 2014,2015 Sebastian Uhl (TUM)
+//    Copyright 2014-2016 Sebastian Uhl (TUM)
 //
 //    This file is part of ROOTPWA
 //
@@ -104,15 +104,21 @@ void
 rpwa::massDepFit::model::setFsmd(rpwa::massDepFit::fsmd* fsmd)
 {
 	if(_fsmd != NULL) {
-		_nrParameters -= _fsmd->getNrParameters();
+		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
+			_nrParameters -= _fsmd->getNrParameters(idxBin);
+		}
 		delete _fsmd;
 	}
 
 	_fsmd = fsmd;
 
 	if(_fsmd != NULL) {
-		_nrParameters += _fsmd->getNrParameters();
-		_maxParametersInComponent = std::max(_maxParametersInComponent, _fsmd->getNrParameters());
+		size_t sumNrParameters = 0;
+		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
+			sumNrParameters += _fsmd->getNrParameters(idxBin);
+		}
+		_maxParametersInComponent = std::max(_maxParametersInComponent, sumNrParameters);
+		_nrParameters += sumNrParameters;
 	}
 }
 
@@ -270,7 +276,7 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 	}
 
 	if(_fsmd != NULL) {
-		prodAmp *= _fsmd->val(fitParameters, cache, mass, idxMass);
+		prodAmp *= _fsmd->val(fitParameters, cache, idxBin, mass, idxMass);
 	}
 
 	if (idxMass != std::numeric_limits<size_t>::max()) {
