@@ -76,12 +76,13 @@ rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
 
 bool
 rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
-                                 const std::vector<double>& massBinCenters,
+                                 const std::vector<size_t>& nrMassBins,
+                                 const boost::multi_array<double, 2>& massBinCenters,
                                  const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                  const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
                                  const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
                                  const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
-                                 const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
+                                 const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
 {
 	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
 		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
@@ -90,6 +91,9 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 	_compset = compset;
 
+	_nrMassBins = nrMassBins;
+
+	_massBinCenters.resize(std::vector<size_t>(massBinCenters.shape(), massBinCenters.shape()+massBinCenters.num_dimensions()));
 	_massBinCenters = massBinCenters;
 
 	_productionAmplitudes.resize(std::vector<size_t>(productionAmplitudes.shape(), productionAmplitudes.shape()+productionAmplitudes.num_dimensions()));
@@ -103,16 +107,18 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 	_idxAnchorWave = _compset->getAnchorWave();
 
-	_nrBins = _spinDensityMatrices.size();
-	_nrMassBins = _massBinCenters.size();
-	_nrWaves = _wavePairMassBinLimits.size();
+	_nrBins = _spinDensityMatrices.shape()[0];
+	_maxMassBins = _spinDensityMatrices.shape()[1];
+	_nrWaves = _spinDensityMatrices.shape()[2];
 
-	_idxMassMin = _nrMassBins;
-	_idxMassMax = 0;
+	_idxMassMax.resize(_nrBins);
+	_idxMassMin.resize(_nrBins);
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		_idxMassMin[idxBin] = _nrMassBins[idxBin];
+		_idxMassMax[idxBin] = 0;
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			_idxMassMin = std::min(_idxMassMin, _wavePairMassBinLimits[idxWave][idxWave].first);
-			_idxMassMax = std::max(_idxMassMax, _wavePairMassBinLimits[idxWave][idxWave].second);
+			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
+			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
 		}
 	}
 
@@ -120,12 +126,12 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		// do some stuff specific to the fit to the production amplitudes
 
 		// get a list of waves that are zero (those have to be excluded
-		// form the inversion of the covariance matrix below) and test
+		// from the inversion of the covariance matrix below) and test
 		// that the anchor wave is non-zero over the complete fit range
 		bool zeroAnchorWave = false;
-		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_nrMassBins]);
+		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_maxMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 					bool zeroThisWave = true;
 					zeroThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].real() == 0.);
@@ -135,7 +141,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					zeroThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
 					zeroThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave+1) == 0.);
 
-					if(zeroThisWave || idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
+					if(zeroThisWave or idxMass < _wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
 						zeroWaves[idxBin][idxMass].push_back(idxWave);
 					}
 
@@ -144,7 +150,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 					}
 
 					// check that a wave is not zero in its fit range
-					if(zeroThisWave && idxMass >= _wavePairMassBinLimits[idxWave][idxWave].first && idxMass <= _wavePairMassBinLimits[idxWave][idxWave].second) {
+					if(zeroThisWave and idxMass >= _wavePairMassBinLimits[idxBin][idxWave][idxWave].first and idxMass <= _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
 						printErr << "production amplitudes of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
 						return false;
 					}
@@ -165,7 +171,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			bool realThisWave = true;
 			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-				for(size_t idxMass = _idxMassMin; idxMass <= _idxMassMax; ++idxMass) {
+				for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 					realThisWave &= (_productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
 					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*idxWave+1) == 0.);
 					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
@@ -186,9 +192,9 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 			return false;
 		}
 
-		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
+		_productionAmplitudesCovMatInv.resize(boost::extents[_nrBins][_maxMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				// determine whether the anchor wave should be used in the current bin
 				bool skipAnchor = false;
 				for (std::vector<size_t>::const_iterator it=zeroWaves[idxBin][idxMass].begin(); it!=zeroWaves[idxBin][idxMass].end(); ++it) {
@@ -359,7 +365,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 
 		// modify measured production amplitude such that the anchor wave is always real and positive
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				const std::complex<double> anchorPhase = _productionAmplitudes[idxBin][idxMass][_idxAnchorWave] / abs(_productionAmplitudes[idxBin][idxMass][_idxAnchorWave]);
 				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 					_productionAmplitudes[idxBin][idxMass][idxWave] /= anchorPhase;
@@ -370,10 +376,10 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		// do some stuff specific to the fit to the spin-density matrix
 
 		// get a list of waves that are zero (those have to be excluded
-		// form the inversion of the covariance matrix below)
-		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_nrMassBins]);
+		// from the inversion of the covariance matrix below)
+		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_maxMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 					bool zeroThisWave = true;
 					for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
@@ -387,12 +393,12 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 						zeroThisWave &= (spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, idx+1) == 0.);
 					}
 
-					if(zeroThisWave || idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
+					if(zeroThisWave or idxMass < _wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
 						zeroWaves[idxBin][idxMass].push_back(idxWave);
 					}
 
 					// check that a wave is not zero in its fit range
-					if(zeroThisWave && idxMass >= _wavePairMassBinLimits[idxWave][idxWave].first && idxMass <= _wavePairMassBinLimits[idxWave][idxWave].second) {
+					if(zeroThisWave and idxMass >= _wavePairMassBinLimits[idxBin][idxWave][idxWave].first and idxMass <= _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
 						printErr << "spin-density matrix element of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
 						return false;
 					}
@@ -400,9 +406,9 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 			}
 		}
 
-		_spinDensityMatricesCovMatInv.resize(boost::extents[_nrBins][_nrMassBins]);
+		_spinDensityMatricesCovMatInv.resize(boost::extents[_nrBins][_maxMassBins]);
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
+			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				// import covariance matrix of spin-density matrix elements
 				const size_t matrixSize(_nrWaves * (_nrWaves+1));
 				const size_t reducedMatrixSize((_nrWaves - zeroWaves[idxBin][idxMass].size())*(_nrWaves - zeroWaves[idxBin][idxMass].size()));
@@ -576,10 +582,12 @@ rpwa::massDepFit::function::getNrDataPoints() const
 		// * production amplitudes in general are complex numbers
 		// * for the anchor wave it might be real
 		// * remember (Re,Im) => factor 2
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
-			if(idxWave != _idxAnchorWave) {
-				nrPts += _wavePairMassBinLimits[idxWave][idxWave].second - _wavePairMassBinLimits[idxWave][idxWave].first + 1;
+		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+				nrPts += _wavePairMassBinLimits[idxBin][idxWave][idxWave].second - _wavePairMassBinLimits[idxBin][idxWave][idxWave].first + 1;
+				if(idxWave != _idxAnchorWave) {
+					nrPts += _wavePairMassBinLimits[idxBin][idxWave][idxWave].second - _wavePairMassBinLimits[idxBin][idxWave][idxWave].first + 1;
+				}
 			}
 		}
 	} else {
@@ -589,14 +597,14 @@ rpwa::massDepFit::function::getNrDataPoints() const
 		// * remember (Re,Im) => factor 2
 		// * diagonal elements are only checked once, off-diagonal elements with
 		//   the two different combinations (i,j) and (j,i)
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-				nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
+		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+					nrPts += _wavePairMassBinLimits[idxBin][idxWave][jdxWave].second - _wavePairMassBinLimits[idxBin][idxWave][jdxWave].first + 1;
+				}
 			}
 		}
 	}
-
-	nrPts *= _nrBins;
 
 	return nrPts;
 }
@@ -623,7 +631,7 @@ rpwa::massDepFit::function::chiSquare(const double* par) const
 	                                           _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                           _compset->getMaxChannelsInComponent(),
 	                                           _nrBins,
-	                                           _nrMassBins);
+	                                           _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_compset->importParameters(par, fitParameters, cache);
@@ -684,7 +692,7 @@ rpwa::massDepFit::function::logPriorLikelihood(const double* par) const
 	                              _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                              _compset->getMaxChannelsInComponent(),
 	                              _nrBins,
-	                              _nrMassBins);
+	                              _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_compset->importParameters(par, fitParameters, cache);
@@ -729,8 +737,8 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 	// loop over bins
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
-		for(unsigned idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
-			const double mass = _massBinCenters[idxMass];
+		for(unsigned idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
+			const double mass = _massBinCenters[idxBin][idxMass];
 
 			// phase of fit in anchor wave
 			const std::complex<double> anchorFit = _compset->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
@@ -742,7 +750,7 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 				// check that this mass bin should be taken into account for this
 				// combination of waves
-				if(idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second) {
+				if(idxMass < _wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
 					continue;
 				}
 
@@ -775,15 +783,15 @@ rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::p
 	// loop over bins
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
-		for(unsigned idxMass=_idxMassMin; idxMass<=_idxMassMax; ++idxMass) {
-			const double mass = _massBinCenters[idxMass];
+		for(unsigned idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
+			const double mass = _massBinCenters[idxBin][idxMass];
 
 			// sum over the contributions to chi2 -> rho_ij
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 				for(size_t jdxWave=idxWave; jdxWave<_nrWaves; ++jdxWave) {
 					// check that this mass bin should be taken into account for this
 					// combination of waves
-					if(idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second) {
+					if(idxMass < _wavePairMassBinLimits[idxBin][idxWave][jdxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][jdxWave].second) {
 						continue;
 					}
 

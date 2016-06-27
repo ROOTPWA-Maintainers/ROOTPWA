@@ -237,7 +237,7 @@ main(int    argc,
 	                              compset.getNrComponents()+1,           // nr components + final-state mass-dependence
 	                              compset.getMaxChannelsInComponent(),
 	                              mdepFit.getNrBins(),
-	                              mdepFit.getNrMassBins());
+	                              mdepFit.getMaxMassBins());
 
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;

@@ -61,7 +61,8 @@ namespace rpwa {
 			channel(const size_t waveIdx,
 			        const std::string& waveName,
 			        const size_t nrBins,
-			        const std::vector<double>& massBinCenters,
+			        const std::vector<size_t>& nrMassBins,
+			        const boost::multi_array<double, 2>& massBinCenters,
 			        const boost::multi_array<double, 2>& phaseSpace);
 			channel(const rpwa::massDepFit::channel& ch);
 			~channel();
@@ -87,7 +88,8 @@ namespace rpwa {
 
 			size_t _nrBins;
 
-			std::vector<double> _massBinCenters;
+			std::vector<size_t> _nrMassBins;
+			boost::multi_array<double, 2> _massBinCenters;
 			boost::multi_array<double, 2> _phaseSpace;
 			std::vector<ROOT::Math::Interpolator*> _interpolator;
 
@@ -111,7 +113,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -195,6 +199,8 @@ namespace rpwa {
 
 		protected:
 
+			bool _sameMassBinning;
+
 			std::vector<double> _parametersStart;
 			std::vector<double> _parametersError;
 
@@ -221,7 +227,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -254,7 +262,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -301,7 +311,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -347,7 +359,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -380,7 +394,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -424,7 +440,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -468,7 +486,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
@@ -513,7 +533,9 @@ namespace rpwa {
 			                  rpwa::massDepFit::parameters& fitParameters,
 			                  rpwa::massDepFit::parameters& fitParametersError,
 			                  const size_t nrBins,
-			                  const std::vector<double>& massBinCenters,
+			                  const std::vector<size_t>& nrMassBins,
+			                  const boost::multi_array<double, 2>& massBinCenters,
+			                  const bool sameMassBinning,
 			                  const std::map<std::string, size_t>& waveIndices,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,

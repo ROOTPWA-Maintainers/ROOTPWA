@@ -37,6 +37,7 @@
 
 #include <TFormula.h>
 
+#include "conversionUtils.hpp"
 #include "massDepFitCache.h"
 #include "massDepFitParameters.h"
 #include "reportingUtils.hpp"
@@ -46,7 +47,8 @@
 rpwa::massDepFit::fsmd::fsmd(const size_t id)
 	: _id(id),
 	  _nrBins(0),
-	  _maxParameters(0)
+	  _maxParameters(0),
+	  _sameMassBinning(false)
 {
 }
 
@@ -61,11 +63,14 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
                              rpwa::massDepFit::parameters& fitParameters,
                              rpwa::massDepFit::parameters& fitParametersError,
                              const size_t nrBins,
+                             const bool sameMassBinning,
                              const bool debug)
 {
 	if(debug) {
 		printDebug << "start initializing final-state mass-dependence." << std::endl;
 	}
+
+	_sameMassBinning = sameMassBinning;
 
 	if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
 		printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
@@ -383,7 +388,7 @@ rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
 	const std::complex<double> fsmd = _functions[idxBin]->EvalPar(&mass, fitParameters.getParameters(_id)+_parametersIndex[idxBin]);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(_id, ((_nrBins == 1) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, fsmd);
+		cache.setComponent(_id, ((_nrBins == 1 and _sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, fsmd);
 	}
 
 	return fsmd;
@@ -393,7 +398,8 @@ rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
 std::ostream&
 rpwa::massDepFit::fsmd::print(std::ostream& out) const
 {
-	out << "final-state mass-dependence (id " << _id << ")" << std::endl;
+	out << "final-state mass-dependence (id " << _id << ")" << std::endl
+	    << "    all bins have the same mass binning: " << rpwa::yesNo(_sameMassBinning) << std::endl;
 
 	for(size_t i = 0; i < _nrBins; ++i) {
 		printBin(i, out);

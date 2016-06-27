@@ -62,6 +62,7 @@ namespace rpwa {
 			          rpwa::massDepFit::parameters& fitParameters,
 			          rpwa::massDepFit::parameters& fitParametersError,
 			          const size_t nrBins,
+			          const bool sameMassBinning,
 			          const bool debug);
 
 			bool write(YAML::Emitter& yamlOutput,
@@ -114,6 +115,8 @@ namespace rpwa {
 
 			size_t _nrBins;
 			size_t _maxParameters;
+
+			bool _sameMassBinning;
 
 			std::vector<std::shared_ptr<TFormula> > _functions;
 
