@@ -67,12 +67,13 @@ namespace rpwa {
 			~function() {}
 
 			bool init(rpwa::massDepFit::model* compset,
-			          const std::vector<double>& massBinCenters,
+			          const std::vector<size_t>& nrMassBins,
+			          const boost::multi_array<double, 2>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			          const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
 			          const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
-			          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
+			          const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits);
 
 			size_t getNrParameters() const;
 			size_t getNrDataPoints() const;
@@ -101,13 +102,14 @@ namespace rpwa {
 			rpwa::massDepFit::model* _compset;
 
 			size_t _nrBins;
-			size_t _nrMassBins;
+			size_t _maxMassBins;
 			size_t _nrWaves;
 
-			size_t _idxMassMin;
-			size_t _idxMassMax;
+			std::vector<size_t> _idxMassMin;
+			std::vector<size_t> _idxMassMax;
 
-			std::vector<double> _massBinCenters;
+			std::vector<size_t> _nrMassBins;
+			boost::multi_array<double, 2> _massBinCenters;
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
 			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
@@ -115,7 +117,7 @@ namespace rpwa {
 			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _spinDensityMatricesCovMatInv;
 
-			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
+			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 
 			size_t _idxAnchorWave;
 

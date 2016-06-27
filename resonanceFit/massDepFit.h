@@ -98,7 +98,7 @@ namespace rpwa {
 			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
 
 			size_t getNrBins() const { return _nrBins; }
-			size_t getNrMassBins() const { return _nrMassBins; }
+			size_t getMaxMassBins() const { return _maxMassBins; }
 			size_t getNrWaves() const { return _nrWaves; }
 
 			static void setDebug(bool debug) { _debug = debug; }
@@ -106,6 +106,7 @@ namespace rpwa {
 		private:
 
 			bool prepareMassLimits();
+			bool prepareMassLimit(const size_t idxBin);
 
 			bool readConfigFitquality(const YAML::Node& configFitquality,
 			                          double& chi2,
@@ -157,8 +158,6 @@ namespace rpwa {
 
 			bool readInFiles(const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
-			bool readInFileFirst(const std::string& valTreeName   = "pwa",
-			                     const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
@@ -171,9 +170,15 @@ namespace rpwa {
 
 			bool checkFitResultMassBins(TTree* tree,
 			                            rpwa::fitResult* fit,
+			                            const size_t idxBin,
 			                            std::vector<Long64_t>& mapping) const;
 			bool readFitResultMassBins(TTree* tree,
-			                           rpwa::fitResult* fit);
+			                           rpwa::fitResult* fit,
+			                           double& massMin,
+			                           double& massMax,
+			                           double& massStep,
+			                           size_t& nrMassBins,
+			                           boost::multi_array<double, 1>& massBinCenters) const;
 			bool readFitResultMatrices(TTree* tree,
 			                           rpwa::fitResult* fit,
 			                           const std::vector<Long64_t>& mapping,
@@ -227,17 +232,18 @@ namespace rpwa {
 
 			std::vector<double> _tPrimeMeans;
 
-			double _massMax;
-			double _massMin;
-			double _massStep;
-			std::vector<double> _massBinCenters;
+			bool _sameMassBinning;
+			std::vector<double> _massMaxs;
+			std::vector<double> _massMins;
+			std::vector<double> _massSteps;
+			std::vector<size_t> _nrMassBins;
+			boost::multi_array<double, 2> _massBinCenters;
 
 			std::vector<std::string> _waveNames;
 			std::map<std::string, size_t> _waveIndices;
 			std::vector<std::pair<double, double> > _waveMassLimits;
-			std::vector<std::pair<size_t, size_t> > _waveMassBinLimits;
-
-			boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
+			boost::multi_array<std::pair<size_t, size_t>, 2> _waveMassBinLimits;
+			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 
 			std::vector<std::string> _freeParameters;
 
@@ -260,7 +266,7 @@ namespace rpwa {
 			boost::multi_array<double, 5> _sysPhases;
 
 			size_t _nrBins;
-			size_t _nrMassBins;
+			size_t _maxMassBins;
 			size_t _nrSystematics;
 			size_t _nrWaves;
 

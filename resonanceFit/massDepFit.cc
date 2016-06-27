@@ -67,7 +67,8 @@ bool rpwa::massDepFit::massDepFit::_debug = false;
 
 rpwa::massDepFit::massDepFit::massDepFit()
 	: _sysPlotting(false),
-	  _nrMassBins(0),
+	  _sameMassBinning(true),
+	  _maxMassBins(0),
 	  _nrSystematics(0),
 	  _nrWaves(0)
 {
@@ -616,7 +617,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrBins, _nrMassBins, _massBinCenters, _sameMassBinning, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
@@ -656,7 +657,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 	}
 
 	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
-	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _debug)) {
+	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _sameMassBinning, _debug)) {
 		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
@@ -681,6 +682,7 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 	}
 
 	if(not fitFunction.init(&fitModel,
+	                        _nrMassBins,
 	                        _massBinCenters,
 	                        _inProductionAmplitudes,
 	                        _inProductionAmplitudesCovariance,
@@ -1009,118 +1011,13 @@ bool
 rpwa::massDepFit::massDepFit::readInFiles(const std::string& valTreeName,
                                           const std::string& valBranchName)
 {
-	if(not readInFileFirst(valTreeName, valBranchName)) {
-		printErr << "error while reading first file." << std::endl;
-		return false;
-	}
-
-	for(size_t idxBin=1; idxBin<_nrBins; ++idxBin) {
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 		if(not readInFile(idxBin, valTreeName, valBranchName)) {
 			printErr << "error while reading file entry " << idxBin << "." << std::endl;
 			return false;
 		}
 	}
 
-	return true;
-}
-
-
-bool
-rpwa::massDepFit::massDepFit::readInFileFirst(const std::string& valTreeName,
-                                              const std::string& valBranchName)
-{
-	if(_debug) {
-		printDebug << "reading fit result from file '" << _inFileName[0] << "'." << std::endl;
-	}
-
-	TFile* inFile = TFile::Open(_inFileName[0].c_str());
-	if(not inFile) {
-		printErr << "input file '" << _inFileName[0] << "' not found."<< std::endl;
-		return false;
-	}
-	if(inFile->IsZombie()) {
-		printErr << "error while reading input file '" << _inFileName[0] << "'."<< std::endl;
-		delete inFile;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName[0] << "'." << std::endl;
-	}
-
-	TTree* inTree;
-	inFile->GetObject(valTreeName.c_str(), inTree);
-	if(not inTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName[0] << "'."<< std::endl;
-		delete inFile;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << std::endl;
-	}
-
-	fitResult* inFit = NULL;
-	if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
-		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
-
-	if(not readFitResultMassBins(inTree, inFit)) {
-		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[0] << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
-
-	std::vector<Long64_t> inMapping;
-	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[0] << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
-
-	// resize all array to store the information
-	_inProductionAmplitudes.resize(boost::extents[_nrBins][_nrMassBins][_nrWaves]);
-	_inProductionAmplitudesCovariance.resize(boost::extents[_nrBins][_nrMassBins]);
-	_inSpinDensityMatrices.resize(boost::extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves]);
-	_inSpinDensityCovarianceMatrices.resize(boost::extents[_nrBins][_nrMassBins]);
-	_inPhaseSpaceIntegrals.resize(boost::extents[_nrBins][_nrMassBins][_nrWaves]);
-	_inIntensities.resize(boost::extents[_nrBins][_nrMassBins][_nrWaves][2]);
-	_inPhases.resize(boost::extents[_nrBins][_nrMassBins][_nrWaves][_nrWaves][2]);
-
-	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
-	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
-	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
-	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
-	boost::multi_array<double, 3> tempIntensities;
-	boost::multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(inTree, inFit, inMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
-	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[0] << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
-	_inProductionAmplitudes[0] = tempProductionAmplitudes;
-	_inSpinDensityMatrices[0] = tempSpinDensityMatrices;
-	_inIntensities[0] = tempIntensities;
-	_inPhases[0] = tempPhases;
-	for(size_t i = 0; i < _nrMassBins; ++i) {
-		_inProductionAmplitudesCovariance[0][i].ResizeTo(tempProductionAmplitudesCovariance[i]);
-		_inProductionAmplitudesCovariance[0][i] = tempProductionAmplitudesCovariance[i];
-		_inSpinDensityCovarianceMatrices[0][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
-		_inSpinDensityCovarianceMatrices[0][i] = tempSpinDensityCovarianceMatrices[i];
-	}
-
-	boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
-	if(not readFitResultIntegrals(inTree, inFit, inMapping, tempPhaseSpaceIntegrals)) {
-		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[0] << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
-	_inPhaseSpaceIntegrals[0] = tempPhaseSpaceIntegrals;
-
-	delete inFile;
 	return true;
 }
 
@@ -1168,11 +1065,92 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 		return false;
 	}
 
-	std::vector<Long64_t> inMapping;
-	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+	double massMin;
+	double massMax;
+	double massStep;
+	size_t nrMassBins;
+	boost::multi_array<double, 1> massBinCenters;
+	if(not readFitResultMassBins(inTree, inFit, massMin, massMax, massStep, nrMassBins, massBinCenters)) {
+		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
+	}
+
+	if(_maxMassBins < nrMassBins) {
+		// take care to correctly copy the covariance matrices
+		boost::multi_array<TMatrixT<double>, 2> tempProductionAmplitudesCovariance(std::vector<size_t>(_inProductionAmplitudesCovariance.shape(), _inProductionAmplitudesCovariance.shape()+_inProductionAmplitudesCovariance.num_dimensions()));
+		boost::multi_array<TMatrixT<double>, 2> tempSpinDensityCovarianceMatrices(std::vector<size_t>(_inSpinDensityCovarianceMatrices.shape(), _inSpinDensityCovarianceMatrices.shape()+_inSpinDensityCovarianceMatrices.num_dimensions()));
+		if(idxBin > 0) {
+			for(size_t idx = 0; idx < _nrBins; ++idx) {
+				for(size_t idxMass = 0; idxMass < _nrMassBins[idx]; ++idxMass) {
+					tempProductionAmplitudesCovariance[idx][idxMass].ResizeTo(_inProductionAmplitudesCovariance[idx][idxMass]);
+					tempProductionAmplitudesCovariance[idx][idxMass] = _inProductionAmplitudesCovariance[idx][idxMass];
+					tempSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(_inSpinDensityCovarianceMatrices[idx][idxMass]);
+					tempSpinDensityCovarianceMatrices[idx][idxMass] = _inSpinDensityCovarianceMatrices[idx][idxMass];
+				}
+			}
+			_inProductionAmplitudesCovariance.resize(boost::extents[0][0]);
+			_inSpinDensityCovarianceMatrices.resize(boost::extents[0][0]);
+		}
+
+		_maxMassBins = nrMassBins;
+
+		// resize all array to store the information
+		_massMaxs.resize(_nrBins);
+		_massMins.resize(_nrBins);
+		_massSteps.resize(_nrBins);
+		_nrMassBins.resize(_nrBins);
+		_massBinCenters.resize(boost::extents[_nrBins][_maxMassBins]);
+
+		_inProductionAmplitudes.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
+		_inProductionAmplitudesCovariance.resize(boost::extents[_nrBins][_maxMassBins]);
+		_inSpinDensityMatrices.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
+		_inSpinDensityCovarianceMatrices.resize(boost::extents[_nrBins][_maxMassBins]);
+		_inPhaseSpaceIntegrals.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
+		_inIntensities.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][2]);
+		_inPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves][2]);
+
+		if(idxBin > 0) {
+			for(size_t idx = 0; idx < _nrBins; ++idx) {
+				for(size_t idxMass = 0; idxMass < _nrMassBins[idx]; ++idxMass) {
+					_inProductionAmplitudesCovariance[idx][idxMass].ResizeTo(tempProductionAmplitudesCovariance[idx][idxMass]);
+					_inProductionAmplitudesCovariance[idx][idxMass] = tempProductionAmplitudesCovariance[idx][idxMass];
+					_inSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(tempSpinDensityCovarianceMatrices[idx][idxMass]);
+					_inSpinDensityCovarianceMatrices[idx][idxMass] = tempSpinDensityCovarianceMatrices[idx][idxMass];
+				}
+			}
+		}
+	}
+
+	_massMaxs[idxBin] = massMax;
+	_massMins[idxBin] = massMin;
+	_massSteps[idxBin] = massStep;
+	_nrMassBins[idxBin] = nrMassBins;
+	_massBinCenters[idxBin] = massBinCenters;
+
+	bool readMapping(false);
+	std::vector<Long64_t> inMapping;
+	if(_sameMassBinning and idxBin > 0) {
+		if(checkFitResultMassBins(inTree, inFit, idxBin-1, inMapping)) {
+			if(_debug) {
+				printDebug << "bin " << idxBin << " has the same mass binning as bin " << idxBin-1 << "." << std::endl;
+			}
+
+			readMapping = true;
+		} else {
+			if(_debug) {
+				printDebug << "bin " << idxBin << " does not have the same mass binning as bin " << idxBin-1 << "." << std::endl;
+			}
+
+			_sameMassBinning = false;
+		}
+	}
+	if(not readMapping) {
+		if(not checkFitResultMassBins(inTree, inFit, idxBin, inMapping)) {
+			printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+			delete inFile;
+			return false;
+		}
 	}
 
 	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
@@ -1191,7 +1169,7 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
 	_inIntensities[idxBin] = tempIntensities;
 	_inPhases[idxBin] = tempPhases;
-	for(size_t i = 0; i < _nrMassBins; ++i) {
+	for(size_t i = 0; i < nrMassBins; ++i) {
 		_inProductionAmplitudesCovariance[idxBin][i].ResizeTo(tempProductionAmplitudesCovariance[i]);
 		_inProductionAmplitudesCovariance[idxBin][i] = tempProductionAmplitudesCovariance[i];
 		_inSpinDensityCovarianceMatrices[idxBin][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
@@ -1229,15 +1207,15 @@ rpwa::massDepFit::massDepFit::readSystematicsFiles(const std::string& valTreeNam
 		printDebug << "reading fit results for systematic errors from " << _nrSystematics << " files." << std::endl;
 	}
 
-	_sysSpinDensityMatrices.resize(boost::extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves]);
-	_sysSpinDensityCovarianceMatrices.resize(boost::extents[_nrSystematics][_nrMassBins]);
-	_sysIntensities.resize(boost::extents[_nrSystematics][_nrMassBins][_nrWaves][2]);
-	_sysPhases.resize(boost::extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves][2]);
+	_sysSpinDensityMatrices.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][_nrWaves]);
+	_sysSpinDensityCovarianceMatrices.resize(boost::extents[_nrSystematics][_maxMassBins]);
+	_sysIntensities.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][2]);
+	_sysPhases.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][_nrWaves][2]);
 
 	_sysSpinDensityMatrices[0] = _inSpinDensityMatrices[0];
 	_sysIntensities[0] = _inIntensities[0];
 	_sysPhases[0] = _inPhases[0];
-	for(size_t i = 0; i < _nrMassBins; ++i) {
+	for(size_t i = 0; i < _maxMassBins; ++i) {
 		_sysSpinDensityCovarianceMatrices[0][i].ResizeTo(_inSpinDensityCovarianceMatrices[0][i]);
 		_sysSpinDensityCovarianceMatrices[0][i] = _inSpinDensityCovarianceMatrices[0][i];
 	}
@@ -1297,7 +1275,7 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	}
 
 	std::vector<Long64_t> sysMapping;
-	if(not checkFitResultMassBins(sysTree, sysFit, sysMapping)) {
+	if(not checkFitResultMassBins(sysTree, sysFit, 0, sysMapping)) {
 		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
 		delete sysFile;
 		return false;
@@ -1318,7 +1296,7 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	_sysSpinDensityMatrices[idxSystematics] = tempSpinDensityMatrices;
 	_sysIntensities[idxSystematics] = tempIntensities;
 	_sysPhases[idxSystematics] = tempPhases;
-	for(size_t i = 0; i < _nrMassBins; ++i) {
+	for(size_t i = 0; i < _nrMassBins[0]; ++i) {
 		_sysSpinDensityCovarianceMatrices[idxSystematics][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
 		_sysSpinDensityCovarianceMatrices[idxSystematics][i] = tempSpinDensityCovarianceMatrices[i];
 	}
@@ -1331,6 +1309,7 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 bool
 rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
                                                      rpwa::fitResult* fit,
+                                                     const size_t idxBin,
                                                      std::vector<Long64_t>& mapping) const
 {
 	if(not tree or not fit) {
@@ -1339,14 +1318,14 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	}
 
 	// reset mapping
-	mapping.assign(_nrMassBins, std::numeric_limits<Long64_t>::max());
+	mapping.assign(_nrMassBins[idxBin], std::numeric_limits<Long64_t>::max());
 
 	// extract data from tree
 	const Long64_t nrEntries = tree->GetEntries();
 
 	if(_debug) {
 		printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
-		           << "and map the " << _nrMassBins << " mass bins to those entries." << std::endl;
+		           << "and map the " << _nrMassBins[idxBin] << " mass bins to those entries." << std::endl;
 	}
 
 	for(Long64_t idx=0; idx<nrEntries; ++idx) {
@@ -1363,8 +1342,8 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 
 		bool found = false;
 		size_t idxMass=0;
-		while(idxMass<_nrMassBins) {
-			if(std::abs(_massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
+		while(idxMass<_nrMassBins[idxBin]) {
+			if(std::abs(_massBinCenters[idxBin][idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
 				found = true;
 				break;
 			}
@@ -1377,13 +1356,13 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 		}
 
 		if(mapping[idxMass] != std::numeric_limits<Long64_t>::max()) {
-			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2)  "
+			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxBin][idxMass] << " GeV/c^2)  "
 			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << std::endl;
 			return false;
 		}
 
 		if(_debug) {
-			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
+			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxBin][idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
 		}
 		mapping[idxMass] = idx;
 	} // end loop over entries in tree
@@ -1391,7 +1370,7 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	// check that all mass bins are mapped
 	for(size_t idx=0; idx<mapping.size(); ++idx) {
 		if(mapping[idx] == std::numeric_limits<Long64_t>::max()) {
-			printErr << "mass bin " << idx << " (" << _massBinCenters[idx] << " GeV/c^2) not mapped." << std::endl;
+			printErr << "mass bin " << idx << " (" << _massBinCenters[idxBin][idx] << " GeV/c^2) not mapped." << std::endl;
 			return false;
 		}
 	}
@@ -1410,7 +1389,12 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 
 bool
 rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
-                                                    rpwa::fitResult* fit)
+                                                    rpwa::fitResult* fit,
+                                                    double& massMin,
+                                                    double& massMax,
+                                                    double& massStep,
+                                                    size_t& nrMassBins,
+                                                    boost::multi_array<double, 1>& massBinCenters) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
@@ -1419,12 +1403,13 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 
 	// extract data from tree
 	const Long64_t nrEntries = tree->GetEntries();
-	_massBinCenters.clear();
 
 	if(_debug) {
 		printDebug << "getting center of mass bins from " << nrEntries << " entries in tree." << std::endl;
 	}
 
+	nrMassBins = 0;
+	massBinCenters.resize(boost::extents[_maxMassBins]);
 	for(Long64_t idx=0; idx<nrEntries; ++idx) {
 		if(tree->GetEntry(idx) == 0) {
 			printErr << "error while reading entry " << idx << " from tree." << std::endl;
@@ -1437,8 +1422,8 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 		}
 
 		bool found = false;
-		for(size_t idxMass=0; idxMass<_massBinCenters.size(); ++idxMass) {
-			if(std::abs(_massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
+		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
+			if(std::abs(massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
 				found = true;
 				if(_debug) {
 					printDebug << "this center of mass bin already was encountered before." << std::endl;
@@ -1448,35 +1433,37 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 		}
 
 		if(not found) {
-			_massBinCenters.push_back(newMass);
+			if(nrMassBins >= _maxMassBins) {
+				massBinCenters.resize(boost::extents[nrMassBins+1]);
+			}
+
+			massBinCenters[nrMassBins++] = newMass;
 		}
 	} // end loop over entries in tree
 
 	// sort mass bins
-	sort(_massBinCenters.begin(), _massBinCenters.end());
+	std::sort(massBinCenters.data(), massBinCenters.data() + nrMassBins);
 
-	_nrMassBins = _massBinCenters.size();
+	printInfo << "found " << nrMassBins << " mass bins, center of first and last mass bins: "
+	          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
 
-	printInfo << "found " << _nrMassBins << " mass bins, center of first and last mass bins: "
-	          << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " GeV/c^2." << std::endl;
-
-	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
-	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
-		if(std::abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
-			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " GeV/c^2) and "
-			         << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
-			         << _massStep << " GeV/c^2" << std::endl;
+	massStep = (massBinCenters[nrMassBins - 1] - massBinCenters[0]) / (nrMassBins - 1);
+	for(size_t idxMass = 1; idxMass < nrMassBins; ++idxMass) {
+		if(std::abs(massBinCenters[idxMass]-massBinCenters[idxMass-1] - massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
+			printErr << "mass distance between bins " << idxMass-1 << " (" << massBinCenters[idxMass-1] << " GeV/c^2) and "
+			         << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
+			         << massStep << " GeV/c^2" << std::endl;
 			return false;
 		}
 	}
 	if(_debug) {
-		printDebug << "distance between two mass bins is " << _massStep << " GeV/c^2." << std::endl;
+		printDebug << "distance between two mass bins is " << massStep << " GeV/c^2." << std::endl;
 	}
 
-	_massMin=_massBinCenters[0] - _massStep / 2;
-	_massMax=_massBinCenters[_nrMassBins - 1] + _massStep / 2;
+	massMin = massBinCenters[0] - massStep / 2;
+	massMax = massBinCenters[nrMassBins - 1] + massStep / 2;
 	if(_debug) {
-		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " GeV/c^2." << std::endl;
+		printDebug << "mass bins cover the mass range from " << massMin << " to " << massMax << " GeV/c^2." << std::endl;
 	}
 
 	return true;
@@ -1503,18 +1490,18 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 		printDebug << "reading spin-density matrices for " << _nrWaves << " waves from fit result." << std::endl;
 	}
 
-	productionAmplitudes.resize(boost::extents[_nrMassBins][_nrWaves]);
-	productionAmplitudesCovariance.resize(boost::extents[_nrMassBins]);
+	productionAmplitudes.resize(boost::extents[_maxMassBins][_nrWaves]);
+	productionAmplitudesCovariance.resize(boost::extents[_maxMassBins]);
 
-	spinDensityMatrices.resize(boost::extents[_nrMassBins][_nrWaves][_nrWaves]);
-	spinDensityCovarianceMatrices.resize(boost::extents[_nrMassBins]);
+	spinDensityMatrices.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves]);
+	spinDensityCovarianceMatrices.resize(boost::extents[_maxMassBins]);
 
-	intensities.resize(boost::extents[_nrMassBins][_nrWaves][2]);
-	phases.resize(boost::extents[_nrMassBins][_nrWaves][_nrWaves][2]);
+	intensities.resize(boost::extents[_maxMassBins][_nrWaves][2]);
+	phases.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves][2]);
 
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from tree." << std::endl;
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
 		}
 		// FIXME: in case of reading the fit result for a systematic tree this might happen, so this should be allowed in certain cases
 		if(tree->GetEntry(mapping[idxMass]) == 0) {
@@ -1648,15 +1635,15 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 		return false;
 	}
 
-	phaseSpaceIntegrals.resize(boost::extents[_nrMassBins][_nrWaves]);
+	phaseSpaceIntegrals.resize(boost::extents[_maxMassBins][_nrWaves]);
 
 	if(_debug) {
 		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from fit result." << std::endl;
 	}
 
-	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " GeV/c^2) from tree." << std::endl;
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
 		}
 		if(tree->GetEntry(mapping[idxMass]) == 0) {
 			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << std::endl;
@@ -1670,9 +1657,9 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 	}
 
 	if(_debug) {
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
 			std::ostringstream output;
-			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+			for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 			}
 			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << std::endl;
@@ -1686,23 +1673,39 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 bool
 rpwa::massDepFit::massDepFit::prepareMassLimits()
 {
-	if(_debug) {
-		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins << " mass bins, center of first and last mass bins: "
-		           << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " GeV/c^2." << std::endl;
+	_waveMassBinLimits.resize(boost::extents[_nrBins][_nrWaves]);
+	_wavePairMassBinLimits.resize(boost::extents[_nrBins][_nrWaves][_nrWaves]);
+
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		if(not prepareMassLimit(idxBin)) {
+			printErr << "error while determine bins to use in fit for bin " << idxBin << "." << std::endl;
+			return false;
+		}
 	}
 
-	_waveMassBinLimits.clear();
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::prepareMassLimit(const size_t idxBin)
+{
+	if(_debug) {
+		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins[idxBin] << " mass bins, center of first and last mass bins: "
+		           << _massBinCenters[idxBin][0] << " and " << _massBinCenters[idxBin][_nrMassBins[idxBin] - 1] << " GeV/c^2." << std::endl;
+	}
+
 	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 		size_t binFirst = 0;
-		size_t binLast = _nrMassBins-1;
-		for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
-			if(_massBinCenters[idxMass] < _waveMassLimits[idxWave].first) {
+		size_t binLast = _nrMassBins[idxBin]-1;
+		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+			if(_massBinCenters[idxBin][idxMass] < _waveMassLimits[idxWave].first) {
 				binFirst = idxMass+1;
 			}
-			if(_massBinCenters[idxMass] == _waveMassLimits[idxWave].first) {
+			if(_massBinCenters[idxBin][idxMass] == _waveMassLimits[idxWave].first) {
 				binFirst = idxMass;
 			}
-			if(_massBinCenters[idxMass] <= _waveMassLimits[idxWave].second) {
+			if(_massBinCenters[idxBin][idxMass] <= _waveMassLimits[idxWave].second) {
 				binLast = idxMass;
 			}
 		}
@@ -1710,22 +1713,21 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 			binFirst = 0;
 		}
 		if(_waveMassLimits[idxWave].second < 0) {
-			binLast = _nrMassBins-1;
+			binLast = _nrMassBins[idxBin]-1;
 		}
 		if(_debug) {
 			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
-			           << "mass range: " << (_waveMassLimits[idxWave].first<0. ? _massMin : _waveMassLimits[idxWave].first)
-			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMax : _waveMassLimits[idxWave].second) << " GeV/c^2, "
+			           << "mass range: " << (_waveMassLimits[idxWave].first<0. ? _massMins[idxBin] : _waveMassLimits[idxWave].first)
+			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMaxs[idxBin] : _waveMassLimits[idxWave].second) << " GeV/c^2, "
 			           << "bin range " << binFirst << "-" << binLast << std::endl;
 		}
-		_waveMassBinLimits.push_back(std::make_pair(binFirst, binLast));
+		_waveMassBinLimits[idxBin][idxWave] = std::make_pair(binFirst, binLast);
 	}
 
-	_wavePairMassBinLimits.resize(boost::extents[_nrWaves][_nrWaves]);
 	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 		for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-			_wavePairMassBinLimits[idxWave][jdxWave] = std::make_pair(std::max(_waveMassBinLimits[idxWave].first,  _waveMassBinLimits[jdxWave].first),
-			                                                          std::min(_waveMassBinLimits[idxWave].second, _waveMassBinLimits[jdxWave].second));
+			_wavePairMassBinLimits[idxBin][idxWave][jdxWave] = std::make_pair(std::max(_waveMassBinLimits[idxBin][idxWave].first,  _waveMassBinLimits[idxBin][jdxWave].first),
+			                                                                  std::min(_waveMassBinLimits[idxBin][idxWave].second, _waveMassBinLimits[idxBin][jdxWave].second));
 		}
 	}
 
@@ -1734,9 +1736,9 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			std::ostringstream output;
 			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-				output << _wavePairMassBinLimits[idxWave][jdxWave].first << "-" << _wavePairMassBinLimits[idxWave][jdxWave].second << " ";
+				output << _wavePairMassBinLimits[idxBin][idxWave][jdxWave].first << "-" << _wavePairMassBinLimits[idxBin][idxWave][jdxWave].second << " ";
 			}
-			printDebug << _waveNames[idxWave] << " " << _waveMassBinLimits[idxWave].first << "-" << _waveMassBinLimits[idxWave].second
+			printDebug << _waveNames[idxWave] << " " << _waveMassBinLimits[idxBin][idxWave].first << "-" << _waveMassBinLimits[idxBin][idxWave].second
 			           << ": " << output.str() << std::endl;
 		}
 	}
@@ -1783,7 +1785,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			}
 		}
 
-		if(fitModel.getFsmd() and fitModel.getFsmd()->getNrBins() != 1) {
+		if(fitModel.getFsmd() and (fitModel.getFsmd()->getNrBins() != 1 or not _sameMassBinning)) {
 			if(not createPlotsFsmd(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
 				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
 				return false;
@@ -1791,7 +1793,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if (_nrBins != 1) {
+	if(_nrBins != 1 and _sameMassBinning) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			if(not createPlotsWaveSum(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
@@ -1800,7 +1802,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(fitModel.getFsmd() and fitModel.getFsmd()->getNrBins() == 1) {
+	if(fitModel.getFsmd() and (fitModel.getFsmd()->getNrBins() == 1 and _sameMassBinning)) {
 		if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
 			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 			return false;
@@ -1882,10 +1884,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 	// plot data
 	double maxIE = -std::numeric_limits<double>::max();
-	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxMass];
-		const double halfBin = _massStep/2.;
+		const double mass = _massBinCenters[idxBin][idxMass];
+		const double halfBin = _massSteps[idxBin]/2.;
 
 		data->SetPoint(point, mass, _inIntensities[idxBin][idxMass][idxWave][0]);
 		data->SetPointError(point, halfBin, _inIntensities[idxBin][idxMass][idxWave][1]);
@@ -1905,11 +1907,11 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	}
 
 	// plot fit, either over full or limited mass range
-	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].second) : (extraBinning*(_nrMassBins-1));
+	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].first) : 0;
+	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		const double intensity = fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		fit->SetPoint(point-firstPoint, mass, intensity);
@@ -1930,14 +1932,15 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		}
 	}
 
-	boost::multi_array<double, 3>::const_array_view<1>::type view = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range()][idxWave]];
-	ROOT::Math::Interpolator phaseSpaceInterpolator(_massBinCenters, std::vector<double>(view.begin(), view.end()), ROOT::Math::Interpolation::kLINEAR);
+	boost::multi_array<double, 2>::const_array_view<1>::type viewM = _massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
+	boost::multi_array<double, 3>::const_array_view<1>::type viewInt = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range(0, _nrMassBins[idxBin])][idxWave]];
+	ROOT::Math::Interpolator phaseSpaceInterpolator(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 
 	// plot phase-space
 	double maxP = -std::numeric_limits<double>::max();
-	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
 		if(fitModel.getFsmd() != NULL) {
@@ -1973,6 +1976,13 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	if(_debug) {
 		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
 	}
+
+	// all mass binnings must be the same to be able to create the sum plots
+	if(not _sameMassBinning) {
+		printErr << "cannot create plots for wave '" << _waveNames[idxWave] << "' for sum over all bins if the bins used different mass binnings." << std::endl;
+		return false;
+	}
+	const size_t idxBin = 0;
 
 	TMultiGraph graphs;
 	graphs.SetName(_waveNames[idxWave].c_str());
@@ -2011,10 +2021,10 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	}
 
 	// plot data
-	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxMass];
-		const double halfBin = _massStep/2.;
+		const double mass = _massBinCenters[idxBin][idxMass];
+		const double halfBin = _massSteps[idxBin]/2.;
 
 		double sum = 0.;
 		double error2 = 0.;
@@ -2027,11 +2037,11 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	}
 
 	// plot fit, either over full or limited mass range
-	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxWave].second) : (extraBinning*(_nrMassBins-1));
+	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].first) : 0;
+	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		double sum = 0.;
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
@@ -2160,10 +2170,10 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	imag.Add(imagFit, "L");
 
 	// plot data
-	for(size_t point=0; point<=(_nrMassBins-1); ++point) {
+	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxMass];
-		const double halfBin = _massStep/2.;
+		const double mass = _massBinCenters[idxBin][idxMass];
+		const double halfBin = _massSteps[idxBin]/2.;
 
 		phaseData->SetPoint(point, mass, _inPhases[idxBin][idxMass][idxWave][jdxWave][0]);
 		phaseData->SetPointError(point, halfBin, _inPhases[idxBin][idxMass][idxWave][jdxWave][1]);
@@ -2215,11 +2225,11 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	}
 
 	// plot fit, either over full or limited mass range
-	const size_t firstPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxWave][jdxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxWave][jdxWave].second) : (extraBinning*(_nrMassBins-1));
+	const size_t firstPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxBin][idxWave][jdxWave].first) : 0;
+	const size_t lastPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxBin][idxWave][jdxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 		realFit->SetPoint(point-firstPoint, mass, element.real());
@@ -2228,9 +2238,9 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 
 	// keep track of phase over full mass range
 	TGraph phaseFitAll;
-	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		const double phase = fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
 
@@ -2255,9 +2265,9 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 	}
 
 	// rectify phase graphs
-	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		double x;
 		double valueFit;
@@ -2318,9 +2328,9 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
 	graph.SetName("finalStateMassDependence");
 	graph.SetTitle("finalStateMassDependence");
 
-	for(size_t point=0; point<=(extraBinning*(_nrMassBins-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxMass] : (_massBinCenters[point/extraBinning] + (point%extraBinning) * _massStep/extraBinning);
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass)));
 	}
