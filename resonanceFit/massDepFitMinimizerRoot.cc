@@ -91,7 +91,7 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 	          << "using algorithm '" << minimizerType[1] << "'" << std::endl;
 	_minimizer.reset(ROOT::Math::Factory::CreateMinimizer(minimizerType[0], minimizerType[1]));
-	if(_minimizer.get() == NULL) {
+	if(not _minimizer) {
 		printErr << "could not create minimizer. exiting." << std::endl;
 		throw;
 	}
@@ -109,6 +109,12 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 #endif
 	}
 }
+
+
+rpwa::massDepFit::minimizerRoot::~minimizerRoot()
+{
+}
+
 
 unsigned int
 rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
@@ -211,7 +217,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	size_t parcount=0;
 	// first add all couplings
 	for(size_t idxComponent=0; idxComponent<_fitModel.getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::component* comp = _fitModel.getComponent(idxComponent);
+		const rpwa::massDepFit::componentConstPtr comp = _fitModel.getComponent(idxComponent);
 		for(size_t idxCoupling=0; idxCoupling<comp->getNrCouplings(); ++idxCoupling) {
 			const rpwa::massDepFit::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
 			for(size_t idxBin=0; idxBin<channel.getNrBins(); ++idxBin) {
@@ -275,7 +281,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	// second eventually add all branchings
 	if(_fitModel.useBranchings()) {
 		for(size_t idxComponent=0; idxComponent<_fitModel.getNrComponents(); ++idxComponent) {
-			const rpwa::massDepFit::component* comp = _fitModel.getComponent(idxComponent);
+			const rpwa::massDepFit::componentConstPtr comp = _fitModel.getComponent(idxComponent);
 			// branching with idxChannel 0 is always real and fixed to 1
 			for(size_t idxBranching=1; idxBranching<comp->getNrBranchings(); ++idxBranching) {
 				const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
@@ -328,7 +334,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 
 	// third add parameters of the components, i.e. mass and width
 	for(size_t idxComponent=0; idxComponent<_fitModel.getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::component* comp = _fitModel.getComponent(idxComponent);
+		const rpwa::massDepFit::componentConstPtr comp = _fitModel.getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
 			const std::string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
 
@@ -389,8 +395,8 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	} // end loop over components
 
 	// set parameters for final-state mass-dependence
-	if(_fitModel.getFsmd() != NULL) {
-		const rpwa::massDepFit::fsmd* fsmd = _fitModel.getFsmd();
+	if(_fitModel.getFsmd()) {
+		const rpwa::massDepFit::fsmdConstPtr fsmd = _fitModel.getFsmd();
 		for(size_t idxBin = 0; idxBin < fsmd->getNrBins(); ++idxBin) {
 			for(size_t idxParameter = 0; idxParameter < fsmd->getNrParameters(idxBin); ++idxParameter) {
 				std::ostringstream name;

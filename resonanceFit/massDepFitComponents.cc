@@ -49,40 +49,13 @@ rpwa::massDepFit::channel::channel(const size_t waveIdx,
 	  _anchor(false),
 	  _nrBins(nrBins),
 	  _nrMassBins(nrMassBins),
-	  _massBinCenters(massBinCenters),
 	  _phaseSpace(phaseSpace)
 {
 	_interpolator.resize(_nrBins);
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		boost::multi_array<double, 2>::const_array_view<1>::type viewM = _massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
+		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
 		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
-		_interpolator[idxBin] = new ROOT::Math::Interpolator(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
-	}
-}
-
-
-rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
-	: _waveIdx(ch._waveIdx),
-	  _waveName(ch._waveName),
-	  _anchor(ch._anchor),
-	  _nrBins(ch._nrBins),
-	  _nrMassBins(ch._nrMassBins),
-	  _massBinCenters(ch._massBinCenters),
-	  _phaseSpace(ch._phaseSpace)
-{
-	_interpolator.resize(_nrBins);
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		boost::multi_array<double, 2>::const_array_view<1>::type viewM = _massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
-		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
-		_interpolator[idxBin] = new ROOT::Math::Interpolator(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
-	}
-}
-
-
-rpwa::massDepFit::channel::~channel()
-{
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		delete _interpolator[idxBin];
+		_interpolator[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 	}
 }
 
@@ -1070,17 +1043,6 @@ rpwa::massDepFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_
 }
 
 
-rpwa::massDepFit::integralWidthBreitWigner::~integralWidthBreitWigner()
-{
-	for (size_t i=0; i<_interpolator.size(); ++i) {
-		if (_interpolator[i] != NULL) {
-			delete _interpolator[i];
-		}
-	}
-	_interpolator.clear();
-}
-
-
 bool
 rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configComponent,
                                                  rpwa::massDepFit::parameters& fitParameters,
@@ -1210,7 +1172,7 @@ rpwa::massDepFit::integralWidthBreitWigner::readDecayChannel(const YAML::Node& d
 
 	_masses.push_back(masses);
 	_values.push_back(values);
-	_interpolator.push_back(new ROOT::Math::Interpolator(masses, values, ROOT::Math::Interpolation::kLINEAR));
+	_interpolator.push_back(std::make_shared<ROOT::Math::Interpolator>(masses, values, ROOT::Math::Interpolation::kLINEAR));
 	_ratio.push_back(decayChannel["branchingRatio"].as<double>());
 
 	return true;
@@ -1890,20 +1852,11 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
                                                                                const std::string& name)
-	: component(id, name, "exponentialBackgroundIntegral", true, 1),
-	  _interpolator(NULL)
+	: component(id, name, "exponentialBackgroundIntegral", true, 1)
 {
 	_parametersName[0] = "g";
 
 	_parametersStep[0] = 1.0;
-}
-
-
-rpwa::massDepFit::exponentialBackgroundIntegral::~exponentialBackgroundIntegral()
-{
-	if (_interpolator != NULL) {
-		delete _interpolator;
-	}
 }
 
 
@@ -1985,8 +1938,8 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 		_values.push_back(val);
 	}
 
-	assert(_interpolator == NULL);
-	_interpolator = new ROOT::Math::Interpolator(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
+	assert(not _interpolator);
+	_interpolator = std::make_shared<ROOT::Math::Interpolator>(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
 
 	_exponent = configComponent["exponent"].as<double>();
 
@@ -2105,8 +2058,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIntegral(const size_t id,
                                                                                        const std::string& name)
-	: component(id, name, "tPrimeDependentBackgroundIntegral", false, 5),
-	  _interpolator(NULL)
+	: component(id, name, "tPrimeDependentBackgroundIntegral", false, 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";
@@ -2119,14 +2071,6 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIn
 	_parametersStep[2] = 1.0;
 	_parametersStep[3] = 1.0;
 	_parametersStep[4] = 1.0;
-}
-
-
-rpwa::massDepFit::tPrimeDependentBackgroundIntegral::~tPrimeDependentBackgroundIntegral()
-{
-	if (_interpolator != NULL) {
-		delete _interpolator;
-	}
 }
 
 
@@ -2217,8 +2161,8 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 		_values.push_back(val);
 	}
 
-	assert(_interpolator == NULL);
-	_interpolator = new ROOT::Math::Interpolator(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
+	assert(not _interpolator);
+	_interpolator = std::make_shared<ROOT::Math::Interpolator>(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
 
 	_exponent = configComponent["exponent"].as<double>();
 

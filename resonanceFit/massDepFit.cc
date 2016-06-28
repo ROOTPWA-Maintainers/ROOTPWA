@@ -652,32 +652,31 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			printDebug << "found component '" << name << "' with type '" << type << "'." << std::endl;
 		}
 
-		rpwa::massDepFit::component* component = NULL;
+		rpwa::massDepFit::componentPtr component;
 		if(type == "fixedWidthBreitWigner") {
-			component = new fixedWidthBreitWigner(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::fixedWidthBreitWigner>(fitModel.getNrComponents(), name);
 		} else if(type == "dynamicWidthBreitWigner") {
-			component = new dynamicWidthBreitWigner(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::dynamicWidthBreitWigner>(fitModel.getNrComponents(), name);
 		} else if(type == "integralWidthBreitWigner") {
-			component = new integralWidthBreitWigner(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::integralWidthBreitWigner>(fitModel.getNrComponents(), name);
 		} else if(type == "constantBackground") {
-			component = new constantBackground(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::constantBackground>(fitModel.getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
-			component = new exponentialBackground(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::exponentialBackground>(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
-			component = new tPrimeDependentBackground(fitModel.getNrComponents(), name);
-			((tPrimeDependentBackground*)component)->setTPrimeMeans(_tPrimeMeans);
+			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackground>(fitModel.getNrComponents(), name);
+			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else if(type == "exponentialBackgroundIntegral") {
-			component = new exponentialBackgroundIntegral(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::exponentialBackgroundIntegral>(fitModel.getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackgroundIntegral") {
-			component = new tPrimeDependentBackgroundIntegral(fitModel.getNrComponents(), name);
-			((tPrimeDependentBackgroundIntegral*)component)->setTPrimeMeans(_tPrimeMeans);
+			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackgroundIntegral>(fitModel.getNrComponents(), name);
+			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
 			return false;
 		}
 
 		if(not component->init(configComponent, fitParameters, fitParametersError, _nrBins, _nrMassBins, _massBinCenters, _sameMassBinning, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
-			delete component;
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
@@ -715,9 +714,8 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
-	rpwa::massDepFit::fsmd* fsmd = new rpwa::massDepFit::fsmd(fitModel.getNrComponents());
+	rpwa::massDepFit::fsmdPtr fsmd(new rpwa::massDepFit::fsmd(fitModel.getNrComponents()));
 	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _sameMassBinning, _debug)) {
-		delete fsmd;
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
 	}
@@ -997,7 +995,7 @@ rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::Key << "finalStateMassDependence";
 	yamlOutput << YAML::Value;
-	if(fitModel.getFsmd() != NULL) {
+	if(fitModel.getFsmd()) {
 		if(not writeConfigModelFsmd(yamlOutput, fitModel, fitParameters, fitParametersError)) {
 			printErr << "error while writing 'finalStateMassDependence' to result file." << std::endl;
 			return false;
@@ -2036,7 +2034,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 			std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
-			if(fitModel.getFsmd() != NULL) {
+			if(fitModel.getFsmd()) {
 				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 			}
 
@@ -2056,7 +2054,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
-		if(fitModel.getFsmd() != NULL) {
+		if(fitModel.getFsmd()) {
 			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass));
 		}
 		phaseSpace->SetPoint(point, mass, ps);
@@ -2170,7 +2168,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 				std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 				prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
-				if(fitModel.getFsmd() != NULL) {
+				if(fitModel.getFsmd()) {
 					prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 				}
 				sum += norm(prodAmp);

@@ -37,6 +37,8 @@
 #include <limits>
 #include <vector>
 
+#include "massDepFitForward.h"
+
 namespace rpwa {
 
 	namespace massDepFit {
@@ -51,9 +53,8 @@ namespace rpwa {
 		public:
 
 			model(const bool useBranchings);
-			~model();
 
-			void add(rpwa::massDepFit::component* comp);
+			void add(const rpwa::massDepFit::componentPtr& comp);
 
 			bool init(const std::vector<std::string>& waveNames,
 			          const std::string& anchorWaveName,
@@ -65,10 +66,10 @@ namespace rpwa {
 			                      rpwa::massDepFit::cache& cache) const;
 
 			size_t getNrComponents() const { return _components.size(); }
-			const rpwa::massDepFit::component* getComponent(size_t idxComponent) const { return _components[idxComponent]; }
+			rpwa::massDepFit::componentConstPtr getComponent(size_t idxComponent) const { return _components[idxComponent]; }
 
-			const rpwa::massDepFit::fsmd* getFsmd() const { return _fsmd; }
-			void setFsmd(rpwa::massDepFit::fsmd* fsmd);
+			rpwa::massDepFit::fsmdConstPtr getFsmd() const { return _fsmd; }
+			void setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd);
 
 			size_t getMaxChannelsInComponent() const { return _maxChannelsInComponent; }
 			size_t getMaxParametersInComponent() const { return _maxParametersInComponent; }
@@ -123,9 +124,9 @@ namespace rpwa {
 
 			size_t _nrParameters;
 
-			std::vector<rpwa::massDepFit::component*> _components;
+			std::vector<rpwa::massDepFit::componentPtr> _components;
 
-			rpwa::massDepFit::fsmd* _fsmd;
+			rpwa::massDepFit::fsmdPtr _fsmd;
 
 			size_t _maxChannelsInComponent;
 			size_t _maxParametersInComponent;

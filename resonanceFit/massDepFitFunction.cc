@@ -708,7 +708,7 @@ rpwa::massDepFit::function::logPriorLikelihood(const rpwa::massDepFit::parameter
 
 	const size_t nrComponents = _compset->getNrComponents();
 	for (size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
-		const rpwa::massDepFit::component* component = _compset->getComponent(idxComponent);
+		const rpwa::massDepFit::componentConstPtr component = _compset->getComponent(idxComponent);
 
 		const size_t nrParameters = component->getNrParameters();
 		for (size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {

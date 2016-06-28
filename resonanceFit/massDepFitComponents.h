@@ -64,8 +64,6 @@ namespace rpwa {
 			        const std::vector<size_t>& nrMassBins,
 			        const boost::multi_array<double, 2>& massBinCenters,
 			        const boost::multi_array<double, 2>& phaseSpace);
-			channel(const rpwa::massDepFit::channel& ch);
-			~channel();
 
 			size_t getWaveIdx() const { return _waveIdx; }
 			const std::string& getWaveName() const { return _waveName; }
@@ -89,9 +87,8 @@ namespace rpwa {
 			size_t _nrBins;
 
 			std::vector<size_t> _nrMassBins;
-			boost::multi_array<double, 2> _massBinCenters;
 			boost::multi_array<double, 2> _phaseSpace;
-			std::vector<ROOT::Math::Interpolator*> _interpolator;
+			std::vector<std::shared_ptr<const ROOT::Math::Interpolator> > _interpolator;
 
 		};
 
@@ -307,7 +304,6 @@ namespace rpwa {
 
 			integralWidthBreitWigner(const size_t id,
 			                         const std::string& name);
-			virtual ~integralWidthBreitWigner();
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
@@ -345,7 +341,7 @@ namespace rpwa {
 
 			std::vector<std::vector<double> > _masses;
 			std::vector<std::vector<double> > _values;
-			std::vector<ROOT::Math::Interpolator*> _interpolator;
+			std::vector<std::shared_ptr<const ROOT::Math::Interpolator> > _interpolator;
 			std::vector<double> _ratio;
 
 		};
@@ -482,7 +478,6 @@ namespace rpwa {
 
 			exponentialBackgroundIntegral(const size_t id,
 			                              const std::string& name);
-			~exponentialBackgroundIntegral();
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
@@ -514,7 +509,7 @@ namespace rpwa {
 
 			std::vector<double> _masses;
 			std::vector<double> _values;
-			ROOT::Math::Interpolator* _interpolator;
+			std::shared_ptr<const ROOT::Math::Interpolator> _interpolator;
 			double _exponent;
 
 			double _norm;
@@ -527,7 +522,6 @@ namespace rpwa {
 
 			tPrimeDependentBackgroundIntegral(const size_t id,
 			                                  const std::string& name);
-			~tPrimeDependentBackgroundIntegral();
 
 			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
@@ -562,7 +556,7 @@ namespace rpwa {
 			std::vector<double> _tPrimeMeans;
 			std::vector<double> _masses;
 			std::vector<double> _values;
-			ROOT::Math::Interpolator* _interpolator;
+			std::shared_ptr<const ROOT::Math::Interpolator> _interpolator;
 			double _exponent;
 
 			double _norm;
