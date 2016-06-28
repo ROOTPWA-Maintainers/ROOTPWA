@@ -90,14 +90,15 @@ rpwa::massDepFit::channel::~channel()
 rpwa::massDepFit::component::component(const size_t id,
                                        const std::string& name,
                                        const std::string& type,
+                                       const bool equalInAllBins,
                                        const size_t nrParameters)
 	: _id(id),
 	  _name(name),
 	  _type(type),
+	  _equalInAllBins(equalInAllBins),
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
-	  _sameMassBinning(false),
 	  _parametersStart(nrParameters),
 	  _parametersError(nrParameters),
 	  _parametersFixed(nrParameters),
@@ -134,7 +135,7 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 	fitParametersError.resize(_id+1, 0, _nrParameters, nrBins);
 
 	// all bins have the same mass binning, this can be used in the caching
-	_sameMassBinning = sameMassBinning;
+	_equalInAllBins &= sameMassBinning;
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
@@ -641,7 +642,7 @@ rpwa::massDepFit::component::importParameters(const double* par,
 std::ostream&
 rpwa::massDepFit::component::print(std::ostream& out) const
 {
-	out << "    all bins have the same mass binning: " << rpwa::yesNo(_sameMassBinning) << std::endl
+	out << "    use equal values for all bins for each mass bin: " << rpwa::yesNo(_equalInAllBins) << std::endl
 	    << "Decay modes:" << std::endl;
 	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
 		const rpwa::massDepFit::channel& channel = _channels[idxChannel];
@@ -653,7 +654,7 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 
 rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "fixedWidthBreitWigner", 2)
+	: component(id, name, "fixedWidthBreitWigner", true, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -743,7 +744,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::val(const rpwa::massDepFit::parameters&
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((_sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
 	}
 
 	return component;
@@ -787,7 +788,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
                                                                    const std::string& name)
-	: component(id, name, "dynamicWidthBreitWigner", 2)
+	: component(id, name, "dynamicWidthBreitWigner", true, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -1008,7 +1009,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameter
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((_sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
 	}
 
 	return component;
@@ -1059,7 +1060,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
                                                                      const std::string& name)
-	: component(id, name, "integralWidthBreitWigner", 2)
+	: component(id, name, "integralWidthBreitWigner", true, 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -1324,7 +1325,7 @@ rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::paramete
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((_sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
 	}
 
 	return component;
@@ -1368,7 +1369,7 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::constantBackground::constantBackground(const size_t id,
                                                          const std::string& name)
-	: component(id, name, "constantBackground", 0)
+	: component(id, name, "constantBackground", true, 0)
 {
 }
 
@@ -1460,7 +1461,7 @@ rpwa::massDepFit::constantBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "exponentialBackground", 1)
+	: component(id, name, "exponentialBackground", true, 1)
 {
 	_parametersName[0] = "g";
 
@@ -1615,7 +1616,7 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((_sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
 	}
 
 	return component;
@@ -1650,7 +1651,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const size_t id,
                                                                        const std::string& name)
-	: component(id, name, "tPrimeDependentBackground", 5)
+	: component(id, name, "tPrimeDependentBackground", false, 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";
@@ -1889,7 +1890,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
                                                                                const std::string& name)
-	: component(id, name, "exponentialBackgroundIntegral", 1),
+	: component(id, name, "exponentialBackgroundIntegral", true, 1),
 	  _interpolator(NULL)
 {
 	_parametersName[0] = "g";
@@ -2071,7 +2072,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::val(const rpwa::massDepFit::par
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((_sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
 	}
 
 	return component;
@@ -2104,7 +2105,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIntegral(const size_t id,
                                                                                        const std::string& name)
-	: component(id, name, "tPrimeDependentBackgroundIntegral", 5),
+	: component(id, name, "tPrimeDependentBackgroundIntegral", false, 5),
 	  _interpolator(NULL)
 {
 	_parametersName[0] = "m0";

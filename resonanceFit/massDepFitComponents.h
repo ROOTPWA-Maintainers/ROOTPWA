@@ -102,6 +102,7 @@ namespace rpwa {
 			component(const size_t id,
 			          const std::string& name,
 			          const std::string& type,
+			          const bool equalInAllBins,
 			          const size_t nrParameters);
 			virtual ~component() {};
 
@@ -150,6 +151,8 @@ namespace rpwa {
 			                        rpwa::massDepFit::parameters& fitParameters,
 			                        rpwa::massDepFit::cache& cache);
 
+			bool isEqualInAllBins() const { return _equalInAllBins; }
+
 			size_t getNrParameters() const { return _nrParameters; }
 			virtual size_t importParameters(const double* par,
 			                                rpwa::massDepFit::parameters& fitParameters,
@@ -193,13 +196,12 @@ namespace rpwa {
 			std::vector<size_t> _channelsBranching;
 			std::vector<size_t> _channelsFromBranching;
 
+			bool _equalInAllBins;
 			const size_t _nrParameters;
 			size_t _nrCouplings;
 			size_t _nrBranchings;
 
 		protected:
-
-			bool _sameMassBinning;
 
 			std::vector<double> _parametersStart;
 			std::vector<double> _parametersError;
