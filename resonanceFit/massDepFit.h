@@ -240,6 +240,7 @@ namespace rpwa {
 			boost::multi_array<double, 2> _massBinCenters;
 
 			std::vector<std::string> _waveNames;
+			std::vector<std::vector<std::string> > _waveNameAlternatives;
 			std::map<std::string, size_t> _waveIndices;
 			std::vector<std::pair<double, double> > _waveMassLimits;
 			boost::multi_array<std::pair<size_t, size_t>, 2> _waveMassBinLimits;

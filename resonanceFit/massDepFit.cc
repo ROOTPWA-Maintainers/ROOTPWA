@@ -335,18 +335,77 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const YAML::Node& configInput
 			}
 		}
 
+		std::vector<std::string> alternativeNames;
+		if(configInputWave["alternativeNames"]) {
+			if(checkVariableType(configInputWave["alternativeNames"], YamlCppUtils::TypeSequence)) {
+				for(size_t idxAlt = 0; idxAlt < configInputWave["alternativeNames"].size(); ++idxAlt) {
+					if(not checkVariableType(configInputWave["alternativeNames"][idxAlt], YamlCppUtils::TypeString)) {
+						printErr << "element " << idxAlt << " of variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a string." << std::endl;
+						return false;
+					}
+					const std::string alternativeName = configInputWave["alternativeNames"][idxAlt].as<std::string>();
+
+					// check that the alternative name does not yet exist
+					if(alternativeName == name) {
+						printErr << "alternative name '" << alternativeName << "' is equal to name of wave '" << name << "'." << std::endl;
+						return false;
+					}
+					if(find(alternativeNames.begin(), alternativeNames.end(), alternativeName) != alternativeNames.end()) {
+						printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' defined twice." << std::endl;
+						return false;
+					}
+					if(find(_waveNames.begin(), _waveNames.end(), alternativeName) != _waveNames.end()) {
+						printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' already defined as separate wave." << std::endl;
+						return false;
+					}
+					for(size_t i = 0; i < _waveNameAlternatives.size(); ++i) {
+						if(find(_waveNameAlternatives[i].begin(), _waveNameAlternatives[i].end(), alternativeName) != _waveNameAlternatives[i].end()) {
+							printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' already defined as alternative name of wave '" << _waveNames[i] << "'." << std::endl;
+							return false;
+						}
+					}
+
+					alternativeNames.push_back(alternativeName);
+				}
+			} else {
+				printErr << "variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a sequence." << std::endl;
+				return false;
+			}
+		}
+
 		// check that wave does not yet exist
 		if(find(_waveNames.begin(), _waveNames.end(), name) != _waveNames.end()) {
 			printErr << "wave '" << name << "' defined twice." << std::endl;
 			return false;
 		}
+		for(size_t i = 0; i < _waveNameAlternatives.size(); ++i) {
+			if(find(_waveNameAlternatives[i].begin(), _waveNameAlternatives[i].end(), name) != _waveNameAlternatives[i].end()) {
+				printErr << "wave '" << name << "' already defined as alternative name of wave '" << _waveNames[i] << "'." << std::endl;
+				return false;
+			}
+		}
 
 		_waveNames.push_back(name);
+		_waveNameAlternatives.push_back(alternativeNames);
 		_waveIndices[name] = _waveNames.size() - 1;
+		for(size_t idxAlt = 0; idxAlt < alternativeNames.size(); ++idxAlt) {
+			_waveIndices[alternativeNames[idxAlt]] = _waveNames.size() - 1;
+		}
 		_waveMassLimits.push_back(std::make_pair(massLower, massUpper));
 
 		if(_debug) {
-			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " GeV/c^2, index: " << _waveIndices[name] << ")" << std::endl;
+			std::ostringstream alternatives;
+			if(alternativeNames.size() > 0) {
+				alternatives << ", alternative names: ";
+				for(size_t idxAlt = 0; idxAlt < alternativeNames.size(); ++idxAlt) {
+					if(idxAlt != 0) {
+						alternatives << ", ";
+					}
+					alternatives << "'" << alternativeNames[idxAlt] << "'";
+				}
+			}
+
+			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " GeV/c^2, index: " << _waveIndices[name] << alternatives.str() << ")" << std::endl;
 		}
 	}
 
@@ -858,6 +917,21 @@ rpwa::massDepFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) c
 		if (_waveMassLimits[idxWave].second >= 0) {
 			yamlOutput << YAML::Key << "massUpper";
 			yamlOutput << YAML::Value << _waveMassLimits[idxWave].second;
+		}
+
+		if(_waveNameAlternatives[idxWave].size() > 0) {
+			yamlOutput << YAML::Key << "alternativeNames";
+			yamlOutput << YAML::Value;
+
+			yamlOutput << YAML::Flow;
+			yamlOutput << YAML::BeginSeq;
+
+			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
+				yamlOutput << _waveNameAlternatives[idxWave][idxAlt];
+			}
+
+			yamlOutput << YAML::EndSeq;
+			yamlOutput << YAML::Block;
 		}
 
 		yamlOutput << YAML::EndMap;
@@ -1511,7 +1585,18 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 		spinDensityCovarianceMatrices[idxMass].ResizeTo(_nrWaves * (_nrWaves+1), _nrWaves * (_nrWaves+1));
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			const int idx = fit->waveIndex(_waveNames[idxWave]);
+			int idx = fit->waveIndex(_waveNames[idxWave]);
+			// try alternative wave names
+			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
+				const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
+				if(altIdx != -1) {
+					if(idx != -1) {
+						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
+						return false;
+					}
+					idx = altIdx;
+				}
+			}
 			if(idx == -1) {
 				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
 				return false;
@@ -1521,7 +1606,18 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 			intensities[idxMass][idxWave][1] = fit->intensityErr(idx);
 
 			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-				const int jdx = fit->waveIndex(_waveNames[jdxWave]);
+				int jdx = fit->waveIndex(_waveNames[jdxWave]);
+				// try alternative wave names
+				for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[jdxWave].size(); ++idxAlt) {
+					const int altJdx = fit->waveIndex(_waveNameAlternatives[jdxWave][idxAlt]);
+					if(altJdx != -1) {
+						if(jdx != -1) {
+							printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[jdxWave] << "'." << std::endl;
+							return false;
+						}
+						jdx = altJdx;
+					}
+				}
 				if(jdx == -1) {
 					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << std::endl;
 					return false;
@@ -1651,7 +1747,24 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
+			int idx = fit->waveIndex(_waveNames[idxWave]);
+			// try alternative wave names
+			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
+				const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
+				if(altIdx != -1) {
+					if(idx != -1) {
+						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
+						return false;
+					}
+					idx = altIdx;
+				}
+			}
+			if(idx == -1) {
+				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
+				return false;
+			}
+
+			const double ps = fit->phaseSpaceIntegral(idx);
 			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
