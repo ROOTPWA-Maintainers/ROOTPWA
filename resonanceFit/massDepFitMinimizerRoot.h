@@ -82,7 +82,7 @@ namespace rpwa {
 			              const int minimizerStrategy,
 			              const double minimizerTolerance,
 			              const bool quiet);
-			virtual ~minimizerRoot() {}
+			virtual ~minimizerRoot();
 
 			unsigned int getNrFreeParameters() const;
 
@@ -95,12 +95,7 @@ namespace rpwa {
 			bool initParameters(const rpwa::massDepFit::parameters& fitParameters,
 			                    const std::string& freeParameters) const;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-			// should be replaced by std::unique_ptr once we make C++11 compatible compiler mandatory
-			// see http://stackoverflow.com/questions/3451099/stdauto-ptr-to-stdunique-ptr
-			std::auto_ptr<ROOT::Math::Minimizer> _minimizer;
-#pragma GCC diagnostic pop
+			std::unique_ptr<ROOT::Math::Minimizer> _minimizer;
 
 			const rpwa::massDepFit::model& _fitModel;
 

@@ -417,7 +417,7 @@ rpwa::massDepFit::fsmd::printBin(const size_t idxBin,
                                  std::ostream& out) const
 {
 	out << "final-state mass-dependence for bin " << idxBin << std::endl;
-	out << "formula: " << ((_functions[idxBin] != NULL) ? _functions[idxBin]->GetTitle() : "not set") << std::endl;
+	out << "formula: " << (_functions[idxBin] ? _functions[idxBin]->GetTitle() : "not set") << std::endl;
 
 	for(size_t i = 0; i < _nrParameters[idxBin]; ++i) {
 		out << "    [" << i << "] ";

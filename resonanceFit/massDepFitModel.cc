@@ -37,7 +37,6 @@
 
 rpwa::massDepFit::model::model(const bool useBranchings)
 	: _nrParameters(0),
-	  _fsmd(NULL),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
 	  _useBranchings(useBranchings),
@@ -45,20 +44,6 @@ rpwa::massDepFit::model::model(const bool useBranchings)
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
 	  _idxAnchorChannel(std::numeric_limits<size_t>::max())
 {
-}
-
-
-rpwa::massDepFit::model::~model()
-{
-	for(std::vector<rpwa::massDepFit::component*>::iterator it=_components.begin(); it!=_components.end(); ++it) {
-		delete *it;
-	}
-	_components.clear();
-
-	if(_fsmd != NULL) {
-		delete _fsmd;
-		_fsmd = NULL;
-	}
 }
 
 
@@ -79,7 +64,7 @@ rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
 
 
 void
-rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
+rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
 {
 	_components.push_back(comp);
 
@@ -101,18 +86,17 @@ rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 
 
 void
-rpwa::massDepFit::model::setFsmd(rpwa::massDepFit::fsmd* fsmd)
+rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
 {
-	if(_fsmd != NULL) {
+	if(_fsmd) {
 		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
 			_nrParameters -= _fsmd->getNrParameters(idxBin);
 		}
-		delete _fsmd;
 	}
 
 	_fsmd = fsmd;
 
-	if(_fsmd != NULL) {
+	if(_fsmd) {
 		size_t sumNrParameters = 0;
 		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
 			sumNrParameters += _fsmd->getNrParameters(idxBin);
@@ -240,7 +224,7 @@ rpwa::massDepFit::model::importParameters(const double* par,
 	}
 
 	// final-state mass-dependence
-	if(_fsmd != NULL) {
+	if(_fsmd) {
 		parcount += _fsmd->importParameters(&par[parcount], parameters, cache);
 	}
 }
@@ -275,7 +259,7 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 		prodAmp += _components[idxComponent]->val(fitParameters, cache, idxBin, mass, idxMass) * _components[idxComponent]->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 	}
 
-	if(_fsmd != NULL) {
+	if(_fsmd) {
 		prodAmp *= _fsmd->val(fitParameters, cache, idxBin, mass, idxMass);
 	}
 
