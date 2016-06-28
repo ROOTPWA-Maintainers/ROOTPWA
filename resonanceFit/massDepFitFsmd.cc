@@ -47,8 +47,8 @@
 rpwa::massDepFit::fsmd::fsmd(const size_t id)
 	: _id(id),
 	  _nrBins(0),
-	  _maxParameters(0),
-	  _sameMassBinning(false)
+	  _equalInAllBins(false),
+	  _maxParameters(0)
 {
 }
 
@@ -69,8 +69,6 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 	if(debug) {
 		printDebug << "start initializing final-state mass-dependence." << std::endl;
 	}
-
-	_sameMassBinning = sameMassBinning;
 
 	if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
 		printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
@@ -113,6 +111,11 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 			_parametersIndex[idxBin] = _parametersIndex[0];
 		}
 	}
+
+	// if all bins have the same mass binning and there is only one
+	// final-state mass dependence, the value in each mass bin is equal
+	// for all bins
+	_equalInAllBins = sameMassBinning and (_nrBins == 1);
 
 	if(debug) {
 		print(printDebug);
@@ -388,7 +391,7 @@ rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
 	const std::complex<double> fsmd = _functions[idxBin]->EvalPar(&mass, fitParameters.getParameters(_id)+_parametersIndex[idxBin]);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(_id, ((_nrBins == 1 and _sameMassBinning) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, fsmd);
+		cache.setComponent(_id, (_equalInAllBins ? std::numeric_limits<size_t>::max() : idxBin), idxMass, fsmd);
 	}
 
 	return fsmd;
@@ -399,7 +402,7 @@ std::ostream&
 rpwa::massDepFit::fsmd::print(std::ostream& out) const
 {
 	out << "final-state mass-dependence (id " << _id << ")" << std::endl
-	    << "    all bins have the same mass binning: " << rpwa::yesNo(_sameMassBinning) << std::endl;
+	    << "    use equal values for all bins for each mass bin: " << rpwa::yesNo(_equalInAllBins) << std::endl;
 
 	for(size_t i = 0; i < _nrBins; ++i) {
 		printBin(i, out);

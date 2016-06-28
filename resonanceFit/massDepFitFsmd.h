@@ -114,9 +114,8 @@ namespace rpwa {
 			const size_t _id;
 
 			size_t _nrBins;
+			bool _equalInAllBins;
 			size_t _maxParameters;
-
-			bool _sameMassBinning;
 
 			std::vector<std::shared_ptr<TFormula> > _functions;
 
