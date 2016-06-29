@@ -57,6 +57,7 @@ namespace rpwa {
 			void add(const rpwa::massDepFit::componentPtr& comp);
 
 			bool init(const std::vector<std::string>& waveNames,
+			          const std::vector<std::vector<std::string> >& waveNameAlternatives,
 			          const std::string& anchorWaveName,
 			          const std::string& anchorComponentName);
 
@@ -118,6 +119,7 @@ namespace rpwa {
 		private:
 
 			bool initMapping(const std::vector<std::string>& waveNames,
+			                 const std::vector<std::vector<std::string> >& waveNameAlternatives,
 			                 const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
 

@@ -49,10 +49,11 @@ rpwa::massDepFit::model::model(const bool useBranchings)
 
 bool
 rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
+                              const std::vector<std::vector<std::string> >& waveNameAlternatives,
                               const std::string& anchorWaveName,
                               const std::string& anchorComponentName)
 {
-	if(not initMapping(waveNames, anchorWaveName, anchorComponentName)) {
+	if(not initMapping(waveNames, waveNameAlternatives, anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
 		return false;
 	}
@@ -111,6 +112,7 @@ rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
 rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
+                                     const std::vector<std::vector<std::string> >& waveNameAlternatives,
                                      const std::string& anchorWaveName,
                                      const std::string& anchorComponentName)
 {
@@ -121,7 +123,20 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 			const channel& channel = component->getChannel(idxChannel);
 
+			bool found = false;
 			if(find(waveNames.begin(), waveNames.end(), channel.getWaveName()) != waveNames.end()) {
+				found = true;
+			}
+			for(size_t i = 0; i < waveNameAlternatives.size(); ++i) {
+				if(find(waveNameAlternatives[i].begin(), waveNameAlternatives[i].end(), channel.getWaveName()) != waveNameAlternatives[i].end()) {
+					if(found) {
+						printErr << "wave '" << channel.getWaveName() << "' known multiple times." << std::endl;
+						return false;
+					}
+					found = true;
+				}
+			}
+			if(not found) {
 				printErr << "wave '" << channel.getWaveName() << "' not known in decay of '" << component->getName() << "'." << std::endl;
 				return false;
 			}
@@ -137,6 +152,10 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 				const channel& channel = component->getChannel(idxChannel);
 
 				if(channel.getWaveName() == waveNames[idxWave]) {
+					found = true;
+					break;
+				}
+				if(find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), channel.getWaveName()) != waveNameAlternatives[idxWave].end()) {
 					found = true;
 					break;
 				}
@@ -158,10 +177,10 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 				const channel& channel = component->getChannel(idxChannel);
 
-				if(channel.getWaveName() == waveNames[idxWave]) {
+				if(channel.getWaveName() == waveNames[idxWave] or find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), channel.getWaveName()) != waveNameAlternatives[idxWave].end()) {
 					_waveComponentChannel[idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
 
-					if(anchorWaveName == waveNames[idxWave] and anchorComponentName == component->getName()) {
+					if((anchorWaveName == waveNames[idxWave] or find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), anchorWaveName) != waveNameAlternatives[idxWave].end()) and anchorComponentName == component->getName()) {
 						_idxAnchorWave = idxWave;
 						_idxAnchorComponent = idxComponent;
 						_idxAnchorChannel = idxChannel;
