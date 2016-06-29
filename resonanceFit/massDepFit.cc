@@ -732,6 +732,7 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
                                    rpwa::massDepFit::function& fitFunction)
 {
 	if(not fitModel.init(_waveNames,
+	                     _waveNameAlternatives,
 	                     _anchorWaveName,
 	                     _anchorComponentName)) {
 		printErr << "error while initializing the fit model." << std::endl;
