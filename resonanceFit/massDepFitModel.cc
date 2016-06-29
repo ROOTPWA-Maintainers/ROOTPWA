@@ -52,9 +52,7 @@ rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
                               const std::string& anchorWaveName,
                               const std::string& anchorComponentName)
 {
-	_waveNames = waveNames;
-
-	if(not initMapping(anchorWaveName, anchorComponentName)) {
+	if(not initMapping(waveNames, anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
 		return false;
 	}
@@ -73,7 +71,10 @@ rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
 	_maxParametersInComponent = std::max(_maxParametersInComponent, comp->getNrParameters());
 
 	// number of coupling parameters
-	_nrParameters += 2 * comp->getNrCouplings() * comp->getChannel(0).getNrBins();
+	for(size_t idxCoupling = 0; idxCoupling < comp->getNrCouplings(); ++idxCoupling) {
+		const channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
+		_nrParameters += 2 * channel.getNrBins();
+	}
 
 	// number of branching parameters (first branching is always real and fixed to 1)
 	if(_useBranchings && comp->getNrChannels() > 1) {
@@ -109,26 +110,33 @@ rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
+rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
+                                     const std::string& anchorWaveName,
                                      const std::string& anchorComponentName)
 {
 	// check that all waves used in a decay channel have been defined
 	const size_t nrComponents = _components.size();
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		for(std::vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
-			if(find(_waveNames.begin(), _waveNames.end(), itChan->getWaveName()) == _waveNames.end()) {
-				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _components[idxComponent]->getName() << "'." << std::endl;
+		const componentConstPtr& component = _components[idxComponent];
+		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+			const channel& channel = component->getChannel(idxChannel);
+
+			if(find(waveNames.begin(), waveNames.end(), channel.getWaveName()) != waveNames.end()) {
+				printErr << "wave '" << channel.getWaveName() << "' not known in decay of '" << component->getName() << "'." << std::endl;
 				return false;
 			}
 		}
 	}
 
 	// check that all defined waves are also used
-	for(std::vector<std::string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
+	for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 		bool found(false);
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-			for(std::vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
-				if(itChan->getWaveName() == *itWave) {
+			const componentConstPtr& component = _components[idxComponent];
+			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+				const channel& channel = component->getChannel(idxChannel);
+
+				if(channel.getWaveName() == waveNames[idxWave]) {
 					found = true;
 					break;
 				}
@@ -136,22 +144,24 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		}
 
 		if(not found) {
-			printErr << "wave '" << *itWave << "' defined but not used in any decay." << std::endl;
+			printErr << "wave '" << waveNames[idxWave] << "' defined but not used in any decay." << std::endl;
 			return false;
 		}
 	}
 
-	_waveComponentChannel.resize(_waveNames.size());
-	for(size_t idxWave=0; idxWave<_waveNames.size(); ++idxWave) {
+	_waveComponentChannel.resize(waveNames.size());
+	for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 		// check which components this waves belongs to and which channel they are
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+			const componentConstPtr& component = _components[idxComponent];
 			// loop over channels of component and see if wave is there
-			const size_t nrChannels = _components[idxComponent]->getNrChannels();
-			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-				if(_components[idxComponent]->getChannel(idxChannel).getWaveName() == _waveNames[idxWave]) {
+			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+				const channel& channel = component->getChannel(idxChannel);
+
+				if(channel.getWaveName() == waveNames[idxWave]) {
 					_waveComponentChannel[idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
 
-					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _components[idxComponent]->getName()) {
+					if(anchorWaveName == waveNames[idxWave] and anchorComponentName == component->getName()) {
 						_idxAnchorWave = idxWave;
 						_idxAnchorComponent = idxComponent;
 						_idxAnchorChannel = idxChannel;
@@ -170,15 +180,17 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		printErr << "anchor wave '" << anchorWaveName << "' has to be first channel in anchor component '" << anchorComponentName << "'." << std::endl;
 		return false;
 	}
-	_components[_idxAnchorComponent]->setChannelAnchor(_idxAnchorChannel, true);
-	_nrParameters -= _components[_idxAnchorComponent]->getChannel(_idxAnchorChannel).getNrBins();
+	const componentPtr& anchorComponent = _components[_idxAnchorComponent];
+	anchorComponent->setChannelAnchor(_idxAnchorChannel, true);
+	_nrParameters -= anchorComponent->getChannel(_idxAnchorChannel).getNrBins();
 
 	std::ostringstream output;
-	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
-		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
+	for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
+		output << "    wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
 		for(size_t idxComponents=0; idxComponents<_waveComponentChannel[idxWave].size(); idxComponents++) {
 			const size_t idxComponent = _waveComponentChannel[idxWave][idxComponents].first;
-			output << "        component " << idxComponents << ": " << idxComponent << " '" << _components[idxComponent]->getName() << "'";
+			const componentConstPtr& component = _components[idxComponent];
+			output << "        component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
 			if(_idxAnchorWave == idxWave && _idxAnchorComponent == idxComponent) {
 				output << " (anchor)";
 			}
@@ -186,15 +198,15 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		}
 	}
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		output << "    component '" << _components[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+		const componentConstPtr& component = _components[idxComponent];
 
-		const size_t nrChannels = _components[idxComponent]->getNrChannels();
-		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannel(idxChannel).getWaveName()
-			       << (_components[idxComponent]->getChannel(idxChannel).isAnchor() ? " (anchor)" : "") << std::endl;
+		output << "    component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+			const channel& channel = component->getChannel(idxChannel);
+			output << "        channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor() ? " (anchor)" : "") << std::endl;
 		}
 	}
-	printInfo << _waveNames.size() << " waves and " << _components.size() << " components in fit model:" << std::endl
+	printInfo << waveNames.size() << " waves and " << _components.size() << " components in fit model:" << std::endl
 	          << output.str();
 
 	return true;
@@ -245,17 +257,16 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 		}
 	}
 
-
 	// loop over all components and pick up those that contribute to this channels
 	std::complex<double> prodAmp(0., 0.);
 
 	// get entry from mapping
 	const std::vector<std::pair<size_t, size_t> >& components = _waveComponentChannel[idxWave];
-	size_t nrComponents = components.size();
+	const size_t nrComponents = components.size();
 
-	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
-		size_t idxComponent = components[idxComponents].first;
-		size_t idxChannel = components[idxComponents].second;
+	for(size_t idxComponents = 0; idxComponents < nrComponents; ++idxComponents) {
+		const size_t idxComponent = components[idxComponents].first;
+		const size_t idxChannel = components[idxComponents].second;
 		prodAmp += _components[idxComponent]->val(fitParameters, cache, idxBin, mass, idxMass) * _components[idxComponent]->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 	}
 

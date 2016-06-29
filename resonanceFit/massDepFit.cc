@@ -676,7 +676,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrBins, _nrMassBins, _massBinCenters, _sameMassBinning, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
@@ -1210,9 +1210,7 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 
 			readMapping = true;
 		} else {
-			if(_debug) {
-				printDebug << "bin " << idxBin << " does not have the same mass binning as bin " << idxBin-1 << "." << std::endl;
-			}
+			printInfo << "bin " << idxBin << " does not have the same mass binning as bin " << idxBin-1 << ", use individual mass binning for each bin." << std::endl;
 
 			_sameMassBinning = false;
 		}
