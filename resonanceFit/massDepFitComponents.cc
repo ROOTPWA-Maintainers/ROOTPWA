@@ -40,19 +40,24 @@
 
 rpwa::massDepFit::channel::channel(const size_t waveIdx,
                                    const std::string& waveName,
+                                   const std::vector<size_t>& bins,
                                    const std::vector<size_t>& nrMassBins,
                                    const boost::multi_array<double, 2>& massBinCenters,
                                    const boost::multi_array<double, 2>& phaseSpace)
 	: _waveIdx(waveIdx),
 	  _waveName(waveName),
-	  _anchor(false),
+	  _bins(bins),
 	  _phaseSpace(phaseSpace)
 {
-	_nrBins = nrMassBins.size();
-	assert(_nrBins == massBinCenters.shape()[0] and _nrBins == _phaseSpace.shape()[0]);
+	const size_t nrBins = nrMassBins.size();
+	assert(nrBins == massBinCenters.shape()[0] and nrBins == _phaseSpace.shape()[0]);
 
-	_interpolator.resize(_nrBins);
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+	_anchor.resize(nrBins, false),
+
+	_interpolator.resize(nrBins);
+	for(size_t i = 0; i < _bins.size(); ++i) {
+		const size_t idxBin = _bins[i];
+
 		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
 		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
 		_interpolator[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
@@ -92,6 +97,7 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
                                   const std::vector<size_t>& nrMassBins,
                                   const boost::multi_array<double, 2>& massBinCenters,
                                   const std::map<std::string, size_t>& waveIndices,
+                                  const std::map<std::string, std::vector<size_t> >& waveBins,
                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                   const bool useBranchings,
                                   const bool debug)
@@ -210,8 +216,9 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 	fitParameters.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
 	fitParametersError.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
 
-	std::map<std::string, size_t> couplingsQN;
-	std::map<std::string, size_t> branchingDecay;
+	std::vector<bool> branchingFixed(nrBins, false);
+	std::map<std::pair<std::string, size_t>, size_t> couplingsQN;
+	std::map<std::pair<std::string, size_t>, size_t> branchingDecay;
 	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const YAML::Node& decayChannel = decayChannels[idxDecayChannel];
 
@@ -241,8 +248,17 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 		}
 		const size_t waveIdx = it->second;
 
+		// get list of bins this wave is defined in
+		const std::map<std::string, std::vector<size_t> >::const_iterator it2 = waveBins.find(waveName);
+		if(it2 == waveBins.end()) {
+			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
+			return false;
+		}
+		const std::vector<size_t>& binsForWave = it2->second;
+
 		bool readCouplings = true;
 		bool readBranching = false;
+		bool fixedBranching = true;
 		size_t couplingIndex = _nrCouplings;
 		size_t branchingIndex = _nrBranchings;
 		if(useBranchings && nrDecayChannels > 1) {
@@ -252,29 +268,66 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 				printDebug << "extracted quantum numbers '" << waveQN << "' and decay chain '" << waveDecay << "' from wave name '" << waveName << "'." << std::endl;
 			}
 
-			std::map<std::string, size_t>::const_iterator mappingQN = couplingsQN.find(waveQN);
-			std::map<std::string, size_t>::const_iterator mappingDecay = branchingDecay.find(waveDecay);
-			if(mappingQN == couplingsQN.end() && mappingDecay == branchingDecay.end()) {
-				readCouplings = true;
-				couplingsQN[waveQN] = couplingIndex;
-				readBranching = true;
-				branchingDecay[waveDecay] = branchingIndex;
-			} else if(mappingQN == couplingsQN.end()) {
-				readCouplings = true;
-				couplingsQN[waveQN] = couplingIndex;
-				readBranching = false;
-				branchingIndex = mappingDecay->second;
-			} else if(mappingDecay == branchingDecay.end()) {
-				readCouplings = false;
-				couplingIndex = mappingQN->second;
-				readBranching = true;
-				branchingDecay[waveDecay] = branchingIndex;
-			} else {
-				readCouplings = false;
-				couplingIndex = mappingQN->second;
-				readBranching = false;
-				branchingIndex = mappingDecay->second;
+			fixedBranching = branchingFixed[binsForWave[0]];
+			for(size_t i = 0; i < binsForWave.size(); ++i) {
+				const size_t idxBin = binsForWave[i];
+
+				std::map<std::pair<std::string, size_t>, size_t>::const_iterator mappingQN = couplingsQN.find(std::make_pair(waveQN, idxBin));
+				std::map<std::pair<std::string, size_t>, size_t>::const_iterator mappingDecay = branchingDecay.find(std::make_pair(waveDecay, idxBin));
+				if(mappingQN == couplingsQN.end() and mappingDecay == branchingDecay.end()) {
+					couplingsQN[std::make_pair(waveQN, idxBin)] = couplingIndex;
+					branchingDecay[std::make_pair(waveDecay, idxBin)] = branchingIndex;
+
+					if(i > 1 and (not readCouplings or not readBranching)) {
+						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
+						return false;
+					}
+
+					readCouplings = true;
+					readBranching = true;
+				} else if(mappingQN == couplingsQN.end()) {
+					couplingsQN[std::make_pair(waveQN, idxBin)] = couplingIndex;
+
+					if(i > 1 and (not readCouplings or readBranching or branchingIndex != mappingDecay->second)) {
+						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
+						return false;
+					}
+
+					readCouplings = true;
+					readBranching = false;
+					branchingIndex = mappingDecay->second;
+				} else if(mappingDecay == branchingDecay.end()) {
+					branchingDecay[std::make_pair(waveDecay, idxBin)] = branchingIndex;
+
+					if(i > 1 and (readCouplings or not readBranching or couplingIndex != mappingQN->second)) {
+						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
+						return false;
+					}
+
+					readCouplings = false;
+					couplingIndex = mappingQN->second;
+					readBranching = true;
+				} else {
+					if(i > 1 and (readCouplings or readBranching or couplingIndex != mappingQN->second or branchingIndex != mappingDecay->second)) {
+						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
+						return false;
+					}
+
+					readCouplings = false;
+					couplingIndex = mappingQN->second;
+					readBranching = false;
+					branchingIndex = mappingDecay->second;
+				}
+
+				if(fixedBranching != branchingFixed[idxBin]) {
+					printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
+					return false;
+				}
+				if(not branchingFixed[idxBin]) {
+					branchingFixed[idxBin] = true;
+				}
 			}
+			fixedBranching = not fixedBranching;
 		}
 
 		if(readCouplings) {
@@ -295,8 +348,8 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 			}
 
 			const size_t nrCouplings = configCouplings.size();
-			if(nrCouplings != nrBins) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << nrBins << "." << std::endl;
+			if(nrCouplings != binsForWave.size()) {
+				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << binsForWave.size() << "." << std::endl;
 				return false;
 			}
 
@@ -324,7 +377,7 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 				const double couplingImag = configCoupling[1].as<double>();
 
 				const std::complex<double> coupling(couplingReal, couplingImag);
-				fitParameters.setCoupling(getId(), couplingIndex, idxCoupling, coupling);
+				fitParameters.setCoupling(getId(), couplingIndex, binsForWave[idxCoupling], coupling);
 			}
 
 			_channelsFromCoupling.push_back(_channels.size());
@@ -360,7 +413,7 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 			double branchingReal = configBranching[0].as<double>();
 			double branchingImag = configBranching[1].as<double>();
 
-			if(branchingIndex == 0) {
+			if(fixedBranching) {
 				// the first branching should always be 1.
 				if(branchingReal != 1.0 || branchingImag != 0.0) {
 					printWarn << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' forced to 1." << std::endl;
@@ -373,11 +426,12 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 			fitParameters.setBranching(getId(), branchingIndex, branching);
 
 			_channelsFromBranching.push_back(_channels.size());
+			_branchingsFixed.push_back(fixedBranching);
 			++_nrBranchings;
 		}
 
 		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][waveIdx]];
-		_channels.push_back(rpwa::massDepFit::channel(waveIdx, waveName, nrMassBins, massBinCenters, view));
+		_channels.push_back(rpwa::massDepFit::channel(waveIdx, waveName, binsForWave, nrMassBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
 
@@ -389,6 +443,10 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 
 	// if no branchings are read at all make sure that there is one equal to 1.
 	if (_nrBranchings == 0) {
+		_channelsFromBranching.push_back(0);
+		_branchingsFixed.push_back(true);
+		_nrBranchings++;
+
 		fitParameters.setBranching(getId(), 0, std::complex<double>(1., 0.));
 	}
 
@@ -477,8 +535,9 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 			yamlOutput << YAML::Value;
 			yamlOutput << YAML::BeginSeq;
 
-			const size_t nrBins = getChannel(idxDecayChannel).getNrBins();
-			for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+			const std::vector<size_t>& bins = getChannel(idxDecayChannel).getBins();
+			for(size_t i = 0; i < bins.size(); ++i) {
+				const size_t idxBin = bins[i];
 				yamlOutput << YAML::Flow;
 				yamlOutput << YAML::BeginSeq;
 
@@ -533,6 +592,15 @@ rpwa::massDepFit::component::writeDecayChannel(YAML::Emitter& /*yamlOutput*/,
 }
 
 
+void
+rpwa::massDepFit::component::setChannelAnchor(const std::vector<size_t>& channels)
+{
+	for(size_t idxBin = 0; idxBin < channels.size(); idxBin++) {
+		_channels[channels[idxBin]].setAnchor(idxBin);
+	}
+}
+
+
 size_t
 rpwa::massDepFit::component::importCouplings(const double* par,
                                              rpwa::massDepFit::parameters& fitParameters,
@@ -541,10 +609,11 @@ rpwa::massDepFit::component::importCouplings(const double* par,
 	size_t counter=0;
 	for(size_t idxCoupling=0; idxCoupling<_nrCouplings; ++idxCoupling) {
 		rpwa::massDepFit::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
-		const size_t nrBins = channel.getNrBins();
-		for(size_t idxBin=0; idxBin<nrBins; ++idxBin) {
+		const std::vector<size_t>& bins = channel.getBins();
+		for(size_t i = 0; i < bins.size(); ++i) {
+			const size_t idxBin = bins[i];
 			std::complex<double> coupling;
-			if(channel.isAnchor()) {
+			if(channel.isAnchor(idxBin)) {
 				coupling = std::complex<double>(par[counter], 0.);
 				counter += 1;
 			} else {
@@ -575,20 +644,13 @@ rpwa::massDepFit::component::importBranchings(const double* par,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::cache& cache)
 {
-	// branching with idx 0 is always real and fixed to 1
-	std::complex<double> branching(1., 0.);
-	if (fitParameters.getBranching(getId(), 0) != branching) {
-		fitParameters.setBranching(getId(), 0, branching);
-
-		// invalidate the cache
-		cache.setCoupling(getId(), 0, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
-		cache.setProdAmp(_channels[0].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
-	}
-
 	size_t counter=0;
-	for(size_t idxBranching=1; idxBranching<_nrBranchings; ++idxBranching) {
-		branching = std::complex<double>(par[counter], par[counter+1]);
-		counter += 2;
+	for(size_t idxBranching = 0; idxBranching < _nrBranchings; ++idxBranching) {
+		std::complex<double> branching(1., 0.);
+		if(not _branchingsFixed[idxBranching]) {
+			branching = std::complex<double>(par[counter], par[counter+1]);
+			counter += 2;
+		}
 
 		if (fitParameters.getBranching(getId(), idxBranching) != branching) {
 			fitParameters.setBranching(getId(), idxBranching, branching);
@@ -663,6 +725,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
                                               const std::vector<size_t>& nrMassBins,
                                               const boost::multi_array<double, 2>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
+                                              const std::map<std::string, std::vector<size_t> >& waveBins,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool useBranchings,
                                               const bool debug)
@@ -671,7 +734,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -795,6 +858,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponen
                                                 const std::vector<size_t>& nrMassBins,
                                                 const boost::multi_array<double, 2>& massBinCenters,
                                                 const std::map<std::string, size_t>& waveIndices,
+                                                const std::map<std::string, std::vector<size_t> >& waveBins,
                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                 const bool useBranchings,
                                                 const bool debug)
@@ -803,7 +867,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponen
 		printDebug << "start initializing 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1065,6 +1129,7 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configCompone
                                                  const std::vector<size_t>& nrMassBins,
                                                  const boost::multi_array<double, 2>& massBinCenters,
                                                  const std::map<std::string, size_t>& waveIndices,
+                                                 const std::map<std::string, std::vector<size_t> >& waveBins,
                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                  const bool useBranchings,
                                                  const bool debug)
@@ -1073,7 +1138,7 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configCompone
 		printDebug << "start initializing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1356,6 +1421,7 @@ rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
                                            const std::vector<size_t>& nrMassBins,
                                            const boost::multi_array<double, 2>& massBinCenters,
                                            const std::map<std::string, size_t>& waveIndices,
+                                           const std::map<std::string, std::vector<size_t> >& waveBins,
                                            const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                            const bool useBranchings,
                                            const bool debug)
@@ -1364,7 +1430,7 @@ rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'constantBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1449,6 +1515,7 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
                                               const std::vector<size_t>& nrMassBins,
                                               const boost::multi_array<double, 2>& massBinCenters,
                                               const std::map<std::string, size_t>& waveIndices,
+                                              const std::map<std::string, std::vector<size_t> >& waveBins,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool useBranchings,
                                               const bool debug)
@@ -1457,9 +1524,7 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'exponentialBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	const size_t nrBins = nrMassBins.size();
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1505,9 +1570,12 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 		_exponent = 2.0;
 	}
 
-	std::vector<double> maxMasses(nrBins);
-	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-		maxMasses[idxBin] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
+	// select the maximum of the mass only from the used bins
+	const std::vector<size_t>& bins = getChannel(0).getBins();
+	std::vector<double> maxMasses(bins.size());
+	for(size_t i = 0; i < bins.size(); ++i) {
+		const size_t idxBin = bins[i];
+		maxMasses[i] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	const double q = rpwa::breakupMomentum(maxMass, _m1, _m2);
@@ -1656,6 +1724,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
                                                   const std::vector<size_t>& nrMassBins,
                                                   const boost::multi_array<double, 2>& massBinCenters,
                                                   const std::map<std::string, size_t>& waveIndices,
+                                                  const std::map<std::string, std::vector<size_t> >& waveBins,
                                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                   const bool useBranchings,
                                                   const bool debug)
@@ -1666,7 +1735,7 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 
 	const size_t nrBins = nrMassBins.size();
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1712,9 +1781,12 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 		_exponent = 2.0;
 	}
 
-	std::vector<double> maxMasses(nrBins);
-	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-		maxMasses[idxBin] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
+	// select the maximum of the mass only from the used bins
+	const std::vector<size_t>& bins = getChannel(0).getBins();
+	std::vector<double> maxMasses(bins.size());
+	for(size_t i = 0; i < bins.size(); ++i) {
+		const size_t idxBin = bins[i];
+		maxMasses[i] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	const double q = rpwa::breakupMomentum(maxMass, _m1, _m2);
@@ -1878,6 +1950,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
                                                       const std::vector<size_t>& nrMassBins,
                                                       const boost::multi_array<double, 2>& massBinCenters,
                                                       const std::map<std::string, size_t>& waveIndices,
+                                                      const std::map<std::string, std::vector<size_t> >& waveBins,
                                                       const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                       const bool useBranchings,
                                                       const bool debug)
@@ -1886,9 +1959,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 		printDebug << "start initializing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
 	}
 
-	const size_t nrBins = nrMassBins.size();
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1954,9 +2025,12 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 
 	_exponent = configComponent["exponent"].as<double>();
 
-	std::vector<double> maxMasses(nrBins);
-	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-		maxMasses[idxBin] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
+	// select the maximum of the mass only from the used bins
+	const std::vector<size_t>& bins = getChannel(0).getBins();
+	std::vector<double> maxMasses(bins.size());
+	for(size_t i = 0; i < bins.size(); ++i) {
+		const size_t idxBin = bins[i];
+		maxMasses[i] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	_norm = 1. / (maxMass * _interpolator->Eval(maxMass));
@@ -2101,6 +2175,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
                                                           const std::vector<size_t>& nrMassBins,
                                                           const boost::multi_array<double, 2>& massBinCenters,
                                                           const std::map<std::string, size_t>& waveIndices,
+                                                          const std::map<std::string, std::vector<size_t> >& waveBins,
                                                           const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                           const bool useBranchings,
                                                           const bool debug)
@@ -2111,7 +2186,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 
 	const size_t nrBins = nrMassBins.size();
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -2177,9 +2252,12 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 
 	_exponent = configComponent["exponent"].as<double>();
 
-	std::vector<double> maxMasses(nrBins);
-	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-		maxMasses[idxBin] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
+	// select the maximum of the mass only from the used bins
+	const std::vector<size_t>& bins = getChannel(0).getBins();
+	std::vector<double> maxMasses(bins.size());
+	for(size_t i = 0; i < bins.size(); ++i) {
+		const size_t idxBin = bins[i];
+		maxMasses[i] = massBinCenters[idxBin][nrMassBins[idxBin] - 1];
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	_norm = 1. / (maxMass * _interpolator->Eval(maxMass));

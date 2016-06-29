@@ -37,6 +37,8 @@
 #include <limits>
 #include <vector>
 
+#include <boost/multi_array.hpp>
+
 #include "massDepFitForward.h"
 
 namespace rpwa {
@@ -56,10 +58,13 @@ namespace rpwa {
 
 			void add(const rpwa::massDepFit::componentPtr& comp);
 
-			bool init(const std::vector<std::string>& waveNames,
+			bool init(const size_t nrBins,
+			          const std::vector<std::string>& waveNames,
 			          const std::vector<std::vector<std::string> >& waveNameAlternatives,
 			          const std::string& anchorWaveName,
 			          const std::string& anchorComponentName);
+
+			bool isMappingEqualInAllBins() const { return _mappingEqualInAllBins; }
 
 			size_t getNrParameters() const { return _nrParameters; }
 			void importParameters(const double* par,
@@ -79,7 +84,7 @@ namespace rpwa {
 
 			size_t getAnchorWave() const { return _idxAnchorWave; }
 
-			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idxWave) const { return _waveComponentChannel[idxWave]; }
+			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(const size_t idxBin, const size_t idxWave) const { return _waveComponentChannel[idxBin][idxWave]; }
 
 			std::complex<double> productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
 			                                         rpwa::massDepFit::cache& cache,
@@ -118,10 +123,13 @@ namespace rpwa {
 
 		private:
 
-			bool initMapping(const std::vector<std::string>& waveNames,
+			bool initMapping(const size_t nrBins,
+			                 const std::vector<std::string>& waveNames,
 			                 const std::vector<std::vector<std::string> >& waveNameAlternatives,
 			                 const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
+
+			bool _mappingEqualInAllBins;
 
 			std::vector<rpwa::massDepFit::componentPtr> _components;
 
@@ -135,9 +143,9 @@ namespace rpwa {
 
 			size_t _idxAnchorWave;
 			size_t _idxAnchorComponent;
-			size_t _idxAnchorChannel;
+			std::vector<size_t> _idxAnchorChannel;
 
-			std::vector<std::vector<std::pair<size_t, size_t> > > _waveComponentChannel;
+			boost::multi_array<std::vector<std::pair<size_t, size_t> >, 2> _waveComponentChannel;
 
 		};
 
