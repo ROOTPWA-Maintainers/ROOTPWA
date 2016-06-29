@@ -36,24 +36,25 @@
 
 
 rpwa::massDepFit::model::model(const bool useBranchings)
-	: _nrParameters(0),
+	: _mappingEqualInAllBins(false),
+	  _nrParameters(0),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
 	  _useBranchings(useBranchings),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
-	  _idxAnchorComponent(std::numeric_limits<size_t>::max()),
-	  _idxAnchorChannel(std::numeric_limits<size_t>::max())
+	  _idxAnchorComponent(std::numeric_limits<size_t>::max())
 {
 }
 
 
 bool
-rpwa::massDepFit::model::init(const std::vector<std::string>& waveNames,
+rpwa::massDepFit::model::init(const size_t nrBins,
+                              const std::vector<std::string>& waveNames,
                               const std::vector<std::vector<std::string> >& waveNameAlternatives,
                               const std::string& anchorWaveName,
                               const std::string& anchorComponentName)
 {
-	if(not initMapping(waveNames, waveNameAlternatives, anchorWaveName, anchorComponentName)) {
+	if(not initMapping(nrBins, waveNames, waveNameAlternatives, anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
 		return false;
 	}
@@ -74,12 +75,16 @@ rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
 	// number of coupling parameters
 	for(size_t idxCoupling = 0; idxCoupling < comp->getNrCouplings(); ++idxCoupling) {
 		const channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
-		_nrParameters += 2 * channel.getNrBins();
+		_nrParameters += 2 * channel.getBins().size();
 	}
 
-	// number of branching parameters (first branching is always real and fixed to 1)
+	// number of branching parameters (some branchings are always real and fixed to 1)
 	if(_useBranchings && comp->getNrChannels() > 1) {
-		_nrParameters += 2 * comp->getNrBranchings() - 2;
+		for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
+			if(not comp->isBranchingFixed(idxBranching)) {
+				_nrParameters += 2;
+			}
+		}
 	}
 
 	// maximum number of channels in one component
@@ -111,7 +116,8 @@ rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
+rpwa::massDepFit::model::initMapping(const size_t nrBins,
+                                     const std::vector<std::string>& waveNames,
                                      const std::vector<std::vector<std::string> >& waveNameAlternatives,
                                      const std::string& anchorWaveName,
                                      const std::string& anchorComponentName)
@@ -168,7 +174,8 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 		}
 	}
 
-	_waveComponentChannel.resize(waveNames.size());
+	_idxAnchorChannel.resize(nrBins, std::numeric_limits<size_t>::max());
+	_waveComponentChannel.resize(boost::extents[nrBins][waveNames.size()]);
 	for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 		// check which components this waves belongs to and which channel they are
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
@@ -178,12 +185,34 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 				const channel& channel = component->getChannel(idxChannel);
 
 				if(channel.getWaveName() == waveNames[idxWave] or find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), channel.getWaveName()) != waveNameAlternatives[idxWave].end()) {
-					_waveComponentChannel[idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
+					for(size_t i = 0; i < channel.getBins().size(); ++i) {
+						const size_t idxBin = channel.getBins()[i];
 
-					if((anchorWaveName == waveNames[idxWave] or find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), anchorWaveName) != waveNameAlternatives[idxWave].end()) and anchorComponentName == component->getName()) {
+						_waveComponentChannel[idxBin][idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
+					}
+
+					if(anchorWaveName == waveNames[idxWave] and anchorComponentName == component->getName()) {
+						if(_idxAnchorWave != std::numeric_limits<size_t>::max() and _idxAnchorWave != idxWave) {;
+							printErr << "second anchor wave found." << std::endl;
+							return false;
+						}
 						_idxAnchorWave = idxWave;
+
+						if(_idxAnchorComponent != std::numeric_limits<size_t>::max() and _idxAnchorComponent != idxComponent) {;
+							printErr << "second anchor component found." << std::endl;
+							return false;
+						}
 						_idxAnchorComponent = idxComponent;
-						_idxAnchorChannel = idxChannel;
+
+						for(size_t i = 0; i < channel.getBins().size(); ++i) {
+							const size_t idxBin = channel.getBins()[i];
+
+							if(_idxAnchorChannel[idxBin] != std::numeric_limits<size_t>::max()) {
+								printErr << "second anchor channel found." << std::endl;
+								return false;
+							}
+							_idxAnchorChannel[idxBin] = idxChannel;
+						}
 					}
 				}
 			} // end loop over channels
@@ -191,38 +220,113 @@ rpwa::massDepFit::model::initMapping(const std::vector<std::string>& waveNames,
 	}
 
 	// test that anchor wave is present
-	if(_idxAnchorWave == std::numeric_limits<size_t>::max() || _idxAnchorComponent == std::numeric_limits<size_t>::max() || _idxAnchorChannel == std::numeric_limits<size_t>::max()) {
+	if(_idxAnchorWave == std::numeric_limits<size_t>::max() or _idxAnchorComponent == std::numeric_limits<size_t>::max() or find(_idxAnchorChannel.begin(), _idxAnchorChannel.end(), std::numeric_limits<size_t>::max()) != _idxAnchorChannel.end()) {
 		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << std::endl;
 		return false;
 	}
-	if(_idxAnchorChannel != 0) {
-		printErr << "anchor wave '" << anchorWaveName << "' has to be first channel in anchor component '" << anchorComponentName << "'." << std::endl;
-		return false;
-	}
 	const componentPtr& anchorComponent = _components[_idxAnchorComponent];
-	anchorComponent->setChannelAnchor(_idxAnchorChannel, true);
-	_nrParameters -= anchorComponent->getChannel(_idxAnchorChannel).getNrBins();
-
-	std::ostringstream output;
-	for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
-		output << "    wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
-		for(size_t idxComponents=0; idxComponents<_waveComponentChannel[idxWave].size(); idxComponents++) {
-			const size_t idxComponent = _waveComponentChannel[idxWave][idxComponents].first;
-			const componentConstPtr& component = _components[idxComponent];
-			output << "        component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
-			if(_idxAnchorWave == idxWave && _idxAnchorComponent == idxComponent) {
-				output << " (anchor)";
+	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+		size_t firstChannel = 0;
+		// loop over channels of component and see if wave is there
+		for(size_t idxChannel = 0; idxChannel < anchorComponent->getNrChannels(); ++idxChannel) {
+			const channel& channel = anchorComponent->getChannel(idxChannel);
+			const std::vector<size_t>& bins = channel.getBins();
+			if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
+				firstChannel = idxChannel;
+				break;
 			}
-			output << std::endl;
+		}
+
+		if(_idxAnchorChannel[idxBin] != firstChannel) {
+			printErr << "anchor wave '" << anchorWaveName << "' has to be channel number " << firstChannel << " in anchor component '" << anchorComponentName << "' in bin " << idxBin << "." << std::endl;
+			return false;
 		}
 	}
-	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		const componentConstPtr& component = _components[idxComponent];
+	anchorComponent->setChannelAnchor(_idxAnchorChannel);
+	_nrParameters -= nrBins;
 
-		output << "    component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
-		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-			const channel& channel = component->getChannel(idxChannel);
-			output << "        channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor() ? " (anchor)" : "") << std::endl;
+	// can we simplify stuff by assuming all bins have the same mapping?
+	_mappingEqualInAllBins = true;
+	for(size_t idxBin = 1; idxBin < nrBins; ++idxBin) {
+		if(_idxAnchorChannel[idxBin] != _idxAnchorChannel[0]) {
+			_mappingEqualInAllBins = false;
+			break;
+		}
+		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+			if(_waveComponentChannel[idxBin][idxWave] != _waveComponentChannel[0][idxWave]) {
+				_mappingEqualInAllBins = false;
+				break;
+			}
+		}
+		if(not _mappingEqualInAllBins) {
+			break;
+		}
+	}
+
+	std::ostringstream output;
+	if(_mappingEqualInAllBins) {
+		const size_t idxBin = 0;
+		for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
+			output << "    wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
+			for(size_t idxComponents = 0; idxComponents < _waveComponentChannel[idxBin][idxWave].size(); idxComponents++) {
+				const size_t idxComponent = _waveComponentChannel[idxBin][idxWave][idxComponents].first;
+				const componentConstPtr& component = _components[idxComponent];
+				output << "        component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
+				if(_idxAnchorWave == idxWave and _idxAnchorComponent == idxComponent) {
+					output << " (anchor)";
+				}
+				output << std::endl;
+			}
+		}
+		for(size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
+			const componentConstPtr& component = _components[idxComponent];
+
+			bool printedHeader = false;
+			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+				const channel& channel = component->getChannel(idxChannel);
+				const std::vector<size_t>& bins = channel.getBins();
+				if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
+					if(not printedHeader) {
+						output << "    component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+						printedHeader = true;
+					}
+
+					output << "        channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor(idxBin) ? " (anchor)" : "") << std::endl;
+				}
+			}
+		}
+	} else {
+		for(size_t idxBin = 0; idxBin < nrBins; idxBin++) {
+			output << "    mapping used in bin " << idxBin << std::endl;
+			for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
+				output << "        wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
+				for(size_t idxComponents = 0; idxComponents < _waveComponentChannel[idxBin][idxWave].size(); idxComponents++) {
+					const size_t idxComponent = _waveComponentChannel[idxBin][idxWave][idxComponents].first;
+					const componentConstPtr& component = _components[idxComponent];
+					output << "            component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
+					if(_idxAnchorWave == idxWave and _idxAnchorComponent == idxComponent) {
+						output << " (anchor)";
+					}
+					output << std::endl;
+				}
+			}
+			for(size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
+				const componentConstPtr& component = _components[idxComponent];
+
+				bool printedHeader = false;
+				for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+					const channel& channel = component->getChannel(idxChannel);
+					const std::vector<size_t>& bins = channel.getBins();
+					if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
+						if(not printedHeader) {
+							output << "        component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+							printedHeader = true;
+						}
+
+						output << "            channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor(idxBin) ? " (anchor)" : "") << std::endl;
+					}
+				}
+			}
 		}
 	}
 	printInfo << waveNames.size() << " waves and " << _components.size() << " components in fit model:" << std::endl
@@ -258,6 +362,8 @@ rpwa::massDepFit::model::importParameters(const double* par,
 	if(_fsmd) {
 		parcount += _fsmd->importParameters(&par[parcount], parameters, cache);
 	}
+
+	assert(_nrParameters == parcount);
 }
 
 
@@ -280,7 +386,7 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 	std::complex<double> prodAmp(0., 0.);
 
 	// get entry from mapping
-	const std::vector<std::pair<size_t, size_t> >& components = _waveComponentChannel[idxWave];
+	const std::vector<std::pair<size_t, size_t> >& components = _waveComponentChannel[idxBin][idxWave];
 	const size_t nrComponents = components.size();
 
 	for(size_t idxComponents = 0; idxComponents < nrComponents; ++idxComponents) {

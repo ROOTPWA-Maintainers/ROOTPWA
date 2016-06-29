@@ -220,7 +220,9 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 		const rpwa::massDepFit::componentConstPtr comp = _fitModel.getComponent(idxComponent);
 		for(size_t idxCoupling=0; idxCoupling<comp->getNrCouplings(); ++idxCoupling) {
 			const rpwa::massDepFit::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
-			for(size_t idxBin=0; idxBin<channel.getNrBins(); ++idxBin) {
+			const std::vector<size_t>& bins = channel.getBins();
+			for(size_t i = 0; i < bins.size(); ++i) {
+				const size_t idxBin = bins[i];
 				std::ostringstream prefixName;
 				prefixName << "coupling__bin"
 				           << idxBin
@@ -250,7 +252,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 					                             parameter.real());
 					++parcount;
 
-					if(not channel.isAnchor()) {
+					if(not channel.isAnchor(idxBin)) {
 						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
 						_minimizer->SetFixedVariable(parcount,
 						                             prefixName.str() + "__imag",
@@ -265,7 +267,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 					                        0.1);
 					++parcount;
 
-					if(not channel.isAnchor()) {
+					if(not channel.isAnchor(idxBin)) {
 						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
 						_minimizer->SetVariable(parcount,
 						                        prefixName.str() + "__imag",
@@ -281,9 +283,13 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	// second eventually add all branchings
 	if(_fitModel.useBranchings()) {
 		for(size_t idxComponent=0; idxComponent<_fitModel.getNrComponents(); ++idxComponent) {
-			const rpwa::massDepFit::componentConstPtr comp = _fitModel.getComponent(idxComponent);
-			// branching with idxChannel 0 is always real and fixed to 1
-			for(size_t idxBranching=1; idxBranching<comp->getNrBranchings(); ++idxBranching) {
+			const rpwa::massDepFit::componentConstPtr& comp = _fitModel.getComponent(idxComponent);
+			for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
+				// skip branchings that are always real and fixed to 1
+				if(comp->isBranchingFixed(idxBranching)) {
+					continue;
+				}
+
 				const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
 				const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
 				std::ostringstream prefixName;

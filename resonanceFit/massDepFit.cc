@@ -676,7 +676,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
@@ -731,7 +731,8 @@ bool
 rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
                                    rpwa::massDepFit::function& fitFunction)
 {
-	if(not fitModel.init(_waveNames,
+	if(not fitModel.init(_nrBins,
+	                     _waveNames,
 	                     _waveNameAlternatives,
 	                     _anchorWaveName,
 	                     _anchorComponentName)) {
@@ -1236,6 +1237,9 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
+	}
+	for(std::vector<std::string>::const_iterator it = waveNames.begin(); it != waveNames.end(); ++it) {
+		_waveBins[*it].push_back(idxBin);
 	}
 	_inProductionAmplitudes[idxBin] = tempProductionAmplitudes;
 	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
@@ -1894,7 +1898,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(_nrBins != 1 and _sameMassBinning) {
+	if(_nrBins != 1 and _sameMassBinning and fitModel.isMappingEqualInAllBins()) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			if(not createPlotsWaveSum(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
@@ -1964,7 +1968,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
 	graphs.Add(phaseSpace, "L");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxBin, idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
@@ -2079,7 +2083,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	}
 
 	// all mass binnings must be the same to be able to create the sum plots
-	if(not _sameMassBinning) {
+	if(not _sameMassBinning or not fitModel.isMappingEqualInAllBins()) {
 		printErr << "cannot create plots for wave '" << _waveNames[idxWave] << "' for sum over all bins if the bins used different mass binnings." << std::endl;
 		return false;
 	}
@@ -2102,7 +2106,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	fit->SetMarkerColor(kRed);
 	graphs.Add(fit, "L");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxBin, idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;

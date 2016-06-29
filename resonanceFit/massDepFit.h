@@ -244,6 +244,7 @@ namespace rpwa {
 			std::vector<std::string> _waveNames;
 			std::vector<std::vector<std::string> > _waveNameAlternatives;
 			std::map<std::string, size_t> _waveIndices;
+			std::map<std::string, std:: vector<size_t> > _waveBins;
 			std::vector<std::pair<double, double> > _waveMassLimits;
 			boost::multi_array<std::pair<size_t, size_t>, 2> _waveMassBinLimits;
 			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;

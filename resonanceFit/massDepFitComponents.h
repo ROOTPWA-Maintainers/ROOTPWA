@@ -60,6 +60,7 @@ namespace rpwa {
 
 			channel(const size_t waveIdx,
 			        const std::string& waveName,
+			        const std::vector<size_t>& bins,
 			        const std::vector<size_t>& nrMassBins,
 			        const boost::multi_array<double, 2>& massBinCenters,
 			        const boost::multi_array<double, 2>& phaseSpace);
@@ -67,10 +68,10 @@ namespace rpwa {
 			size_t getWaveIdx() const { return _waveIdx; }
 			const std::string& getWaveName() const { return _waveName; }
 
-			bool isAnchor() const { return _anchor; }
-			void setAnchor(const bool anchor) { _anchor = anchor; }
+			bool isAnchor(const size_t idxBin) const { return _anchor[idxBin]; }
+			void setAnchor(const size_t idxBin) { _anchor[idxBin] = true; }
 
-			size_t getNrBins() const { return _nrBins; }
+			const std::vector<size_t>& getBins() const { return _bins; }
 
 			double getPhaseSpace(const size_t idxBin,
 			                     const double mass,
@@ -81,9 +82,9 @@ namespace rpwa {
 			const size_t _waveIdx;
 			const std::string _waveName;
 
-			bool _anchor;
+			std::vector<bool> _anchor;
 
-			size_t _nrBins;
+			std::vector<size_t> _bins;
 
 			boost::multi_array<double, 2> _phaseSpace;
 			std::vector<std::shared_ptr<const ROOT::Math::Interpolator> > _interpolator;
@@ -111,6 +112,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -132,7 +134,7 @@ namespace rpwa {
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			const channel& getChannelFromBranchingIdx(const size_t i) const { return _channels[_channelsFromBranching[i]]; }
 			const channel& getChannelFromCouplingIdx(const size_t i) const { return _channels[_channelsFromCoupling[i]]; }
-			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
+			void setChannelAnchor(const std::vector<size_t>& channels);
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t importCouplings(const double* par,
@@ -144,12 +146,13 @@ namespace rpwa {
 			                        rpwa::massDepFit::parameters& fitParameters,
 			                        rpwa::massDepFit::cache& cache);
 
-			bool isEqualInAllBins() const { return _equalInAllBins; }
-
 			size_t getNrParameters() const { return _nrParameters; }
 			virtual size_t importParameters(const double* par,
 			                                rpwa::massDepFit::parameters& fitParameters,
 			                                rpwa::massDepFit::cache& cache);
+
+			bool isEqualInAllBins() const { return _equalInAllBins; }
+			bool isBranchingFixed(const size_t idxBranching) const { return _branchingsFixed[idxBranching]; }
 
 			virtual double getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
 			virtual double getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
@@ -194,6 +197,8 @@ namespace rpwa {
 			size_t _nrCouplings;
 			size_t _nrBranchings;
 
+			std::vector<bool> _branchingsFixed;
+
 		protected:
 
 			std::vector<double> _parametersStart;
@@ -224,6 +229,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -257,6 +263,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -303,6 +310,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -349,6 +357,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -382,6 +391,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -426,6 +436,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -469,6 +480,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
@@ -513,6 +525,7 @@ namespace rpwa {
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
+			                  const std::map<std::string, std::vector<size_t> >& waveBins,
 			                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                  const bool useBranchings,
 			                  const bool debug);
