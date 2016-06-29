@@ -182,6 +182,7 @@ namespace rpwa {
 			bool readFitResultMatrices(TTree* tree,
 			                           rpwa::fitResult* fit,
 			                           const std::vector<Long64_t>& mapping,
+			                           std::vector<std::string>& waveNames,
 			                           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
 			                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
@@ -191,6 +192,7 @@ namespace rpwa {
 			bool readFitResultIntegrals(TTree* tree,
 			                            rpwa::fitResult* fit,
 			                            const std::vector<Long64_t>& mapping,
+			                            const std::vector<std::string>& waveNames,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
 			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
