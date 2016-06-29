@@ -117,17 +117,15 @@ namespace rpwa {
 
 		private:
 
-			bool initMapping(const std::string& anchorWaveName,
+			bool initMapping(const std::vector<std::string>& waveNames,
+			                 const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
-
-			std::vector<std::string> _waveNames;
-
-			size_t _nrParameters;
 
 			std::vector<rpwa::massDepFit::componentPtr> _components;
 
 			rpwa::massDepFit::fsmdPtr _fsmd;
 
+			size_t _nrParameters;
 			size_t _maxChannelsInComponent;
 			size_t _maxParametersInComponent;
 

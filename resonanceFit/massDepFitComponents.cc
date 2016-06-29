@@ -40,21 +40,21 @@
 
 rpwa::massDepFit::channel::channel(const size_t waveIdx,
                                    const std::string& waveName,
-                                   const size_t nrBins,
                                    const std::vector<size_t>& nrMassBins,
                                    const boost::multi_array<double, 2>& massBinCenters,
                                    const boost::multi_array<double, 2>& phaseSpace)
 	: _waveIdx(waveIdx),
 	  _waveName(waveName),
 	  _anchor(false),
-	  _nrBins(nrBins),
-	  _nrMassBins(nrMassBins),
 	  _phaseSpace(phaseSpace)
 {
+	_nrBins = nrMassBins.size();
+	assert(_nrBins == massBinCenters.shape()[0] and _nrBins == _phaseSpace.shape()[0]);
+
 	_interpolator.resize(_nrBins);
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
-		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
+		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
+		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
 		_interpolator[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 	}
 }
@@ -89,10 +89,8 @@ bool
 rpwa::massDepFit::component::init(const YAML::Node& configComponent,
                                   rpwa::massDepFit::parameters& fitParameters,
                                   rpwa::massDepFit::parameters& fitParametersError,
-                                  const size_t nrBins,
                                   const std::vector<size_t>& nrMassBins,
                                   const boost::multi_array<double, 2>& massBinCenters,
-                                  const bool sameMassBinning,
                                   const std::map<std::string, size_t>& waveIndices,
                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                   const bool useBranchings,
@@ -102,13 +100,32 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'component' for component '" << getName() << "'." << std::endl;
 	}
 
+	const size_t nrBins = nrMassBins.size();
+	assert(nrBins == massBinCenters.shape()[0] and nrBins == phaseSpaceIntegrals.shape()[0]);
+
 	// resize fitParameters without affecting the number of channels first
 	// as this is not yet known
 	fitParameters.resize(_id+1, 0, _nrParameters, nrBins);
 	fitParametersError.resize(_id+1, 0, _nrParameters, nrBins);
 
-	// all bins have the same mass binning, this can be used in the caching
-	_equalInAllBins &= sameMassBinning;
+	// check if all bins have the same mass binning
+	if(_equalInAllBins) {
+		for(size_t idxBin = 1; idxBin < nrBins; ++idxBin) {
+			if(nrMassBins[idxBin] != nrMassBins[0]) {
+				_equalInAllBins = false;
+				break;
+			}
+			for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
+				if(massBinCenters[idxBin][idxMass] != massBinCenters[0][idxMass]) {
+					_equalInAllBins = false;
+					break;
+				}
+			}
+			if(not _equalInAllBins) {
+				break;
+			}
+		}
+	}
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
@@ -216,11 +233,13 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 			}
 		}
 
+		// get index of wave in array for wave names, phase-space integrals, ...
 		const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
 		if(it == waveIndices.end()) {
 			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
 			return false;
 		}
+		const size_t waveIdx = it->second;
 
 		bool readCouplings = true;
 		bool readBranching = false;
@@ -329,14 +348,14 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 				return false;
 			}
 
-				if(not checkVariableType(configBranching[0], YamlCppUtils::TypeFloat)) {
-					printErr << "real part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-					return false;
-				}
-				if(not checkVariableType(configBranching[1], YamlCppUtils::TypeFloat)) {
-					printErr << "imaginary part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-					return false;
-				}
+			if(not checkVariableType(configBranching[0], YamlCppUtils::TypeFloat)) {
+				printErr << "real part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+				return false;
+			}
+			if(not checkVariableType(configBranching[1], YamlCppUtils::TypeFloat)) {
+				printErr << "imaginary part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
+				return false;
+			}
 
 			double branchingReal = configBranching[0].as<double>();
 			double branchingImag = configBranching[1].as<double>();
@@ -357,8 +376,8 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 			++_nrBranchings;
 		}
 
-		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][it->second]];
-		_channels.push_back(rpwa::massDepFit::channel(it->second, waveName, nrBins, nrMassBins, massBinCenters, view));
+		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][waveIdx]];
+		_channels.push_back(rpwa::massDepFit::channel(waveIdx, waveName, nrMassBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
 
@@ -641,10 +660,8 @@ bool
 rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError,
-                                              const size_t nrBins,
                                               const std::vector<size_t>& nrMassBins,
                                               const boost::multi_array<double, 2>& massBinCenters,
-                                              const bool sameMassBinning,
                                               const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool useBranchings,
@@ -654,7 +671,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -775,10 +792,8 @@ bool
 rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponent,
                                                 rpwa::massDepFit::parameters& fitParameters,
                                                 rpwa::massDepFit::parameters& fitParametersError,
-                                                const size_t nrBins,
                                                 const std::vector<size_t>& nrMassBins,
                                                 const boost::multi_array<double, 2>& massBinCenters,
-                                                const bool sameMassBinning,
                                                 const std::map<std::string, size_t>& waveIndices,
                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                 const bool useBranchings,
@@ -788,7 +803,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponen
 		printDebug << "start initializing 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1047,10 +1062,8 @@ bool
 rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configComponent,
                                                  rpwa::massDepFit::parameters& fitParameters,
                                                  rpwa::massDepFit::parameters& fitParametersError,
-                                                 const size_t nrBins,
                                                  const std::vector<size_t>& nrMassBins,
                                                  const boost::multi_array<double, 2>& massBinCenters,
-                                                 const bool sameMassBinning,
                                                  const std::map<std::string, size_t>& waveIndices,
                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                  const bool useBranchings,
@@ -1060,7 +1073,7 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configCompone
 		printDebug << "start initializing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1340,10 +1353,8 @@ bool
 rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
                                            rpwa::massDepFit::parameters& fitParameters,
                                            rpwa::massDepFit::parameters& fitParametersError,
-                                           const size_t nrBins,
                                            const std::vector<size_t>& nrMassBins,
                                            const boost::multi_array<double, 2>& massBinCenters,
-                                           const bool sameMassBinning,
                                            const std::map<std::string, size_t>& waveIndices,
                                            const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                            const bool useBranchings,
@@ -1353,7 +1364,7 @@ rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'constantBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1435,10 +1446,8 @@ bool
 rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError,
-                                              const size_t nrBins,
                                               const std::vector<size_t>& nrMassBins,
                                               const boost::multi_array<double, 2>& massBinCenters,
-                                              const bool sameMassBinning,
                                               const std::map<std::string, size_t>& waveIndices,
                                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                               const bool useBranchings,
@@ -1448,7 +1457,9 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 		printDebug << "start initializing 'exponentialBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	const size_t nrBins = nrMassBins.size();
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1642,10 +1653,8 @@ bool
 rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configComponent,
                                                   rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::parameters& fitParametersError,
-                                                  const size_t nrBins,
                                                   const std::vector<size_t>& nrMassBins,
                                                   const boost::multi_array<double, 2>& massBinCenters,
-                                                  const bool sameMassBinning,
                                                   const std::map<std::string, size_t>& waveIndices,
                                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                   const bool useBranchings,
@@ -1655,7 +1664,9 @@ rpwa::massDepFit::tPrimeDependentBackground::init(const YAML::Node& configCompon
 		printDebug << "start initializing 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	const size_t nrBins = nrMassBins.size();
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -1864,10 +1875,8 @@ bool
 rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configComponent,
                                                       rpwa::massDepFit::parameters& fitParameters,
                                                       rpwa::massDepFit::parameters& fitParametersError,
-                                                      const size_t nrBins,
                                                       const std::vector<size_t>& nrMassBins,
                                                       const boost::multi_array<double, 2>& massBinCenters,
-                                                      const bool sameMassBinning,
                                                       const std::map<std::string, size_t>& waveIndices,
                                                       const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                       const bool useBranchings,
@@ -1877,7 +1886,9 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 		printDebug << "start initializing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	const size_t nrBins = nrMassBins.size();
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
@@ -2087,10 +2098,8 @@ bool
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& configComponent,
                                                           rpwa::massDepFit::parameters& fitParameters,
                                                           rpwa::massDepFit::parameters& fitParametersError,
-                                                          const size_t nrBins,
                                                           const std::vector<size_t>& nrMassBins,
                                                           const boost::multi_array<double, 2>& massBinCenters,
-                                                          const bool sameMassBinning,
                                                           const std::map<std::string, size_t>& waveIndices,
                                                           const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                                           const bool useBranchings,
@@ -2100,7 +2109,9 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& conf
 		printDebug << "start initializing 'tPrimeDependentBackgroundIntegral' for component '" << getName() << "'." << std::endl;
 	}
 
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrBins, nrMassBins, massBinCenters, sameMassBinning, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
+	const size_t nrBins = nrMassBins.size();
+
+	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, phaseSpaceIntegrals, useBranchings, debug)) {
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
