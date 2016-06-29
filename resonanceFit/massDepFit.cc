@@ -1225,13 +1225,14 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 		}
 	}
 
+	std::vector<std::string> waveNames;
 	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
 	boost::multi_array<double, 3> tempIntensities;
 	boost::multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(inTree, inFit, inMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	if(not readFitResultMatrices(inTree, inFit, inMapping, waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
@@ -1249,7 +1250,7 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 	}
 
 	boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
-	if(not readFitResultIntegrals(inTree, inFit, inMapping, tempPhaseSpaceIntegrals)) {
+	if(not readFitResultIntegrals(inTree, inFit, inMapping, waveNames, tempPhaseSpaceIntegrals)) {
 		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
@@ -1353,13 +1354,14 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 		return false;
 	}
 
+	std::vector<std::string> waveNames;
 	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
 	boost::multi_array<double, 3> tempIntensities;
 	boost::multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
 		delete sysFile;
@@ -1546,6 +1548,7 @@ bool
 rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
                                                     rpwa::fitResult* fit,
                                                     const std::vector<Long64_t>& mapping,
+                                                    std::vector<std::string>& waveNames,
                                                     boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                                     boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
                                                     boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
@@ -1560,6 +1563,32 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 	if(_debug) {
 		printDebug << "reading spin-density matrices for " << _nrWaves << " waves from fit result." << std::endl;
+	}
+
+	// read wave names from first fit result in tree
+	waveNames.resize(_nrWaves);
+	if(tree->GetEntry(0) == 0) {
+		printErr << "error while reading entry " << 0 << " from tree." << std::endl;
+		return false;
+	}
+	for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+		int idx = fit->waveIndex(_waveNames[idxWave]);
+		// try alternative wave names
+		for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
+			const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
+			if(altIdx != -1) {
+				if(idx != -1) {
+					printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
+					return false;
+				}
+				idx = altIdx;
+			}
+		}
+		if(idx == -1) {
+			printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
+			return false;
+		}
+		waveNames[idxWave] = fit->waveName(idx);
 	}
 
 	productionAmplitudes.resize(boost::extents[_maxMassBins][_nrWaves]);
@@ -1583,18 +1612,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 		spinDensityCovarianceMatrices[idxMass].ResizeTo(_nrWaves * (_nrWaves+1), _nrWaves * (_nrWaves+1));
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			int idx = fit->waveIndex(_waveNames[idxWave]);
-			// try alternative wave names
-			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
-				const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
-				if(altIdx != -1) {
-					if(idx != -1) {
-						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
-						return false;
-					}
-					idx = altIdx;
-				}
-			}
+			const int idx = fit->waveIndex(waveNames[idxWave]);
 			if(idx == -1) {
 				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
 				return false;
@@ -1604,18 +1622,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 			intensities[idxMass][idxWave][1] = fit->intensityErr(idx);
 
 			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-				int jdx = fit->waveIndex(_waveNames[jdxWave]);
-				// try alternative wave names
-				for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[jdxWave].size(); ++idxAlt) {
-					const int altJdx = fit->waveIndex(_waveNameAlternatives[jdxWave][idxAlt]);
-					if(altJdx != -1) {
-						if(jdx != -1) {
-							printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[jdxWave] << "'." << std::endl;
-							return false;
-						}
-						jdx = altJdx;
-					}
-				}
+				const int jdx = fit->waveIndex(waveNames[jdxWave]);
 				if(jdx == -1) {
 					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << std::endl;
 					return false;
@@ -1722,6 +1729,7 @@ bool
 rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
                                                      rpwa::fitResult* fit,
                                                      const std::vector<Long64_t>& mapping,
+                                                     const std::vector<std::string>& waveNames,
                                                      boost::multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	if(not tree or not fit) {
@@ -1745,24 +1753,7 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			int idx = fit->waveIndex(_waveNames[idxWave]);
-			// try alternative wave names
-			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
-				const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
-				if(altIdx != -1) {
-					if(idx != -1) {
-						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
-						return false;
-					}
-					idx = altIdx;
-				}
-			}
-			if(idx == -1) {
-				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
-				return false;
-			}
-
-			const double ps = fit->phaseSpaceIntegral(idx);
+			const double ps = fit->phaseSpaceIntegral(waveNames[idxWave]);
 			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
