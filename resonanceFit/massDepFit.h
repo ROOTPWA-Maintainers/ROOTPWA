@@ -182,6 +182,7 @@ namespace rpwa {
 			bool readFitResultMatrices(TTree* tree,
 			                           rpwa::fitResult* fit,
 			                           const std::vector<Long64_t>& mapping,
+			                           const double rescaleErrors,
 			                           std::vector<std::string>& waveNames,
 			                           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
@@ -232,6 +233,7 @@ namespace rpwa {
 			bool _sysPlotting;
 			std::vector<std::string> _sysFileNames;
 
+			std::vector<double> _rescaleErrors;
 			std::vector<double> _tPrimeMeans;
 
 			bool _sameMassBinning;

@@ -278,6 +278,21 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& config
 		if(_debug) {
 			printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
 		}
+
+		if(configInputFitResult["rescaleErrors"]) {
+			if(checkVariableType(configInputFitResult["rescaleErrors"], YamlCppUtils::TypeFloat)) {
+				_rescaleErrors.push_back(configInputFitResult["rescaleErrors"].as<double>());
+			} else {
+				printErr << "variable 'rescaleErrors' of 'fitresults' entry at index " << idxFitResult << " is not a floating point number." << std::endl;
+				return false;
+			}
+		} else {
+			_rescaleErrors.push_back(1.);
+		}
+
+		if(_debug) {
+			printDebug << "rescale errors by factor: '" << _rescaleErrors.back() << "'." << std::endl;
+		}
 	}
 
 	_nrBins = _inFileName.size();
@@ -886,6 +901,11 @@ rpwa::massDepFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutp
 		yamlOutput << YAML::Key << "tPrimeMean";
 		yamlOutput << YAML::Value << _tPrimeMeans[idxBin];
 
+		if(_rescaleErrors[idxBin] != 1.) {
+			yamlOutput << YAML::Key << "rescaleErrors";
+			yamlOutput << YAML::Value << _rescaleErrors[idxBin];
+		}
+
 		yamlOutput << YAML::EndMap;
 	}
 
@@ -1232,7 +1252,7 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
 	boost::multi_array<double, 3> tempIntensities;
 	boost::multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(inTree, inFit, inMapping, waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	if(not readFitResultMatrices(inTree, inFit, inMapping, _rescaleErrors[idxBin], waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
@@ -1364,7 +1384,7 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
 	boost::multi_array<double, 3> tempIntensities;
 	boost::multi_array<double, 4> tempPhases;
-	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
+	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, _rescaleErrors[0], waveNames, tempProductionAmplitudes, tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices, tempIntensities, tempPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
 		delete sysFile;
@@ -1551,6 +1571,7 @@ bool
 rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
                                                     rpwa::fitResult* fit,
                                                     const std::vector<Long64_t>& mapping,
+                                                    const double rescaleErrors,
                                                     std::vector<std::string>& waveNames,
                                                     boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                                     boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
@@ -1622,7 +1643,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 			}
 
 			intensities[idxMass][idxWave][0] = fit->intensity(idx);
-			intensities[idxMass][idxWave][1] = fit->intensityErr(idx);
+			intensities[idxMass][idxWave][1] = fit->intensityErr(idx) * sqrt(rescaleErrors);
 
 			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 				const int jdx = fit->waveIndex(waveNames[jdxWave]);
@@ -1632,12 +1653,12 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 				}
 
 				phases[idxMass][idxWave][jdxWave][0] = fit->phase(idx, jdx);
-				phases[idxMass][idxWave][jdxWave][1] = fit->phaseErr(idx, jdx);
+				phases[idxMass][idxWave][jdxWave][1] = fit->phaseErr(idx, jdx) * sqrt(rescaleErrors);
 
 				spinDensityMatrices[idxMass][idxWave][jdxWave] = fit->spinDensityMatrixElem(idx, jdx);
 
 				if(jdxWave >= idxWave) {
-					const TMatrixT<double> spinDensityMatrixElemCov = fit->spinDensityMatrixElemCov(idx, jdx);
+					const TMatrixT<double> spinDensityMatrixElemCov = fit->spinDensityMatrixElemCov(idx, jdx) * rescaleErrors;
 
 					const size_t idxCov = _nrWaves*(_nrWaves+1) - (_nrWaves-idxWave)*(_nrWaves-idxWave+1) + 2*(jdxWave-idxWave);
 					spinDensityCovarianceMatrices[idxMass].SetSub(idxCov, idxCov, spinDensityMatrixElemCov);
@@ -1670,7 +1691,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 			prodAmpIndicesForCov[idxWave] = idxProdAmp;
 		}
-		const TMatrixT<double> prodAmpCov = fit->prodAmpCov(prodAmpIndicesForCov);
+		const TMatrixT<double> prodAmpCov = fit->prodAmpCov(prodAmpIndicesForCov) * rescaleErrors;
 		productionAmplitudesCovariance[idxMass].ResizeTo(prodAmpCov);
 		productionAmplitudesCovariance[idxMass] = prodAmpCov;
 
