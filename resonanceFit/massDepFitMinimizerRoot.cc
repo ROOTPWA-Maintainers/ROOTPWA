@@ -44,11 +44,6 @@
 #include "reportingUtils.hpp"
 
 
-const unsigned int rpwa::massDepFit::minimizerRoot::maxNmbOfIterations    = 20000;
-const unsigned int rpwa::massDepFit::minimizerRoot::maxNmbOfFunctionCalls = 2000000;
-const bool         rpwa::massDepFit::minimizerRoot::runHesse              = true;
-
-
 rpwa::massDepFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::massDepFit::function& fitFunction)
 	: _fitFunction(fitFunction)
 {
@@ -85,7 +80,10 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
                                                const bool quiet)
 	: _fitModel(fitModel),
 	  _functionAdaptor(fitFunction),
-	  _freeParameters(freeParameters)
+	  _freeParameters(freeParameters),
+	  _maxNmbOfIterations(20000),
+	  _maxNmbOfFunctionCalls(5 * _maxNmbOfIterations * fitFunction.getNrParameters()),
+	  _runHesse(true)
 {
 	// setup minimizer
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
@@ -99,8 +97,8 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 	_minimizer->SetStrategy        (minimizerStrategy);
 	_minimizer->SetTolerance       (minimizerTolerance);
 	_minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
-	_minimizer->SetMaxIterations   (maxNmbOfIterations);
-	_minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
+	_minimizer->SetMaxIterations   (_maxNmbOfIterations);
+	_minimizer->SetMaxFunctionCalls(_maxNmbOfFunctionCalls);
 
 	// special for Minuit2
 	if(dynamic_cast<ROOT::Minuit2::Minuit2Minimizer*>(_minimizer.get())) {
@@ -153,7 +151,7 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 		_fitModel.importParameters(_minimizer->X(), fitParameters, cache);
 	}
 
-	if (runHesse) {
+	if(_runHesse) {
 		printInfo << "calculating Hessian matrix." << std::endl;
 		success &= _minimizer->Hesse();
 

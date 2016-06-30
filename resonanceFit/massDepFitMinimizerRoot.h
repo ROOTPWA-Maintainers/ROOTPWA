@@ -103,9 +103,9 @@ namespace rpwa {
 
 			const std::vector<std::string> _freeParameters;
 
-			static const unsigned int maxNmbOfIterations;
-			static const unsigned int maxNmbOfFunctionCalls;
-			static const bool runHesse;
+			const unsigned int _maxNmbOfIterations;
+			const unsigned int _maxNmbOfFunctionCalls;
+			const bool _runHesse;
 
 		};
 
