@@ -74,6 +74,7 @@ rpwa::massDepFit::minimizerRoot::functionAdaptor::DoEval(const double* par) cons
 rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fitModel,
                                                const rpwa::massDepFit::function& fitFunction,
                                                const std::vector<std::string>& freeParameters,
+                                               const unsigned int maxNmbOfFunctionCalls,
                                                const std::string minimizerType[],
                                                const int minimizerStrategy,
                                                const double minimizerTolerance,
@@ -82,7 +83,7 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::model& fi
 	  _functionAdaptor(fitFunction),
 	  _freeParameters(freeParameters),
 	  _maxNmbOfIterations(20000),
-	  _maxNmbOfFunctionCalls(5 * _maxNmbOfIterations * fitFunction.getNrParameters()),
+	  _maxNmbOfFunctionCalls((maxNmbOfFunctionCalls > 0) ? maxNmbOfFunctionCalls : (5 * _maxNmbOfIterations * fitFunction.getNrParameters())),
 	  _runHesse(true)
 {
 	// setup minimizer
@@ -137,6 +138,8 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 			return false;
 		}
 
+		_minimizer->SetMaxFunctionCalls(_maxNmbOfFunctionCalls);
+
 		printInfo << "performing minimization step " << step << ": '" << _freeParameters[step] << "' (" << _minimizer->NFree() << " free parameters)." << std::endl;
 		success &= _minimizer->Minimize();
 
@@ -149,9 +152,15 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 		// copy current parameters from minimizer
 		_fitModel.importParameters(_minimizer->Errors(), fitParametersError, cache);
 		_fitModel.importParameters(_minimizer->X(), fitParameters, cache);
+
+		if(_minimizer->NCalls() >= _maxNmbOfFunctionCalls) {
+			_maxNmbOfFunctionCalls = 0;
+			break;
+		}
+		_maxNmbOfFunctionCalls -= _minimizer->NCalls();
 	}
 
-	if(_runHesse) {
+	if(_runHesse and _maxNmbOfFunctionCalls != 0) {
 		printInfo << "calculating Hessian matrix." << std::endl;
 		success &= _minimizer->Hesse();
 
