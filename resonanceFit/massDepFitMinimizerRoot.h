@@ -78,6 +78,7 @@ namespace rpwa {
 			minimizerRoot(const rpwa::massDepFit::model& fitModel,
 			              const rpwa::massDepFit::function& fitFunction,
 			              const std::vector<std::string>& freeParameters,
+			              const unsigned int maxNmbOfFunctionCalls,
 			              const std::string minimizerType[],
 			              const int minimizerStrategy,
 			              const double minimizerTolerance,
@@ -103,9 +104,9 @@ namespace rpwa {
 
 			const std::vector<std::string> _freeParameters;
 
-			const unsigned int _maxNmbOfIterations;
-			const unsigned int _maxNmbOfFunctionCalls;
-			const bool _runHesse;
+			unsigned int _maxNmbOfIterations;
+			unsigned int _maxNmbOfFunctionCalls;
+			bool _runHesse;
 
 		};
 

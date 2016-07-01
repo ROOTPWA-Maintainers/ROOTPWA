@@ -58,9 +58,10 @@ usage(const std::string& progName,
 	          << std::endl
 	          << "usage:" << std::endl
 	          << progName
-	          << " [-o outfile -M minimizer -m algorithm -g # -t # -P -R -F # -A -B -C # -d -q -h] config file" << std::endl
+	          << " [-o outfile -c # -M minimizer -m algorithm -g # -t # -P -R -F # -A -B -C # -d -q -h] config file" << std::endl
 	          << "    where:" << std::endl
 	          << "        -o file    path to output file (default: 'mDep.result.root')" << std::endl
+	          << "        -c #       maximal number of function calls (default: depends on number of parameters)" << std::endl
 	          << "        -M name    minimizer (default: Minuit2)" << std::endl
 	          << "        -m name    minimization algorithm (optional, default: Migrad)" << std::endl
 	          << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << std::endl
@@ -111,28 +112,32 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
-	const std::string progName           = argv[0];
-	std::string       outFileName        = "mDep.result.root";     // output filename
-	std::string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-	int               minimizerStrategy  = 1;                      // minimizer strategy
-	double            minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool              onlyPlotting       = false;
-	bool              rangePlotting      = false;
-	size_t            extraBinning       = 1;
-	bool              doProdAmp          = false;
-	bool              doBranching        = false;
-	bool              debug              = false;
-	bool              quiet              = false;
+	const std::string progName                 = argv[0];
+	std::string       outFileName              = "mDep.result.root";     // output filename
+	unsigned int      maxNumberOfFunctionCalls = 0;
+	std::string       minimizerType[2]         = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	int               minimizerStrategy        = 1;                      // minimizer strategy
+	double            minimizerTolerance       = 1e-10;                  // minimizer tolerance
+	bool              onlyPlotting             = false;
+	bool              rangePlotting            = false;
+	size_t            extraBinning             = 1;
+	bool              doProdAmp                = false;
+	bool              doBranching              = false;
+	bool              debug                    = false;
+	bool              quiet                    = false;
 
 	rpwa::massDepFit::function::useCovarianceMatrix doCov = rpwa::massDepFit::function::useCovarianceMatrixDefault;
 
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRF:ABC:dqh")) != -1) {
+	while ((c = getopt(argc, argv, "o:c:M:m:g:t:PRF:ABC:dqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
+			break;
+		case 'c':
+			maxNumberOfFunctionCalls = atoi(optarg);
 			break;
 		case 'M':
 			minimizerType[0] = optarg;
@@ -195,6 +200,7 @@ main(int    argc,
 	printInfo << "running " << progName << " with the following parameters:" << std::endl
 	          << "    path to configuration file ..................... '" << configFileName << "'" << std::endl
 	          << "    path to output file ............................ '" << outFileName << "'" << std::endl
+	          << "    number of calls to fit function ................ "  << maxNumberOfFunctionCalls << std::endl
 	          << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << std::endl
 	          << "    minimizer strategy ............................. "  << minimizerStrategy  << std::endl
 	          << "    minimizer tolerance ............................ "  << minimizerTolerance << std::endl
@@ -248,6 +254,7 @@ main(int    argc,
 		rpwa::massDepFit::minimizerRoot minimizer(compset,
 		                                          fitFunction,
 		                                          mdepFit.getFreeParameters(),
+		                                          maxNumberOfFunctionCalls,
 		                                          minimizerType,
 		                                          minimizerStrategy,
 		                                          minimizerTolerance,
