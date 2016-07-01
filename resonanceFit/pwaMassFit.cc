@@ -220,9 +220,10 @@ main(int    argc,
 	// read configuration file
 	rpwa::massDepFit::parameters fitParameters;
 	rpwa::massDepFit::parameters fitParametersError;
+	int minStatus;
 	double chi2;
 	unsigned int ndf;
-	if(not mdepFit.readConfig(configRoot, compset, fitParameters, fitParametersError, chi2, ndf, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, compset, fitParameters, fitParametersError, minStatus, chi2, ndf, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -255,16 +256,14 @@ main(int    argc,
 		TStopwatch stopwatch;
 
 		stopwatch.Start();
-		const bool success = minimizer.minimize(fitParameters, fitParametersError, cache);
+		minStatus = minimizer.minimize(fitParameters, fitParametersError, cache);
 		stopwatch.Stop();
 
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 
+		printInfo << "minimizer status = " << minStatus << std::endl;
+
 		chi2 = fitFunction.chiSquare(fitParameters, cache);
-		if(not success) {
-			printInfo << "chi2 (if fit were successful) =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
-			chi2 = 0.;
-		}
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
 		const unsigned int nrDataPoints = fitFunction.getNrDataPoints();
@@ -287,7 +286,7 @@ main(int    argc,
 		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
 	std::ofstream configFile(confFileName.c_str());
-	if(not mdepFit.writeConfig(configFile, compset, fitParameters, fitParametersError, chi2, ndf)) {
+	if(not mdepFit.writeConfig(configFile, compset, fitParameters, fitParametersError, minStatus, chi2, ndf)) {
 		printErr << "error while writing result to configuration file." << std::endl;
 		return 1;
 	}

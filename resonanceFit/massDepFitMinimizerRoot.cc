@@ -121,7 +121,7 @@ rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
 }
 
 
-bool
+int
 rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParameters,
                                           rpwa::massDepFit::parameters& fitParametersError,
                                           rpwa::massDepFit::cache& cache)
@@ -191,7 +191,7 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 	printInfo << "minimization result:" << std::endl
 	          << output.str();
 
-	return success;
+	return _minimizer->Status();
 }
 
 
