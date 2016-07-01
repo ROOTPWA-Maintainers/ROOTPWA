@@ -45,9 +45,9 @@ namespace rpwa {
 
 			virtual unsigned int getNrFreeParameters() const = 0;
 
-			virtual bool minimize(rpwa::massDepFit::parameters& fitParameters,
-			                      rpwa::massDepFit::parameters& fitParametersError,
-			                      rpwa::massDepFit::cache& cache) = 0;
+			virtual int minimize(rpwa::massDepFit::parameters& fitParameters,
+			                     rpwa::massDepFit::parameters& fitParametersError,
+			                     rpwa::massDepFit::cache& cache) = 0;
 
 		};
 

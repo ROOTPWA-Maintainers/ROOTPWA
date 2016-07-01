@@ -80,6 +80,7 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                          rpwa::massDepFit::model& fitModel,
                                          rpwa::massDepFit::parameters& fitParameters,
                                          rpwa::massDepFit::parameters& fitParametersError,
+                                         int& minStatus,
                                          double& chi2,
                                          unsigned int& ndf,
                                          const std::string& valTreeName,
@@ -88,11 +89,12 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	// fit result information
 	const YAML::Node& configFitquality = configRoot["fitquality"];
 	if(configFitquality) {
-		if(not readConfigFitquality(configFitquality, chi2, ndf)) {
+		if(not readConfigFitquality(configFitquality, minStatus, chi2, ndf)) {
 			printErr << "error while reading 'fitquality' in configuration file." << std::endl;
 			return false;
 		}
 	} else {
+		minStatus = 0;
 		chi2 = 0.;
 		ndf = 0;
 	}
@@ -143,6 +145,7 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 bool
 rpwa::massDepFit::massDepFit::readConfigFitquality(const YAML::Node& configFitquality,
+                                                   int& minStatus,
                                                    double& chi2,
                                                    unsigned int& ndf) const
 {
@@ -155,17 +158,38 @@ rpwa::massDepFit::massDepFit::readConfigFitquality(const YAML::Node& configFitqu
 		return false;
 	}
 
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("chi2", YamlCppUtils::TypeFloat)
-	                     ("ndf", YamlCppUtils::TypeInt);
-	if(not checkIfAllVariablesAreThere(configFitquality, mandatoryArguments)) {
-		printErr << "'fitquality' does not contain all required variables." << std::endl;
-		return false;
+	if(configFitquality["minStatus"]) {
+		if(checkVariableType(configFitquality["minStatus"], YamlCppUtils::TypeInt)) {
+			minStatus = configFitquality["minStatus"].as<int>();
+		} else {
+			printErr << "variable 'minStatus' of 'fitquality' is not a floating point number." << std::endl;
+			return false;
+		}
+	} else {
+		minStatus = 0;
 	}
 
-	chi2 = configFitquality["chi2"].as<double>();
-	ndf = configFitquality["ndf"].as<unsigned int>();
+	if(configFitquality["chi2"]) {
+		if(checkVariableType(configFitquality["chi2"], YamlCppUtils::TypeFloat)) {
+			chi2 = configFitquality["chi2"].as<double>();
+		} else {
+			printErr << "variable 'chi2' of 'fitquality' is not a floating point number." << std::endl;
+			return false;
+		}
+	} else {
+		chi2 = 0.;
+	}
+
+	if(configFitquality["ndf"]) {
+		if(checkVariableType(configFitquality["ndf"], YamlCppUtils::TypeInt)) {
+			ndf = configFitquality["ndf"].as<unsigned int>();
+		} else {
+			printErr << "variable 'ndf' of 'fitquality' is not a floating point number." << std::endl;
+			return false;
+		}
+	} else {
+		ndf = 0;
+	}
 
 	return true;
 }
@@ -776,6 +800,7 @@ rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
                                           const rpwa::massDepFit::model& fitModel,
                                           const rpwa::massDepFit::parameters& fitParameters,
                                           const rpwa::massDepFit::parameters& fitParametersError,
+                                          const int minStatus,
                                           const double chi2,
                                           const unsigned int ndf) const
 {
@@ -788,7 +813,7 @@ rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
 
 	yamlOutput << YAML::Key << "fitquality";
 	yamlOutput << YAML::Value;
-	if(not writeConfigFitquality(yamlOutput, chi2, ndf)) {
+	if(not writeConfigFitquality(yamlOutput, minStatus, chi2, ndf)) {
 		printErr << "error while writing 'fitquality' to result file." << std::endl;
 		return false;
 	}
@@ -818,6 +843,7 @@ rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
 
 bool
 rpwa::massDepFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
+                                                    const int minStatus,
                                                     const double chi2,
                                                     const unsigned int ndf) const
 {
@@ -826,6 +852,8 @@ rpwa::massDepFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
 	}
 
 	yamlOutput << YAML::BeginMap;
+	yamlOutput << YAML::Key << "minStatus";
+	yamlOutput << YAML::Value << minStatus;
 	yamlOutput << YAML::Key << "chi2";
 	yamlOutput << YAML::Value << chi2;
 	yamlOutput << YAML::Key << "ndf";

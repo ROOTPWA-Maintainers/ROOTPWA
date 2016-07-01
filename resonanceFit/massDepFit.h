@@ -71,6 +71,7 @@ namespace rpwa {
 			                rpwa::massDepFit::model& fitModel,
 			                rpwa::massDepFit::parameters& fitParameters,
 			                rpwa::massDepFit::parameters& fitParametersError,
+			                int& minStatus,
 			                double& chi2,
 			                unsigned int& ndf,
 			                const std::string& valTreeName   = "pwa",
@@ -83,6 +84,7 @@ namespace rpwa {
 			                 const rpwa::massDepFit::model& fitModel,
 			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 const rpwa::massDepFit::parameters& fitParametersError,
+			                 const int minStatus,
 			                 const double chi2,
 			                 const unsigned int ndf) const;
 
@@ -109,6 +111,7 @@ namespace rpwa {
 			bool prepareMassLimit(const size_t idxBin);
 
 			bool readConfigFitquality(const YAML::Node& configFitquality,
+			                          int& minStatus,
 			                          double& chi2,
 			                          unsigned int& ndf) const;
 
@@ -133,6 +136,7 @@ namespace rpwa {
 			                         rpwa::massDepFit::parameters& fitParametersError) const;
 
 			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
+			                           const int minStatus,
 			                           const double chi2,
 			                           const unsigned int ndf) const;
 
