@@ -43,12 +43,13 @@
 #include <TMatrixT.h>
 #include <TVectorT.h>
 
+#include "massDepFitForward.h"
+
 namespace rpwa {
 
 	namespace massDepFit {
 
 		class cache;
-		class model;
 		class parameters;
 
 		class function {
@@ -66,7 +67,7 @@ namespace rpwa {
 			         const rpwa::massDepFit::function::useCovarianceMatrix useCovariance);
 			~function() {}
 
-			bool init(rpwa::massDepFit::model* compset,
+			bool init(const rpwa::massDepFit::modelConstPtr& fitModel,
 			          const std::vector<size_t>& nrMassBins,
 			          const boost::multi_array<double, 2>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -99,7 +100,7 @@ namespace rpwa {
 			double chiSquareSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
 			                                  rpwa::massDepFit::cache& cache) const;
 
-			rpwa::massDepFit::model* _compset;
+			rpwa::massDepFit::modelConstPtr _fitModel;
 
 			size_t _nrBins;
 			size_t _maxMassBins;

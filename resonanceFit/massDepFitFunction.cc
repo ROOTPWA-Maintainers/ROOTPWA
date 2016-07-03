@@ -75,7 +75,7 @@ rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
 
 
 bool
-rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
+rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel,
                                  const std::vector<size_t>& nrMassBins,
                                  const boost::multi_array<double, 2>& massBinCenters,
                                  const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -89,7 +89,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 		return false;
 	}
 
-	_compset = compset;
+	_fitModel = fitModel;
 
 	_nrMassBins = nrMassBins;
 
@@ -105,7 +105,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 	_wavePairMassBinLimits.resize(std::vector<size_t>(wavePairMassBinLimits.shape(), wavePairMassBinLimits.shape()+wavePairMassBinLimits.num_dimensions()));
 	_wavePairMassBinLimits = wavePairMassBinLimits;
 
-	_idxAnchorWave = _compset->getAnchorWave();
+	_idxAnchorWave = _fitModel->getAnchorWave();
 
 	_nrBins = _spinDensityMatrices.shape()[0];
 	_maxMassBins = _spinDensityMatrices.shape()[1];
@@ -568,7 +568,7 @@ rpwa::massDepFit::function::init(rpwa::massDepFit::model* compset,
 size_t
 rpwa::massDepFit::function::getNrParameters() const
 {
-	return _compset->getNrParameters();
+	return _fitModel->getNrParameters();
 }
 
 
@@ -623,18 +623,18 @@ rpwa::massDepFit::function::chiSquare(const double* par) const
 	// in C++11 we can use a static variable per thread so that the
 	// parameters are kept over function calls and we can implement some
 	// caching
-	thread_local rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
-	                                                        _compset->getMaxChannelsInComponent(),
-	                                                        _compset->getMaxParametersInComponent(),
+	thread_local rpwa::massDepFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
+	                                                        _fitModel->getMaxChannelsInComponent(),
+	                                                        _fitModel->getMaxParametersInComponent(),
 	                                                        _nrBins);
 	thread_local rpwa::massDepFit::cache cache(_nrWaves,
-	                                           _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
-	                                           _compset->getMaxChannelsInComponent(),
+	                                           _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
+	                                           _fitModel->getMaxChannelsInComponent(),
 	                                           _nrBins,
 	                                           _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
-	_compset->importParameters(par, fitParameters, cache);
+	_fitModel->importParameters(par, fitParameters, cache);
 
 	return chiSquare(fitParameters, cache);
 }
@@ -684,18 +684,18 @@ rpwa::massDepFit::function::logPriorLikelihood(const std::vector<double>& par) c
 double
 rpwa::massDepFit::function::logPriorLikelihood(const double* par) const
 {
-	rpwa::massDepFit::parameters fitParameters(_compset->getNrComponents()+1,           // nr components + final-state mass-dependence
-	                                           _compset->getMaxChannelsInComponent(),
-	                                           _compset->getMaxParametersInComponent(),
+	rpwa::massDepFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
+	                                           _fitModel->getMaxChannelsInComponent(),
+	                                           _fitModel->getMaxParametersInComponent(),
 	                                           _nrBins);
 	rpwa::massDepFit::cache cache(_nrWaves,
-	                              _compset->getNrComponents()+1,           // nr components + final-state mass-dependence
-	                              _compset->getMaxChannelsInComponent(),
+	                              _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
+	                              _fitModel->getMaxChannelsInComponent(),
 	                              _nrBins,
 	                              _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
-	_compset->importParameters(par, fitParameters, cache);
+	_fitModel->importParameters(par, fitParameters, cache);
 
 	return logPriorLikelihood(fitParameters);
 }
@@ -706,9 +706,9 @@ rpwa::massDepFit::function::logPriorLikelihood(const rpwa::massDepFit::parameter
 {
 	double logPrior = 0;
 
-	const size_t nrComponents = _compset->getNrComponents();
+	const size_t nrComponents = _fitModel->getNrComponents();
 	for (size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
-		const rpwa::massDepFit::componentConstPtr component = _compset->getComponent(idxComponent);
+		const rpwa::massDepFit::componentConstPtr& component = _fitModel->getComponent(idxComponent);
 
 		const size_t nrParameters = component->getNrParameters();
 		for (size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
@@ -741,7 +741,7 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 			const double mass = _massBinCenters[idxBin][idxMass];
 
 			// phase of fit in anchor wave
-			const std::complex<double> anchorFit = _compset->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
+			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
 			TVectorT<double> prodAmpDiffVect(2*_nrWaves);
@@ -755,7 +755,7 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 				}
 
 				// calculate target spin density matrix element
-				const std::complex<double> prodAmpFit = _compset->productionAmplitude(fitParameters, cache, idxWave, idxBin, mass, idxMass) / anchorFitPhase;
+				const std::complex<double> prodAmpFit = _fitModel->productionAmplitude(fitParameters, cache, idxWave, idxBin, mass, idxMass) / anchorFitPhase;
 
 				const std::complex<double> prodAmpDiff = prodAmpFit - _productionAmplitudes[idxBin][idxMass][idxWave];
 
@@ -796,7 +796,7 @@ rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::p
 					}
 
 					// calculate target spin density matrix element
-					const std::complex<double> rhoFit = _compset->spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
+					const std::complex<double> rhoFit = _fitModel->spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 
 					const std::complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
 

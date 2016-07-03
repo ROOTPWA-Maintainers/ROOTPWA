@@ -214,8 +214,8 @@ main(int    argc,
 	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
-	rpwa::massDepFit::model compset(doBranching);
-	rpwa::massDepFit::function fitFunction(doProdAmp, doCov);
+	rpwa::massDepFit::modelPtr fitModel(new rpwa::massDepFit::model(doBranching));
+	rpwa::massDepFit::functionPtr fitFunction(new rpwa::massDepFit::function(doProdAmp, doCov));
 
 	YAML::Node configRoot;
 	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
@@ -229,29 +229,29 @@ main(int    argc,
 	int minStatus;
 	double chi2;
 	unsigned int ndf;
-	if(not mdepFit.readConfig(configRoot, compset, fitParameters, fitParametersError, minStatus, chi2, ndf, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, minStatus, chi2, ndf, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(compset, fitFunction)) {
+	if(not mdepFit.init(fitModel, fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 
 	rpwa::massDepFit::cache cache(mdepFit.getNrWaves(),
-	                              compset.getNrComponents()+1,           // nr components + final-state mass-dependence
-	                              compset.getMaxChannelsInComponent(),
+	                              fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                              fitModel->getMaxChannelsInComponent(),
 	                              mdepFit.getNrBins(),
 	                              mdepFit.getMaxMassBins());
 
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
-		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction.chiSquare(fitParameters, cache)) << std::endl;
+		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction->chiSquare(fitParameters, cache)) << std::endl;
 	} else {
-		rpwa::massDepFit::minimizerRoot minimizer(compset,
+		rpwa::massDepFit::minimizerRoot minimizer(fitModel,
 		                                          fitFunction,
 		                                          mdepFit.getFreeParameters(),
 		                                          maxNumberOfFunctionCalls,
@@ -270,10 +270,10 @@ main(int    argc,
 
 		printInfo << "minimizer status = " << minStatus << std::endl;
 
-		chi2 = fitFunction.chiSquare(fitParameters, cache);
+		chi2 = fitFunction->chiSquare(fitParameters, cache);
 		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
 
-		const unsigned int nrDataPoints = fitFunction.getNrDataPoints();
+		const unsigned int nrDataPoints = fitFunction->getNrDataPoints();
 		const unsigned int nrFree = minimizer.getNrFreeParameters();
 		ndf = nrDataPoints - nrFree;
 		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
@@ -293,7 +293,7 @@ main(int    argc,
 		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
 	std::ofstream configFile(confFileName.c_str());
-	if(not mdepFit.writeConfig(configFile, compset, fitParameters, fitParametersError, minStatus, chi2, ndf)) {
+	if(not mdepFit.writeConfig(configFile, fitModel, fitParameters, fitParametersError, minStatus, chi2, ndf)) {
 		printErr << "error while writing result to configuration file." << std::endl;
 		return 1;
 	}
@@ -312,7 +312,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(compset, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
+	if(not mdepFit.createPlots(fitModel, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
 		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}

@@ -42,6 +42,14 @@ namespace rpwa {
 		typedef std::shared_ptr<fsmd> fsmdPtr;
 		typedef std::shared_ptr<const fsmd> fsmdConstPtr;
 
+		class function;
+		typedef std::shared_ptr<function> functionPtr;
+		typedef std::shared_ptr<const function> functionConstPtr;
+
+		class model;
+		typedef std::shared_ptr<model> modelPtr;
+		typedef std::shared_ptr<const model> modelConstPtr;
+
 	} // end namespace massDepFit
 
 } // end namespace rpwa
