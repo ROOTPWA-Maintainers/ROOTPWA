@@ -42,6 +42,8 @@
 
 #include <TMatrixT.h>
 
+#include "massDepFitForward.h"
+
 namespace YAML {
 	class Emitter;
 	class Node;
@@ -56,8 +58,6 @@ namespace rpwa {
 	namespace massDepFit {
 
 		class cache;
-		class function;
-		class model;
 		class parameters;
 
 		class massDepFit {
@@ -68,7 +68,7 @@ namespace rpwa {
 			~massDepFit() {};
 
 			bool readConfig(const YAML::Node& configRoot,
-			                rpwa::massDepFit::model& fitModel,
+			                const rpwa::massDepFit::modelPtr& fitModel,
 			                rpwa::massDepFit::parameters& fitParameters,
 			                rpwa::massDepFit::parameters& fitParametersError,
 			                int& minStatus,
@@ -77,11 +77,11 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool init(rpwa::massDepFit::model& fitModel,
-			          rpwa::massDepFit::function& fitFunction);
+			bool init(const rpwa::massDepFit::modelPtr& fitModel,
+			          const rpwa::massDepFit::functionPtr& fitFunction);
 
 			bool writeConfig(std::ostream& output,
-			                 const rpwa::massDepFit::model& fitModel,
+			                 const rpwa::massDepFit::modelConstPtr& fitModel,
 			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 const rpwa::massDepFit::parameters& fitParametersError,
 			                 const int minStatus,
@@ -89,7 +89,7 @@ namespace rpwa {
 			                 const unsigned int ndf) const;
 
 // FIXME: make private
-			bool createPlots(const rpwa::massDepFit::model& fitModel,
+			bool createPlots(const rpwa::massDepFit::modelConstPtr& fitModel,
 			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 rpwa::massDepFit::cache& cache,
 			                 TFile* outFile,
@@ -122,16 +122,16 @@ namespace rpwa {
 			bool readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters);
 
 			bool readConfigModel(const YAML::Node& configModel,
-			                     rpwa::massDepFit::model& fitModel,
+			                     const rpwa::massDepFit::modelPtr& fitModel,
 			                     rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::parameters& fitParametersError);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
 			bool readConfigModelComponents(const YAML::Node& configComponents,
-			                               rpwa::massDepFit::model& fitModel,
+			                               const rpwa::massDepFit::modelPtr& fitModel,
 			                               rpwa::massDepFit::parameters& fitParameters,
 			                               rpwa::massDepFit::parameters& fitParametersError) const;
 			bool readConfigModelFsmd(const YAML::Node& configFsmd,
-			                         rpwa::massDepFit::model& fitModel,
+			                         const rpwa::massDepFit::modelPtr& fitModel,
 			                         rpwa::massDepFit::parameters& fitParameters,
 			                         rpwa::massDepFit::parameters& fitParametersError) const;
 
@@ -147,16 +147,16 @@ namespace rpwa {
 			bool writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
-			                      const rpwa::massDepFit::model& fitModel,
+			                      const rpwa::massDepFit::modelConstPtr& fitModel,
 			                      const rpwa::massDepFit::parameters& fitParameters,
 			                      const rpwa::massDepFit::parameters& fitParametersError) const;
 			bool writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const;
 			bool writeConfigModelComponents(YAML::Emitter& yamlOutput,
-			                                const rpwa::massDepFit::model& fitModel,
+			                                const rpwa::massDepFit::modelConstPtr& fitModel,
 			                                const rpwa::massDepFit::parameters& fitParameters,
 			                                const rpwa::massDepFit::parameters& fitParametersError) const;
 			bool writeConfigModelFsmd(YAML::Emitter& yamlOutput,
-			                          const rpwa::massDepFit::model& fitModel,
+			                          const rpwa::massDepFit::modelConstPtr& fitModel,
 			                          const rpwa::massDepFit::parameters& fitParameters,
 			                          const rpwa::massDepFit::parameters& fitParametersError) const;
 
@@ -200,7 +200,7 @@ namespace rpwa {
 			                            const std::vector<std::string>& waveNames,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
-			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
+			bool createPlotsWave(const rpwa::massDepFit::modelConstPtr& fitModel,
 			                     const rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,
@@ -208,14 +208,14 @@ namespace rpwa {
 			                     const size_t extraBinning,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
-			bool createPlotsWaveSum(const rpwa::massDepFit::model& fitModel,
+			bool createPlotsWaveSum(const rpwa::massDepFit::modelConstPtr& fitModel,
 			                        const rpwa::massDepFit::parameters& fitParameters,
 			                        rpwa::massDepFit::cache& cache,
 			                        TDirectory* outDirectory,
 			                        const bool rangePlotting,
 			                        const size_t extraBinning,
 			                        const size_t idxWave) const;
-			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
+			bool createPlotsWavePair(const rpwa::massDepFit::modelConstPtr& fitModel,
 			                         const rpwa::massDepFit::parameters& fitParameters,
 			                         rpwa::massDepFit::cache& cache,
 			                         TDirectory* outDirectory,
@@ -224,7 +224,7 @@ namespace rpwa {
 			                         const size_t idxWave,
 			                         const size_t jdxWave,
 			                         const size_t idxBin) const;
-			bool createPlotsFsmd(const rpwa::massDepFit::model& fitModel,
+			bool createPlotsFsmd(const rpwa::massDepFit::modelConstPtr& fitModel,
 			                     const rpwa::massDepFit::parameters& fitParameters,
 			                     rpwa::massDepFit::cache& cache,
 			                     TDirectory* outDirectory,

@@ -35,6 +35,7 @@
 
 #include <Math/IFunction.h>
 
+#include "massDepFitForward.h"
 #include "massDepFitMinimizer.h"
 
 namespace ROOT {
@@ -47,9 +48,6 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class function;
-		class model;
-
 		class minimizerRoot : public rpwa::massDepFit::minimizer {
 
 		private:
@@ -58,7 +56,7 @@ namespace rpwa {
 
 			public:
 
-				functionAdaptor(const rpwa::massDepFit::function& fitFunction);
+				functionAdaptor(const rpwa::massDepFit::functionConstPtr& fitFunction);
 				virtual ~functionAdaptor() {}
 
 				virtual rpwa::massDepFit::minimizerRoot::functionAdaptor* Clone() const;
@@ -69,14 +67,14 @@ namespace rpwa {
 
 			private:
 
-				const rpwa::massDepFit::function& _fitFunction;
+				const rpwa::massDepFit::functionConstPtr _fitFunction;
 
 			};
 
 		public:
 
-			minimizerRoot(const rpwa::massDepFit::model& fitModel,
-			              const rpwa::massDepFit::function& fitFunction,
+			minimizerRoot(const rpwa::massDepFit::modelConstPtr& fitModel,
+			              const rpwa::massDepFit::functionConstPtr& fitFunction,
 			              const std::vector<std::string>& freeParameters,
 			              const unsigned int maxNmbOfFunctionCalls,
 			              const std::string minimizerType[],
@@ -98,7 +96,7 @@ namespace rpwa {
 
 			std::unique_ptr<ROOT::Math::Minimizer> _minimizer;
 
-			const rpwa::massDepFit::model& _fitModel;
+			const rpwa::massDepFit::modelConstPtr _fitModel;
 
 			rpwa::massDepFit::minimizerRoot::functionAdaptor _functionAdaptor;
 

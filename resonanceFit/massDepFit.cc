@@ -77,7 +77,7 @@ rpwa::massDepFit::massDepFit::massDepFit()
 
 bool
 rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
-                                         rpwa::massDepFit::model& fitModel,
+                                         const rpwa::massDepFit::modelPtr& fitModel,
                                          rpwa::massDepFit::parameters& fitParameters,
                                          rpwa::massDepFit::parameters& fitParametersError,
                                          int& minStatus,
@@ -550,7 +550,7 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& co
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
-                                              rpwa::massDepFit::model& fitModel,
+                                              const rpwa::massDepFit::modelPtr& fitModel,
                                               rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::parameters& fitParametersError)
 {
@@ -634,7 +634,7 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& config
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
-                                                        rpwa::massDepFit::model& fitModel,
+                                                        const rpwa::massDepFit::modelPtr& fitModel,
                                                         rpwa::massDepFit::parameters& fitParameters,
                                                         rpwa::massDepFit::parameters& fitParametersError) const
 {
@@ -666,8 +666,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 
 		const std::string name = configComponent["name"].as<std::string>();
 
-		for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
-			if(fitModel.getComponent(idx)->getName() == name) {
+		for(size_t idx = 0; idx < fitModel->getNrComponents(); ++idx) {
+			if(fitModel->getComponent(idx)->getName() == name) {
 				printErr << "component '" << name << "' defined twice." << std::endl;
 				return false;
 			}
@@ -693,41 +693,41 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 
 		rpwa::massDepFit::componentPtr component;
 		if(type == "fixedWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::fixedWidthBreitWigner>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::fixedWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "dynamicWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::dynamicWidthBreitWigner>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::dynamicWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "integralWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::integralWidthBreitWigner>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::integralWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "constantBackground") {
-			component = std::make_shared<rpwa::massDepFit::constantBackground>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::constantBackground>(fitModel->getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
-			component = std::make_shared<rpwa::massDepFit::exponentialBackground>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::exponentialBackground>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
-			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackground>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackground>(fitModel->getNrComponents(), name);
 			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else if(type == "exponentialBackgroundIntegral") {
-			component = std::make_shared<rpwa::massDepFit::exponentialBackgroundIntegral>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::exponentialBackgroundIntegral>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackgroundIntegral") {
-			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackgroundIntegral>(fitModel.getNrComponents(), name);
+			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackgroundIntegral>(fitModel->getNrComponents(), name);
 			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, fitModel.useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, fitModel->useBranchings(), _debug)) {
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
 
-		fitModel.add(component);
+		fitModel->add(component);
 	}
 
 	std::ostringstream output;
-	for(size_t idxComponent=0; idxComponent<fitModel.getNrComponents(); ++idxComponent) {
-		output << "    " << fitModel.getComponent(idxComponent)->getName() << std::endl;
+	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
 	}
-	printInfo << "fitting " << fitModel.getNrComponents() << " components to the data:" << std::endl
+	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
 	          << output.str();
 
 	return true;
@@ -736,7 +736,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
-                                                  rpwa::massDepFit::model& fitModel,
+                                                  const rpwa::massDepFit::modelPtr& fitModel,
                                                   rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::parameters& fitParametersError) const
 {
@@ -753,12 +753,12 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
-	rpwa::massDepFit::fsmdPtr fsmd(new rpwa::massDepFit::fsmd(fitModel.getNrComponents()));
+	rpwa::massDepFit::fsmdPtr fsmd(new rpwa::massDepFit::fsmd(fitModel->getNrComponents()));
 	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _sameMassBinning, _debug)) {
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
 	}
-	fitModel.setFsmd(fsmd);
+	fitModel->setFsmd(fsmd);
 
 	printInfo << "using final-state mass-dependence as defined in the configuration file." << std::endl;
 
@@ -767,26 +767,26 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 
 
 bool
-rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
-                                   rpwa::massDepFit::function& fitFunction)
+rpwa::massDepFit::massDepFit::init(const rpwa::massDepFit::modelPtr& fitModel,
+                                   const rpwa::massDepFit::functionPtr& fitFunction)
 {
-	if(not fitModel.init(_nrBins,
-	                     _waveNames,
-	                     _waveNameAlternatives,
-	                     _anchorWaveName,
-	                     _anchorComponentName)) {
+	if(not fitModel->init(_nrBins,
+	                      _waveNames,
+	                      _waveNameAlternatives,
+	                      _anchorWaveName,
+	                      _anchorComponentName)) {
 		printErr << "error while initializing the fit model." << std::endl;
 		return false;
 	}
 
-	if(not fitFunction.init(&fitModel,
-	                        _nrMassBins,
-	                        _massBinCenters,
-	                        _inProductionAmplitudes,
-	                        _inProductionAmplitudesCovariance,
-	                        _inSpinDensityMatrices,
-	                        _inSpinDensityCovarianceMatrices,
-	                        _wavePairMassBinLimits)) {
+	if(not fitFunction->init(fitModel,
+	                         _nrMassBins,
+	                         _massBinCenters,
+	                         _inProductionAmplitudes,
+	                         _inProductionAmplitudesCovariance,
+	                         _inSpinDensityMatrices,
+	                         _inSpinDensityCovarianceMatrices,
+	                         _wavePairMassBinLimits)) {
 		printErr << "error while initializing the function to minimize." << std::endl;
 		return false;
 	}
@@ -797,7 +797,7 @@ rpwa::massDepFit::massDepFit::init(rpwa::massDepFit::model& fitModel,
 
 bool
 rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
-                                          const rpwa::massDepFit::model& fitModel,
+                                          const rpwa::massDepFit::modelConstPtr& fitModel,
                                           const rpwa::massDepFit::parameters& fitParameters,
                                           const rpwa::massDepFit::parameters& fitParametersError,
                                           const int minStatus,
@@ -1019,7 +1019,7 @@ rpwa::massDepFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yaml
 
 bool
 rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
-                                               const rpwa::massDepFit::model& fitModel,
+                                               const rpwa::massDepFit::modelConstPtr& fitModel,
                                                const rpwa::massDepFit::parameters& fitParameters,
                                                const rpwa::massDepFit::parameters& fitParametersError) const
 {
@@ -1045,7 +1045,7 @@ rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::Key << "finalStateMassDependence";
 	yamlOutput << YAML::Value;
-	if(fitModel.getFsmd()) {
+	if(fitModel->getFsmd()) {
 		if(not writeConfigModelFsmd(yamlOutput, fitModel, fitParameters, fitParametersError)) {
 			printErr << "error while writing 'finalStateMassDependence' to result file." << std::endl;
 			return false;
@@ -1081,7 +1081,7 @@ rpwa::massDepFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutp
 
 bool
 rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutput,
-                                                         const rpwa::massDepFit::model& fitModel,
+                                                         const rpwa::massDepFit::modelConstPtr& fitModel,
                                                          const rpwa::massDepFit::parameters& fitParameters,
                                                          const rpwa::massDepFit::parameters& fitParametersError) const
 {
@@ -1091,9 +1091,9 @@ rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutp
 
 	yamlOutput << YAML::BeginSeq;
 
-	const size_t nrComponents = fitModel.getNrComponents();
+	const size_t nrComponents = fitModel->getNrComponents();
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		if(not fitModel.getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, fitModel.useBranchings(), _debug)) {
+		if(not fitModel->getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, fitModel->useBranchings(), _debug)) {
 			printErr << "error while writing component at index " << idxComponent << " to result file." << std::endl;
 			return false;
 		}
@@ -1107,7 +1107,7 @@ rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutp
 
 bool
 rpwa::massDepFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
-                                                   const rpwa::massDepFit::model& fitModel,
+                                                   const rpwa::massDepFit::modelConstPtr& fitModel,
                                                    const rpwa::massDepFit::parameters& fitParameters,
                                                    const rpwa::massDepFit::parameters& fitParametersError) const
 {
@@ -1115,12 +1115,12 @@ rpwa::massDepFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 		printDebug << "writing 'finalStateMassDependence'." << std::endl;
 	}
 
-	if(not fitModel.getFsmd()) {
+	if(not fitModel->getFsmd()) {
 		printErr << "writing final-state mass-dependence requested, but there is no final-state mass-dependence." << std::endl;
 		return false;
 	}
 
-	if(not fitModel.getFsmd()->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
+	if(not fitModel->getFsmd()->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
 		printErr << "error while writing final-state mass-dependence to result file." << std::endl;
 		return false;
 	}
@@ -1902,7 +1902,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimit(const size_t idxBin)
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitModel,
+rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::modelConstPtr& fitModel,
                                           const rpwa::massDepFit::parameters& fitParameters,
                                           rpwa::massDepFit::cache& cache,
                                           TFile* outFile,
@@ -1939,7 +1939,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			}
 		}
 
-		if(fitModel.getFsmd() and (fitModel.getFsmd()->getNrBins() != 1 or not _sameMassBinning)) {
+		if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() != 1 or not _sameMassBinning)) {
 			if(not createPlotsFsmd(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
 				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
 				return false;
@@ -1947,7 +1947,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(_nrBins != 1 and _sameMassBinning and fitModel.isMappingEqualInAllBins()) {
+	if(_nrBins != 1 and _sameMassBinning and fitModel->isMappingEqualInAllBins()) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			if(not createPlotsWaveSum(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
@@ -1956,7 +1956,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 		}
 	}
 
-	if(fitModel.getFsmd() and (fitModel.getFsmd()->getNrBins() == 1 and _sameMassBinning)) {
+	if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() == 1 and _sameMassBinning)) {
 		if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
 			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 			return false;
@@ -1972,7 +1972,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::modelConstPtr& fitModel,
                                               const rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::cache& cache,
                                               TDirectory* outDirectory,
@@ -2017,16 +2017,16 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
 	graphs.Add(phaseSpace, "L");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxBin, idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel->getComponentChannel(idxBin, idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
-		component->SetName((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
-		component->SetTitle((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
+		component->SetName((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
 
 		Color_t color = kBlue;
-		if(fitModel.getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
+		if(fitModel->getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
 			color = kMagenta;
 		}
 		component->SetLineColor(color);
@@ -2067,7 +2067,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
-		const double intensity = fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
+		const double intensity = fitModel->intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		fit->SetPoint(point-firstPoint, mass, intensity);
 		maxIE = std::max(maxIE, intensity);
 
@@ -2075,10 +2075,10 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxComponent = compChannel[idxComponents].first;
 			const size_t idxChannel = compChannel[idxComponents].second;
 
-			std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
-			prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
-			if(fitModel.getFsmd()) {
-				prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
+			std::complex<double> prodAmp = fitModel->getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
+			prodAmp *= fitModel->getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
+			if(fitModel->getFsmd()) {
+				prodAmp *= fitModel->getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 			}
 
 			components[idxComponents]->SetPoint(point-firstPoint, mass, norm(prodAmp));
@@ -2097,8 +2097,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
-		if(fitModel.getFsmd()) {
-			ps *= std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass));
+		if(fitModel->getFsmd()) {
+			ps *= std::norm(fitModel->getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass));
 		}
 		phaseSpace->SetPoint(point, mass, ps);
 		maxP = std::max(maxP, ps);
@@ -2119,7 +2119,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::modelConstPtr& fitModel,
                                                  const rpwa::massDepFit::parameters& fitParameters,
                                                  rpwa::massDepFit::cache& cache,
                                                  TDirectory* outDirectory,
@@ -2132,7 +2132,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	}
 
 	// all mass binnings must be the same to be able to create the sum plots
-	if(not _sameMassBinning or not fitModel.isMappingEqualInAllBins()) {
+	if(not _sameMassBinning or not fitModel->isMappingEqualInAllBins()) {
 		printErr << "cannot create plots for wave '" << _waveNames[idxWave] << "' for sum over all bins if the bins used different mass binnings." << std::endl;
 		return false;
 	}
@@ -2155,16 +2155,16 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 	fit->SetMarkerColor(kRed);
 	graphs.Add(fit, "L");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxBin, idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel->getComponentChannel(idxBin, idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
-		component->SetName((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
-		component->SetTitle((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
+		component->SetName((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
 
 		Color_t color = kBlue;
-		if(fitModel.getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
+		if(fitModel->getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
 			color = kMagenta;
 		}
 		component->SetLineColor(color);
@@ -2199,7 +2199,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 
 		double sum = 0.;
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			sum += fitModel.intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
+			sum += fitModel->intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		}
 		fit->SetPoint(point-firstPoint, mass, sum);
 
@@ -2209,10 +2209,10 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 
 			double sum = 0.;
 			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-				std::complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
-				prodAmp *= fitModel.getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
-				if(fitModel.getFsmd()) {
-					prodAmp *= fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
+				std::complex<double> prodAmp = fitModel->getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
+				prodAmp *= fitModel->getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
+				if(fitModel->getFsmd()) {
+					prodAmp *= fitModel->getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass);
 				}
 				sum += norm(prodAmp);
 			}
@@ -2228,7 +2228,7 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::model& 
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::modelConstPtr& fitModel,
                                                   const rpwa::massDepFit::parameters& fitParameters,
                                                   rpwa::massDepFit::cache& cache,
                                                   TDirectory* outDirectory,
@@ -2385,7 +2385,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
-		const std::complex<double> element = fitModel.spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
+		const std::complex<double> element = fitModel->spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 		realFit->SetPoint(point-firstPoint, mass, element.real());
 		imagFit->SetPoint(point-firstPoint, mass, element.imag());
 	}
@@ -2396,7 +2396,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
-		const double phase = fitModel.phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
+		const double phase = fitModel->phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
 
 		if(point != 0) {
 			int bestOffs = 0;
@@ -2466,7 +2466,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::modelConstPtr& fitModel,
                                               const rpwa::massDepFit::parameters& fitParameters,
                                               rpwa::massDepFit::cache& cache,
                                               TDirectory* outDirectory,
@@ -2486,7 +2486,7 @@ rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::model& fit
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
 
-		graph.SetPoint(point, mass, std::norm(fitModel.getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass)));
+		graph.SetPoint(point, mass, std::norm(fitModel->getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass)));
 	}
 
 	outDirectory->cd();
