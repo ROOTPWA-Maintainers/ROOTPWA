@@ -56,9 +56,24 @@ function printInfo {
 		echo ">>> ${THIS_SCRIPT}: info: ${1}"
 }
 
+function printSucc {
+		echo "*** ${THIS_SCRIPT}: success: ${1}"
+}
+
 function printErr {
 		echo "!!! ${THIS_SCRIPT}: ${BASH_LINENO[0]}: error: ${1}"
 		exit 1
+}
+
+function testStep {
+		printInfo "Test ${1} ..."
+		echo "    executing: ${2}"
+		if eval ${2}; then
+				printSucc "${1} was successful."
+				echo
+		else
+				printErr "${1} was not successful. Aborting."
+		fi
 }
 
 
@@ -108,95 +123,96 @@ sed -i 's/^integralBinning.*$/integralBinning                        = [ { "mass
 ### BEGIN MONTE CARLO GENERATION ###
 
 # generate phase space data
-printInfo "Generating phase space ..."
-if ! ${ROOTPWA}/build/bin/genpw -s ${SEED_PS} -n ${NMB_PS_EVENTS} -p "${PARTICLE_DATA_TABLE}" -M ${MASS} -B ${BINWIDTH} "./generator_noBeamSimulation.conf" -o "./data/phase_space_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PS_EVENTS}.root"; then
-	printErr "Generation of phase space was not successful. Aborting."
-fi
+testStep "generation of phase-space data" \
+"${ROOTPWA}/build/bin/genpw \
+-s ${SEED_PS} \
+-n ${NMB_PS_EVENTS} \
+-p \"${PARTICLE_DATA_TABLE}\" \
+-M ${MASS} \
+-B ${BINWIDTH} \
+\"./generator_noBeamSimulation.conf\" \
+-o \"./data/phase_space_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PS_EVENTS}.root\""
 
 # generate the keyfiles
-printInfo "Generating keyfiles ..."
 DESTINATION_DIR="${TESTDIR}/keyfiles"
 export PARTICLE_DATA_TABLE
 export DESTINATION_DIR
 export WAVESET_FILES="wavelist.compass.2008.88waves"
 export TEMPLATE_KEY_FILES="${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/template.key"
-if ! ${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/GenerateKeyfiles.sh; then
-	printErr "Generation of keyfiles was not successful. Aborting."
-fi
+testStep "generation of keyfiles" "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/GenerateKeyfiles.sh"
 
 # remove some parameterizations
 rm ${TESTDIR}/keyfiles/*[f0_980_0bw=[*.key
 rm ${TESTDIR}/keyfiles/*[f0_980_0=[*.key
 
 # create first file manager
-printInfo "Create first file manager ..."
-if ! ${ROOTPWA}/build/bin/createFileManager; then
-	printErr "Creation of first file manager was not successful. Aborting."
-fi
+testStep "creation of first file manager" "${ROOTPWA}/build/bin/createFileManager"
 
-# calculate amplitudes for generated data
-printInfo "Calculate amplitudes for generated data ..."
-if ! ${ROOTPWA}/build/bin/calcAmplitudes -e generated; then
-	printErr "Calculation of amplitudes for generated data was not successful. Aborting."
-fi
+# calculate amplitudes for generated phase-space data
+testStep "calculation of amplitudes for phase-space data" "${ROOTPWA}/build/bin/calcAmplitudes -e generated"
 
-# calculate integrals for generated data
-printInfo "Calculate integrals for generated data ..."
-if ! ${ROOTPWA}/build/bin/calcIntegrals -e generated; then
-	printErr "Calculation of integrals for generated was not successful. Aborting."
-fi
+# calculate integrals for generated phase-space data
+testStep "calculation of integrals for phase-space data" "${ROOTPWA}/build/bin/calcIntegrals -e generated"
 
 # generate weighted MC pseudo data
-printInfo "Generate weighted MC pseudo data ..."
-if ! ${ROOTPWA}/build/bin/genPseudoData "./generator_noBeamSimulation.conf" "${TESTDIR}/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root" "./ints/integral_binID-0_2.root" "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" -s ${SEED_PSEUDO} -n ${NMB_PSEUDO_EVENTS} -M ${MASS} -B ${BINWIDTH}; then
-	printErr "Generation of weighted MC pseudo data was not successful. Aborting."
-fi
+testStep "generation of MC data with weights" \
+"${ROOTPWA}/build/bin/genPseudoData \
+\"./generator_noBeamSimulation.conf\" \ \"${TESTDIR}/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root\" \ \"./ints/integral_binID-0_2.root\" \ \"./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root\" \
+-s ${SEED_PSEUDO} \
+-n ${NMB_PSEUDO_EVENTS} \
+-M ${MASS} \
+-B ${BINWIDTH}"
 
 # deweight the pseudo data
-printInfo "Deweight pseudo data ..."
-if ! ${ROOTPWA}/build/bin/deWeight "./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" "./data/pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root" -s ${SEED_DEWEIGHT}; then
-	printErr "Deweighting of weighted MC pseudo data was not successful. Aborting."
-fi
+testStep "deweighting of MC data" \
+"${ROOTPWA}/build/bin/deWeight \ \"./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root\" \ \"./data/pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root\" \
+-s ${SEED_DEWEIGHT}"
 
 # backup old file manager ...
 printInfo "Move first file manager (backup) ..."
 mv ./fileManager.pkl ./fileManager.pkl.old
 
 # ... create a new file manager
-printInfo "Create second file manager ..."
-if ! ${ROOTPWA}/build/bin/createFileManager; then
-	printErr "Creation of second file manager was not successful. Aborting."
-fi
+testStep "creation of second file manager" "${ROOTPWA}/build/bin/createFileManager"
 
 # calculate amplitudes for 'real' (= MC) data
-printInfo "Calculate amplitudes for 'real' (= MC) data ..."
-if ! ${ROOTPWA}/build/bin/calcAmplitudes -e real; then
-	printErr "Calculation of amplitudes for 'real' (= MC) data  was not successful. Aborting."
-fi
+testStep "calculation of amplitudes for 'real' (= weighted-MC) data" "${ROOTPWA}/build/bin/calcAmplitudes -e real"
 
 #-- END MONTE CARLO GENERATION --#
 
 ### BEGIN FIT TEST ###
 
-printInfo "Test pwaFit without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit "./fits/pwaTest_NONLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves -s ${SEED_FIT}; then
-	printErr "pwaFit was not successful. Aborting."
-fi
+testStep "pwaFit without prior" \
+"${ROOTPWA}/build/bin/pwaFit \
+\"./fits/pwaTest_NONLOPT_NOPRIOR.root\" \
+--noAcceptance \
+-w wavelist.compass.2008.88waves \
+-s ${SEED_FIT}"
 
-printInfo "Test pwaFit with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaFit "./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5 -s ${SEED_FIT}; then
-	printErr "pwaFit with prior was not successful. Aborting."
-fi
+testStep "pwaFit with prior" \
+"${ROOTPWA}/build/bin/pwaFit \
+\"./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
+--noAcceptance \
+-w wavelist.compass.2008.88waves \
+-C \
+-P 0.5 \
+-s ${SEED_FIT}"
 
-printInfo "Test pwaNloptFit without prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit "./fits/pwaTest_NLOPT_NOPRIOR.root" --noAcceptance -w wavelist.compass.2008.88waves -s ${SEED_FIT}; then
-	printErr "pwaNloptFit was not successful. Aborting."
-fi
+testStep "pwaNloptFit without prior" \
+"${ROOTPWA}/build/bin/pwaNloptFit \
+\"./fits/pwaTest_NLOPT_NOPRIOR.root\" \
+--noAcceptance \
+-w wavelist.compass.2008.88waves \
+-s ${SEED_FIT}"
 
-printInfo "Test pwaNloptFit with prior ..."
-if ! ${ROOTPWA}/build/bin/pwaNloptFit "./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root" --noAcceptance -w wavelist.compass.2008.88waves -C -P 0.5 -s ${SEED_FIT}; then
-	printErr "pwaNloptFit with prior was not successful. Aborting."
-fi
+testStep "pwaNloptFit with prior" \
+"${ROOTPWA}/build/bin/pwaNloptFit \
+\"./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
+--noAcceptance \
+-w wavelist.compass.2008.88waves \
+-C \
+-P 0.5 \
+-s ${SEED_FIT}"
 
 #-- END FIT TEST --#
 
