@@ -340,7 +340,7 @@ If you already have a solution for a particular bug or have implemented a new fe
 
 ## Contributing Code ##
 
-If you would like to contribute to ROOTPWA to an extent which would be impractical for patch files, you can fork the ROOTPWA repository. To do this, you need to have a SourceForge account. While logged in, go to the [ROOTPWA repository](https://sourceforge.net/p/rootpwa/code/) and click "Fork" on the left. This will give you your own copy of the ROOTPWA git repository on SourceForge which you can use to implement your contribution. As soon as you judge your work ready for integration, you can issue a merge request by clicking "Request Merge" in your copy of the repository. The ROOTPWA developers will then consider your changes for implementation.
+If you would like to contribute to ROOTPWA, the first step is to fork the ROOTPWA repository. To do this, you need to have a GitHub account. While logged in, go to the [ROOTPWA repository](https://github.com/ROOTPWA-Maintainers/ROOTPWA) and click "Fork" on the top right. This will give you your own copy of the ROOTPWA git repository on GitHub, which you can use to implement your contribution. As soon as you judge your work ready for integration, issue a pull request by clicking "New Pull Request" in your copy of the repository. Be sure that your pull request has the green checkmark "Able to merge". The ROOTPWA developers will then consider your changes for implementation and if necessary request changes.
 
 In case you are new to git and need information on how to work with it, we recommend the [git book](http://git-scm.com/book), which gives a thorough and comprehensible introduction to git.
 
@@ -354,9 +354,16 @@ The ROOTPWA repository uses the master branch for development, meaning that the 
 
 ### Commit Message Format ###
 
-ROOTPWA follows a policy for the commit messages, which is close to the standard git commit message policy. It consists of the following rules:
+ROOTPWA follows a policy for the commit messages, which is close to the standard git commit-message policy. It consists of the following rules:
 
-- The commit message must consist of at least three lines
+- The commit message must consist of at least three lines.
 - The first line of the commit message must not be longer than 80 characters.
-- The second line of the commit message must be empty
+- The second line of the commit message must be empty.
 - All remaining lines (of which there must be at least one) must not be longer than 80 characters.
+
+Please note that the ROOTPWA git repository uses a server hook to enforce this policy. Should any of your commits you would like to see integrated not fulfill these requirements, all of them will be rejected and you will have to re-edit the problematic messages. To reduce such problems, there is a git hook in the repository, which you can use on the client side to check all the commit messages already when committing to your repository. You can install it by running
+
+    > cd $ROOTPWA/gitUtils
+    > ./installClientHook.sh
+
+Please note that the `ROOTPWA` environment variable has to be set for the script to work.
