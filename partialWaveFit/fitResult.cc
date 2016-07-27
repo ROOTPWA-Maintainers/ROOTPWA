@@ -339,27 +339,7 @@ fitResult::evidence() const
 std::vector<double>
 fitResult::evidenceComponents() const
 {
-	// make sure evidence can be calculated, i.e.:
-	// - covariance matrix exists
-	// - accepted normalisation integral exists
-	if (not covMatrixValid()) {
-		printWarn << "fitResult does not have a valid error matrix. Returning negative infinity for components of evidence." << endl;
-		std::vector<double> retval;
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		return retval;
-	}
-	if (acceptedNormIntegralMatrix().nCols() == 0 || acceptedNormIntegralMatrix().nRows() == 0) {
-		printWarn << "fitResult does not have a acceptance integral matrix. Returning negative infinity for components of evidence." << endl;
-		std::vector<double> retval;
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		retval.push_back(-numeric_limits<double>::infinity());
-		return retval;
-	}
+	std::vector<double> components(4, -numeric_limits<double>::infinity());
 
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
@@ -381,145 +361,152 @@ fitResult::evidenceComponents() const
 		thrWaveIndices.insert(index);
 	}
 
-	// for the list of thresholded production amplitudes get the list of
-	// columns and rows of the covariance matrix that are thresholded
-	set<Int_t> thrColAndRowIndices;
-	for (set<unsigned int>::const_iterator it = thrProdAmpIndices.begin();
-	     it != thrProdAmpIndices.end(); ++it) {
-		thrColAndRowIndices.insert(fitParCovIndices()[*it].first);
-		if (fitParCovIndices()[*it].second != -1)
-			thrColAndRowIndices.insert(fitParCovIndices()[*it].second);
-	}
-
-	// create a new covariance matrix with the thresholded entries removed
-	TMatrixT<Double_t> thrCovMatrix(fitParCovMatrix().GetNrows()-thrColAndRowIndices.size(),
-	                                fitParCovMatrix().GetNcols()-thrColAndRowIndices.size());
-	Int_t row = -1;
-	for (Int_t i = 0; i < fitParCovMatrix().GetNrows(); ++i) {
-		if (thrColAndRowIndices.count(i) > 0) {
-			continue;
-		}
-		row++;
-
-		Int_t col = -1;
-		for (Int_t j = 0; j < fitParCovMatrix().GetNcols(); ++j) {
-			if (thrColAndRowIndices.count(j) > 0) {
-				continue;
-			}
-			col++;
-
-			thrCovMatrix(row, col) = fitParCovMatrix()(i, j);
-		}
-	}
-
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
-	const double l      = -logLikelihood();// - intensity(".*");
-	double       logDet = thrCovMatrix.Determinant();
-	const double d      = (double)thrCovMatrix.GetNcols();
+	const double l = -logLikelihood();// - intensity(".*");
+	components[0]  = l;
 
-	if(std::isinf(logDet)) {
-		printWarn << "found infinite determinant of covariance matrix, trying to calculate log(det) directly..." << endl;
-		logDet = 0.;
-		TVectorT<double> eigenvalues;
-		thrCovMatrix.EigenVectors(eigenvalues);
-		for(int i = 0; i < eigenvalues.GetNrows(); ++i) {
-			logDet += TMath::Log(eigenvalues[i]);
+	if (covMatrixValid()) {
+		// for the list of thresholded production amplitudes get the list of
+		// columns and rows of the covariance matrix that are thresholded
+		set<Int_t> thrColAndRowIndices;
+		for (set<unsigned int>::const_iterator it = thrProdAmpIndices.begin();
+		     it != thrProdAmpIndices.end(); ++it) {
+			thrColAndRowIndices.insert(fitParCovIndices()[*it].first);
+			if (fitParCovIndices()[*it].second != -1)
+				thrColAndRowIndices.insert(fitParCovIndices()[*it].second);
 		}
-		if(std::isinf(logDet) or std::isnan(logDet)) {
-			printWarn << "calculation failed, log(det) = " << logDet << "." << endl;
-		} else {
-			printSucc << "calculation succeeded, log(det) = " << logDet << "." << endl;
-		}
-	} else {
-		logDet = TMath::Log(logDet);
-	}
 
-	// parameter-volume after observing data
-	const double lvad = 0.5 * (d * 1.837877066 + logDet);
-
-	// parameter volume prior to observing the data
-	double logDetAcc = 0;
-	{
-		// keep list of required waves for each reflectivity and rank
-		boost::multi_array<vector<int>, 2> waves(boost::extents[2][rank()]);
-
-		// loop over production amplitudes and extract combinations of
-		// rank and reflectivity
-		for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-			// skip thresholded production amplitudes
-			if (thrProdAmpIndices.count(i) > 0)
+		// create a new covariance matrix with the thresholded entries removed
+		TMatrixT<Double_t> thrCovMatrix(fitParCovMatrix().GetNrows()-thrColAndRowIndices.size(),
+		                                fitParCovMatrix().GetNcols()-thrColAndRowIndices.size());
+		Int_t row = -1;
+		for (Int_t i = 0; i < fitParCovMatrix().GetNrows(); ++i) {
+			if (thrColAndRowIndices.count(i) > 0) {
 				continue;
+			}
+			row++;
 
-			const string waveName = string(waveNameForProdAmp(i));
-			const int waveI = waveIndex(waveName);
-			assert(waveI >= 0);
-			assert(thrWaveIndices.count(waveI) == 0);
+			Int_t col = -1;
+			for (Int_t j = 0; j < fitParCovMatrix().GetNcols(); ++j) {
+				if (thrColAndRowIndices.count(j) > 0) {
+					continue;
+				}
+				col++;
 
-			// skip flat wave (handled below)
-			if (waveName == "flat")
-				continue;
-
-			const int rank = rankOfProdAmp(i);
-			assert(rank >= 0 && (unsigned int)rank < this->rank());
-
-			const int refl = partialWaveFitHelper::getReflectivity(waveName);
-			assert(refl == -1 || refl == +1);
-
-			if (refl > 0)
-				waves[1][rank].push_back(waveI);
-			else
-				waves[0][rank].push_back(waveI);
-		}
-
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
-			for (unsigned int iRank = 0; iRank < rank(); ++iRank) {
-				const unsigned int dim = waves[iRefl][iRank].size();
-				complexMatrix sub(dim, dim);
-
-				for(unsigned int i = 0; i < dim; ++i)
-					for(unsigned int j = 0; j < dim; ++j)
-						sub.set(i, j, acceptedNormIntegral(waves[iRefl][iRank][i], waves[iRefl][iRank][j]));
-
-				logDetAcc += TMath::Log(sub.determinant().real());
+				thrCovMatrix(row, col) = fitParCovMatrix()(i, j);
 			}
 		}
 
-		// parameter volume for flat wave correlates with overall acceptance
-		const int idxFlat = waveIndex("flat");
-		assert(idxFlat != -1);
-		logDetAcc += TMath::Log(acceptedNormIntegral(idxFlat, idxFlat).real());
+		double       logDet = thrCovMatrix.Determinant();
+		const double d      = (double)thrCovMatrix.GetNcols();
+
+		if(std::isinf(logDet)) {
+			printWarn << "found infinite determinant of covariance matrix, trying to calculate log(det) directly..." << endl;
+			logDet = 0.;
+			TVectorT<double> eigenvalues;
+			thrCovMatrix.EigenVectors(eigenvalues);
+			for(int i = 0; i < eigenvalues.GetNrows(); ++i) {
+				logDet += TMath::Log(eigenvalues[i]);
+			}
+			if(std::isinf(logDet) or std::isnan(logDet)) {
+				printWarn << "calculation failed, log(det) = " << logDet << "." << endl;
+			} else {
+				printSucc << "calculation succeeded, log(det) = " << logDet << "." << endl;
+			}
+		} else {
+			logDet = TMath::Log(logDet);
+		}
+
+		// parameter-volume after observing data
+		const double lvad = 0.5 * (d * 1.837877066 + logDet);
+		components[1] = lvad;
+
+		// parameter volume prior to observing the data
+		if (acceptedNormIntegralMatrix().nCols() != 0 && acceptedNormIntegralMatrix().nRows() != 0) {
+			// keep list of required waves for each reflectivity and rank
+			boost::multi_array<vector<int>, 2> waves(boost::extents[2][rank()]);
+
+			// loop over production amplitudes and extract combinations of
+			// rank and reflectivity
+			for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+				// skip thresholded production amplitudes
+				if (thrProdAmpIndices.count(i) > 0)
+					continue;
+
+				const string waveName = string(waveNameForProdAmp(i));
+				const int waveI = waveIndex(waveName);
+				assert(waveI >= 0);
+				assert(thrWaveIndices.count(waveI) == 0);
+
+				// skip flat wave (handled below)
+				if (waveName == "flat")
+					continue;
+
+				const int rank = rankOfProdAmp(i);
+				assert(rank >= 0 && (unsigned int)rank < this->rank());
+
+				const int refl = partialWaveFitHelper::getReflectivity(waveName);
+				assert(refl == -1 || refl == +1);
+
+				if (refl > 0)
+					waves[1][rank].push_back(waveI);
+				else
+					waves[0][rank].push_back(waveI);
+			}
+
+			double logDetAcc = 0;
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+				for (unsigned int iRank = 0; iRank < rank(); ++iRank) {
+					const unsigned int dim = waves[iRefl][iRank].size();
+					complexMatrix sub(dim, dim);
+
+					for(unsigned int i = 0; i < dim; ++i)
+						for(unsigned int j = 0; j < dim; ++j)
+							sub.set(i, j, acceptedNormIntegral(waves[iRefl][iRank][i], waves[iRefl][iRank][j]));
+
+					logDetAcc += TMath::Log(sub.determinant().real());
+				}
+			}
+
+			// parameter volume for flat wave correlates with overall acceptance
+			const int idxFlat = waveIndex("flat");
+			assert(idxFlat != -1);
+			logDetAcc += TMath::Log(acceptedNormIntegral(idxFlat, idxFlat).real());
+
+			// n-Sphere:
+			const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(nmbEvents()))
+			                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * logDetAcc;
+			components[2] = -lva;
+		} else {
+			printWarn << "fitResult does not have a acceptance integral matrix. Returning negative infinity for corresponding component of evidence." << endl;
+		}
+
+		// finally we calculate the probability of single waves being negligible and
+		// take these reults into account
+		const unsigned int nwaves = nmbWaves();
+		double logprob = 0;
+		for (unsigned int iwaves = 0; iwaves < nwaves; ++iwaves) {
+			// exclude flat wave
+			if (waveName(iwaves) == "flat")
+				continue;
+
+			// check that this wave is not amongst the thresholded waves
+			if (thrWaveIndices.count(iwaves) > 0)
+				continue;
+
+			const double val = intensity   (iwaves);
+			const double err = intensityErr(iwaves);
+			// P(val>0); (assuming gaussian...) dirty!
+			// require 3simga significance!
+			const double prob = ROOT::Math::normal_cdf_c(5. * err, err, val);
+			logprob += TMath::Log(prob);
+		}
+		components[3] = logprob;
+	} else {
+		printWarn << "fitResult does not have a valid error matrix. Returning negative infinity for corresponding components of evidence." << endl;
 	}
-	// n-Sphere:
-	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(nmbEvents()))
-	                   - ROOT::Math::lgamma(0.5 * d + 1) - 0.5 * logDetAcc;
 
-	// finally we calculate the probability of single waves being negligible and
-	// take these reults into account
-	const unsigned int nwaves = nmbWaves();
-	double logprob = 0;
-	for (unsigned int iwaves = 0; iwaves < nwaves; ++iwaves) {
-		// exclude flat wave
-		if (waveName(iwaves) == "flat")
-			continue;
-
-		// check that this wave is not amongst the thresholded waves
-		if (thrWaveIndices.count(iwaves) > 0)
-			continue;
-
-		const double val = intensity   (iwaves);
-		const double err = intensityErr(iwaves);
-		// P(val>0); (assuming gaussian...) dirty!
-		// require 3simga significance!
-		const double prob = ROOT::Math::normal_cdf_c(5. * err, err, val);
-		logprob += TMath::Log(prob);
-	}
-
-	std::vector<double> retval;
-	retval.push_back(l);
-	retval.push_back(lvad);
-	retval.push_back(-lva);
-	retval.push_back(logprob);
-	return retval;
+	return components;
 }
 
 
