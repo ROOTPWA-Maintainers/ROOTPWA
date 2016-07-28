@@ -34,7 +34,7 @@
 # set include directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CUDACODE_INCLUDE_DIR}
+	${RPWA_CUDA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
@@ -44,7 +44,7 @@ include_directories(
 
 
 # compile HOST executables
-make_executable(testLikelihoodMockup testLikelihoodMockup.cc ${CUDA_CUTIL_LIBRARY} "${CUDACODE_LIBS}" "${ROOT_LIBS}")
+make_executable(testLikelihoodMockup testLikelihoodMockup.cc ${CUDA_CUTIL_LIBRARY} "${RPWA_CUDA_LIBS}" "${ROOT_LIBS}")
 
 cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
 target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})

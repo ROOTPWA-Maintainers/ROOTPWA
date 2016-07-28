@@ -37,7 +37,7 @@ message_setup_this_dir()
 # set include directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${CUDACODE_INCLUDE_DIR}
+	${RPWA_CUDA_INCLUDE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
 	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
@@ -64,12 +64,12 @@ lib_name_for_current_dir(THIS_LIB)
 
 
 # ROOT dictionary
-set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
+set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/dict.cc)
 root_generate_dictionary(
 	${ROOTPWA_DICTIONARY}
 	fitResult.h complexMatrix.h
 	MODULE ${THIS_LIB}
-	LINKDEF rootPwaLinkDef.h
+	LINKDEF linkdef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
@@ -79,7 +79,7 @@ make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
 	"${ROOT_LIBS}"
-	"${CUDACODE_LIBS}"
+	"${RPWA_CUDA_LIBS}"
 	"${RPWA_PARTICLEDATA_LIB}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
@@ -87,5 +87,5 @@ make_shared_library(
 
 
 # executables
-make_executable(stripIntegralsFromFitResult    stripIntegralsFromFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})
-make_executable(addIntegralsToFitResult        addIntegralsToFitResult.cc         ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(stripIntegralsFromFitResult stripIntegralsFromFitResult.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(addIntegralsToFitResult     addIntegralsToFitResult.cc     ${THIS_LIB} ${RPWA_UTILITIES_LIB})

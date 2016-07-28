@@ -43,7 +43,7 @@ include_directories(
 
 
 # executables
-make_executable(testSumAccumulators    testSumAccumulators.cc)
-make_executable(testSpinUtils          testSpinUtils.cc)
-make_executable(testFileUtils          testFileUtils.cc)
-make_executable(testArray              testArray.cc)
+make_executable(testSumAccumulators testSumAccumulators.cc)
+make_executable(testSpinUtils       testSpinUtils.cc)
+make_executable(testFileUtils       testFileUtils.cc)
+make_executable(testArray           testArray.cc)

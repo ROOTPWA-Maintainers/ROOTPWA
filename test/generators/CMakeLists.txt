@@ -42,4 +42,4 @@ include_directories(
 
 
 # executables
-make_executable(testMassAndTPrimePicker   testMassAndTPrimePicker.cc   "${RPWA_GENERATORS_LIB}")
+make_executable(testMassAndTPrimePicker testMassAndTPrimePicker.cc "${RPWA_GENERATORS_LIB}")

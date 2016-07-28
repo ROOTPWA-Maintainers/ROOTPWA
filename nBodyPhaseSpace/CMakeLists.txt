@@ -57,12 +57,12 @@ lib_name_for_current_dir(THIS_LIB)
 
 
 # ROOT dictionary
-set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
+set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/dict.cc)
 root_generate_dictionary(
 	${ROOTPWAGEN_DICTIONARY}
 	nBodyPhaseSpaceGenerator.h nBodyPhaseSpaceKinematics.h
 	MODULE ${THIS_LIB}
-	LINKDEF rootPwaGenLinkDef.h
+	LINKDEF linkdef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
 
@@ -73,7 +73,3 @@ make_shared_library(
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	)
-
-
-# build tests
-#add_subdirectory(test)

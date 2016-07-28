@@ -60,12 +60,12 @@ lib_name_for_current_dir(THIS_LIB)
 
 
 # ROOT dictionary
-set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaStorageFormatsDict.cc)
+set(ROOTPWASTORAGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/dict.cc)
 root_generate_dictionary(
 	${ROOTPWASTORAGE_DICTIONARY}
 	amplitudeMetadata.h amplitudeTreeLeaf.h eventMetadata.h
 	MODULE ${THIS_LIB}
-	LINKDEF rootPwaStorageLinkDef.h
+	LINKDEF linkdef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWASTORAGE_DICTIONARY})
 
@@ -79,4 +79,4 @@ make_shared_library(
 	)
 
 
-make_executable(mergeDatafiles   mergeDatafiles.cc   ${THIS_LIB} ${RPWA_UTILITIES_LIB})
+make_executable(mergeDatafiles mergeDatafiles.cc ${THIS_LIB} ${RPWA_UTILITIES_LIB})
