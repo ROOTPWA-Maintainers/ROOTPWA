@@ -527,6 +527,9 @@ enable_testing()
 # * compilation of each directory can be switched off by defining a
 #   variable with name DO_NOT_COMPILE_RPWA_<FOLDER> and setting it to
 #   a non-empty value
+#
+# * each folder may contain one linkdef.h file, which will be used to
+#   generate ROOT dictionaries (dict.cc)
 
 set(_SRC_DIRS
 #	cuda

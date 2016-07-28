@@ -75,5 +75,5 @@ make_shared_library(
 
 
 # executables
-make_executable(CalcAmpl                   CalcAmpl.cc                   ${THIS_LIB})
-make_executable(generatePrimeNumberCache   generatePrimeNumberCache.cc   ${THIS_LIB})
+make_executable(CalcAmpl                 CalcAmpl.cc                 ${THIS_LIB})
+make_executable(generatePrimeNumberCache generatePrimeNumberCache.cc ${THIS_LIB})

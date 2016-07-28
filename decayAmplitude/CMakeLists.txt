@@ -78,12 +78,12 @@ lib_name_for_current_dir(THIS_LIB)
 
 
 # ROOT dictionary
-set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/dict.cc)
 root_generate_dictionary(
 	${ROOTPWAAMP_DICTIONARY}
 	waveDescription.h ampIntegralMatrix.h ampIntegralMatrixMetadata.h
 	MODULE ${THIS_LIB}
-	LINKDEF rootPwaAmpLinkDef.h
+	LINKDEF linkdef.h
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
