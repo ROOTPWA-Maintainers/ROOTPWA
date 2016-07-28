@@ -82,25 +82,6 @@ namespace {
 		return rpwa::py::convertToPy<TMatrixT<double> >(self.prodAmpCov(prodAmpIndices));
 	}
 
-	PyObject* fitResult_prodAmpCov_3(const rpwa::fitResult& self, const bp::object& pyProdAmpIndexPairs)
-	{
-		bp::list pyListProdAmpIndexPairs = bp::extract<bp::list>(pyProdAmpIndexPairs);
-		std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairs(bp::len(pyListProdAmpIndexPairs));
-		for(int i = 0; i < bp::len(pyListProdAmpIndexPairs); ++i) {
-			bp::tuple tuple = bp::extract<bp::tuple>(pyListProdAmpIndexPairs[i]);
-			prodAmpIndexPairs[i].first  = bp::extract<unsigned int>(tuple[0]);
-			prodAmpIndexPairs[i].second = bp::extract<unsigned int>(tuple[1]);
-		}
-		return rpwa::py::convertToPy<TMatrixT<double> >(self.prodAmpCov(prodAmpIndexPairs));
-	}
-
-	PyObject* fitResult_prodAmpCov_4(const rpwa::fitResult& self,
-	                                 const std::vector<unsigned int>& prodAmpIndicesA,
-	                                 const std::vector<unsigned int>& prodAmpIndicesB)
-	{
-		return rpwa::py::convertToPy<TMatrixT<double> >(self.prodAmpCov(prodAmpIndicesA, prodAmpIndicesB));
-	}
-
 	double fitResult_phaseSpaceIntegral_1(const rpwa::fitResult& self, const unsigned int waveIndex)
 	{
 		return self.phaseSpaceIntegral(waveIndex);
@@ -111,35 +92,18 @@ namespace {
 		return self.phaseSpaceIntegral(waveName);
 	}
 
-	PyObject* fitResult_spinDensityMatrixElemCov(const rpwa::fitResult& self,
-	                                             const unsigned int waveIndexA,
-	                                             const unsigned int waveIndexB)
+	std::complex<double> fitResult_spinDensityMatrixElem_1(const rpwa::fitResult& self,
+	                                                       const unsigned int waveIndexA,
+	                                                       const unsigned int waveIndexB)
+	{
+		return self.spinDensityMatrixElem(waveIndexA, waveIndexB);
+	}
+
+	PyObject* fitResult_spinDensityMatrixElemCov_1(const rpwa::fitResult& self,
+	                                               const unsigned int waveIndexA,
+	                                               const unsigned int waveIndexB)
 	{
 		return rpwa::py::convertToPy<TMatrixT<double> >(self.spinDensityMatrixElemCov(waveIndexA, waveIndexB));
-	}
-
-	double fitResult_intensity_1(const rpwa::fitResult& self, const unsigned int waveIndex) {
-		return self.intensity(waveIndex);
-	}
-
-	double fitResult_intensityErr_1(const rpwa::fitResult& self, const unsigned int waveIndex) {
-			return self.intensityErr(waveIndex);
-	}
-
-	double fitResult_intensity_2(const rpwa::fitResult& self, const char* waveNamePattern) {
-		return self.intensity(waveNamePattern);
-	}
-
-	double fitResult_intensityErr_2(const rpwa::fitResult& self, const char* waveNamePattern) {
-			return self.intensityErr(waveNamePattern);
-	}
-
-	double fitResult_intensity_3(const rpwa::fitResult& self) {
-		return self.intensity();
-	}
-
-	double fitResult_intensityErr_3(const rpwa::fitResult& self) {
-			return self.intensityErr();
 	}
 
 	double fitResult_phase_1(const rpwa::fitResult& self,
@@ -156,6 +120,48 @@ namespace {
 		return self.phaseErr(waveIndexA, waveIndexB);
 	}
 
+	double fitResult_coherence_1(const rpwa::fitResult& self,
+	                             const unsigned int waveIndexA,
+	                             const unsigned int waveIndexB)
+	{
+		return self.coherence(waveIndexA, waveIndexB);
+	}
+
+	double fitResult_coherenceErr_1(const rpwa::fitResult& self,
+	                                const unsigned int waveIndexA,
+	                                const unsigned int waveIndexB)
+	{
+		return self.coherenceErr(waveIndexA, waveIndexB);
+	}
+
+	double fitResult_overlap_1(const rpwa::fitResult& self,
+	                           const unsigned int waveIndexA,
+	                           const unsigned int waveIndexB)
+	{
+		return self.overlap(waveIndexA, waveIndexB);
+	}
+
+	double fitResult_overlapErr_1(const rpwa::fitResult& self,
+	                              const unsigned int waveIndexA,
+	                              const unsigned int waveIndexB)
+	{
+		return self.overlapErr(waveIndexA, waveIndexB);
+	}
+
+	std::complex<double> fitResult_spinDensityMatrixElem_2(const rpwa::fitResult& self,
+	                                                       const std::string& waveNameA,
+	                                                       const std::string& waveNameB)
+	{
+		return self.spinDensityMatrixElem(waveNameA, waveNameB);
+	}
+
+	PyObject* fitResult_spinDensityMatrixElemCov_2(const rpwa::fitResult& self,
+	                                               const std::string& waveNameA,
+	                                               const std::string& waveNameB)
+	{
+		return rpwa::py::convertToPy<TMatrixT<double> >(self.spinDensityMatrixElemCov(waveNameA, waveNameB));
+	}
+
 	double fitResult_phase_2(const rpwa::fitResult& self,
 	                         const std::string waveNameA,
 	                         const std::string waveNameB)
@@ -168,6 +174,58 @@ namespace {
 	                            const std::string waveNameB)
 	{
 		return self.phaseErr(waveNameA, waveNameB);
+	}
+
+	double fitResult_coherence_2(const rpwa::fitResult& self,
+	                             const std::string waveNameA,
+	                             const std::string waveNameB)
+	{
+		return self.coherence(waveNameA, waveNameB);
+	}
+
+	double fitResult_coherenceErr_2(const rpwa::fitResult& self,
+	                                const std::string waveNameA,
+	                                const std::string waveNameB)
+	{
+		return self.coherenceErr(waveNameA, waveNameB);
+	}
+
+	double fitResult_overlap_2(const rpwa::fitResult& self,
+	                           const std::string waveNameA,
+	                           const std::string waveNameB)
+	{
+		return self.overlap(waveNameA, waveNameB);
+	}
+
+	double fitResult_overlapErr_2(const rpwa::fitResult& self,
+	                              const std::string waveNameA,
+	                              const std::string waveNameB)
+	{
+		return self.overlapErr(waveNameA, waveNameB);
+	}
+
+	double fitResult_intensity_1(const rpwa::fitResult& self, const unsigned int waveIndex) {
+		return self.intensity(waveIndex);
+	}
+
+	double fitResult_intensityErr_1(const rpwa::fitResult& self, const unsigned int waveIndex) {
+		return self.intensityErr(waveIndex);
+	}
+
+	double fitResult_intensity_2(const rpwa::fitResult& self, const char* waveNamePattern) {
+		return self.intensity(waveNamePattern);
+	}
+
+	double fitResult_intensityErr_2(const rpwa::fitResult& self, const char* waveNamePattern) {
+		return self.intensityErr(waveNamePattern);
+	}
+
+	double fitResult_intensity_3(const rpwa::fitResult& self) {
+		return self.intensity();
+	}
+
+	double fitResult_intensityErr_3(const rpwa::fitResult& self) {
+		return self.intensityErr();
 	}
 
 	bp::list fitResult_prodAmps(const rpwa::fitResult& self)
@@ -222,20 +280,6 @@ namespace {
 		return retval;
 	}
 
-	std::string fitResult_printProdAmpNames(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printProdAmpNames(sstr);
-		return sstr.str();
-	}
-
-	std::string fitResult_printWaveNames(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printWaveNames(sstr);
-		return sstr.str();
-	}
-
 	std::string fitResult_printProdAmps(const rpwa::fitResult self)
 	{
 		std::stringstream sstr;
@@ -247,13 +291,6 @@ namespace {
 	{
 		std::stringstream sstr;
 		self.printWaves(sstr);
-		return sstr.str();
-	}
-
-	std::string fitResult_printAmpsGenPW(const rpwa::fitResult self)
-	{
-		std::stringstream sstr;
-		self.printAmpsGenPW(sstr);
 		return sstr.str();
 	}
 
@@ -275,52 +312,68 @@ void rpwa::py::exportFitResult() {
 		.def("reset", &rpwa::fitResult::reset)
 		.def("fill", &fitResult_fill_1)
 		.def("fill", &fitResult_fill_2)
+		.def("nmbEvents", &rpwa::fitResult::nmbEvents)
+		.def("normNmbEvents", &rpwa::fitResult::normNmbEvents)
 		.def("massBinCenter", &rpwa::fitResult::massBinCenter)
 		.def("logLikelihood", &rpwa::fitResult::logLikelihood)
 		.def("evidence", &rpwa::fitResult::evidence)
 		.def("evidenceComponents", &fitResult_evidenceComponents)
+		.def("rank", &rpwa::fitResult::rank)
+		.def("covMatrixValid", &rpwa::fitResult::covMatrixValid)
 		.def("converged", &rpwa::fitResult::converged)
 		.def("hasHessian", &rpwa::fitResult::hasHessian)
-		.def("rank", &rpwa::fitResult::rank)
-		.def("nmbEvents", &rpwa::fitResult::nmbEvents)
-		.def("normNmbEvents", &rpwa::fitResult::normNmbEvents)
 		.def("nmbWaves", &rpwa::fitResult::nmbWaves)
 		.def("nmbProdAmps", &rpwa::fitResult::nmbProdAmps)
-		.def("waveName", &rpwa::fitResult::waveName)
+		.def(
+			"waveName"
+			, &rpwa::fitResult::waveName
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def("waveNameEsc", &rpwa::fitResult::waveNameEsc)
-		.def("prodAmpName", &rpwa::fitResult::prodAmpName)
+		.def(
+			"prodAmpName"
+			, &rpwa::fitResult::prodAmpName
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def("prodAmpNameEsc", &rpwa::fitResult::prodAmpNameEsc)
 		.def("waveNameForProdAmp", &rpwa::fitResult::waveNameForProdAmp)
+		.def("rankOfProdAmp", &rpwa::fitResult::rankOfProdAmp)
 		.def("waveIndex", &rpwa::fitResult::waveIndex)
 		.def("prodAmpIndex", &rpwa::fitResult::prodAmpIndex)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
-		.def("fitParameterCov", &rpwa::fitResult::fitParameterCov)
 		.def("prodAmp", &fitResult::prodAmp)
-		.def("prodAmpCov", &fitResult_prodAmpCov_3)
-		.def("prodAmpCov", &fitResult_prodAmpCov_4)
 		.def("prodAmpCov", &fitResult_prodAmpCov_2)
 		.def("prodAmpCov", &fitResult_prodAmpCov_1)
-		.def("covMatrixValid", &rpwa::fitResult::covMatrixValid)
 		.def("normIntegral", &rpwa::fitResult::normIntegral)
 		.def("acceptedNormIntegral", &rpwa::fitResult::acceptedNormIntegral)
 		.def("phaseSpaceIntegral", &fitResult_phaseSpaceIntegral_1)
 		.def("phaseSpaceIntegral", &fitResult_phaseSpaceIntegral_2)
-		.def("spinDensityMatrixElem", &rpwa::fitResult::spinDensityMatrixElem)
-		.def("spinDensityMatrixElemCov", &fitResult_spinDensityMatrixElemCov)
+
+		.def("spinDensityMatrixElem", &fitResult_spinDensityMatrixElem_1)
+		.def("spinDensityMatrixElemCov", &fitResult_spinDensityMatrixElemCov_1)
+		.def("phase", &fitResult_phase_1)
+		.def("phaseErr", &fitResult_phaseErr_1)
+		.def("coherence", &fitResult_coherence_1)
+		.def("coherenceErr", &fitResult_coherenceErr_1)
+		.def("overlap", &fitResult_overlap_1)
+		.def("overlapErr", &fitResult_overlapErr_1)
+
+		.def("spinDensityMatrixElem", &fitResult_spinDensityMatrixElem_2)
+		.def("spinDensityMatrixElemCov", &fitResult_spinDensityMatrixElemCov_2)
+		.def("phase", &fitResult_phase_2)
+		.def("phaseErr", &fitResult_phaseErr_2)
+		.def("coherence", &fitResult_coherence_2)
+		.def("coherenceErr", &fitResult_coherenceErr_2)
+		.def("overlap", &fitResult_overlap_2)
+		.def("overlapErr", &fitResult_overlapErr_2)
+
 		.def("intensity", &fitResult_intensity_1)
 		.def("intensityErr", &fitResult_intensityErr_1)
 		.def("intensity", &fitResult_intensity_2)
 		.def("intensityErr", &fitResult_intensityErr_2)
 		.def("intensity", &fitResult_intensity_3)
 		.def("intensityErr", &fitResult_intensityErr_3)
-		.def("phase", &fitResult_phase_1)
-		.def("phaseErr", &fitResult_phaseErr_1)
-		.def("phase", &fitResult_phase_2)
-		.def("phaseErr", &fitResult_phaseErr_2)
-		.def("coherence", &rpwa::fitResult::coherence)
-		.def("coherenceErr", &rpwa::fitResult::coherenceErr)
-		.def("overlap", &rpwa::fitResult::overlap)
-		.def("overlapErr", &rpwa::fitResult::overlapErr)
+
 		.def("prodAmps", &fitResult_prodAmps)
 		.def("prodAmpNames", &fitResult_prodAmpNames)
 		.def("waveNames", &fitResult_waveNames)
@@ -338,11 +391,8 @@ void rpwa::py::exportFitResult() {
 		)
 		.def("phaseSpaceIntegralVector", &fitResult_phaseSpaceIntegralVector)
 		.def("normIntIndexMap", &fitResult_normIntIndexMap)
-		.def("printProdAmpNames", &fitResult_printProdAmpNames)
-		.def("printWaveNames", &fitResult_printWaveNames)
 		.def("printProdAmps", &fitResult_printProdAmps)
 		.def("printWaves", &fitResult_printWaves)
-		.def("printAmpsGenPW", &fitResult_printAmpsGenPW)
 
 		.def("Write", &fitResult_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &rpwa::py::setBranchAddress<rpwa::fitResult*>)

@@ -94,9 +94,8 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	minimum = ROOT.TVectorD(likelihood.nmbPars())
-	for i in range(likelihood.nmbPars()):
-		parName = likelihood.parName(i)
-		minimum[i] = result.fitParameter(parName)
+	for i, parameter in enumerate(likelihood.parameters()):
+		minimum[i] = result.fitParameter(parameter.parName())
 
 	minimumLikelihood = likelihood.DoEval( [ minimum[i] for i in xrange(minimum.GetNrows()) ] )
 	pyRootPwa.utils.printInfo("likelihood at minimum is {: .15e}.".format(minimumLikelihood))

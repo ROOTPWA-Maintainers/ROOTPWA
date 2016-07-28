@@ -18,7 +18,7 @@ def initLikelihood(waveDescThres,
 	if not verbose:
 		likelihood.setQuiet()
 	if cauchy:
-		likelihood.setPriorType(pyRootPwa.core.HALF_CAUCHY)
+		likelihood.setPriorType(pyRootPwa.core.pwaLikelihood.HALF_CAUCHY)
 		likelihood.setCauchyWidth(cauchyWidth)
 	if (not likelihood.init(waveDescThres,
 	                        rank,

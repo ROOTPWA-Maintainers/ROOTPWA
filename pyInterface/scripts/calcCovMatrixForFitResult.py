@@ -92,9 +92,8 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	pars = []
-	for i in range(likelihood.nmbPars()):
-		parName = likelihood.parName(i)
-		pars.append(result.fitParameter(parName))
+	for parameter in likelihood.parameters():
+		pars.append(result.fitParameter(parameter.parName()))
 
 	# analytically calculate Hessian
 	hessian = likelihood.Hessian(pars)

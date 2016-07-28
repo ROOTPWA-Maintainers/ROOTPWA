@@ -30,24 +30,11 @@
 #define PARTIALWAVEFITHELPER_HH
 
 
-#include <iostream>
-
-
-template<typename T> class TMatrixT;
-template<typename T> class TVectorT;
-
-
 namespace rpwa {
-
-
-	class fitResult;
-	template<typename T> class pwaLikelihood;
 
 
 	namespace partialWaveFitHelper {
 
-
-		void extractWaveList(const rpwa::fitResult& fitResult, std::ostream& waveList);
 
 		int getReflectivity(const std::string& name);
 
