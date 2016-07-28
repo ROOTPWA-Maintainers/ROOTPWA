@@ -119,7 +119,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up compiler environment.")
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-	message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
+	message(STATUS "No build type was specified. Setting build type to 'RELWITHDEBINFO'.")
 	set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 endif()
 
@@ -131,15 +131,17 @@ if(COMPILER_IS_CXX11_COMPATIBLE)
 	message(STATUS "C++11 compatible compiler found, enable C++11 features.")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
-# consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+# consider flags -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Wsuggest-attribute=const
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Woverloaded-virtual -Werror")
+# options switchable via command line
+# enable option by running cmake .. -D <VAR>=<any value>
+if(ARCH_NATIVE)
+	# !Note! may cause trouble in heterogeneous environments
+	# `gcc -march=native -Q --help=target` shows the compiler switches set by this option on your machine
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+endif()
 # set additional flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-if(WEXTRA)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
-endif()
-# -march=native switch was removed, because is caused trouble in heterogeneous environments
-# `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
@@ -433,6 +435,26 @@ endif()
 add_feature_info(Bayesian_Analysis_Toolkit USE_BAT "Allow usage of the Bayesian Analysis Toolkit.")
 
 
+# setup nlopt (optional)
+message(STATUS "")
+message(STATUS ">>> Setting up NLopt.")
+find_package(NLopt)
+set_package_properties(NLopt
+	PROPERTIES
+	DESCRIPTION "Library for nonlinear optimization"
+	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
+	TYPE OPTIONAL
+	)
+if(NOT NLopt_FOUND)
+	set(USE_NLOPT OFF)
+	message(STATUS "Cannot find NLopt installation. No NLopt components will be generated.")
+else()
+	set(USE_NLOPT ON)
+	add_definitions(-DUSE_NLOPT)
+endif()
+add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
+
+
 # make git hash accessible via predefined macro GIT_HASH
 message(STATUS "")
 message(STATUS ">>> Setting up Git.")
@@ -457,26 +479,6 @@ if(GIT_FOUND)
 		message(Warning " ??? Running 'git' did not succeed. Repository hash unknown.")
 	endif()
 endif()
-
-
-# setup nlopt (optional)
-message(STATUS "")
-message(STATUS ">>> Setting up NLopt.")
-find_package(NLopt)
-set_package_properties(NLopt
-	PROPERTIES
-	DESCRIPTION "Library for nonlinear optimization"
-	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
-	TYPE OPTIONAL
-	)
-if(NOT NLopt_FOUND)
-	set(USE_NLOPT OFF)
-	message(STATUS "Cannot find NLopt installation. No NLopt components will be generated.")
-else()
-	set(USE_NLOPT ON)
-	add_definitions(-DUSE_NLOPT)
-endif()
-add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
 
 
 # setup doxygen (optional)
@@ -582,7 +584,7 @@ if(USE_CUDA)
 	add_subdirectory(cuda)
 endif()
 
-
+# tests
 add_subdirectory(test)
 
 

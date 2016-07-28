@@ -42,7 +42,7 @@ include_directories(
 	)
 
 
-# produce new version of environment printing variables
+# make environment variables accessible from program code
 ADD_CUSTOM_TARGET(
 	environment
 	${CMAKE_COMMAND} -D SRC=${CMAKE_CURRENT_SOURCE_DIR}/environment.h.in

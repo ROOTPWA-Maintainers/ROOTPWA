@@ -73,7 +73,3 @@ make_shared_library(
 	"${SOURCES}"
 	"${ROOT_LIBS}"
 	)
-
-
-# build tests
-#add_subdirectory(test)
