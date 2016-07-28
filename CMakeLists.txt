@@ -511,7 +511,8 @@ endif()
 enable_testing()
 
 
-# set include and library paths for project-internal libraries
+# define include and library paths for project-internal libraries
+#
 # the following scheme is used:
 #
 # * for each source folder a shared library is generated
@@ -531,8 +532,10 @@ enable_testing()
 # * each folder may contain one linkdef.h file, which will be used to
 #   generate ROOT dictionaries (dict.cc)
 
+message(STATUS "")
+message(STATUS ">>> Defining include and library paths.")
 set(_SRC_DIRS
-#	cuda
+	cuda
 	decayAmplitude
 	fortran
 	generators
@@ -546,6 +549,7 @@ set(_SRC_DIRS
 	storageFormats
 	utilities
 	)
+# loop over all source directories
 foreach(_SRC_DIR ${_SRC_DIRS})
 	var_name_from_dir_name(${_SRC_DIR} _VAR_NAME)
 	if(NOT DO_NOT_COMPILE_${_VAR_NAME})
@@ -559,18 +563,6 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 	unset(_VAR_NAME)
 endforeach()
 
-if(USE_CUDA)
-	set(CUDACODE_INCLUDE_DIR
-		${CMAKE_SOURCE_DIR}/cuda
-		)
-	set(CUDACODE_LIBS
-		RootPwaCuda
-		)
-else()
-	set(CUDACODE_INCLUDE_DIR)
-	set(CUDACODE_LIBS)
-endif()
-
 
 # build project-internal libraries
 foreach(_SRC_DIR ${_SRC_DIRS})
@@ -582,12 +574,7 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 endforeach()
 unset(_SRC_DIRS)
 
-# CUDA stuff
-if(USE_CUDA)
-	add_subdirectory(cuda)
-endif()
-
-# tests
+# build tests
 add_subdirectory(test)
 
 
