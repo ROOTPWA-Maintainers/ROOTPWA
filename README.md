@@ -165,6 +165,46 @@ The build system tries to find your Python installation automatically. For this 
 In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
+### NLopt (optional) ###
+
+The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
+
+1.  Download the source tarball from <http://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice.
+
+2.  Configure and compile _NLopt_.
+
+    `> ./configure --with-cxx --enable-shared && make`
+
+    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`.
+
+3.  Set the environment variable `NLOPT` to the current directory.
+
+    ``> export NLOPT=`pwd -P` ``
+
+    Consider to add the appropriate line to your `.profile`.
+
+
+### BAT (optional) ###
+
+An efficient way to create Monte Carlo events according to a given model can be used if the _Bayesian Analysis Toolkit_ (<https://github.com/bat/bat>) is available. The ROOTPWA build system is able to automatically detect BAT if it is either installed in system paths or if the `BATINSTALLDIR` environment variable is set.
+
+1.  At the time of writing this documentation there is no tagged release of BAT working in our usecase. The current `git` `HEAD` should be used instead.
+
+    `> git clone https://github.com/bat/bat.git`
+
+2.  Change to the directory that was created during the clone to configure and compile BAT.
+
+    `> ./configure && make`
+
+    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments.
+
+3.  Set the environment variable `BATINSTALLDIR` to the current directory.
+
+    ``> export BATINSTALLDIR=`pwd -P` ``
+
+    Consider to add an appropriate line to your `.profile`.
+
+
 ### CUDA (optional) ###
 
 If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 5.5 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
