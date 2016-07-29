@@ -165,6 +165,46 @@ The build system tries to find your Python installation automatically. For this 
 In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
+### NLopt (optional) ###
+
+The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
+
+1.  Download the source tarball from <http://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice. You can decide in the next step whether the source directory should also contain the final library (the simplest case) or whether you want to install into another directory.
+
+2.  Configure, compile and install _NLopt_.
+
+    `> ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared && make && make install`
+
+    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. If you want NLopt to be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
+
+3.  Set the environment variable `NLOPT` to either the directory containing the installation or to the directory containing the result of the compilation.
+
+    ``> export NLOPT=`pwd -P` ``
+
+    Consider to add the appropriate line to your `.profile`.
+
+
+### BAT (optional) ###
+
+An efficient way to create Monte Carlo events according to a given model can be used if the _Bayesian Analysis Toolkit_ (<https://github.com/bat/bat>) is available. The ROOTPWA build system is able to automatically detect BAT if it is either installed in system paths or if the `BATINSTALLDIR` environment variable is set.
+
+1.  At the time of writing this documentation there is no tagged release of BAT working in our usecase. The current `git` `HEAD` should be used instead.
+
+    `> git clone https://github.com/bat/bat.git`
+
+2.  Change to the directory that was created during the clone to configure and compile BAT.
+
+    `> ./autogen.sh && ./configure --prefix=/your/folder/to/install/bat && make && make install`
+
+    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
+
+3.  Set the environment variable `BATINSTALLDIR` to either the directory containing the installation or to the build directory.
+
+    ``> export BATINSTALLDIR=`pwd -P` ``
+
+    Consider to add an appropriate line to your `.profile`.
+
+
 ### CUDA (optional) ###
 
 If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 5.5 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
@@ -335,7 +375,9 @@ Contributions to the development of ROOTPWA are very welcome and can be made in 
 
 If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file an [issue report](https://github.com/ROOTPWA-Maintainers/ROOTPWA/issues) via the ROOTPWA GitHub website. Before submitting an issue report, please check that your issue has not already been submitted by someone else.
 
-If you already have a solution for a particular bug or have implemented a new feature, feel to submit a pull request so that the ROOTPWA developers can review your changes (see also "Contributing Code" below).
+If you already have a solution for a particular bug or have implemented a new feature, feel free to submit a pull request so that the ROOTPWA developers can review your changes (see also "Contributing Code" below).
+
+The development of ROOTPWA is organized via [Trello](https://trello.com/b/MdWlJZPQ). If you have a feature request please check if there already is a corresponding card. Trello can also be used to check if a feature is being worked on.
 
 
 ## Contributing Code ##
