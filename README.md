@@ -175,7 +175,7 @@ The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a
 
     `> ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared && make && make install`
 
-    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. NLopt can also be installed directly into the source directory. In this case, `configure` can be called without the `--prefix` option and `make install` should not be executed.
+    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. If you want NLopt to be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
 
 3.  Set the environment variable `NLOPT` to either the directory containing the installation or to the directory containing the result of the compilation.
 
@@ -196,7 +196,7 @@ An efficient way to create Monte Carlo events according to a given model can be 
 
     `> ./autogen.sh && ./configure --prefix=/your/folder/to/install/bat && make && make install`
 
-    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should not be installed outside the build directory, `configure` can be called without the `--prefix` option and `make install` should not be excuted.
+    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
 
 3.  Set the environment variable `BATINSTALLDIR` to either the directory containing the installation or to the build directory.
 
