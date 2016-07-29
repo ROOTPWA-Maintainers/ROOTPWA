@@ -169,15 +169,15 @@ In addition you need to compile the `Boost.Python` library (e.g. by running the 
 
 The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
 
-1.  Download the source tarball from <http://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice.
+1.  Download the source tarball from <http://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice. You can decide in the next step whether the source directory should also contain the final library (the simplest case) or whether you want to install into another directory.
 
-2.  Configure and compile _NLopt_.
+2.  Configure, compile and install _NLopt_.
 
-    `> ./configure --with-cxx --enable-shared && make`
+    `> ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared && make && make install`
 
-    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`.
+    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. NLopt can also be installed directly into the source directory. In this case, `configure` can be called without the `--prefix` option and `make install` should not be executed.
 
-3.  Set the environment variable `NLOPT` to the current directory.
+3.  Set the environment variable `NLOPT` to either the directory containing the installation or to the directory containing the result of the compilation.
 
     ``> export NLOPT=`pwd -P` ``
 
@@ -194,11 +194,11 @@ An efficient way to create Monte Carlo events according to a given model can be 
 
 2.  Change to the directory that was created during the clone to configure and compile BAT.
 
-    `> ./configure && make`
+    `> ./autogen.sh && ./configure --prefix=/your/folder/to/install/bat && make && make install`
 
-    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments.
+    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should not be installed outside the build directory, `configure` can be called without the `--prefix` option and `make install` should not be excuted.
 
-3.  Set the environment variable `BATINSTALLDIR` to the current directory.
+3.  Set the environment variable `BATINSTALLDIR` to either the directory containing the installation or to the build directory.
 
     ``> export BATINSTALLDIR=`pwd -P` ``
 
@@ -375,7 +375,9 @@ Contributions to the development of ROOTPWA are very welcome and can be made in 
 
 If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file an [issue report](https://github.com/ROOTPWA-Maintainers/ROOTPWA/issues) via the ROOTPWA GitHub website. Before submitting an issue report, please check that your issue has not already been submitted by someone else.
 
-If you already have a solution for a particular bug or have implemented a new feature, feel to submit a pull request so that the ROOTPWA developers can review your changes (see also "Contributing Code" below).
+If you already have a solution for a particular bug or have implemented a new feature, feel free to submit a pull request so that the ROOTPWA developers can review your changes (see also "Contributing Code" below).
+
+The development of ROOTPWA is organized via [Trello](https://trello.com/b/MdWlJZPQ). If you have a feature request please check if there already is a corresponding card. Trello can also be used to check if a feature is being worked on.
 
 
 ## Contributing Code ##
