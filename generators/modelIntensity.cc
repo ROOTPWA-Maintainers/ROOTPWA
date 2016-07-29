@@ -5,17 +5,17 @@
 
 rpwa::modelIntensity::modelIntensity(fitResultPtr fitResult)
 	: _fitResult(fitResult),
-	  _amplitudesInitialized(false),
-	  _amplitudes(fitResult->nmbWaves()),
+	  _decayAmplitudesInitialized(false),
+	  _decayAmplitudes(fitResult->nmbWaves()),
 	  _refls(fitResult->nmbWaves(), 0),
-	  _integralsLoaded(false),
-	  _integrals(fitResult->nmbWaves()),
-	  _amplitudesFromXDecay(false)
+	  _phaseSpaceIntegralsLoaded(false),
+	  _phaseSpaceIntegrals(fitResult->nmbWaves()),
+	  _decayAmplitudesFromXDecay(false)
 {
 	// use the phase-space integrals from fit result if available
 	if (fitResult->phaseSpaceIntegralVector().size() == fitResult->nmbWaves()) {
-		_integralsLoaded = true;
-		_integrals       = fitResult->phaseSpaceIntegralVector();
+		_phaseSpaceIntegralsLoaded = true;
+		_phaseSpaceIntegrals       = fitResult->phaseSpaceIntegralVector();
 	}
 
 	_waveIndicesWithoutFlat = fitResult->waveIndicesMatchingPattern("^(?!flat$).*$");
@@ -23,119 +23,121 @@ rpwa::modelIntensity::modelIntensity(fitResultPtr fitResult)
 
 
 bool
-rpwa::modelIntensity::addAmplitude(rpwa::isobarAmplitudePtr amplitude)
+rpwa::modelIntensity::addDecayAmplitude(rpwa::isobarAmplitudePtr decayAmplitude)
 {
-	const std::string waveName  = waveDescription::waveNameFromTopology(*(amplitude->decayTopology()));
+	const std::string waveName  = waveDescription::waveNameFromTopology(*(decayAmplitude->decayTopology()));
 	const int         waveIndex = _fitResult->waveIndex(waveName);
 	if (waveIndex == -1) {
-		printErr << "wave '" << waveName << "' not used in fit result provided. Aborting..." << std::endl;
+		printWarn << "cannot find wave '" << waveName << "' in fit result provided." << std::endl;
 		return false;
 	}
-	if (_amplitudes[waveIndex]) {
-		printErr << "amplitude for wave '" << waveName << "' is added a second time. Aborting..." << std::endl;
+	if (_decayAmplitudes[waveIndex]) {
+		printWarn << "decay amplitude for wave '" << waveName << "' is added a second time." << std::endl;
 		return false;
 	}
 
-	_amplitudesInitialized = false;
-	_amplitudes[waveIndex] = amplitude;
-	_refls     [waveIndex] = amplitude->decayTopology()->XIsobarDecayVertex()->parent()->reflectivity();
-	_allRefls.insert(amplitude->decayTopology()->XIsobarDecayVertex()->parent()->reflectivity());
+	_decayAmplitudesInitialized = false;
+	_decayAmplitudes[waveIndex] = decayAmplitude;
+	_refls          [waveIndex] = decayAmplitude->decayTopology()->XIsobarDecayVertex()->parent()->reflectivity();
+	_allRefls.insert(decayAmplitude->decayTopology()->XIsobarDecayVertex()->parent()->reflectivity());
 	return true;
 }
 
 
 bool
-rpwa::modelIntensity::addIntegral(const rpwa::ampIntegralMatrix& integralMatrix)
+rpwa::modelIntensity::loadPhaseSpaceIntegral(const rpwa::ampIntegralMatrix& integralMatrix)
 {
-	_integralsLoaded = false;
-	_integrals.resize(_fitResult->nmbWaves());
+	_phaseSpaceIntegralsLoaded = false;
+	_phaseSpaceIntegrals.resize(_fitResult->nmbWaves());
 
 	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
 		const std::string& waveName = _fitResult->waveName(wave);
 		if (waveName == "flat") {
-			_integrals[wave] = 1.;
+			_phaseSpaceIntegrals[wave] = 1.;
 		} else {
 			if (not integralMatrix.containsWave(waveName)) {
-				std::cout << "wave '" << waveName << "' not in the integral matrix. Aborting..." << std::endl;
+				printWarn << "wave '" << waveName << "' not in the integral matrix." << std::endl;
 				return false;
 			}
 			const std::complex<double> integral = integralMatrix.element(waveName, waveName);
-			_integrals[wave] = std::sqrt(integral.real());
+			_phaseSpaceIntegrals[wave] = std::sqrt(integral.real());
 		}
 	}
 
-	_integralsLoaded = true;
+	_phaseSpaceIntegralsLoaded = true;
 	return true;
 }
 
 
 bool
-rpwa::modelIntensity::initAmplitudes(const std::vector<std::string>& decayKinParticleNames)
+rpwa::modelIntensity::initDecayAmplitudes(const std::vector<std::string>& decayKinParticleNames)
 {
-	// get X name from first amplitude
+	// get X name from first decay amplitude
 	std::vector<std::string> prodKinParticleNames(1);
 	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
 		const std::string& waveName = _fitResult->waveName(wave);
-		// no amplitude for 'flat' wave
+		// no decay amplitude for 'flat' wave
 		if (waveName == "flat") {
-			if (_amplitudes[wave]) {
-				printErr << "amplitude for flat wave was added. Aborting..." << std::endl;
+			if (_decayAmplitudes[wave]) {
+				printWarn << "decay amplitude for flat wave was added." << std::endl;
 				return false;
 			}
 			continue;
 		}
-		if (not _amplitudes[wave]) {
-			printErr << "amplitude for wave '" << waveName << "' was not added. Aborting..." << std::endl;
+		if (not _decayAmplitudes[wave]) {
+			printWarn << "decay amplitude for wave '" << waveName << "' was not added." << std::endl;
 			return false;
 		}
 
-		const isobarDecayTopologyPtr decay  = _amplitudes[wave]->decayTopology();
+		const isobarDecayTopologyPtr decay  = _decayAmplitudes[wave]->decayTopology();
 		const isobarDecayVertexPtr   vertex = decay->XIsobarDecayVertex();
 		prodKinParticleNames[0] = vertex->parent()->name();
 		break;
 	}
 
-	return initAmplitudes(prodKinParticleNames, decayKinParticleNames, true);
+	return initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames, true);
 }
 
 
 bool
-rpwa::modelIntensity::initAmplitudes(const std::vector<std::string>& prodKinParticleNames,
-                                     const std::vector<std::string>& decayKinParticleNames,
-                                     const bool                      fromXDecay)
+rpwa::modelIntensity::initDecayAmplitudes(const std::vector<std::string>& prodKinParticleNames,
+                                          const std::vector<std::string>& decayKinParticleNames,
+                                          const bool                      fromXDecay)
 {
-	_amplitudesInitialized = false;
-	_amplitudesFromXDecay  = fromXDecay;
+	_decayAmplitudesInitialized = false;
+	_decayAmplitudesFromXDecay  = fromXDecay;
 
+	//initialize the decay amplitudes
 	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
 		const std::string& waveName = _fitResult->waveName(wave);
-		// no amplitude for 'flat' wave
+		// no decay amplitude for 'flat' wave
 		if (waveName == "flat") {
-			if (_amplitudes[wave]) {
-				printErr << "amplitude for flat wave was added. Aborting..." << std::endl;
+			if (_decayAmplitudes[wave]) {
+				printWarn << "decay amplitude for flat wave was added." << std::endl;
 				return false;
 			}
 			continue;
 		}
-		if (not _amplitudes[wave]) {
-			printErr << "amplitude for wave '" << waveName << "' was not added. Aborting..." << std::endl;
+		if (not _decayAmplitudes[wave]) {
+			printWarn << "decay amplitude for wave '" << waveName << "' was not added." << std::endl;
 			return false;
 		}
 
-		// start amplitude from X decay
-		if (_amplitudesFromXDecay) {
-			const isobarDecayTopologyPtr decay  = _amplitudes[wave]->decayTopology();
+		// start decay amplitude from X decay
+		if (_decayAmplitudesFromXDecay) {
+			const isobarDecayTopologyPtr decay  = _decayAmplitudes[wave]->decayTopology();
 			const isobarDecayVertexPtr   vertex = decay->XIsobarDecayVertex();
-			_amplitudes[wave]->setDecayTopology(rpwa::createIsobarDecayTopology(decay->subDecayConsistent(vertex)));
+			_decayAmplitudes[wave]->setDecayTopology(rpwa::createIsobarDecayTopology(decay->subDecayConsistent(vertex)));
 		}
-		_amplitudes[wave]->init();
-		if (not _amplitudes[wave]->decayTopology()->initKinematicsData(prodKinParticleNames, decayKinParticleNames)) {
-			printErr << "could not initialize kinematics data for amplitude of wave '" << waveName << "'. Aborting..." << std::endl;
+
+		_decayAmplitudes[wave]->init();
+		if (not _decayAmplitudes[wave]->decayTopology()->initKinematicsData(prodKinParticleNames, decayKinParticleNames)) {
+			printWarn << "could not initialize kinematics data for decay amplitude of wave '" << waveName << "'." << std::endl;
 			return false;
 		}
 	}
 
-	_amplitudesInitialized = true;
+	_decayAmplitudesInitialized = true;
 	return true;
 }
 
@@ -145,7 +147,7 @@ rpwa::modelIntensity::getIntensity(const std::vector<unsigned int>& waveIndices,
                                    const std::vector<TVector3>&     prodKinMomenta,
                                    const std::vector<TVector3>&     decayKinMomenta) const
 {
-	const std::vector<std::complex<double> > amplitudes = getAmplitudes(prodKinMomenta, decayKinMomenta);
+	const std::vector<std::complex<double> > decayAmplitudes = getDecayAmplitudes(prodKinMomenta, decayKinMomenta);
 
 	double intensity = 0;
 	for (std::set<int>::const_iterator it=_allRefls.begin(); it!=_allRefls.end(); ++it) {
@@ -153,7 +155,7 @@ rpwa::modelIntensity::getIntensity(const std::vector<unsigned int>& waveIndices,
 		for (size_t i=0; i<waveIndices.size(); ++i) {
 			const unsigned int waveIndex = waveIndices[i];
 			if (_refls[waveIndex] == *it) {
-				amp += _fitResult->prodAmp(waveIndex) * amplitudes[waveIndex];
+				amp += _fitResult->prodAmp(waveIndex) * decayAmplitudes[waveIndex];
 			}
 		}
 		intensity += std::norm(amp);
@@ -164,33 +166,33 @@ rpwa::modelIntensity::getIntensity(const std::vector<unsigned int>& waveIndices,
 
 
 std::vector<std::complex<double> >
-rpwa::modelIntensity::getAmplitudes(const std::vector<TVector3>& prodKinMomenta,
-                                    const std::vector<TVector3>& decayKinMomenta) const
+rpwa::modelIntensity::getDecayAmplitudes(const std::vector<TVector3>& prodKinMomenta,
+                                         const std::vector<TVector3>& decayKinMomenta) const
 {
-	if (not _amplitudesInitialized) {
-		printErr << "amplitudes not initialized, cannot evaluate model. Aborting..." << std::endl;
+	if (not _decayAmplitudesInitialized) {
+		printErr << "decay amplitudes not initialized, cannot evaluate model. Aborting..." << std::endl;
 		throw;
 	}
-	if (not _integralsLoaded) {
+	if (not _phaseSpaceIntegralsLoaded) {
 		printErr << "integrals not loaded, cannot evaluate model. Aborting..." << std::endl;
 		throw;
 	}
 
-	std::vector<std::complex<double> > amplitudes(_amplitudes.size());
+	std::vector<std::complex<double> > decayAmplitudes(_decayAmplitudes.size());
 	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
 		// 'flat' wave
-		if (not _amplitudes[wave]) {
-			amplitudes[wave] = 1. / _integrals[wave];
+		if (not _decayAmplitudes[wave]) {
+			decayAmplitudes[wave] = 1. / _phaseSpaceIntegrals[wave];
 			continue;
 		}
 
-		if (not _amplitudes[wave]->decayTopology()->readKinematicsData(prodKinMomenta, decayKinMomenta)) {
+		if (not _decayAmplitudes[wave]->decayTopology()->readKinematicsData(prodKinMomenta, decayKinMomenta)) {
 			printErr << "could not read kinematics data for wave '" << _fitResult->waveName(wave) << "'. Aborting..." << std::endl;
 			throw;
 		}
-		amplitudes[wave] = _amplitudes[wave]->amplitude() / _integrals[wave];
+		decayAmplitudes[wave] = _decayAmplitudes[wave]->amplitude() / _phaseSpaceIntegrals[wave];
 	}
-	return amplitudes;
+	return decayAmplitudes;
 }
 
 
@@ -198,13 +200,13 @@ std::ostream&
 rpwa::modelIntensity::print(std::ostream& out) const
 {
 	out << "status of model intensity object:" << std::endl
-	    << "    number of waves ........... " << _fitResult->nmbWaves() << std::endl
+	    << "    number of waves ................. " << _fitResult->nmbWaves() << std::endl
 	    << "    wave names" << std::endl;
 	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
-		out << "                                " << _fitResult->waveName(wave) << std::endl;
+		out << "                                        " << _fitResult->waveName(wave) << std::endl;
 	}
-	out << "    amplitudes initialized .... " << yesNo(_amplitudesInitialized) << std::endl
-	    << "    integrals loaded .......... " << yesNo(_integralsLoaded) << std::endl
-	    << "    amplitudes from X decay ... " << yesNo(_amplitudesFromXDecay) << std::endl;
+	out << "    decay amplitudes initialized .... " << yesNo(_decayAmplitudesInitialized) << std::endl
+	    << "    integrals loaded ................ " << yesNo(_phaseSpaceIntegralsLoaded) << std::endl
+	    << "    decay amplitudes from X decay ... " << yesNo(_decayAmplitudesFromXDecay) << std::endl;
 	return out;
 }

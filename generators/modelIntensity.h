@@ -28,19 +28,19 @@ namespace rpwa {
 
 		modelIntensity(fitResultPtr fitResult);
 
-		bool addAmplitude(isobarAmplitudePtr             amplitude);
-		bool addIntegral (const rpwa::ampIntegralMatrix& integralMatrix);
+		bool addDecayAmplitude     (isobarAmplitudePtr             decayAmplitude);
+		bool loadPhaseSpaceIntegral(const rpwa::ampIntegralMatrix& integralMatrix);
 
-		// initialize amplitudes starting from X decay
-		bool initAmplitudes(const std::vector<std::string>& decayKinParticleNames);
+		// initialize decay amplitudes starting from X decay
+		bool initDecayAmplitudes(const std::vector<std::string>& decayKinParticleNames);
 
-		bool initAmplitudes(const std::vector<std::string>& prodKinParticleNames,
-		                    const std::vector<std::string>& decayKinParticleNames,
-		                    const bool                      fromXDecay = false);
+		bool initDecayAmplitudes(const std::vector<std::string>& prodKinParticleNames,
+		                         const std::vector<std::string>& decayKinParticleNames,
+		                         const bool                      fromXDecay = false);
 
 		// get intensity of all waves except flat wave
 
-		// get intensity if amplitudes have been initialized to start from X decay
+		// get intensity if decay amplitudes have been initialized to start from X decay
 		double getIntensity(const std::vector<TVector3>& decayKinMomenta) const;
 
 		double getIntensity(const std::vector<TVector3>& prodKinMomenta,
@@ -48,7 +48,7 @@ namespace rpwa {
 
 		// get intensity for set of waves
 
-		// get intensity if amplitudes have been initialized to start from X decay
+		// get intensity if decay amplitudes have been initialized to start from X decay
 		double getIntensity(const std::vector<unsigned int>& waveIndices,
 		                    const std::vector<TVector3>&     decayKinMomenta) const;
 
@@ -62,21 +62,21 @@ namespace rpwa {
 
 	private:
 
-		std::vector<std::complex<double> > getAmplitudes(const std::vector<TVector3>& prodKinMomenta,
-		                                                 const std::vector<TVector3>& decayKinMomenta) const;
+		std::vector<std::complex<double> > getDecayAmplitudes(const std::vector<TVector3>& prodKinMomenta,
+		                                                      const std::vector<TVector3>& decayKinMomenta) const;
 
 		fitResultPtr                       _fitResult;
 		std::vector<unsigned int>          _waveIndicesWithoutFlat;
 
-		bool                               _amplitudesInitialized;
-		std::vector<isobarAmplitudePtr>    _amplitudes;
+		bool                               _decayAmplitudesInitialized;
+		std::vector<isobarAmplitudePtr>    _decayAmplitudes;
 		std::vector<int>                   _refls;
 		std::set<int>                      _allRefls;
 
-		bool                               _integralsLoaded;
-		std::vector<double>                _integrals;
+		bool                               _phaseSpaceIntegralsLoaded;
+		std::vector<double>                _phaseSpaceIntegrals;
 
-		bool                               _amplitudesFromXDecay;
+		bool                               _decayAmplitudesFromXDecay;
 
 	};
 
@@ -103,8 +103,8 @@ namespace rpwa {
 	modelIntensity::getIntensity(const std::vector<unsigned int>& waveIndices,
 	                             const std::vector<TVector3>&     decayKinMomenta) const
 	{
-		if (not _amplitudesFromXDecay) {
-			printErr << "amplitudes not starting from X decay, but not production kinematics provided. Aborting..." << std::endl;
+		if (not _decayAmplitudesFromXDecay) {
+			printErr << "decay amplitudes are not starting from X decay, but no production kinematics provided. Aborting..." << std::endl;
 			throw;
 		}
 

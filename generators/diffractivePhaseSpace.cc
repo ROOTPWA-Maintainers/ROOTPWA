@@ -86,7 +86,7 @@ diffractivePhaseSpace::buildDaughterList()
 		}
 		const double xMassMin = _pickerFunction->massRange().first;
 		const double xMassMax = _pickerFunction->massRange().second;
-		if((xMassMax < xMassMin) || (xMassMax <= 0.)) {
+		if((xMassMax < xMassMin) or (xMassMax <= 0.)) {
 			printErr << "mass range [" << xMassMin << ", " << xMassMax << "] GeV/c^2 "
 			         << "does mot make sense. Aborting..." << endl;
 			throw;

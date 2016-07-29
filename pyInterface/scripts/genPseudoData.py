@@ -10,7 +10,7 @@ import pyRootPwa.core
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
-	                                 description="generate phase space Monte Carlo events"
+	                                 description="generate phase-space Monte Carlo events"
 	                                )
 
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 		if not result:
 			printErr('could not construct amplitude for wave "' + waveName + '".')
 			sys.exit(1)
-		if not model.addAmplitude(amplitude):
+		if not model.addDecayAmplitude(amplitude):
 			printErr('could not add amplitude for wave "' + waveName + '".')
 
 	# overwrite integral matrix from fit result with one read from a file
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 		integralFile = pyRootPwa.ROOT.TFile.Open(args.integralFile, "READ")
 		integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
 		integral = integralMeta.getAmpIntegralMatrix()
-		model.addIntegral(integral)
+		model.loadPhaseSpaceIntegral(integral)
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
 	if not outputFile:
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 					printErr('could not initialize file writer. Aborting...')
 					sys.exit(1)
 
-				if not model.initAmplitudes(prodKinNames, decayKinNames):
+				if not model.initDecayAmplitudes(prodKinNames, decayKinNames):
 					printErr('could not initialize kinematics Data. Aborting...')
 					sys.exit(1)
 				first = False

@@ -154,7 +154,7 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		configTarget->lookupValue("recoilParticleName", recoilParticleName);
 		const particleProperties* targetParticle = particleDataTable::entry(targetParticleName);
 		const particleProperties* recoilParticle = particleDataTable::entry(recoilParticleName);
-		if(not (targetParticle && recoilParticle)) {
+		if(not (targetParticle and recoilParticle)) {
 			printErr << "invalid target or recoil particle" << endl;
 			return false;
 		}

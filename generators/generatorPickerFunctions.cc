@@ -17,7 +17,7 @@ using namespace rpwa;
 
 void massAndTPrimePicker::overrideMassRange(double lowerLimit, double upperLimit) {
 	if(not _initialized) {
-		printErr << "cannot override massRange on uninitialized massAndTPrimePicker." << endl;
+		printErr << "cannot call overrideMassRange() on uninitialized massAndTPrimePicker." << endl;
 		throw;
 	}
 	_massRange.first = lowerLimit;
@@ -28,7 +28,7 @@ void massAndTPrimePicker::overrideMassRange(double lowerLimit, double upperLimit
 
 const std::pair<double, double>& massAndTPrimePicker::massRange() const {
 	if(not _initialized) {
-		printErr << "cannot call massRange on uninitialized massAndTPrimePicker." << endl;
+		printErr << "cannot call massRange() on uninitialized massAndTPrimePicker." << endl;
 		throw;
 	}
 	return _massRange;
@@ -37,7 +37,7 @@ const std::pair<double, double>& massAndTPrimePicker::massRange() const {
 
 const std::pair<double, double>& massAndTPrimePicker::tPrimeRange() const {
 	if(not _initialized) {
-		printErr << "cannot call tPrimeRange on uninitialized massAndTPrimePicker." << endl;
+		printErr << "cannot call tPrimeRange() on uninitialized massAndTPrimePicker." << endl;
 		throw;
 	}
 	return _tPrimeRange;
@@ -123,7 +123,7 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 		return false;
 	}
 	if(not (setting["tSlopes"][0].isNumber()
-			|| (setting["tSlopes"][0].isArray() && setting["tSlopes"][0][0].isNumber()))) {
+			or (setting["tSlopes"][0].isArray() and setting["tSlopes"][0][0].isNumber()))) {
 		printErr << "'tSlopes' has to be number or array of numbers." << endl;
 		return false;
 	}
@@ -140,7 +140,7 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	}
 	for(int i = 0; i < setting["invariantMasses"].getLength(); ++i) {
 		vector<double> param;
-		if(tArray && not setting["tSlopes"][i].isArray()) {
+		if(tArray and not setting["tSlopes"][i].isArray()) {
 			printErr << "all entries of 'tSlopes' have to be either numbers or arrays of numbers." << endl;
 			return false;
 		}
@@ -316,7 +316,7 @@ bool uniformMassExponentialTPicker::pickTPrimeForMass(const double invariantMass
 			steps++;
 		}
 		restarts++;
-		if(restarts >= 5 && not done) {
+		if(restarts >= 5 and not done) {
 			printErr << restarts << " attempts to generate t' failed." << endl;
 			return false;
 		}
@@ -458,7 +458,7 @@ bool polynomialMassAndTPrimeSlopePicker::pickTPrimeForMass(const double invarian
 	double tPrimeSlope = _tPrimeSlopePolynomial.Eval(invariantMass);
 	do {
 		tPrime = randomNumbers->Exp(1. / tPrimeSlope);
-	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
+	} while(tPrime < _tPrimeRange.first or tPrime > _tPrimeRange.second);
 	return true;
 }
 

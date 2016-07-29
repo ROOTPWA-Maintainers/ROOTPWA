@@ -1,3 +1,39 @@
+//-------------------------------------------------------------------------
+//
+// This class creates events according to a model by sampling the phase
+// space using the Bayesian Analysis Toolkit (BAT). To this end this class
+// inherits from the BAT model class and overrides the
+// 'LogAPrioriProbability', 'LogLikelihood', and 'CalculateObservables'
+// class functions:
+// * 'LogAPrioriProbability' ensures that the events are inside the
+//   kinematic boundaries
+// * 'LogLikelihood' calculates the weight of an event given the model by
+//   calculating the decay amplitudes
+// * 'CalculateObservables' is used to write the events to an event file
+//   after boosting it to the laboratory system
+//
+// For a n-particle final state 3*(n-1) parameters are defined in BAT.
+// Each of the (n-1) triples consist of one mass and two angles
+// (cos(theta) and phi). The ordering of the triples follows the ordering
+// of the parameters in the 'nBodyPhaseSpace...' classes and is sketched
+// below:
+//
+// n-body                              3-body                      2-body                      single daughter
+//
+// _masses[n - 1]                      _masses[2]                  _masses[1]
+// ^                                   ^                           ^
+// |                                   |                           |
+// |                                   |                           |
+// M         [n - 1] = p[3*n - 6]  --> M         [2] = p[3]    --> M         [1] = p[0]    --> M         [0] = _masses[0]
+// cos(theta)[n - 1] = p[3*n - 5]      cos(theta)[2] = p[4]        cos(theta)[1] = p[1]        cos(theta)[0] (not used)
+// phi       [n - 1] = p[3*n - 4]      phi       [2] = p[5]        phi       [1] = p[2]        phi       [0] (not used)
+// _mSum[n - 1]                        _mSum[2]                    _mSum[1]                    _mSum[0] = _masses[0]
+// = _mSum[n - 2] + _masses[n - 1]     = _mSum[1] + _masses[2]     = _mSum[0] + _masses[1]
+//
+//
+//-------------------------------------------------------------------------
+
+
 #include<cmath>
 #include<iostream>
 #include<sstream>
@@ -38,7 +74,7 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 		_mSum                      += _finalState.particles[part].mass();
 	}
 
-	_model->initAmplitudes(decayKinParticleNames);
+	_model->initDecayAmplitudes(decayKinParticleNames);
 
 	if (_nPart < 2) {
 		printErr << "less than two particles to sample. Four-momentum conservation leaves no d.o.f.. No sampling necessary. Aborting..." << std::endl;
@@ -56,6 +92,7 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 	for (size_t part = 1; part < _nPart; ++part) {
 		mMinPar += _masses[part];
 
+		// define parameter corresponding to (part+1)-body mass
 		std::stringstream nameM;
 		std::stringstream texM;
 		nameM << "m";
@@ -66,6 +103,9 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 		}
 		texM << "}";
 		BCParameter param(nameM.str(), mMinPar, mMax, texM.str());
+
+		// the parameter for the X mass is special, its range is taken
+		// from the generator options
 		if (part == _nPart-1) {
 			if (mMin == mMax) {
 				// X mass is fixed to one value
@@ -74,8 +114,11 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 				param.SetLimits(mMin, mMax);
 			}
 		}
+
 		AddParameter(param);
 
+		// define parameters corresponding to angles of the bachelor
+		// particle in (part+1)-body rest frame
 		// sample cos(theta), because dOmega = sin(theta) dtheta dphi = dcos(theta) dphi
 		std::stringstream nameTheta;
 		std::stringstream texTheta;
@@ -89,12 +132,16 @@ rpwa::importanceSampler::importanceSampler(rpwa::modelIntensityPtr         model
 		texPhi << "#phi_{" << part+1 << "}";
 		AddParameter(namePhi.str(), 0., 2*M_PI, texPhi.str());
 	}
-	for (size_t part = 0; part < _nPart; ++part) {
-		for (size_t qart = 0; qart < part; ++qart) {
+
+	// also show the squared masses of all possible two-body sub-systems
+	// and their correlations in the plots created by BAT, in particular
+	// for three-body final-states this creates Dalitz plots
+	for (size_t partA = 0; partA < _nPart; ++partA) {
+		for (size_t partB = 0; partB < partA; ++partB) {
 			std::stringstream name;
 			std::stringstream tex;
-			name << "M" << qart+1 << part+1 << 2;
-			tex << "m^{2}_{" << qart+1 << part+1 << "}";
+			name << "M" << partB+1 << partA+1 << 2;
+			tex << "m^{2}_{" << partB+1 << partA+1 << "}";
 			AddObservable(name.str(), 0., mMax*mMax, tex.str());
 		}
 	}
@@ -119,13 +166,14 @@ rpwa::importanceSampler::LogAPrioriProbability(const std::vector<double>& parame
 		return -std::numeric_limits<double>::infinity();
 	}
 
-	double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(parameters[3*_nPart-6] - _mSum, _nPart-2);
+	const double mX = parameters[3*_nPart-6];
+	double phaseSpace = nBodyPhaseSpace.calcWeight() / std::pow(mX - _mSum, _nPart-2);
 	if (_massPrior) {
 #ifdef _OPENMP
 #pragma omp critical(massPrior)
 #endif
 		{
-			phaseSpace *= _massPrior->Eval(parameters[3*_nPart-6]);
+			phaseSpace *= _massPrior->Eval(mX);
 		}
 	}
 
@@ -150,7 +198,7 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 	timerTot.Start();
 
 	if (_phaseSpaceOnly) {
-		return -1;
+		return 0;
 	}
 
 	rpwa::nBodyPhaseSpaceKinematics nBodyPhaseSpace;
@@ -159,8 +207,9 @@ rpwa::importanceSampler::LogLikelihood(const std::vector<double>& parameters)
 		throw;
 	}
 
+	const double mX = parameters[3*_nPart-6];
 	nBodyPhaseSpace.calcBreakupMomenta();
-	nBodyPhaseSpace.calcEventKinematics(TLorentzVector(0., 0., 0., parameters[3*_nPart-6]));
+	nBodyPhaseSpace.calcEventKinematics(TLorentzVector(0., 0., 0., mX));
 	std::vector<TVector3> decayKinMomenta(_nPart);
 	for (size_t part = 0; part < _nPart; ++part) {
 		decayKinMomenta[part] = nBodyPhaseSpace.daughter(part).Vect();
@@ -200,23 +249,36 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 		throw;
 	}
 
+	const double mX = parameters[3*_nPart-6];
 	nBodyPhaseSpace.calcBreakupMomenta();
-	nBodyPhaseSpace.calcEventKinematics(TLorentzVector(0., 0., 0., parameters[3*_nPart-6]));
+	nBodyPhaseSpace.calcEventKinematics(TLorentzVector(0., 0., 0., mX));
 
-	size_t count = 0;
-	for (size_t part = 0; part < _nPart; ++part) {
-		for (size_t qart = 0; qart < part; ++qart) {
-			GetObservable(count) = (nBodyPhaseSpace.daughter(part) + nBodyPhaseSpace.daughter(qart)).M2();
-			++count;
+	// calculate the squared masses of all possible two-body sub-systems
+	// (used by BAT to create plots)
+	size_t countPair = 0;
+	for (size_t partA = 0; partA < _nPart; ++partA) {
+		for (size_t partB = 0; partB < partA; ++partB) {
+			GetObservable(countPair) = (nBodyPhaseSpace.daughter(partA) + nBodyPhaseSpace.daughter(partB)).M2();
+			++countPair;
 		}
 	}
 
-	if (_fileWriter.initialized() && GetPhase() > 0) { // Put file writer stuff here
+	// only store events if the file writer has been initialised and BAT is
+	// no longer in the pre-run phase
+	if (_fileWriter.initialized() and GetPhase() > 0) {
+		// apply lag:
+		// the 'CalculateObservables' method might be called more often
+		// than the prior and log-likelihood functions in case points
+		// outside the parameter limits are proposed inside BAT. to
+		// protect from this, but also to reduce the impact of
+		// correlations between two consecutive points, only store
+		// every (fMCMCNLag)th point
 		if (fMCMCCurrentIteration % fMCMCNLag != 0) {
-			return; // apply lag
+			return;
 		}
 
-		bool           valid;
+		// generate the production kinematics of the current event
+		bool           validBeamAndTPrime;
 		double         tPrime;
 		TLorentzVector pBeam;
 		TLorentzVector pX;
@@ -224,13 +286,14 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 #pragma omp critical(prodKin)
 #endif
 		{
-			boost::tuples::tie(valid, tPrime, pBeam, pX) = getProductionKinematics(parameters[3*_nPart-6]);
+			boost::tuples::tie(validBeamAndTPrime, tPrime, pBeam, pX) = getProductionKinematics(mX);
 		}
-		if (not valid) {
-			printErr << "generation of production failed" << std::endl;
+		if (not validBeamAndTPrime) {
+			printErr << "vertex and beam generation or picking of tPrime failed. Aborting..." << std::endl;
 			throw;
 		}
 
+		// boost the event into the laboratory system
 		const TLorentzRotation toLab = rpwa::isobarAmplitude::gjTransform(pBeam, pX).Inverse();
 		std::vector<TVector3> decayKinMomenta(_nPart);
 		for (size_t part = 0; part < _nPart; ++part) {
@@ -239,17 +302,17 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 			decayKinMomenta[part] = p.Vect();
 		}
 
-		std::vector<double> var;
+		std::vector<double> additionalVars;
 		if (_storeMassAndTPrime) {
-			var.push_back(pX.M());
-			var.push_back(tPrime);
+			additionalVars.push_back(pX.M());
+			additionalVars.push_back(tPrime);
 		}
 		std::vector<TVector3> prodKinMomenta(1, pBeam.Vect());
 #ifdef _OPENMP
 #pragma omp critical(fileWriter)
 #endif
 		{
-			_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, var);
+			_fileWriter.addEvent(prodKinMomenta, decayKinMomenta, additionalVars);
 		}
 	}
 
@@ -280,10 +343,10 @@ rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
 	std::map<std::string, std::pair<double, double> > binning;
 	binning[massVariableName]   = _massAndTPrimePicker->massRange();
 	binning[tPrimeVariableName] = _massAndTPrimePicker->tPrimeRange();
-	std::vector<std::string> var;
+	std::vector<std::string> additionalVarLabels;
 	if (_storeMassAndTPrime) {
-		var.push_back(massVariableName);
-		var.push_back(tPrimeVariableName);
+		additionalVarLabels.push_back(massVariableName);
+		additionalVarLabels.push_back(tPrimeVariableName);
 	}
 
 	const bool valid = _fileWriter.initialize(*outFile,
@@ -292,7 +355,7 @@ rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
 	                                          prodKinParticleNames,
 	                                          decayKinParticleNames,
 	                                          binning,
-	                                          var);
+	                                          additionalVarLabels);
 
 	return valid;
 }
@@ -309,17 +372,16 @@ boost::tuples::tuple<bool, double, TLorentzVector, TLorentzVector>
 rpwa::importanceSampler::getProductionKinematics(const double xMass) const
 {
 	if(not _beamAndVertexGenerator->event(_target, _beam)) {
-		printErr << "could not generate vertex/beam. Aborting..." << std::endl;
+		printWarn << "could not generate vertex and beam." << std::endl;
 		return boost::tuples::make_tuple(false, 0., TLorentzVector(), TLorentzVector());
 	}
 	const TLorentzVector targetLab(0., 0., 0., _target.targetParticle.mass());
 	const TLorentzVector beamLorentzVector = _beamAndVertexGenerator->getBeam();
 	const TLorentzVector overallCm = beamLorentzVector + targetLab;  // beam-target center-of-mass system
 
-
 	double tPrime;
 	if (not _massAndTPrimePicker->pickTPrimeForMass(xMass, tPrime)) {
-		printErr << "t' pick failed" << std::endl;
+		printWarn << "t' pick failed." << std::endl;
 		return boost::tuples::make_tuple(false, 0., TLorentzVector(), TLorentzVector());
 	}
 	TRandom3* random = randomNumberGenerator::instance()->getGenerator();

@@ -15,51 +15,51 @@ namespace bp = boost::python;
 namespace {
 
 	bool
-	modelIntensity_addIntegral(rpwa::modelIntensity& self,
-	                           PyObject*             pyIntegralMatrix)
+	modelIntensity_loadPhaseSpaceIntegral(rpwa::modelIntensity& self,
+	                                      PyObject*             pyIntegralMatrix)
 	{
-		rpwa::ampIntegralMatrix* integralMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix* >(pyIntegralMatrix);
+		rpwa::ampIntegralMatrix* integralMatrix = rpwa::py::convertFromPy<rpwa::ampIntegralMatrix*>(pyIntegralMatrix);
 		if(not integralMatrix) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for integralMatrix when executing modelIntensity::addIntegral");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for integralMatrix when executing modelIntensity::loadPhaseSpaceIntegral()");
 			bp::throw_error_already_set();
 		}
-		return self.addIntegral(*integralMatrix);
+		return self.loadPhaseSpaceIntegral(*integralMatrix);
 	}
 
 
 	double
-	modelIntensity_initAmplitudes_1(rpwa::modelIntensity& self,
-	                                const bp::list&       pyDecayKinParticleNames)
+	modelIntensity_initDecayAmplitudes_1(rpwa::modelIntensity& self,
+	                                     const bp::list&       pyDecayKinParticleNames)
 	{
 		std::vector<std::string> decayKinParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyDecayKinParticleNames, decayKinParticleNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayKinParticleNames when executing rpwa::modelIntensity::initAmplitudes()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayKinParticleNames when executing rpwa::modelIntensity::initDecayAmplitudes()");
 			bp::throw_error_already_set();
 		}
 
-		return self.initAmplitudes(decayKinParticleNames);
+		return self.initDecayAmplitudes(decayKinParticleNames);
 	}
 
 
 	double
-	modelIntensity_initAmplitudes_2(rpwa::modelIntensity& self,
-	                                const bp::list&       pyProdKinParticleNames,
-	                                const bp::list&       pyDecayKinParticleNames,
-	                                const bool            fromXDecay)
+	modelIntensity_initDecayAmplitudes_2(rpwa::modelIntensity& self,
+	                                     const bp::list&       pyProdKinParticleNames,
+	                                     const bp::list&       pyDecayKinParticleNames,
+	                                     const bool            fromXDecay)
 	{
 		std::vector<std::string> prodKinParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProdKinParticleNames, prodKinParticleNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for prodKinParticleNames when executing rpwa::modelIntensity::initAmplitudes()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for prodKinParticleNames when executing rpwa::modelIntensity::initDecayAmplitudes()");
 			bp::throw_error_already_set();
 		}
 
 		std::vector<std::string> decayKinParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyDecayKinParticleNames, decayKinParticleNames)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayKinParticleNames when executing rpwa::modelIntensity::initAmplitudes()");
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayKinParticleNames when executing rpwa::modelIntensity::initDecayAmplitudes()");
 			bp::throw_error_already_set();
 		}
 
-		return self.initAmplitudes(prodKinParticleNames, decayKinParticleNames, fromXDecay);
+		return self.initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames, fromXDecay);
 	}
 
 
@@ -91,7 +91,7 @@ namespace {
 			if (itemU.check()) {
 				indices = true;
 				if (momenta) {
-					PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity is a mixed list of 'unsigned int' and 'TVector3'.");
+					PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity() is a mixed list of 'unsigned int' and 'TVector3'.");
 					bp::throw_error_already_set();
 				}
 				waveIndices[i] = itemU();
@@ -103,14 +103,14 @@ namespace {
 				if (ptrV) {
 					momenta = true;
 					if (indices) {
-						PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity is a mixed list of 'unsigned int' and 'TVector3'.");
+						PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity() is a mixed list of 'unsigned int' and 'TVector3'.");
 						bp::throw_error_already_set();
 					}
 					prodKinMomenta[i] = *ptrV;
 					continue;
 				}
 			}
-			PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity is not a list of either 'unsigned int' or 'TVector3'.");
+			PyErr_SetString(PyExc_TypeError, "First argument of modelIntensity::getIntensity() is not a list of either 'unsigned int' or 'TVector3'.");
 			bp::throw_error_already_set();
 		}
 
@@ -125,7 +125,7 @@ namespace {
 		if (momenta)
 			return self.getIntensity(prodKinMomenta, decayKinMomenta);
 
-		PyErr_SetString(PyExc_TypeError, "Could not determine type of first argument of modelIntensity::getIntensity.");
+		PyErr_SetString(PyExc_TypeError, "Could not determine type of first argument of modelIntensity::getIntensity().");
 		bp::throw_error_already_set();
 		return 0;
 	}
@@ -139,7 +139,7 @@ namespace {
 	{
 		std::vector<unsigned int> waveIndices;
 		if (not rpwa::py::convertBPObjectToVector<unsigned int>(pyWaveIndices, waveIndices)) {
-			PyErr_SetString(PyExc_TypeError, "Cannot convert first argument of modelIntensity::getIntensity to a vector of 'unsigned int'.");
+			PyErr_SetString(PyExc_TypeError, "Cannot convert first argument of modelIntensity::getIntensity() to a vector of 'unsigned int'.");
 			bp::throw_error_already_set();
 		}
 
@@ -168,30 +168,30 @@ void rpwa::py::exportModelIntensity() {
 		.def(bp::self_ns::str(bp::self))
 
 		.def(
-			"addAmplitude"
-			, &rpwa::modelIntensity::addAmplitude
+			"addDecayAmplitude"
+			, &rpwa::modelIntensity::addDecayAmplitude
 			, (bp::arg("amplitude"))
 		)
 
 		.def(
-			"addIntegral"
-			, &::modelIntensity_addIntegral
+			"loadPhaseSpaceIntegral"
+			, &::modelIntensity_loadPhaseSpaceIntegral
 			, (bp::arg("integralMatrix"))
 		)
 		.def(
-			"addIntegral"
-			, &rpwa::modelIntensity::addIntegral
+			"loadPhaseSpaceIntegral"
+			, &rpwa::modelIntensity::loadPhaseSpaceIntegral
 			, (bp::arg("integralMatrix"))
 		)
 
 		.def(
-			"initAmplitudes"
-			, &modelIntensity_initAmplitudes_1
+			"initDecayAmplitudes"
+			, &modelIntensity_initDecayAmplitudes_1
 			, (bp::arg("decayKinParticleNames"))
 		)
 		.def(
-			"initAmplitudes"
-			, &modelIntensity_initAmplitudes_2
+			"initDecayAmplitudes"
+			, &modelIntensity_initDecayAmplitudes_2
 			, (bp::arg("prodKinParticleNames"),
 			   bp::arg("decayKinParticleNames"),
 			   bp::arg("fromXdecay") = false)
