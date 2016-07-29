@@ -51,7 +51,7 @@ if __name__ == "__main__":
 		# get the amplitude names from the list of keys
 		if key.GetClassName() == "rpwa::amplitudeMetadata":
 			if not key.GetName().endswith(".meta"):
-				pyRootPwa.utils.printErr("key with name '{}' is an amplitude metadata object but does not follow the naming convention.")
+				pyRootPwa.utils.printErr("key with name '{}' is an amplitude metadata object but does not follow the naming convention.".format(key.GetName()))
 				sys.exit(1)
 
 			amplitudeMeta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(inputFile, key.GetName()[:-5], True)
