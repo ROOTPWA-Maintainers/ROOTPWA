@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description="print event metadata")
 	parser.add_argument("inputFile", type=str, metavar="inputFile", help="input file in ROOTPWA format")
-	parser.add_argument("-r", action="store_true", dest="recalculateHash", help="recalculate hash and compare it with the stored one (default: %(default)s)")
+	parser.add_argument("-v", "--verify", action="store_true", dest="verifyHash", help="verify hash(es) (default: %(default)s)")
 	args = parser.parse_args()
 
 	inputFile = ROOT.TFile.Open(args.inputFile, "READ")
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 	if eventMeta:
 		readMeta = True
 
-		if args.recalculateHash:
+		if args.verifyHash:
 			pyRootPwa.utils.printInfo("recalculating hash...")
 			calcHash = eventMeta.recalculateHash(True)
 			if calcHash != eventMeta.contentHash():
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
 			readMeta = True
 
-			if args.recalculateHash:
+			if args.verifyHash:
 				pyRootPwa.utils.printInfo("recalculating hash...")
 				calcHash = amplitudeMeta.recalculateHash(True)
 				if calcHash != amplitudeMeta.contentHash():
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 	if ampIntegralMatrixMeta:
 		readMeta = True
 
-		if args.recalculateHash:
+		if args.verifyHash:
 			pyRootPwa.utils.printInfo("recalculating hash...")
 			calcHash = ampIntegralMatrixMeta.recalculateHash()
 			if calcHash != ampIntegralMatrixMeta.contentHash():
