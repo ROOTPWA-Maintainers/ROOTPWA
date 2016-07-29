@@ -35,8 +35,7 @@ namespace rpwa {
 		bool initDecayAmplitudes(const std::vector<std::string>& decayKinParticleNames);
 
 		bool initDecayAmplitudes(const std::vector<std::string>& prodKinParticleNames,
-		                         const std::vector<std::string>& decayKinParticleNames,
-		                         const bool                      fromXDecay = false);
+		                         const std::vector<std::string>& decayKinParticleNames);
 
 		// get intensity of all waves except flat wave
 
@@ -61,6 +60,11 @@ namespace rpwa {
 		                                  const modelIntensity& model) { return model.print(out); }
 
 	private:
+
+		template<typename T>
+		bool initDecayAmplitudes(T&                              prodKinParticleNames,
+		                         const std::vector<std::string>& decayKinParticleNames,
+		                         const bool                      fromXDecay);
 
 		std::vector<std::complex<double> > getDecayAmplitudes(const std::vector<TVector3>& prodKinMomenta,
 		                                                      const std::vector<TVector3>& decayKinMomenta) const;

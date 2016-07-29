@@ -72,35 +72,51 @@ rpwa::modelIntensity::loadPhaseSpaceIntegral(const rpwa::ampIntegralMatrix& inte
 bool
 rpwa::modelIntensity::initDecayAmplitudes(const std::vector<std::string>& decayKinParticleNames)
 {
-	// get X name from first decay amplitude
 	std::vector<std::string> prodKinParticleNames(1);
-	for (size_t wave = 0; wave < _fitResult->nmbWaves(); ++wave) {
-		const std::string& waveName = _fitResult->waveName(wave);
-		// no decay amplitude for 'flat' wave
-		if (waveName == "flat") {
-			if (_decayAmplitudes[wave]) {
-				printWarn << "decay amplitude for flat wave was added." << std::endl;
-				return false;
-			}
-			continue;
-		}
-		if (not _decayAmplitudes[wave]) {
-			printWarn << "decay amplitude for wave '" << waveName << "' was not added." << std::endl;
-			return false;
-		}
-
-		const isobarDecayTopologyPtr decay  = _decayAmplitudes[wave]->decayTopology();
-		const isobarDecayVertexPtr   vertex = decay->XIsobarDecayVertex();
-		prodKinParticleNames[0] = vertex->parent()->name();
-		break;
-	}
-
 	return initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames, true);
 }
 
 
 bool
 rpwa::modelIntensity::initDecayAmplitudes(const std::vector<std::string>& prodKinParticleNames,
+                                          const std::vector<std::string>& decayKinParticleNames)
+{
+	return initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames, false);
+}
+
+
+// if 'initDecayAmplitudes' is called with a 'const std::vector' as an
+// argument we have to assume that the 'prodKinParticleNames' is already
+// set up, and should not try to set it again. if it is called with a
+// non-const vector, which is the case if it is called from the
+// 'initDecayAmplitudes' used for decays starting from the X, then the
+// name of the production particle should be set.
+namespace {
+
+	template<typename T>
+	void setProdKinParticleNames(T& prodKinParticleNames, const std::string& name);
+
+
+	template<>
+	void setProdKinParticleNames<std::vector<std::string> >(std::vector<std::string>& prodKinParticleNames, const std::string& name)
+	{
+		prodKinParticleNames.resize(1);
+		prodKinParticleNames[0] = name;
+	}
+
+
+	template<>
+	void setProdKinParticleNames<const std::vector<std::string> >(const std::vector<std::string>&, const std::string&)
+	{
+		// do nothing
+	}
+
+}
+
+
+template<typename T>
+bool
+rpwa::modelIntensity::initDecayAmplitudes(T&                              prodKinParticleNames,
                                           const std::vector<std::string>& decayKinParticleNames,
                                           const bool                      fromXDecay)
 {
@@ -121,6 +137,14 @@ rpwa::modelIntensity::initDecayAmplitudes(const std::vector<std::string>& prodKi
 		if (not _decayAmplitudes[wave]) {
 			printWarn << "decay amplitude for wave '" << waveName << "' was not added." << std::endl;
 			return false;
+		}
+
+		// the name of the production particle is not yet known, it has
+		// to be obtained from the X decay vertex
+		if (prodKinParticleNames.size() == 0 or prodKinParticleNames[0] == "") {
+			const isobarDecayTopologyPtr decay  = _decayAmplitudes[wave]->decayTopology();
+			const isobarDecayVertexPtr   vertex = decay->XIsobarDecayVertex();
+			setProdKinParticleNames(prodKinParticleNames, vertex->parent()->name());
 		}
 
 		// start decay amplitude from X decay

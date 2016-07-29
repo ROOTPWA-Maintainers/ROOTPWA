@@ -44,8 +44,7 @@ namespace {
 	double
 	modelIntensity_initDecayAmplitudes_2(rpwa::modelIntensity& self,
 	                                     const bp::list&       pyProdKinParticleNames,
-	                                     const bp::list&       pyDecayKinParticleNames,
-	                                     const bool            fromXDecay)
+	                                     const bp::list&       pyDecayKinParticleNames)
 	{
 		std::vector<std::string> prodKinParticleNames;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyProdKinParticleNames, prodKinParticleNames)) {
@@ -59,7 +58,7 @@ namespace {
 			bp::throw_error_already_set();
 		}
 
-		return self.initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames, fromXDecay);
+		return self.initDecayAmplitudes(prodKinParticleNames, decayKinParticleNames);
 	}
 
 
@@ -193,8 +192,7 @@ void rpwa::py::exportModelIntensity() {
 			"initDecayAmplitudes"
 			, &modelIntensity_initDecayAmplitudes_2
 			, (bp::arg("prodKinParticleNames"),
-			   bp::arg("decayKinParticleNames"),
-			   bp::arg("fromXdecay") = false)
+			   bp::arg("decayKinParticleNames"))
 		)
 
 		.def(
