@@ -43,6 +43,7 @@
 
 #include<BAT/BCMath.h>
 
+#include"diffractivePhaseSpace.h"
 #include"importanceSampler.h"
 #include"nBodyPhaseSpaceKinematics.h"
 #include"randomNumberGenerator.h"
@@ -384,42 +385,14 @@ rpwa::importanceSampler::getProductionKinematics(const double xMass) const
 		printWarn << "t' pick failed." << std::endl;
 		return boost::tuples::make_tuple(false, 0., TLorentzVector(), TLorentzVector());
 	}
-	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
 
-	const double s            = overallCm.Mag2();
-	const double sqrtS        = sqrt(s);
-	const double recoilMass2  = _target.recoilParticle.mass2();
-	const double xMass2       = xMass * xMass;
-	const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
-	const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
-	const double beamMass2    = _beam.particle.mass2();
-	const double targetMass2  = _target.targetParticle.mass2();
-	const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
-	const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
-	const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
-	                            (xMomCM - beamMomCM) * (xMomCM - beamMomCM);
-	const double t            = t0 - tPrime;
+	// get Lorentz vector of X in lab system
+	const TLorentzVector xSystemLab = rpwa::diffractivePhaseSpace::calculateXSystemLab(beamLorentzVector,
+	                                                                                   _target.targetParticle.mass(),
+	                                                                                   xMass,
+	                                                                                   _target.recoilParticle.mass(),
+	                                                                                   overallCm.M2(), tPrime);
 
-	// construct X Lorentz-vector in lab frame (= target RF)
-	// convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
-	const double beamEnergy       = beamLorentzVector.E();
-	const double beamMomentum     = beamLorentzVector.P();
-	const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _target.targetParticle.mass());  // breakup energy
-	const double xEnergyLab       = beamEnergy + reggeonEnergyLab;
-	const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
-	const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab);
-	const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
-	const double xPtLab           = xMomLab * xSinThetaLab;
-	const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
-
-	// xSystemLab is defined w.r.t. beam direction
-	TLorentzVector xSystemLab = TLorentzVector(xPtLab  * cos(xPhiLab),
-	                                           xPtLab  * sin(xPhiLab),
-	                                           xMomLab * xCosThetaLab,
-	                                           xEnergyLab);
-
-	TVector3 beamDir = beamLorentzVector.Vect().Unit();
-	xSystemLab.RotateUz(beamDir);
 	return boost::tuples::make_tuple(true, tPrime, beamLorentzVector, xSystemLab);
 }
 

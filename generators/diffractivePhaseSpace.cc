@@ -111,6 +111,57 @@ diffractivePhaseSpace::buildDaughterList()
 }
 
 
+TLorentzVector
+diffractivePhaseSpace::calculateXSystemLab(const TLorentzVector& beamLorentzVector,
+                                           const double          targetMass,
+                                           const double          xMass,
+                                           const double          recoilMass,
+                                           const double          s,
+                                           const double          tPrime)
+{
+
+	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
+
+	// calculate t from t' in center-of-mass system of collision
+	const double sqrtS        = sqrt(s);
+	const double recoilMass2  = recoilMass * recoilMass;
+	const double xMass2       = xMass * xMass;
+	const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
+	const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
+	const double beamMass2    = beamLorentzVector.M2();
+	const double targetMass2  = targetMass * targetMass;
+	const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
+	const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
+	const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
+	                            (xMomCM - beamMomCM) * (xMomCM - beamMomCM); // t0 <= 0
+	const double t            = t0 - tPrime;
+
+	// construct X Lorentz-vector in lab frame (= target RF)
+	// convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
+	const double beamEnergy       = beamLorentzVector.E();
+	const double beamMomentum     = beamLorentzVector.P();
+	const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * targetMass);  // breakup energy
+	const double xEnergyLab       = beamEnergy + reggeonEnergyLab;
+	const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
+	const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab);
+	const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
+	const double xPtLab           = xMomLab * xSinThetaLab;
+	const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
+
+	// xSystemLab is defined w.r.t. beam direction
+	TLorentzVector xSystemLab(xPtLab  * cos(xPhiLab),
+	                          xPtLab  * sin(xPhiLab),
+	                          xMomLab * xCosThetaLab,
+	                          xEnergyLab);
+	// rotate according to beam tilt
+	TVector3 beamDir = beamLorentzVector.Vect().Unit();
+	xSystemLab.RotateUz(beamDir);
+
+	return xSystemLab;
+
+}
+
+
 // based on Dima's prod_decay_split.f
 unsigned int
 diffractivePhaseSpace::event()
@@ -157,7 +208,7 @@ diffractivePhaseSpace::event()
 				printErr << "could not generate X mass and t'. Aborting..." << endl;
 				throw;
 			}
-		} while(_xMass + _target.recoilParticle.mass() > overallCm.M());
+		} while((_xMass + _target.recoilParticle.mass() > overallCm.M()) or (_tPrime < 0));  // reject events outside of allowed kinematic region
 
 		{
 			unsigned int i = 0;
@@ -165,45 +216,17 @@ diffractivePhaseSpace::event()
 			_phaseSpace.setMaxWeight(_maxWeightsForXMasses[i]);
 		}
 
-		// calculate t from t' in center-of-mass system of collision
+		// calculate center-of-mass energy
 		const double s            = overallCm.Mag2();
 		const double sqrtS        = sqrt(s);
-		const double recoilMass2  = _target.recoilParticle.mass2();
-		const double xMass2       = _xMass * _xMass;
-		const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
-		const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
-		const double beamMass2    = _beam.particle.mass2();
-		const double targetMass2  = _target.targetParticle.mass2();
-		const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
-		const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
-		const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
-		                            (xMomCM - beamMomCM) * (xMomCM - beamMomCM); // t0 <= 0
-		const double t            = t0 - _tPrime;
-		// reject events outside of allowed kinematic region
-		if(t > t0) {
-			continue;
-		}
 
-		// construct X Lorentz-vector in lab frame (= target RF)
-		// convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
-		const double beamEnergy       = beamLorentzVector.E();
-		const double beamMomentum     = beamLorentzVector.P();
-		const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _target.targetParticle.mass());  // breakup energy
-		const double xEnergyLab       = beamEnergy + reggeonEnergyLab;
-		const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
-		const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab);
-		const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
-		const double xPtLab           = xMomLab * xSinThetaLab;
-		const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
+		// calculate X Lorentz-vector in lab frame (= target RF)
+		const TLorentzVector xSystemLab = calculateXSystemLab(beamLorentzVector,
+		                                                      _target.targetParticle.mass(),
+		                                                      _xMass,
+		                                                      _target.recoilParticle.mass(),
+		                                                      s, _tPrime);
 
-		// xSystemLab is defined w.r.t. beam direction
-		TLorentzVector xSystemLab = TLorentzVector(xPtLab  * cos(xPhiLab),
-		                                           xPtLab  * sin(xPhiLab),
-		                                           xMomLab * xCosThetaLab,
-		                                           xEnergyLab);
-		// rotate according to beam tilt
-		TVector3 beamDir = _beam.particle.momentum().Unit();
-		xSystemLab.RotateUz(beamDir);
 		// calculate the recoil proton properties
 		_target.recoilParticle.setLzVec((beamLorentzVector + targetLab) - xSystemLab); // targetLab
 
