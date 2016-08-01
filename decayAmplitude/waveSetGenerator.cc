@@ -411,14 +411,20 @@ waveSetGenerator::generateWaveSet()
 
 									// loop over isobar candidates
 									for (size_t iIsobar = 0; iIsobar < possibleIsobars.size(); ++iIsobar) {
+										const particleProperties* isobar =  possibleIsobars[iIsobar];
 										if (_debug)
 											printDebug << "setting isobar = '"
-											           << possibleIsobars[iIsobar]->name() << "'" << endl;
+											           << isobar->name() << "'" << endl;
 										// clone topology
 										const isobarDecayTopologyPtr& decayCopy
 											= createNewDecayTopology(parentDecay, parentVertex, L, S,
-											                         *possibleIsobars[iIsobar], parentCharge);
-										decayPossibilities[startNds[iStart]].push_back(*decayCopy);
+											                         *isobar, parentCharge);
+										// set mass dependencies of top-level isobar decay
+										const vector<isobarDecayTopologyPtr> decayTopologyWithMassDeps
+											= setMassDepsForDecayTopology(decayCopy, *isobar, decay);
+										for (vector<isobarDecayTopologyPtr>::const_iterator decayMassDep = decayTopologyWithMassDeps.begin();
+										     decayMassDep != decayTopologyWithMassDeps.end(); ++decayMassDep)
+											decayPossibilities[startNds[iStart]].push_back(**decayMassDep);
 									}
 								}
 							}  // isospin loop
@@ -453,6 +459,19 @@ waveSetGenerator::generateWaveSet()
 		printSucc << "removed " << boseSymWaveIndices.size() << " Bose duplicates "
 		          << "from wave set" << endl;
 	}
+
+	// check that the wave names are unique
+	set<string> waveNames;
+	for (size_t i = 0; i < _waveSet.size(); ++i) {
+		const string waveName = waveDescription::waveNameFromTopology(_waveSet[i]);
+
+		if (waveNames.count(waveName) != 0) {
+			printErr << "the wave name '" << waveName << "' appears for more than one decay topolgy." << endl;
+			throw;
+		}
+		waveNames.insert(waveName);
+	}
+
 	return _waveSet.size();
 }
 
@@ -562,6 +581,62 @@ waveSetGenerator::createNewDecayTopology(const isobarDecayTopology&  parentDecay
 	if (_debug)
 		printDebug << "created decay topology for " << *parentVertexCopy << endl;
 	return decayCopy;
+}
+
+
+vector<isobarDecayTopologyPtr>
+waveSetGenerator::setMassDepsForDecayTopology(const isobarDecayTopologyPtr         decayTopology,
+                                              const particleProperties&            isobar,
+                                              const particleProperties::decayMode& decayMode)
+{
+	// set mass dependencies of isobar decay
+	set<string> usedMassDeps;
+	vector<isobarDecayTopologyPtr> decayTopologyWithMassDeps;
+	// 1. search the decay modes of the current isobar for a match with the current decay
+	//    (there might be multiple matches (e.g. a special mass depedence for a
+	//    particular L))
+	for (size_t iDecay = 0; iDecay < isobar.nmbDecays(); ++iDecay) {
+		if (not (isobar.decayModes()[iDecay] == decayMode))
+			continue;
+
+		//  2. loop over mass dependencies
+		const vector<string>& massDepTypes = isobar.decayModes()[iDecay]._massDependencies;
+		if (massDepTypes.size() != 0) {
+			for (vector<string>::const_iterator massDepType = massDepTypes.begin(); massDepType != massDepTypes.end(); ++massDepType) {
+				if (usedMassDeps.count(*massDepType) != 0)
+					continue;
+				usedMassDeps.insert(*massDepType);
+				if (*massDepType == "relativisticBreitWigner") usedMassDeps.insert("");
+				if (*massDepType == "") usedMassDeps.insert("relativisticBreitWigner");
+
+				massDependencePtr massDep = createMassDependence(*massDepType);
+				if (not massDep) {
+					printErr << "unknown mass dependence '" << *massDepType << "'. Aborting..." << endl;
+					throw;
+				}
+
+				// clone topology
+				const isobarDecayTopologyPtr decayMassDep = decayTopology->clone(false, false);
+				decayMassDep->isobarDecayVertices()[0]->setMassDependence(massDep);
+				decayTopologyWithMassDeps.push_back(decayMassDep);
+			}
+		} else {
+			// if no special mass dependence is requested, just use the default one
+			if (usedMassDeps.count("relativisticBreitWigner") != 0)
+				continue;
+			usedMassDeps.insert("relativisticBreitWigner");
+			usedMassDeps.insert("");
+
+			decayTopologyWithMassDeps.push_back(decayTopology);
+		}
+	}
+
+	// if no matching decay mode was provided for this isobar use the default
+	// mass dependence
+	if (decayTopologyWithMassDeps.size() == 0)
+		decayTopologyWithMassDeps.push_back(decayTopology);
+
+	return decayTopologyWithMassDeps;
 }
 
 
