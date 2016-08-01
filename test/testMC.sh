@@ -125,7 +125,7 @@ rm -f rootpwa.config.bak
 
 # generate phase space data
 testStep "generation of phase-space data" \
-"${ROOTPWA}/build/bin/genpw \
+"${ROOTPWA}/build/bin/generatePhaseSpace \
 -s ${SEED_PS} \
 -n ${NMB_PS_EVENTS} \
 -p \"${PARTICLE_DATA_TABLE}\" \

@@ -125,7 +125,7 @@ set(RPWA_PYTHON_SCRIPTS_FILES
 	deWeight.py
 	eigenvectorLikelihoodSlices.py
 	genPseudoData.py
-	genpw.py
+	generatePhaseSpace.py
 	likelihoodPointCalculator.py
 	plotAngles.py
 	printMetadata.py
