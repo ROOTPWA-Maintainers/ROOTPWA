@@ -88,6 +88,12 @@ namespace rpwa {
 	typedef boost::shared_ptr<massDependence> massDependencePtr;
 
 
+	/// create a mass dependence object as specified by 'massDepType'
+	// only marks for mass dependencies not requiring additional arguments,
+	// if the mass dependence cannot be created return a NULL pointer
+	massDependencePtr createMassDependence(const std::string& massDepType);
+
+
 	inline
 	std::ostream&
 	operator <<(std::ostream&         out,

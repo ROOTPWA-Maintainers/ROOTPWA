@@ -58,6 +58,34 @@ massDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
+massDependencePtr
+rpwa::createMassDependence(const std::string& massDepType)
+{
+	massDependencePtr massDep;
+	if (   (massDepType == "relativisticBreitWigner")
+	    or (massDepType == ""))  // default mass dependence
+		massDep = createRelativisticBreitWigner();
+	else if (massDepType == "constWidthBreitWigner")
+		massDep = createConstWidthBreitWigner();
+	else if (massDepType == "flat")
+		massDep = createFlatMassDependence();
+	else if (massDepType == "f_0(980)")
+		massDep = createF0980BreitWigner();
+	else if (massDepType == "f_0(980)Flatte")
+		massDep = createF0980Flatte();
+	else if (massDepType == "piPiSWaveAuMorganPenningtonM")
+		massDep = createPiPiSWaveAuMorganPenningtonM();
+	else if (massDepType == "piPiSWaveAuMorganPenningtonVes")
+		massDep = createPiPiSWaveAuMorganPenningtonVes();
+	else if (massDepType == "piPiSWaveAuMorganPenningtonKachaev")
+		massDep = createPiPiSWaveAuMorganPenningtonKachaev();
+	else if (massDepType == "rhoPrime")
+		massDep = createRhoPrimeMassDep();
+	return massDep;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
