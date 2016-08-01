@@ -22,7 +22,7 @@ if __name__ == "__main__":
 	                    help="path to particle data table file (default: ./particleDataTable.txt)")
 	parser.add_argument("-c", action="store_true", dest="comgeantOutput",
 	                    help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
-	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
+	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
