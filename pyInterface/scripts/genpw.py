@@ -92,6 +92,9 @@ if __name__ == "__main__":
 				index += 1
 				filename = str(index) + ".phaseSpace.root"
 			args.outputFileName = filename
+	elif not args.outputFileName.endswith(".root"):
+		printErr("output file name needs to have '.root' extension. Aborting...")
+		sys.exit(1)
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 
 	outputComgeantFile = None
 	if args.comgeantOutput:
-		outputComgeantFile = open(args.outputFileName.replace(".evt", ".fort.26"), 'w')
+		outputComgeantFile = open(args.outputFileName.replace(".root", ".fort.26"), 'w')
 		printInfo("opened output comgeant file: " + args.outputFileName)
 
 	try:
