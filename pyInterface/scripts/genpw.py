@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 	if args.outputFileName == "":
 		if overrideMass:
-			args.outputFileName = str(args.massLowerBinBoundary) + "." + str(args.massLowerBinBoundary + args.massBinWidth) + ".phaseSpace.root"
+			args.outputFileName = "{:.0f}.{:.0f}.phaseSpace.root".format(args.massLowerBinBoundary, args.massLowerBinBoundary + args.massBinWidth)
 		else:
 			index = 1
 			filename = "1.phaseSpace.root"
