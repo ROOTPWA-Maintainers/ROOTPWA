@@ -392,6 +392,20 @@ particleDataTable::readDecayModeFile(const string& fileName)
       particleProperties::decayMode decay(daughters);
       (*partDecays)[decayIndex].lookupValue("L", decay._L);
       (*partDecays)[decayIndex].lookupValue("S", decay._S);
+
+			const Setting* configMassDependencies = findLibConfigArray((*partDecays)[decayIndex], "massDeps", false);
+			if (configMassDependencies) {
+				vector<string> massDependencies;
+				if (configMassDependencies->getLength() > 0 && (*configMassDependencies)[0].getType() == Setting::TypeString) {
+					for (int j = 0; j < configMassDependencies->getLength(); ++j)
+						massDependencies.push_back((*configMassDependencies)[j]);
+				} else if (configMassDependencies->getLength() > 0) {
+					printWarn << "mass dependencies setting for isobar '" << partName << "' is not an array of strings. "
+					          << "not using special mass dependencies for this isobar." << endl;
+				}
+				decay._massDependencies = massDependencies;
+			}
+
       particleProp.addDecayMode(decay);
       ++countEntries;
     }
