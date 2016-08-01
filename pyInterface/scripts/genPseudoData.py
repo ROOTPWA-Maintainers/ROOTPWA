@@ -10,7 +10,11 @@ import pyRootPwa.core
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
-	                                 description="generate phase-space Monte Carlo events"
+	                                 description="""
+	                                                Generate phase-space Monte Carlo events and calculate the
+	                                                weight of each event from the provided fit result. The events
+	                                                in the output file are not deweighted.
+	                                             """
 	                                )
 
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
