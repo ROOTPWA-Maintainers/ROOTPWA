@@ -101,6 +101,10 @@ namespace rpwa {
 		                                                    const particleProperties&   isobar,
 		                                                    const int                   parentCharge);
 
+		std::vector<isobarDecayTopologyPtr> setMassDepsForDecayTopology(const isobarDecayTopologyPtr         decayTopology,
+		                                                                const particleProperties&            isobar,
+		                                                                const particleProperties::decayMode& decayMode);
+
 		std::set<std::size_t> findBoseSymDecays() const;  ///< finds decays wave set that are related by Bose symmetrization and returns indices of superfluous waves
 
 		boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
