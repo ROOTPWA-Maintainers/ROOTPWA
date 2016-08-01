@@ -11,9 +11,20 @@ deleted by the script.
 
 PARTICLE_DATA_TABLE
 points to the particle data table that should be used for the generation of
-the wavesets. By default the one in ROOTPWA's 'amplitude' directory is used
+the wavesets. By default the one in ROOTPWA's 'particleData' directory is used
 (specified by the relative path, so this has to be changed, if this script is
 moved from its original place in the repostitory).
+
+PARTICLE_DECAY_TABLE
+is only used to determine the mass-dependencies of the isobar decays in the
+case of the pi- pi- pi+ channel. By default the 'ParticleDecays.key' file in
+this directory is used, this path might have to be adjusted if
+'GenerateWaveSet.sh' is not run from in there.
+
+TEMPLATE_KEY_FILES
+indicates the templates for the keyfiles to be created. Different paths might
+have to be used in case the 'GenerateWaveSet.sh' script is not run from this
+directory.
 
 WAVESET_FILES
 is a list of wavesets. By default this list is empty, and then no additional
@@ -21,9 +32,8 @@ action is taken. If this list is not empty, then only those keyfiles actually
 used in one of those wavesets are kept, and all others are removed, e.g.
             WAVESET_FILES=wavelist.* ./GenerateKeyfiles.sh
 will keep all keyfiles for waves used in at least one waveset in the current
-directory. Files in this list will also be copied to the destination directory
-and copies of each file taking into account the different wave names for the
-various mass dependences of the f0(980) will be created.
+directory. Files in these lists will also be copied to the destination
+directory.
 
 
 A couple of wavesets are also provided. These are the references
