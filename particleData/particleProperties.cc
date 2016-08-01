@@ -92,6 +92,14 @@ particleProperties::decayMode::print(ostream& out) const
 		out << "S = " << spinQn(_S) << "]";
 	} else if (_L != -1)
 		out << "]";
+	if (_massDependencies.size() != 0) {
+		out << " ('";
+		for (size_t i = 0; i < _massDependencies.size() ; ++i) {
+			if (i != 0) out << "', '";
+			out << _massDependencies[i];
+		}
+		out << "')";
+	}
 	return out;
 }
 

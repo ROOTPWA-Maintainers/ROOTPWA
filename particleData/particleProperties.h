@@ -68,9 +68,11 @@ namespace rpwa {
 
 			virtual std::ostream& print(std::ostream& out) const;  ///< prints decay mode informayion in human-readable form
 
-			std::multiset<std::string> _daughters;  ///< names of daughter particles
-			int                        _L;          ///< L for two-body decay; -1 means undefined
-			int                        _S;          ///< total spin; -1 means undefined
+			std::multiset<std::string> _daughters;         ///< names of daughter particles
+			int                        _L;                 ///< L for two-body decay; -1 means undefined
+			int                        _S;                 ///< total spin; -1 means undefined
+
+			std::vector<std::string>   _massDependencies;  ///< list of mass dependencies for this decay (empty list = default mass dependence)
 
 		};
 
