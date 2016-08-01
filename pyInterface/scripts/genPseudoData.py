@@ -21,15 +21,15 @@ if __name__ == "__main__":
 	parser.add_argument("fitResult", type=str, metavar="fitResult", help="fitResult to get the production amplitudes")
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName",
-	                    help="path to config file (default: ./rootpwa.config)")
+	                    help="path to config file (default: '%(default)s')")
 	parser.add_argument("-i", "--integralFile", type=str, metavar="integralFile", help="integral file")
-	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
-	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: 0)")
+	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: %(default)s)")
+	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: %(default)s)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="phaseSpaceEvents")
-	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
+	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: '%(default)s')",
 	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
