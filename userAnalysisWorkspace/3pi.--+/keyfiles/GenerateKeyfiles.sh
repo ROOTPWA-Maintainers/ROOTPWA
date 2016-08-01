@@ -2,6 +2,7 @@
 
 [[ -z ${DESTINATION_DIR} ]] && DESTINATION_DIR="keyfiles"
 [[ -z ${PARTICLE_DATA_TABLE} ]] && PARTICLE_DATA_TABLE="../../../particleData/particleDataTable.txt"
+[[ -z ${PARTICLE_DECAY_TABLE} ]] && PARTICLE_DECAY_TABLE="ParticleDecays.key"
 [[ -z ${TEMPLATE_KEY_FILES} ]] && TEMPLATE_KEY_FILES="template.key"
 [[ -z ${WAVESET_FILES} ]] && WAVESET_FILES=""
 
@@ -17,102 +18,7 @@ fi
 # generate the keyfiles
 for TEMPLATE_KEY_FILE in ${TEMPLATE_KEY_FILES}
 do
-	generateWaveSet -p ${PARTICLE_DATA_TABLE} -o ${DESTINATION_DIR} -k ${TEMPLATE_KEY_FILE}
-done
-
-# post-process the keyfiles
-# * change mass dependence for sigma isobars
-for KEY_FILE in ${DESTINATION_DIR}/*sigma0=*.key
-do
-	if [[ ! -f ${KEY_FILE} ]]
-	then
-		continue
-	fi
-	awk '
-BEGIN {
-	idx = 0
-}
-{
-	if (pos = index($0, "name = \"sigma0\";")) {
-		depths[++idx] = pos
-	}
-	if (idx > 0) {
-		if (index($0, "} );") == (depths[idx]-2)) {
-			pre = ""
-			while (length(pre) < (depths[idx]-2)) pre = pre"  ";
-			print pre"massDep : "
-			print pre"{"
-			print pre"  name = \"piPiSWaveAuMorganPenningtonKachaev\";"
-			print pre"};"
-			--idx
-		}
-	}
-	print $0
-}
-' ${KEY_FILE} > ${KEY_FILE}.new
-	mv -f ${KEY_FILE}.new ${KEY_FILE}
-done
-
-# post-process the keyfiles
-# * f0(980) isobars with three different mass dependences:
-#   usual Breit-Wigner, special Breit-Wigner and Flatte
-for KEY_FILE in ${DESTINATION_DIR}/*f0_980_0=*.key
-do
-	if [[ ! -f ${KEY_FILE} ]]
-	then
-		continue
-	fi
-	awk '
-BEGIN {
-	idx = 0
-}
-{
-	if (pos = index($0, "name = \"f0(980)0\";")) {
-		depths[++idx] = pos
-	}
-	if (idx > 0) {
-		if (index($0, "} );") == (depths[idx]-2)) {
-			pre = ""
-			while (length(pre) < (depths[idx]-2)) pre = pre"  ";
-			print pre"massDep : "
-			print pre"{"
-			print pre"  name = \"f_0(980)\";"
-			print pre"};"
-			--idx
-		}
-	}
-	print $0
-}
-' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0_980_0/f0_980_0bw/g'`
-done
-for KEY_FILE in ${DESTINATION_DIR}/*f0_980_0=*.key
-do
-	if [[ ! -f ${KEY_FILE} ]]
-	then
-		continue
-	fi
-	awk '
-BEGIN {
-	idx = 0
-}
-{
-	if (pos = index($0, "name = \"f0(980)0\";")) {
-		depths[++idx] = pos
-	}
-	if (idx > 0) {
-		if (index($0, "} );") == (depths[idx]-2)) {
-			pre = ""
-			while (length(pre) < (depths[idx]-2)) pre = pre"  ";
-			print pre"massDep : "
-			print pre"{"
-			print pre"  name = \"f_0(980)Flatte\";"
-			print pre"};"
-			--idx
-		}
-	}
-	print $0
-}
-' ${KEY_FILE} > `echo ${KEY_FILE} | sed -e 's/f0_980_0/f0_980_0fl/g'`
+	generateWaveSet -d ${PARTICLE_DECAY_TABLE} -p ${PARTICLE_DATA_TABLE} -o ${DESTINATION_DIR} -k ${TEMPLATE_KEY_FILE}
 done
 
 if [[ ! -z "${WAVESET_FILES}" ]]
@@ -144,7 +50,7 @@ then
 			NEW_WAVESET_FILE="`basename ${WAVESET_FILE}`.f0980bw"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
-				sed -e 's/f0_980_0=/f0_980_0bw=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
+				sed -e 's/f0_980_0=/f0980BreitWigner[f0_980_0]=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				if cmp -s ${WAVESET_FILE} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				then
 					rm -rf ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
@@ -158,7 +64,7 @@ then
 			NEW_WAVESET_FILE="`basename ${WAVESET_FILE}`.f0980fl"
 			if [[ ! -e ${DESTINATION_DIR}/${NEW_WAVESET_FILE} ]]
 			then
-				sed -e 's/f0_980_0=/f0_980_0fl=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
+				sed -e 's/f0_980_0=/f0980FlatteBesII[f0_980_0]=/g' ${WAVESET_FILE} > ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				if cmp -s ${WAVESET_FILE} ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
 				then
 					rm -rf ${DESTINATION_DIR}/${NEW_WAVESET_FILE}
