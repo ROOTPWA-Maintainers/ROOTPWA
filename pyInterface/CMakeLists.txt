@@ -153,7 +153,7 @@ add_custom_target(
 )
 
 # pylint tests
-if(PYLINT_EXECUTABLE)
+if(PYLINT_FOUND)
 	# check 'pyRootPwa' module
 	add_test(pyLintPyRootPwa ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa)
 

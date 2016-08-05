@@ -294,11 +294,16 @@ message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}
 # setup pylint (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up pylint.")
-find_program(PYLINT_EXECUTABLE pylint)
-if(NOT PYLINT_EXECUTABLE)
+find_package(PYLINT 1.5.5)
+set_package_properties(PYLINT
+	PROPERTIES
+	DESCRIPTION "code analysis for Python"
+	URL "https://www.pylint.org"
+	PURPOSE "Used to assess quality of Python code."
+	TYPE OPTIONAL
+	)
+if(NOT PYLINT_FOUND)
 	message(STATUS "Cannot find pylint executable. Quality of python code will no be assessed.")
-else()
-	message(STATUS "Using pylint executable '${PYLINT_EXECUTABLE}'.")
 endif()
 
 
