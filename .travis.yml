@@ -11,7 +11,7 @@ before_install:
     - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
     - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
     - ./travisCI/install-cmake.sh
-    - export PATH=$PWD/cmake/bin:${PATH}
+    - export PATH=${PWD}/cmake/bin:${PATH}
     - ./travisCI/install-boost.sh
     - export BOOST_ROOT=$PWD/boost_1_58_0
     - ./compileBoostLibraries.sh
