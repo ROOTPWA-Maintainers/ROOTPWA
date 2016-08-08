@@ -24,6 +24,7 @@ before_install:
     - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
     # packages required by ROOTPWA
     - sudo apt-get install -y libconfig++-dev libyaml-cpp-dev
+    - pip install --user pylint==1.5.5 numpy
     - if [ ${TRAVIS_RPWA_USE_NLOPT} -eq 1 ] ; then sudo apt-get install -y libnlopt-dev ; fi
     # fix Python library
     - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
@@ -39,7 +40,14 @@ install:
 before_script:
     # set some environment variables
     - export ROOTPWA=${PWD}
+    - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
+    - export PATH=${ROOTPWA}/build/bin:${PATH}
+    - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
 script:
     - cd ${ROOTPWA}/build
     - cmake ..
-    - make
+    # run 'make'
+    # - if 'make' was not successful, fail the build
+    # - if 'make' was successful, run 'make test'
+    # - if 'make test' was not successful, print the log and fail the build
+    - make && (make test || (cat Testing/Temporary/LastTest.log && false))
