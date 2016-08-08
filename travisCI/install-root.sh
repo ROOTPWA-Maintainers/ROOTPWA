@@ -1,5 +1,4 @@
 #!/bin/bash
 set -exv
-echo $PATH
-wget https://www.dropbox.com/s/vbpvign4f4sr13k/root.tar.gz
+wget https://root.cern.ch/download/root_v6.06.06.Linux-ubuntu14-x86_64-gcc4.8.tar.gz -O root.tar.gz
 tar -xzf root.tar.gz
