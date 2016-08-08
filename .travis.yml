@@ -8,7 +8,7 @@ before_install:
     - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev
     - sudo apt-get install -y gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
     # packages required by ROOTPWA
-    - sudo apt-get install -y libconfig++-dev
+    - sudo apt-get install -y libconfig++-dev libyaml-cpp-dev
     # fix Python library
     - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
     - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
@@ -16,9 +16,6 @@ before_install:
     - export PATH=${PWD}/cmake/bin:${PATH}
     - ./travisCI/install-boost.sh 1.61.0
     - export BOOST_ROOT=${PWD}/boost-boost-1.61.0
-    - ./travisCI/install-yaml-cpp.sh
-    - export YAML_CPP=$PWD/yaml-cpp-install
-    - export LD_LIBRARY_PATH=${YAML_CPP}/lib:${LD_LIBRARY_PATH}
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
     - export ROOTPWA=$PWD
