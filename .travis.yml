@@ -3,6 +3,14 @@ sudo: required
 dist: trusty
 
 language: cpp
+
+# send mails if a build fails
+notifications:
+    email:
+        recipients: rootpwa-push-notifications@lists.sourceforge.net
+        on_success: change
+        on_failure: always
+
 before_install:
     - sudo apt-get update -qq
     # packages required by ROOT
@@ -12,22 +20,17 @@ before_install:
     # fix Python library
     - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
     - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
+install:
     - ./travisCI/install-cmake.sh
     - export PATH=${PWD}/cmake/bin:${PATH}
     - ./travisCI/install-boost.sh 1.61.0
     - export BOOST_ROOT=${PWD}/boost-boost-1.61.0
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
-    - export ROOTPWA=$PWD
-install:
+before_script:
+    # set some environment variables
+    - export ROOTPWA=${PWD}
+script:
     - cd ${ROOTPWA}/build
     - cmake ..
     - make
-before_script: echo "before_script nop"
-script: echo "script nop"
-cache: apt
-notifications:
-    email:
-        recipients: rootpwa-push-notifications@lists.sourceforge.net
-        on_success: change
-        on_failure: always
