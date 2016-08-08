@@ -5,9 +5,9 @@ dist: trusty
 # test with two different settings for the optional packages
 env:
     # without any optional package
-    - TRAVIS_RPWA_USE_NLOPT=0
+    - TRAVIS_RPWA_USE_NLOPT=0 TRAVIS_RPWA_USE_BAT=0
     # with all optional packages
-    - TRAVIS_RPWA_USE_NLOPT=1
+    - TRAVIS_RPWA_USE_NLOPT=1 TRAVIS_RPWA_USE_BAT=1
 
 language: cpp
 
@@ -35,6 +35,7 @@ install:
     - export BOOST_ROOT=${PWD}/boost-boost-1.61.0
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
+    - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${PWD}/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
 before_script:
     # set some environment variables
     - export ROOTPWA=${PWD}
