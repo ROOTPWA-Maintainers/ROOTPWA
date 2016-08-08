@@ -59,7 +59,7 @@ if(NOT NLopt_DIR)
 	endif()
 	unset(_NLopt_LIB_NAMES)
 
-	set(_NLopt_HEADER_FILE_NAME "NLopt.h")
+	set(_NLopt_HEADER_FILE_NAME "nlopt.hpp")
 	find_file(_NLopt_HEADER_FILE
 		NAMES ${_NLopt_HEADER_FILE_NAME})
 	if(NOT _NLopt_HEADER_FILE)
