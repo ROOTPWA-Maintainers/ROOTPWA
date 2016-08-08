@@ -7,6 +7,9 @@ before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev
     - sudo apt-get install -y gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
+    # fix Python library
+    - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
+    - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
     - ./travisCI/install-cmake.sh
     - export PATH=$PWD/cmake/bin:${PATH}
     - ./travisCI/install-boost.sh
