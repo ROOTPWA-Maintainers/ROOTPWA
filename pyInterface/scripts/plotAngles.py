@@ -231,7 +231,7 @@ if __name__ == "__main__":
 			name = parent.name + "_" + daughter1.name + "_" + daughter2.name
 			nEntriesMass = 0
 			nEntriesAngles = 0
-			for permutationKey in permutations.keys():
+			for permutationKey in permutations:
 				tuples = permutations[permutationKey][i]
 				if tuples[0]:
 					nEntriesMass += 1
@@ -277,7 +277,7 @@ if __name__ == "__main__":
 			isobar1Name = topology.isobarDecayVertices()[index1].parent().name
 			isobar2Name = topology.isobarDecayVertices()[index2].parent().name
 			nEntries = 0
-			for permutationKey in isobarPermutations.keys():
+			for permutationKey in isobarPermutations:
 				if isobarPermutations[permutationKey][isobarCombination_i]:
 					nEntries += 1
 			if nEntries == 1:
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
 	assert inputFileRanges.keys() == hists.keys()
 
-	for rangeName in inputFileRanges.keys():
+	for rangeName in inputFileRanges:
 
 		pyRootPwa.utils.printInfo("Processing bin range " + rangeName)
 		outputFile.cd(rangeName)
@@ -331,7 +331,7 @@ if __name__ == "__main__":
 				# Read input data
 				topology.readKinematicsData(prodKinMomenta, decayKinMomenta)
 
-				for permutationKey in permutations.keys():
+				for permutationKey in permutations:
 
 					permutation = list(permutationKey)
 
