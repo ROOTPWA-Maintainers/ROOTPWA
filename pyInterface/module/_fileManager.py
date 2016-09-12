@@ -323,7 +323,7 @@ class fileManager(object):
 			inputFiles[inputFile.eventsType].append(inputFile)
 			dataFile.Close()
 		retval =  collections.OrderedDict()
-		for eventsType in sorted(inputFiles.keys()):
+		for eventsType in sorted(inputFiles):
 			retval[eventsType] = inputFiles[eventsType]
 		return inputFiles
 
@@ -350,7 +350,7 @@ class fileManager(object):
 					return collections.OrderedDict()
 				keyFiles[waveName] = keyFileName
 		retval = collections.OrderedDict()
-		for waveName in sorted(keyFiles.keys()):
+		for waveName in sorted(keyFiles):
 			retval[waveName] = keyFiles[waveName]
 		return retval
 
