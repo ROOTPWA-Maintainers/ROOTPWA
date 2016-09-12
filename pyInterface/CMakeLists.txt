@@ -130,8 +130,10 @@ set(RPWA_PYTHON_SCRIPTS_FILES
 	plotAngles.py
 	printMetadata.py
 	pwaFit.py
-	pwaNloptFit.py
 )
+if(USE_NLOPT)
+	LIST(APPEND RPWA_PYTHON_SCRIPTS_FILES pwaNloptFit.py)
+endif()
 
 set(RPWA_PYTHON_SCRIPTS_LINKS)
 foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
