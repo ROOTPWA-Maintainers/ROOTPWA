@@ -65,7 +65,7 @@ namespace rpwa {
 		public:
 
 			massDepFit();
-			~massDepFit() {};
+			~massDepFit() {}
 
 			bool readConfig(const YAML::Node& configRoot,
 			                const rpwa::massDepFit::modelPtr& fitModel,

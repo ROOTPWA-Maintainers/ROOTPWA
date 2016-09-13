@@ -47,7 +47,7 @@ namespace rpwa {
 			      const size_t maxChannels,
 			      const size_t maxBins,
 			      const size_t maxMassBins);
-			virtual ~cache() {}
+			~cache() {}
 
 			std::complex<double> getCoupling(const size_t idxComponent, const size_t idxChannel, const size_t idxBin, const size_t idxMassBin) const { return _couplings[idxComponent][idxChannel][idxBin][idxMassBin]; }
 			std::complex<double> getComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin) const { return _components[idxComponent][idxBin][idxMassBin]; }

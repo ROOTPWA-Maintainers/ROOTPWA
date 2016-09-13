@@ -100,7 +100,7 @@ namespace rpwa {
 			          const std::string& type,
 			          const bool equalInAllBins,
 			          const size_t nrParameters);
-			virtual ~component() {};
+			virtual ~component() {}
 
 			size_t getId() const { return _id; }
 			const std::string& getName() const { return _name; }
@@ -147,23 +147,23 @@ namespace rpwa {
 			                        rpwa::massDepFit::cache& cache);
 
 			size_t getNrParameters() const { return _nrParameters; }
-			virtual size_t importParameters(const double* par,
-			                                rpwa::massDepFit::parameters& fitParameters,
-			                                rpwa::massDepFit::cache& cache);
+			size_t importParameters(const double* par,
+			                        rpwa::massDepFit::parameters& fitParameters,
+			                        rpwa::massDepFit::cache& cache);
 
 			bool isEqualInAllBins() const { return _equalInAllBins; }
 			bool isBranchingFixed(const size_t idxBranching) const { return _branchingsFixed[idxBranching]; }
 
-			virtual double getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
-			virtual double getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
+			double getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
+			double getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
 
-			virtual bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
-			virtual double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
-			virtual bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
-			virtual double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
-			virtual bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
-			virtual const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
-			virtual double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
+			bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
+			double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
+			bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
+			double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
+			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
+			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
+			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
 			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
 			                                 rpwa::massDepFit::cache& cache,
@@ -428,7 +428,7 @@ namespace rpwa {
 			tPrimeDependentBackground(const size_t id,
 			                          const std::string& name);
 
-			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,
@@ -517,7 +517,7 @@ namespace rpwa {
 			tPrimeDependentBackgroundIntegral(const size_t id,
 			                                  const std::string& name);
 
-			virtual bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::massDepFit::parameters& fitParameters,

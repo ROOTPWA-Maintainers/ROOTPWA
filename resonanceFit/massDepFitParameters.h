@@ -47,7 +47,7 @@ namespace rpwa {
 			           const size_t maxChannels,
 			           const size_t maxParameters,
 			           const size_t maxBins);
-			virtual ~parameters() {}
+			~parameters() {}
 
 			std::complex<double> getBranching(const size_t idxComponent, const size_t idxChannel) const { return _branchings[idxComponent][idxChannel]; };
 			std::complex<double> getCoupling(const size_t idxComponent, const size_t idxChannel, const size_t idxBin) const { return _couplings[idxComponent][idxChannel][idxBin]; };
