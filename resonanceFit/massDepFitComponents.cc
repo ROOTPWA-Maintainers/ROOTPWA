@@ -38,6 +38,69 @@
 #include "yamlCppUtils.hpp"
 
 
+namespace {
+
+
+	// initialize the bins that can be used for the caching, each value is
+	// only cached for the given bin in val()
+	std::vector<std::vector<size_t> >
+	initBinsEqualValuesForSingleBins(const size_t nrBins)
+	{
+		std::vector<std::vector<size_t> > binsEqualValues(nrBins, std::vector<size_t>(1, 0));
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			binsEqualValues[idxBin][0] = idxBin;
+		}
+
+		return binsEqualValues;
+	}
+
+
+	// initialize the bins that can be used for the caching, each value is
+	// used in all bins that have the same mass binning
+	std::vector<std::vector<size_t> >
+	initBinsEqualValuesFromMassBinning(const std::vector<size_t>& nrMassBins,
+	                                   const boost::multi_array<double, 2>& massBinCenters)
+	{
+		const size_t nrBins = nrMassBins.size();
+
+		std::vector<std::vector<size_t> > binsEqualValues(nrBins, std::vector<size_t>());
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			if(binsEqualValues[idxBin].size() != 0) {
+				continue;
+			}
+
+			std::vector<size_t> bins(1, idxBin);
+			for(size_t jdxBin = idxBin+1; jdxBin < nrBins; ++jdxBin) {
+				if(nrMassBins[idxBin] != nrMassBins[jdxBin]) {
+					continue;
+				}
+
+				bool sameBinning = true;
+				for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
+					if(massBinCenters[idxBin][idxMass] != massBinCenters[jdxBin][idxMass]) {
+						sameBinning = false;
+						break;
+					}
+				}
+				if(sameBinning) {
+					bins.push_back(jdxBin);
+				}
+			}
+
+			for(size_t jdxBin = 0; jdxBin < bins.size(); ++jdxBin) {
+				assert(binsEqualValues[bins[jdxBin]].size() == 0);
+
+				binsEqualValues[bins[jdxBin]] = bins;
+			}
+		}
+
+		return binsEqualValues;
+	}
+
+
+}
+
+
 rpwa::massDepFit::channel::channel(const size_t waveIdx,
                                    const std::string& waveName,
                                    const std::vector<size_t>& bins,
@@ -68,12 +131,10 @@ rpwa::massDepFit::channel::channel(const size_t waveIdx,
 rpwa::massDepFit::component::component(const size_t id,
                                        const std::string& name,
                                        const std::string& type,
-                                       const bool equalInAllBins,
                                        const size_t nrParameters)
 	: _id(id),
 	  _name(name),
 	  _type(type),
-	  _equalInAllBins(equalInAllBins),
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
@@ -109,29 +170,15 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 	const size_t nrBins = nrMassBins.size();
 	assert(nrBins == massBinCenters.shape()[0] and nrBins == phaseSpaceIntegrals.shape()[0]);
 
+	// initialize the bins that can be used for the caching, the function
+	// value might be the same in several bins, but by default each value
+	// is only cached for the given bin in val()
+	_binsEqualValues = initBinsEqualValuesForSingleBins(nrBins);
+
 	// resize fitParameters without affecting the number of channels first
 	// as this is not yet known
 	fitParameters.resize(_id+1, 0, _nrParameters, nrBins);
 	fitParametersError.resize(_id+1, 0, _nrParameters, nrBins);
-
-	// check if all bins have the same mass binning
-	if(_equalInAllBins) {
-		for(size_t idxBin = 1; idxBin < nrBins; ++idxBin) {
-			if(nrMassBins[idxBin] != nrMassBins[0]) {
-				_equalInAllBins = false;
-				break;
-			}
-			for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
-				if(massBinCenters[idxBin][idxMass] != massBinCenters[0][idxMass]) {
-					_equalInAllBins = false;
-					break;
-				}
-			}
-			if(not _equalInAllBins) {
-				break;
-			}
-		}
-	}
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
@@ -710,7 +757,14 @@ rpwa::massDepFit::component::val(const rpwa::massDepFit::parameters& fitParamete
 	const std::complex<double> component = val(fitParameters, idxBin, m);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+		if(_binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
+			// the value is the same for all bins
+			cache.setComponent(getId(), std::numeric_limits<size_t>::max(), idxMass, component);
+		} else {
+			for(std::vector<size_t>::const_iterator it = _binsEqualValues[idxBin].begin(); it != _binsEqualValues[idxBin].end(); ++it) {
+				cache.setComponent(getId(), *it, idxMass, component);
+			}
+		}
 	}
 
 	return component;
@@ -720,8 +774,22 @@ rpwa::massDepFit::component::val(const rpwa::massDepFit::parameters& fitParamete
 std::ostream&
 rpwa::massDepFit::component::print(std::ostream& out) const
 {
-	out << "    use equal values for all bins for each mass bin: " << rpwa::yesNo(_equalInAllBins) << std::endl
-	    << "Decay modes:" << std::endl;
+	out << "    use equal values for each mass bin in group of bins: ";
+	std::set<size_t> printed;
+	for(size_t idxBin = 0; idxBin < _binsEqualValues.size(); ++idxBin) {
+		if(printed.count(idxBin) > 0) {
+			continue;
+		}
+		out << ((printed.size() > 0) ? ", " : "") << "{";
+		for(size_t idx = 0; idx < _binsEqualValues[idxBin].size(); ++idx) {
+			out << ((idx > 0) ? ", " : "") << _binsEqualValues[idxBin][idx];
+			printed.insert(_binsEqualValues[idxBin][idx]);
+		}
+		out << "}";
+	}
+	out << std::endl;
+
+	out << "Decay modes:" << std::endl;
 	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
 		const rpwa::massDepFit::channel& channel = _channels[idxChannel];
 		out << "    " << idxChannel << ", '" << channel.getWaveName() << "'" << std::endl;
@@ -732,7 +800,7 @@ rpwa::massDepFit::component::print(std::ostream& out) const
 
 rpwa::massDepFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "fixedWidthBreitWigner", true, 2)
+	: component(id, name, "fixedWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -762,6 +830,11 @@ rpwa::massDepFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	if(debug) {
 		print(printDebug);
@@ -852,7 +925,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
                                                                    const std::string& name)
-	: component(id, name, "dynamicWidthBreitWigner", true, 2)
+	: component(id, name, "dynamicWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -882,6 +955,11 @@ rpwa::massDepFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponen
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	const size_t nrDecayChannels = getNrChannels();
 
@@ -1110,7 +1188,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
                                                                      const std::string& name)
-	: component(id, name, "integralWidthBreitWigner", true, 2)
+	: component(id, name, "integralWidthBreitWigner", 2)
 {
 	_parametersName[0] = "mass";
 	_parametersName[1] = "width";
@@ -1140,6 +1218,11 @@ rpwa::massDepFit::integralWidthBreitWigner::init(const YAML::Node& configCompone
 		printErr << "error while reading configuration of 'component' class." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	const size_t nrDecayChannels = getNrChannels();
 
@@ -1394,7 +1477,7 @@ rpwa::massDepFit::integralWidthBreitWigner::print(std::ostream& out) const
 
 rpwa::massDepFit::constantBackground::constantBackground(const size_t id,
                                                          const std::string& name)
-	: component(id, name, "constantBackground", true, 0)
+	: component(id, name, "constantBackground", 0)
 {
 }
 
@@ -1424,6 +1507,11 @@ rpwa::massDepFit::constantBackground::init(const YAML::Node& configComponent,
 		printErr << "component '" << getName() << "' of type 'constantBackground' needs to have exactly one decay channel." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	if(debug) {
 		print(printDebug);
@@ -1483,7 +1571,7 @@ rpwa::massDepFit::constantBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackground::exponentialBackground(const size_t id,
                                                                const std::string& name)
-	: component(id, name, "exponentialBackground", true, 1)
+	: component(id, name, "exponentialBackground", 1)
 {
 	_parametersName[0] = "g";
 
@@ -1516,6 +1604,11 @@ rpwa::massDepFit::exponentialBackground::init(const YAML::Node& configComponent,
 		printErr << "component '" << getName() << "' of type 'exponentialBackground' needs to have exactly one decay channel." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	std::map<std::string, YamlCppUtils::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
@@ -1662,7 +1755,7 @@ rpwa::massDepFit::exponentialBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackground::tPrimeDependentBackground(const size_t id,
                                                                        const std::string& name)
-	: component(id, name, "tPrimeDependentBackground", false, 5)
+	: component(id, name, "tPrimeDependentBackground", 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";
@@ -1892,7 +1985,7 @@ rpwa::massDepFit::tPrimeDependentBackground::print(std::ostream& out) const
 
 rpwa::massDepFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
                                                                                const std::string& name)
-	: component(id, name, "exponentialBackgroundIntegral", true, 1)
+	: component(id, name, "exponentialBackgroundIntegral", 1)
 {
 	_parametersName[0] = "g";
 
@@ -1925,6 +2018,11 @@ rpwa::massDepFit::exponentialBackgroundIntegral::init(const YAML::Node& configCo
 		printErr << "component '" << getName() << "' of type 'exponentialBackgroundIntegral' needs to have exactly one decay channel." << std::endl;
 		return false;
 	}
+
+	// initialize the bins that can be used for the caching, the function
+	// value for this component type is the same in bins with an equal
+	// mass binning
+	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
 	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
 	boost::assign::insert(mandatoryArguments)
@@ -2087,7 +2185,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::print(std::ostream& out) const
 
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIntegral(const size_t id,
                                                                                        const std::string& name)
-	: component(id, name, "tPrimeDependentBackgroundIntegral", false, 5)
+	: component(id, name, "tPrimeDependentBackgroundIntegral", 5)
 {
 	_parametersName[0] = "m0";
 	_parametersName[1] = "c0";
