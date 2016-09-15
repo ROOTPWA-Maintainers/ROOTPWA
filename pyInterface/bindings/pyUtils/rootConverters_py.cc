@@ -1,6 +1,7 @@
 #include "rootConverters_py.h"
 
 #include<TClonesArray.h>
+#include<TF1.h>
 #include<TFile.h>
 #include<TLorentzRotation.h>
 #include<TPython.h>
@@ -75,42 +76,6 @@ bool rpwa::py::branch(T objectPtr, PyObject* pyTree, const std::string& name, in
 template bool rpwa::py::branch<rpwa::fitResult*>(rpwa::fitResult* objectPtr, PyObject* pyTree, const std::string& name, int bufsize, int splitlevel);
 template bool rpwa::py::branch<rpwa::amplitudeTreeLeaf*>(rpwa::amplitudeTreeLeaf* objectPtr, PyObject* pyTree, const std::string& name, int bufsize, int splitlevel);
 
-namespace {
-
-	template<typename T>
-	T* getFromTDirectoryTemplate(PyObject* pyDir, const std::string& name)
-	{
-		TDirectory* dir = rpwa::py::convertFromPy<TDirectory*>(pyDir);
-		if(not dir) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for directory when executing rpwa::py::getFromTDirectory()");
-			bp::throw_error_already_set();
-		}
-		return dynamic_cast<T*>(dir->Get(name.c_str()));
-	}
-
-}
-
-template<typename T>
-T* rpwa::py::getFromTDirectory(PyObject* /* pyDir */, const std::string& /* name */)
-{
-	printErr<<"Because of boost::python, this function has to be explicitly instantiated."<<std::endl;
-	throw;
-}
-
-namespace rpwa {
-
-	namespace py {
-
-		template<>
-		rpwa::ampIntegralMatrix* getFromTDirectory<rpwa::ampIntegralMatrix>(PyObject* pyDir, const std::string& name)
-		{
-			return getFromTDirectoryTemplate<rpwa::ampIntegralMatrix>(pyDir, name);
-		}
-
-	}
-
-}
-
 void rpwa::py::exportRootConverters() {
 
 	bp::def("__RootConverters_convertToPy_TVector3", &rpwa::py::convertToPy<TVector3>);
@@ -162,6 +127,11 @@ void rpwa::py::exportRootConverters() {
 
 	bp::def(
 		"__RootConverters_convertFromPy_TFile", &rpwa::py::convertFromPy<TFile*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_TF1", &rpwa::py::convertFromPy<TF1*>
 		, bp::return_internal_reference<1>()
 	);
 

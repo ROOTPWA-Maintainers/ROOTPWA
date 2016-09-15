@@ -33,7 +33,28 @@ generatorManager::generatorManager()
 
 generatorManager::~generatorManager() {
 	delete _generator;
-};
+}
+
+
+#ifdef USE_BAT
+rpwa::importanceSamplerPtr generatorManager::getImportanceSampler(rpwa::modelIntensityPtr model) {
+
+	if(not _reactionFileRead) {
+		printErr << "trying to initialize importance sampler before reading reaction file." << endl;
+		return rpwa::importanceSamplerPtr();
+	}
+
+	rpwa::importanceSamplerPtr sampler(new importanceSampler(model,
+	                                                         _beamAndVertexGenerator,
+	                                                         _pickerFunction,
+	                                                         _beam,
+	                                                         _target,
+	                                                         _finalState));
+
+	return sampler;
+
+}
+#endif
 
 
 unsigned int generatorManager::event() {
@@ -133,7 +154,7 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		configTarget->lookupValue("recoilParticleName", recoilParticleName);
 		const particleProperties* targetParticle = particleDataTable::entry(targetParticleName);
 		const particleProperties* recoilParticle = particleDataTable::entry(recoilParticleName);
-		if(not (targetParticle && recoilParticle)) {
+		if(not (targetParticle and recoilParticle)) {
 			printErr << "invalid target or recoil particle" << endl;
 			return false;
 		}
@@ -336,11 +357,11 @@ void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
 void generatorManager::randomizeBeamfileStartingPosition() {
 
 	if(not _reactionFileRead) {
-		printErr << "reaction file has to have been read to set this option (readBeamfileSequentially)." << endl;
+		printErr << "reaction file has to have been read to set this option (randomizeBeamfileStartingPosition)." << endl;
 		throw;
 	}
 	if(not _beamAndVertexGenerator) {
-		printErr << "beam and vertex package seems to be disabled, unable to read beamfile sequentially." << endl;
+		printErr << "beam and vertex package seems to be disabled, unable to randomize beamfile starting position." << endl;
 		throw;
 	}
 	_beamAndVertexGenerator->randomizeBeamfileStartingPosition();

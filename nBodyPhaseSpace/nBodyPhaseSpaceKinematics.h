@@ -124,8 +124,10 @@ namespace rpwa {
 		void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
 		weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
 
+		/// \brief computes breakup momenta
+		void calcBreakupMomenta();
+
 		/// \brief computes event weight and breakup momenta
-		/// operates on vector of intermediate two-body masses
 		double calcWeight();
 
 		enum kinematicsTypeEnum {BLOCK         = 1,   // method for calculation of event kinematics used in nuphaz (faster)
@@ -134,7 +136,8 @@ namespace rpwa {
 		kinematicsTypeEnum kinematicsType   () const                                  { return _kinematicsType;           }  ///< returns algorithm used to calculate event kinematics
 
 		/// \brief calculates full event kinematics from the effective masses of the (i + 1)-body systems and the Lorentz vector of the decaying system
-		/// uses the break-up momenta calculated by calcWeight() and angles from pickAngles()
+		/// uses the break-up momenta calculated by calcBreakupMomenta() (either called
+		/// directly or implicitly via calcWeight()) and angles from setAngles()
 		void calcEventKinematics(const TLorentzVector& nBody);  // Lorentz vector of n-body system in lab frame
 
 

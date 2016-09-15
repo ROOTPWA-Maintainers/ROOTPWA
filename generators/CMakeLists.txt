@@ -48,6 +48,12 @@ include_directories(
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	)
+if(USE_BAT)
+	include_directories(
+		SYSTEM
+		${BAT_INCLUDE_DIR}
+	)
+endif()
 
 
 # source files that are compiled into library
@@ -57,7 +63,12 @@ set(SOURCES
 	diffractivePhaseSpace.cc
 	beamAndVertexGenerator.cc
 	generatorPickerFunctions.cc
+	modelIntensity.cc
 	)
+if(USE_BAT)
+	LIST(APPEND SOURCES importanceSampler.cc)
+	set_source_files_properties(importanceSampler.cc PROPERTIES COMPILE_FLAGS "${BAT_CXX_FLAGS}")
+endif()
 
 
 # library
@@ -71,6 +82,9 @@ make_shared_library(
 	"${RPWA_PARTIALWAVEFIT_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
 	)
+if(USE_BAT)
+	target_link_libraries(${THIS_LIB} "${BAT_LIBRARIES}" "${BAT_LINKER_FLAGS}")
+endif()
 
 
 # executables

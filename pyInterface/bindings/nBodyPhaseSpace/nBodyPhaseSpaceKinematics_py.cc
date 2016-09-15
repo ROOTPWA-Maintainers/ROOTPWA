@@ -56,6 +56,8 @@ void rpwa::py::exportNBodyPhaseSpaceKinematics() {
 
 		.def("setDecay", &nBodyPhaseSpaceKinematics_setDecay)
 
+		.def("calcBreakupMomenta", &rpwa::nBodyPhaseSpaceKinematics::calcBreakupMomenta)
+
 		.def("calcWeight", &rpwa::nBodyPhaseSpaceKinematics::calcWeight)
 
 		.def("calcEventKinematics", &nBodyPhaseSpaceKinematics_calcEventKinematics)

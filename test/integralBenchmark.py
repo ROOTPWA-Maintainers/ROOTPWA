@@ -79,8 +79,8 @@ if __name__ == "__main__":
 
 	integralBenchmarkFile = ROOT.TFile.Open(args.path + "/integralBenchmark.root", "READ")
 	integralCreatedFile   = ROOT.TFile.Open(args.path + "/integral.root", "READ")
-	ampIntMatrixBenchmark = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralBenchmarkFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
-	ampIntMatrixCreated   = pyRootPwa.core.ampIntegralMatrix.getFromTDirectory(integralCreatedFile, pyRootPwa.core.ampIntegralMatrix.integralObjectName)
+	ampIntMatrixBenchmark = pyRootPwa.core.ampIntegralMatrix.readIntegralFile(integralBenchmarkFile).getAmpIntegralMatrix()
+	ampIntMatrixCreated   = pyRootPwa.core.ampIntegralMatrix.readIntegralFile(integralCreatedFile).getAmpIntegralMatrix()
 
 	if ampIntMatrixBenchmark == ampIntMatrixCreated:
 		pyRootPwa.utils.printSucc("TEST SUCCEEDED!!")

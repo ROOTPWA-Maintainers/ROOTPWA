@@ -16,7 +16,15 @@ void rpwa::py::exportGeneratorManager() {
 		.def(
 			"getGenerator"
 			, &rpwa::generatorManager::getGenerator
-			, bp::return_internal_reference<1>())
+			, bp::return_internal_reference<1>()
+		)
+#ifdef USE_BAT
+		.def(
+			"getImportanceSampler"
+			, &rpwa::generatorManager::getImportanceSampler
+			, (bp::arg("model"))
+		)
+#endif
 		.def("readReactionFile", &rpwa::generatorManager::readReactionFile)
 		.def("initializeGenerator", &rpwa::generatorManager::initializeGenerator)
 		.def("overrideMassRange", &rpwa::generatorManager::overrideMassRange)
@@ -24,7 +32,7 @@ void rpwa::py::exportGeneratorManager() {
 		.def(
 			"readBeamfileSequentially"
 			, &rpwa::generatorManager::readBeamfileSequentially
-			, bp::arg("readBeamfileSequentially")=true
+			, (bp::arg("readBeamfileSequentially")=true)
 		)
 		.def("randomizeBeamfileStartingPosition", &rpwa::generatorManager::randomizeBeamfileStartingPosition)
 		.add_static_property("debugGeneratorManager", &rpwa::generatorManager::debug, &rpwa::generatorManager::setDebug);

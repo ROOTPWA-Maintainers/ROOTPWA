@@ -41,8 +41,10 @@ namespace rpwa {
 
 		virtual void overrideMassRange(double lowerLimit, double upperLimit);
 		virtual const std::pair<double, double>& massRange() const;
+		virtual const std::pair<double, double>& tPrimeRange() const;
 
 		virtual bool operator() (double& invariantMass, double& tPrime) = 0;
+		virtual bool pickTPrimeForMass(const double invariantMass, double& tPrime) = 0;
 
 		virtual std::ostream& print(std::ostream& out) const = 0;
 
@@ -72,6 +74,7 @@ namespace rpwa {
 		virtual bool init(const libconfig::Setting& setting);
 
 		virtual bool operator() (double& invariantMass, double& tPrime);
+		virtual bool pickTPrimeForMass(const double invariantMass, double& tPrime);
 
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -97,6 +100,7 @@ namespace rpwa {
 		virtual bool init(const libconfig::Setting& setting);
 
 		virtual bool operator() (double& invariantMass, double& tPrime);
+		virtual bool pickTPrimeForMass(const double invariantMass, double& tPrime);
 
 		virtual std::ostream& print(std::ostream& out) const;
 

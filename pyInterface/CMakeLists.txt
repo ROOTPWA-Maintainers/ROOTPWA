@@ -124,13 +124,16 @@ set(RPWA_PYTHON_SCRIPTS_FILES
 	createFileManager.py
 	deWeight.py
 	eigenvectorLikelihoodSlices.py
-	genPseudoData.py
 	generatePhaseSpace.py
+	genPseudoData.py
 	likelihoodPointCalculator.py
 	plotAngles.py
 	printMetadata.py
 	pwaFit.py
 )
+if(USE_BAT)
+	LIST(APPEND RPWA_PYTHON_SCRIPTS_FILES genPseudoDataImportanceSampling.py)
+endif()
 if(USE_NLOPT)
 	LIST(APPEND RPWA_PYTHON_SCRIPTS_FILES pwaNloptFit.py)
 endif()

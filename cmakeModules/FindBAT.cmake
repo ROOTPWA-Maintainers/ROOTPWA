@@ -11,6 +11,7 @@
 #//      BAT_ROOT_DIR       - BAT installation directory
 #//      BAT_INCLUDE_DIR    - BAT header directory
 #//      BAT_LIBRARIES      - BAT libraries
+#//      BAT_CXX_FLAGS      - extra compiler flags when using BAT
 #//      BAT_LINKER_FLAGS   - extra linker flags required to link against
 #//                           BAT
 #//
@@ -27,6 +28,7 @@ set(BAT_VERSION      )
 set(BAT_ROOT_DIR     "")
 set(BAT_INCLUDE_DIR  "")
 set(BAT_LIBRARIES    )
+set(BAT_CXX_FLAGS    "")
 set(BAT_LINKER_FLAGS "")
 
 
@@ -89,6 +91,16 @@ if(BAT_ROOT_DIR)
 			OUTPUT_VARIABLE BAT_VERSION
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --cflags
+			OUTPUT_VARIABLE _BAT_CFLAGS
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		string(FIND ${_BAT_CFLAGS} "-fopenmp" _BAT_OPENMP)
+		if(NOT _BAT_OPENMP EQUAL -1)
+			set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
+		endif()
+		unset(_BAT_CFLAGS)
+		unset(_BAT_OPENMP)
+
 		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --libs
 			OUTPUT_VARIABLE _BAT_LDFLAGS
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -139,6 +151,7 @@ if(BAT_ROOT_DIR)
 				set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract whether BAT was build with threading support from string '${_BAT_OPENMP}'.")
 			endif()
 			if(_BAT_OPENMP_STATUS)
+				set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
 				set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
 			endif()
 			unset(_BAT_OPENMP)
@@ -165,6 +178,7 @@ endif()
 
 
 # remove leading and trailing whitespaces
+string(STRIP "${BAT_CXX_FLAGS}" BAT_CXX_FLAGS)
 string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
 
 
@@ -172,6 +186,7 @@ string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
 mark_as_advanced(
 	BAT_INCLUDE_DIR
 	BAT_LIBRARIES
+	BAT_CXX_FLAGS
 	BAT_LINKER_FLAGS
 	)
 
@@ -181,6 +196,7 @@ if(BAT_FOUND)
 	message(STATUS "Found BAT version ${BAT_VERSION} in '${BAT_ROOT_DIR}'.")
 	message(STATUS "Using BAT include directory '${BAT_INCLUDE_DIR}'.")
 	message(STATUS "Using BAT libraries '${BAT_LIBRARIES}'.")
+	message(STATUS "Using extra CXX_FLAGS for BAT '${BAT_CXX_FLAGS}'.")
 	message(STATUS "Using extra LINKER_FLAGS for BAT '${BAT_LINKER_FLAGS}'.")
 else()
 	if(BAT_FIND_REQUIRED)

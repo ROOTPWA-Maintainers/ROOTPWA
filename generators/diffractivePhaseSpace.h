@@ -58,6 +58,19 @@ namespace rpwa {
 		void setDecayProducts(const std::vector<rpwa::particle>& particles);
 		void addDecayProduct(const rpwa::particle& particle);
 
+		/** @brief calculate kinematics of X system in lab frame (= target RF)
+		 *
+		 * calculate the Lorentz vector of the X system in the laboratory frame
+		 * (target rest frame) using the Lorentz vector of the beam particle,
+		 * the masses of target, recoil and X, and the Mandelstam variables
+		 */
+		static TLorentzVector calculateXSystemLab(const TLorentzVector& beamLorentzVector,
+		                                          const double          targetMass,
+		                                          const double          xMass,
+		                                          const double          recoilMass,
+		                                          const double          s,
+		                                          const double          tPrime);
+
 		/** @brief generates one event
 		 *
 		 * returns number of attempts to generate this event and beam

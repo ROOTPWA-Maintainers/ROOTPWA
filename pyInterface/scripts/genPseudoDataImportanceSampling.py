@@ -11,9 +11,10 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(
 	                                 description="""
-	                                                Generate phase-space Monte Carlo events and calculate the
-	                                                weight of each event from the provided fit result. The events
-	                                                in the output file are not deweighted.
+	                                                Generate Monte Carlo events according to the provided
+	                                                fit-result by sampling the phase space and the model intensity
+	                                                using BAT. The events in the output file must not need be
+	                                                deweighted.
 	                                             """
 	                                )
 
@@ -24,14 +25,17 @@ if __name__ == "__main__":
 	                    help="path to config file (default: '%(default)s')")
 	parser.add_argument("-i", "--integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: %(default)s)")
+	parser.add_argument("-C", type=int, metavar="#", dest="nChains", default=5, help="number od MCMC chains to be run")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: %(default)s)")
+	parser.add_argument("-l", type=int, metavar="#", dest="lag", default=1, help="take just every nth generated event into the sample to avoid correlations")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
-	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="phaseSpaceEvents")
+	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="importanceSampledEvents")
 	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: '%(default)s')",
 	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
+	parser.add_argument("-p", "--phaseSpaceOnly", help="do phase space only (default: %(default)s)", action="store_true")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
 	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
@@ -123,81 +127,50 @@ if __name__ == "__main__":
 		integral = integralMeta.getAmpIntegralMatrix()
 		model.loadPhaseSpaceIntegral(integral)
 
+	# do not let BAT create histograms in the eventfile, otherwise this script
+	# will exit with a segmentation violation due to ROOT ownership
+	pyRootPwa.ROOT.TH1.AddDirectory(False)
+
+	modelSampler = generatorManager.getImportanceSampler(model)
+	if args.phaseSpaceOnly:
+		modelSampler.setPhaseSpaceOnly()
+
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFile, "NEW")
 	if not outputFile:
 		printErr("could not open output file. Aborting...")
 		sys.exit(1)
+	if len(args.massTPrimeVariableNames.split(',')) != 2:
+		printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
+		sys.exit(1)
+	success = modelSampler.initializeFileWriter(outputFile,
+	                                            args.userString,
+	                                            not args.noStoreMassTPrime,
+	                                            args.massTPrimeVariableNames.split(',')[0],
+	                                            args.massTPrimeVariableNames.split(',')[1])
+	if not success:
+		printErr('could not initialize file writer. Aborting...')
+		sys.exit(1)
 
-	fileWriter = pyRootPwa.core.eventFileWriter()
+	modelSampler.SetNChains(args.nChains)
+	modelSampler.SetNIterationsRun(args.nEvents/args.nChains*args.lag)
+	modelSampler.SetNLag(args.lag)
+	modelSampler.SetRandomSeed(args.seed)
+	modelSampler.MarginalizeAll()
 
-	printInfo("opened output root file: " + args.outputFile)
-	try:
-		printInfo(generatorManager)
-		progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
-		progressBar.start()
-		massTPrimeVariables = []
-		attempts = 0
-		decayKin = None
-		prodKin = None
-		first = True
-		weight = 0.
+	modelSampler.finalizeFileWriter()
 
-		eventsGenerated = 0
-		for eventsGenerated in range(args.nEvents):
+	modelSampler.PrintAllMarginalized(args.outputFile.replace(".root",".pdf").replace(".ROOT",".pdf"),2,4)
+	modelSampler.PrintCorrelationMatrix(args.outputFile.replace(".root","_coma.pdf").replace(".ROOT","_coma.pdf"))
 
-			attempts += generatorManager.event()
-			generator = generatorManager.getGenerator()
-			beam = generator.getGeneratedBeam()
-			finalState = generator.getGeneratedFinalState()
+	modelSampler.printFuncInfo()
 
-			if first:
-				if not args.noStoreMassTPrime:
-					if len(args.massTPrimeVariableNames.split(',')) == 2:
-						massTPrimeVariables = args.massTPrimeVariableNames.split(',')
-					else:
-						printErr("Option --massTPrimeVariableNames has wrong format '" + args.massTPrimeVariableNames + "'. Aborting...")
-						sys.exit(1)
-
-				prodKinNames = [ beam.name ]
-				decayKinNames = [ particle.name for particle in finalState]
-				success = fileWriter.initialize(
-				                                outputFile,
-				                                args.userString,
-				                                pyRootPwa.core.eventMetadata.REAL,
-				                                prodKinNames,
-				                                decayKinNames,
-# TODO: FILL THESE
-				                                { "mass": (massRange[0], massRange[1]) },
-				                                massTPrimeVariables + ["weight"]
-				                                )
-				if not success:
-					printErr('could not initialize file writer. Aborting...')
-					sys.exit(1)
-
-				if not model.initDecayAmplitudes(prodKinNames, decayKinNames):
-					printErr('could not initialize kinematics Data. Aborting...')
-					sys.exit(1)
-				first = False
-
-			prodKin = [ beam.lzVec.Vect() ]
-			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
-
-			weight = model.getIntensity(prodKin, decayKin)
-
-			additionalVariables = []
-			if not args.noStoreMassTPrime:
-				additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
-			fileWriter.addEvent(prodKin, decayKin, additionalVariables + [weight])
-
-			progressBar.update(eventsGenerated)
-	except:
-		raise
-	finally:
-		fileWriter.finalize()
-
-	eventsGenerated += 1
-	printSucc("generated " + str(eventsGenerated) + " events.")
-	printInfo("attempts: " + str(attempts))
-	printInfo("efficiency: " + str(100. * (float(eventsGenerated) / float(attempts))) + "%")
-
-	pyRootPwa.utils.printPrintingSummary(pyRootPwa.utils.printingCounter)
+	realEfficiency = float(args.nEvents)/float(modelSampler.nCalls())
+	printInfo("generated "+str(args.nEvents)+" with "+str(args.nChains)+" chains, needed "+str(modelSampler.nCalls()) + " actual calls => efficiency:"+str(realEfficiency))
+	if realEfficiency < .5 and realEfficiency > .3:
+		printSucc("efficiency in acceptable range")
+	elif realEfficiency <= .3:
+		printWarn("low efficiency encountered. Try decreasing the lag to speed up the process")
+	elif realEfficiency >= .5 and realEfficiency <= 1.:
+		printWarn("high efficiency encountered. Try increasing the lag to avoid correlations")
+	elif realEfficiency > 1.:
+		printErr("efficiency > 1 encountered. Data are highly correlated. Increase the lag.")
