@@ -693,6 +693,30 @@ rpwa::massDepFit::component::importParameters(const double* par,
 }
 
 
+std::complex<double>
+rpwa::massDepFit::component::val(const rpwa::massDepFit::parameters& fitParameters,
+                                 rpwa::massDepFit::cache& cache,
+                                 const size_t idxBin,
+                                 const double m,
+                                 const size_t idxMass) const
+{
+	if(idxMass != std::numeric_limits<size_t>::max()) {
+		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
+		if(component != 0.) {
+			return component;
+		}
+	}
+
+	const std::complex<double> component = val(fitParameters, idxBin, m);
+
+	if(idxMass != std::numeric_limits<size_t>::max()) {
+		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
+	}
+
+	return component;
+}
+
+
 std::ostream&
 rpwa::massDepFit::component::print(std::ostream& out) const
 {
@@ -779,26 +803,13 @@ rpwa::massDepFit::fixedWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 
 std::complex<double>
 rpwa::massDepFit::fixedWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
-                                             rpwa::massDepFit::cache& cache,
-                                             const size_t idxBin,
-                                             const double m,
-                                             const size_t idxMass) const
+                                             const size_t /*idxBin*/,
+                                             const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
-	}
 
 	return component;
 }
@@ -1017,18 +1028,9 @@ rpwa::massDepFit::dynamicWidthBreitWigner::writeDecayChannel(YAML::Emitter& yaml
 
 std::complex<double>
 rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
-                                               rpwa::massDepFit::cache& cache,
-                                               const size_t idxBin,
-                                               const double m,
-                                               const size_t idxMass) const
+                                               const size_t /*idxBin*/,
+                                               const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
@@ -1059,10 +1061,6 @@ rpwa::massDepFit::dynamicWidthBreitWigner::val(const rpwa::massDepFit::parameter
 	gamma *= gamma0 * m0/m;
 
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
-	}
 
 	return component;
 }
@@ -1333,18 +1331,9 @@ rpwa::massDepFit::integralWidthBreitWigner::writeDecayChannel(YAML::Emitter& yam
 
 std::complex<double>
 rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::parameters& fitParameters,
-                                                rpwa::massDepFit::cache& cache,
-                                                const size_t idxBin,
-                                                const double m,
-                                                const size_t idxMass) const
+                                                const size_t /*idxBin*/,
+                                                const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
@@ -1363,10 +1352,6 @@ rpwa::massDepFit::integralWidthBreitWigner::val(const rpwa::massDepFit::paramete
 	gamma *= gamma0;
 
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
-	}
 
 	return component;
 }
@@ -1480,10 +1465,8 @@ rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
 
 std::complex<double>
 rpwa::massDepFit::constantBackground::val(const rpwa::massDepFit::parameters& /*fitParameters*/,
-                                          rpwa::massDepFit::cache& /*cache*/,
                                           const size_t /*idxBin*/,
-                                          const double /*m*/,
-                                          const size_t /*idxMass*/) const
+                                          const double /*m*/) const
 {
 	return 1.;
 }
@@ -1634,18 +1617,9 @@ rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
 
 std::complex<double>
 rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters& fitParameters,
-                                             rpwa::massDepFit::cache& cache,
-                                             const size_t idxBin,
-                                             const double m,
-                                             const size_t idxMass) const
+                                             const size_t /*idxBin*/,
+                                             const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	// calculate breakup momentum
 	if(m < _m1+_m2) {
 		return std::complex<double>(1,0);
@@ -1655,10 +1629,6 @@ rpwa::massDepFit::exponentialBackground::val(const rpwa::massDepFit::parameters&
 	const double c = std::pow(q*f2 * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
-	}
 
 	return component;
 }
@@ -1850,18 +1820,9 @@ rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
 
 std::complex<double>
 rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::parameters& fitParameters,
-                                                 rpwa::massDepFit::cache& cache,
                                                  const size_t idxBin,
-                                                 const double m,
-                                                 const size_t idxMass) const
+                                                 const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	// calculate breakup momentum
 	if(m < _m1+_m2) {
 		return std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
@@ -1877,10 +1838,6 @@ rpwa::massDepFit::tPrimeDependentBackground::val(const rpwa::massDepFit::paramet
 	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 
 	const std::complex<double> component = mPre * exp(-tPrimePol*c);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), idxBin, idxMass, component);
-	}
 
 	return component;
 }
@@ -2092,26 +2049,13 @@ rpwa::massDepFit::exponentialBackgroundIntegral::write(YAML::Emitter& yamlOutput
 
 std::complex<double>
 rpwa::massDepFit::exponentialBackgroundIntegral::val(const rpwa::massDepFit::parameters& fitParameters,
-                                                     rpwa::massDepFit::cache& cache,
-                                                     const size_t idxBin,
-                                                     const double m,
-                                                     const size_t idxMass) const
+                                                     const size_t /*idxBin*/,
+                                                     const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	const double ps = _interpolator->Eval(m);
 	const double c = std::pow(m * ps * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), ((isEqualInAllBins()) ? std::numeric_limits<size_t>::max() : idxBin), idxMass, component);
-	}
 
 	return component;
 }
@@ -2324,18 +2268,9 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::write(YAML::Emitter& yamlOu
 
 std::complex<double>
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::val(const rpwa::massDepFit::parameters& fitParameters,
-                                                         rpwa::massDepFit::cache& cache,
                                                          const size_t idxBin,
-                                                         const double m,
-                                                         const size_t idxMass) const
+                                                         const double m) const
 {
-	if (idxMass != std::numeric_limits<size_t>::max()) {
-		const std::complex<double> component = cache.getComponent(getId(), idxBin, idxMass);
-		if (component != 0.) {
-			return component;
-		}
-	}
-
 	const double ps = _interpolator->Eval(m);
 	const double c = std::pow(m * ps * _norm, _exponent);
 
@@ -2346,10 +2281,6 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::val(const rpwa::massDepFit:
 	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 
 	const std::complex<double> component = mPre * exp(-tPrimePol*c);
-
-	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(getId(), idxBin, idxMass, component);
-	}
 
 	return component;
 }
