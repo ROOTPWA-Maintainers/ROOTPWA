@@ -199,21 +199,24 @@ testStep "pwaFit with prior" \
 -P 0.5 \
 -s ${SEED_FIT}"
 
-testStep "pwaNloptFit without prior" \
-"${ROOTPWA}/build/bin/pwaNloptFit \
-\"./fits/pwaTest_NLOPT_NOPRIOR.root\" \
---noAcceptance \
--w wavelist.compass.2008.88waves \
--s ${SEED_FIT}"
+if which pwaNloptFit
+then
+	testStep "pwaNloptFit without prior" \
+	"${ROOTPWA}/build/bin/pwaNloptFit \
+	\"./fits/pwaTest_NLOPT_NOPRIOR.root\" \
+	--noAcceptance \
+	-w wavelist.compass.2008.88waves \
+	-s ${SEED_FIT}"
 
-testStep "pwaNloptFit with prior" \
-"${ROOTPWA}/build/bin/pwaNloptFit \
-\"./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
---noAcceptance \
--w wavelist.compass.2008.88waves \
--C \
--P 0.5 \
--s ${SEED_FIT}"
+	testStep "pwaNloptFit with prior" \
+	"${ROOTPWA}/build/bin/pwaNloptFit \
+	\"./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
+	--noAcceptance \
+	-w wavelist.compass.2008.88waves \
+	-C \
+	-P 0.5 \
+	-s ${SEED_FIT}"
+fi
 
 #-- END FIT TEST --#
 
