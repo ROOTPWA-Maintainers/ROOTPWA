@@ -14,20 +14,20 @@ if __name__ == "__main__":
 	                                )
 
 	parser.add_argument("reactionFile", type=str, metavar="reactionFile", help="reaction config file")
-	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
+	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: %(default)s)")
 	parser.add_argument("-a", type=int, metavar="#", dest="maxAttempts", default=0, help="(max) number of attempts to do (default: infinity)")
 	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="",
 	                    help="ROOT output file (if not specified, generated automatically)")
 	parser.add_argument("-p", type=str, metavar="<particleDataTable>", dest="particleDataTableFileName", default="./particleDataTable.txt",
-	                    help="path to particle data table file (default: ./particleDataTable.txt)")
+	                    help="path to particle data table file (default: '%(default)s'")
 	parser.add_argument("-c", action="store_true", dest="comgeantOutput",
 	                    help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
-	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
+	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: %(default)s)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary",
 	                    help="lower boundary of mass range in MeV (!) (overwrites values from reaction file)")
 	parser.add_argument("-B", type=float, metavar="#", dest="massBinWidth", help="width of mass bin in MeV (!)")
 	parser.add_argument("-u", "--userString", type=str, metavar="#", dest="userString", help="metadata user string", default="")
-	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: %(default)s)",
+	parser.add_argument("--massTPrimeVariableNames", type=str, dest="massTPrimeVariableNames", help="Name of the mass and t' variable (default: '%(default)s')",
 	                    default="mass,tPrime")
 	parser.add_argument("--noStoreMassTPrime", action="store_true", dest="noStoreMassTPrime", help="Do not store mass and t' variable of each event.")
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
 	if args.outputFileName == "":
 		if overrideMass:
-			args.outputFileName = str(args.massLowerBinBoundary) + "." + str(args.massLowerBinBoundary + args.massBinWidth) + ".phaseSpace.root"
+			args.outputFileName = "{:.0f}.{:.0f}.phaseSpace.root".format(args.massLowerBinBoundary, args.massLowerBinBoundary + args.massBinWidth)
 		else:
 			index = 1
 			filename = "1.phaseSpace.root"
@@ -92,6 +92,9 @@ if __name__ == "__main__":
 				index += 1
 				filename = str(index) + ".phaseSpace.root"
 			args.outputFileName = filename
+	elif not args.outputFileName.endswith(".root"):
+		printErr("output file name needs to have '.root' extension. Aborting...")
+		sys.exit(1)
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 
 	outputComgeantFile = None
 	if args.comgeantOutput:
-		outputComgeantFile = open(args.outputFileName.replace(".evt", ".fort.26"), 'w')
+		outputComgeantFile = open(args.outputFileName.replace(".root", ".fort.26"), 'w')
 		printInfo("opened output comgeant file: " + args.outputFileName)
 
 	try:
