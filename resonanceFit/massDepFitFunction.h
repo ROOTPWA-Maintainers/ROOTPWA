@@ -117,6 +117,7 @@ namespace rpwa {
 
 			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _spinDensityMatricesCovMatInv;
+			boost::multi_array<double, 6> _spinDensityMatricesCovMatInvArray;
 
 			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 

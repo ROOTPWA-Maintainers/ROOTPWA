@@ -406,7 +406,11 @@ rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel
 			}
 		}
 
-		_spinDensityMatricesCovMatInv.resize(boost::extents[_nrBins][_maxMassBins]);
+		if(_useCovariance == useFullCovarianceMatrix) {
+			_spinDensityMatricesCovMatInv.resize(boost::extents[_nrBins][_maxMassBins]);
+		} else {
+			_spinDensityMatricesCovMatInvArray.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves][2][2]);
+		}
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
 				// import covariance matrix of spin-density matrix elements
@@ -492,8 +496,9 @@ rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel
 				reducedCovMat.Invert();
 
 				// import covariance matrix of spin-density matrix elements
-				_spinDensityMatricesCovMatInv[idxBin][idxMass].ResizeTo(matrixSize, matrixSize);
-				{
+				if(_useCovariance == useFullCovarianceMatrix) {
+					_spinDensityMatricesCovMatInv[idxBin][idxMass].ResizeTo(matrixSize, matrixSize);
+
 					// i is for loop over rows
 					size_t redIdx = 0;
 					for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < _nrWaves; ++iWave1) {
@@ -550,6 +555,36 @@ rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel
 							}
 
 							if(iWave1 == iWave2) {
+								redIdx += 1;
+							} else {
+								redIdx += 2;
+							}
+						}
+					}
+				}else {
+					// i is for loop over rows
+					size_t redIdx = 0;
+					for(size_t iWave = 0, iSkip = 0; iWave < _nrWaves; ++iWave) {
+						if(iSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip] == iWave) {
+							++iSkip;
+							continue;
+						}
+						for(size_t jWave = iWave, jSkip = iSkip; jWave < _nrWaves; ++jWave) {
+							if(jSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip] == jWave) {
+								++jSkip;
+								continue;
+							}
+
+							if(iWave == jWave) {
+								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][0] = reducedCovMat(redIdx,   redIdx  );
+							} else {
+								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][0] = reducedCovMat(redIdx,   redIdx  );
+								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][1] = reducedCovMat(redIdx,   redIdx+1);
+								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][1][0] = reducedCovMat(redIdx+1, redIdx  );
+								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][1][1] = reducedCovMat(redIdx+1, redIdx+1);
+							}
+
+							if(iWave == jWave) {
 								redIdx += 1;
 							} else {
 								redIdx += 2;
@@ -800,18 +835,17 @@ rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::p
 
 					const std::complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
 
-					const size_t idx = _nrWaves*(_nrWaves+1) - (_nrWaves-idxWave)*(_nrWaves-idxWave+1) + 2*(jdxWave-idxWave);
 					if(idxWave==jdxWave) {
-						chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx, idx) * rhoDiff.real();
+						chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
 					} else {
 						if (_useCovariance == useDiagnalElementsOnly) {
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  ) * rhoDiff.real();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1) * rhoDiff.imag();
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
 						} else if(_useCovariance == useComplexDiagnalElementsOnly) {
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx  ) * rhoDiff.real();
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   idx+1) * rhoDiff.imag();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx  ) * rhoDiff.real();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, idx+1) * rhoDiff.imag();
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
+							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][1] * rhoDiff.imag();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][0] * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
 						} else {
 							// this should have returned an error during the call to init()
 							assert(false);
