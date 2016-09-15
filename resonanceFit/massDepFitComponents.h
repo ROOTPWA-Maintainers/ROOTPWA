@@ -165,11 +165,11 @@ namespace rpwa {
 			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
 			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const = 0;
+			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                         rpwa::massDepFit::cache& cache,
+			                         const size_t idxBin,
+			                         const double m,
+			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			std::complex<double> getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
 			                                           rpwa::massDepFit::cache& cache,
@@ -181,6 +181,10 @@ namespace rpwa {
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const = 0;
 
 			const size_t _id;
 			const std::string _name;
@@ -240,13 +244,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 		};
 
@@ -280,15 +284,13 @@ namespace rpwa {
 			                               const size_t idxDecayChannel,
 			                               const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			std::vector<double> _ratio;
 			std::vector<int> _l;
@@ -327,15 +329,13 @@ namespace rpwa {
 			                               const size_t idxDecayChannel,
 			                               const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			std::vector<std::vector<double> > _masses;
 			std::vector<std::vector<double> > _values;
@@ -368,13 +368,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
+
+		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 		};
 
@@ -402,15 +402,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			int _l;
 			double _m1;
@@ -447,15 +445,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			std::vector<double> _tPrimeMeans;
 			int _l;
@@ -491,15 +487,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			std::vector<double> _masses;
 			std::vector<double> _values;
@@ -536,15 +530,13 @@ namespace rpwa {
 			                   const bool useBranchings,
 			                   const bool debug) const;
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                                 rpwa::massDepFit::cache& cache,
-			                                 const size_t idxBin,
-			                                 const double m,
-			                                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
+
+			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			                                 const size_t idxBin,
+			                                 const double m) const;
 
 			std::vector<double> _tPrimeMeans;
 			std::vector<double> _masses;
