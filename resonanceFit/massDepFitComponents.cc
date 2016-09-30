@@ -263,9 +263,7 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 	fitParameters.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
 	fitParametersError.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
 
-	std::vector<bool> branchingFixed(nrBins, false);
 	std::map<std::pair<std::string, size_t>, size_t> couplingsQN;
-	std::map<std::pair<std::string, size_t>, size_t> branchingDecay;
 	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
 		const YAML::Node& decayChannel = decayChannels[idxDecayChannel];
 
@@ -315,66 +313,38 @@ rpwa::massDepFit::component::init(const YAML::Node& configComponent,
 				printDebug << "extracted quantum numbers '" << waveQN << "' and decay chain '" << waveDecay << "' from wave name '" << waveName << "'." << std::endl;
 			}
 
-			fixedBranching = branchingFixed[binsForWave[0]];
 			for(size_t i = 0; i < binsForWave.size(); ++i) {
 				const size_t idxBin = binsForWave[i];
 
 				std::map<std::pair<std::string, size_t>, size_t>::const_iterator mappingQN = couplingsQN.find(std::make_pair(waveQN, idxBin));
-				std::map<std::pair<std::string, size_t>, size_t>::const_iterator mappingDecay = branchingDecay.find(std::make_pair(waveDecay, idxBin));
-				if(mappingQN == couplingsQN.end() and mappingDecay == branchingDecay.end()) {
+				if(mappingQN == couplingsQN.end()) {
 					couplingsQN[std::make_pair(waveQN, idxBin)] = couplingIndex;
-					branchingDecay[std::make_pair(waveDecay, idxBin)] = branchingIndex;
 
-					if(i > 1 and (not readCouplings or not readBranching)) {
+					if(i > 1 and (not readCouplings or not fixedBranching)) {
 						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
 						return false;
 					}
 
 					readCouplings = true;
-					readBranching = true;
-				} else if(mappingQN == couplingsQN.end()) {
-					couplingsQN[std::make_pair(waveQN, idxBin)] = couplingIndex;
-
-					if(i > 1 and (not readCouplings or readBranching or branchingIndex != mappingDecay->second)) {
-						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
-						return false;
-					}
-
-					readCouplings = true;
-					readBranching = false;
-					branchingIndex = mappingDecay->second;
-				} else if(mappingDecay == branchingDecay.end()) {
-					branchingDecay[std::make_pair(waveDecay, idxBin)] = branchingIndex;
-
-					if(i > 1 and (readCouplings or not readBranching or couplingIndex != mappingQN->second)) {
-						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
-						return false;
-					}
-
-					readCouplings = false;
-					couplingIndex = mappingQN->second;
-					readBranching = true;
+					fixedBranching = true;
 				} else {
-					if(i > 1 and (readCouplings or readBranching or couplingIndex != mappingQN->second or branchingIndex != mappingDecay->second)) {
+					if(i > 1 and (readCouplings or fixedBranching or couplingIndex != mappingQN->second)) {
 						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
 						return false;
 					}
 
 					readCouplings = false;
+					fixedBranching = false;
 					couplingIndex = mappingQN->second;
-					readBranching = false;
-					branchingIndex = mappingDecay->second;
 				}
 
-				if(fixedBranching != branchingFixed[idxBin]) {
+				if(i > 1 and (not readBranching)) {
 					printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
 					return false;
 				}
-				if(not branchingFixed[idxBin]) {
-					branchingFixed[idxBin] = true;
-				}
+
+				readBranching = true;
 			}
-			fixedBranching = not fixedBranching;
 		}
 
 		if(readCouplings) {

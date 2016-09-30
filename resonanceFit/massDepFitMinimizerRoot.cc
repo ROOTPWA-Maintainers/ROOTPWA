@@ -298,10 +298,13 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 				}
 
 				const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
+				const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
 				const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
 				std::ostringstream prefixName;
 				prefixName << "branching__"
 				           << comp->getName()
+				           << "__"
+				           << waveQN
 				           << "__"
 				           << waveDecay;
 
