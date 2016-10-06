@@ -47,10 +47,14 @@ def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap)
 	for evt_i in range(minEvent, maxEvent):
 		progressBar.update(evt_i)
 		eventTree.GetEvent(evt_i)
+		skipEvent = False
 		for key in binningMap:
 			if binningVariables[key] < binningMap[key][0] or  binningVariables[key] >= binningMap[key][1]:
 				skippedEvents += 1
-				continue
+				skipEvent = True
+				break
+		if skipEvent:
+			continue
 		for amp_i, amplitude in enumerate(amplitudes):
 			topo = amplitude.decayTopology()
 			if not topo.readKinematicsData(prodKinMomenta, decayKinMomenta):
