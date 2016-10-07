@@ -45,8 +45,6 @@ namespace rpwa {
 			minimizer() {}
 			virtual ~minimizer() {}
 
-			virtual unsigned int getNrFreeParameters() const = 0;
-
 			virtual std::map<std::string, double> minimize(rpwa::massDepFit::parameters& fitParameters,
 			                                               rpwa::massDepFit::parameters& fitParametersError,
 			                                               rpwa::massDepFit::cache& cache) = 0;
