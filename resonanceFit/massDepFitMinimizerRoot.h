@@ -63,9 +63,9 @@ namespace rpwa {
 
 				virtual unsigned int NDim() const;
 
-				virtual double DoEval(const double* par) const;
-
 			private:
+
+				virtual double DoEval(const double* par) const;
 
 				const rpwa::massDepFit::functionConstPtr _fitFunction;
 
