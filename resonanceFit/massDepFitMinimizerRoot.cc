@@ -64,6 +64,13 @@ rpwa::massDepFit::minimizerRoot::functionAdaptor::NDim() const
 }
 
 
+unsigned int
+rpwa::massDepFit::minimizerRoot::functionAdaptor::NPoint() const
+{
+	return _fitFunction->getNrDataPoints();
+}
+
+
 double
 rpwa::massDepFit::minimizerRoot::functionAdaptor::DoEval(const double* par) const
 {
