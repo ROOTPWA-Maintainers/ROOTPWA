@@ -122,13 +122,6 @@ rpwa::massDepFit::minimizerRoot::~minimizerRoot()
 }
 
 
-unsigned int
-rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
-{
-	return _minimizer->NFree();
-}
-
-
 std::map<std::string, double>
 rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParameters,
                                           rpwa::massDepFit::parameters& fitParametersError,
