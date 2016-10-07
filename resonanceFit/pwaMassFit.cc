@@ -226,10 +226,8 @@ main(int    argc,
 	// read configuration file
 	rpwa::massDepFit::parameters fitParameters;
 	rpwa::massDepFit::parameters fitParametersError;
-	int minStatus;
-	double chi2;
-	unsigned int ndf;
-	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, minStatus, chi2, ndf, valTreeName, valBranchName)) {
+	std::map<std::string, double> fitQuality;
+	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, fitQuality, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -263,23 +261,10 @@ main(int    argc,
 		TStopwatch stopwatch;
 
 		stopwatch.Start();
-		minStatus = minimizer.minimize(fitParameters, fitParametersError, cache);
+		fitQuality = minimizer.minimize(fitParameters, fitParametersError, cache);
 		stopwatch.Stop();
 
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
-
-		printInfo << "minimizer status = " << minStatus << std::endl;
-
-		chi2 = fitFunction->chiSquare(fitParameters, cache);
-		printInfo << "chi2 =" << rpwa::maxPrecisionAlign(chi2) << std::endl;
-
-		const unsigned int nrDataPoints = fitFunction->getNrDataPoints();
-		const unsigned int nrFree = minimizer.getNrFreeParameters();
-		ndf = nrDataPoints - nrFree;
-		printInfo << "ndf = " << nrDataPoints << "-" << nrFree << " = " << ndf << std::endl;
-
-		const double chi2red = chi2/(double)ndf;
-		printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(chi2red) << std::endl;
 	}
 
 	std::string confFileName(outFileName);
@@ -293,7 +278,7 @@ main(int    argc,
 		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
 	std::ofstream configFile(confFileName.c_str());
-	if(not mdepFit.writeConfig(configFile, fitModel, fitParameters, fitParametersError, minStatus, chi2, ndf)) {
+	if(not mdepFit.writeConfig(configFile, fitModel, fitParameters, fitParametersError, fitQuality)) {
 		printErr << "error while writing result to configuration file." << std::endl;
 		return 1;
 	}

@@ -87,9 +87,9 @@ namespace rpwa {
 
 			unsigned int getNrFreeParameters() const;
 
-			int minimize(rpwa::massDepFit::parameters& fitParameters,
-			             rpwa::massDepFit::parameters& fitParametersError,
-			             rpwa::massDepFit::cache& cache);
+			std::map<std::string, double> minimize(rpwa::massDepFit::parameters& fitParameters,
+			                                       rpwa::massDepFit::parameters& fitParametersError,
+			                                       rpwa::massDepFit::cache& cache);
 
 		private:
 

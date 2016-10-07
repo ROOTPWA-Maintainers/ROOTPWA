@@ -29,6 +29,8 @@
 #ifndef MASSDEPFITMINIMIZER_HH
 #define MASSDEPFITMINIMIZER_HH
 
+#include <map>
+
 namespace rpwa {
 
 	namespace massDepFit {
@@ -45,9 +47,9 @@ namespace rpwa {
 
 			virtual unsigned int getNrFreeParameters() const = 0;
 
-			virtual int minimize(rpwa::massDepFit::parameters& fitParameters,
-			                     rpwa::massDepFit::parameters& fitParametersError,
-			                     rpwa::massDepFit::cache& cache) = 0;
+			virtual std::map<std::string, double> minimize(rpwa::massDepFit::parameters& fitParameters,
+			                                               rpwa::massDepFit::parameters& fitParametersError,
+			                                               rpwa::massDepFit::cache& cache) = 0;
 
 		};
 

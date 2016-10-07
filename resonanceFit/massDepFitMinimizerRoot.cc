@@ -129,7 +129,7 @@ rpwa::massDepFit::minimizerRoot::getNrFreeParameters() const
 }
 
 
-int
+std::map<std::string, double>
 rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParameters,
                                           rpwa::massDepFit::parameters& fitParametersError,
                                           rpwa::massDepFit::cache& cache)
@@ -142,7 +142,7 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 		// set startvalues
 		if(not initParameters(fitParameters, _freeParameters[step])) {
 			printErr << "error while setting start parameters for step " << step << "." << std::endl;
-			return false;
+			return std::map<std::string, double>();
 		}
 
 		_minimizer->SetMaxFunctionCalls(_maxNmbOfFunctionCalls);
@@ -207,7 +207,31 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 	printInfo << "minimization result:" << std::endl
 	          << output.str();
 
-	return _minimizer->Status();
+	// store and print information about fit quality
+	std::map<std::string, double> fitQuality;
+
+	fitQuality["minStatus"] = _minimizer->Status() % 10;
+	printInfo << "minimizer status = " << fitQuality["minStatus"] << std::endl;
+
+	if(_runHesse and _maxNmbOfFunctionCalls != 0) {
+		fitQuality["hesseStatus"] = _minimizer->Status() / 100;
+		printInfo << "Hesse status = " << fitQuality["hesseStatus"] << std::endl;
+
+		fitQuality["covMatrixStatus"] = _minimizer->CovMatrixStatus();
+	}
+
+	fitQuality["chi2"] = _functionAdaptor(_minimizer->X());
+	printInfo << "chi2 =" << rpwa::maxPrecisionAlign(fitQuality["chi2"]) << std::endl;
+
+	fitQuality["ndf"] = _functionAdaptor.NPoint() - _minimizer->NFree();
+	printInfo << "ndf = " << fitQuality["ndf"] << std::endl;
+
+	fitQuality["redchi2"] = fitQuality["chi2"] / fitQuality["ndf"];
+	printInfo << "chi2/ndf =" << rpwa::maxPrecisionAlign(fitQuality["redchi2"]) << std::endl;
+
+	fitQuality["edm"] = _minimizer->Edm();
+
+	return fitQuality;
 }
 
 
