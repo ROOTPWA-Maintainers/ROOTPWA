@@ -63,6 +63,8 @@ namespace rpwa {
 
 				virtual unsigned int NDim() const;
 
+				virtual unsigned int NPoint() const;
+
 			private:
 
 				virtual double DoEval(const double* par) const;
