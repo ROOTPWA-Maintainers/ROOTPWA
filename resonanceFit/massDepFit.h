@@ -71,9 +71,7 @@ namespace rpwa {
 			                const rpwa::massDepFit::modelPtr& fitModel,
 			                rpwa::massDepFit::parameters& fitParameters,
 			                rpwa::massDepFit::parameters& fitParametersError,
-			                int& minStatus,
-			                double& chi2,
-			                unsigned int& ndf,
+			                std::map<std::string, double>& fitQuality,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -84,9 +82,7 @@ namespace rpwa {
 			                 const rpwa::massDepFit::modelConstPtr& fitModel,
 			                 const rpwa::massDepFit::parameters& fitParameters,
 			                 const rpwa::massDepFit::parameters& fitParametersError,
-			                 const int minStatus,
-			                 const double chi2,
-			                 const unsigned int ndf) const;
+			                 const std::map<std::string, double>& fitQuality) const;
 
 // FIXME: make private
 			bool createPlots(const rpwa::massDepFit::modelConstPtr& fitModel,
@@ -111,9 +107,7 @@ namespace rpwa {
 			bool prepareMassLimit(const size_t idxBin);
 
 			bool readConfigFitquality(const YAML::Node& configFitquality,
-			                          int& minStatus,
-			                          double& chi2,
-			                          unsigned int& ndf) const;
+			                          std::map<std::string, double>& fitQuality) const;
 
 			bool readConfigInput(const YAML::Node& configInput);
 			bool readConfigInputFitResults(const YAML::Node& configInputFitResults);
@@ -136,9 +130,7 @@ namespace rpwa {
 			                         rpwa::massDepFit::parameters& fitParametersError) const;
 
 			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
-			                           const int minStatus,
-			                           const double chi2,
-			                           const unsigned int ndf) const;
+			                           const std::map<std::string, double>& fitQuality) const;
 
 			bool writeConfigInput(YAML::Emitter& yamlOutput) const;
 			bool writeConfigInputFitResults(YAML::Emitter& yamlOutput) const;
