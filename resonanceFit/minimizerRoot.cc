@@ -27,7 +27,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitMinimizerRoot.h"
+#include "minimizerRoot.h"
 
 #include <boost/tokenizer.hpp>
 
@@ -35,12 +35,12 @@
 #include <Math/Factory.h>
 #include <Minuit2/Minuit2Minimizer.h>
 
-#include "massDepFitCache.h"
-#include "massDepFitComponents.h"
-#include "massDepFitFsmd.h"
-#include "massDepFitFunction.h"
-#include "massDepFitModel.h"
-#include "massDepFitParameters.h"
+#include "cache.h"
+#include "components.h"
+#include "fsmd.h"
+#include "function.h"
+#include "model.h"
+#include "parameters.h"
 #include "reportingUtils.hpp"
 
 

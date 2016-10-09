@@ -26,8 +26,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITMINIMIZER_HH
-#define MASSDEPFITMINIMIZER_HH
+#ifndef RESONANCEFIT_MINIMIZER_HH
+#define RESONANCEFIT_MINIMIZER_HH
 
 #include <map>
 
@@ -56,4 +56,4 @@ namespace rpwa {
 } // end namespace rpwa
 
 
-#endif
+#endif // RESONANCEFIT_MINIMIZER_HH

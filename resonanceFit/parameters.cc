@@ -26,8 +26,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitParameters.h"
-
+#include "parameters.h"
 
 #include "reportingUtils.hpp"
 

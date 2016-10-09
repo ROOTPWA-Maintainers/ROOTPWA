@@ -42,7 +42,7 @@
 
 #include <TMatrixT.h>
 
-#include "massDepFitForward.h"
+#include "forward.h"
 
 namespace YAML {
 	class Emitter;
@@ -283,4 +283,4 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-#endif
+#endif // MASSDEPFIT_HH

@@ -35,15 +35,15 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITFUNCTION_HH
-#define MASSDEPFITFUNCTION_HH
+#ifndef RESONANCEFIT_FUNCTION_HH
+#define RESONANCEFIT_FUNCTION_HH
 
 #include <boost/multi_array.hpp>
 
 #include <TMatrixT.h>
 #include <TVectorT.h>
 
-#include "massDepFitForward.h"
+#include "forward.h"
 
 namespace rpwa {
 
@@ -132,4 +132,4 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-#endif
+#endif // RESONANCEFIT_FUNCTION_HH

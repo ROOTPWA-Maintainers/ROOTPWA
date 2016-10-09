@@ -26,7 +26,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitCache.h"
+#include "cache.h"
 
 
 rpwa::resonanceFit::cache::cache(const size_t maxWaves,

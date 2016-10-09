@@ -27,8 +27,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITFORWARD_HH
-#define MASSDEPFITFORWARD_HH
+#ifndef RESONANCEFIT_FORWARD_HH
+#define RESONANCEFIT_FORWARD_HH
 
 namespace rpwa {
 
@@ -54,4 +54,4 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-#endif // MASSDEPFITFORWARD_HH
+#endif // RESONANCEFIT_FORWARD_HH

@@ -26,8 +26,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITMINIMIZERROOT_HH
-#define MASSDEPFITMINIMIZERROOT_HH
+#ifndef RESONANCEFIT_MINIMIZERROOT_HH
+#define RESONANCEFIT_MINIMIZERROOT_HH
 
 #include <memory>
 #include <string>
@@ -35,8 +35,8 @@
 
 #include <Math/IFunction.h>
 
-#include "massDepFitForward.h"
-#include "massDepFitMinimizer.h"
+#include "forward.h"
+#include "minimizer.h"
 
 namespace ROOT {
 	namespace Math {
@@ -116,4 +116,4 @@ namespace rpwa {
 } // end namespace rpwa
 
 
-#endif
+#endif // RESONANCEFIT_MINIMIZERROOT_HH
