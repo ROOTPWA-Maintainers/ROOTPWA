@@ -27,11 +27,11 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitModel.h"
+#include "model.h"
 
-#include "massDepFitCache.h"
-#include "massDepFitComponents.h"
-#include "massDepFitFsmd.h"
+#include "cache.h"
+#include "components.h"
+#include "fsmd.h"
 #include "reportingUtils.hpp"
 
 

@@ -29,7 +29,6 @@
 
 #include "massDepFit.h"
 
-
 #include <algorithm>
 #include <complex>
 #include <iomanip>
@@ -52,12 +51,12 @@
 #include <TRandom3.h>
 #include <TStopwatch.h>
 
+#include "components.h"
 #include "fileUtils.hpp"
 #include "fitResult.h"
-#include "massDepFitComponents.h"
-#include "massDepFitFsmd.h"
-#include "massDepFitFunction.h"
-#include "massDepFitModel.h"
+#include "fsmd.h"
+#include "function.h"
+#include "model.h"
 #include "reportingUtils.hpp"
 #include "yamlCppUtils.hpp"
 

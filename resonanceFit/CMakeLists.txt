@@ -47,13 +47,13 @@ include_directories(
 # source files that are compiled into library
 set(SOURCES
 	massDepFit.cc
-	massDepFitCache.cc
-	massDepFitComponents.cc
-	massDepFitFsmd.cc
-	massDepFitFunction.cc
-	massDepFitMinimizerRoot.cc
-	massDepFitModel.cc
-	massDepFitParameters.cc
+	cache.cc
+	components.cc
+	fsmd.cc
+	function.cc
+	minimizerRoot.cc
+	model.cc
+	parameters.cc
 	)
 
 

@@ -32,8 +32,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITCOMPONENTS_HH
-#define MASSDEPFITCOMPONENTS_HH
+#ifndef RESONANCEFIT_COMPONENTS_HH
+#define RESONANCEFIT_COMPONENTS_HH
 
 #include <iostream>
 #include <map>
@@ -42,8 +42,8 @@
 
 #include <Math/Interpolator.h>
 
-#include "massDepFitCache.h"
-#include "massDepFitParameters.h"
+#include "cache.h"
+#include "parameters.h"
 
 namespace YAML {
 	class Emitter;
@@ -597,4 +597,4 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::com
 }
 
 
-#endif // MASSDEPFITCOMPONENTS_HH
+#endif // RESONANCEFIT_COMPONENTS_HH

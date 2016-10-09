@@ -28,8 +28,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITFSMD_HH
-#define MASSDEPFITFSMD_HH
+#ifndef RESONANCEFIT_FSMD_HH
+#define RESONANCEFIT_FSMD_HH
 
 #include <complex>
 #include <iostream>
@@ -146,4 +146,4 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::fsm
 }
 
 
-#endif // MASSDEPFITFSMD_HH
+#endif // RESONANCEFIT_FSMD_HH

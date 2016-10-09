@@ -27,7 +27,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitComponents.h"
+#include "components.h"
 
 #include <boost/assign/std/vector.hpp>
 

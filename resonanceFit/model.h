@@ -29,8 +29,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITMODEL_HH
-#define MASSDEPFITMODEL_HH
+#ifndef RESONANCEFIT_MODEL_HH
+#define RESONANCEFIT_MODEL_HH
 
 #include <complex>
 #include <iostream>
@@ -39,7 +39,7 @@
 
 #include <boost/multi_array.hpp>
 
-#include "massDepFitForward.h"
+#include "forward.h"
 
 namespace rpwa {
 
@@ -160,4 +160,4 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::mod
 }
 
 
-#endif // MASSDEPFITMODEL_HH
+#endif // RESONANCEFIT_MODEL_HH

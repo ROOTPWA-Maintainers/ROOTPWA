@@ -26,8 +26,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITCACHE_HH
-#define MASSDEPFITCACHE_HH
+#ifndef RESONANCEFIT_CACHE_HH
+#define RESONANCEFIT_CACHE_HH
 
 #include <complex>
 #include <iostream>
@@ -82,4 +82,4 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::cac
 }
 
 
-#endif
+#endif // RESONANCEFIT_CACHE_HH

@@ -26,8 +26,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFITPARAMETERS_HH
-#define MASSDEPFITPARAMETERS_HH
+#ifndef RESONANCEFIT_PARAMETERS_HH
+#define RESONANCEFIT_PARAMETERS_HH
 
 #include <complex>
 #include <iostream>
@@ -90,4 +90,4 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::par
 }
 
 
-#endif
+#endif // RESONANCEFIT_PARAMETERS_HH

@@ -35,16 +35,16 @@
 #include <TROOT.h>
 #include <TStopwatch.h>
 
+#include "cache.h"
+#include "components.h"
 #include "conversionUtils.hpp"
 #include "fileUtils.hpp"
+#include "fsmd.h"
+#include "function.h"
 #include "massDepFit.h"
-#include "massDepFitCache.h"
-#include "massDepFitComponents.h"
-#include "massDepFitFsmd.h"
-#include "massDepFitFunction.h"
-#include "massDepFitMinimizerRoot.h"
-#include "massDepFitModel.h"
-#include "massDepFitParameters.h"
+#include "minimizerRoot.h"
+#include "model.h"
+#include "parameters.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
 #include "yamlCppUtils.hpp"

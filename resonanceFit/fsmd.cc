@@ -27,7 +27,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFitFsmd.h"
+#include "fsmd.h"
 
 #include <map>
 
@@ -37,9 +37,9 @@
 
 #include <TFormula.h>
 
+#include "cache.h"
 #include "conversionUtils.hpp"
-#include "massDepFitCache.h"
-#include "massDepFitParameters.h"
+#include "parameters.h"
 #include "reportingUtils.hpp"
 #include "yamlCppUtils.hpp"
 
