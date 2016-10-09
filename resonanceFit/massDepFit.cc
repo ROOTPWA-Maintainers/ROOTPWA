@@ -81,6 +81,7 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                          rpwa::massDepFit::parameters& fitParameters,
                                          rpwa::massDepFit::parameters& fitParametersError,
                                          std::map<std::string, double>& fitQuality,
+                                         const bool useBranchings,
                                          const std::string& valTreeName,
                                          const std::string& valBranchName)
 {
@@ -130,7 +131,7 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
 		printErr << "'model' does not exist in configuration file." << std::endl;
 		return false;
 	}
-	if(not readConfigModel(configModel, fitModel, fitParameters, fitParametersError)) {
+	if(not readConfigModel(configModel, fitModel, fitParameters, fitParametersError, useBranchings)) {
 		printErr << "error while reading 'model' in configuration file." << std::endl;
 		return false;
 	}
@@ -533,7 +534,8 @@ bool
 rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
                                               const rpwa::massDepFit::modelPtr& fitModel,
                                               rpwa::massDepFit::parameters& fitParameters,
-                                              rpwa::massDepFit::parameters& fitParametersError)
+                                              rpwa::massDepFit::parameters& fitParametersError,
+                                              const bool useBranchings)
 {
 	if(not configModel) {
 		printErr << "'configModel' is not a valid YAML node." << std::endl;
@@ -565,7 +567,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 		printErr << "'components' does not exist in 'model'." << std::endl;
 		return false;
 	}
-	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError)) {
+	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError, useBranchings)) {
 		printErr << "error while reading 'components' in 'model'." << std::endl;
 		return false;
 	}
@@ -617,7 +619,8 @@ bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
                                                         const rpwa::massDepFit::modelPtr& fitModel,
                                                         rpwa::massDepFit::parameters& fitParameters,
-                                                        rpwa::massDepFit::parameters& fitParametersError) const
+                                                        rpwa::massDepFit::parameters& fitParametersError,
+                                                        const bool useBranchings) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a valid YAML node." << std::endl;
@@ -696,7 +699,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, fitModel->useBranchings(), _debug)) {
+		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, useBranchings, _debug)) {
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
@@ -1068,7 +1071,7 @@ rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutp
 
 	const size_t nrComponents = fitModel->getNrComponents();
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		if(not fitModel->getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, fitModel->useBranchings(), _debug)) {
+		if(not fitModel->getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
 			printErr << "error while writing component at index " << idxComponent << " to result file." << std::endl;
 			return false;
 		}

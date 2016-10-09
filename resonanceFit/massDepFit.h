@@ -72,6 +72,7 @@ namespace rpwa {
 			                rpwa::massDepFit::parameters& fitParameters,
 			                rpwa::massDepFit::parameters& fitParametersError,
 			                std::map<std::string, double>& fitQuality,
+			                const bool useBranchings,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -118,12 +119,14 @@ namespace rpwa {
 			bool readConfigModel(const YAML::Node& configModel,
 			                     const rpwa::massDepFit::modelPtr& fitModel,
 			                     rpwa::massDepFit::parameters& fitParameters,
-			                     rpwa::massDepFit::parameters& fitParametersError);
+			                     rpwa::massDepFit::parameters& fitParametersError,
+			                     const bool useBranchings);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
 			bool readConfigModelComponents(const YAML::Node& configComponents,
 			                               const rpwa::massDepFit::modelPtr& fitModel,
 			                               rpwa::massDepFit::parameters& fitParameters,
-			                               rpwa::massDepFit::parameters& fitParametersError) const;
+			                               rpwa::massDepFit::parameters& fitParametersError,
+			                               const bool useBranchings) const;
 			bool readConfigModelFsmd(const YAML::Node& configFsmd,
 			                         const rpwa::massDepFit::modelPtr& fitModel,
 			                         rpwa::massDepFit::parameters& fitParameters,

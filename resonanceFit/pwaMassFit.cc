@@ -214,7 +214,7 @@ main(int    argc,
 	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
-	rpwa::massDepFit::modelPtr fitModel(new rpwa::massDepFit::model(doBranching));
+	rpwa::massDepFit::modelPtr fitModel(new rpwa::massDepFit::model);
 	rpwa::massDepFit::functionPtr fitFunction(new rpwa::massDepFit::function(doProdAmp, doCov));
 
 	YAML::Node configRoot;
@@ -227,7 +227,7 @@ main(int    argc,
 	rpwa::massDepFit::parameters fitParameters;
 	rpwa::massDepFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
-	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, fitQuality, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
