@@ -1735,7 +1735,7 @@ rpwa::resonanceFit::tPrimeDependentBackground::tPrimeDependentBackground(const s
 
 
 bool
-rpwa::resonanceFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<double> tPrimeMeans)
+rpwa::resonanceFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<double>& tPrimeMeans)
 {
 	_tPrimeMeans = tPrimeMeans;
 
@@ -2163,7 +2163,7 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackground
 
 
 bool
-rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::setTPrimeMeans(const std::vector<double> tPrimeMeans)
+rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::setTPrimeMeans(const std::vector<double>& tPrimeMeans)
 {
 	_tPrimeMeans = tPrimeMeans;
 
