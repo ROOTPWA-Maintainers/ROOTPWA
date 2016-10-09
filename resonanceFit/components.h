@@ -419,7 +419,7 @@ namespace rpwa {
 			tPrimeDependentBackground(const size_t id,
 			                          const std::string& name);
 
-			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+			bool setTPrimeMeans(const std::vector<double>& tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::resonanceFit::parameters& fitParameters,
@@ -502,7 +502,7 @@ namespace rpwa {
 			tPrimeDependentBackgroundIntegral(const size_t id,
 			                                  const std::string& name);
 
-			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
+			bool setTPrimeMeans(const std::vector<double>& tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
 			                  rpwa::resonanceFit::parameters& fitParameters,
