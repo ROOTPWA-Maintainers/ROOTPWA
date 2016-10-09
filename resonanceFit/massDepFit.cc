@@ -31,34 +31,28 @@
 
 #include <algorithm>
 #include <complex>
-#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <string>
 
 #include <boost/assign/std/vector.hpp>
-#include <boost/tokenizer.hpp>
 
 #include <yaml-cpp/yaml.h>
 
-#include <TTree.h>
 #include <TFile.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TMultiGraph.h>
-#include <TString.h>
-#include <TComplex.h>
-#include <TRandom3.h>
-#include <TStopwatch.h>
+#include <TTree.h>
+
+#include <fitResult.h>
+#include <reportingUtils.hpp>
+#include <yamlCppUtils.hpp>
 
 #include "components.h"
-#include "fileUtils.hpp"
-#include "fitResult.h"
 #include "fsmd.h"
 #include "function.h"
 #include "model.h"
-#include "reportingUtils.hpp"
-#include "yamlCppUtils.hpp"
 
 
 bool rpwa::resonanceFit::massDepFit::_debug = false;

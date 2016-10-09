@@ -37,11 +37,12 @@
 
 #include <TFormula.h>
 
+#include <conversionUtils.hpp>
+#include <reportingUtils.hpp>
+#include <yamlCppUtils.hpp>
+
 #include "cache.h"
-#include "conversionUtils.hpp"
 #include "parameters.h"
-#include "reportingUtils.hpp"
-#include "yamlCppUtils.hpp"
 
 
 rpwa::resonanceFit::fsmd::fsmd(const size_t id)

@@ -35,13 +35,14 @@
 #include <Math/Factory.h>
 #include <Minuit2/Minuit2Minimizer.h>
 
+#include <reportingUtils.hpp>
+
 #include "cache.h"
 #include "components.h"
 #include "fsmd.h"
 #include "function.h"
 #include "model.h"
 #include "parameters.h"
-#include "reportingUtils.hpp"
 
 
 rpwa::resonanceFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::resonanceFit::functionConstPtr& fitFunction)

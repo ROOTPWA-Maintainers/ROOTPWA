@@ -29,10 +29,11 @@
 
 #include "model.h"
 
+#include <reportingUtils.hpp>
+
 #include "cache.h"
 #include "components.h"
 #include "fsmd.h"
-#include "reportingUtils.hpp"
 
 
 rpwa::resonanceFit::model::model()

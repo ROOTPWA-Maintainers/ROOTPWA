@@ -29,11 +29,12 @@
 
 #include "function.h"
 
+#include <reportingUtils.hpp>
+
 #include "cache.h"
 #include "components.h"
 #include "model.h"
 #include "parameters.h"
-#include "reportingUtils.hpp"
 
 
 rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
