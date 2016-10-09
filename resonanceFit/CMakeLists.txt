@@ -71,4 +71,4 @@ make_shared_library(
 	)
 
 
-make_executable(pwaMassFit pwaMassFit.cc ${THIS_LIB})
+make_executable(resonanceFit resonanceFit.cc ${THIS_LIB})
