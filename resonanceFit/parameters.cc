@@ -28,7 +28,7 @@
 
 #include "parameters.h"
 
-#include "reportingUtils.hpp"
+#include <reportingUtils.hpp>
 
 
 rpwa::resonanceFit::parameters::parameters()
