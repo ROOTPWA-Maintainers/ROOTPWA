@@ -44,48 +44,48 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::massDepFit::functionConstPtr& fitFunction)
+rpwa::resonanceFit::minimizerRoot::functionAdaptor::functionAdaptor(const rpwa::resonanceFit::functionConstPtr& fitFunction)
 	: _fitFunction(fitFunction)
 {
 }
 
 
-rpwa::massDepFit::minimizerRoot::functionAdaptor*
-rpwa::massDepFit::minimizerRoot::functionAdaptor::Clone() const
+rpwa::resonanceFit::minimizerRoot::functionAdaptor*
+rpwa::resonanceFit::minimizerRoot::functionAdaptor::Clone() const
 {
-	return new rpwa::massDepFit::minimizerRoot::functionAdaptor(*this);
+	return new rpwa::resonanceFit::minimizerRoot::functionAdaptor(*this);
 }
 
 
 unsigned int
-rpwa::massDepFit::minimizerRoot::functionAdaptor::NDim() const
+rpwa::resonanceFit::minimizerRoot::functionAdaptor::NDim() const
 {
 	return _fitFunction->getNrParameters();
 }
 
 
 unsigned int
-rpwa::massDepFit::minimizerRoot::functionAdaptor::NPoint() const
+rpwa::resonanceFit::minimizerRoot::functionAdaptor::NPoint() const
 {
 	return _fitFunction->getNrDataPoints();
 }
 
 
 double
-rpwa::massDepFit::minimizerRoot::functionAdaptor::DoEval(const double* par) const
+rpwa::resonanceFit::minimizerRoot::functionAdaptor::DoEval(const double* par) const
 {
 	return _fitFunction->chiSquare(par);
 }
 
 
-rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                               const rpwa::massDepFit::functionConstPtr& fitFunction,
-                                               const std::vector<std::string>& freeParameters,
-                                               const unsigned int maxNmbOfFunctionCalls,
-                                               const std::string minimizerType[],
-                                               const int minimizerStrategy,
-                                               const double minimizerTolerance,
-                                               const bool quiet)
+rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                 const rpwa::resonanceFit::functionConstPtr& fitFunction,
+                                                 const std::vector<std::string>& freeParameters,
+                                                 const unsigned int maxNmbOfFunctionCalls,
+                                                 const std::string minimizerType[],
+                                                 const int minimizerStrategy,
+                                                 const double minimizerTolerance,
+                                                 const bool quiet)
 	: _fitModel(fitModel),
 	  _functionAdaptor(fitFunction),
 	  _freeParameters(freeParameters),
@@ -117,15 +117,15 @@ rpwa::massDepFit::minimizerRoot::minimizerRoot(const rpwa::massDepFit::modelCons
 }
 
 
-rpwa::massDepFit::minimizerRoot::~minimizerRoot()
+rpwa::resonanceFit::minimizerRoot::~minimizerRoot()
 {
 }
 
 
 std::map<std::string, double>
-rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParameters,
-                                          rpwa::massDepFit::parameters& fitParametersError,
-                                          rpwa::massDepFit::cache& cache)
+rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitParameters,
+                                            rpwa::resonanceFit::parameters& fitParametersError,
+                                            rpwa::resonanceFit::cache& cache)
 {
 	// keep list of parameters to free
 	const size_t nrSteps = _freeParameters.size();
@@ -229,8 +229,8 @@ rpwa::massDepFit::minimizerRoot::minimize(rpwa::massDepFit::parameters& fitParam
 
 
 bool
-rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::parameters& fitParameters,
-                                                const std::string& freeParameters) const
+rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::parameters& fitParameters,
+                                                  const std::string& freeParameters) const
 {
 	// tokenize freeParameters string (default separators also include '*')
 	boost::char_separator<char> separators(" ,\t\n");
@@ -248,9 +248,9 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	size_t parcount=0;
 	// first add all couplings
 	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
+		const rpwa::resonanceFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
 		for(size_t idxCoupling=0; idxCoupling<comp->getNrCouplings(); ++idxCoupling) {
-			const rpwa::massDepFit::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
+			const rpwa::resonanceFit::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
 			const std::vector<size_t>& bins = channel.getBins();
 			for(size_t i = 0; i < bins.size(); ++i) {
 				const size_t idxBin = bins[i];
@@ -313,14 +313,14 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 
 	// second eventually add all branchings
 	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
+		const rpwa::resonanceFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
 		for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
 			// skip branchings that are always real and fixed to 1
 			if(comp->isBranchingFixed(idxBranching)) {
 				continue;
 			}
 
-			const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
+			const rpwa::resonanceFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
 			const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
 			const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
 			std::ostringstream prefixName;
@@ -372,7 +372,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 
 	// third add parameters of the components, i.e. mass and width
 	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
-		const rpwa::massDepFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
+		const rpwa::resonanceFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
 			const std::string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
 
@@ -434,7 +434,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 
 	// set parameters for final-state mass-dependence
 	if(_fitModel->getFsmd()) {
-		const rpwa::massDepFit::fsmdConstPtr& fsmd = _fitModel->getFsmd();
+		const rpwa::resonanceFit::fsmdConstPtr& fsmd = _fitModel->getFsmd();
 		for(size_t idxBin = 0; idxBin < fsmd->getNrBins(); ++idxBin) {
 			for(size_t idxParameter = 0; idxParameter < fsmd->getNrParameters(idxBin); ++idxParameter) {
 				std::ostringstream name;

@@ -46,9 +46,12 @@ namespace ROOT {
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
-		class minimizerRoot : public rpwa::massDepFit::minimizer {
+		class function;
+		class model;
+
+		class minimizerRoot : public rpwa::resonanceFit::minimizer {
 
 		private:
 
@@ -56,10 +59,10 @@ namespace rpwa {
 
 			public:
 
-				functionAdaptor(const rpwa::massDepFit::functionConstPtr& fitFunction);
+				functionAdaptor(const rpwa::resonanceFit::functionConstPtr& fitFunction);
 				virtual ~functionAdaptor() {}
 
-				virtual rpwa::massDepFit::minimizerRoot::functionAdaptor* Clone() const;
+				virtual rpwa::resonanceFit::minimizerRoot::functionAdaptor* Clone() const;
 
 				virtual unsigned int NDim() const;
 
@@ -69,14 +72,14 @@ namespace rpwa {
 
 				virtual double DoEval(const double* par) const;
 
-				const rpwa::massDepFit::functionConstPtr _fitFunction;
+				const rpwa::resonanceFit::functionConstPtr _fitFunction;
 
 			};
 
 		public:
 
-			minimizerRoot(const rpwa::massDepFit::modelConstPtr& fitModel,
-			              const rpwa::massDepFit::functionConstPtr& fitFunction,
+			minimizerRoot(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			              const rpwa::resonanceFit::functionConstPtr& fitFunction,
 			              const std::vector<std::string>& freeParameters,
 			              const unsigned int maxNmbOfFunctionCalls,
 			              const std::string minimizerType[],
@@ -85,20 +88,20 @@ namespace rpwa {
 			              const bool quiet);
 			virtual ~minimizerRoot();
 
-			std::map<std::string, double> minimize(rpwa::massDepFit::parameters& fitParameters,
-			                                       rpwa::massDepFit::parameters& fitParametersError,
-			                                       rpwa::massDepFit::cache& cache);
+			std::map<std::string, double> minimize(rpwa::resonanceFit::parameters& fitParameters,
+			                                       rpwa::resonanceFit::parameters& fitParametersError,
+			                                       rpwa::resonanceFit::cache& cache);
 
 		private:
 
-			bool initParameters(const rpwa::massDepFit::parameters& fitParameters,
+			bool initParameters(const rpwa::resonanceFit::parameters& fitParameters,
 			                    const std::string& freeParameters) const;
 
 			std::unique_ptr<ROOT::Math::Minimizer> _minimizer;
 
-			const rpwa::massDepFit::modelConstPtr _fitModel;
+			const rpwa::resonanceFit::modelConstPtr _fitModel;
 
-			rpwa::massDepFit::minimizerRoot::functionAdaptor _functionAdaptor;
+			rpwa::resonanceFit::minimizerRoot::functionAdaptor _functionAdaptor;
 
 			const std::vector<std::string> _freeParameters;
 
@@ -108,7 +111,7 @@ namespace rpwa {
 
 		};
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 

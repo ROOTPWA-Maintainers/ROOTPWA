@@ -44,7 +44,7 @@
 #include "yamlCppUtils.hpp"
 
 
-rpwa::massDepFit::fsmd::fsmd(const size_t id)
+rpwa::resonanceFit::fsmd::fsmd(const size_t id)
 	: _id(id),
 	  _nrBins(0),
 	  _equalInAllBins(false),
@@ -53,18 +53,18 @@ rpwa::massDepFit::fsmd::fsmd(const size_t id)
 }
 
 
-rpwa::massDepFit::fsmd::~fsmd()
+rpwa::resonanceFit::fsmd::~fsmd()
 {
 }
 
 
 bool
-rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
-                             rpwa::massDepFit::parameters& fitParameters,
-                             rpwa::massDepFit::parameters& fitParametersError,
-                             const size_t nrBins,
-                             const bool sameMassBinning,
-                             const bool debug)
+rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
+                               rpwa::resonanceFit::parameters& fitParameters,
+                               rpwa::resonanceFit::parameters& fitParametersError,
+                               const size_t nrBins,
+                               const bool sameMassBinning,
+                               const bool debug)
 {
 	if(debug) {
 		printDebug << "start initializing final-state mass-dependence." << std::endl;
@@ -127,11 +127,11 @@ rpwa::massDepFit::fsmd::init(const YAML::Node& configFsmd,
 
 
 bool
-rpwa::massDepFit::fsmd::initBin(const YAML::Node& configFsmd,
-                                rpwa::massDepFit::parameters& fitParameters,
-                                rpwa::massDepFit::parameters& fitParametersError,
-                                const size_t idxBin,
-                                const bool debug)
+rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
+                                  rpwa::resonanceFit::parameters& fitParameters,
+                                  rpwa::resonanceFit::parameters& fitParametersError,
+                                  const size_t idxBin,
+                                  const bool debug)
 {
 	if(debug) {
 		printDebug << "start initializing final-state mass-dependence for bin " << idxBin << "." << std::endl;
@@ -261,10 +261,10 @@ rpwa::massDepFit::fsmd::initBin(const YAML::Node& configFsmd,
 
 
 bool
-rpwa::massDepFit::fsmd::write(YAML::Emitter& yamlOutput,
-                              const rpwa::massDepFit::parameters& fitParameters,
-                              const rpwa::massDepFit::parameters& fitParametersError,
-                              const bool debug) const
+rpwa::resonanceFit::fsmd::write(YAML::Emitter& yamlOutput,
+                                const rpwa::resonanceFit::parameters& fitParameters,
+                                const rpwa::resonanceFit::parameters& fitParametersError,
+                                const bool debug) const
 {
 	if(debug) {
 		printDebug << "start writing final-state mass-dependence." << std::endl;
@@ -291,11 +291,11 @@ rpwa::massDepFit::fsmd::write(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::massDepFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
-                                 const rpwa::massDepFit::parameters& fitParameters,
-                                 const rpwa::massDepFit::parameters& fitParametersError,
-                                 const size_t idxBin,
-                                 const bool debug) const
+rpwa::resonanceFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
+                                   const rpwa::resonanceFit::parameters& fitParameters,
+                                   const rpwa::resonanceFit::parameters& fitParametersError,
+                                   const size_t idxBin,
+                                   const bool debug) const
 {
 	if(debug) {
 		printDebug << "start writing final-state mass-dependence for bin " << idxBin << "." << std::endl;
@@ -344,9 +344,9 @@ rpwa::massDepFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
 
 
 size_t
-rpwa::massDepFit::fsmd::importParameters(const double* par,
-                                         rpwa::massDepFit::parameters& fitParameters,
-                                         rpwa::massDepFit::cache& cache)
+rpwa::resonanceFit::fsmd::importParameters(const double* par,
+                                           rpwa::resonanceFit::parameters& fitParameters,
+                                           rpwa::resonanceFit::cache& cache)
 {
 	size_t sumNrParameters = 0;
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
@@ -371,11 +371,11 @@ rpwa::massDepFit::fsmd::importParameters(const double* par,
 
 
 std::complex<double>
-rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
-                            rpwa::massDepFit::cache& cache,
-                            const size_t idxBin,
-                            const double mass,
-                            const size_t idxMass) const
+rpwa::resonanceFit::fsmd::val(const rpwa::resonanceFit::parameters& fitParameters,
+                              rpwa::resonanceFit::cache& cache,
+                              const size_t idxBin,
+                              const double mass,
+                              const size_t idxMass) const
 {
 	if(not _functions[idxBin]) {
 		return 1.;
@@ -399,7 +399,7 @@ rpwa::massDepFit::fsmd::val(const rpwa::massDepFit::parameters& fitParameters,
 
 
 std::ostream&
-rpwa::massDepFit::fsmd::print(std::ostream& out) const
+rpwa::resonanceFit::fsmd::print(std::ostream& out) const
 {
 	out << "final-state mass-dependence (id " << _id << ")" << std::endl
 	    << "    use equal values for all bins for each mass bin: " << rpwa::yesNo(_equalInAllBins) << std::endl;
@@ -413,8 +413,8 @@ rpwa::massDepFit::fsmd::print(std::ostream& out) const
 
 
 std::ostream&
-rpwa::massDepFit::fsmd::printBin(const size_t idxBin,
-                                 std::ostream& out) const
+rpwa::resonanceFit::fsmd::printBin(const size_t idxBin,
+                                   std::ostream& out) const
 {
 	out << "final-state mass-dependence for bin " << idxBin << std::endl;
 	out << "formula: " << (_functions[idxBin] ? _functions[idxBin]->GetTitle() : "not set") << std::endl;

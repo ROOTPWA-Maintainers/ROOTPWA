@@ -35,7 +35,7 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::model::model()
+rpwa::resonanceFit::model::model()
 	: _mappingEqualInAllBins(false),
 	  _nrParameters(0),
 	  _maxChannelsInComponent(0),
@@ -47,11 +47,11 @@ rpwa::massDepFit::model::model()
 
 
 bool
-rpwa::massDepFit::model::init(const size_t nrBins,
-                              const std::vector<std::string>& waveNames,
-                              const std::vector<std::vector<std::string> >& waveNameAlternatives,
-                              const std::string& anchorWaveName,
-                              const std::string& anchorComponentName)
+rpwa::resonanceFit::model::init(const size_t nrBins,
+                                const std::vector<std::string>& waveNames,
+                                const std::vector<std::vector<std::string> >& waveNameAlternatives,
+                                const std::string& anchorWaveName,
+                                const std::string& anchorComponentName)
 {
 	if(not initMapping(nrBins, waveNames, waveNameAlternatives, anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
@@ -63,7 +63,7 @@ rpwa::massDepFit::model::init(const size_t nrBins,
 
 
 void
-rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
+rpwa::resonanceFit::model::add(const rpwa::resonanceFit::componentPtr& comp)
 {
 	_components.push_back(comp);
 
@@ -90,7 +90,7 @@ rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
 
 
 void
-rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
+rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
 {
 	if(_fsmd) {
 		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
@@ -113,11 +113,11 @@ rpwa::massDepFit::model::setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::massDepFit::model::initMapping(const size_t nrBins,
-                                     const std::vector<std::string>& waveNames,
-                                     const std::vector<std::vector<std::string> >& waveNameAlternatives,
-                                     const std::string& anchorWaveName,
-                                     const std::string& anchorComponentName)
+rpwa::resonanceFit::model::initMapping(const size_t nrBins,
+                                       const std::vector<std::string>& waveNames,
+                                       const std::vector<std::vector<std::string> >& waveNameAlternatives,
+                                       const std::string& anchorWaveName,
+                                       const std::string& anchorComponentName)
 {
 	// check that all waves used in a decay channel have been defined
 	const size_t nrComponents = _components.size();
@@ -334,9 +334,9 @@ rpwa::massDepFit::model::initMapping(const size_t nrBins,
 
 
 void
-rpwa::massDepFit::model::importParameters(const double* par,
-                                          rpwa::massDepFit::parameters& parameters,
-                                          rpwa::massDepFit::cache& cache) const
+rpwa::resonanceFit::model::importParameters(const double* par,
+                                            rpwa::resonanceFit::parameters& parameters,
+                                            rpwa::resonanceFit::cache& cache) const
 {
 	size_t parcount=0;
 
@@ -365,12 +365,12 @@ rpwa::massDepFit::model::importParameters(const double* par,
 
 
 std::complex<double>
-rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
-                                             rpwa::massDepFit::cache& cache,
-                                             const size_t idxWave,
-                                             const size_t idxBin,
-                                             const double mass,
-                                             const size_t idxMass) const
+rpwa::resonanceFit::model::productionAmplitude(const rpwa::resonanceFit::parameters& fitParameters,
+                                               rpwa::resonanceFit::cache& cache,
+                                               const size_t idxWave,
+                                               const size_t idxBin,
+                                               const double mass,
+                                               const size_t idxMass) const
 {
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		const std::complex<double> prodAmp = cache.getProdAmp(idxWave, idxBin, idxMass);
@@ -405,12 +405,12 @@ rpwa::massDepFit::model::productionAmplitude(const rpwa::massDepFit::parameters&
 
 
 double
-rpwa::massDepFit::model::intensity(const rpwa::massDepFit::parameters& fitParameters,
-                                   rpwa::massDepFit::cache& cache,
-                                   const size_t idxWave,
-                                   const size_t idxBin,
-                                   const double mass,
-                                   const size_t idxMass) const
+rpwa::resonanceFit::model::intensity(const rpwa::resonanceFit::parameters& fitParameters,
+                                     rpwa::resonanceFit::cache& cache,
+                                     const size_t idxWave,
+                                     const size_t idxBin,
+                                     const double mass,
+                                     const size_t idxMass) const
 {
 	const std::complex<double> prodAmp = productionAmplitude(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 
@@ -419,12 +419,12 @@ rpwa::massDepFit::model::intensity(const rpwa::massDepFit::parameters& fitParame
 
 
 double
-rpwa::massDepFit::model::phaseAbsolute(const rpwa::massDepFit::parameters& fitParameters,
-                                       rpwa::massDepFit::cache& cache,
-                                       const size_t idxWave,
-                                       const size_t idxBin,
-                                       const double mass,
-                                       const size_t idxMass) const
+rpwa::resonanceFit::model::phaseAbsolute(const rpwa::resonanceFit::parameters& fitParameters,
+                                         rpwa::resonanceFit::cache& cache,
+                                         const size_t idxWave,
+                                         const size_t idxBin,
+                                         const double mass,
+                                         const size_t idxMass) const
 {
 	const std::complex<double> prodAmp = productionAmplitude(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 
@@ -433,13 +433,13 @@ rpwa::massDepFit::model::phaseAbsolute(const rpwa::massDepFit::parameters& fitPa
 
 
 std::complex<double>
-rpwa::massDepFit::model::spinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-                                           rpwa::massDepFit::cache& cache,
-                                           const size_t idxWave,
-                                           const size_t jdxWave,
-                                           const size_t idxBin,
-                                           const double mass,
-                                           const size_t idxMass) const
+rpwa::resonanceFit::model::spinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
+                                             rpwa::resonanceFit::cache& cache,
+                                             const size_t idxWave,
+                                             const size_t jdxWave,
+                                             const size_t idxBin,
+                                             const double mass,
+                                             const size_t idxMass) const
 {
 	const std::complex<double> prodAmpI = productionAmplitude(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 	const std::complex<double> prodAmpJ = productionAmplitude(fitParameters, cache, jdxWave, idxBin, mass, idxMass);
@@ -449,23 +449,23 @@ rpwa::massDepFit::model::spinDensityMatrix(const rpwa::massDepFit::parameters& f
 
 
 double
-rpwa::massDepFit::model::phase(const rpwa::massDepFit::parameters& fitParameters,
-                               rpwa::massDepFit::cache& cache,
-                               const size_t idxWave,
-                               const size_t jdxWave,
-                               const size_t idxBin,
-                               const double mass,
-                               const size_t idxMass) const
+rpwa::resonanceFit::model::phase(const rpwa::resonanceFit::parameters& fitParameters,
+                                 rpwa::resonanceFit::cache& cache,
+                                 const size_t idxWave,
+                                 const size_t jdxWave,
+                                 const size_t idxBin,
+                                 const double mass,
+                                 const size_t idxMass) const
 {
 	return arg(spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass));
 }
 
 
 std::ostream&
-rpwa::massDepFit::model::print(std::ostream& out) const
+rpwa::resonanceFit::model::print(std::ostream& out) const
 {
 	for(unsigned int i=0;i<_components.size();++i){
-		const rpwa::massDepFit::component& c = *_components[i];
+		const rpwa::resonanceFit::component& c = *_components[i];
 		c.print(out);
 	}
 	return out;
