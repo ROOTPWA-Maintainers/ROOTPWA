@@ -35,12 +35,11 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::model::model(const bool useBranchings)
+rpwa::massDepFit::model::model()
 	: _mappingEqualInAllBins(false),
 	  _nrParameters(0),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
-	  _useBranchings(useBranchings),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max())
 {
@@ -79,11 +78,9 @@ rpwa::massDepFit::model::add(const rpwa::massDepFit::componentPtr& comp)
 	}
 
 	// number of branching parameters (some branchings are always real and fixed to 1)
-	if(_useBranchings && comp->getNrChannels() > 1) {
-		for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
-			if(not comp->isBranchingFixed(idxBranching)) {
-				_nrParameters += 2;
-			}
+	for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
+		if(not comp->isBranchingFixed(idxBranching)) {
+			_nrParameters += 2;
 		}
 	}
 

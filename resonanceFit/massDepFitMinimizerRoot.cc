@@ -260,7 +260,7 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 				           << "__"
 				           << comp->getName()
 				           << "__";
-				if(_fitModel->useBranchings() and comp->getNrChannels() > 1) {
+				if(comp->getNrBranchings() > 1) {
 					const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
 					prefixName << waveQN;
 				} else {
@@ -312,65 +312,63 @@ rpwa::massDepFit::minimizerRoot::initParameters(const rpwa::massDepFit::paramete
 	} // end loop over components
 
 	// second eventually add all branchings
-	if(_fitModel->useBranchings()) {
-		for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
-			const rpwa::massDepFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
-			for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
-				// skip branchings that are always real and fixed to 1
-				if(comp->isBranchingFixed(idxBranching)) {
-					continue;
-				}
+	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
+		const rpwa::massDepFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
+		for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
+			// skip branchings that are always real and fixed to 1
+			if(comp->isBranchingFixed(idxBranching)) {
+				continue;
+			}
 
-				const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
-				const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
-				const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
-				std::ostringstream prefixName;
-				prefixName << "branching__"
-				           << comp->getName()
-				           << "__"
-				           << waveQN
-				           << "__"
-				           << waveDecay;
+			const rpwa::massDepFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
+			const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
+			const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
+			std::ostringstream prefixName;
+			prefixName << "branching__"
+			           << comp->getName()
+			           << "__"
+			           << waveQN
+			           << "__"
+			           << waveDecay;
 
-				bool free = false;
-				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
-				   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching")!=tokenizeFreeParameters.end() ) {
-					free = true;
-				}
-				bool fix = not free;
+			bool free = false;
+			if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*") != tokenizeFreeParameters.end()
+			   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching") != tokenizeFreeParameters.end()) {
+				free = true;
+			}
+			bool fix = not free;
 
-				const std::complex<double> parameter = fitParameters.getBranching(idxComponent, idxBranching);
+			const std::complex<double> parameter = fitParameters.getBranching(idxComponent, idxBranching);
 
-				if (fix) {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << std::endl;
-					_minimizer->SetFixedVariable(parcount,
-					                             prefixName.str() + "__real",
-					                             parameter.real());
-					++parcount;
+			if(fix) {
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') fixed to " << parameter.real() << std::endl;
+				_minimizer->SetFixedVariable(parcount,
+				                             prefixName.str() + "__real",
+				                             parameter.real());
+				++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
-					_minimizer->SetFixedVariable(parcount,
-					                             prefixName.str() + "__imag",
-					                             parameter.imag());
-					++parcount;
-				} else {
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
-					_minimizer->SetVariable(parcount,
-					                        prefixName.str() + "__real",
-					                        parameter.real(),
-					                        0.1);
-					++parcount;
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
+				_minimizer->SetFixedVariable(parcount,
+				                             prefixName.str() + "__imag",
+				                             parameter.imag());
+				++parcount;
+			} else {
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__real") << "') set to " << parameter.real() << std::endl;
+				_minimizer->SetVariable(parcount,
+				                        prefixName.str() + "__real",
+				                        parameter.real(),
+				                        0.1);
+				++parcount;
 
-					printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
-					_minimizer->SetVariable(parcount,
-					                        prefixName.str() + "__imag",
-					                        parameter.imag(),
-					                        0.1);
-					++parcount;
-				}
-			} // end loop over channels
-		} // end loop over components
-	}
+				printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
+				_minimizer->SetVariable(parcount,
+				                        prefixName.str() + "__imag",
+				                        parameter.imag(),
+				                        0.1);
+				++parcount;
+			}
+		} // end loop over channels
+	} // end loop over components
 
 	// third add parameters of the components, i.e. mass and width
 	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {

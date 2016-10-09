@@ -122,7 +122,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -240,7 +239,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -277,7 +275,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -322,7 +319,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -364,7 +360,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -398,7 +393,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -441,7 +435,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -483,7 +476,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
@@ -526,7 +518,6 @@ namespace rpwa {
 			virtual bool write(YAML::Emitter& yamlOutput,
 			                   const rpwa::massDepFit::parameters& fitParameters,
 			                   const rpwa::massDepFit::parameters& fitParametersError,
-			                   const bool useBranchings,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;

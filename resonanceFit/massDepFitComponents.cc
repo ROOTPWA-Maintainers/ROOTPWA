@@ -488,7 +488,6 @@ bool
 rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
                                    const rpwa::massDepFit::parameters& fitParameters,
                                    const rpwa::massDepFit::parameters& fitParametersError,
-                                   const bool useBranchings,
                                    const bool debug) const
 {
 	if(debug) {
@@ -568,7 +567,7 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 			yamlOutput << YAML::EndSeq;
 		}
 
-		if(useBranchings && nrDecayChannels > 1) {
+		if(_nrBranchings > 1) {
 			if(idxDecayChannel == _channelsFromBranching[_channelsBranching[idxDecayChannel]]) {
 				yamlOutput << YAML::Key << "branching";
 				yamlOutput << YAML::Value;
@@ -581,7 +580,6 @@ rpwa::massDepFit::component::write(YAML::Emitter& yamlOutput,
 
 				yamlOutput << YAML::EndSeq;
 				yamlOutput << YAML::Block;
-
 			}
 		}
 
@@ -819,7 +817,6 @@ bool
 rpwa::massDepFit::fixedWidthBreitWigner::write(YAML::Emitter& yamlOutput,
                                                const rpwa::massDepFit::parameters& fitParameters,
                                                const rpwa::massDepFit::parameters& fitParametersError,
-                                               const bool useBranchings,
                                                const bool debug) const
 {
 	if(debug) {
@@ -829,7 +826,7 @@ rpwa::massDepFit::fixedWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'fixedWidthBreitWigner'." << std::endl;
 		return false;
 	}
@@ -1009,7 +1006,6 @@ bool
 rpwa::massDepFit::dynamicWidthBreitWigner::write(YAML::Emitter& yamlOutput,
                                                  const rpwa::massDepFit::parameters& fitParameters,
                                                  const rpwa::massDepFit::parameters& fitParametersError,
-                                                 const bool useBranchings,
                                                  const bool debug) const
 {
 	if(debug) {
@@ -1019,7 +1015,7 @@ rpwa::massDepFit::dynamicWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'dynamicWidthBreitWigner'." << std::endl;
 		return false;
 	}
@@ -1312,7 +1308,6 @@ bool
 rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
                                                   const rpwa::massDepFit::parameters& fitParameters,
                                                   const rpwa::massDepFit::parameters& fitParametersError,
-                                                  const bool useBranchings,
                                                   const bool debug) const
 {
 	if(debug) {
@@ -1322,7 +1317,7 @@ rpwa::massDepFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'integralWidthBreitWigner'." << std::endl;
 		return false;
 	}
@@ -1496,7 +1491,6 @@ bool
 rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
                                             const rpwa::massDepFit::parameters& fitParameters,
                                             const rpwa::massDepFit::parameters& fitParametersError,
-                                            const bool useBranchings,
                                             const bool debug) const
 {
 	if(debug) {
@@ -1506,7 +1500,7 @@ rpwa::massDepFit::constantBackground::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'constantBackground'." << std::endl;
 		return false;
 	}
@@ -1641,7 +1635,6 @@ bool
 rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
                                                const rpwa::massDepFit::parameters& fitParameters,
                                                const rpwa::massDepFit::parameters& fitParametersError,
-                                               const bool useBranchings,
                                                const bool debug) const
 {
 	if(debug) {
@@ -1651,7 +1644,7 @@ rpwa::massDepFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'exponentialBackground'." << std::endl;
 		return false;
 	}
@@ -1844,7 +1837,6 @@ bool
 rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
                                                    const rpwa::massDepFit::parameters& fitParameters,
                                                    const rpwa::massDepFit::parameters& fitParametersError,
-                                                   const bool useBranchings,
                                                    const bool debug) const
 {
 	if(debug) {
@@ -1854,7 +1846,7 @@ rpwa::massDepFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'tPrimeDependentBackground'." << std::endl;
 		return false;
 	}
@@ -2073,7 +2065,6 @@ bool
 rpwa::massDepFit::exponentialBackgroundIntegral::write(YAML::Emitter& yamlOutput,
                                                        const rpwa::massDepFit::parameters& fitParameters,
                                                        const rpwa::massDepFit::parameters& fitParametersError,
-                                                       const bool useBranchings,
                                                        const bool debug) const
 {
 	if(debug) {
@@ -2083,7 +2074,7 @@ rpwa::massDepFit::exponentialBackgroundIntegral::write(YAML::Emitter& yamlOutput
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'exponentialBackgroundIntegral'." << std::endl;
 		return false;
 	}
@@ -2292,7 +2283,6 @@ bool
 rpwa::massDepFit::tPrimeDependentBackgroundIntegral::write(YAML::Emitter& yamlOutput,
                                                            const rpwa::massDepFit::parameters& fitParameters,
                                                            const rpwa::massDepFit::parameters& fitParametersError,
-                                                           const bool useBranchings,
                                                            const bool debug) const
 {
 	if(debug) {
@@ -2302,7 +2292,7 @@ rpwa::massDepFit::tPrimeDependentBackgroundIntegral::write(YAML::Emitter& yamlOu
 
 	yamlOutput << YAML::BeginMap;
 
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, useBranchings, debug)) {
+	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
 		printErr << "error while writing 'component' part of 'tPrimeDependentBackgroundIntegral'." << std::endl;
 		return false;
 	}
