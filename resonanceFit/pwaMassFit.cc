@@ -126,7 +126,7 @@ main(int    argc,
 	bool              debug                    = false;
 	bool              quiet                    = false;
 
-	rpwa::massDepFit::function::useCovarianceMatrix doCov = rpwa::massDepFit::function::useCovarianceMatrixDefault;
+	rpwa::resonanceFit::function::useCovarianceMatrix doCov = rpwa::resonanceFit::function::useCovarianceMatrixDefault;
 
 	extern char* optarg;
 	extern int   optind;
@@ -169,10 +169,10 @@ main(int    argc,
 		case 'C':
 			{
 				int cov = atoi(optarg);
-				if      (cov == 1) { doCov = rpwa::massDepFit::function::useDiagnalElementsOnly;        }
-				else if (cov == 2) { doCov = rpwa::massDepFit::function::useComplexDiagnalElementsOnly; }
-				else if (cov == 3) { doCov = rpwa::massDepFit::function::useFullCovarianceMatrix;       }
-				else               { usage(progName, 1); }
+				if     (cov == 1) { doCov = rpwa::resonanceFit::function::useDiagnalElementsOnly;        }
+				else if(cov == 2) { doCov = rpwa::resonanceFit::function::useComplexDiagnalElementsOnly; }
+				else if(cov == 3) { doCov = rpwa::resonanceFit::function::useFullCovarianceMatrix;       }
+				else              { usage(progName, 1); }
 			}
 			break;
 		case 'd':
@@ -211,11 +211,11 @@ main(int    argc,
 	          << "    debug .......................................... "  << rpwa::yesNo(debug) << std::endl
 	          << "    quiet .......................................... "  << rpwa::yesNo(quiet) << std::endl;
 
-	rpwa::massDepFit::massDepFit mdepFit;
+	rpwa::resonanceFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
-	rpwa::massDepFit::modelPtr fitModel(new rpwa::massDepFit::model);
-	rpwa::massDepFit::functionPtr fitFunction(new rpwa::massDepFit::function(doProdAmp, doCov));
+	rpwa::resonanceFit::modelPtr fitModel(new rpwa::resonanceFit::model);
+	rpwa::resonanceFit::functionPtr fitFunction(new rpwa::resonanceFit::function(doProdAmp, doCov));
 
 	YAML::Node configRoot;
 	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
@@ -224,8 +224,8 @@ main(int    argc,
 	}
 
 	// read configuration file
-	rpwa::massDepFit::parameters fitParameters;
-	rpwa::massDepFit::parameters fitParametersError;
+	rpwa::resonanceFit::parameters fitParameters;
+	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
 	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
@@ -238,25 +238,25 @@ main(int    argc,
 		return 1;
 	}
 
-	rpwa::massDepFit::cache cache(mdepFit.getNrWaves(),
-	                              fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
-	                              fitModel->getMaxChannelsInComponent(),
-	                              mdepFit.getNrBins(),
-	                              mdepFit.getMaxMassBins());
+	rpwa::resonanceFit::cache cache(mdepFit.getNrWaves(),
+	                                fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
+	                                fitModel->getMaxChannelsInComponent(),
+	                                mdepFit.getNrBins(),
+	                                mdepFit.getMaxMassBins());
 
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
 		printInfo << "chi2 (valid only if fit was successful) = " << rpwa::maxPrecisionAlign(fitFunction->chiSquare(fitParameters, cache)) << std::endl;
 	} else {
-		rpwa::massDepFit::minimizerRoot minimizer(fitModel,
-		                                          fitFunction,
-		                                          mdepFit.getFreeParameters(),
-		                                          maxNumberOfFunctionCalls,
-		                                          minimizerType,
-		                                          minimizerStrategy,
-		                                          minimizerTolerance,
-		                                          quiet);
+		rpwa::resonanceFit::minimizerRoot minimizer(fitModel,
+		                                            fitFunction,
+		                                            mdepFit.getFreeParameters(),
+		                                            maxNumberOfFunctionCalls,
+		                                            minimizerType,
+		                                            minimizerStrategy,
+		                                            minimizerTolerance,
+		                                            quiet);
 
 		TStopwatch stopwatch;
 

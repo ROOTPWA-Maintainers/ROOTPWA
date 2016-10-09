@@ -62,10 +62,10 @@
 #include "yamlCppUtils.hpp"
 
 
-bool rpwa::massDepFit::massDepFit::_debug = false;
+bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 
-rpwa::massDepFit::massDepFit::massDepFit()
+rpwa::resonanceFit::massDepFit::massDepFit()
 	: _sysPlotting(false),
 	  _sameMassBinning(true),
 	  _maxMassBins(0),
@@ -76,14 +76,14 @@ rpwa::massDepFit::massDepFit::massDepFit()
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
-                                         const rpwa::massDepFit::modelPtr& fitModel,
-                                         rpwa::massDepFit::parameters& fitParameters,
-                                         rpwa::massDepFit::parameters& fitParametersError,
-                                         std::map<std::string, double>& fitQuality,
-                                         const bool useBranchings,
-                                         const std::string& valTreeName,
-                                         const std::string& valBranchName)
+rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
+                                           const rpwa::resonanceFit::modelPtr& fitModel,
+                                           rpwa::resonanceFit::parameters& fitParameters,
+                                           rpwa::resonanceFit::parameters& fitParametersError,
+                                           std::map<std::string, double>& fitQuality,
+                                           const bool useBranchings,
+                                           const std::string& valTreeName,
+                                           const std::string& valBranchName)
 {
 	// fit result information
 	const YAML::Node& configFitquality = configRoot["fitquality"];
@@ -141,8 +141,8 @@ rpwa::massDepFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigFitquality(const YAML::Node& configFitquality,
-                                                   std::map<std::string, double>& fitQuality) const
+rpwa::resonanceFit::massDepFit::readConfigFitquality(const YAML::Node& configFitquality,
+                                                     std::map<std::string, double>& fitQuality) const
 {
 	// clear all information previously stored
 	fitQuality.clear();
@@ -178,7 +178,7 @@ rpwa::massDepFit::massDepFit::readConfigFitquality(const YAML::Node& configFitqu
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInput(const YAML::Node& configInput)
+rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 {
 	if(not configInput) {
 		printErr << "'configInput' is not a valid YAML node." << std::endl;
@@ -241,7 +241,7 @@ rpwa::massDepFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& configInputFitResults)
+rpwa::resonanceFit::massDepFit::readConfigInputFitResults(const YAML::Node& configInputFitResults)
 {
 	if(not configInputFitResults) {
 		printErr << "'configInputFitResults' is not a valid YAML node." << std::endl;
@@ -308,7 +308,7 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const YAML::Node& config
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputWaves(const YAML::Node& configInputWaves)
+rpwa::resonanceFit::massDepFit::readConfigInputWaves(const YAML::Node& configInputWaves)
 {
 	if(not configInputWaves) {
 		printErr << "'configInputWaves' is not a valid YAML node." << std::endl;
@@ -446,7 +446,7 @@ rpwa::massDepFit::massDepFit::readConfigInputWaves(const YAML::Node& configInput
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputSystematics(const YAML::Node& configInputSystematics)
+rpwa::resonanceFit::massDepFit::readConfigInputSystematics(const YAML::Node& configInputSystematics)
 {
 	if(not configInputSystematics) {
 		printErr << "'configInputSystematics' is not a valid YAML node." << std::endl;
@@ -490,7 +490,7 @@ rpwa::massDepFit::massDepFit::readConfigInputSystematics(const YAML::Node& confi
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters)
+rpwa::resonanceFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters)
 {
 	if(not configInputFreeParameters) {
 		printErr << "'configInputFreeParameters' is not a valid YAML node." << std::endl;
@@ -531,11 +531,11 @@ rpwa::massDepFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& co
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
-                                              const rpwa::massDepFit::modelPtr& fitModel,
-                                              rpwa::massDepFit::parameters& fitParameters,
-                                              rpwa::massDepFit::parameters& fitParametersError,
-                                              const bool useBranchings)
+rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
+                                                const rpwa::resonanceFit::modelPtr& fitModel,
+                                                rpwa::resonanceFit::parameters& fitParameters,
+                                                rpwa::resonanceFit::parameters& fitParametersError,
+                                                const bool useBranchings)
 {
 	if(not configModel) {
 		printErr << "'configModel' is not a valid YAML node." << std::endl;
@@ -588,7 +588,7 @@ rpwa::massDepFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& configAnchorWave)
+rpwa::resonanceFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& configAnchorWave)
 {
 	if(not configAnchorWave) {
 		printErr << "'configInputAnchorWave' is not a valid YAML node." << std::endl;
@@ -616,11 +616,11 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& config
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
-                                                        const rpwa::massDepFit::modelPtr& fitModel,
-                                                        rpwa::massDepFit::parameters& fitParameters,
-                                                        rpwa::massDepFit::parameters& fitParametersError,
-                                                        const bool useBranchings) const
+rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
+                                                          const rpwa::resonanceFit::modelPtr& fitModel,
+                                                          rpwa::resonanceFit::parameters& fitParameters,
+                                                          rpwa::resonanceFit::parameters& fitParametersError,
+                                                          const bool useBranchings) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a valid YAML node." << std::endl;
@@ -675,24 +675,24 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 			printDebug << "found component '" << name << "' with type '" << type << "'." << std::endl;
 		}
 
-		rpwa::massDepFit::componentPtr component;
+		rpwa::resonanceFit::componentPtr component;
 		if(type == "fixedWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::fixedWidthBreitWigner>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::fixedWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "dynamicWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::dynamicWidthBreitWigner>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::dynamicWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "integralWidthBreitWigner") {
-			component = std::make_shared<rpwa::massDepFit::integralWidthBreitWigner>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::integralWidthBreitWigner>(fitModel->getNrComponents(), name);
 		} else if(type == "constantBackground") {
-			component = std::make_shared<rpwa::massDepFit::constantBackground>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::constantBackground>(fitModel->getNrComponents(), name);
 		} else if(type == "exponentialBackground") {
-			component = std::make_shared<rpwa::massDepFit::exponentialBackground>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::exponentialBackground>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
-			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackground>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackground>(fitModel->getNrComponents(), name);
 			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else if(type == "exponentialBackgroundIntegral") {
-			component = std::make_shared<rpwa::massDepFit::exponentialBackgroundIntegral>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::exponentialBackgroundIntegral>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackgroundIntegral") {
-			component = std::make_shared<rpwa::massDepFit::tPrimeDependentBackgroundIntegral>(fitModel->getNrComponents(), name);
+			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(fitModel->getNrComponents(), name);
 			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(_tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
@@ -719,10 +719,10 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const YAML::Node& config
 
 
 bool
-rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
-                                                  const rpwa::massDepFit::modelPtr& fitModel,
-                                                  rpwa::massDepFit::parameters& fitParameters,
-                                                  rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
+                                                    const rpwa::resonanceFit::modelPtr& fitModel,
+                                                    rpwa::resonanceFit::parameters& fitParameters,
+                                                    rpwa::resonanceFit::parameters& fitParametersError) const
 {
 	if(not configFsmd) {
 		printErr << "'configFsmd' is not a valid YAML node." << std::endl;
@@ -737,7 +737,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
 	}
 
-	rpwa::massDepFit::fsmdPtr fsmd(new rpwa::massDepFit::fsmd(fitModel->getNrComponents()));
+	rpwa::resonanceFit::fsmdPtr fsmd(new rpwa::resonanceFit::fsmd(fitModel->getNrComponents()));
 	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _sameMassBinning, _debug)) {
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
@@ -751,8 +751,8 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
 
 
 bool
-rpwa::massDepFit::massDepFit::init(const rpwa::massDepFit::modelPtr& fitModel,
-                                   const rpwa::massDepFit::functionPtr& fitFunction)
+rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::modelPtr& fitModel,
+                                     const rpwa::resonanceFit::functionPtr& fitFunction)
 {
 	if(not fitModel->init(_nrBins,
 	                      _waveNames,
@@ -780,11 +780,11 @@ rpwa::massDepFit::massDepFit::init(const rpwa::massDepFit::modelPtr& fitModel,
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
-                                          const rpwa::massDepFit::modelConstPtr& fitModel,
-                                          const rpwa::massDepFit::parameters& fitParameters,
-                                          const rpwa::massDepFit::parameters& fitParametersError,
-                                          const std::map<std::string, double>& fitQuality) const
+rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
+                                            const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                            const rpwa::resonanceFit::parameters& fitParameters,
+                                            const rpwa::resonanceFit::parameters& fitParametersError,
+                                            const std::map<std::string, double>& fitQuality) const
 {
 	if(_debug) {
 		printDebug << "writing configuration file." << std::endl;
@@ -824,8 +824,8 @@ rpwa::massDepFit::massDepFit::writeConfig(std::ostream& output,
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
-                                                    const std::map<std::string, double>& fitQuality) const
+rpwa::resonanceFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
+                                                      const std::map<std::string, double>& fitQuality) const
 {
 	if(_debug) {
 		printDebug << "writing 'fitquality'." << std::endl;
@@ -845,7 +845,7 @@ rpwa::massDepFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'input'." << std::endl;
@@ -890,7 +890,7 @@ rpwa::massDepFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) const
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'fitresults'." << std::endl;
@@ -922,7 +922,7 @@ rpwa::massDepFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutp
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'waves'." << std::endl;
@@ -970,7 +970,7 @@ rpwa::massDepFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) c
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigInputSystematics(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInputSystematics(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'systematics'." << std::endl;
@@ -983,7 +983,7 @@ rpwa::massDepFit::massDepFit::writeConfigInputSystematics(YAML::Emitter& yamlOut
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'freeparameters'." << std::endl;
@@ -996,10 +996,10 @@ rpwa::massDepFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yaml
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
-                                               const rpwa::massDepFit::modelConstPtr& fitModel,
-                                               const rpwa::massDepFit::parameters& fitParameters,
-                                               const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::resonanceFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
+                                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                 const rpwa::resonanceFit::parameters& fitParameters,
+                                                 const rpwa::resonanceFit::parameters& fitParametersError) const
 {
 	if(_debug) {
 		printDebug << "writing 'model'." << std::endl;
@@ -1037,7 +1037,7 @@ rpwa::massDepFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const
 {
 	if(_debug) {
 		printDebug << "writing 'anchorwave'." << std::endl;
@@ -1058,10 +1058,10 @@ rpwa::massDepFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutp
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutput,
-                                                         const rpwa::massDepFit::modelConstPtr& fitModel,
-                                                         const rpwa::massDepFit::parameters& fitParameters,
-                                                         const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::resonanceFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutput,
+                                                           const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                           const rpwa::resonanceFit::parameters& fitParameters,
+                                                           const rpwa::resonanceFit::parameters& fitParametersError) const
 {
 	if(_debug) {
 		printDebug << "writing 'components'." << std::endl;
@@ -1084,10 +1084,10 @@ rpwa::massDepFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutp
 
 
 bool
-rpwa::massDepFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
-                                                   const rpwa::massDepFit::modelConstPtr& fitModel,
-                                                   const rpwa::massDepFit::parameters& fitParameters,
-                                                   const rpwa::massDepFit::parameters& fitParametersError) const
+rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
+                                                     const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                     const rpwa::resonanceFit::parameters& fitParameters,
+                                                     const rpwa::resonanceFit::parameters& fitParametersError) const
 {
 	if(_debug) {
 		printDebug << "writing 'finalStateMassDependence'." << std::endl;
@@ -1108,8 +1108,8 @@ rpwa::massDepFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::massDepFit::massDepFit::readInFiles(const std::string& valTreeName,
-                                          const std::string& valBranchName)
+rpwa::resonanceFit::massDepFit::readInFiles(const std::string& valTreeName,
+                                            const std::string& valBranchName)
 {
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 		if(not readInFile(idxBin, valTreeName, valBranchName)) {
@@ -1123,9 +1123,9 @@ rpwa::massDepFit::massDepFit::readInFiles(const std::string& valTreeName,
 
 
 bool
-rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
-                                         const std::string& valTreeName,
-                                         const std::string& valBranchName)
+rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
+                                           const std::string& valTreeName,
+                                           const std::string& valBranchName)
 {
 	if(_debug) {
 		printDebug << "reading fit result from file '" << _inFileName[idxBin] << "'." << std::endl;
@@ -1292,8 +1292,8 @@ rpwa::massDepFit::massDepFit::readInFile(const size_t idxBin,
 
 
 bool
-rpwa::massDepFit::massDepFit::readSystematicsFiles(const std::string& valTreeName,
-                                                   const std::string& valBranchName)
+rpwa::resonanceFit::massDepFit::readSystematicsFiles(const std::string& valTreeName,
+                                                     const std::string& valBranchName)
 {
 	if(not _sysPlotting) {
 		return true;
@@ -1334,9 +1334,9 @@ rpwa::massDepFit::massDepFit::readSystematicsFiles(const std::string& valTreeNam
 
 
 bool
-rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
-                                                  const std::string& valTreeName,
-                                                  const std::string& valBranchName)
+rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
+                                                    const std::string& valTreeName,
+                                                    const std::string& valBranchName)
 {
 	if(_debug) {
 		printDebug << "reading fit result for systematics for index " << idxSystematics << " from file '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
@@ -1410,10 +1410,10 @@ rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 
 
 bool
-rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
-                                                     rpwa::fitResult* fit,
-                                                     const size_t idxBin,
-                                                     std::vector<Long64_t>& mapping) const
+rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
+                                                       rpwa::fitResult* fit,
+                                                       const size_t idxBin,
+                                                       std::vector<Long64_t>& mapping) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
@@ -1491,13 +1491,13 @@ rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
 
 
 bool
-rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
-                                                    rpwa::fitResult* fit,
-                                                    double& massMin,
-                                                    double& massMax,
-                                                    double& massStep,
-                                                    size_t& nrMassBins,
-                                                    boost::multi_array<double, 1>& massBinCenters) const
+rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
+                                                      rpwa::fitResult* fit,
+                                                      double& massMin,
+                                                      double& massMax,
+                                                      double& massStep,
+                                                      size_t& nrMassBins,
+                                                      boost::multi_array<double, 1>& massBinCenters) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
@@ -1574,17 +1574,17 @@ rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
 
 
 bool
-rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
-                                                    rpwa::fitResult* fit,
-                                                    const std::vector<Long64_t>& mapping,
-                                                    const double rescaleErrors,
-                                                    std::vector<std::string>& waveNames,
-                                                    boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
-                                                    boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
-                                                    boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-                                                    boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
-                                                    boost::multi_array<double, 3>& intensities,
-                                                    boost::multi_array<double, 4>& phases) const
+rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
+                                                      rpwa::fitResult* fit,
+                                                      const std::vector<Long64_t>& mapping,
+                                                      const double rescaleErrors,
+                                                      std::vector<std::string>& waveNames,
+                                                      boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
+                                                      boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+                                                      boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+                                                      boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
+                                                      boost::multi_array<double, 3>& intensities,
+                                                      boost::multi_array<double, 4>& phases) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
@@ -1756,11 +1756,11 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 
 bool
-rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
-                                                     rpwa::fitResult* fit,
-                                                     const std::vector<Long64_t>& mapping,
-                                                     const std::vector<std::string>& waveNames,
-                                                     boost::multi_array<double, 2>& phaseSpaceIntegrals) const
+rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
+                                                       rpwa::fitResult* fit,
+                                                       const std::vector<Long64_t>& mapping,
+                                                       const std::vector<std::string>& waveNames,
+                                                       boost::multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
@@ -1803,7 +1803,7 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 
 bool
-rpwa::massDepFit::massDepFit::prepareMassLimits()
+rpwa::resonanceFit::massDepFit::prepareMassLimits()
 {
 	_waveMassBinLimits.resize(boost::extents[_nrBins][_nrWaves]);
 	_wavePairMassBinLimits.resize(boost::extents[_nrBins][_nrWaves][_nrWaves]);
@@ -1820,7 +1820,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 
 
 bool
-rpwa::massDepFit::massDepFit::prepareMassLimit(const size_t idxBin)
+rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t idxBin)
 {
 	if(_debug) {
 		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins[idxBin] << " mass bins, center of first and last mass bins: "
@@ -1880,12 +1880,12 @@ rpwa::massDepFit::massDepFit::prepareMassLimit(const size_t idxBin)
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                          const rpwa::massDepFit::parameters& fitParameters,
-                                          rpwa::massDepFit::cache& cache,
-                                          TFile* outFile,
-                                          const bool rangePlotting,
-                                          const size_t extraBinning) const
+rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                            const rpwa::resonanceFit::parameters& fitParameters,
+                                            rpwa::resonanceFit::cache& cache,
+                                            TFile* outFile,
+                                            const bool rangePlotting,
+                                            const size_t extraBinning) const
 {
 	if(_debug) {
 		printDebug << "start creating plots." << std::endl;
@@ -1950,14 +1950,14 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::modelConstPtr&
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                              const rpwa::massDepFit::parameters& fitParameters,
-                                              rpwa::massDepFit::cache& cache,
-                                              TDirectory* outDirectory,
-                                              const bool rangePlotting,
-                                              const size_t extraBinning,
-                                              const size_t idxWave,
-                                              const size_t idxBin) const
+rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                const rpwa::resonanceFit::parameters& fitParameters,
+                                                rpwa::resonanceFit::cache& cache,
+                                                TDirectory* outDirectory,
+                                                const bool rangePlotting,
+                                                const size_t extraBinning,
+                                                const size_t idxWave,
+                                                const size_t idxBin) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
@@ -2097,13 +2097,13 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::modelConst
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                                 const rpwa::massDepFit::parameters& fitParameters,
-                                                 rpwa::massDepFit::cache& cache,
-                                                 TDirectory* outDirectory,
-                                                 const bool rangePlotting,
-                                                 const size_t extraBinning,
-                                                 const size_t idxWave) const
+rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                   const rpwa::resonanceFit::parameters& fitParameters,
+                                                   rpwa::resonanceFit::cache& cache,
+                                                   TDirectory* outDirectory,
+                                                   const bool rangePlotting,
+                                                   const size_t extraBinning,
+                                                   const size_t idxWave) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
@@ -2206,15 +2206,15 @@ rpwa::massDepFit::massDepFit::createPlotsWaveSum(const rpwa::massDepFit::modelCo
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                                  const rpwa::massDepFit::parameters& fitParameters,
-                                                  rpwa::massDepFit::cache& cache,
-                                                  TDirectory* outDirectory,
-                                                  const bool rangePlotting,
-                                                  const size_t extraBinning,
-                                                  const size_t idxWave,
-                                                  const size_t jdxWave,
-                                                  const size_t idxBin) const
+rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                    const rpwa::resonanceFit::parameters& fitParameters,
+                                                    rpwa::resonanceFit::cache& cache,
+                                                    TDirectory* outDirectory,
+                                                    const bool rangePlotting,
+                                                    const size_t extraBinning,
+                                                    const size_t idxWave,
+                                                    const size_t jdxWave,
+                                                    const size_t idxBin) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
@@ -2444,13 +2444,13 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::modelC
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsFsmd(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                              const rpwa::massDepFit::parameters& fitParameters,
-                                              rpwa::massDepFit::cache& cache,
-                                              TDirectory* outDirectory,
-                                              const bool /*rangePlotting*/,
-                                              const size_t extraBinning,
-                                              const size_t idxBin) const
+rpwa::resonanceFit::massDepFit::createPlotsFsmd(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                                const rpwa::resonanceFit::parameters& fitParameters,
+                                                rpwa::resonanceFit::cache& cache,
+                                                TDirectory* outDirectory,
+                                                const bool /*rangePlotting*/,
+                                                const size_t extraBinning,
+                                                const size_t idxBin) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for final-state mass-dependence." << std::endl;

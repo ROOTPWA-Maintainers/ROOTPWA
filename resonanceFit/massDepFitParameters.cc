@@ -32,16 +32,16 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::parameters::parameters()
+rpwa::resonanceFit::parameters::parameters()
 	: _fixedSize(false)
 {
 }
 
 
-rpwa::massDepFit::parameters::parameters(const size_t maxComponents,
-                                         const size_t maxChannels,
-                                         const size_t maxParameters,
-                                         const size_t maxBins)
+rpwa::resonanceFit::parameters::parameters(const size_t maxComponents,
+                                           const size_t maxChannels,
+                                           const size_t maxParameters,
+                                           const size_t maxBins)
 	: _fixedSize(true),
 	  _branchings(boost::extents[maxComponents][maxChannels]),
 	  _couplings(boost::extents[maxComponents][maxChannels][maxBins]),
@@ -51,10 +51,10 @@ rpwa::massDepFit::parameters::parameters(const size_t maxComponents,
 
 
 void
-rpwa::massDepFit::parameters::resize(const size_t maxComponents,
-                                     const size_t maxChannels,
-                                     const size_t maxParameters,
-                                     const size_t maxBins)
+rpwa::resonanceFit::parameters::resize(const size_t maxComponents,
+                                       const size_t maxChannels,
+                                       const size_t maxParameters,
+                                       const size_t maxBins)
 {
 	if (_fixedSize) {
 		printErr << "cannot resize 'parameters' object that has been initialized with a size." << std::endl;
@@ -86,7 +86,7 @@ rpwa::massDepFit::parameters::resize(const size_t maxComponents,
 
 
 std::ostream&
-rpwa::massDepFit::parameters::print(std::ostream& out) const
+rpwa::resonanceFit::parameters::print(std::ostream& out) const
 {
 	out << "branchings: "
 	    << *(_branchings.shape()) << " components, "

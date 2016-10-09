@@ -46,7 +46,7 @@ class TFormula;
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class cache;
 		class parameters;
@@ -59,15 +59,15 @@ namespace rpwa {
 			~fsmd();
 
 			bool init(const YAML::Node& configComponent,
-			          rpwa::massDepFit::parameters& fitParameters,
-			          rpwa::massDepFit::parameters& fitParametersError,
+			          rpwa::resonanceFit::parameters& fitParameters,
+			          rpwa::resonanceFit::parameters& fitParametersError,
 			          const size_t nrBins,
 			          const bool sameMassBinning,
 			          const bool debug);
 
 			bool write(YAML::Emitter& yamlOutput,
-			           const rpwa::massDepFit::parameters& fitParameters,
-			           const rpwa::massDepFit::parameters& fitParametersError,
+			           const rpwa::resonanceFit::parameters& fitParameters,
+			           const rpwa::resonanceFit::parameters& fitParametersError,
 			           const bool debug) const;
 
 			size_t getNrBins() const { return _nrBins; }
@@ -75,8 +75,8 @@ namespace rpwa {
 			size_t getNrParameters(const size_t idxBin) const { return _nrParameters[idxBin]; }
 			size_t getParameterIndex(const size_t idxBin) const { return _parametersIndex[idxBin]; }
 			size_t importParameters(const double* par,
-			                        rpwa::massDepFit::parameters& fitParameters,
-			                        rpwa::massDepFit::cache& cache);
+			                        rpwa::resonanceFit::parameters& fitParameters,
+			                        rpwa::resonanceFit::cache& cache);
 
 			bool getParameterFixed(const size_t idxBin, const size_t idxParameter) const { return _parametersFixed[idxBin][idxParameter]; }
 			double getParameterLimitLower(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitLower[idxBin][idxParameter]; }
@@ -86,8 +86,8 @@ namespace rpwa {
 			const std::string& getParameterName(const size_t idxBin, const size_t idxParameter) const { return _parametersName[idxBin][idxParameter]; }
 			double getParameterStep(const size_t idxBin, const size_t idxParameter) const { return _parametersStep[idxBin][idxParameter]; }
 
-			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                         rpwa::massDepFit::cache& cache,
+			std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
+			                         rpwa::resonanceFit::cache& cache,
 			                         const size_t idxBin,
 			                         const double mass,
 			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
@@ -97,14 +97,14 @@ namespace rpwa {
 		private:
 
 			bool initBin(const YAML::Node& configComponent,
-			             rpwa::massDepFit::parameters& fitParameters,
-			             rpwa::massDepFit::parameters& fitParametersError,
+			             rpwa::resonanceFit::parameters& fitParameters,
+			             rpwa::resonanceFit::parameters& fitParametersError,
 			             const size_t idxBin,
 			             const bool debug);
 
 			bool writeBin(YAML::Emitter& yamlOutput,
-			              const rpwa::massDepFit::parameters& fitParameters,
-			              const rpwa::massDepFit::parameters& fitParametersError,
+			              const rpwa::resonanceFit::parameters& fitParameters,
+			              const rpwa::resonanceFit::parameters& fitParametersError,
 			              const size_t idxBin,
 			              const bool debug) const;
 
@@ -131,16 +131,16 @@ namespace rpwa {
 			boost::multi_array<double, 2> _parametersStep;
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::fsmd& fsmd);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::fsmd& fsmd);
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
 
 inline
 std::ostream&
-rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::fsmd& fsmd)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::fsmd& fsmd)
 {
 	return fsmd.print(out);
 }

@@ -47,7 +47,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class cache;
 		class parameters;
@@ -64,10 +64,10 @@ namespace rpwa {
 			};
 
 			function(const bool fitProductionAmplitudes,
-			         const rpwa::massDepFit::function::useCovarianceMatrix useCovariance);
+			         const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance);
 			~function() {}
 
-			bool init(const rpwa::massDepFit::modelConstPtr& fitModel,
+			bool init(const rpwa::resonanceFit::modelConstPtr& fitModel,
 			          const std::vector<size_t>& nrMassBins,
 			          const boost::multi_array<double, 2>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -81,26 +81,26 @@ namespace rpwa {
 
 			double chiSquare(const std::vector<double>& par) const;
 			double chiSquare(const double* par) const;
-			double chiSquare(const rpwa::massDepFit::parameters& fitParameters,
-			                 rpwa::massDepFit::cache& cache) const;
+			double chiSquare(const rpwa::resonanceFit::parameters& fitParameters,
+			                 rpwa::resonanceFit::cache& cache) const;
 
 			double logLikelihood(const std::vector<double>& par) const;
 			double logLikelihood(const double* par) const;
-			double logLikelihood(const rpwa::massDepFit::parameters& fitParameters,
-			                     rpwa::massDepFit::cache& cache) const;
+			double logLikelihood(const rpwa::resonanceFit::parameters& fitParameters,
+			                     rpwa::resonanceFit::cache& cache) const;
 
 			double logPriorLikelihood(const std::vector<double>& par) const;
 			double logPriorLikelihood(const double* par) const;
-			double logPriorLikelihood(const rpwa::massDepFit::parameters& fitParameters) const;
+			double logPriorLikelihood(const rpwa::resonanceFit::parameters& fitParameters) const;
 
 		private:
 
-			double chiSquareProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
-			                                     rpwa::massDepFit::cache& cache) const;
-			double chiSquareSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-			                                  rpwa::massDepFit::cache& cache) const;
+			double chiSquareProductionAmplitudes(const rpwa::resonanceFit::parameters& fitParameters,
+			                                     rpwa::resonanceFit::cache& cache) const;
+			double chiSquareSpinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
+			                                  rpwa::resonanceFit::cache& cache) const;
 
-			rpwa::massDepFit::modelConstPtr _fitModel;
+			rpwa::resonanceFit::modelConstPtr _fitModel;
 
 			size_t _nrBins;
 			size_t _maxMassBins;
@@ -124,11 +124,11 @@ namespace rpwa {
 			size_t _idxAnchorWave;
 
 			const bool _fitProductionAmplitudes;
-			rpwa::massDepFit::function::useCovarianceMatrix _useCovariance;
+			rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
 
 		};
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 

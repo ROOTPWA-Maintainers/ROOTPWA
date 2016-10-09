@@ -33,7 +33,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class cache;
 		class parameters;
@@ -45,13 +45,13 @@ namespace rpwa {
 			minimizer() {}
 			virtual ~minimizer() {}
 
-			virtual std::map<std::string, double> minimize(rpwa::massDepFit::parameters& fitParameters,
-			                                               rpwa::massDepFit::parameters& fitParametersError,
-			                                               rpwa::massDepFit::cache& cache) = 0;
+			virtual std::map<std::string, double> minimize(rpwa::resonanceFit::parameters& fitParameters,
+			                                               rpwa::resonanceFit::parameters& fitParametersError,
+			                                               rpwa::resonanceFit::cache& cache) = 0;
 
 		};
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 

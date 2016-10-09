@@ -52,7 +52,7 @@ namespace YAML {
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class channel {
 
@@ -106,8 +106,8 @@ namespace rpwa {
 			const std::string& getType() const { return _type; }
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -120,8 +120,8 @@ namespace rpwa {
 			                              const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -136,18 +136,18 @@ namespace rpwa {
 
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t importCouplings(const double* par,
-			                       rpwa::massDepFit::parameters& fitParameters,
-			                       rpwa::massDepFit::cache& cache);
+			                       rpwa::resonanceFit::parameters& fitParameters,
+			                       rpwa::resonanceFit::cache& cache);
 
 			size_t getNrBranchings() const { return _nrBranchings; }
 			size_t importBranchings(const double* par,
-			                        rpwa::massDepFit::parameters& fitParameters,
-			                        rpwa::massDepFit::cache& cache);
+			                        rpwa::resonanceFit::parameters& fitParameters,
+			                        rpwa::resonanceFit::cache& cache);
 
 			size_t getNrParameters() const { return _nrParameters; }
 			size_t importParameters(const double* par,
-			                        rpwa::massDepFit::parameters& fitParameters,
-			                        rpwa::massDepFit::cache& cache);
+			                        rpwa::resonanceFit::parameters& fitParameters,
+			                        rpwa::resonanceFit::cache& cache);
 
 			bool isBranchingFixed(const size_t idxBranching) const { return _branchingsFixed[idxBranching]; }
 
@@ -162,14 +162,14 @@ namespace rpwa {
 			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
 			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
 
-			std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
-			                         rpwa::massDepFit::cache& cache,
+			std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
+			                         rpwa::resonanceFit::cache& cache,
 			                         const size_t idxBin,
 			                         const double m,
 			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			std::complex<double> getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
-			                                           rpwa::massDepFit::cache& cache,
+			std::complex<double> getCouplingPhaseSpace(const rpwa::resonanceFit::parameters& fitParameters,
+			                                           rpwa::resonanceFit::cache& cache,
 			                                           const size_t idxChannel,
 			                                           const size_t idxBin,
 			                                           const double mass,
@@ -179,7 +179,7 @@ namespace rpwa {
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const = 0;
 
@@ -216,7 +216,7 @@ namespace rpwa {
 
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::component& component);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::component& component);
 
 		class fixedWidthBreitWigner : public component {
 
@@ -226,8 +226,8 @@ namespace rpwa {
 			                      const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -237,15 +237,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -259,8 +259,8 @@ namespace rpwa {
 			                        const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -273,8 +273,8 @@ namespace rpwa {
 			                              const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -284,7 +284,7 @@ namespace rpwa {
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -303,8 +303,8 @@ namespace rpwa {
 			                         const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -317,8 +317,8 @@ namespace rpwa {
 			                              const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 			virtual bool writeDecayChannel(YAML::Emitter& yamlOutput,
 			                               const size_t idxDecayChannel,
@@ -328,7 +328,7 @@ namespace rpwa {
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -347,8 +347,8 @@ namespace rpwa {
 			                   const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -358,15 +358,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -380,8 +380,8 @@ namespace rpwa {
 			                      const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -391,15 +391,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -422,8 +422,8 @@ namespace rpwa {
 			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -433,15 +433,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -463,8 +463,8 @@ namespace rpwa {
 			                              const std::string& name);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -474,15 +474,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -505,8 +505,8 @@ namespace rpwa {
 			bool setTPrimeMeans(const std::vector<double> tPrimeMeans);
 
 			virtual bool init(const YAML::Node& configComponent,
-			                  rpwa::massDepFit::parameters& fitParameters,
-			                  rpwa::massDepFit::parameters& fitParametersError,
+			                  rpwa::resonanceFit::parameters& fitParameters,
+			                  rpwa::resonanceFit::parameters& fitParametersError,
 			                  const std::vector<size_t>& nrMassBins,
 			                  const boost::multi_array<double, 2>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -516,15 +516,15 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual bool write(YAML::Emitter& yamlOutput,
-			                   const rpwa::massDepFit::parameters& fitParameters,
-			                   const rpwa::massDepFit::parameters& fitParametersError,
+			                   const rpwa::resonanceFit::parameters& fitParameters,
+			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
 			virtual std::ostream& print(std::ostream& out = std::cout) const;
 
 		private:
 
-			virtual std::complex<double> val(const rpwa::massDepFit::parameters& fitParameters,
+			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
 			                                 const double m) const;
 
@@ -538,16 +538,16 @@ namespace rpwa {
 
 		};
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
 
 inline
 double
-rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
-                                         const double mass,
-                                         const size_t idxMass) const
+rpwa::resonanceFit::channel::getPhaseSpace(const size_t idxBin,
+                                           const double mass,
+                                           const size_t idxMass) const
 {
 	if(idxMass != std::numeric_limits<size_t>::max()) {
 		return _phaseSpace[idxBin][idxMass];
@@ -559,12 +559,12 @@ rpwa::massDepFit::channel::getPhaseSpace(const size_t idxBin,
 
 inline
 std::complex<double>
-rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::parameters& fitParameters,
-                                                   rpwa::massDepFit::cache& cache,
-                                                   const size_t idxChannel,
-                                                   const size_t idxBin,
-                                                   const double mass,
-                                                   const size_t idxMass) const
+rpwa::resonanceFit::component::getCouplingPhaseSpace(const rpwa::resonanceFit::parameters& fitParameters,
+                                                     rpwa::resonanceFit::cache& cache,
+                                                     const size_t idxChannel,
+                                                     const size_t idxBin,
+                                                     const double mass,
+                                                     const size_t idxMass) const
 {
 	if (idxMass != std::numeric_limits<size_t>::max()) {
 		const std::complex<double> couplingPhaseSpace = cache.getCoupling(_id, idxChannel, idxBin, idxMass);
@@ -591,7 +591,7 @@ rpwa::massDepFit::component::getCouplingPhaseSpace(const rpwa::massDepFit::param
 
 inline
 std::ostream&
-rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::component& component)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::component& component)
 {
 	return component.print(out);
 }

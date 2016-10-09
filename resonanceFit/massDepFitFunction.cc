@@ -36,8 +36,8 @@
 #include "reportingUtils.hpp"
 
 
-rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
-                                     const rpwa::massDepFit::function::useCovarianceMatrix useCovariance)
+rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
+                                       const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance)
 	: _fitProductionAmplitudes(fitProductionAmplitudes),
 	  _useCovariance(useCovariance)
 {
@@ -75,14 +75,14 @@ rpwa::massDepFit::function::function(const bool fitProductionAmplitudes,
 
 
 bool
-rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel,
-                                 const std::vector<size_t>& nrMassBins,
-                                 const boost::multi_array<double, 2>& massBinCenters,
-                                 const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-                                 const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
-                                 const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
-                                 const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
-                                 const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
+rpwa::resonanceFit::function::init(const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                   const std::vector<size_t>& nrMassBins,
+                                   const boost::multi_array<double, 2>& massBinCenters,
+                                   const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+                                   const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+                                   const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+                                   const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
+                                   const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
 {
 	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
 		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
@@ -601,14 +601,14 @@ rpwa::massDepFit::function::init(const rpwa::massDepFit::modelConstPtr& fitModel
 
 
 size_t
-rpwa::massDepFit::function::getNrParameters() const
+rpwa::resonanceFit::function::getNrParameters() const
 {
 	return _fitModel->getNrParameters();
 }
 
 
 size_t
-rpwa::massDepFit::function::getNrDataPoints() const
+rpwa::resonanceFit::function::getNrDataPoints() const
 {
 	size_t nrPts(0);
 
@@ -646,27 +646,27 @@ rpwa::massDepFit::function::getNrDataPoints() const
 
 
 double
-rpwa::massDepFit::function::chiSquare(const std::vector<double>& par) const
+rpwa::resonanceFit::function::chiSquare(const std::vector<double>& par) const
 {
 	return chiSquare(par.data());
 }
 
 
 double
-rpwa::massDepFit::function::chiSquare(const double* par) const
+rpwa::resonanceFit::function::chiSquare(const double* par) const
 {
 	// in C++11 we can use a static variable per thread so that the
 	// parameters are kept over function calls and we can implement some
 	// caching
-	thread_local rpwa::massDepFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
-	                                                        _fitModel->getMaxChannelsInComponent(),
-	                                                        _fitModel->getMaxParametersInComponent(),
-	                                                        _nrBins);
-	thread_local rpwa::massDepFit::cache cache(_nrWaves,
-	                                           _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
-	                                           _fitModel->getMaxChannelsInComponent(),
-	                                           _nrBins,
-	                                           _maxMassBins);
+	thread_local rpwa::resonanceFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
+	                                                          _fitModel->getMaxChannelsInComponent(),
+	                                                          _fitModel->getMaxParametersInComponent(),
+	                                                          _nrBins);
+	thread_local rpwa::resonanceFit::cache cache(_nrWaves,
+	                                             _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
+	                                             _fitModel->getMaxChannelsInComponent(),
+	                                             _nrBins,
+	                                             _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_fitModel->importParameters(par, fitParameters, cache);
@@ -676,8 +676,8 @@ rpwa::massDepFit::function::chiSquare(const double* par) const
 
 
 double
-rpwa::massDepFit::function::chiSquare(const rpwa::massDepFit::parameters& fitParameters,
-                                      rpwa::massDepFit::cache& cache) const
+rpwa::resonanceFit::function::chiSquare(const rpwa::resonanceFit::parameters& fitParameters,
+                                        rpwa::resonanceFit::cache& cache) const
 {
 	if(_fitProductionAmplitudes) {
 		return chiSquareProductionAmplitudes(fitParameters, cache);
@@ -688,46 +688,46 @@ rpwa::massDepFit::function::chiSquare(const rpwa::massDepFit::parameters& fitPar
 
 
 double
-rpwa::massDepFit::function::logLikelihood(const std::vector<double>& par) const
+rpwa::resonanceFit::function::logLikelihood(const std::vector<double>& par) const
 {
 	return -0.5 * chiSquare(par);
 }
 
 
 double
-rpwa::massDepFit::function::logLikelihood(const double* par) const
+rpwa::resonanceFit::function::logLikelihood(const double* par) const
 {
 	return -0.5 * chiSquare(par);
 }
 
 
 double
-rpwa::massDepFit::function::logLikelihood(const rpwa::massDepFit::parameters& fitParameters,
-                                          rpwa::massDepFit::cache& cache) const
+rpwa::resonanceFit::function::logLikelihood(const rpwa::resonanceFit::parameters& fitParameters,
+                                            rpwa::resonanceFit::cache& cache) const
 {
 	return -0.5 * chiSquare(fitParameters, cache);
 }
 
 
 double
-rpwa::massDepFit::function::logPriorLikelihood(const std::vector<double>& par) const
+rpwa::resonanceFit::function::logPriorLikelihood(const std::vector<double>& par) const
 {
 	return logPriorLikelihood(par.data());
 }
 
 
 double
-rpwa::massDepFit::function::logPriorLikelihood(const double* par) const
+rpwa::resonanceFit::function::logPriorLikelihood(const double* par) const
 {
-	rpwa::massDepFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
-	                                           _fitModel->getMaxChannelsInComponent(),
-	                                           _fitModel->getMaxParametersInComponent(),
-	                                           _nrBins);
-	rpwa::massDepFit::cache cache(_nrWaves,
-	                              _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
-	                              _fitModel->getMaxChannelsInComponent(),
-	                              _nrBins,
-	                              _maxMassBins);
+	rpwa::resonanceFit::parameters fitParameters(_fitModel->getNrComponents()+1,            // nr components + final-state mass-dependence
+	                                             _fitModel->getMaxChannelsInComponent(),
+	                                             _fitModel->getMaxParametersInComponent(),
+	                                             _nrBins);
+	rpwa::resonanceFit::cache cache(_nrWaves,
+	                                _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
+	                                _fitModel->getMaxChannelsInComponent(),
+	                                _nrBins,
+	                                _maxMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_fitModel->importParameters(par, fitParameters, cache);
@@ -737,13 +737,13 @@ rpwa::massDepFit::function::logPriorLikelihood(const double* par) const
 
 
 double
-rpwa::massDepFit::function::logPriorLikelihood(const rpwa::massDepFit::parameters& fitParameters) const
+rpwa::resonanceFit::function::logPriorLikelihood(const rpwa::resonanceFit::parameters& fitParameters) const
 {
 	double logPrior = 0;
 
 	const size_t nrComponents = _fitModel->getNrComponents();
 	for (size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
-		const rpwa::massDepFit::componentConstPtr& component = _fitModel->getComponent(idxComponent);
+		const rpwa::resonanceFit::componentConstPtr& component = _fitModel->getComponent(idxComponent);
 
 		const size_t nrParameters = component->getNrParameters();
 		for (size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
@@ -764,8 +764,8 @@ rpwa::massDepFit::function::logPriorLikelihood(const rpwa::massDepFit::parameter
 
 
 double
-rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit::parameters& fitParameters,
-                                                          rpwa::massDepFit::cache& cache) const
+rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanceFit::parameters& fitParameters,
+                                                            rpwa::resonanceFit::cache& cache) const
 {
 	double chi2=0;
 
@@ -810,8 +810,8 @@ rpwa::massDepFit::function::chiSquareProductionAmplitudes(const rpwa::massDepFit
 
 
 double
-rpwa::massDepFit::function::chiSquareSpinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-                                                       rpwa::massDepFit::cache& cache) const
+rpwa::resonanceFit::function::chiSquareSpinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
+                                                         rpwa::resonanceFit::cache& cache) const
 {
 	double chi2=0;
 

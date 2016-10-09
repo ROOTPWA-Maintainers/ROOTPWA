@@ -32,7 +32,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class component;
 		typedef std::shared_ptr<component> componentPtr;
@@ -50,7 +50,7 @@ namespace rpwa {
 		typedef std::shared_ptr<model> modelPtr;
 		typedef std::shared_ptr<const model> modelConstPtr;
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 

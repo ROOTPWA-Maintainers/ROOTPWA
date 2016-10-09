@@ -36,7 +36,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class cache {
 
@@ -67,16 +67,16 @@ namespace rpwa {
 
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::cache& cache);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::cache& cache);
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
 
 inline
 std::ostream&
-rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::cache& cache)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::cache& cache)
 {
 	return cache.print(out);
 }

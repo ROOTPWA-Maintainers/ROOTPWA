@@ -43,7 +43,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class cache;
 		class component;
@@ -56,7 +56,7 @@ namespace rpwa {
 
 			model();
 
-			void add(const rpwa::massDepFit::componentPtr& comp);
+			void add(const rpwa::resonanceFit::componentPtr& comp);
 
 			bool init(const size_t nrBins,
 			          const std::vector<std::string>& waveNames,
@@ -68,14 +68,14 @@ namespace rpwa {
 
 			size_t getNrParameters() const { return _nrParameters; }
 			void importParameters(const double* par,
-			                      rpwa::massDepFit::parameters& parameters,
-			                      rpwa::massDepFit::cache& cache) const;
+			                      rpwa::resonanceFit::parameters& parameters,
+			                      rpwa::resonanceFit::cache& cache) const;
 
 			size_t getNrComponents() const { return _components.size(); }
-			rpwa::massDepFit::componentConstPtr getComponent(size_t idxComponent) const { return _components[idxComponent]; }
+			rpwa::resonanceFit::componentConstPtr getComponent(size_t idxComponent) const { return _components[idxComponent]; }
 
-			rpwa::massDepFit::fsmdConstPtr getFsmd() const { return _fsmd; }
-			void setFsmd(const rpwa::massDepFit::fsmdPtr& fsmd);
+			rpwa::resonanceFit::fsmdConstPtr getFsmd() const { return _fsmd; }
+			void setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd);
 
 			size_t getMaxChannelsInComponent() const { return _maxChannelsInComponent; }
 			size_t getMaxParametersInComponent() const { return _maxParametersInComponent; }
@@ -84,33 +84,33 @@ namespace rpwa {
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(const size_t idxBin, const size_t idxWave) const { return _waveComponentChannel[idxBin][idxWave]; }
 
-			std::complex<double> productionAmplitude(const rpwa::massDepFit::parameters& fitParameters,
-			                                         rpwa::massDepFit::cache& cache,
+			std::complex<double> productionAmplitude(const rpwa::resonanceFit::parameters& fitParameters,
+			                                         rpwa::resonanceFit::cache& cache,
 			                                         const size_t idxWave,
 			                                         const size_t idxBin,
 			                                         const double mass,
 			                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double intensity(const rpwa::massDepFit::parameters& fitParameters,
-			                 rpwa::massDepFit::cache& cache,
+			double intensity(const rpwa::resonanceFit::parameters& fitParameters,
+			                 rpwa::resonanceFit::cache& cache,
 			                 const size_t idxWave,
 			                 const size_t idxBin,
 			                 const double mass,
 			                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double phaseAbsolute(const rpwa::massDepFit::parameters& fitParameters,
-			                     rpwa::massDepFit::cache& cache,
+			double phaseAbsolute(const rpwa::resonanceFit::parameters& fitParameters,
+			                     rpwa::resonanceFit::cache& cache,
 			                     const size_t idxWave,
 			                     const size_t idxBin,
 			                     const double mass,
 			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			std::complex<double> spinDensityMatrix(const rpwa::massDepFit::parameters& fitParameters,
-			                                       rpwa::massDepFit::cache& cache,
+			std::complex<double> spinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
+			                                       rpwa::resonanceFit::cache& cache,
 			                                       const size_t idxWave,
 			                                       const size_t jdxWave,
 			                                       const size_t idxBin,
 			                                       const double mass,
 			                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-			double phase(const rpwa::massDepFit::parameters& fitParameters,
-			             rpwa::massDepFit::cache& cache,
+			double phase(const rpwa::resonanceFit::parameters& fitParameters,
+			             rpwa::resonanceFit::cache& cache,
 			             const size_t idxWave,
 			             const size_t jdxWave,
 			             const size_t idxBin,
@@ -129,9 +129,9 @@ namespace rpwa {
 
 			bool _mappingEqualInAllBins;
 
-			std::vector<rpwa::massDepFit::componentPtr> _components;
+			std::vector<rpwa::resonanceFit::componentPtr> _components;
 
-			rpwa::massDepFit::fsmdPtr _fsmd;
+			rpwa::resonanceFit::fsmdPtr _fsmd;
 
 			size_t _nrParameters;
 			size_t _maxChannelsInComponent;
@@ -145,16 +145,16 @@ namespace rpwa {
 
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::model& fitModel);
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
 
 inline
 std::ostream&
-rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::model& fitModel)
 {
 	return fitModel.print(out);
 }

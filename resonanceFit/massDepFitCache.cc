@@ -29,11 +29,11 @@
 #include "massDepFitCache.h"
 
 
-rpwa::massDepFit::cache::cache(const size_t maxWaves,
-                               const size_t maxComponents,
-                               const size_t maxChannels,
-                               const size_t maxBins,
-                               const size_t maxMassBins)
+rpwa::resonanceFit::cache::cache(const size_t maxWaves,
+                                 const size_t maxComponents,
+                                 const size_t maxChannels,
+                                 const size_t maxBins,
+                                 const size_t maxMassBins)
 	: _couplings(boost::extents[maxComponents][maxChannels][maxBins][maxMassBins]),
 	  _components(boost::extents[maxComponents][maxBins][maxMassBins]),
 	  _prodAmps(boost::extents[maxWaves][maxBins][maxMassBins])
@@ -42,11 +42,11 @@ rpwa::massDepFit::cache::cache(const size_t maxWaves,
 
 
 void
-rpwa::massDepFit::cache::setCoupling(const size_t idxComponent,
-                                     const size_t idxChannel,
-                                     const size_t idxBin,
-                                     const size_t idxMassBin,
-                                     const std::complex<double> coupling)
+rpwa::resonanceFit::cache::setCoupling(const size_t idxComponent,
+                                       const size_t idxChannel,
+                                       const size_t idxBin,
+                                       const size_t idxMassBin,
+                                       const std::complex<double> coupling)
 {
 	if (idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
 		for (size_t idx=0; idx<*(_couplings.shape()+2) ; ++idx) {
@@ -69,10 +69,10 @@ rpwa::massDepFit::cache::setCoupling(const size_t idxComponent,
 
 
 void
-rpwa::massDepFit::cache::setComponent(const size_t idxComponent,
-                                      const size_t idxBin,
-                                      const size_t idxMassBin,
-                                      const std::complex<double> component)
+rpwa::resonanceFit::cache::setComponent(const size_t idxComponent,
+                                        const size_t idxBin,
+                                        const size_t idxMassBin,
+                                        const std::complex<double> component)
 {
 	if (idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
 		for (size_t idx=0; idx<*(_components.shape()+1) ; ++idx) {
@@ -95,10 +95,10 @@ rpwa::massDepFit::cache::setComponent(const size_t idxComponent,
 
 
 void
-rpwa::massDepFit::cache::setProdAmp(const size_t idxWave,
-                                    const size_t idxBin,
-                                    const size_t idxMassBin,
-                                    const std::complex<double> prodAmp)
+rpwa::resonanceFit::cache::setProdAmp(const size_t idxWave,
+                                      const size_t idxBin,
+                                      const size_t idxMassBin,
+                                      const std::complex<double> prodAmp)
 {
 	if (idxWave == std::numeric_limits<size_t>::max() && idxBin == std::numeric_limits<size_t>::max() && idxMassBin == std::numeric_limits<size_t>::max()) {
 		for (size_t idx=0; idx<*(_prodAmps.shape()) ; ++idx) {
@@ -145,7 +145,7 @@ rpwa::massDepFit::cache::setProdAmp(const size_t idxWave,
 
 
 std::ostream&
-rpwa::massDepFit::cache::print(std::ostream& out) const
+rpwa::resonanceFit::cache::print(std::ostream& out) const
 {
 	out << "cache for couplings: "
 	    << *(_couplings.shape()) << " components, "

@@ -36,7 +36,7 @@
 
 namespace rpwa {
 
-	namespace massDepFit {
+	namespace resonanceFit {
 
 		class parameters {
 
@@ -75,16 +75,16 @@ namespace rpwa {
 
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::parameters& parameters);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::parameters& parameters);
 
-	} // end namespace massDepFit
+	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
 
 inline
 std::ostream&
-rpwa::massDepFit::operator<< (std::ostream& out, const rpwa::massDepFit::parameters& parameters)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::parameters& parameters)
 {
 	return parameters.print(out);
 }
