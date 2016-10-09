@@ -54,13 +54,13 @@ void
 usage(const std::string& progName,
       const int     errCode = 0)
 {
-	std::cerr << "performs mass-dependent fit" << std::endl
+	std::cerr << "performs resonance fit" << std::endl
 	          << std::endl
 	          << "usage:" << std::endl
 	          << progName
 	          << " [-o outfile -c # -M minimizer -m algorithm -g # -t # -P -R -F # -A -B -C # -d -q -h] config file" << std::endl
 	          << "    where:" << std::endl
-	          << "        -o file    path to output file (default: 'mDep.result.root')" << std::endl
+	          << "        -o file    path to output file (default: 'resonanceFit.result.root')" << std::endl
 	          << "        -c #       maximal number of function calls (default: depends on number of parameters)" << std::endl
 	          << "        -M name    minimizer (default: Minuit2)" << std::endl
 	          << "        -m name    minimization algorithm (optional, default: Migrad)" << std::endl
@@ -113,11 +113,11 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const std::string progName                 = argv[0];
-	std::string       outFileName              = "mDep.result.root";     // output filename
+	std::string       outFileName              = "resonanceFit.result.root";  // output filename
 	unsigned int      maxNumberOfFunctionCalls = 0;
-	std::string       minimizerType[2]         = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-	int               minimizerStrategy        = 1;                      // minimizer strategy
-	double            minimizerTolerance       = 1e-10;                  // minimizer tolerance
+	std::string       minimizerType[2]         = {"Minuit2", "Migrad"};       // minimizer, minimization algorithm
+	int               minimizerStrategy        = 1;                           // minimizer strategy
+	double            minimizerTolerance       = 1e-10;                       // minimizer tolerance
 	bool              onlyPlotting             = false;
 	bool              rangePlotting            = false;
 	size_t            extraBinning             = 1;
