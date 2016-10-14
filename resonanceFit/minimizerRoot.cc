@@ -214,6 +214,11 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 		fitQuality["covMatrixStatus"] = _minimizer->CovMatrixStatus();
 	}
 
+	if(_maxNmbOfFunctionCalls == 0) {
+		fitQuality["continue"] = 1.0;
+		printWarn << "maximum allowed number of function calls exceeded." << std::endl;
+	}
+
 	fitQuality["chi2"] = _functionAdaptor(_minimizer->X());
 	printInfo << "chi2 =" << rpwa::maxPrecisionAlign(fitQuality["chi2"]) << std::endl;
 
