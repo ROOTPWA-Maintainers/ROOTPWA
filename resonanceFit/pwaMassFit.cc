@@ -301,7 +301,12 @@ main(int    argc,
 	if(debug) {
 		printDebug << "name of output ROOT file: '" << rootFileName << "'." << std::endl;
 	}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+	// should be replaced by std::unique_ptr once we make C++11 compatible compiler mandatory
+	// see http://stackoverflow.com/questions/3451099/stdauto-ptr-to-stdunique-ptr
 	std::auto_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
+#pragma GCC diagnostic pop
 	if(outFile.get() == NULL || outFile->IsZombie()) {
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;

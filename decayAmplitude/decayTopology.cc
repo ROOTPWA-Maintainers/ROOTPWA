@@ -145,9 +145,10 @@ decayTopology::doClone(const bool cloneFsParticles,
 		// clone vertex
 		if (   isDecayVertex(vert)
 		    or isProductionVertex(vert)
-		    or (cloneFsParticles and isFsVertex(vert)))
+		    or (cloneFsParticles and isFsVertex(vert))) {
 			topoClone->isDecayVertex(vert);
-			newVerts.push_back(topoClone->cloneNode(*iNd));
+		}
+		newVerts.push_back(topoClone->cloneNode(*iNd));
 	}
 	// looping over incoming particles of respective vertices and clone them
 	// this also clones dangling particles that have no associated edge

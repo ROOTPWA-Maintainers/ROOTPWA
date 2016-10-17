@@ -125,7 +125,7 @@ In case you do not have administrator privileges, the easiest way to install yam
     > git clone https://github.com/jbeder/yaml-cpp.git
     > cd yaml-cpp
     > mkdir build; cd build
-    > cmake .. -DBUILD_SHARED_LIBS=ON
+    > cmake -DBUILD_SHARED_LIBS=ON ..
     > make
 
 Like ROOTPWA also yaml-cpp relies on Boost. By default the yaml-cpp build system prefers the system-installed Boost version, if present. In case you run into problems when compiling ROOTPWA that point to yaml-cpp and Boost, consider running `cmake` with the `-DBoost_NO_SYSTEM_PATHS=ON` flag in order to force CMake to use the Boost libraries pointed to by the `BOOST_ROOT` environment variable (see also "Compiling Boost Library" above).
