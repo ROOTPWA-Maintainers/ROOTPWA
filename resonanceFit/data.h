@@ -35,6 +35,10 @@
 
 #include <boost/multi_array.hpp>
 
+#include <TMatrixT.h>
+
+#include "function.h"
+
 namespace rpwa {
 
 	namespace resonanceFit {
@@ -44,19 +48,35 @@ namespace rpwa {
 		public:
 
 			data(const std::vector<size_t>& nrMassBins,
-			     const boost::multi_array<double, 2>& massBinCenters);
+			     const boost::multi_array<double, 2>& massBinCenters,
+			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+			     const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
+			     const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance);
 			~data() {}
 
 			size_t nrBins() const { return _nrMassBins.size(); }
 			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
+			size_t nrWaves() const { return *(_productionAmplitudes.shape()+2); }
 
 			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
 			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
+
+			const boost::multi_array<std::complex<double>, 3>& productionAmplitudes() const { return _productionAmplitudes; }
+			const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv() const { return _productionAmplitudesCovMatInv; }
+
+			rpwa::resonanceFit::function::useCovarianceMatrix useCovariance() const { return _useCovariance; }
 
 		private:
 
 			std::vector<size_t> _nrMassBins;
 			boost::multi_array<double, 2> _massBinCenters;
+
+			// data used for fitting
+
+			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
+			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
+
+			rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
 
 		};
 

@@ -77,13 +77,36 @@ namespace {
 	}
 
 
+	template<typename T, const size_t dim = 0>
+	void
+	checkSize(const boost::multi_array<T, 3+dim>& obj,
+	          const size_t dim1,
+	          const std::string& msg1,
+	          const size_t dim2,
+	          const std::string& msg2,
+	          const size_t dim3,
+	          const std::string& msg3)
+	{
+		if(dim1 != *(obj.shape()+dim)) {
+			printErr << msg1 << " expected: " << dim1 << ", found: " << *(obj.shape()+dim) << ". Aborting..." << std::endl;
+			throw;
+		}
+		checkSize<T, dim+1>(obj, dim2, msg2, dim3, msg3);
+	}
+
+
 }
 
 
 rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
-                               const boost::multi_array<double, 2>& massBinCenters)
+                               const boost::multi_array<double, 2>& massBinCenters,
+                               const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+                               const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
+                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance)
 	: _nrMassBins(nrMassBins),
-	  _massBinCenters(massBinCenters)
+	  _massBinCenters(massBinCenters),
+	  _productionAmplitudes(productionAmplitudes),
+	  _useCovariance(useCovariance)
 {
 	// get dimensions from one array and make sure that all other arrays
 	// have the same dimensions
@@ -99,9 +122,45 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 		throw;
 	}
 
+	const size_t nrWaves = *(_productionAmplitudes.shape()+2);
+	if(nrWaves == 0) {
+		printErr << "number of waves is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
 	checkSize(_nrMassBins,
 	          nrBins, "number of bins is not correct for number of mass bins.");
 	checkSize(_massBinCenters,
 	          nrBins, "number of bins is not correct for centers of mass bins.",
 	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+
+	checkSize(_productionAmplitudes,
+	          nrBins, "number of bins is not correct for production amplitudes.",
+	          maxMassBins, "maximal number of mass bins is not correct for production amplitudes.",
+	          nrWaves, "number of waves is not correct for production amplitudes.");
+
+	// TMatrixT<double>::operator= does not adjust the size of matrices
+	_productionAmplitudesCovMatInv.resize(std::vector<size_t>(productionAmplitudesCovMatInv.shape(), productionAmplitudesCovMatInv.shape()+productionAmplitudesCovMatInv.num_dimensions()));
+	checkSize(_productionAmplitudesCovMatInv,
+	          nrBins, "number of bins is not correct for inverted covariance matrices of production amplitudes.",
+	          maxMassBins, "maximal number of mass bins is not correct for inverted covariance matrices of production amplitudes.");
+	for(size_t idxBin = 0; idxBin < *(productionAmplitudesCovMatInv.shape()); ++idxBin) {
+		for(size_t idxMass = 0; idxMass < *(productionAmplitudesCovMatInv.shape()+1); ++idxMass) {
+			if(productionAmplitudesCovMatInv[idxBin][idxMass].GetNrows() == 0 and productionAmplitudesCovMatInv[idxBin][idxMass].GetNcols() == 0) {
+				continue;
+			}
+
+			_productionAmplitudesCovMatInv[idxBin][idxMass].ResizeTo(productionAmplitudesCovMatInv[idxBin][idxMass]);
+			_productionAmplitudesCovMatInv[idxBin][idxMass] = productionAmplitudesCovMatInv[idxBin][idxMass];
+
+			if((Int_t)(2*nrWaves) != _productionAmplitudesCovMatInv[idxBin][idxMass].GetNrows()) {
+				printErr << "number of waves is not correct for inverted covariance matrices of production amplitudes. Aborting..." << std::endl;
+				throw;
+			}
+			if((Int_t)(2*nrWaves) != _productionAmplitudesCovMatInv[idxBin][idxMass].GetNcols()) {
+				printErr << "number of waves is not correct for inverted covariance matrices of production amplitudes. Aborting..." << std::endl;
+				throw;
+			}
+		}
+	}
 }

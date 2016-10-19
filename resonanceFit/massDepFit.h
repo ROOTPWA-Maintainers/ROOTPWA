@@ -43,6 +43,7 @@
 #include <TMatrixT.h>
 
 #include "forward.h"
+#include "function.h"
 
 namespace YAML {
 	class Emitter;
@@ -74,6 +75,7 @@ namespace rpwa {
 			                rpwa::resonanceFit::parameters& fitParametersError,
 			                std::map<std::string, double>& fitQuality,
 			                const bool useBranchings,
+			                const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -168,11 +170,15 @@ namespace rpwa {
 
 			bool readInFiles(std::vector<size_t>& nrMassBins,
 			                 boost::multi_array<double, 2>& massBinCenters,
+			                 boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+			                 boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			                 const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
 			                std::vector<size_t>& nrMassBins,
 			                boost::multi_array<double, 2>& massBinCenters,
+			                boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
+			                boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
@@ -275,8 +281,6 @@ namespace rpwa {
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
 
-			boost::multi_array<std::complex<double>, 3> _inProductionAmplitudes;
-			boost::multi_array<TMatrixT<double>, 2> _inProductionAmplitudesCovariance;
 			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;

@@ -243,7 +243,7 @@ main(int    argc,
 	rpwa::resonanceFit::parameters fitParameters;
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
-	if(not mdepFit.readConfig(configRoot, fitData, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, fitData, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, doCov, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}

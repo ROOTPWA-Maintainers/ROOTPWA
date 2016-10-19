@@ -69,8 +69,6 @@ namespace rpwa {
 
 			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
 			          const rpwa::resonanceFit::modelConstPtr& fitModel,
-			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-			          const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
 			          const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
 			          const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits);
@@ -108,9 +106,6 @@ namespace rpwa {
 
 			std::vector<size_t> _idxMassMin;
 			std::vector<size_t> _idxMassMax;
-
-			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
-			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
 
 			boost::multi_array<std::complex<double>, 4> _spinDensityMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _spinDensityMatricesCovMatInv;
