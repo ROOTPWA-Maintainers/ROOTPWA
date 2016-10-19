@@ -209,6 +209,15 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 				const double error = configParameter["error"].as<double>();
 				_parametersError[idxParameter] = error;
 				fitParametersError.setParameter(getId(), idxParameter, error);
+			} else if(checkVariableType(configParameter["error"], YamlCppUtils::TypeString) and configParameter["error"].as<std::string>() == "nan") {
+				// some systems cannot convert the string 'nan'
+				// to a floating point number, so this is to be
+				// done manually. in any case this does not
+				// really matter as the error is usually not
+				// used.
+				const double error = std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0;
+				_parametersError[idxParameter] = error;
+				fitParametersError.setParameter(getId(), idxParameter, error);
 			} else {
 				printErr << "variable 'error' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
 				return false;
