@@ -70,4 +70,4 @@ make_shared_library(
 	)
 
 
-make_executable(resonanceFit resonanceFit.cc ${THIS_LIB})
+make_executable(resonanceFit resonanceFitExe.cc ${THIS_LIB})
