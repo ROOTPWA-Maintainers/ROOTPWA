@@ -191,6 +191,17 @@ main(int    argc,
 		}
 	}
 
+	// if useCovariance has not been overwritten from the command line set
+	// reasonable defaults depending on what to fit to
+	if(doCov == rpwa::resonanceFit::function::useCovarianceMatrixDefault) {
+		if(doProdAmp) {
+			doCov = rpwa::resonanceFit::function::useFullCovarianceMatrix;
+		} else {
+			doCov = rpwa::resonanceFit::function::useComplexDiagnalElementsOnly;
+		}
+	}
+	assert(doCov != rpwa::resonanceFit::function::useCovarianceMatrixDefault);
+
 	// there must only be one remaining (unhandled) argument which is the
 	// configuration file
 	if(optind+1 != argc) {

@@ -124,7 +124,7 @@ namespace rpwa {
 			size_t _idxAnchorWave;
 
 			const bool _fitProductionAmplitudes;
-			rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
+			const rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
 
 		};
 

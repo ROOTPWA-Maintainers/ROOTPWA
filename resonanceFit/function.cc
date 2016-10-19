@@ -42,17 +42,6 @@ rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
 	: _fitProductionAmplitudes(fitProductionAmplitudes),
 	  _useCovariance(useCovariance)
 {
-	// if useCovariance has not been overwritten from the command line set
-	// reasonable defaults depending on what to fit to
-	if (_useCovariance == useCovarianceMatrixDefault) {
-		if (fitProductionAmplitudes) {
-			_useCovariance = useFullCovarianceMatrix;
-		} else {
-			_useCovariance = useComplexDiagnalElementsOnly;
-		}
-	}
-	assert(_useCovariance != useCovarianceMatrixDefault);
-
 	std::ostringstream output;
 	output << "created 'function' object for a fit to the ";
 	if (fitProductionAmplitudes) {
