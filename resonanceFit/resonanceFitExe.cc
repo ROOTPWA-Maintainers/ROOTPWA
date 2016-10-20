@@ -229,11 +229,6 @@ main(int    argc,
 	rpwa::resonanceFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
-	rpwa::resonanceFit::informationConstPtr fitInformation;
-	rpwa::resonanceFit::dataConstPtr fitData;
-	rpwa::resonanceFit::modelConstPtr fitModel;
-	rpwa::resonanceFit::functionPtr fitFunction(new rpwa::resonanceFit::function(doProdAmp, doCov));
-
 	YAML::Node configRoot;
 	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
 		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
@@ -241,6 +236,9 @@ main(int    argc,
 	}
 
 	// read configuration file
+	rpwa::resonanceFit::informationConstPtr fitInformation;
+	rpwa::resonanceFit::dataConstPtr fitData;
+	rpwa::resonanceFit::modelConstPtr fitModel;
 	rpwa::resonanceFit::parameters fitParameters;
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
@@ -262,10 +260,11 @@ main(int    argc,
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(fitData,
-	                    fitModel,
-	                    fitFunction)) {
-		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
+	rpwa::resonanceFit::functionConstPtr fitFunction(new rpwa::resonanceFit::function(fitData,
+	                                                                                  fitModel,
+	                                                                                  doProdAmp));
+	if(not fitFunction) {
+		printErr << "error while initializing the function to minimize." << std::endl;
 		return 1;
 	}
 

@@ -60,12 +60,10 @@ namespace rpwa {
 				useCovarianceMatrixDefault
 			};
 
-			function(const bool fitProductionAmplitudes,
-			         const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance);
+			function(const rpwa::resonanceFit::dataConstPtr& fitData,
+			         const rpwa::resonanceFit::modelConstPtr& fitModel,
+			         const bool useProductionAmplitudes);
 			~function() {}
-
-			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
-			          const rpwa::resonanceFit::modelConstPtr& fitModel);
 
 			size_t getNrParameters() const;
 			size_t getNrDataPoints() const;
@@ -91,19 +89,17 @@ namespace rpwa {
 			double chiSquareSpinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
 			                                  rpwa::resonanceFit::cache& cache) const;
 
-			rpwa::resonanceFit::dataConstPtr _fitData;
-			rpwa::resonanceFit::modelConstPtr _fitModel;
+			const rpwa::resonanceFit::dataConstPtr _fitData;
+			const rpwa::resonanceFit::modelConstPtr _fitModel;
 
-			size_t _nrBins;
-			size_t _maxMassBins;
-			size_t _nrWaves;
+			const size_t _nrBins;
+			const size_t _maxMassBins;
+			const size_t _nrWaves;
 
 			std::vector<size_t> _idxMassMin;
 			std::vector<size_t> _idxMassMax;
 
-			size_t _idxAnchorWave;
-
-			const bool _fitProductionAmplitudes;
+			const bool _useProductionAmplitudes;
 			const rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
 
 		};
