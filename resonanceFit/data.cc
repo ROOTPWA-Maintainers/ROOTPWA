@@ -120,6 +120,7 @@ namespace {
 
 rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<double, 2>& massBinCenters,
+                               const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
                                const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
                                const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
@@ -135,6 +136,7 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases)
 	: _nrMassBins(nrMassBins),
 	  _massBinCenters(massBinCenters),
+	  _wavePairMassBinLimits(wavePairMassBinLimits),
 	  _productionAmplitudes(productionAmplitudes),
 	  _spinDensityMatrixElements(spinDensityMatrixElements),
 	  _useCovariance(useCovariance),
@@ -172,6 +174,11 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	checkSize(_massBinCenters,
 	          nrBins, "number of bins is not correct for centers of mass bins.",
 	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+
+	checkSize(_wavePairMassBinLimits,
+	          nrBins, "number of bins is not correct for bin ranges of wave pairs.",
+	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.",
+	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.");
 
 	checkSize(_productionAmplitudes,
 	          nrBins, "number of bins is not correct for production amplitudes.",
