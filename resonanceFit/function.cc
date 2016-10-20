@@ -69,8 +69,7 @@ rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
 
 bool
 rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitData,
-                                   const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                   const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
+                                   const rpwa::resonanceFit::modelConstPtr& fitModel)
 {
 	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
 		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
@@ -79,9 +78,6 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitDa
 
 	_fitData = fitData;
 	_fitModel = fitModel;
-
-	_wavePairMassBinLimits.resize(std::vector<size_t>(wavePairMassBinLimits.shape(), wavePairMassBinLimits.shape()+wavePairMassBinLimits.num_dimensions()));
-	_wavePairMassBinLimits = wavePairMassBinLimits;
 
 	_idxAnchorWave = _fitModel->getAnchorWave();
 
@@ -95,8 +91,8 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitDa
 		_idxMassMin[idxBin] = _fitData->nrMassBins()[idxBin];
 		_idxMassMax[idxBin] = 0;
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
-			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
+			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first);
+			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second);
 		}
 	}
 
@@ -123,9 +119,9 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 		// * remember (Re,Im) => factor 2
 		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
-				nrPts += _wavePairMassBinLimits[idxBin][idxWave][idxWave].second - _wavePairMassBinLimits[idxBin][idxWave][idxWave].first + 1;
+				nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
 				if(idxWave != _idxAnchorWave) {
-					nrPts += _wavePairMassBinLimits[idxBin][idxWave][idxWave].second - _wavePairMassBinLimits[idxBin][idxWave][idxWave].first + 1;
+					nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
 				}
 			}
 		}
@@ -139,7 +135,7 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
 				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
-					nrPts += _wavePairMassBinLimits[idxBin][idxWave][jdxWave].second - _wavePairMassBinLimits[idxBin][idxWave][jdxWave].first + 1;
+					nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].first + 1;
 				}
 			}
 		}
@@ -289,7 +285,7 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 				// check that this mass bin should be taken into account for this
 				// combination of waves
-				if(idxMass < _wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
+				if(idxMass < _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first or idxMass > _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second) {
 					continue;
 				}
 
@@ -330,7 +326,7 @@ rpwa::resonanceFit::function::chiSquareSpinDensityMatrix(const rpwa::resonanceFi
 				for(size_t jdxWave=idxWave; jdxWave<_nrWaves; ++jdxWave) {
 					// check that this mass bin should be taken into account for this
 					// combination of waves
-					if(idxMass < _wavePairMassBinLimits[idxBin][idxWave][jdxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][jdxWave].second) {
+					if(idxMass < _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].first or idxMass > _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].second) {
 						continue;
 					}
 

@@ -110,10 +110,11 @@ namespace rpwa {
 		private:
 
 			bool prepareMassLimits(const std::vector<size_t>& nrMassBins,
-			                       const boost::multi_array<double, 2>& massBinCenters);
+			                       const boost::multi_array<double, 2>& massBinCenters,
+			                       boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits);
 			bool prepareMassLimit(const size_t nrMassBins,
 			                      const boost::multi_array<double, 1>& massBinCenters,
-			                      const size_t idxBin);
+			                      boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
 
 			bool readConfigFitquality(const YAML::Node& configFitquality,
 			                          std::map<std::string, double>& fitQuality) const;
@@ -299,8 +300,6 @@ namespace rpwa {
 			std::map<std::string, size_t> _waveIndices;
 			std::map<std::string, std:: vector<size_t> > _waveBins;
 			std::vector<std::pair<double, double> > _waveMassLimits;
-			boost::multi_array<std::pair<size_t, size_t>, 2> _waveMassBinLimits;
-			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 
 			std::vector<std::string> _freeParameters;
 

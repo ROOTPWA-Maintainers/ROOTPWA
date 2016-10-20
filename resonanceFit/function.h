@@ -65,8 +65,7 @@ namespace rpwa {
 			~function() {}
 
 			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
-			          const rpwa::resonanceFit::modelConstPtr& fitModel,
-			          const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits);
+			          const rpwa::resonanceFit::modelConstPtr& fitModel);
 
 			size_t getNrParameters() const;
 			size_t getNrDataPoints() const;
@@ -101,8 +100,6 @@ namespace rpwa {
 
 			std::vector<size_t> _idxMassMin;
 			std::vector<size_t> _idxMassMax;
-
-			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 
 			size_t _idxAnchorWave;
 
