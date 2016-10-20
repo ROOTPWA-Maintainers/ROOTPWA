@@ -51,7 +51,15 @@ namespace rpwa {
 			     const boost::multi_array<double, 2>& massBinCenters,
 			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			     const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
-			     const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance);
+			     const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+			     const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+			     const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+			     const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+			     const boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+			     const boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+			     const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+			     const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+			     const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases);
 			~data() {}
 
 			size_t nrBins() const { return _nrMassBins.size(); }
@@ -66,6 +74,16 @@ namespace rpwa {
 
 			rpwa::resonanceFit::function::useCovarianceMatrix useCovariance() const { return _useCovariance; }
 
+			const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities() const { return _plottingIntensities; }
+			const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal() const { return _plottingSpinDensityMatrixElementsReal; }
+			const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag() const { return _plottingSpinDensityMatrixElementsImag; }
+			const boost::multi_array<std::pair<double, double>, 4>& plottingPhases() const { return _plottingPhases; }
+
+			const boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities() const { return _sysPlottingIntensities; }
+			const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal() const { return _sysPlottingSpinDensityMatrixElementsReal; }
+			const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag() const { return _sysPlottingSpinDensityMatrixElementsImag; }
+			const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases() const { return _sysPlottingPhases; }
+
 		private:
 
 			std::vector<size_t> _nrMassBins;
@@ -77,6 +95,18 @@ namespace rpwa {
 			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
 
 			rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
+
+			// data used for plotting
+
+			boost::multi_array<std::pair<double, double>, 3> _plottingIntensities;
+			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsReal;
+			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsImag;
+			boost::multi_array<std::pair<double, double>, 4> _plottingPhases;
+
+			boost::multi_array<std::pair<double, double>, 3> _sysPlottingIntensities;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsReal;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsImag;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingPhases;
 
 		};
 

@@ -537,6 +537,7 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 rpwa::resonanceFit::massDepFit::massDepFit()
 	: _sameMassBinning(true),
+	  _nrBins(0),
 	  _maxMassBins(0),
 	  _nrWaves(0)
 {
@@ -582,10 +583,26 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	boost::multi_array<double, 2> massBinCenters;
 	boost::multi_array<std::complex<double>, 3> inProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 2> inProductionAmplitudesCovariance;
+	boost::multi_array<std::pair<double, double>, 3> inPlottingIntensities;
+	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsReal;
+	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsImag;
+	boost::multi_array<std::pair<double, double>, 4> inPlottingPhases;
+	boost::multi_array<std::pair<double, double>, 3> inSysPlottingIntensities;
+	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
+	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
+	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
 	if(not readInFiles(nrMassBins,
 	                   massBinCenters,
 	                   inProductionAmplitudes,
 	                   inProductionAmplitudesCovariance,
+	                   inPlottingIntensities,
+	                   inPlottingSpinDensityMatrixElementsReal,
+	                   inPlottingSpinDensityMatrixElementsImag,
+	                   inPlottingPhases,
+	                   inSysPlottingIntensities,
+	                   inSysPlottingSpinDensityMatrixElementsReal,
+	                   inSysPlottingSpinDensityMatrixElementsImag,
+	                   inSysPlottingPhases,
 	                   valTreeName,
 	                   valBranchName)) {
 		printErr << "error while reading fit result." << std::endl;
@@ -633,7 +650,15 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                                           massBinCenters,
 	                                           inProductionAmplitudes,
 	                                           inProductionAmplitudesCovariance,
-	                                           useCovariance));
+	                                           useCovariance,
+	                                           inPlottingIntensities,
+	                                           inPlottingSpinDensityMatrixElementsReal,
+	                                           inPlottingSpinDensityMatrixElementsImag,
+	                                           inPlottingPhases,
+	                                           inSysPlottingIntensities,
+	                                           inSysPlottingSpinDensityMatrixElementsReal,
+	                                           inSysPlottingSpinDensityMatrixElementsImag,
+	                                           inSysPlottingPhases));
 
 	return true;
 }
@@ -1626,18 +1651,34 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
                                             boost::multi_array<double, 2>& massBinCenters,
                                             boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                             boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+                                            boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+                                            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+                                            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+                                            boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+                                            boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases,
                                             const std::string& valTreeName,
                                             const std::string& valBranchName)
 {
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 		boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 		boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
+		boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
+		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
+		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
+		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
 		if(not readInFile(idxBin,
 		                  nrMassBins,
 		                  massBinCenters,
 		                  tempProductionAmplitudes,
 		                  tempProductionAmplitudesCovariance,
+		                  tempPlottingIntensities,
+		                  tempPlottingSpinDensityMatrixElementsReal,
+		                  tempPlottingSpinDensityMatrixElementsImag,
+		                  tempPlottingPhases,
 		                  valTreeName,
 		                  valBranchName)) {
 			printErr << "error while reading file entry " << idxBin << "." << std::endl;
@@ -1646,21 +1687,30 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 
 		adjustSizeAndSet(productionAmplitudes, idxBin, tempProductionAmplitudes);
 		adjustSizeAndSet(productionAmplitudesCovariance, idxBin, tempProductionAmplitudesCovariance);
+		adjustSizeAndSet(plottingIntensities, idxBin, tempPlottingIntensities);
+		adjustSizeAndSet(plottingSpinDensityMatrixElementsReal, idxBin, tempPlottingSpinDensityMatrixElementsReal);
+		adjustSizeAndSet(plottingSpinDensityMatrixElementsImag, idxBin, tempPlottingSpinDensityMatrixElementsImag);
+		adjustSizeAndSet(plottingPhases, idxBin, tempPlottingPhases);
 
 		// extract information for systematic errors
 		// initialize with real fit result
+		boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities(std::vector<size_t>(tempPlottingIntensities.shape(), tempPlottingIntensities.shape()+tempPlottingIntensities.num_dimensions()));
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsReal.shape(), tempPlottingSpinDensityMatrixElementsReal.shape()+tempPlottingSpinDensityMatrixElementsReal.num_dimensions()));
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsImag.shape(), tempPlottingSpinDensityMatrixElementsImag.shape()+tempPlottingSpinDensityMatrixElementsImag.num_dimensions()));
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases(std::vector<size_t>(tempPlottingPhases.shape(), tempPlottingPhases.shape()+tempPlottingPhases.num_dimensions()));
+
 		for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
 			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
-				_sysPlottingIntensities[idxBin][idxMass][idxWave] = std::make_pair(_plottingIntensities[idxBin][idxMass][idxWave].first,
-				                                                                   _plottingIntensities[idxBin][idxMass][idxWave].first);
+				tempSysPlottingIntensities[idxMass][idxWave] = std::make_pair(tempPlottingIntensities[idxMass][idxWave].first,
+				                                                              tempPlottingIntensities[idxMass][idxWave].first);
 
 				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
-					_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first,
-					                                                                                              _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first);
-					_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first,
-					                                                                                              _plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first);
-					_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingPhases[idxBin][idxMass][idxWave][jdxWave].first,
-					                                                                       _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first);
+					tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
+					                                                                                         tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+					tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
+					                                                                                         tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+					tempSysPlottingPhases[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingPhases[idxMass][idxWave][jdxWave].first,
+					                                                                  tempPlottingPhases[idxMass][idxWave][jdxWave].first);
 				}
 			}
 		}
@@ -1669,12 +1719,22 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 			if(not readSystematicsFiles(idxBin,
 			                            nrMassBins[idxBin],
 			                            massBinCenters[idxBin],
+			                            tempPlottingPhases,
+			                            tempSysPlottingIntensities,
+			                            tempSysPlottingSpinDensityMatrixElementsReal,
+			                            tempSysPlottingSpinDensityMatrixElementsImag,
+			                            tempSysPlottingPhases,
 			                            valTreeName,
 			                            valBranchName)) {
 				printErr << "error while reading fit results for systematic errors in bin " << idxBin << "." << std::endl;
 				return false;
 			}
 		}
+
+		adjustSizeAndSet(sysPlottingIntensities, idxBin, tempSysPlottingIntensities);
+		adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsReal, idxBin, tempSysPlottingSpinDensityMatrixElementsReal);
+		adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsImag, idxBin, tempSysPlottingSpinDensityMatrixElementsImag);
+		adjustSizeAndSet(sysPlottingPhases, idxBin, tempSysPlottingPhases);
 	}
 
 	return true;
@@ -1687,6 +1747,10 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
                                            boost::multi_array<double, 2>& massBinCenters,
                                            boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                            boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+                                           boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
+                                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
+                                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
+                                           boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
                                            const std::string& valTreeName,
                                            const std::string& valBranchName)
 {
@@ -1759,14 +1823,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		_inSpinDensityMatrices.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 		_inSpinDensityCovarianceMatrices.resize(boost::extents[_nrBins][_maxMassBins]);
 		_inPhaseSpaceIntegrals.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
-		_plottingIntensities.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
-		_plottingSpinDensityMatrixElementsReal.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_plottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_plottingPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_sysPlottingIntensities.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
-		_sysPlottingSpinDensityMatrixElementsReal.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_sysPlottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_sysPlottingPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 
 		for(size_t idx = 0; idx < idxBin; ++idx) {
 			for(size_t idxMass = 0; idxMass < nrMassBins[idx]; ++idxMass) {
@@ -1810,10 +1866,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	std::vector<std::string> waveNames;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
-	boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 	if(not readFitResultMatrices(inTree,
 	                             inFit,
 	                             inMapping,
@@ -1823,10 +1875,10 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	                             productionAmplitudesCovariance,
 	                             tempSpinDensityMatrices,
 	                             tempSpinDensityCovarianceMatrices,
-	                             tempPlottingIntensities,
-	                             tempPlottingSpinDensityMatrixElementsReal,
-	                             tempPlottingSpinDensityMatrixElementsImag,
-	                             tempPlottingPhases)) {
+	                             plottingIntensities,
+	                             plottingSpinDensityMatrixElementsReal,
+	                             plottingSpinDensityMatrixElementsImag,
+	                             plottingPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
@@ -1835,10 +1887,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		_waveBins[*it].push_back(idxBin);
 	}
 	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
-	_plottingIntensities[idxBin] = tempPlottingIntensities;
-	_plottingSpinDensityMatrixElementsReal[idxBin] = tempPlottingSpinDensityMatrixElementsReal;
-	_plottingSpinDensityMatrixElementsImag[idxBin] = tempPlottingSpinDensityMatrixElementsImag;
-	_plottingPhases[idxBin] = tempPlottingPhases;
 	for(size_t i = 0; i < nrMassBins[idxBin]; ++i) {
 		_inSpinDensityCovarianceMatrices[idxBin][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
 		_inSpinDensityCovarianceMatrices[idxBin][i] = tempSpinDensityCovarianceMatrices[i];
@@ -1861,6 +1909,11 @@ bool
 rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
                                                      const size_t nrMassBins,
                                                      const boost::multi_array<double, 1>& massBinCenters,
+                                                     const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+                                                     boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
                                                      const std::string& valTreeName,
                                                      const std::string& valBranchName)
 {
@@ -1877,6 +1930,11 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 		                           idxSystematics,
 		                           nrMassBins,
 		                           massBinCenters,
+		                           plottingPhases,
+		                           sysPlottingIntensities,
+		                           sysPlottingSpinDensityMatrixElementsReal,
+		                           sysPlottingSpinDensityMatrixElementsImag,
+		                           sysPlottingPhases,
 		                           valTreeName,
 		                           valBranchName)) {
 			printErr << "error while reading fit results for systematic errors." << std::endl;
@@ -1893,6 +1951,11 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
                                                     const size_t idxSystematics,
                                                     const size_t nrMassBins,
                                                     const boost::multi_array<double, 1>& massBinCenters,
+                                                    const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+                                                    boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
                                                     const std::string& valTreeName,
                                                     const std::string& valBranchName)
 {
@@ -1974,35 +2037,35 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 
 	for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
 		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
-			_sysPlottingIntensities[idxBin][idxMass][idxWave].first = std::min(_sysPlottingIntensities[idxBin][idxMass][idxWave].first,
-			                                                                   tempSysPlottingIntensities[idxMass][idxWave].first);
-			_sysPlottingIntensities[idxBin][idxMass][idxWave].second = std::max(_sysPlottingIntensities[idxBin][idxMass][idxWave].second,
-			                                                                    tempSysPlottingIntensities[idxMass][idxWave].first);
+			sysPlottingIntensities[idxMass][idxWave].first = std::min(sysPlottingIntensities[idxMass][idxWave].first,
+			                                                          tempSysPlottingIntensities[idxMass][idxWave].first);
+			sysPlottingIntensities[idxMass][idxWave].second = std::max(sysPlottingIntensities[idxMass][idxWave].second,
+			                                                           tempSysPlottingIntensities[idxMass][idxWave].first);
 
 			for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
-				_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first,
-				                                                                                              tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
-				_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second,
-				                                                                                               tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
+				                                                                                     tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second,
+				                                                                                      tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
 
-				_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first,
-				                                                                                              tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
-				_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second,
-				                                                                                               tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+				sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
+				                                                                                     tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+				sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second,
+				                                                                                      tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
 
 				// rotate phase by +- 360 degrees to be as
 				// close as possible to the data used in the
 				// fit
-				if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first+360. - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first)) {
+				if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first+360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
 					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first += 360.;
-				} else if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first-360. - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first)) {
+				} else if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first-360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
 					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first -= 360.;
 				}
 
-				_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first,
-				                                                                       tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
-				_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second,
-				                                                                        tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+				sysPlottingPhases[idxMass][idxWave][jdxWave].first = std::min(sysPlottingPhases[idxMass][idxWave][jdxWave].first,
+				                                                              tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+				sysPlottingPhases[idxMass][idxWave][jdxWave].second = std::max(sysPlottingPhases[idxMass][idxWave][jdxWave].second,
+				                                                               tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
 			}
 		}
 	}
@@ -2624,13 +2687,13 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataCo
 		const double mass = fitData->massBinCenters()[idxBin][idxMass];
 		const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
-		data->SetPoint(point, mass, _plottingIntensities[idxBin][idxMass][idxWave].first);
-		data->SetPointError(point, halfBin, _plottingIntensities[idxBin][idxMass][idxWave].second);
-		maxIE = std::max(maxIE, _plottingIntensities[idxBin][idxMass][idxWave].first+_plottingIntensities[idxBin][idxMass][idxWave].second);
+		data->SetPoint(point, mass, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first);
+		data->SetPointError(point, halfBin, fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
+		maxIE = std::max(maxIE, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first+fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
 
 		if(_nrSystematics[idxBin] > 0) {
-			const double minSI = _sysPlottingIntensities[idxBin][idxMass][idxWave].first;
-			const double maxSI = _sysPlottingIntensities[idxBin][idxMass][idxWave].second;
+			const double minSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first;
+			const double maxSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second;
 			systematics->SetPoint(point, mass, (maxSI+minSI)/2.);
 			systematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 			maxIE = std::max(maxIE, maxSI);
@@ -2763,8 +2826,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 		double sum = 0.;
 		double error2 = 0.;
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			sum += _plottingIntensities[idxBin][idxMass][idxWave].first;
-			error2 += std::pow(_plottingIntensities[idxBin][idxMass][idxWave].second, 2);
+			sum += fitData->plottingIntensities()[idxBin][idxMass][idxWave].first;
+			error2 += std::pow(fitData->plottingIntensities()[idxBin][idxMass][idxWave].second, 2);
 		}
 		data->SetPoint(point, mass, sum);
 		data->SetPointError(point, halfBin, sqrt(error2));
@@ -2911,28 +2974,28 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::da
 		const double mass = fitData->massBinCenters()[idxBin][idxMass];
 		const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
-		realData->SetPoint(point, mass, _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first);
-		realData->SetPointError(point, halfBin, _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second);
+		realData->SetPoint(point, mass, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first);
+		realData->SetPointError(point, halfBin, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second);
 
-		imagData->SetPoint(point, mass, _plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first);
-		imagData->SetPointError(point, halfBin, _plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second);
+		imagData->SetPoint(point, mass, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first);
+		imagData->SetPointError(point, halfBin, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second);
 
-		phaseData->SetPoint(point, mass, _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first);
-		phaseData->SetPointError(point, halfBin, _plottingPhases[idxBin][idxMass][idxWave][jdxWave].second);
+		phaseData->SetPoint(point, mass, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].first);
+		phaseData->SetPointError(point, halfBin, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].second);
 
 		if(_nrSystematics[idxBin] > 0) {
-			const double minSR = _sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first;
-			const double maxSR = _sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second;
+			const double minSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second;
 			realSystematics->SetPoint(point, mass, (maxSR+minSR)/2.);
 			realSystematics->SetPointError(point, halfBin, (maxSR-minSR)/2.);
 
-			const double minSI = _sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first;
-			const double maxSI = _sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second;
+			const double minSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second;
 			imagSystematics->SetPoint(point, mass, (maxSI+minSI)/2.);
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 
-			const double minSP = _sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first;
-			const double maxSP = _sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second;
+			const double minSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].second;
 			phaseSystematics->SetPoint(point, mass, (maxSP+minSP)/2.);
 			phaseSystematics->SetPointError(point, halfBin, (maxSP-minSP)/2.);
 		}

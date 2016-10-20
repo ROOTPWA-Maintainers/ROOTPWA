@@ -172,6 +172,14 @@ namespace rpwa {
 			                 boost::multi_array<double, 2>& massBinCenters,
 			                 boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			                 boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+			                 boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+			                 boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+			                 boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+			                 boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+			                 boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+			                 boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+			                 boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+			                 boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases,
 			                 const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
@@ -179,18 +187,32 @@ namespace rpwa {
 			                boost::multi_array<double, 2>& massBinCenters,
 			                boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+			                boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
+			                boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
+			                boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
+			                boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
 			bool readSystematicsFiles(const size_t idxBin,
 			                          const size_t nrMassBins,
 			                          const boost::multi_array<double, 1>& massBinCenters,
+			                          const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+			                          boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+			                          boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+			                          boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+			                          boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
 			                          const std::string& valTreeName   = "pwa",
 			                          const std::string& valBranchName = "fitResult_v2");
 			bool readSystematicsFile(const size_t idxBin,
 			                         const size_t idxSystematics,
 			                         const size_t nrMassBins,
 			                         const boost::multi_array<double, 1>& massBinCenters,
+			                         const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+			                         boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+			                         boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+			                         boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+			                         boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
 			                         const std::string& valTreeName   = "pwa",
 			                         const std::string& valBranchName = "fitResult_v2");
 
@@ -284,16 +306,6 @@ namespace rpwa {
 			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
 			boost::multi_array<TMatrixT<double>, 2> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
-
-			boost::multi_array<std::pair<double, double>, 3> _plottingIntensities;
-			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsReal;
-			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsImag;
-			boost::multi_array<std::pair<double, double>, 4> _plottingPhases;
-
-			boost::multi_array<std::pair<double, double>, 3> _sysPlottingIntensities;
-			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsReal;
-			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsImag;
-			boost::multi_array<std::pair<double, double>, 4> _sysPlottingPhases;
 
 			size_t _nrBins;
 			size_t _maxMassBins;
