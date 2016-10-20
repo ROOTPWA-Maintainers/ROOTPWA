@@ -95,6 +95,26 @@ namespace {
 	}
 
 
+	template<typename T, const size_t dim = 0>
+	void
+	checkSize(const boost::multi_array<T, 4+dim>& obj,
+	          const size_t dim1,
+	          const std::string& msg1,
+	          const size_t dim2,
+	          const std::string& msg2,
+	          const size_t dim3,
+	          const std::string& msg3,
+	          const size_t dim4,
+	          const std::string& msg4)
+	{
+		if(dim1 != *(obj.shape()+dim)) {
+			printErr << msg1 << " expected: " << dim1 << ", found: " << *(obj.shape()+dim) << ". Aborting..." << std::endl;
+			throw;
+		}
+		checkSize<T, dim+1>(obj, dim2, msg2, dim3, msg3, dim4, msg4);
+	}
+
+
 }
 
 
@@ -102,11 +122,27 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<double, 2>& massBinCenters,
                                const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
-                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance)
+                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+                               const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+                               const boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases)
 	: _nrMassBins(nrMassBins),
 	  _massBinCenters(massBinCenters),
 	  _productionAmplitudes(productionAmplitudes),
-	  _useCovariance(useCovariance)
+	  _useCovariance(useCovariance),
+	  _plottingIntensities(plottingIntensities),
+	  _plottingSpinDensityMatrixElementsReal(plottingSpinDensityMatrixElementsReal),
+	  _plottingSpinDensityMatrixElementsImag(plottingSpinDensityMatrixElementsImag),
+	  _plottingPhases(plottingPhases),
+	  _sysPlottingIntensities(sysPlottingIntensities),
+	  _sysPlottingSpinDensityMatrixElementsReal(sysPlottingSpinDensityMatrixElementsReal),
+	  _sysPlottingSpinDensityMatrixElementsImag(sysPlottingSpinDensityMatrixElementsImag),
+	  _sysPlottingPhases(sysPlottingPhases)
 {
 	// get dimensions from one array and make sure that all other arrays
 	// have the same dimensions
@@ -163,4 +199,44 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 			}
 		}
 	}
+
+	checkSize(_plottingIntensities,
+	          nrBins, "number of bins is not correct for intensities for plotting.",
+	          maxMassBins, "maximal number of mass bins is not correct for intensities for plotting.",
+	          nrWaves, "number of waves is not correct for intensities for plotting.");
+	checkSize(_plottingSpinDensityMatrixElementsReal,
+	          nrBins, "number of bins is not correct for real part of spin-density matrix elements for plotting.",
+	          maxMassBins, "maximal number of mass bins is not correct for real part of spin-density matrix elements for plotting.",
+	          nrWaves, "number of waves is not correct for real part of spin-density matrix elements for plotting.",
+	          nrWaves, "number of waves is not correct for real part of spin-density matrix elements for plotting.");
+	checkSize(_plottingSpinDensityMatrixElementsImag,
+	          nrBins, "number of bins is not correct for imaginary part of spin-density matrix elements for plotting.",
+	          maxMassBins, "maximal number of mass bins is not correct for imaginary part of spin-density matrix elements for plotting.",
+	          nrWaves, "number of waves is not correct for imaginary part of spin-density matrix elements for plotting.",
+	          nrWaves, "number of waves is not correct for imaginary part of spin-density matrix elements for plotting.");
+	checkSize(_plottingPhases,
+	          nrBins, "number of bins is not correct for phases for plotting.",
+	          maxMassBins, "maximal number of mass bins is not correct for phases for plotting.",
+	          nrWaves, "number of waves is not correct for phases for plotting.",
+	          nrWaves, "number of waves is not correct for phases for plotting.");
+
+	checkSize(_sysPlottingIntensities,
+	          nrBins, "number of bins is not correct for intensities for plotting of systematic errors.",
+	          maxMassBins, "maximal number of mass bins is not correct for intensities for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for intensities for plotting of systematic errors.");
+	checkSize(_sysPlottingSpinDensityMatrixElementsReal,
+	          nrBins, "number of bins is not correct for real part of spin-density matrix elements for plotting of systematic errors.",
+	          maxMassBins, "maximal number of mass bins is not correct for real part of spin-density matrix elements for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for real part of spin-density matrix elements for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for real part of spin-density matrix elements for plotting of systematic errors.");
+	checkSize(_sysPlottingSpinDensityMatrixElementsImag,
+	          nrBins, "number of bins is not correct for imaginary part of spin-density matrix elements for plotting of systematic errors.",
+	          maxMassBins, "maximal number of mass bins is not correct for imaginary part of spin-density matrix elements for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for imaginary part of spin-density matrix elements for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for imaginary part of spin-density matrix elements for plotting of systematic errors.");
+	checkSize(_sysPlottingPhases,
+	          nrBins, "number of bins is not correct for phases for plotting of systematic errors.",
+	          maxMassBins, "maximal number of mass bins is not correct for phases for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.",
+	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.");
 }
