@@ -93,10 +93,6 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
-			          const rpwa::resonanceFit::modelConstPtr& fitModel,
-			          const rpwa::resonanceFit::functionPtr& fitFunction);
-
 			bool writeConfig(std::ostream& output,
 			                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                 const rpwa::resonanceFit::modelConstPtr& fitModel,

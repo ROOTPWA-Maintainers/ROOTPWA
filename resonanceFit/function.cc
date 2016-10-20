@@ -40,14 +40,36 @@
 #include "parameters.h"
 
 
-rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
-                                       const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance)
-	: _fitProductionAmplitudes(fitProductionAmplitudes),
-	  _useCovariance(useCovariance)
+rpwa::resonanceFit::function::function(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                       const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                       const bool useProductionAmplitudes)
+	: _fitData(fitData),
+	  _fitModel(fitModel),
+	  _nrBins(fitData->nrBins()),
+	  _maxMassBins(_fitData->maxMassBins()),
+	  _nrWaves(_fitData->nrWaves()),
+	  _useProductionAmplitudes(useProductionAmplitudes),
+	  _useCovariance(_fitData->useCovariance())
 {
+	if(not _useProductionAmplitudes and _useCovariance == useFullCovarianceMatrix) {
+		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
+		throw;
+	}
+
+	_idxMassMax.resize(_nrBins);
+	_idxMassMin.resize(_nrBins);
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		_idxMassMin[idxBin] = _maxMassBins;
+		_idxMassMax[idxBin] = 0;
+		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first);
+			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second);
+		}
+	}
+
 	std::ostringstream output;
 	output << "created 'function' object for a fit to the ";
-	if (fitProductionAmplitudes) {
+	if(_useProductionAmplitudes) {
 		output << "production amplitudes";
 	} else {
 		output << "spin-density matrix";
@@ -67,39 +89,6 @@ rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
 }
 
 
-bool
-rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitData,
-                                   const rpwa::resonanceFit::modelConstPtr& fitModel)
-{
-	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
-		printErr << "cannot use full covariance matrix while fitting to spin-density matrix." << std::endl;
-		return false;
-	}
-
-	_fitData = fitData;
-	_fitModel = fitModel;
-
-	_idxAnchorWave = _fitModel->getAnchorWave();
-
-	_nrBins = *(_fitData->productionAmplitudes().shape());
-	_maxMassBins = *(_fitData->productionAmplitudes().shape()+1);
-	_nrWaves = *(_fitData->productionAmplitudes().shape()+2);
-
-	_idxMassMax.resize(_nrBins);
-	_idxMassMin.resize(_nrBins);
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		_idxMassMin[idxBin] = _fitData->nrMassBins()[idxBin];
-		_idxMassMax[idxBin] = 0;
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first);
-			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second);
-		}
-	}
-
-	return true;
-}
-
-
 size_t
 rpwa::resonanceFit::function::getNrParameters() const
 {
@@ -112,7 +101,7 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 {
 	size_t nrPts(0);
 
-	if(_fitProductionAmplitudes) {
+	if(_useProductionAmplitudes) {
 		// calculate data points:
 		// * production amplitudes in general are complex numbers
 		// * for the anchor wave it might be real
@@ -120,7 +109,7 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
 				nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
-				if(idxWave != _idxAnchorWave) {
+				if(idxWave != _fitModel->getAnchorWave()) {
 					nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
 				}
 			}
@@ -179,7 +168,7 @@ double
 rpwa::resonanceFit::function::chiSquare(const rpwa::resonanceFit::parameters& fitParameters,
                                         rpwa::resonanceFit::cache& cache) const
 {
-	if(_fitProductionAmplitudes) {
+	if(_useProductionAmplitudes) {
 		return chiSquareProductionAmplitudes(fitParameters, cache);
 	} else {
 		return chiSquareSpinDensityMatrix(fitParameters, cache);
@@ -276,7 +265,7 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 			const double mass = _fitData->massBinCenters()[idxBin][idxMass];
 
 			// phase of fit in anchor wave
-			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
+			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _fitModel->getAnchorWave(), idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
 			TVectorT<double> prodAmpDiffVect(2*_nrWaves);
@@ -296,7 +285,7 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 
 				const Int_t row = 2*idxWave;
 				prodAmpDiffVect(row) = prodAmpDiff.real();
-				if(idxWave != _idxAnchorWave) {
+				if(idxWave != _fitModel->getAnchorWave()) {
 					prodAmpDiffVect(row+1) = prodAmpDiff.imag();
 				}
 			} // end loop over idxWave

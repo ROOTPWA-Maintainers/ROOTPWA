@@ -4359,21 +4359,6 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 
 bool
-rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fitData,
-                                     const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                     const rpwa::resonanceFit::functionPtr& fitFunction)
-{
-	if(not fitFunction->init(fitData,
-	                         fitModel)) {
-		printErr << "error while initializing the function to minimize." << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-
-bool
 rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
                                             const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                             const rpwa::resonanceFit::modelConstPtr& fitModel,

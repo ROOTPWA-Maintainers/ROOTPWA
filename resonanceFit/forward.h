@@ -48,7 +48,8 @@ namespace rpwa {
 		typedef std::shared_ptr<const fsmd> fsmdConstPtr;
 
 		class function;
-		typedef std::shared_ptr<function> functionPtr;
+		// 'function' should not be changed after construction, so this is not needed:
+		// typedef std::shared_ptr<function> functionPtr;
 		typedef std::shared_ptr<const function> functionConstPtr;
 
 		class information;
