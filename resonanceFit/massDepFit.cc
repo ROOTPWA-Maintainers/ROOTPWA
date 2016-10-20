@@ -529,6 +529,215 @@ namespace {
 	}
 
 
+	// do some stuff specific to the fit to the spin-density matrix
+	bool
+	prepareSpinDensityMatrices(const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+	                           const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
+	                           const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+	                           boost::multi_array<TMatrixT<double>, 2>& spinDensityMatricesCovariance)
+	{
+		const size_t nrBins = *(spinDensityMatrices.shape());
+		const size_t maxMassBins = *(spinDensityMatrices.shape()+1);
+		const size_t nrWaves = *(spinDensityMatrices.shape()+2);
+
+		// get range of used mass bins (in any wave) for each bin
+		std::vector<size_t> idxMassMax(nrBins);
+		std::vector<size_t> idxMassMin(nrBins);
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			idxMassMin[idxBin] = maxMassBins;
+			idxMassMax[idxBin] = 0;
+			for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
+				idxMassMin[idxBin] = std::min(idxMassMin[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
+				idxMassMax[idxBin] = std::max(idxMassMax[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
+			}
+		}
+
+		// get a list of waves that are zero (those have to be excluded
+		// from the inversion of the covariance matrix below)
+		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[nrBins][maxMassBins]);
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
+				for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
+					bool zeroThisWave = true;
+					for(size_t jdxWave = 0; jdxWave < nrWaves; ++jdxWave) {
+						const size_t idx = nrWaves*(nrWaves+1) - ((jdxWave >= idxWave) ? ((nrWaves-idxWave)*(nrWaves-idxWave+1) - 2*(jdxWave-idxWave)) : ((nrWaves-jdxWave)*(nrWaves-jdxWave+1) - 2*(idxWave-jdxWave)));
+
+						zeroThisWave &= (spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].real() == 0.);
+						zeroThisWave &= (spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].imag() == 0.);
+						zeroThisWave &= (spinDensityMatricesCovariance[idxBin][idxMass](idx,   idx  ) == 0.);
+						zeroThisWave &= (spinDensityMatricesCovariance[idxBin][idxMass](idx,   idx+1) == 0.);
+						zeroThisWave &= (spinDensityMatricesCovariance[idxBin][idxMass](idx+1, idx  ) == 0.);
+						zeroThisWave &= (spinDensityMatricesCovariance[idxBin][idxMass](idx+1, idx+1) == 0.);
+					}
+
+					if(zeroThisWave or idxMass < wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
+						zeroWaves[idxBin][idxMass].push_back(idxWave);
+					}
+
+					// check that a wave is not zero in its fit range
+					if(zeroThisWave and idxMass >= wavePairMassBinLimits[idxBin][idxWave][idxWave].first and idxMass <= wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
+						printErr << "spin-density matrix element of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
+						return false;
+					}
+				}
+			}
+		}
+
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
+				// import covariance matrix of spin-density matrix elements
+				const size_t reducedMatrixSize((nrWaves - zeroWaves[idxBin][idxMass].size())*(nrWaves - zeroWaves[idxBin][idxMass].size()));
+				TMatrixT<double> reducedCovMat(reducedMatrixSize, reducedMatrixSize);
+
+				{
+					// i is for loop over rows
+					size_t redIdx = 0;
+					for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < nrWaves; ++iWave1) {
+						if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
+							++iSkip1;
+							continue;
+						}
+						for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < nrWaves; ++iWave2) {
+							if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
+								++iSkip2;
+								continue;
+							}
+							const size_t idx = nrWaves*(nrWaves+1) - (nrWaves-iWave1)*(nrWaves-iWave1+1) + 2*(iWave2-iWave1);
+
+							// j is for loop over columns
+							size_t redJdx = 0;
+							for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < nrWaves; ++jWave1) {
+								if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
+									++jSkip1;
+									continue;
+								}
+								for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < nrWaves; ++jWave2) {
+									if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
+										++jSkip2;
+										continue;
+									}
+									const size_t jdx = nrWaves*(nrWaves+1) - (nrWaves-jWave1)*(nrWaves-jWave1+1) + 2*(jWave2-jWave1);
+
+									if(iWave1 == iWave2) { // one row
+										if(jWave1 == jWave2) { // one column
+											if((iWave1 == jWave1 and iWave2 == jWave2) or useCovariance == rpwa::resonanceFit::function::useFullCovarianceMatrix) {
+												reducedCovMat(redIdx,   redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  );
+											}
+										} else { // two columns
+											if(useCovariance == rpwa::resonanceFit::function::useFullCovarianceMatrix) {
+												reducedCovMat(redIdx,   redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  );
+												reducedCovMat(redIdx,   redJdx+1) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx+1);
+											}
+										}
+									} else { // two rows
+										if(jWave1 == jWave2) { // one column
+											if(useCovariance == rpwa::resonanceFit::function::useFullCovarianceMatrix) {
+												reducedCovMat(redIdx,   redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  );
+												reducedCovMat(redIdx+1, redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx  );
+											}
+										} else { // two columns
+											if((iWave1 == jWave1 and iWave2 == jWave2) or useCovariance == rpwa::resonanceFit::function::useFullCovarianceMatrix) {
+												reducedCovMat(redIdx,   redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  );
+												reducedCovMat(redIdx+1, redJdx+1) = spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx+1);
+												if(useCovariance != rpwa::resonanceFit::function::useDiagnalElementsOnly) {
+													reducedCovMat(redIdx,   redJdx+1) = spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx+1);
+													reducedCovMat(redIdx+1, redJdx  ) = spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx  );
+												}
+											}
+										}
+									}
+
+									if(jWave1 == jWave2) {
+										redJdx += 1;
+									} else {
+										redJdx += 2;
+									}
+								}
+							}
+
+							if(iWave1 == iWave2) {
+								redIdx += 1;
+							} else {
+								redIdx += 2;
+							}
+						}
+					}
+				}
+
+				reducedCovMat.Invert();
+
+				// import covariance matrix of spin-density matrix elements
+				spinDensityMatricesCovariance[idxBin][idxMass].Zero();
+
+				// i is for loop over rows
+				size_t redIdx = 0;
+				for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < nrWaves; ++iWave1) {
+					if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
+						++iSkip1;
+						continue;
+					}
+					for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < nrWaves; ++iWave2) {
+						if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
+							++iSkip2;
+							continue;
+						}
+						const size_t idx = nrWaves*(nrWaves+1) - (nrWaves-iWave1)*(nrWaves-iWave1+1) + 2*(iWave2-iWave1);
+
+						// j is for loop over columns
+						size_t redJdx = 0;
+						for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < nrWaves; ++jWave1) {
+							if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
+								++jSkip1;
+								continue;
+							}
+							for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < nrWaves; ++jWave2) {
+								if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
+									++jSkip2;
+									continue;
+								}
+								const size_t jdx = nrWaves*(nrWaves+1) - (nrWaves-jWave1)*(nrWaves-jWave1+1) + 2*(jWave2-jWave1);
+
+								if(iWave1 == iWave2) { // one row
+									if(jWave1 == jWave2) { // one column
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
+									} else { // two columns
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx+1) = reducedCovMat(redIdx,   redJdx+1);
+									}
+								} else { // two rows
+									if(jWave1 == jWave2) { // one column
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
+										spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx  ) = reducedCovMat(redIdx+1, redJdx  );
+									} else { // two columns
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
+										spinDensityMatricesCovariance[idxBin][idxMass](idx,   jdx+1) = reducedCovMat(redIdx,   redJdx+1);
+										spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx  ) = reducedCovMat(redIdx+1, redJdx  );
+										spinDensityMatricesCovariance[idxBin][idxMass](idx+1, jdx+1) = reducedCovMat(redIdx+1, redJdx+1);
+									}
+								}
+
+								if(jWave1 == jWave2) {
+									redJdx += 1;
+								} else {
+									redJdx += 2;
+								}
+							}
+						}
+
+						if(iWave1 == iWave2) {
+							redIdx += 1;
+						} else {
+							redIdx += 2;
+						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+
 }
 
 
@@ -583,6 +792,8 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	boost::multi_array<double, 2> massBinCenters;
 	boost::multi_array<std::complex<double>, 3> inProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 2> inProductionAmplitudesCovariance;
+	boost::multi_array<std::complex<double>, 4> inSpinDensityMatrices;
+	boost::multi_array<TMatrixT<double>, 2> inSpinDensityMatricesCovariance;
 	boost::multi_array<std::pair<double, double>, 3> inPlottingIntensities;
 	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsImag;
@@ -595,6 +806,8 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                   massBinCenters,
 	                   inProductionAmplitudes,
 	                   inProductionAmplitudesCovariance,
+	                   inSpinDensityMatrices,
+	                   inSpinDensityMatricesCovariance,
 	                   inPlottingIntensities,
 	                   inPlottingSpinDensityMatrixElementsReal,
 	                   inPlottingSpinDensityMatrixElementsImag,
@@ -644,12 +857,18 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                            _wavePairMassBinLimits,
 	                            inProductionAmplitudes,
 	                            inProductionAmplitudesCovariance);
+	prepareSpinDensityMatrices(useCovariance,
+	                           _wavePairMassBinLimits,
+	                           inSpinDensityMatrices,
+	                           inSpinDensityMatricesCovariance);
 
 	// create data object
 	fitData.reset(new rpwa::resonanceFit::data(nrMassBins,
 	                                           massBinCenters,
 	                                           inProductionAmplitudes,
 	                                           inProductionAmplitudesCovariance,
+	                                           inSpinDensityMatrices,
+	                                           inSpinDensityMatricesCovariance,
 	                                           useCovariance,
 	                                           inPlottingIntensities,
 	                                           inPlottingSpinDensityMatrixElementsReal,
@@ -1306,8 +1525,6 @@ rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fit
 
 	if(not fitFunction->init(fitData,
 	                         fitModel,
-	                         _inSpinDensityMatrices,
-	                         _inSpinDensityCovarianceMatrices,
 	                         _wavePairMassBinLimits)) {
 		printErr << "error while initializing the function to minimize." << std::endl;
 		return false;
@@ -1651,6 +1868,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
                                             boost::multi_array<double, 2>& massBinCenters,
                                             boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                             boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+                                            boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+                                            boost::multi_array<TMatrixT<double>, 2>& spinDensityMatricesCovariance,
                                             boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
                                             boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
                                             boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
@@ -1665,6 +1884,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
 		boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 		boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
+		boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
+		boost::multi_array<TMatrixT<double>, 1> tempSpinDensityMatricesCovariance;
 		boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
@@ -1675,6 +1896,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 		                  massBinCenters,
 		                  tempProductionAmplitudes,
 		                  tempProductionAmplitudesCovariance,
+		                  tempSpinDensityMatrices,
+		                  tempSpinDensityMatricesCovariance,
 		                  tempPlottingIntensities,
 		                  tempPlottingSpinDensityMatrixElementsReal,
 		                  tempPlottingSpinDensityMatrixElementsImag,
@@ -1687,6 +1910,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 
 		adjustSizeAndSet(productionAmplitudes, idxBin, tempProductionAmplitudes);
 		adjustSizeAndSet(productionAmplitudesCovariance, idxBin, tempProductionAmplitudesCovariance);
+		adjustSizeAndSet(spinDensityMatrices, idxBin, tempSpinDensityMatrices);
+		adjustSizeAndSet(spinDensityMatricesCovariance, idxBin, tempSpinDensityMatricesCovariance);
 		adjustSizeAndSet(plottingIntensities, idxBin, tempPlottingIntensities);
 		adjustSizeAndSet(plottingSpinDensityMatrixElementsReal, idxBin, tempPlottingSpinDensityMatrixElementsReal);
 		adjustSizeAndSet(plottingSpinDensityMatrixElementsImag, idxBin, tempPlottingSpinDensityMatrixElementsImag);
@@ -1747,6 +1972,8 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
                                            boost::multi_array<double, 2>& massBinCenters,
                                            boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                            boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+                                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+                                           boost::multi_array<TMatrixT<double>, 1>& spinDensityMatricesCovariance,
                                            boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
                                            boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
                                            boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
@@ -1807,29 +2034,10 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
 
 	if(_maxMassBins < tempNrMassBins) {
-		// take care to correctly copy the covariance matrices
-		boost::multi_array<TMatrixT<double>, 2> tempSpinDensityCovarianceMatrices(std::vector<size_t>(_inSpinDensityCovarianceMatrices.shape(), _inSpinDensityCovarianceMatrices.shape()+_inSpinDensityCovarianceMatrices.num_dimensions()));
-		for(size_t idx = 0; idx < idxBin; ++idx) {
-			for(size_t idxMass = 0; idxMass < nrMassBins[idx]; ++idxMass) {
-				tempSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(_inSpinDensityCovarianceMatrices[idx][idxMass]);
-				tempSpinDensityCovarianceMatrices[idx][idxMass] = _inSpinDensityCovarianceMatrices[idx][idxMass];
-			}
-		}
-		_inSpinDensityCovarianceMatrices.resize(boost::extents[0][0]);
-
 		_maxMassBins = tempNrMassBins;
 
 		// resize all array to store the information
-		_inSpinDensityMatrices.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
-		_inSpinDensityCovarianceMatrices.resize(boost::extents[_nrBins][_maxMassBins]);
 		_inPhaseSpaceIntegrals.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
-
-		for(size_t idx = 0; idx < idxBin; ++idx) {
-			for(size_t idxMass = 0; idxMass < nrMassBins[idx]; ++idxMass) {
-				_inSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(tempSpinDensityCovarianceMatrices[idx][idxMass]);
-				_inSpinDensityCovarianceMatrices[idx][idxMass] = tempSpinDensityCovarianceMatrices[idx][idxMass];
-			}
-		}
 	}
 
 	bool readMapping(false);
@@ -1864,8 +2072,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	}
 
 	std::vector<std::string> waveNames;
-	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
-	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
 	if(not readFitResultMatrices(inTree,
 	                             inFit,
 	                             inMapping,
@@ -1873,8 +2079,8 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	                             waveNames,
 	                             productionAmplitudes,
 	                             productionAmplitudesCovariance,
-	                             tempSpinDensityMatrices,
-	                             tempSpinDensityCovarianceMatrices,
+	                             spinDensityMatrices,
+	                             spinDensityMatricesCovariance,
 	                             plottingIntensities,
 	                             plottingSpinDensityMatrixElementsReal,
 	                             plottingSpinDensityMatrixElementsImag,
@@ -1885,11 +2091,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	}
 	for(std::vector<std::string>::const_iterator it = waveNames.begin(); it != waveNames.end(); ++it) {
 		_waveBins[*it].push_back(idxBin);
-	}
-	_inSpinDensityMatrices[idxBin] = tempSpinDensityMatrices;
-	for(size_t i = 0; i < nrMassBins[idxBin]; ++i) {
-		_inSpinDensityCovarianceMatrices[idxBin][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
-		_inSpinDensityCovarianceMatrices[idxBin][i] = tempSpinDensityCovarianceMatrices[i];
 	}
 
 	boost::multi_array<double, 2> tempPhaseSpaceIntegrals;

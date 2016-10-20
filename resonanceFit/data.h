@@ -51,6 +51,8 @@ namespace rpwa {
 			     const boost::multi_array<double, 2>& massBinCenters,
 			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			     const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
+			     const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
+			     const boost::multi_array<TMatrixT<double>, 2>& spinDensityMatrixElementsCovMatInv,
 			     const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 			     const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
 			     const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
@@ -71,6 +73,10 @@ namespace rpwa {
 
 			const boost::multi_array<std::complex<double>, 3>& productionAmplitudes() const { return _productionAmplitudes; }
 			const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv() const { return _productionAmplitudesCovMatInv; }
+
+			const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements() const { return _spinDensityMatrixElements; }
+			const boost::multi_array<TMatrixT<double>, 2>& spinDensityMatrixElementsCovMatInv() const { return _spinDensityMatrixElementsCovMatInv; }
+			const boost::multi_array<double, 6>& spinDensityMatrixElementsCovMatInvArray() const { return _spinDensityMatrixElementsCovMatInvArray; }
 
 			rpwa::resonanceFit::function::useCovarianceMatrix useCovariance() const { return _useCovariance; }
 
@@ -93,6 +99,10 @@ namespace rpwa {
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
 			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;
+
+			boost::multi_array<std::complex<double>, 4> _spinDensityMatrixElements;
+			boost::multi_array<TMatrixT<double>, 2> _spinDensityMatrixElementsCovMatInv;
+			boost::multi_array<double, 6> _spinDensityMatrixElementsCovMatInvArray;
 
 			rpwa::resonanceFit::function::useCovarianceMatrix _useCovariance;
 
