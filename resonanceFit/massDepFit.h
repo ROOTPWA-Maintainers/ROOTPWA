@@ -172,6 +172,8 @@ namespace rpwa {
 			                 boost::multi_array<double, 2>& massBinCenters,
 			                 boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			                 boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+			                 boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+			                 boost::multi_array<TMatrixT<double>, 2>& spinDensityMatricesCovariance,
 			                 boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
 			                 boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
 			                 boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
@@ -187,6 +189,8 @@ namespace rpwa {
 			                boost::multi_array<double, 2>& massBinCenters,
 			                boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+			                boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+			                boost::multi_array<TMatrixT<double>, 1>& spinDensityMatricesCovariance,
 			                boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
 			                boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
 			                boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
@@ -303,8 +307,6 @@ namespace rpwa {
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
 
-			boost::multi_array<std::complex<double>, 4> _inSpinDensityMatrices;
-			boost::multi_array<TMatrixT<double>, 2> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
 
 			size_t _nrBins;

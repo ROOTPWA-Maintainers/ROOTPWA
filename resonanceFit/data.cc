@@ -122,6 +122,8 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<double, 2>& massBinCenters,
                                const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
+                               const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
+                               const boost::multi_array<TMatrixT<double>, 2>& spinDensityMatrixElementsCovMatInv,
                                const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
                                const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
                                const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
@@ -134,6 +136,7 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	: _nrMassBins(nrMassBins),
 	  _massBinCenters(massBinCenters),
 	  _productionAmplitudes(productionAmplitudes),
+	  _spinDensityMatrixElements(spinDensityMatrixElements),
 	  _useCovariance(useCovariance),
 	  _plottingIntensities(plottingIntensities),
 	  _plottingSpinDensityMatrixElementsReal(plottingSpinDensityMatrixElementsReal),
@@ -196,6 +199,59 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 			if((Int_t)(2*nrWaves) != _productionAmplitudesCovMatInv[idxBin][idxMass].GetNcols()) {
 				printErr << "number of waves is not correct for inverted covariance matrices of production amplitudes. Aborting..." << std::endl;
 				throw;
+			}
+		}
+	}
+
+	checkSize(_spinDensityMatrixElements,
+	          nrBins, "number of bins is not correct for spin-density matrix elements.",
+	          maxMassBins, "maximal number of mass bins is not correct for spin-density matrix elements.",
+	          nrWaves, "number of waves is not correct for spin-density matrix elements.",
+	          nrWaves, "number of waves is not correct for spin-density matrix elements.");
+
+	// TMatrixT<double>::operator= does not adjust the size of matrices
+	_spinDensityMatrixElementsCovMatInv.resize(std::vector<size_t>(spinDensityMatrixElementsCovMatInv.shape(), spinDensityMatrixElementsCovMatInv.shape()+spinDensityMatrixElementsCovMatInv.num_dimensions()));
+	checkSize(_spinDensityMatrixElementsCovMatInv,
+	          nrBins, "number of bins is not correct for inverted covariance matrices of spin-density matrix elements.",
+	          maxMassBins, "maximal number of mass bins is not correct for inverted covariance matrices of spin-density matrix elements.");
+	for(size_t idxBin = 0; idxBin < *(spinDensityMatrixElementsCovMatInv.shape()); ++idxBin) {
+		for(size_t idxMass = 0; idxMass < *(spinDensityMatrixElementsCovMatInv.shape()+1); ++idxMass) {
+			if(spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNrows() == 0 and spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNcols() == 0) {
+				continue;
+			}
+
+			_spinDensityMatrixElementsCovMatInv[idxBin][idxMass].ResizeTo(spinDensityMatrixElementsCovMatInv[idxBin][idxMass]);
+			_spinDensityMatrixElementsCovMatInv[idxBin][idxMass] = spinDensityMatrixElementsCovMatInv[idxBin][idxMass];
+
+			if((Int_t)(nrWaves*(nrWaves+1)) != _spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNrows()) {
+				printErr << "number of waves is not correct for inverted covariance matrices of spin-density matrix elements. Aborting..." << std::endl;
+				throw;
+			}
+			if((Int_t)(nrWaves*(nrWaves+1)) != _spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNcols()) {
+				printErr << "number of waves is not correct for inverted covariance matrices of spin-density matrix elements. Aborting..." << std::endl;
+				throw;
+			}
+		}
+	}
+
+	// copy the diagonal of the covariance matrices of the spin-density
+	// matrix elements for faster calculations if the full covariance
+	// matrix is not used
+	_spinDensityMatrixElementsCovMatInvArray.resize(boost::extents[nrBins][maxMassBins][nrWaves][nrWaves][2][2]);
+	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+		for(size_t idxMass = 0; idxMass < maxMassBins; ++idxMass) {
+			if(_spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNrows() == 0 and _spinDensityMatrixElementsCovMatInv[idxBin][idxMass].GetNcols() == 0) {
+				continue;
+			}
+
+			for(size_t iWave = 0; iWave < nrWaves; ++iWave) {
+				for(size_t jWave = 0; jWave < nrWaves; ++jWave) {
+					const size_t base = nrWaves*(nrWaves+1) - (nrWaves-iWave)*(nrWaves-iWave+1) + 2*(jWave-iWave);
+					_spinDensityMatrixElementsCovMatInvArray[idxBin][idxMass][iWave][jWave][0][0] = _spinDensityMatrixElementsCovMatInv[idxBin][idxMass](base,   base  );
+					_spinDensityMatrixElementsCovMatInvArray[idxBin][idxMass][iWave][jWave][0][1] = _spinDensityMatrixElementsCovMatInv[idxBin][idxMass](base,   base+1);
+					_spinDensityMatrixElementsCovMatInvArray[idxBin][idxMass][iWave][jWave][1][0] = _spinDensityMatrixElementsCovMatInv[idxBin][idxMass](base+1, base  );
+					_spinDensityMatrixElementsCovMatInvArray[idxBin][idxMass][iWave][jWave][1][1] = _spinDensityMatrixElementsCovMatInv[idxBin][idxMass](base+1, base+1);
+				}
 			}
 		}
 	}

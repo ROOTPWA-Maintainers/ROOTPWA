@@ -29,6 +29,8 @@
 
 #include "function.h"
 
+#include <TVectorT.h>
+
 #include <reportingUtils.hpp>
 
 #include "cache.h"
@@ -68,8 +70,6 @@ rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
 bool
 rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitData,
                                    const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                   const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
-                                   const boost::multi_array<TMatrixT<double>, 2>& spinDensityCovarianceMatrices,
                                    const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
 {
 	if(not _fitProductionAmplitudes && _useCovariance == useFullCovarianceMatrix) {
@@ -80,17 +80,14 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitDa
 	_fitData = fitData;
 	_fitModel = fitModel;
 
-	_spinDensityMatrices.resize(std::vector<size_t>(spinDensityMatrices.shape(), spinDensityMatrices.shape()+spinDensityMatrices.num_dimensions()));
-	_spinDensityMatrices = spinDensityMatrices;
-
 	_wavePairMassBinLimits.resize(std::vector<size_t>(wavePairMassBinLimits.shape(), wavePairMassBinLimits.shape()+wavePairMassBinLimits.num_dimensions()));
 	_wavePairMassBinLimits = wavePairMassBinLimits;
 
 	_idxAnchorWave = _fitModel->getAnchorWave();
 
-	_nrBins = _spinDensityMatrices.shape()[0];
-	_maxMassBins = _spinDensityMatrices.shape()[1];
-	_nrWaves = _spinDensityMatrices.shape()[2];
+	_nrBins = *(_fitData->productionAmplitudes().shape());
+	_maxMassBins = *(_fitData->productionAmplitudes().shape()+1);
+	_nrWaves = *(_fitData->productionAmplitudes().shape()+2);
 
 	_idxMassMax.resize(_nrBins);
 	_idxMassMin.resize(_nrBins);
@@ -100,231 +97,6 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitDa
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
 			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
-		}
-	}
-
-	if(_fitProductionAmplitudes) {
-	} else {
-		// do some stuff specific to the fit to the spin-density matrix
-
-		// get a list of waves that are zero (those have to be excluded
-		// from the inversion of the covariance matrix below)
-		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[_nrBins][_maxMassBins]);
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
-				for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-					bool zeroThisWave = true;
-					for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
-						const size_t idx = _nrWaves*(_nrWaves+1) - ((jdxWave >= idxWave) ? ((_nrWaves-idxWave)*(_nrWaves-idxWave+1) - 2*(jdxWave-idxWave)) : ((_nrWaves-jdxWave)*(_nrWaves-jdxWave+1) - 2*(idxWave-jdxWave)));
-
-						zeroThisWave &= (_spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].real() == 0.);
-						zeroThisWave &= (_spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave].imag() == 0.);
-						zeroThisWave &= (spinDensityCovarianceMatrices[idxBin][idxMass](idx,   idx  ) == 0.);
-						zeroThisWave &= (spinDensityCovarianceMatrices[idxBin][idxMass](idx,   idx+1) == 0.);
-						zeroThisWave &= (spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, idx  ) == 0.);
-						zeroThisWave &= (spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, idx+1) == 0.);
-					}
-
-					if(zeroThisWave or idxMass < _wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
-						zeroWaves[idxBin][idxMass].push_back(idxWave);
-					}
-
-					// check that a wave is not zero in its fit range
-					if(zeroThisWave and idxMass >= _wavePairMassBinLimits[idxBin][idxWave][idxWave].first and idxMass <= _wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
-						printErr << "spin-density matrix element of wave " << idxWave << " zero in its fit range (e.g. mass limit in mass-independent fit)." << std::endl;
-						return false;
-					}
-				}
-			}
-		}
-
-		if(_useCovariance == useFullCovarianceMatrix) {
-			_spinDensityMatricesCovMatInv.resize(boost::extents[_nrBins][_maxMassBins]);
-		} else {
-			_spinDensityMatricesCovMatInvArray.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves][2][2]);
-		}
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-			for(size_t idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
-				// import covariance matrix of spin-density matrix elements
-				const size_t matrixSize(_nrWaves * (_nrWaves+1));
-				const size_t reducedMatrixSize((_nrWaves - zeroWaves[idxBin][idxMass].size())*(_nrWaves - zeroWaves[idxBin][idxMass].size()));
-				TMatrixT<double> reducedCovMat(reducedMatrixSize, reducedMatrixSize);
-
-				{
-					// i is for loop over rows
-					size_t redIdx = 0;
-					for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < _nrWaves; ++iWave1) {
-						if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
-							++iSkip1;
-							continue;
-						}
-						for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < _nrWaves; ++iWave2) {
-							if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
-								++iSkip2;
-								continue;
-							}
-							const size_t idx = _nrWaves*(_nrWaves+1) - (_nrWaves-iWave1)*(_nrWaves-iWave1+1) + 2*(iWave2-iWave1);
-
-							// j is for loop over columns
-							size_t redJdx = 0;
-							for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < _nrWaves; ++jWave1) {
-								if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
-									++jSkip1;
-									continue;
-								}
-								for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < _nrWaves; ++jWave2) {
-									if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
-										++jSkip2;
-										continue;
-									}
-									const size_t jdx = _nrWaves*(_nrWaves+1) - (_nrWaves-jWave1)*(_nrWaves-jWave1+1) + 2*(jWave2-jWave1);
-
-									if(iWave1 == iWave2) { // one row
-										if(jWave1 == jWave2) { // one column
-											if((iWave1 == jWave1 and iWave2 == jWave2) or _useCovariance == useFullCovarianceMatrix) {
-												reducedCovMat(redIdx,   redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx  );
-											}
-										} else { // two columns
-											if(_useCovariance == useFullCovarianceMatrix) {
-												reducedCovMat(redIdx,   redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx  );
-												reducedCovMat(redIdx,   redJdx+1) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx+1);
-											}
-										}
-									} else { // two rows
-										if(jWave1 == jWave2) { // one column
-											if(_useCovariance == useFullCovarianceMatrix) {
-												reducedCovMat(redIdx,   redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx  );
-												reducedCovMat(redIdx+1, redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, jdx  );
-											}
-										} else { // two columns
-											if((iWave1 == jWave1 and iWave2 == jWave2) or _useCovariance == useFullCovarianceMatrix) {
-												reducedCovMat(redIdx,   redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx  );
-												reducedCovMat(redIdx+1, redJdx+1) = spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, jdx+1);
-												if(_useCovariance != useDiagnalElementsOnly) {
-													reducedCovMat(redIdx,   redJdx+1) = spinDensityCovarianceMatrices[idxBin][idxMass](idx,   jdx+1);
-													reducedCovMat(redIdx+1, redJdx  ) = spinDensityCovarianceMatrices[idxBin][idxMass](idx+1, jdx  );
-												}
-											}
-										}
-									}
-
-									if(jWave1 == jWave2) {
-										redJdx += 1;
-									} else {
-										redJdx += 2;
-									}
-								}
-							}
-
-							if(iWave1 == iWave2) {
-								redIdx += 1;
-							} else {
-								redIdx += 2;
-							}
-						}
-					}
-				}
-
-				reducedCovMat.Invert();
-
-				// import covariance matrix of spin-density matrix elements
-				if(_useCovariance == useFullCovarianceMatrix) {
-					_spinDensityMatricesCovMatInv[idxBin][idxMass].ResizeTo(matrixSize, matrixSize);
-
-					// i is for loop over rows
-					size_t redIdx = 0;
-					for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < _nrWaves; ++iWave1) {
-						if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
-							++iSkip1;
-							continue;
-						}
-						for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < _nrWaves; ++iWave2) {
-							if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
-								++iSkip2;
-								continue;
-							}
-							const size_t idx = _nrWaves*(_nrWaves+1) - (_nrWaves-iWave1)*(_nrWaves-iWave1+1) + 2*(iWave2-iWave1);
-
-							// j is for loop over columns
-							size_t redJdx = 0;
-							for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < _nrWaves; ++jWave1) {
-								if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
-									++jSkip1;
-									continue;
-								}
-								for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < _nrWaves; ++jWave2) {
-									if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
-										++jSkip2;
-										continue;
-									}
-									const size_t jdx = _nrWaves*(_nrWaves+1) - (_nrWaves-jWave1)*(_nrWaves-jWave1+1) + 2*(jWave2-jWave1);
-
-									if(iWave1 == iWave2) { // one row
-										if(jWave1 == jWave2) { // one column
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
-										} else { // two columns
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx+1) = reducedCovMat(redIdx,   redJdx+1);
-										}
-									} else { // two rows
-										if(jWave1 == jWave2) { // one column
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, jdx  ) = reducedCovMat(redIdx+1, redJdx  );
-										} else { // two columns
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx  ) = reducedCovMat(redIdx,   redJdx  );
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx,   jdx+1) = reducedCovMat(redIdx,   redJdx+1);
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, jdx  ) = reducedCovMat(redIdx+1, redJdx  );
-											_spinDensityMatricesCovMatInv[idxBin][idxMass](idx+1, jdx+1) = reducedCovMat(redIdx+1, redJdx+1);
-										}
-									}
-
-									if(jWave1 == jWave2) {
-										redJdx += 1;
-									} else {
-										redJdx += 2;
-									}
-								}
-							}
-
-							if(iWave1 == iWave2) {
-								redIdx += 1;
-							} else {
-								redIdx += 2;
-							}
-						}
-					}
-				}else {
-					// i is for loop over rows
-					size_t redIdx = 0;
-					for(size_t iWave = 0, iSkip = 0; iWave < _nrWaves; ++iWave) {
-						if(iSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip] == iWave) {
-							++iSkip;
-							continue;
-						}
-						for(size_t jWave = iWave, jSkip = iSkip; jWave < _nrWaves; ++jWave) {
-							if(jSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip] == jWave) {
-								++jSkip;
-								continue;
-							}
-
-							if(iWave == jWave) {
-								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][0] = reducedCovMat(redIdx,   redIdx  );
-							} else {
-								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][0] = reducedCovMat(redIdx,   redIdx  );
-								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][0][1] = reducedCovMat(redIdx,   redIdx+1);
-								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][1][0] = reducedCovMat(redIdx+1, redIdx  );
-								_spinDensityMatricesCovMatInvArray[idxBin][idxMass][iWave][jWave][1][1] = reducedCovMat(redIdx+1, redIdx+1);
-							}
-
-							if(iWave == jWave) {
-								redIdx += 1;
-							} else {
-								redIdx += 2;
-							}
-						}
-					}
-				}
-			}
 		}
 	}
 
@@ -565,19 +337,19 @@ rpwa::resonanceFit::function::chiSquareSpinDensityMatrix(const rpwa::resonanceFi
 					// calculate target spin density matrix element
 					const std::complex<double> rhoFit = _fitModel->spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 
-					const std::complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxBin][idxMass][idxWave][jdxWave];
+					const std::complex<double> rhoDiff = rhoFit - _fitData->spinDensityMatrixElements()[idxBin][idxMass][idxWave][jdxWave];
 
 					if(idxWave==jdxWave) {
-						chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
+						chi2 += rhoDiff.real() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
 					} else {
 						if (_useCovariance == useDiagnalElementsOnly) {
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
+							chi2 += rhoDiff.real() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
 						} else if(_useCovariance == useComplexDiagnalElementsOnly) {
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
-							chi2 += rhoDiff.real() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][0][1] * rhoDiff.imag();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][0] * rhoDiff.real();
-							chi2 += rhoDiff.imag() * _spinDensityMatricesCovMatInvArray[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
+							chi2 += rhoDiff.real() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][0][0] * rhoDiff.real();
+							chi2 += rhoDiff.real() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][0][1] * rhoDiff.imag();
+							chi2 += rhoDiff.imag() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][1][0] * rhoDiff.real();
+							chi2 += rhoDiff.imag() * _fitData->spinDensityMatrixElementsCovMatInvArray()[idxBin][idxMass][idxWave][jdxWave][1][1] * rhoDiff.imag();
 						} else {
 							// this should have returned an error during the call to init()
 							assert(false);
