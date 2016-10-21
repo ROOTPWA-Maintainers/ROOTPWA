@@ -21,42 +21,47 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      forward declaration of classes use throughout the resonance fit
-//      * including shared_ptr definitions
+//      storage for the data required by the resonance fit
+//      - vectors of production amplitudes
+//      - spin-density matrices
+//      - the corresponding covariances
+//      - phase-space integrals of waves
 //
 //-------------------------------------------------------------------------
 
 
-#ifndef RESONANCEFIT_FORWARD_HH
-#define RESONANCEFIT_FORWARD_HH
+#ifndef RESONANCEFIT_DATA_HH
+#define RESONANCEFIT_DATA_HH
+
+#include <boost/multi_array.hpp>
 
 namespace rpwa {
 
 	namespace resonanceFit {
 
-		class component;
-		typedef std::shared_ptr<component> componentPtr;
-		typedef std::shared_ptr<const component> componentConstPtr;
+		class data {
 
-		class data;
-		// 'data' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<data> dataPtr;
-		typedef std::shared_ptr<const data> dataConstPtr;
+		public:
 
-		class fsmd;
-		typedef std::shared_ptr<fsmd> fsmdPtr;
-		typedef std::shared_ptr<const fsmd> fsmdConstPtr;
+			data(const std::vector<size_t>& nrMassBins,
+			     const boost::multi_array<double, 2>& massBinCenters);
+			~data() {}
 
-		class function;
-		typedef std::shared_ptr<function> functionPtr;
-		typedef std::shared_ptr<const function> functionConstPtr;
+			size_t nrBins() const { return _nrMassBins.size(); }
+			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
 
-		class model;
-		typedef std::shared_ptr<model> modelPtr;
-		typedef std::shared_ptr<const model> modelConstPtr;
+			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
+			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
+
+		private:
+
+			std::vector<size_t> _nrMassBins;
+			boost::multi_array<double, 2> _massBinCenters;
+
+		};
 
 	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
-#endif // RESONANCEFIT_FORWARD_HH
+#endif // RESONANCEFIT_DATA_HH

@@ -48,9 +48,6 @@ namespace rpwa {
 
 	namespace resonanceFit {
 
-		class function;
-		class model;
-
 		class minimizerRoot : public rpwa::resonanceFit::minimizer {
 
 		private:

@@ -46,6 +46,7 @@
 #include <yamlCppUtils.hpp>
 
 #include "cache.h"
+#include "data.h"
 #include "function.h"
 #include "massDepFit.h"
 #include "minimizerRoot.h"
@@ -228,6 +229,7 @@ main(int    argc,
 	rpwa::resonanceFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
+	rpwa::resonanceFit::dataConstPtr fitData;
 	rpwa::resonanceFit::modelPtr fitModel(new rpwa::resonanceFit::model);
 	rpwa::resonanceFit::functionPtr fitFunction(new rpwa::resonanceFit::function(doProdAmp, doCov));
 
@@ -241,13 +243,13 @@ main(int    argc,
 	rpwa::resonanceFit::parameters fitParameters;
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
-	if(not mdepFit.readConfig(configRoot, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, valTreeName, valBranchName)) {
+	if(not mdepFit.readConfig(configRoot, fitData, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, valTreeName, valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(fitModel, fitFunction)) {
+	if(not mdepFit.init(fitData, fitModel, fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -311,7 +313,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(fitModel, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
+	if(not mdepFit.createPlots(fitData, fitModel, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
 		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}

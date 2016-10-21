@@ -50,9 +50,156 @@
 #include <yamlCppUtils.hpp>
 
 #include "components.h"
+#include "data.h"
 #include "fsmd.h"
 #include "function.h"
 #include "model.h"
+
+
+namespace {
+
+
+	template<typename T>
+	void
+	copyMultiArrayElement(const T& source,
+	                      T& target)
+	{
+		target = source;
+	}
+
+
+	template<typename T, size_t dim1, size_t dim2>
+	void
+	copyMultiArray(const boost::multi_array<T, dim1>& source,
+	               std::vector<size_t> sourceIndices,
+	               boost::multi_array<T, dim2>& target,
+	               std::vector<size_t> targetIndices)
+	{
+		assert(sourceIndices.size() <= dim1);
+		assert(targetIndices.size() <= dim2);
+		assert(dim1-sourceIndices.size() == dim2-targetIndices.size());
+		assert(((sourceIndices.size() == dim1) and (targetIndices.size() == dim2))
+		       or ((sourceIndices.size() != dim1) and (targetIndices.size() != dim2)));
+
+		if(sourceIndices.size() == dim1) {
+			copyMultiArrayElement(source(sourceIndices), target(targetIndices));
+		} else {
+			const size_t maxIdx = source.shape()[sourceIndices.size()];
+
+			sourceIndices.push_back(0);
+			targetIndices.push_back(0);
+			for(size_t idx = 0; idx < maxIdx; ++idx) {
+				sourceIndices.back() = idx;
+				targetIndices.back() = idx;
+				copyMultiArray(source, sourceIndices, target, targetIndices);
+			}
+		}
+	}
+
+
+	// increase the extensions of a boost::multi_array such that one part
+	// of it can simply be reset
+	template<typename T>
+	void
+	adjustSize(boost::multi_array<T, 1>& master,
+	           const size_t minSizeFirst = 1)
+	{
+		// initialize the next size with the current size
+		std::vector<size_t> newSize(master.shape(), master.shape()+master.num_dimensions());
+
+		// resize if the minimal size required for the first dimension
+		// is larger than its current size
+		if(newSize[0] < minSizeFirst) {
+			newSize[0] = minSizeFirst;
+			master.resize(newSize);
+		}
+	}
+
+
+	// increase the extensions of a boost::multi_array such that one part
+	// of it can simply be reset
+	template<typename T, size_t dim>
+	void
+	adjustSize(boost::multi_array<T, dim>& master,
+	           const boost::multi_array<T, dim-1>& part,
+	           const size_t minSizeFirst = 1)
+	{
+		// initialize the next size with the current size
+		std::vector<size_t> newSize(master.shape(), master.shape()+master.num_dimensions());
+
+		// resize if the minimal size required for the first dimension
+		// is larger than its current size
+		bool resize = newSize[0] < minSizeFirst;
+		newSize[0] = std::max(newSize[0], minSizeFirst);
+
+		// compare the other dimensions with the dimenstions of the
+		// part to be set
+		for(size_t i = 1; i < dim; ++i) {
+			if(newSize[i] < part.shape()[i-1]) {
+				resize = true;
+				newSize[i] = part.shape()[i-1];
+			}
+		}
+
+		if(resize) {
+			master.resize(newSize);
+		}
+	}
+
+
+	// increase the extensions of a std::vector such that a new element can
+	// simply be set
+	template<typename T>
+	void
+	adjustSize(std::vector<T>& master,
+	           const size_t minSize)
+	{
+		if(master.size() < minSize) {
+			master.resize(minSize);
+		}
+	}
+
+
+	// increase the extensions of a boost::multi_array such that one part
+	// of it can simply be reset, and also set this part
+	template<typename T>
+	void
+	adjustSizeAndSet(boost::multi_array<T, 1>& master,
+	                 const size_t idx,
+	                 const T& part)
+	{
+		adjustSize(master, idx+1);
+		master[idx] = part;
+	}
+
+
+	// increase the extensions of a boost::multi_array such that one part
+	// of it can simply be reset, and also set this part
+	template<typename T, size_t dim>
+	void
+	adjustSizeAndSet(boost::multi_array<T, dim>& master,
+	                 const size_t idx,
+	                 const boost::multi_array<T, dim-1>& part)
+	{
+		adjustSize(master, part, idx+1);
+		copyMultiArray(part, std::vector<size_t>(), master, std::vector<size_t>(1, idx));
+	}
+
+
+	// increase the extensions of a std::vector such that a new element can
+	// simply be set, and also set this part
+	template<typename T>
+	void
+	adjustSizeAndSet(std::vector<T>& master,
+	                 const size_t idx,
+	                 const T& part)
+	{
+		adjustSize(master, idx+1);
+		master[idx] = part;
+	}
+
+
+}
 
 
 bool rpwa::resonanceFit::massDepFit::_debug = false;
@@ -68,6 +215,7 @@ rpwa::resonanceFit::massDepFit::massDepFit()
 
 bool
 rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
+                                           rpwa::resonanceFit::dataConstPtr& fitData,
                                            const rpwa::resonanceFit::modelPtr& fitModel,
                                            rpwa::resonanceFit::parameters& fitParameters,
                                            rpwa::resonanceFit::parameters& fitParametersError,
@@ -99,13 +247,18 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	}
 
 	// extract information from fit results
-	if(not readInFiles(valTreeName, valBranchName)) {
+	std::vector<size_t> nrMassBins;
+	boost::multi_array<double, 2> massBinCenters;
+	if(not readInFiles(nrMassBins,
+	                   massBinCenters,
+	                   valTreeName,
+	                   valBranchName)) {
 		printErr << "error while reading fit result." << std::endl;
 		return false;
 	}
 
 	// prepare mass limits
-	if(not prepareMassLimits()) {
+	if(not prepareMassLimits(nrMassBins, massBinCenters)) {
 		printErr << "error while determining which bins to use in the fit." << std::endl;
 		return false;
 	}
@@ -116,10 +269,20 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 		printErr << "'model' does not exist in configuration file." << std::endl;
 		return false;
 	}
-	if(not readConfigModel(configModel, fitModel, fitParameters, fitParametersError, useBranchings)) {
+	if(not readConfigModel(configModel,
+	                       fitModel,
+	                       fitParameters,
+	                       fitParametersError,
+	                       nrMassBins,
+	                       massBinCenters,
+	                       useBranchings)) {
 		printErr << "error while reading 'model' in configuration file." << std::endl;
 		return false;
 	}
+
+	// create data object
+	fitData.reset(new rpwa::resonanceFit::data(nrMassBins,
+	                                           massBinCenters));
 
 	return true;
 }
@@ -517,6 +680,8 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
                                                 const rpwa::resonanceFit::modelPtr& fitModel,
                                                 rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::parameters& fitParametersError,
+                                                const std::vector<size_t>& nrMassBins,
+                                                const boost::multi_array<double, 2>& massBinCenters,
                                                 const bool useBranchings)
 {
 	if(not configModel) {
@@ -549,7 +714,13 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 		printErr << "'components' does not exist in 'model'." << std::endl;
 		return false;
 	}
-	if(not readConfigModelComponents(configComponents, fitModel, fitParameters, fitParametersError, useBranchings)) {
+	if(not readConfigModelComponents(configComponents,
+	                                 fitModel,
+	                                 fitParameters,
+	                                 fitParametersError,
+	                                 nrMassBins,
+	                                 massBinCenters,
+	                                 useBranchings)) {
 		printErr << "error while reading 'components' in 'model'." << std::endl;
 		return false;
 	}
@@ -602,6 +773,8 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
                                                           const rpwa::resonanceFit::modelPtr& fitModel,
                                                           rpwa::resonanceFit::parameters& fitParameters,
                                                           rpwa::resonanceFit::parameters& fitParametersError,
+                                                          const std::vector<size_t>& nrMassBins,
+                                                          const boost::multi_array<double, 2>& massBinCenters,
                                                           const bool useBranchings) const
 {
 	if(not configComponents) {
@@ -681,7 +854,16 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 			return false;
 		}
 
-		if(not component->init(configComponent, fitParameters, fitParametersError, _nrMassBins, _massBinCenters, _waveIndices, _waveBins, _inPhaseSpaceIntegrals, useBranchings, _debug)) {
+		if(not component->init(configComponent,
+		                       fitParameters,
+		                       fitParametersError,
+		                       nrMassBins,
+		                       massBinCenters,
+		                       _waveIndices,
+		                       _waveBins,
+		                       _inPhaseSpaceIntegrals,
+		                       useBranchings,
+		                       _debug)) {
 			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
 			return false;
 		}
@@ -733,7 +915,8 @@ rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd
 
 
 bool
-rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::modelPtr& fitModel,
+rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                     const rpwa::resonanceFit::modelPtr& fitModel,
                                      const rpwa::resonanceFit::functionPtr& fitFunction)
 {
 	if(not fitModel->init(_nrBins,
@@ -745,9 +928,8 @@ rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::modelPtr& fitMode
 		return false;
 	}
 
-	if(not fitFunction->init(fitModel,
-	                         _nrMassBins,
-	                         _massBinCenters,
+	if(not fitFunction->init(fitData,
+	                         fitModel,
 	                         _inProductionAmplitudes,
 	                         _inProductionAmplitudesCovariance,
 	                         _inSpinDensityMatrices,
@@ -1091,18 +1273,24 @@ rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readInFiles(const std::string& valTreeName,
+rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
+                                            boost::multi_array<double, 2>& massBinCenters,
+                                            const std::string& valTreeName,
                                             const std::string& valBranchName)
 {
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-		if(not readInFile(idxBin, valTreeName, valBranchName)) {
+		if(not readInFile(idxBin,
+		                  nrMassBins,
+		                  massBinCenters,
+		                  valTreeName,
+		                  valBranchName)) {
 			printErr << "error while reading file entry " << idxBin << "." << std::endl;
 			return false;
 		}
 
 		// extract information for systematic errors
 		// initialize with real fit result
-		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+		for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
 			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
 				_sysPlottingIntensities[idxBin][idxMass][idxWave] = std::make_pair(_plottingIntensities[idxBin][idxMass][idxWave].first,
 				                                                                   _plottingIntensities[idxBin][idxMass][idxWave].first);
@@ -1119,7 +1307,11 @@ rpwa::resonanceFit::massDepFit::readInFiles(const std::string& valTreeName,
 		}
 
 		if(_nrSystematics[idxBin] > 0) {
-			if(not readSystematicsFiles(idxBin, valTreeName, valBranchName)) {
+			if(not readSystematicsFiles(idxBin,
+			                            nrMassBins[idxBin],
+			                            massBinCenters[idxBin],
+			                            valTreeName,
+			                            valBranchName)) {
 				printErr << "error while reading fit results for systematic errors in bin " << idxBin << "." << std::endl;
 				return false;
 			}
@@ -1132,6 +1324,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const std::string& valTreeName,
 
 bool
 rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
+                                           std::vector<size_t>& nrMassBins,
+                                           boost::multi_array<double, 2>& massBinCenters,
                                            const std::string& valTreeName,
                                            const std::string& valBranchName)
 {
@@ -1173,43 +1367,38 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		return false;
 	}
 
-	double massMin;
-	double massMax;
-	double massStep;
-	size_t nrMassBins;
-	boost::multi_array<double, 1> massBinCenters;
-	if(not readFitResultMassBins(inTree, inFit, massMin, massMax, massStep, nrMassBins, massBinCenters)) {
+	size_t tempNrMassBins;
+	boost::multi_array<double, 1> tempMassBinCenters;
+	if(not readFitResultMassBins(inTree,
+	                             inFit,
+	                             tempNrMassBins,
+	                             tempMassBinCenters)) {
 		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
 
-	if(_maxMassBins < nrMassBins) {
+	adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
+	adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
+
+	if(_maxMassBins < tempNrMassBins) {
 		// take care to correctly copy the covariance matrices
 		boost::multi_array<TMatrixT<double>, 2> tempProductionAmplitudesCovariance(std::vector<size_t>(_inProductionAmplitudesCovariance.shape(), _inProductionAmplitudesCovariance.shape()+_inProductionAmplitudesCovariance.num_dimensions()));
 		boost::multi_array<TMatrixT<double>, 2> tempSpinDensityCovarianceMatrices(std::vector<size_t>(_inSpinDensityCovarianceMatrices.shape(), _inSpinDensityCovarianceMatrices.shape()+_inSpinDensityCovarianceMatrices.num_dimensions()));
-		if(idxBin > 0) {
-			for(size_t idx = 0; idx < _nrBins; ++idx) {
-				for(size_t idxMass = 0; idxMass < _nrMassBins[idx]; ++idxMass) {
-					tempProductionAmplitudesCovariance[idx][idxMass].ResizeTo(_inProductionAmplitudesCovariance[idx][idxMass]);
-					tempProductionAmplitudesCovariance[idx][idxMass] = _inProductionAmplitudesCovariance[idx][idxMass];
-					tempSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(_inSpinDensityCovarianceMatrices[idx][idxMass]);
-					tempSpinDensityCovarianceMatrices[idx][idxMass] = _inSpinDensityCovarianceMatrices[idx][idxMass];
-				}
+		for(size_t idx = 0; idx < idxBin; ++idx) {
+			for(size_t idxMass = 0; idxMass < nrMassBins[idx]; ++idxMass) {
+				tempProductionAmplitudesCovariance[idx][idxMass].ResizeTo(_inProductionAmplitudesCovariance[idx][idxMass]);
+				tempProductionAmplitudesCovariance[idx][idxMass] = _inProductionAmplitudesCovariance[idx][idxMass];
+				tempSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(_inSpinDensityCovarianceMatrices[idx][idxMass]);
+				tempSpinDensityCovarianceMatrices[idx][idxMass] = _inSpinDensityCovarianceMatrices[idx][idxMass];
 			}
-			_inProductionAmplitudesCovariance.resize(boost::extents[0][0]);
-			_inSpinDensityCovarianceMatrices.resize(boost::extents[0][0]);
 		}
+		_inProductionAmplitudesCovariance.resize(boost::extents[0][0]);
+		_inSpinDensityCovarianceMatrices.resize(boost::extents[0][0]);
 
-		_maxMassBins = nrMassBins;
+		_maxMassBins = tempNrMassBins;
 
 		// resize all array to store the information
-		_massMaxs.resize(_nrBins);
-		_massMins.resize(_nrBins);
-		_massSteps.resize(_nrBins);
-		_nrMassBins.resize(_nrBins);
-		_massBinCenters.resize(boost::extents[_nrBins][_maxMassBins]);
-
 		_inProductionAmplitudes.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
 		_inProductionAmplitudesCovariance.resize(boost::extents[_nrBins][_maxMassBins]);
 		_inSpinDensityMatrices.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
@@ -1224,28 +1413,24 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		_sysPlottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 		_sysPlottingPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 
-		if(idxBin > 0) {
-			for(size_t idx = 0; idx < _nrBins; ++idx) {
-				for(size_t idxMass = 0; idxMass < _nrMassBins[idx]; ++idxMass) {
-					_inProductionAmplitudesCovariance[idx][idxMass].ResizeTo(tempProductionAmplitudesCovariance[idx][idxMass]);
-					_inProductionAmplitudesCovariance[idx][idxMass] = tempProductionAmplitudesCovariance[idx][idxMass];
-					_inSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(tempSpinDensityCovarianceMatrices[idx][idxMass]);
-					_inSpinDensityCovarianceMatrices[idx][idxMass] = tempSpinDensityCovarianceMatrices[idx][idxMass];
-				}
+		for(size_t idx = 0; idx < idxBin; ++idx) {
+			for(size_t idxMass = 0; idxMass < nrMassBins[idx]; ++idxMass) {
+				_inProductionAmplitudesCovariance[idx][idxMass].ResizeTo(tempProductionAmplitudesCovariance[idx][idxMass]);
+				_inProductionAmplitudesCovariance[idx][idxMass] = tempProductionAmplitudesCovariance[idx][idxMass];
+				_inSpinDensityCovarianceMatrices[idx][idxMass].ResizeTo(tempSpinDensityCovarianceMatrices[idx][idxMass]);
+				_inSpinDensityCovarianceMatrices[idx][idxMass] = tempSpinDensityCovarianceMatrices[idx][idxMass];
 			}
 		}
 	}
 
-	_massMaxs[idxBin] = massMax;
-	_massMins[idxBin] = massMin;
-	_massSteps[idxBin] = massStep;
-	_nrMassBins[idxBin] = nrMassBins;
-	_massBinCenters[idxBin] = massBinCenters;
-
 	bool readMapping(false);
 	std::vector<Long64_t> inMapping;
 	if(_sameMassBinning and idxBin > 0) {
-		if(checkFitResultMassBins(inTree, inFit, idxBin-1, inMapping)) {
+		if(checkFitResultMassBins(inTree,
+		                          inFit,
+		                          nrMassBins[idxBin-1],
+		                          massBinCenters[idxBin-1],
+		                          inMapping)) {
 			if(_debug) {
 				printDebug << "bin " << idxBin << " has the same mass binning as bin " << idxBin-1 << "." << std::endl;
 			}
@@ -1258,7 +1443,11 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		}
 	}
 	if(not readMapping) {
-		if(not checkFitResultMassBins(inTree, inFit, idxBin, inMapping)) {
+		if(not checkFitResultMassBins(inTree,
+		                              inFit,
+		                              nrMassBins[idxBin],
+		                              massBinCenters[idxBin],
+		                              inMapping)) {
 			printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 			delete inFile;
 			return false;
@@ -1300,7 +1489,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	_plottingSpinDensityMatrixElementsReal[idxBin] = tempPlottingSpinDensityMatrixElementsReal;
 	_plottingSpinDensityMatrixElementsImag[idxBin] = tempPlottingSpinDensityMatrixElementsImag;
 	_plottingPhases[idxBin] = tempPlottingPhases;
-	for(size_t i = 0; i < nrMassBins; ++i) {
+	for(size_t i = 0; i < nrMassBins[idxBin]; ++i) {
 		_inProductionAmplitudesCovariance[idxBin][i].ResizeTo(tempProductionAmplitudesCovariance[i]);
 		_inProductionAmplitudesCovariance[idxBin][i] = tempProductionAmplitudesCovariance[i];
 		_inSpinDensityCovarianceMatrices[idxBin][i].ResizeTo(tempSpinDensityCovarianceMatrices[i]);
@@ -1322,6 +1511,8 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 
 bool
 rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
+                                                     const size_t nrMassBins,
+                                                     const boost::multi_array<double, 1>& massBinCenters,
                                                      const std::string& valTreeName,
                                                      const std::string& valBranchName)
 {
@@ -1334,7 +1525,12 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 	}
 
 	for(size_t idxSystematics = 0; idxSystematics < _nrSystematics[idxBin]; ++idxSystematics) {
-		if(not readSystematicsFile(idxBin, idxSystematics, valTreeName, valBranchName)) {
+		if(not readSystematicsFile(idxBin,
+		                           idxSystematics,
+		                           nrMassBins,
+		                           massBinCenters,
+		                           valTreeName,
+		                           valBranchName)) {
 			printErr << "error while reading fit results for systematic errors." << std::endl;
 			return false;
 		}
@@ -1347,6 +1543,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 bool
 rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
                                                     const size_t idxSystematics,
+                                                    const size_t nrMassBins,
+                                                    const boost::multi_array<double, 1>& massBinCenters,
                                                     const std::string& valTreeName,
                                                     const std::string& valBranchName)
 {
@@ -1389,7 +1587,11 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	}
 
 	std::vector<Long64_t> sysMapping;
-	if(not checkFitResultMassBins(sysTree, sysFit, idxBin, sysMapping)) {
+	if(not checkFitResultMassBins(sysTree,
+	                              sysFit,
+	                              nrMassBins,
+	                              massBinCenters,
+	                              sysMapping)) {
 		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
 		delete sysFile;
 		return false;
@@ -1422,7 +1624,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 		return false;
 	}
 
-	for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+	for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
 		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
 			_sysPlottingIntensities[idxBin][idxMass][idxWave].first = std::min(_sysPlottingIntensities[idxBin][idxMass][idxWave].first,
 			                                                                   tempSysPlottingIntensities[idxMass][idxWave].first);
@@ -1465,7 +1667,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 bool
 rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
                                                        rpwa::fitResult* fit,
-                                                       const size_t idxBin,
+                                                       const size_t nrMassBins,
+                                                       const boost::multi_array<double, 1>& massBinCenters,
                                                        std::vector<Long64_t>& mapping) const
 {
 	if(not tree or not fit) {
@@ -1474,14 +1677,14 @@ rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	}
 
 	// reset mapping
-	mapping.assign(_nrMassBins[idxBin], std::numeric_limits<Long64_t>::max());
+	mapping.assign(nrMassBins, std::numeric_limits<Long64_t>::max());
 
 	// extract data from tree
 	const Long64_t nrEntries = tree->GetEntries();
 
 	if(_debug) {
 		printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
-		           << "and map the " << _nrMassBins[idxBin] << " mass bins to those entries." << std::endl;
+		           << "and map the " << nrMassBins << " mass bins to those entries." << std::endl;
 	}
 
 	for(Long64_t idx=0; idx<nrEntries; ++idx) {
@@ -1498,8 +1701,8 @@ rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
 
 		bool found = false;
 		size_t idxMass=0;
-		while(idxMass<_nrMassBins[idxBin]) {
-			if(std::abs(_massBinCenters[idxBin][idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
+		while(idxMass<nrMassBins) {
+			if(std::abs(massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
 				found = true;
 				break;
 			}
@@ -1512,13 +1715,13 @@ rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
 		}
 
 		if(mapping[idxMass] != std::numeric_limits<Long64_t>::max()) {
-			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxBin][idxMass] << " GeV/c^2)  "
+			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2)  "
 			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << std::endl;
 			return false;
 		}
 
 		if(_debug) {
-			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxBin][idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
+			printDebug << "mapping mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
 		}
 		mapping[idxMass] = idx;
 	} // end loop over entries in tree
@@ -1526,7 +1729,7 @@ rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
 	// check that all mass bins are mapped
 	for(size_t idx=0; idx<mapping.size(); ++idx) {
 		if(mapping[idx] == std::numeric_limits<Long64_t>::max()) {
-			printErr << "mass bin " << idx << " (" << _massBinCenters[idxBin][idx] << " GeV/c^2) not mapped." << std::endl;
+			printErr << "mass bin " << idx << " (" << massBinCenters[idx] << " GeV/c^2) not mapped." << std::endl;
 			return false;
 		}
 	}
@@ -1546,9 +1749,6 @@ rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
 bool
 rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
                                                       rpwa::fitResult* fit,
-                                                      double& massMin,
-                                                      double& massMax,
-                                                      double& massStep,
                                                       size_t& nrMassBins,
                                                       boost::multi_array<double, 1>& massBinCenters) const
 {
@@ -1565,7 +1765,6 @@ rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
 	}
 
 	nrMassBins = 0;
-	massBinCenters.resize(boost::extents[_maxMassBins]);
 	for(Long64_t idx=0; idx<nrEntries; ++idx) {
 		if(tree->GetEntry(idx) == 0) {
 			printErr << "error while reading entry " << idx << " from tree." << std::endl;
@@ -1589,11 +1788,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
 		}
 
 		if(not found) {
-			if(nrMassBins >= _maxMassBins) {
-				massBinCenters.resize(boost::extents[nrMassBins+1]);
-			}
-
-			massBinCenters[nrMassBins++] = newMass;
+			adjustSizeAndSet(massBinCenters, nrMassBins++, newMass);
 		}
 	} // end loop over entries in tree
 
@@ -1603,7 +1798,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
 	printInfo << "found " << nrMassBins << " mass bins, center of first and last mass bins: "
 	          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
 
-	massStep = (massBinCenters[nrMassBins - 1] - massBinCenters[0]) / (nrMassBins - 1);
+	const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
 	for(size_t idxMass = 1; idxMass < nrMassBins; ++idxMass) {
 		if(std::abs(massBinCenters[idxMass]-massBinCenters[idxMass-1] - massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
 			printErr << "mass distance between bins " << idxMass-1 << " (" << massBinCenters[idxMass-1] << " GeV/c^2) and "
@@ -1611,15 +1806,6 @@ rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
 			         << massStep << " GeV/c^2" << std::endl;
 			return false;
 		}
-	}
-	if(_debug) {
-		printDebug << "distance between two mass bins is " << massStep << " GeV/c^2." << std::endl;
-	}
-
-	massMin = massBinCenters[0] - massStep / 2;
-	massMax = massBinCenters[nrMassBins - 1] + massStep / 2;
-	if(_debug) {
-		printDebug << "mass bins cover the mass range from " << massMin << " to " << massMax << " GeV/c^2." << std::endl;
 	}
 
 	return true;
@@ -1864,13 +2050,14 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 
 bool
-rpwa::resonanceFit::massDepFit::prepareMassLimits()
+rpwa::resonanceFit::massDepFit::prepareMassLimits(const std::vector<size_t>& nrMassBins,
+                                                  const boost::multi_array<double, 2>& massBinCenters)
 {
 	_waveMassBinLimits.resize(boost::extents[_nrBins][_nrWaves]);
 	_wavePairMassBinLimits.resize(boost::extents[_nrBins][_nrWaves][_nrWaves]);
 
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-		if(not prepareMassLimit(idxBin)) {
+		if(not prepareMassLimit(nrMassBins[idxBin], massBinCenters[idxBin], idxBin)) {
 			printErr << "error while determine bins to use in fit for bin " << idxBin << "." << std::endl;
 			return false;
 		}
@@ -1881,24 +2068,26 @@ rpwa::resonanceFit::massDepFit::prepareMassLimits()
 
 
 bool
-rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t idxBin)
+rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
+                                                 const boost::multi_array<double, 1>& massBinCenters,
+                                                 const size_t idxBin)
 {
 	if(_debug) {
-		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins[idxBin] << " mass bins, center of first and last mass bins: "
-		           << _massBinCenters[idxBin][0] << " and " << _massBinCenters[idxBin][_nrMassBins[idxBin] - 1] << " GeV/c^2." << std::endl;
+		printDebug << "determine which mass bins to use in the fit for " << nrMassBins << " mass bins, center of first and last mass bins: "
+		           << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
 	}
 
 	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 		size_t binFirst = 0;
-		size_t binLast = _nrMassBins[idxBin]-1;
-		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
-			if(_massBinCenters[idxBin][idxMass] < _waveMassLimits[idxWave].first) {
+		size_t binLast = nrMassBins-1;
+		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
+			if(massBinCenters[idxMass] < _waveMassLimits[idxWave].first) {
 				binFirst = idxMass+1;
 			}
-			if(_massBinCenters[idxBin][idxMass] == _waveMassLimits[idxWave].first) {
+			if(massBinCenters[idxMass] == _waveMassLimits[idxWave].first) {
 				binFirst = idxMass;
 			}
-			if(_massBinCenters[idxBin][idxMass] <= _waveMassLimits[idxWave].second) {
+			if(massBinCenters[idxMass] <= _waveMassLimits[idxWave].second) {
 				binLast = idxMass;
 			}
 		}
@@ -1906,13 +2095,16 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t idxBin)
 			binFirst = 0;
 		}
 		if(_waveMassLimits[idxWave].second < 0) {
-			binLast = _nrMassBins[idxBin]-1;
+			binLast = nrMassBins-1;
 		}
+
+		const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
+		const double massFirst = massBinCenters[binFirst] - massStep/2.;
+		const double massLast = massBinCenters[binLast] + massStep/2.;
 		if(_debug) {
 			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
-			           << "mass range: " << (_waveMassLimits[idxWave].first<0. ? _massMins[idxBin] : _waveMassLimits[idxWave].first)
-			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMaxs[idxBin] : _waveMassLimits[idxWave].second) << " GeV/c^2, "
-			           << "bin range " << binFirst << "-" << binLast << std::endl;
+			           << "mass range: " << massFirst << "-" << massLast << " GeV/c^2, "
+			           << "bin range: " << binFirst << "-" << binLast << std::endl;
 		}
 		_waveMassBinLimits[idxBin][idxWave] = std::make_pair(binFirst, binLast);
 	}
@@ -1941,7 +2133,8 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t idxBin)
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConstPtr& fitModel,
+rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                            const rpwa::resonanceFit::modelConstPtr& fitModel,
                                             const rpwa::resonanceFit::parameters& fitParameters,
                                             rpwa::resonanceFit::cache& cache,
                                             TFile* outFile,
@@ -1963,7 +2156,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWave(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, idxBin)) {
+			if(not createPlotsWave(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, idxBin)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
 				return false;
 			}
@@ -1971,7 +2164,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
-				if(not createPlotsWavePair(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, jdxWave, idxBin)) {
+				if(not createPlotsWavePair(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, jdxWave, idxBin)) {
 					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
 					return false;
 				}
@@ -1979,7 +2172,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 		}
 
 		if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() != 1 or not _sameMassBinning)) {
-			if(not createPlotsFsmd(fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
+			if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
 				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
 				return false;
 			}
@@ -1988,7 +2181,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 
 	if(_nrBins != 1 and _sameMassBinning and fitModel->isMappingEqualInAllBins()) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWaveSum(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
+			if(not createPlotsWaveSum(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
 				return false;
 			}
@@ -1996,7 +2189,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 	}
 
 	if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() == 1 and _sameMassBinning)) {
-		if(not createPlotsFsmd(fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
+		if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
 			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 			return false;
 		}
@@ -2011,7 +2204,8 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::modelConst
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelConstPtr& fitModel,
+rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                                const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                 const rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::cache& cache,
                                                 TDirectory* outDirectory,
@@ -2077,10 +2271,10 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 
 	// plot data
 	double maxIE = -std::numeric_limits<double>::max();
-	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
+	for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxBin][idxMass];
-		const double halfBin = _massSteps[idxBin]/2.;
+		const double mass = fitData->massBinCenters()[idxBin][idxMass];
+		const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
 		data->SetPoint(point, mass, _plottingIntensities[idxBin][idxMass][idxWave].first);
 		data->SetPointError(point, halfBin, _plottingIntensities[idxBin][idxMass][idxWave].second);
@@ -2097,10 +2291,11 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 
 	// plot fit, either over full or limited mass range
 	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
+	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(fitData->nrMassBins()[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		const double intensity = fitModel->intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		fit->SetPoint(point-firstPoint, mass, intensity);
@@ -2121,15 +2316,16 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 		}
 	}
 
-	boost::multi_array<double, 2>::const_array_view<1>::type viewM = _massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, _nrMassBins[idxBin])]];
-	boost::multi_array<double, 3>::const_array_view<1>::type viewInt = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range(0, _nrMassBins[idxBin])][idxWave]];
+	boost::multi_array<double, 2>::const_array_view<1>::type viewM = fitData->massBinCenters()[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, fitData->nrMassBins()[idxBin])]];
+	boost::multi_array<double, 3>::const_array_view<1>::type viewInt = _inPhaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range(0, fitData->nrMassBins()[idxBin])][idxWave]];
 	ROOT::Math::Interpolator phaseSpaceInterpolator(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 
 	// plot phase-space
 	double maxP = -std::numeric_limits<double>::max();
-	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(fitData->nrMassBins()[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		double ps = pow((idxMass != std::numeric_limits<size_t>::max()) ? _inPhaseSpaceIntegrals[idxBin][idxMass][idxWave] : phaseSpaceInterpolator.Eval(mass), 2);
 		if(fitModel->getFsmd()) {
@@ -2154,7 +2350,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::modelConstPtr& fitModel,
+rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                                   const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                    const rpwa::resonanceFit::parameters& fitParameters,
                                                    rpwa::resonanceFit::cache& cache,
                                                    TDirectory* outDirectory,
@@ -2210,10 +2407,10 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::mod
 	}
 
 	// plot data
-	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
+	for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxBin][idxMass];
-		const double halfBin = _massSteps[idxBin]/2.;
+		const double mass = fitData->massBinCenters()[idxBin][idxMass];
+		const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
 		double sum = 0.;
 		double error2 = 0.;
@@ -2227,10 +2424,11 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::mod
 
 	// plot fit, either over full or limited mass range
 	const size_t firstPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
+	const size_t lastPoint = rangePlotting ? (extraBinning*_waveMassBinLimits[idxBin][idxWave].second) : (extraBinning*(fitData->nrMassBins()[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		double sum = 0.;
 		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
@@ -2263,7 +2461,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::mod
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::modelConstPtr& fitModel,
+rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                                    const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                     const rpwa::resonanceFit::parameters& fitParameters,
                                                     rpwa::resonanceFit::cache& cache,
                                                     TDirectory* outDirectory,
@@ -2359,10 +2558,10 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 	phase.Add(phaseFit, "L");
 
 	// plot data
-	for(size_t point = 0; point <= (_nrMassBins[idxBin]-1); ++point) {
+	for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 		const size_t idxMass = point;
-		const double mass = _massBinCenters[idxBin][idxMass];
-		const double halfBin = _massSteps[idxBin]/2.;
+		const double mass = fitData->massBinCenters()[idxBin][idxMass];
+		const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
 		realData->SetPoint(point, mass, _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first);
 		realData->SetPointError(point, halfBin, _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second);
@@ -2393,10 +2592,11 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 
 	// plot fit, either over full or limited mass range
 	const size_t firstPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxBin][idxWave][jdxWave].first) : 0;
-	const size_t lastPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxBin][idxWave][jdxWave].second) : (extraBinning*(_nrMassBins[idxBin]-1));
+	const size_t lastPoint = rangePlotting ? (extraBinning*_wavePairMassBinLimits[idxBin][idxWave][jdxWave].second) : (extraBinning*(fitData->nrMassBins()[idxBin]-1));
 	for(size_t point=firstPoint; point<=lastPoint; ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		const std::complex<double> element = fitModel->spinDensityMatrix(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass);
 		realFit->SetPoint(point-firstPoint, mass, element.real());
@@ -2405,9 +2605,10 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 
 	// keep track of phase over full mass range
 	TGraph phaseFitAll;
-	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(fitData->nrMassBins()[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		const double phase = fitModel->phase(fitParameters, cache, idxWave, jdxWave, idxBin, mass, idxMass) * TMath::RadToDeg();
 
@@ -2432,9 +2633,10 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 	}
 
 	// rectify phase graphs
-	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(fitData->nrMassBins()[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		double x;
 		double valueFit;
@@ -2479,7 +2681,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsFsmd(const rpwa::resonanceFit::modelConstPtr& fitModel,
+rpwa::resonanceFit::massDepFit::createPlotsFsmd(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                                const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                 const rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::cache& cache,
                                                 TDirectory* outDirectory,
@@ -2495,9 +2698,10 @@ rpwa::resonanceFit::massDepFit::createPlotsFsmd(const rpwa::resonanceFit::modelC
 	graph.SetName("finalStateMassDependence");
 	graph.SetTitle("finalStateMassDependence");
 
-	for(size_t point = 0; point <= (extraBinning*(_nrMassBins[idxBin]-1)); ++point) {
+	for(size_t point = 0; point <= (extraBinning*(fitData->nrMassBins()[idxBin]-1)); ++point) {
 		const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
-		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? _massBinCenters[idxBin][idxMass] : (_massBinCenters[idxBin][point/extraBinning] + (point%extraBinning) * _massSteps[idxBin]/extraBinning);
+		const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
+		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		graph.SetPoint(point, mass, std::norm(fitModel->getFsmd()->val(fitParameters, cache, idxBin, mass, idxMass)));
 	}
