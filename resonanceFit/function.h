@@ -67,9 +67,8 @@ namespace rpwa {
 			         const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance);
 			~function() {}
 
-			bool init(const rpwa::resonanceFit::modelConstPtr& fitModel,
-			          const std::vector<size_t>& nrMassBins,
-			          const boost::multi_array<double, 2>& massBinCenters,
+			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
+			          const rpwa::resonanceFit::modelConstPtr& fitModel,
 			          const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			          const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			          const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
@@ -100,6 +99,7 @@ namespace rpwa {
 			double chiSquareSpinDensityMatrix(const rpwa::resonanceFit::parameters& fitParameters,
 			                                  rpwa::resonanceFit::cache& cache) const;
 
+			rpwa::resonanceFit::dataConstPtr _fitData;
 			rpwa::resonanceFit::modelConstPtr _fitModel;
 
 			size_t _nrBins;
@@ -108,9 +108,6 @@ namespace rpwa {
 
 			std::vector<size_t> _idxMassMin;
 			std::vector<size_t> _idxMassMax;
-
-			std::vector<size_t> _nrMassBins;
-			boost::multi_array<double, 2> _massBinCenters;
 
 			boost::multi_array<std::complex<double>, 3> _productionAmplitudes;
 			boost::multi_array<TMatrixT<double>, 2> _productionAmplitudesCovMatInv;

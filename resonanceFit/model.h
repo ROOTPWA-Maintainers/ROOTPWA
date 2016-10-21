@@ -46,8 +46,6 @@ namespace rpwa {
 	namespace resonanceFit {
 
 		class cache;
-		class component;
-		class fsmd;
 		class parameters;
 
 		class model {

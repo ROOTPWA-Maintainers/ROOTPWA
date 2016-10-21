@@ -68,6 +68,7 @@ namespace rpwa {
 			~massDepFit() {}
 
 			bool readConfig(const YAML::Node& configRoot,
+			                rpwa::resonanceFit::dataConstPtr& fitData,
 			                const rpwa::resonanceFit::modelPtr& fitModel,
 			                rpwa::resonanceFit::parameters& fitParameters,
 			                rpwa::resonanceFit::parameters& fitParametersError,
@@ -76,7 +77,8 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool init(const rpwa::resonanceFit::modelPtr& fitModel,
+			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
+			          const rpwa::resonanceFit::modelPtr& fitModel,
 			          const rpwa::resonanceFit::functionPtr& fitFunction);
 
 			bool writeConfig(std::ostream& output,
@@ -86,7 +88,8 @@ namespace rpwa {
 			                 const std::map<std::string, double>& fitQuality) const;
 
 // FIXME: make private
-			bool createPlots(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			bool createPlots(const rpwa::resonanceFit::dataConstPtr& fitData,
+			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                 const rpwa::resonanceFit::parameters& fitParameters,
 			                 rpwa::resonanceFit::cache& cache,
 			                 TFile* outFile,
@@ -104,8 +107,11 @@ namespace rpwa {
 
 		private:
 
-			bool prepareMassLimits();
-			bool prepareMassLimit(const size_t idxBin);
+			bool prepareMassLimits(const std::vector<size_t>& nrMassBins,
+			                       const boost::multi_array<double, 2>& massBinCenters);
+			bool prepareMassLimit(const size_t nrMassBins,
+			                      const boost::multi_array<double, 1>& massBinCenters,
+			                      const size_t idxBin);
 
 			bool readConfigFitquality(const YAML::Node& configFitquality,
 			                          std::map<std::string, double>& fitQuality) const;
@@ -120,12 +126,16 @@ namespace rpwa {
 			                     const rpwa::resonanceFit::modelPtr& fitModel,
 			                     rpwa::resonanceFit::parameters& fitParameters,
 			                     rpwa::resonanceFit::parameters& fitParametersError,
+			                     const std::vector<size_t>& nrMassBins,
+			                     const boost::multi_array<double, 2>& massBinCenters,
 			                     const bool useBranchings);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
 			bool readConfigModelComponents(const YAML::Node& configComponents,
 			                               const rpwa::resonanceFit::modelPtr& fitModel,
 			                               rpwa::resonanceFit::parameters& fitParameters,
 			                               rpwa::resonanceFit::parameters& fitParametersError,
+			                               const std::vector<size_t>& nrMassBins,
+			                               const boost::multi_array<double, 2>& massBinCenters,
 			                               const bool useBranchings) const;
 			bool readConfigModelFsmd(const YAML::Node& configFsmd,
 			                         const rpwa::resonanceFit::modelPtr& fitModel,
@@ -156,29 +166,35 @@ namespace rpwa {
 			                          const rpwa::resonanceFit::parameters& fitParameters,
 			                          const rpwa::resonanceFit::parameters& fitParametersError) const;
 
-			bool readInFiles(const std::string& valTreeName   = "pwa",
+			bool readInFiles(std::vector<size_t>& nrMassBins,
+			                 boost::multi_array<double, 2>& massBinCenters,
+			                 const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
+			                std::vector<size_t>& nrMassBins,
+			                boost::multi_array<double, 2>& massBinCenters,
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
 			bool readSystematicsFiles(const size_t idxBin,
+			                          const size_t nrMassBins,
+			                          const boost::multi_array<double, 1>& massBinCenters,
 			                          const std::string& valTreeName   = "pwa",
 			                          const std::string& valBranchName = "fitResult_v2");
 			bool readSystematicsFile(const size_t idxBin,
 			                         const size_t idxSystematics,
+			                         const size_t nrMassBins,
+			                         const boost::multi_array<double, 1>& massBinCenters,
 			                         const std::string& valTreeName   = "pwa",
 			                         const std::string& valBranchName = "fitResult_v2");
 
 			bool checkFitResultMassBins(TTree* tree,
 			                            rpwa::fitResult* fit,
-			                            const size_t idxBin,
+			                            const size_t nrMassBins,
+			                            const boost::multi_array<double, 1>& massBinCenters,
 			                            std::vector<Long64_t>& mapping) const;
 			bool readFitResultMassBins(TTree* tree,
 			                           rpwa::fitResult* fit,
-			                           double& massMin,
-			                           double& massMax,
-			                           double& massStep,
 			                           size_t& nrMassBins,
 			                           boost::multi_array<double, 1>& massBinCenters) const;
 			bool readFitResultMatrices(TTree* tree,
@@ -200,7 +216,8 @@ namespace rpwa {
 			                            const std::vector<std::string>& waveNames,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
-			bool createPlotsWave(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			bool createPlotsWave(const rpwa::resonanceFit::dataConstPtr& fitData,
+			                     const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                     const rpwa::resonanceFit::parameters& fitParameters,
 			                     rpwa::resonanceFit::cache& cache,
 			                     TDirectory* outDirectory,
@@ -208,14 +225,16 @@ namespace rpwa {
 			                     const size_t extraBinning,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
-			bool createPlotsWaveSum(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			bool createPlotsWaveSum(const rpwa::resonanceFit::dataConstPtr& fitData,
+			                        const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                        const rpwa::resonanceFit::parameters& fitParameters,
 			                        rpwa::resonanceFit::cache& cache,
 			                        TDirectory* outDirectory,
 			                        const bool rangePlotting,
 			                        const size_t extraBinning,
 			                        const size_t idxWave) const;
-			bool createPlotsWavePair(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			bool createPlotsWavePair(const rpwa::resonanceFit::dataConstPtr& fitData,
+			                         const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                         const rpwa::resonanceFit::parameters& fitParameters,
 			                         rpwa::resonanceFit::cache& cache,
 			                         TDirectory* outDirectory,
@@ -224,7 +243,8 @@ namespace rpwa {
 			                         const size_t idxWave,
 			                         const size_t jdxWave,
 			                         const size_t idxBin) const;
-			bool createPlotsFsmd(const rpwa::resonanceFit::modelConstPtr& fitModel,
+			bool createPlotsFsmd(const rpwa::resonanceFit::dataConstPtr& fitData,
+			                     const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                     const rpwa::resonanceFit::parameters& fitParameters,
 			                     rpwa::resonanceFit::cache& cache,
 			                     TDirectory* outDirectory,
@@ -241,11 +261,6 @@ namespace rpwa {
 			std::vector<double> _tPrimeMeans;
 
 			bool _sameMassBinning;
-			std::vector<double> _massMaxs;
-			std::vector<double> _massMins;
-			std::vector<double> _massSteps;
-			std::vector<size_t> _nrMassBins;
-			boost::multi_array<double, 2> _massBinCenters;
 
 			std::vector<std::string> _waveNames;
 			std::vector<std::vector<std::string> > _waveNameAlternatives;

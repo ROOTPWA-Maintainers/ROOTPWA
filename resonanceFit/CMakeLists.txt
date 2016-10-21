@@ -48,6 +48,7 @@ set(SOURCES
 	massDepFit.cc
 	cache.cc
 	components.cc
+	data.cc
 	fsmd.cc
 	function.cc
 	minimizerRoot.cc

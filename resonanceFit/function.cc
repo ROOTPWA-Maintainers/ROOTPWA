@@ -33,6 +33,7 @@
 
 #include "cache.h"
 #include "components.h"
+#include "data.h"
 #include "model.h"
 #include "parameters.h"
 
@@ -65,9 +66,8 @@ rpwa::resonanceFit::function::function(const bool fitProductionAmplitudes,
 
 
 bool
-rpwa::resonanceFit::function::init(const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                   const std::vector<size_t>& nrMassBins,
-                                   const boost::multi_array<double, 2>& massBinCenters,
+rpwa::resonanceFit::function::init(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                   const rpwa::resonanceFit::modelConstPtr& fitModel,
                                    const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
                                    const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
                                    const boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
@@ -79,12 +79,8 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::modelConstPtr& fitM
 		return false;
 	}
 
+	_fitData = fitData;
 	_fitModel = fitModel;
-
-	_nrMassBins = nrMassBins;
-
-	_massBinCenters.resize(std::vector<size_t>(massBinCenters.shape(), massBinCenters.shape()+massBinCenters.num_dimensions()));
-	_massBinCenters = massBinCenters;
 
 	_productionAmplitudes.resize(std::vector<size_t>(productionAmplitudes.shape(), productionAmplitudes.shape()+productionAmplitudes.num_dimensions()));
 	_productionAmplitudes = productionAmplitudes;
@@ -104,7 +100,7 @@ rpwa::resonanceFit::function::init(const rpwa::resonanceFit::modelConstPtr& fitM
 	_idxMassMax.resize(_nrBins);
 	_idxMassMin.resize(_nrBins);
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		_idxMassMin[idxBin] = _nrMassBins[idxBin];
+		_idxMassMin[idxBin] = _fitData->nrMassBins()[idxBin];
 		_idxMassMax[idxBin] = 0;
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
@@ -763,7 +759,7 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
 		for(unsigned idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
-			const double mass = _massBinCenters[idxBin][idxMass];
+			const double mass = _fitData->massBinCenters()[idxBin][idxMass];
 
 			// phase of fit in anchor wave
 			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _idxAnchorWave, idxBin, mass, idxMass);
@@ -809,7 +805,7 @@ rpwa::resonanceFit::function::chiSquareSpinDensityMatrix(const rpwa::resonanceFi
 	for(unsigned idxBin=0; idxBin<_nrBins; ++idxBin) {
 		// loop over mass-bins
 		for(unsigned idxMass = _idxMassMin[idxBin]; idxMass <= _idxMassMax[idxBin]; ++idxMass) {
-			const double mass = _massBinCenters[idxBin][idxMass];
+			const double mass = _fitData->massBinCenters()[idxBin][idxMass];
 
 			// sum over the contributions to chi2 -> rho_ij
 			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
