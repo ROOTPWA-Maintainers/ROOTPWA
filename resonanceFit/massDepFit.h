@@ -44,6 +44,7 @@
 
 #include "forward.h"
 #include "function.h"
+#include "information.h"
 
 namespace YAML {
 	class Emitter;
@@ -71,6 +72,7 @@ namespace rpwa {
 			~massDepFit() {}
 
 			bool readConfig(const YAML::Node& configRoot,
+			                rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                rpwa::resonanceFit::dataConstPtr& fitData,
 			                const rpwa::resonanceFit::modelPtr& fitModel,
 			                rpwa::resonanceFit::parameters& fitParameters,
@@ -82,11 +84,13 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
+			bool init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			          const rpwa::resonanceFit::dataConstPtr& fitData,
 			          const rpwa::resonanceFit::modelPtr& fitModel,
 			          const rpwa::resonanceFit::functionPtr& fitFunction);
 
 			bool writeConfig(std::ostream& output,
+			                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                 const rpwa::resonanceFit::parameters& fitParameters,
 			                 const rpwa::resonanceFit::parameters& fitParametersError,
@@ -94,15 +98,14 @@ namespace rpwa {
 			                 const std::vector<std::string>& freeParameters) const;
 
 // FIXME: make private
-			bool createPlots(const rpwa::resonanceFit::dataConstPtr& fitData,
+			bool createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			                 const rpwa::resonanceFit::dataConstPtr& fitData,
 			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                 const rpwa::resonanceFit::parameters& fitParameters,
 			                 rpwa::resonanceFit::cache& cache,
 			                 TFile* outFile,
 			                 const bool rangePlotting,
 			                 const size_t extraBinning) const;
-
-			size_t getNrBins() const { return _nrBins; }
 
 			size_t getNrWaves() const { return _nrWaves; }
 
@@ -121,11 +124,10 @@ namespace rpwa {
 			                          std::map<std::string, double>& fitQuality) const;
 
 			bool readConfigInput(const YAML::Node& configInput);
-			bool readConfigInputFitResults(const YAML::Node& configInputFitResults);
-			bool readConfigInputFitResultSystematics(const YAML::Node& configInputFitResultSystematics);
 			bool readConfigInputWaves(const YAML::Node& configInputWaves);
 
 			bool readConfigModel(const YAML::Node& configModel,
+			                     const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                     const rpwa::resonanceFit::modelPtr& fitModel,
 			                     rpwa::resonanceFit::parameters& fitParameters,
 			                     rpwa::resonanceFit::parameters& fitParametersError,
@@ -135,6 +137,7 @@ namespace rpwa {
 			                     const bool useBranchings);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
 			bool readConfigModelComponents(const YAML::Node& configComponents,
+			                               const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                               const rpwa::resonanceFit::modelPtr& fitModel,
 			                               rpwa::resonanceFit::parameters& fitParameters,
 			                               rpwa::resonanceFit::parameters& fitParametersError,
@@ -152,10 +155,8 @@ namespace rpwa {
 			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
 			                           const std::map<std::string, double>& fitQuality) const;
 
-			bool writeConfigInput(YAML::Emitter& yamlOutput) const;
-			bool writeConfigInputFitResults(YAML::Emitter& yamlOutput) const;
-			bool writeConfigInputFitResultSystematics(YAML::Emitter& yamlOutput,
-			                                          const size_t idxBin) const;
+			bool writeConfigInput(YAML::Emitter& yamlOutput,
+			                      const rpwa::resonanceFit::informationConstPtr& fitInformation) const;
 			bool writeConfigInputWaves(YAML::Emitter& yamlOutput) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
@@ -172,7 +173,8 @@ namespace rpwa {
 			                          const rpwa::resonanceFit::parameters& fitParameters,
 			                          const rpwa::resonanceFit::parameters& fitParametersError) const;
 
-			bool readInFiles(std::vector<size_t>& nrMassBins,
+			bool readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			                 std::vector<size_t>& nrMassBins,
 			                 boost::multi_array<double, 2>& massBinCenters,
 			                 boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                 boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -190,6 +192,7 @@ namespace rpwa {
 			                 const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
+			                const rpwa::resonanceFit::information::bin& bin,
 			                size_t& nrMassBins,
 			                boost::multi_array<double, 1>& massBinCenters,
 			                boost::multi_array<double, 2>& phaseSpaceIntegrals,
@@ -205,6 +208,7 @@ namespace rpwa {
 			                const std::string& valBranchName = "fitResult_v2");
 
 			bool readSystematicsFiles(const size_t idxBin,
+			                          const rpwa::resonanceFit::information::bin& bin,
 			                          const size_t nrMassBins,
 			                          const boost::multi_array<double, 1>& massBinCenters,
 			                          const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
@@ -215,6 +219,7 @@ namespace rpwa {
 			                          const std::string& valTreeName   = "pwa",
 			                          const std::string& valBranchName = "fitResult_v2");
 			bool readSystematicsFile(const size_t idxBin,
+			                         const rpwa::resonanceFit::information::bin& bin,
 			                         const size_t idxSystematics,
 			                         const size_t nrMassBins,
 			                         const boost::multi_array<double, 1>& massBinCenters,
@@ -254,7 +259,8 @@ namespace rpwa {
 			                            const std::vector<std::string>& waveNames,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
-			bool createPlotsWave(const rpwa::resonanceFit::dataConstPtr& fitData,
+			bool createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			                     const rpwa::resonanceFit::dataConstPtr& fitData,
 			                     const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                     const rpwa::resonanceFit::parameters& fitParameters,
 			                     rpwa::resonanceFit::cache& cache,
@@ -263,7 +269,8 @@ namespace rpwa {
 			                     const size_t extraBinning,
 			                     const size_t idxWave,
 			                     const size_t idxBin) const;
-			bool createPlotsWaveSum(const rpwa::resonanceFit::dataConstPtr& fitData,
+			bool createPlotsWaveSum(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			                        const rpwa::resonanceFit::dataConstPtr& fitData,
 			                        const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                        const rpwa::resonanceFit::parameters& fitParameters,
 			                        rpwa::resonanceFit::cache& cache,
@@ -271,7 +278,8 @@ namespace rpwa {
 			                        const bool rangePlotting,
 			                        const size_t extraBinning,
 			                        const size_t idxWave) const;
-			bool createPlotsWavePair(const rpwa::resonanceFit::dataConstPtr& fitData,
+			bool createPlotsWavePair(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			                         const rpwa::resonanceFit::dataConstPtr& fitData,
 			                         const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                         const rpwa::resonanceFit::parameters& fitParameters,
 			                         rpwa::resonanceFit::cache& cache,
@@ -290,14 +298,6 @@ namespace rpwa {
 			                     const size_t extraBinning,
 			                     const size_t idxBin) const;
 
-			std::vector<std::string> _inFileName;
-
-			std::vector<size_t> _nrSystematics;
-			std::vector<std::vector<std::string> > _sysFileNames;
-
-			std::vector<double> _rescaleErrors;
-			std::vector<double> _tPrimeMeans;
-
 			std::vector<std::string> _waveNames;
 			std::vector<std::vector<std::string> > _waveNameAlternatives;
 			std::map<std::string, size_t> _waveIndices;
@@ -307,7 +307,6 @@ namespace rpwa {
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
 
-			size_t _nrBins;
 			size_t _nrWaves;
 
 			static bool _debug;
