@@ -187,8 +187,10 @@ namespace rpwa {
 			                           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
 			                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
 			                           boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
-			                           boost::multi_array<double, 3>& intensities,
-			                           boost::multi_array<double, 4>& phases) const;
+			                           boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
+			                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
+			                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
+			                           boost::multi_array<std::pair<double, double>, 3>& plottingPhases) const;
 			bool readFitResultIntegrals(TTree* tree,
 			                            rpwa::fitResult* fit,
 			                            const std::vector<Long64_t>& mapping,
@@ -261,14 +263,15 @@ namespace rpwa {
 			boost::multi_array<TMatrixT<double>, 2> _inSpinDensityCovarianceMatrices;
 			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
 
-			boost::multi_array<double, 4> _inIntensities;
-			boost::multi_array<double, 5> _inPhases;
+			boost::multi_array<std::pair<double, double>, 3> _plottingIntensities;
+			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsReal;
+			boost::multi_array<std::pair<double, double>, 4> _plottingSpinDensityMatrixElementsImag;
+			boost::multi_array<std::pair<double, double>, 4> _plottingPhases;
 
-			boost::multi_array<std::complex<double>, 4> _sysSpinDensityMatrices;
-			boost::multi_array<TMatrixT<double>, 2> _sysSpinDensityCovarianceMatrices;
-
-			boost::multi_array<double, 4> _sysIntensities;
-			boost::multi_array<double, 5> _sysPhases;
+			boost::multi_array<std::pair<double, double>, 3> _sysPlottingIntensities;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsReal;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingSpinDensityMatrixElementsImag;
+			boost::multi_array<std::pair<double, double>, 4> _sysPlottingPhases;
 
 			size_t _nrBins;
 			size_t _maxMassBins;
