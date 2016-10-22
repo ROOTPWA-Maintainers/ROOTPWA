@@ -59,10 +59,8 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 
 rpwa::resonanceFit::massDepFit::massDepFit()
-	: _sysPlotting(false),
-	  _sameMassBinning(true),
+	: _sameMassBinning(true),
 	  _maxMassBins(0),
-	  _nrSystematics(0),
 	  _nrWaves(0)
 {
 }
@@ -103,12 +101,6 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	// extract information from fit results
 	if(not readInFiles(valTreeName, valBranchName)) {
 		printErr << "error while reading fit result." << std::endl;
-		return false;
-	}
-
-	// extract information for systematic errors
-	if(not readSystematicsFiles(valTreeName, valBranchName)) {
-		printErr << "error while reading fit results for systematic errors." << std::endl;
 		return false;
 	}
 
@@ -204,17 +196,6 @@ rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 		return false;
 	}
 
-	// get information for plotting of systematic error
-	const YAML::Node& configInputSystematics = configInput["systematics"];
-	if(configInputSystematics) {
-		if(not readConfigInputSystematics(configInputSystematics)) {
-			printErr << "error while reading 'systematics' in 'input'." << std::endl;
-			return false;
-		}
-	} else {
-		_sysPlotting = false;
-	}
-
 	// get information for which parameters to release in which order
 	const YAML::Node& configInputFreeParameters = configInput["freeparameters"];
 	if(configInputFreeParameters) {
@@ -292,9 +273,61 @@ rpwa::resonanceFit::massDepFit::readConfigInputFitResults(const YAML::Node& conf
 		if(_debug) {
 			printDebug << "rescale errors by factor: '" << _rescaleErrors.back() << "'." << std::endl;
 		}
+
+		// get information for plotting of systematic error
+		const YAML::Node& configInputFitResultSystematics = configInputFitResult["systematics"];
+		if(configInputFitResultSystematics) {
+			if(not readConfigInputFitResultSystematics(configInputFitResultSystematics)) {
+				printErr << "error while reading 'systematics' in 'input'." << std::endl;
+				return false;
+			}
+		} else {
+			_nrSystematics.push_back(0);
+			_sysFileNames.push_back(std::vector<std::string>());
+		}
 	}
 
 	_nrBins = _inFileName.size();
+
+	return true;
+}
+
+
+bool
+rpwa::resonanceFit::massDepFit::readConfigInputFitResultSystematics(const YAML::Node& configInputFitResultSystematics)
+{
+	if(not configInputFitResultSystematics) {
+		printErr << "'configInputSystematics' is not a valid YAML node." << std::endl;
+		return false;
+	}
+	if(not configInputFitResultSystematics.IsSequence()) {
+		printErr << "'systematics' is not a YAML sequence." << std::endl;
+		return false;
+	}
+
+	_nrSystematics.push_back(configInputFitResultSystematics.size());
+	if(_debug) {
+		printDebug << "going to read information for " << _nrSystematics.back() << " files containing information for systematic errors." << std::endl;
+	}
+
+	std::vector<std::string> sysFileNames;
+	for(size_t idxSystematics = 0; idxSystematics < _nrSystematics.back(); ++idxSystematics) {
+		if(not checkVariableType(configInputFitResultSystematics[idxSystematics], YamlCppUtils::TypeString)) {
+			printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
+			return false;
+		}
+
+		const std::string fileName = configInputFitResultSystematics[idxSystematics].as<std::string>();
+		if(_debug) {
+			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << std::endl;
+		}
+		sysFileNames.push_back(fileName);
+	}
+	_sysFileNames.push_back(sysFileNames);
+
+	if(_debug) {
+		printDebug << "in total " << _nrSystematics.back() << " files to be read to get information for systematic errors." << std::endl;
+	}
 
 	return true;
 }
@@ -433,50 +466,6 @@ rpwa::resonanceFit::massDepFit::readConfigInputWaves(const YAML::Node& configInp
 	}
 	printInfo << _nrWaves << " waves to be used in fit:" << std::endl
 	          << output.str();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInputSystematics(const YAML::Node& configInputSystematics)
-{
-	if(not configInputSystematics) {
-		printErr << "'configInputSystematics' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInputSystematics.IsSequence()) {
-		printErr << "'systematics' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	_nrSystematics = configInputSystematics.size();
-	if(_debug) {
-		printDebug << "going to read information for " << _nrSystematics << " files containing information for systematic errors." << std::endl;
-	}
-
-	if(_nrSystematics > 0) {
-		_sysPlotting = true;
-	}
-
-	for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
-		if(not checkVariableType(configInputSystematics[idxSystematics], YamlCppUtils::TypeString)) {
-			printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
-			return false;
-		}
-
-		const std::string fileName = configInputSystematics[idxSystematics].as<std::string>();
-		if(_debug) {
-			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << std::endl;
-		}
-		_sysFileNames.push_back(fileName);
-	}
-
-	// this also includes the main fitresult file
-	++_nrSystematics;
-	if(_debug) {
-		printDebug << "in total " << _nrSystematics << " files to be read to get information for systematic errors." << std::endl;
-	}
 
 	return true;
 }
@@ -860,15 +849,6 @@ rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) cons
 		return false;
 	}
 
-	if(_sysPlotting) {
-		yamlOutput << YAML::Key << "systematics";
-		yamlOutput << YAML::Value;
-		if(not writeConfigInputSystematics(yamlOutput)) {
-			printErr << "error while writing 'systematics' to result file." << std::endl;
-			return false;
-		}
-	}
-
 	yamlOutput << YAML::Key << "freeparameters";
 	yamlOutput << YAML::Value;
 	if(not writeConfigInputFreeParameters(yamlOutput)) {
@@ -905,10 +885,33 @@ rpwa::resonanceFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOu
 			yamlOutput << YAML::Value << _rescaleErrors[idxBin];
 		}
 
+		if(_nrSystematics[idxBin] > 0) {
+			yamlOutput << YAML::Key << "systematics";
+			yamlOutput << YAML::Value;
+			if(not writeConfigInputFitResultSystematics(yamlOutput, idxBin)) {
+				printErr << "error while writing 'systematics' to result file." << std::endl;
+				return false;
+			}
+		}
+
 		yamlOutput << YAML::EndMap;
 	}
 
 	yamlOutput << YAML::EndSeq;
+
+	return true;
+}
+
+
+bool
+rpwa::resonanceFit::massDepFit::writeConfigInputFitResultSystematics(YAML::Emitter& yamlOutput,
+                                                                     const size_t idxBin) const
+{
+	if(_debug) {
+		printDebug << "writing 'systematics' for bin " << idxBin << "." << std::endl;
+	}
+
+	yamlOutput << _sysFileNames[idxBin];
 
 	return true;
 }
@@ -957,19 +960,6 @@ rpwa::resonanceFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput)
 	}
 
 	yamlOutput << YAML::EndSeq;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInputSystematics(YAML::Emitter& yamlOutput) const
-{
-	if(_debug) {
-		printDebug << "writing 'systematics'." << std::endl;
-	}
-
-	yamlOutput << _sysFileNames;
 
 	return true;
 }
@@ -1109,6 +1099,31 @@ rpwa::resonanceFit::massDepFit::readInFiles(const std::string& valTreeName,
 			printErr << "error while reading file entry " << idxBin << "." << std::endl;
 			return false;
 		}
+
+		// extract information for systematic errors
+		// initialize with real fit result
+		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+				_sysPlottingIntensities[idxBin][idxMass][idxWave] = std::make_pair(_plottingIntensities[idxBin][idxMass][idxWave].first,
+				                                                                   _plottingIntensities[idxBin][idxMass][idxWave].first);
+
+				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+					_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first,
+					                                                                                              _plottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first);
+					_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first,
+					                                                                                              _plottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first);
+					_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave] = std::make_pair(_plottingPhases[idxBin][idxMass][idxWave][jdxWave].first,
+					                                                                       _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first);
+				}
+			}
+		}
+
+		if(_nrSystematics[idxBin] > 0) {
+			if(not readSystematicsFiles(idxBin, valTreeName, valBranchName)) {
+				printErr << "error while reading fit results for systematic errors in bin " << idxBin << "." << std::endl;
+				return false;
+			}
+		}
 	}
 
 	return true;
@@ -1204,6 +1219,10 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		_plottingSpinDensityMatrixElementsReal.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 		_plottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 		_plottingPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
+		_sysPlottingIntensities.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves]);
+		_sysPlottingSpinDensityMatrixElementsReal.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
+		_sysPlottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
+		_sysPlottingPhases.resize(boost::extents[_nrBins][_maxMassBins][_nrWaves][_nrWaves]);
 
 		if(idxBin > 0) {
 			for(size_t idx = 0; idx < _nrBins; ++idx) {
@@ -1302,35 +1321,20 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readSystematicsFiles(const std::string& valTreeName,
+rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
+                                                     const std::string& valTreeName,
                                                      const std::string& valBranchName)
 {
-	if(not _sysPlotting) {
+	if(_nrSystematics[idxBin] == 0) {
 		return true;
 	}
 
-	// FIXME: make systematic errors work with multiple bins
-	if(_nrBins > 1) {
-		printErr << "systematic errors not yet supported for multiple bins." << std::endl;
-		return false;
-	}
-
 	if(_debug) {
-		printDebug << "reading fit results for systematic errors from " << _nrSystematics << " files." << std::endl;
+		printDebug << "reading fit results for systematic errors for bin " << idxBin << " from " << _nrSystematics[idxBin] << " files." << std::endl;
 	}
 
-	_sysPlottingIntensities.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves]);
-	_sysPlottingSpinDensityMatrixElementsReal.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][_nrWaves]);
-	_sysPlottingSpinDensityMatrixElementsImag.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][_nrWaves]);
-	_sysPlottingPhases.resize(boost::extents[_nrSystematics][_maxMassBins][_nrWaves][_nrWaves]);
-
-	_sysPlottingIntensities[0] = _plottingIntensities[0];
-	_sysPlottingSpinDensityMatrixElementsReal[0] = _plottingSpinDensityMatrixElementsReal[0];
-	_sysPlottingSpinDensityMatrixElementsImag[0] = _plottingSpinDensityMatrixElementsImag[0];
-	_sysPlottingPhases[0] = _plottingPhases[0];
-
-	for(size_t idxSystematics=1; idxSystematics<_nrSystematics; ++idxSystematics) {
-		if(not readSystematicsFile(idxSystematics, valTreeName, valBranchName)) {;
+	for(size_t idxSystematics = 0; idxSystematics < _nrSystematics[idxBin]; ++idxSystematics) {
+		if(not readSystematicsFile(idxBin, idxSystematics, valTreeName, valBranchName)) {
 			printErr << "error while reading fit results for systematic errors." << std::endl;
 			return false;
 		}
@@ -1341,33 +1345,34 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const std::string& valTreeN
 
 
 bool
-rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
+rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
+                                                    const size_t idxSystematics,
                                                     const std::string& valTreeName,
                                                     const std::string& valBranchName)
 {
 	if(_debug) {
-		printDebug << "reading fit result for systematics for index " << idxSystematics << " from file '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
+		printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
 	}
 
-	TFile* sysFile = TFile::Open(_sysFileNames[idxSystematics-1].c_str());
+	TFile* sysFile = TFile::Open(_sysFileNames[idxBin][idxSystematics].c_str());
 	if(not sysFile) {
-		printErr << "input file '" << _sysFileNames[idxSystematics-1] << "' not found."<< std::endl;
+		printErr << "input file '" << _sysFileNames[idxBin][idxSystematics] << "' not found."<< std::endl;
 		return false;
 	}
 	if(sysFile->IsZombie()) {
-		printErr << "error while reading input file '" << _sysFileNames[idxSystematics-1] << "'."<< std::endl;
+		printErr << "error while reading input file '" << _sysFileNames[idxBin][idxSystematics] << "'."<< std::endl;
 		delete sysFile;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
 	}
 
 	TTree* sysTree;
 	sysFile->GetObject(valTreeName.c_str(), sysTree);
 	if(not sysTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << _sysFileNames[idxSystematics-1] << "'."<< std::endl;
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << _sysFileNames[idxBin][idxSystematics] << "'."<< std::endl;
 		delete sysFile;
 		return false;
 	}
@@ -1384,8 +1389,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	}
 
 	std::vector<Long64_t> sysMapping;
-	if(not checkFitResultMassBins(sysTree, sysFit, 0, sysMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
+	if(not checkFitResultMassBins(sysTree, sysFit, idxBin, sysMapping)) {
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
 		delete sysFile;
 		return false;
 	}
@@ -1395,31 +1400,62 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
 	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
 	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
-	boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
-	boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
+	boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities;
+	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
+	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
+	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
 	if(not readFitResultMatrices(sysTree,
 	                             sysFit,
 	                             sysMapping,
-	                             _rescaleErrors[0],
+	                             _rescaleErrors[idxBin],
 	                             waveNames,
 	                             tempProductionAmplitudes,
 	                             tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices,
 	                             tempSpinDensityCovarianceMatrices,
-	                             tempPlottingIntensities,
-	                             tempPlottingSpinDensityMatrixElementsReal,
-	                             tempPlottingSpinDensityMatrixElementsImag,
-	                             tempPlottingPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << std::endl;
+	                             tempSysPlottingIntensities,
+	                             tempSysPlottingSpinDensityMatrixElementsReal,
+	                             tempSysPlottingSpinDensityMatrixElementsImag,
+	                             tempSysPlottingPhases)) {
+		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
 		delete sysFile;
 		return false;
 	}
-	_sysPlottingIntensities[idxSystematics] = tempPlottingIntensities;
-	_sysPlottingSpinDensityMatrixElementsReal[idxSystematics] = tempPlottingSpinDensityMatrixElementsReal;
-	_sysPlottingSpinDensityMatrixElementsImag[idxSystematics] = tempPlottingSpinDensityMatrixElementsImag;
-	_sysPlottingPhases[idxSystematics] = tempPlottingPhases;
+
+	for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+			_sysPlottingIntensities[idxBin][idxMass][idxWave].first = std::min(_sysPlottingIntensities[idxBin][idxMass][idxWave].first,
+			                                                                   tempSysPlottingIntensities[idxMass][idxWave].first);
+			_sysPlottingIntensities[idxBin][idxMass][idxWave].second = std::max(_sysPlottingIntensities[idxBin][idxMass][idxWave].second,
+			                                                                    tempSysPlottingIntensities[idxMass][idxWave].first);
+
+			for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+				_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first,
+				                                                                                              tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+				_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second,
+				                                                                                               tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+
+				_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first,
+				                                                                                              tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+				_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second,
+				                                                                                               tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+
+				// rotate phase by +- 360 degrees to be as
+				// close as possible to the data used in the
+				// fit
+				if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first+360. - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first)) {
+					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first += 360.;
+				} else if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first-360. - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first)) {
+					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first -= 360.;
+				}
+
+				_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first = std::min(_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first,
+				                                                                       tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+				_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second = std::max(_sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second,
+				                                                                        tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+			}
+		}
+	}
 
 	delete sysFile;
 	return true;
@@ -1993,7 +2029,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 	graphs.SetTitle(_waveNames[idxWave].c_str());
 
 	TGraphErrors* systematics = NULL;
-	if(_sysPlotting) {
+	if(_nrSystematics[idxBin] > 0) {
 		systematics = new TGraphErrors;
 		systematics->SetName((_waveNames[idxWave] + "__sys").c_str());
 		systematics->SetTitle((_waveNames[idxWave] + "__sys").c_str());
@@ -2050,13 +2086,9 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::modelC
 		data->SetPointError(point, halfBin, _plottingIntensities[idxBin][idxMass][idxWave].second);
 		maxIE = std::max(maxIE, _plottingIntensities[idxBin][idxMass][idxWave].first+_plottingIntensities[idxBin][idxMass][idxWave].second);
 
-		if(_sysPlotting) {
-			double maxSI = -std::numeric_limits<double>::max();
-			double minSI = std::numeric_limits<double>::max();
-			for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
-				maxSI = std::max(maxSI, _sysPlottingIntensities[idxSystematics][idxMass][idxWave].first);
-				minSI = std::min(minSI, _sysPlottingIntensities[idxSystematics][idxMass][idxWave].first);
-			}
+		if(_nrSystematics[idxBin] > 0) {
+			const double minSI = _sysPlottingIntensities[idxBin][idxMass][idxWave].first;
+			const double maxSI = _sysPlottingIntensities[idxBin][idxMass][idxWave].second;
 			systematics->SetPoint(point, mass, (maxSI+minSI)/2.);
 			systematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 			maxIE = std::max(maxIE, maxSI);
@@ -2264,7 +2296,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 	TGraphErrors* realSystematics = NULL;
 	TGraphErrors* imagSystematics = NULL;
 	TGraphErrors* phaseSystematics = NULL;
-	if(_sysPlotting) {
+	if(_nrSystematics[idxBin] > 0) {
 		realSystematics = new TGraphErrors;
 		realSystematics->SetName((realName + "__sys").c_str());
 		realSystematics->SetTitle((realName + "__sys").c_str());
@@ -2341,40 +2373,19 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 		phaseData->SetPoint(point, mass, _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first);
 		phaseData->SetPointError(point, halfBin, _plottingPhases[idxBin][idxMass][idxWave][jdxWave].second);
 
-		if(_sysPlotting) {
-			double maxSR = -std::numeric_limits<double>::max();
-			double minSR = std::numeric_limits<double>::max();
-
-			double maxSI = -std::numeric_limits<double>::max();
-			double minSI = std::numeric_limits<double>::max();
-
-			const double dataP = _plottingPhases[idxBin][idxMass][idxWave][jdxWave].first;
-			double maxSP = -std::numeric_limits<double>::max();
-			double minSP = std::numeric_limits<double>::max();
-
-			for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
-				maxSR = std::max(maxSR, _sysPlottingSpinDensityMatrixElementsReal[idxSystematics][idxMass][idxWave][jdxWave].first);
-				minSR = std::min(minSR, _sysPlottingSpinDensityMatrixElementsReal[idxSystematics][idxMass][idxWave][jdxWave].first);
-
-				maxSI = std::max(maxSI, _sysPlottingSpinDensityMatrixElementsImag[idxSystematics][idxMass][idxWave][jdxWave].first);
-				minSI = std::min(minSI, _sysPlottingSpinDensityMatrixElementsImag[idxSystematics][idxMass][idxWave][jdxWave].first);
-
-				double sysP = _sysPlottingPhases[idxSystematics][idxMass][idxWave][jdxWave].first;
-				if(std::abs(sysP+360.-dataP) < std::abs(sysP-dataP)) {
-					sysP = sysP+360;
-				} else if(std::abs(sysP-360.-dataP) < std::abs(sysP-dataP)) {
-					sysP = sysP-360;
-				}
-				maxSP = std::max(maxSP, sysP);
-				minSP = std::min(minSP, sysP);
-			}
-
+		if(_nrSystematics[idxBin] > 0) {
+			const double minSR = _sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSR = _sysPlottingSpinDensityMatrixElementsReal[idxBin][idxMass][idxWave][jdxWave].second;
 			realSystematics->SetPoint(point, mass, (maxSR+minSR)/2.);
 			realSystematics->SetPointError(point, halfBin, (maxSR-minSR)/2.);
 
+			const double minSI = _sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSI = _sysPlottingSpinDensityMatrixElementsImag[idxBin][idxMass][idxWave][jdxWave].second;
 			imagSystematics->SetPoint(point, mass, (maxSI+minSI)/2.);
 			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
 
+			const double minSP = _sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].first;
+			const double maxSP = _sysPlottingPhases[idxBin][idxMass][idxWave][jdxWave].second;
 			phaseSystematics->SetPoint(point, mass, (maxSP+minSP)/2.);
 			phaseSystematics->SetPointError(point, halfBin, (maxSP-minSP)/2.);
 		}
@@ -2443,7 +2454,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::mo
 			}
 
 			phaseData->SetPoint(idxMass, x, data + bestOffs*360.);
-			if(_sysPlotting) {
+			if(_nrSystematics[idxBin] > 0) {
 				phaseSystematics->GetPoint(idxMass, x, data);
 				phaseSystematics->SetPoint(idxMass, x, data + bestOffs*360.);
 			}

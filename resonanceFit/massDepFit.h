@@ -112,8 +112,8 @@ namespace rpwa {
 
 			bool readConfigInput(const YAML::Node& configInput);
 			bool readConfigInputFitResults(const YAML::Node& configInputFitResults);
+			bool readConfigInputFitResultSystematics(const YAML::Node& configInputFitResultSystematics);
 			bool readConfigInputWaves(const YAML::Node& configInputWaves);
-			bool readConfigInputSystematics(const YAML::Node& configInputSystematics);
 			bool readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters);
 
 			bool readConfigModel(const YAML::Node& configModel,
@@ -137,8 +137,9 @@ namespace rpwa {
 
 			bool writeConfigInput(YAML::Emitter& yamlOutput) const;
 			bool writeConfigInputFitResults(YAML::Emitter& yamlOutput) const;
+			bool writeConfigInputFitResultSystematics(YAML::Emitter& yamlOutput,
+			                                          const size_t idxBin) const;
 			bool writeConfigInputWaves(YAML::Emitter& yamlOutput) const;
-			bool writeConfigInputSystematics(YAML::Emitter& yamlOutput) const;
 			bool writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
@@ -161,9 +162,11 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
+			bool readSystematicsFiles(const size_t idxBin,
+			                          const std::string& valTreeName   = "pwa",
 			                          const std::string& valBranchName = "fitResult_v2");
-			bool readSystematicsFile(const size_t idxSystematics,
+			bool readSystematicsFile(const size_t idxBin,
+			                         const size_t idxSystematics,
 			                         const std::string& valTreeName   = "pwa",
 			                         const std::string& valBranchName = "fitResult_v2");
 
@@ -231,8 +234,8 @@ namespace rpwa {
 
 			std::vector<std::string> _inFileName;
 
-			bool _sysPlotting;
-			std::vector<std::string> _sysFileNames;
+			std::vector<size_t> _nrSystematics;
+			std::vector<std::vector<std::string> > _sysFileNames;
 
 			std::vector<double> _rescaleErrors;
 			std::vector<double> _tPrimeMeans;
@@ -275,7 +278,6 @@ namespace rpwa {
 
 			size_t _nrBins;
 			size_t _maxMassBins;
-			size_t _nrSystematics;
 			size_t _nrWaves;
 
 			static bool _debug;
