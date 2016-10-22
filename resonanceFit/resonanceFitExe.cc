@@ -229,6 +229,7 @@ main(int    argc,
 	rpwa::resonanceFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
+	rpwa::resonanceFit::informationConstPtr fitInformation;
 	rpwa::resonanceFit::dataConstPtr fitData;
 	rpwa::resonanceFit::modelPtr fitModel(new rpwa::resonanceFit::model);
 	rpwa::resonanceFit::functionPtr fitFunction(new rpwa::resonanceFit::function(doProdAmp, doCov));
@@ -245,6 +246,7 @@ main(int    argc,
 	std::map<std::string, double> fitQuality;
 	std::vector<std::string> freeParameters;
 	if(not mdepFit.readConfig(configRoot,
+	                          fitInformation,
 	                          fitData,
 	                          fitModel,
 	                          fitParameters,
@@ -260,7 +262,10 @@ main(int    argc,
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(fitData, fitModel, fitFunction)) {
+	if(not mdepFit.init(fitInformation,
+	                    fitData,
+	                    fitModel,
+	                    fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -268,7 +273,7 @@ main(int    argc,
 	rpwa::resonanceFit::cache cache(mdepFit.getNrWaves(),
 	                                fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                fitModel->getMaxChannelsInComponent(),
-	                                mdepFit.getNrBins(),
+	                                fitInformation->nrBins(),
 	                                fitData->maxMassBins());
 
 	if(onlyPlotting) {
@@ -306,6 +311,7 @@ main(int    argc,
 	}
 	std::ofstream configFile(confFileName.c_str());
 	if(not mdepFit.writeConfig(configFile,
+	                           fitInformation,
 	                           fitModel,
 	                           fitParameters,
 	                           fitParametersError,
@@ -329,7 +335,14 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(fitData, fitModel, fitParameters, cache, outFile.get(), rangePlotting, extraBinning)) {
+	if(not mdepFit.createPlots(fitInformation,
+	                           fitData,
+	                           fitModel,
+	                           fitParameters,
+	                           cache,
+	                           outFile.get(),
+	                           rangePlotting,
+	                           extraBinning)) {
 		printErr << "error while creating plots." << std::endl;
 		return 1;
 	}

@@ -53,6 +53,7 @@
 #include "data.h"
 #include "fsmd.h"
 #include "function.h"
+#include "information.h"
 #include "model.h"
 
 
@@ -807,6 +808,157 @@ namespace {
 	}
 
 
+	std::vector<rpwa::resonanceFit::information::bin>
+	readInformationFitResults(const YAML::Node& configInput)
+	{
+		if(debug) {
+			printDebug << "reading 'fitresults'." << std::endl;
+		}
+
+		const YAML::Node& configInputFitResults = configInput["fitresults"];
+
+		if(not configInputFitResults) {
+			printErr << "'fitresults' does not exist in 'input'." << std::endl;
+			throw;
+		}
+		if(not configInputFitResults.IsSequence()) {
+			printErr << "'fitresults' is not a YAML sequence." << std::endl;
+			throw;
+		}
+
+		std::vector<rpwa::resonanceFit::information::bin> bins;
+
+		const size_t nrFitResults = configInputFitResults.size();
+		for(size_t idxFitResult = 0; idxFitResult < nrFitResults; ++idxFitResult) {
+			if(debug) {
+				printDebug << "reading of entry " << idxFitResult << " in 'fitresults'." << std::endl;
+			}
+
+			const YAML::Node& configInputFitResult = configInputFitResults[idxFitResult];
+
+			std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+			boost::assign::insert(mandatoryArguments)
+			                     ("name", rpwa::YamlCppUtils::TypeString)
+			                     ("tPrimeMean", rpwa::YamlCppUtils::TypeFloat);
+			if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
+				printErr << "'fitresults' entry at index " << idxFitResult << " does not contain all required variables." << std::endl;
+				throw;
+			}
+
+			const std::string fileName = configInputFitResult["name"].as<std::string>();
+			const double tPrimeMean = configInputFitResult["tPrimeMean"].as<double>();
+
+			double rescaleErrors = 1.0;
+			if(configInputFitResult["rescaleErrors"]) {
+				if(checkVariableType(configInputFitResult["rescaleErrors"], rpwa::YamlCppUtils::TypeFloat)) {
+					rescaleErrors = configInputFitResult["rescaleErrors"].as<double>();
+				} else {
+					printErr << "variable 'rescaleErrors' of 'fitresults' entry at index " << idxFitResult << " is not a floating point number." << std::endl;
+					throw;
+				}
+			}
+
+			if(debug) {
+				printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << std::endl;
+				printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
+				printDebug << "rescale errors by factor: '" << rescaleErrors << "'." << std::endl;
+			}
+
+			std::vector<std::string> sysFileNames;
+			// get information for plotting of systematic error
+			const YAML::Node& configInputFitResultSystematics = configInputFitResult["systematics"];
+			if(configInputFitResultSystematics) {
+				if(not configInputFitResultSystematics.IsSequence()) {
+					printErr << "'systematics' is not a YAML sequence." << std::endl;
+					throw;
+				}
+
+				const size_t nrSystematics = configInputFitResultSystematics.size();
+				if(debug) {
+					printDebug << "going to read information for " << nrSystematics << " files containing information for systematic errors." << std::endl;
+				}
+
+				for(size_t idxSystematics = 0; idxSystematics < nrSystematics; ++idxSystematics) {
+					if(not checkVariableType(configInputFitResultSystematics[idxSystematics], rpwa::YamlCppUtils::TypeString)) {
+						printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
+						throw;
+					}
+
+					sysFileNames.push_back(configInputFitResultSystematics[idxSystematics].as<std::string>());
+				}
+			}
+
+			bins.push_back(rpwa::resonanceFit::information::bin(fileName,
+			                                                    tPrimeMean,
+			                                                    rescaleErrors,
+			                                                    sysFileNames));
+
+			if(debug) {
+				printDebug << bins.back() << std::endl;
+			}
+		}
+
+		return bins;
+	}
+
+
+	void
+	writeInformationFitResults(YAML::Emitter& yamlOutput,
+	                           const std::vector<rpwa::resonanceFit::information::bin>& bins)
+	{
+		if(debug) {
+			printDebug << "writing 'fitresults'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "fitresults";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginSeq;
+		for(std::vector<rpwa::resonanceFit::information::bin>::const_iterator bin = bins.begin(); bin != bins.end(); ++bin) {
+			yamlOutput << YAML::BeginMap;
+
+			yamlOutput << YAML::Key << "name";
+			yamlOutput << YAML::Value << bin->fileName();
+
+			yamlOutput << YAML::Key << "tPrimeMean";
+			yamlOutput << YAML::Value << bin->tPrimeMean();
+
+			if(bin->rescaleErrors() != 1.) {
+				yamlOutput << YAML::Key << "rescaleErrors";
+				yamlOutput << YAML::Value << bin->rescaleErrors();
+			}
+
+			if(bin->sysFileNames().size() > 0) {
+				yamlOutput << YAML::Key << "systematics";
+				yamlOutput << YAML::Value << bin->sysFileNames();
+			}
+
+			yamlOutput << YAML::EndMap;
+		}
+		yamlOutput << YAML::EndSeq;
+	}
+
+
+	rpwa::resonanceFit::informationConstPtr
+	readInformation(const YAML::Node& configRoot)
+	{
+		if(debug) {
+			printDebug << "reading 'input'." << std::endl;
+		}
+
+		const YAML::Node& configInput = configRoot["input"];
+
+		if(not configInput) {
+			printErr << "'input' does not exist in configuration file." << std::endl;
+			throw;
+		}
+
+		const std::vector<rpwa::resonanceFit::information::bin> bins = readInformationFitResults(configInput);
+
+		return std::make_shared<rpwa::resonanceFit::information>(bins);
+	}
+
+
 }
 
 
@@ -821,8 +973,7 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 
 rpwa::resonanceFit::massDepFit::massDepFit()
-	: _nrBins(0),
-	  _nrWaves(0)
+	: _nrWaves(0)
 {
 }
 
@@ -837,6 +988,7 @@ rpwa::resonanceFit::massDepFit::setDebug(bool debug)
 
 bool
 rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
+                                           rpwa::resonanceFit::informationConstPtr& fitInformation,
                                            rpwa::resonanceFit::dataConstPtr& fitData,
                                            const rpwa::resonanceFit::modelPtr& fitModel,
                                            rpwa::resonanceFit::parameters& fitParameters,
@@ -861,6 +1013,13 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 	// get information for which parameters to release in which order
 	freeParameters = readFreeParameters(configRoot);
+
+	// get fit results to use in the resonance fit
+	fitInformation = readInformation(configRoot);
+	if(not fitInformation) {
+		printErr << "error while reading 'input' in configuration file." << std::endl;
+		throw;
+	}
 
 	// input section
 	const YAML::Node& configInput = configRoot["input"];
@@ -889,7 +1048,8 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
-	if(not readInFiles(nrMassBins,
+	if(not readInFiles(fitInformation,
+	                   nrMassBins,
 	                   massBinCenters,
 	                   phaseSpaceIntegrals,
 	                   inProductionAmplitudes,
@@ -924,6 +1084,7 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 		return false;
 	}
 	if(not readConfigModel(configModel,
+	                       fitInformation,
 	                       fitModel,
 	                       fitParameters,
 	                       fitParametersError,
@@ -1024,17 +1185,6 @@ rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 		return false;
 	}
 
-	// get information about fit results from mass-independent
-	const YAML::Node& configInputFitResults = configInput["fitresults"];
-	if(not configInputFitResults) {
-		printErr << "'fitresults' does not exist in 'input'." << std::endl;
-		return false;
-	}
-	if(not readConfigInputFitResults(configInputFitResults)) {
-		printErr << "error while reading 'fitresults' in 'input'." << std::endl;
-		return false;
-	}
-
 	// get information about waves to be used in the fit
 	const YAML::Node& configInputWaves = configInput["waves"];
 	if(not configInputWaves) {
@@ -1044,125 +1194,6 @@ rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 	if(not readConfigInputWaves(configInputWaves)) {
 		printErr << "error while reading 'waves' in 'input'." << std::endl;
 		return false;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInputFitResults(const YAML::Node& configInputFitResults)
-{
-	if(not configInputFitResults) {
-		printErr << "'configInputFitResults' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInputFitResults.IsSequence()) {
-		printErr << "'fitresults' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	_inFileName.clear();
-
-	const size_t nrFitResults = configInputFitResults.size();
-	for(size_t idxFitResult=0; idxFitResult<nrFitResults; ++idxFitResult) {
-		if(_debug) {
-			printDebug << "reading of entry " << idxFitResult << " in 'fitresults'." << std::endl;
-		}
-
-		const YAML::Node& configInputFitResult = configInputFitResults[idxFitResult];
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", YamlCppUtils::TypeString)
-		                     ("tPrimeMean", YamlCppUtils::TypeFloat);
-		if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
-			printErr << "'fitresults' entry at index " << idxFitResult << " does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const std::string fileName = configInputFitResult["name"].as<std::string>();
-		_inFileName.push_back(fileName);
-
-		if(_debug) {
-			printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << std::endl;
-		}
-
-		const double tPrimeMean = configInputFitResult["tPrimeMean"].as<double>();
-		_tPrimeMeans.push_back(tPrimeMean);
-
-		if(_debug) {
-			printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
-		}
-
-		if(configInputFitResult["rescaleErrors"]) {
-			if(checkVariableType(configInputFitResult["rescaleErrors"], YamlCppUtils::TypeFloat)) {
-				_rescaleErrors.push_back(configInputFitResult["rescaleErrors"].as<double>());
-			} else {
-				printErr << "variable 'rescaleErrors' of 'fitresults' entry at index " << idxFitResult << " is not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_rescaleErrors.push_back(1.);
-		}
-
-		if(_debug) {
-			printDebug << "rescale errors by factor: '" << _rescaleErrors.back() << "'." << std::endl;
-		}
-
-		// get information for plotting of systematic error
-		const YAML::Node& configInputFitResultSystematics = configInputFitResult["systematics"];
-		if(configInputFitResultSystematics) {
-			if(not readConfigInputFitResultSystematics(configInputFitResultSystematics)) {
-				printErr << "error while reading 'systematics' in 'input'." << std::endl;
-				return false;
-			}
-		} else {
-			_nrSystematics.push_back(0);
-			_sysFileNames.push_back(std::vector<std::string>());
-		}
-	}
-
-	_nrBins = _inFileName.size();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInputFitResultSystematics(const YAML::Node& configInputFitResultSystematics)
-{
-	if(not configInputFitResultSystematics) {
-		printErr << "'configInputSystematics' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInputFitResultSystematics.IsSequence()) {
-		printErr << "'systematics' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	_nrSystematics.push_back(configInputFitResultSystematics.size());
-	if(_debug) {
-		printDebug << "going to read information for " << _nrSystematics.back() << " files containing information for systematic errors." << std::endl;
-	}
-
-	std::vector<std::string> sysFileNames;
-	for(size_t idxSystematics = 0; idxSystematics < _nrSystematics.back(); ++idxSystematics) {
-		if(not checkVariableType(configInputFitResultSystematics[idxSystematics], YamlCppUtils::TypeString)) {
-			printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
-			return false;
-		}
-
-		const std::string fileName = configInputFitResultSystematics[idxSystematics].as<std::string>();
-		if(_debug) {
-			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << std::endl;
-		}
-		sysFileNames.push_back(fileName);
-	}
-	_sysFileNames.push_back(sysFileNames);
-
-	if(_debug) {
-		printDebug << "in total " << _nrSystematics.back() << " files to be read to get information for systematic errors." << std::endl;
 	}
 
 	return true;
@@ -1309,6 +1340,7 @@ rpwa::resonanceFit::massDepFit::readConfigInputWaves(const YAML::Node& configInp
 
 bool
 rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
+                                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                                 const rpwa::resonanceFit::modelPtr& fitModel,
                                                 rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::parameters& fitParametersError,
@@ -1348,6 +1380,7 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 		return false;
 	}
 	if(not readConfigModelComponents(configComponents,
+	                                 fitInformation,
 	                                 fitModel,
 	                                 fitParameters,
 	                                 fitParametersError,
@@ -1409,6 +1442,7 @@ rpwa::resonanceFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& conf
 
 bool
 rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
+                                                          const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                                           const rpwa::resonanceFit::modelPtr& fitModel,
                                                           rpwa::resonanceFit::parameters& fitParameters,
                                                           rpwa::resonanceFit::parameters& fitParametersError,
@@ -1430,6 +1464,11 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 
 	if(_debug) {
 		printDebug << "reading " << nrComponents << " components from configuration file." << std::endl;
+	}
+
+	std::vector<double> tPrimeMeans;
+	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+		tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
 	}
 
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
@@ -1483,12 +1522,12 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 			component = std::make_shared<rpwa::resonanceFit::exponentialBackground>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackground") {
 			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackground>(fitModel->getNrComponents(), name);
-			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(_tPrimeMeans);
+			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(tPrimeMeans);
 		} else if(type == "exponentialBackgroundIntegral") {
 			component = std::make_shared<rpwa::resonanceFit::exponentialBackgroundIntegral>(fitModel->getNrComponents(), name);
 		} else if(type == "tPrimeDependentBackgroundIntegral") {
 			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(fitModel->getNrComponents(), name);
-			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(_tPrimeMeans);
+			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(tPrimeMeans);
 		} else {
 			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
 			return false;
@@ -1562,11 +1601,12 @@ rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd
 
 
 bool
-rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fitData,
+rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                     const rpwa::resonanceFit::dataConstPtr& fitData,
                                      const rpwa::resonanceFit::modelPtr& fitModel,
                                      const rpwa::resonanceFit::functionPtr& fitFunction)
 {
-	if(not fitModel->init(_nrBins,
+	if(not fitModel->init(fitInformation->nrBins(),
 	                      _waveNames,
 	                      _waveNameAlternatives,
 	                      _anchorWaveName,
@@ -1587,6 +1627,7 @@ rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fit
 
 bool
 rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
+                                            const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                             const rpwa::resonanceFit::modelConstPtr& fitModel,
                                             const rpwa::resonanceFit::parameters& fitParameters,
                                             const rpwa::resonanceFit::parameters& fitParametersError,
@@ -1611,7 +1652,7 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 
 	yamlOutput << YAML::Key << "input";
 	yamlOutput << YAML::Value;
-	if(not writeConfigInput(yamlOutput)) {
+	if(not writeConfigInput(yamlOutput, fitInformation)) {
 		printErr << "error while writing 'input' to result file." << std::endl;
 		return false;
 	}
@@ -1654,7 +1695,8 @@ rpwa::resonanceFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) const
+rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput,
+                                                 const rpwa::resonanceFit::informationConstPtr& fitInformation) const
 {
 	if(_debug) {
 		printDebug << "writing 'input'." << std::endl;
@@ -1662,12 +1704,7 @@ rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) cons
 
 	yamlOutput << YAML::BeginMap;
 
-	yamlOutput << YAML::Key << "fitresults";
-	yamlOutput << YAML::Value;
-	if(not writeConfigInputFitResults(yamlOutput)) {
-		printErr << "error while writing 'fitresults' to result file." << std::endl;
-		return false;
-	}
+	writeInformationFitResults(yamlOutput, fitInformation->bins());
 
 	yamlOutput << YAML::Key << "waves";
 	yamlOutput << YAML::Value;
@@ -1677,61 +1714,6 @@ rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) cons
 	}
 
 	yamlOutput << YAML::EndMap;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInputFitResults(YAML::Emitter& yamlOutput) const
-{
-	if(_debug) {
-		printDebug << "writing 'fitresults'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginSeq;
-
-	for (size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
-		yamlOutput << YAML::BeginMap;
-
-		yamlOutput << YAML::Key << "name";
-		yamlOutput << YAML::Value << _inFileName[idxBin];
-
-		yamlOutput << YAML::Key << "tPrimeMean";
-		yamlOutput << YAML::Value << _tPrimeMeans[idxBin];
-
-		if(_rescaleErrors[idxBin] != 1.) {
-			yamlOutput << YAML::Key << "rescaleErrors";
-			yamlOutput << YAML::Value << _rescaleErrors[idxBin];
-		}
-
-		if(_nrSystematics[idxBin] > 0) {
-			yamlOutput << YAML::Key << "systematics";
-			yamlOutput << YAML::Value;
-			if(not writeConfigInputFitResultSystematics(yamlOutput, idxBin)) {
-				printErr << "error while writing 'systematics' to result file." << std::endl;
-				return false;
-			}
-		}
-
-		yamlOutput << YAML::EndMap;
-	}
-
-	yamlOutput << YAML::EndSeq;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInputFitResultSystematics(YAML::Emitter& yamlOutput,
-                                                                     const size_t idxBin) const
-{
-	if(_debug) {
-		printDebug << "writing 'systematics' for bin " << idxBin << "." << std::endl;
-	}
-
-	yamlOutput << _sysFileNames[idxBin];
 
 	return true;
 }
@@ -1898,7 +1880,8 @@ rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
+rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                            std::vector<size_t>& nrMassBins,
                                             boost::multi_array<double, 2>& massBinCenters,
                                             boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                             boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -1916,7 +1899,9 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
                                             const std::string& valTreeName,
                                             const std::string& valBranchName)
 {
-	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+		const rpwa::resonanceFit::information::bin& bin = fitInformation->getBin(idxBin);
+
 		size_t tempNrMassBins;
 		boost::multi_array<double, 1> tempMassBinCenters;
 		boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
@@ -1930,6 +1915,7 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
 		if(not readInFile(idxBin,
+		                  bin,
 		                  tempNrMassBins,
 		                  tempMassBinCenters,
 		                  tempPhaseSpaceIntegrals,
@@ -1982,8 +1968,9 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 			}
 		}
 
-		if(_nrSystematics[idxBin] > 0) {
+		if(bin.sysFileNames().size() > 0) {
 			if(not readSystematicsFiles(idxBin,
+			                            bin,
 			                            nrMassBins[idxBin],
 			                            massBinCenters[idxBin],
 			                            tempPlottingPhases,
@@ -2010,6 +1997,7 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 
 bool
 rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
+                                           const rpwa::resonanceFit::information::bin& bin,
                                            size_t& nrMassBins,
                                            boost::multi_array<double, 1>& massBinCenters,
                                            boost::multi_array<double, 2>& phaseSpaceIntegrals,
@@ -2025,28 +2013,28 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
                                            const std::string& valBranchName)
 {
 	if(_debug) {
-		printDebug << "reading fit result from file '" << _inFileName[idxBin] << "'." << std::endl;
+		printDebug << "reading fit result from file '" << bin.fileName() << "'." << std::endl;
 	}
 
-	TFile* inFile = TFile::Open(_inFileName[idxBin].c_str());
+	TFile* inFile = TFile::Open(bin.fileName().c_str());
 	if(not inFile) {
-		printErr << "input file '" << _inFileName[idxBin] << "' not found."<< std::endl;
+		printErr << "input file '" << bin.fileName() << "' not found."<< std::endl;
 		return false;
 	}
 	if(inFile->IsZombie()) {
-		printErr << "error while reading input file '" << _inFileName[idxBin] << "'."<< std::endl;
+		printErr << "error while reading input file '" << bin.fileName() << "'."<< std::endl;
 		delete inFile;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName[idxBin] << "'." << std::endl;
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.fileName() << "'." << std::endl;
 	}
 
 	TTree* inTree;
 	inFile->GetObject(valTreeName.c_str(), inTree);
 	if(not inTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName[idxBin] << "'."<< std::endl;
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.fileName() << "'."<< std::endl;
 		delete inFile;
 		return false;
 	}
@@ -2066,7 +2054,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	                             inFit,
 	                             nrMassBins,
 	                             massBinCenters)) {
-		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+		printErr << "could not extract mass bins from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
@@ -2077,7 +2065,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	                              nrMassBins,
 	                              massBinCenters,
 	                              inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
@@ -2086,7 +2074,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	if(not readFitResultMatrices(inTree,
 	                             inFit,
 	                             inMapping,
-	                             _rescaleErrors[idxBin],
+	                             bin.rescaleErrors(),
 	                             waveNames,
 	                             productionAmplitudes,
 	                             productionAmplitudesCovariance,
@@ -2096,7 +2084,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	                             plottingSpinDensityMatrixElementsReal,
 	                             plottingSpinDensityMatrixElementsImag,
 	                             plottingPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+		printErr << "error while reading spin-density matrix from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
@@ -2105,7 +2093,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	}
 
 	if(not readFitResultIntegrals(inTree, inFit, inMapping, waveNames, phaseSpaceIntegrals)) {
-		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+		printErr << "error while reading phase-space integrals from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
@@ -2117,6 +2105,7 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 
 bool
 rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
+                                                     const rpwa::resonanceFit::information::bin& bin,
                                                      const size_t nrMassBins,
                                                      const boost::multi_array<double, 1>& massBinCenters,
                                                      const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
@@ -2127,16 +2116,17 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
                                                      const std::string& valTreeName,
                                                      const std::string& valBranchName)
 {
-	if(_nrSystematics[idxBin] == 0) {
+	if(bin.sysFileNames().size() == 0) {
 		return true;
 	}
 
 	if(_debug) {
-		printDebug << "reading fit results for systematic errors for bin " << idxBin << " from " << _nrSystematics[idxBin] << " files." << std::endl;
+		printDebug << "reading fit results for systematic errors for bin " << idxBin << " from " << bin.sysFileNames().size() << " files." << std::endl;
 	}
 
-	for(size_t idxSystematics = 0; idxSystematics < _nrSystematics[idxBin]; ++idxSystematics) {
+	for(size_t idxSystematics = 0; idxSystematics < bin.sysFileNames().size(); ++idxSystematics) {
 		if(not readSystematicsFile(idxBin,
+		                           bin,
 		                           idxSystematics,
 		                           nrMassBins,
 		                           massBinCenters,
@@ -2158,6 +2148,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 
 bool
 rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
+                                                    const rpwa::resonanceFit::information::bin& bin,
                                                     const size_t idxSystematics,
                                                     const size_t nrMassBins,
                                                     const boost::multi_array<double, 1>& massBinCenters,
@@ -2170,28 +2161,28 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
                                                     const std::string& valBranchName)
 {
 	if(_debug) {
-		printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
+		printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
 	}
 
-	TFile* sysFile = TFile::Open(_sysFileNames[idxBin][idxSystematics].c_str());
+	TFile* sysFile = TFile::Open(bin.sysFileNames()[idxSystematics].c_str());
 	if(not sysFile) {
-		printErr << "input file '" << _sysFileNames[idxBin][idxSystematics] << "' not found."<< std::endl;
+		printErr << "input file '" << bin.sysFileNames()[idxSystematics] << "' not found."<< std::endl;
 		return false;
 	}
 	if(sysFile->IsZombie()) {
-		printErr << "error while reading input file '" << _sysFileNames[idxBin][idxSystematics] << "'."<< std::endl;
+		printErr << "error while reading input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
 		delete sysFile;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
 	}
 
 	TTree* sysTree;
 	sysFile->GetObject(valTreeName.c_str(), sysTree);
 	if(not sysTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << _sysFileNames[idxBin][idxSystematics] << "'."<< std::endl;
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
 		delete sysFile;
 		return false;
 	}
@@ -2213,7 +2204,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	                              nrMassBins,
 	                              massBinCenters,
 	                              sysMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
 		delete sysFile;
 		return false;
 	}
@@ -2230,7 +2221,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	if(not readFitResultMatrices(sysTree,
 	                             sysFit,
 	                             sysMapping,
-	                             _rescaleErrors[idxBin],
+	                             bin.rescaleErrors(),
 	                             waveNames,
 	                             tempProductionAmplitudes,
 	                             tempProductionAmplitudesCovariance,
@@ -2240,7 +2231,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	                             tempSysPlottingSpinDensityMatrixElementsReal,
 	                             tempSysPlottingSpinDensityMatrixElementsImag,
 	                             tempSysPlottingPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxBin][idxSystematics] << "'." << std::endl;
+		printErr << "error while reading spin-density matrix from fit result tree in '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
 		delete sysFile;
 		return false;
 	}
@@ -2675,7 +2666,7 @@ rpwa::resonanceFit::massDepFit::prepareMassLimits(const std::vector<size_t>& nrM
                                                   const boost::multi_array<double, 2>& massBinCenters,
                                                   boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
 {
-	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+	for(size_t idxBin = 0; idxBin < nrMassBins.size(); ++idxBin) {
 		boost::multi_array<std::pair<size_t, size_t>, 2> tempWavePairMassBinLimits;
 
 		if(not prepareMassLimit(nrMassBins[idxBin], massBinCenters[idxBin], tempWavePairMassBinLimits)) {
@@ -2758,7 +2749,8 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstPtr& fitData,
+rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                            const rpwa::resonanceFit::dataConstPtr& fitData,
                                             const rpwa::resonanceFit::modelConstPtr& fitModel,
                                             const rpwa::resonanceFit::parameters& fitParameters,
                                             rpwa::resonanceFit::cache& cache,
@@ -2771,9 +2763,9 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 	}
 
 	const bool sameMassBinning = fitData->hasSameMassBinning();
-	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 		TDirectory* outDirectory = NULL;
-		if(_nrBins == 1) {
+		if(fitInformation->nrBins() == 1) {
 			outDirectory = outFile;
 		} else {
 			std::ostringstream name;
@@ -2782,7 +2774,16 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 		}
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWave(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, idxBin)) {
+			if(not createPlotsWave(fitInformation,
+			                       fitData,
+			                       fitModel,
+			                       fitParameters,
+			                       cache,
+			                       outDirectory,
+			                       rangePlotting,
+			                       extraBinning,
+			                       idxWave,
+			                       idxBin)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
 				return false;
 			}
@@ -2790,7 +2791,17 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
-				if(not createPlotsWavePair(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxWave, jdxWave, idxBin)) {
+				if(not createPlotsWavePair(fitInformation,
+				                           fitData,
+				                           fitModel,
+				                           fitParameters,
+				                           cache,
+				                           outDirectory,
+				                           rangePlotting,
+				                           extraBinning,
+				                           idxWave,
+				                           jdxWave,
+				                           idxBin)) {
 					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
 					return false;
 				}
@@ -2798,16 +2809,31 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 		}
 
 		if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() != 1 or not sameMassBinning)) {
-			if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
+			if(not createPlotsFsmd(fitData,
+			                       fitModel,
+			                       fitParameters,
+			                       cache,
+			                       outDirectory,
+			                       rangePlotting,
+			                       extraBinning,
+			                       idxBin)) {
 				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
 				return false;
 			}
 		}
 	}
 
-	if(_nrBins != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
+	if(fitInformation->nrBins() != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			if(not createPlotsWaveSum(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
+			if(not createPlotsWaveSum(fitInformation,
+			                          fitData,
+			                          fitModel,
+			                          fitParameters,
+			                          cache,
+			                          outFile,
+			                          rangePlotting,
+			                          extraBinning,
+			                          idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
 				return false;
 			}
@@ -2815,7 +2841,14 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 	}
 
 	if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() == 1 and sameMassBinning)) {
-		if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
+		if(not createPlotsFsmd(fitData,
+		                       fitModel,
+		                       fitParameters,
+		                       cache,
+		                       outFile,
+		                       rangePlotting,
+		                       extraBinning,
+		                       0)) {
 			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 			return false;
 		}
@@ -2830,7 +2863,8 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataConstPtr& fitData,
+rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                const rpwa::resonanceFit::dataConstPtr& fitData,
                                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                 const rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::cache& cache,
@@ -2849,7 +2883,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataCo
 	graphs.SetTitle(_waveNames[idxWave].c_str());
 
 	TGraphErrors* systematics = NULL;
-	if(_nrSystematics[idxBin] > 0) {
+	if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 		systematics = new TGraphErrors;
 		systematics->SetName((_waveNames[idxWave] + "__sys").c_str());
 		systematics->SetTitle((_waveNames[idxWave] + "__sys").c_str());
@@ -2906,7 +2940,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataCo
 		data->SetPointError(point, halfBin, fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
 		maxIE = std::max(maxIE, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first+fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
 
-		if(_nrSystematics[idxBin] > 0) {
+		if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 			const double minSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first;
 			const double maxSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second;
 			systematics->SetPoint(point, mass, (maxSI+minSI)/2.);
@@ -2976,7 +3010,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::dataCo
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dataConstPtr& fitData,
+rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                   const rpwa::resonanceFit::dataConstPtr& fitData,
                                                    const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                    const rpwa::resonanceFit::parameters& fitParameters,
                                                    rpwa::resonanceFit::cache& cache,
@@ -3040,7 +3075,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 
 		double sum = 0.;
 		double error2 = 0.;
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 			sum += fitData->plottingIntensities()[idxBin][idxMass][idxWave].first;
 			error2 += std::pow(fitData->plottingIntensities()[idxBin][idxMass][idxWave].second, 2);
 		}
@@ -3057,7 +3092,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 		const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 		double sum = 0.;
-		for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 			sum += fitModel->intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 		}
 		fit->SetPoint(point-firstPoint, mass, sum);
@@ -3067,7 +3102,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 			const size_t idxChannel = compChannel[idxComponents].second;
 
 			double sum = 0.;
-			for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 				std::complex<double> prodAmp = fitModel->getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 				prodAmp *= fitModel->getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 				if(fitModel->getFsmd()) {
@@ -3087,7 +3122,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 
 
 bool
-rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::dataConstPtr& fitData,
+rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                    const rpwa::resonanceFit::dataConstPtr& fitData,
                                                     const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                     const rpwa::resonanceFit::parameters& fitParameters,
                                                     rpwa::resonanceFit::cache& cache,
@@ -3121,7 +3157,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::da
 	TGraphErrors* realSystematics = NULL;
 	TGraphErrors* imagSystematics = NULL;
 	TGraphErrors* phaseSystematics = NULL;
-	if(_nrSystematics[idxBin] > 0) {
+	if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 		realSystematics = new TGraphErrors;
 		realSystematics->SetName((realName + "__sys").c_str());
 		realSystematics->SetTitle((realName + "__sys").c_str());
@@ -3198,7 +3234,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::da
 		phaseData->SetPoint(point, mass, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].first);
 		phaseData->SetPointError(point, halfBin, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].second);
 
-		if(_nrSystematics[idxBin] > 0) {
+		if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 			const double minSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first;
 			const double maxSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second;
 			realSystematics->SetPoint(point, mass, (maxSR+minSR)/2.);
@@ -3282,7 +3318,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::da
 			}
 
 			phaseData->SetPoint(idxMass, x, data + bestOffs*360.);
-			if(_nrSystematics[idxBin] > 0) {
+			if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 				phaseSystematics->GetPoint(idxMass, x, data);
 				phaseSystematics->SetPoint(idxMass, x, data + bestOffs*360.);
 			}
