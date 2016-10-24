@@ -131,6 +131,7 @@ namespace rpwa {
 			                     rpwa::resonanceFit::parameters& fitParametersError,
 			                     const std::vector<size_t>& nrMassBins,
 			                     const boost::multi_array<double, 2>& massBinCenters,
+			                     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                     const bool useBranchings);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
 			bool readConfigModelComponents(const YAML::Node& configComponents,
@@ -139,6 +140,7 @@ namespace rpwa {
 			                               rpwa::resonanceFit::parameters& fitParametersError,
 			                               const std::vector<size_t>& nrMassBins,
 			                               const boost::multi_array<double, 2>& massBinCenters,
+			                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                               const bool useBranchings) const;
 			bool readConfigModelFsmd(const YAML::Node& configFsmd,
 			                         const rpwa::resonanceFit::modelPtr& fitModel,
@@ -171,6 +173,7 @@ namespace rpwa {
 
 			bool readInFiles(std::vector<size_t>& nrMassBins,
 			                 boost::multi_array<double, 2>& massBinCenters,
+			                 boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                 boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			                 boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
 			                 boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
@@ -188,6 +191,7 @@ namespace rpwa {
 			bool readInFile(const size_t idxBin,
 			                std::vector<size_t>& nrMassBins,
 			                boost::multi_array<double, 2>& massBinCenters,
+			                boost::multi_array<double, 2>& phaseSpaceIntegrals,
 			                boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
 			                boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
@@ -305,8 +309,6 @@ namespace rpwa {
 
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
-
-			boost::multi_array<double, 3> _inPhaseSpaceIntegrals;
 
 			size_t _nrBins;
 			size_t _maxMassBins;

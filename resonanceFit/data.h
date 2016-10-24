@@ -50,6 +50,7 @@ namespace rpwa {
 			data(const std::vector<size_t>& nrMassBins,
 			     const boost::multi_array<double, 2>& massBinCenters,
 			     const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
+			     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
 			     const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
 			     const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
@@ -73,6 +74,8 @@ namespace rpwa {
 			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
 
 			const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits() const { return _wavePairMassBinLimits; }
+
+			const boost::multi_array<double, 3>& phaseSpaceIntegrals() const { return _phaseSpaceIntegrals; }
 
 			const boost::multi_array<std::complex<double>, 3>& productionAmplitudes() const { return _productionAmplitudes; }
 			const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv() const { return _productionAmplitudesCovMatInv; }
@@ -99,6 +102,10 @@ namespace rpwa {
 			boost::multi_array<double, 2> _massBinCenters;
 
 			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
+
+			// data used in components
+
+			boost::multi_array<double, 3> _phaseSpaceIntegrals;
 
 			// data used for fitting
 
