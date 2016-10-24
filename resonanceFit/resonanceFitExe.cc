@@ -258,7 +258,7 @@ main(int    argc,
 	                                fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                fitModel->getMaxChannelsInComponent(),
 	                                mdepFit.getNrBins(),
-	                                mdepFit.getMaxMassBins());
+	                                fitData->maxMassBins());
 
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
