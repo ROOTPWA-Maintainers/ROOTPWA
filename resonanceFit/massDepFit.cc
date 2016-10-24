@@ -747,7 +747,6 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 rpwa::resonanceFit::massDepFit::massDepFit()
 	: _sameMassBinning(true),
 	  _nrBins(0),
-	  _maxMassBins(0),
 	  _nrWaves(0)
 {
 }
@@ -2046,10 +2045,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
 	adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
 
-	if(_maxMassBins < tempNrMassBins) {
-		_maxMassBins = tempNrMassBins;
-	}
-
 	bool readMapping(false);
 	std::vector<Long64_t> inMapping;
 	if(_sameMassBinning and idxBin > 0) {
@@ -2482,16 +2477,16 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 		waveNames[idxWave] = fit->waveName(idx);
 	}
 
-	productionAmplitudes.resize(boost::extents[_maxMassBins][_nrWaves]);
-	productionAmplitudesCovariance.resize(boost::extents[_maxMassBins]);
+	productionAmplitudes.resize(boost::extents[mapping.size()][_nrWaves]);
+	productionAmplitudesCovariance.resize(boost::extents[mapping.size()]);
 
-	spinDensityMatrices.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves]);
-	spinDensityCovarianceMatrices.resize(boost::extents[_maxMassBins]);
+	spinDensityMatrices.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
+	spinDensityCovarianceMatrices.resize(boost::extents[mapping.size()]);
 
-	plottingIntensities.resize(boost::extents[_maxMassBins][_nrWaves]);
-	plottingSpinDensityMatrixElementsReal.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves]);
-	plottingSpinDensityMatrixElementsImag.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves]);
-	plottingPhases.resize(boost::extents[_maxMassBins][_nrWaves][_nrWaves]);
+	plottingIntensities.resize(boost::extents[mapping.size()][_nrWaves]);
+	plottingSpinDensityMatrixElementsReal.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
+	plottingSpinDensityMatrixElementsImag.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
+	plottingPhases.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
 
 	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 		if(_debug) {
@@ -2634,7 +2629,7 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
 		return false;
 	}
 
-	phaseSpaceIntegrals.resize(boost::extents[_maxMassBins][_nrWaves]);
+	phaseSpaceIntegrals.resize(boost::extents[mapping.size()][_nrWaves]);
 
 	if(_debug) {
 		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from fit result." << std::endl;

@@ -102,7 +102,6 @@ namespace rpwa {
 			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
 
 			size_t getNrBins() const { return _nrBins; }
-			size_t getMaxMassBins() const { return _maxMassBins; }
 			size_t getNrWaves() const { return _nrWaves; }
 
 			static void setDebug(bool debug) { _debug = debug; }
@@ -311,7 +310,6 @@ namespace rpwa {
 			std::string _anchorComponentName;
 
 			size_t _nrBins;
-			size_t _maxMassBins;
 			size_t _nrWaves;
 
 			static bool _debug;
