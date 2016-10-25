@@ -56,9 +56,7 @@ namespace rpwa {
 
 			void add(const rpwa::resonanceFit::componentPtr& comp);
 
-			bool init(const size_t nrBins,
-			          const std::vector<std::string>& waveNames,
-			          const std::vector<std::vector<std::string> >& waveNameAlternatives,
+			bool init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			          const std::string& anchorWaveName,
 			          const std::string& anchorComponentName);
 
@@ -119,9 +117,7 @@ namespace rpwa {
 
 		private:
 
-			bool initMapping(const size_t nrBins,
-			                 const std::vector<std::string>& waveNames,
-			                 const std::vector<std::vector<std::string> >& waveNameAlternatives,
+			bool initMapping(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                 const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
 

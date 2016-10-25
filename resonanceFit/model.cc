@@ -34,6 +34,7 @@
 #include "cache.h"
 #include "components.h"
 #include "fsmd.h"
+#include "information.h"
 
 
 rpwa::resonanceFit::model::model()
@@ -48,13 +49,13 @@ rpwa::resonanceFit::model::model()
 
 
 bool
-rpwa::resonanceFit::model::init(const size_t nrBins,
-                                const std::vector<std::string>& waveNames,
-                                const std::vector<std::vector<std::string> >& waveNameAlternatives,
+rpwa::resonanceFit::model::init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                 const std::string& anchorWaveName,
                                 const std::string& anchorComponentName)
 {
-	if(not initMapping(nrBins, waveNames, waveNameAlternatives, anchorWaveName, anchorComponentName)) {
+	if(not initMapping(fitInformation,
+	                   anchorWaveName,
+	                   anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
 		return false;
 	}
@@ -114,9 +115,7 @@ rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::resonanceFit::model::initMapping(const size_t nrBins,
-                                       const std::vector<std::string>& waveNames,
-                                       const std::vector<std::vector<std::string> >& waveNameAlternatives,
+rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                        const std::string& anchorWaveName,
                                        const std::string& anchorComponentName)
 {
@@ -128,11 +127,13 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 			const channel& channel = component->getChannel(idxChannel);
 
 			bool found = false;
-			if(find(waveNames.begin(), waveNames.end(), channel.getWaveName()) != waveNames.end()) {
-				found = true;
-			}
-			for(size_t i = 0; i < waveNameAlternatives.size(); ++i) {
-				if(find(waveNameAlternatives[i].begin(), waveNameAlternatives[i].end(), channel.getWaveName()) != waveNameAlternatives[i].end()) {
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+				if(wave.waveName() == channel.getWaveName()) {
+					found = true;
+				}
+				if(find(wave.waveNameAlternatives().begin(), wave.waveNameAlternatives().end(), channel.getWaveName()) != wave.waveNameAlternatives().end()) {
 					if(found) {
 						printErr << "wave '" << channel.getWaveName() << "' known multiple times." << std::endl;
 						return false;
@@ -148,18 +149,20 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 	}
 
 	// check that all defined waves are also used
-	for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
 		bool found(false);
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 			const componentConstPtr& component = _components[idxComponent];
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 				const channel& channel = component->getChannel(idxChannel);
 
-				if(channel.getWaveName() == waveNames[idxWave]) {
+				if(channel.getWaveName() == wave.waveName()) {
 					found = true;
 					break;
 				}
-				if(find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), channel.getWaveName()) != waveNameAlternatives[idxWave].end()) {
+				if(find(wave.waveNameAlternatives().begin(), wave.waveNameAlternatives().end(), channel.getWaveName()) != wave.waveNameAlternatives().end()) {
 					found = true;
 					break;
 				}
@@ -167,14 +170,16 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 		}
 
 		if(not found) {
-			printErr << "wave '" << waveNames[idxWave] << "' defined but not used in any decay." << std::endl;
+			printErr << "wave '" << wave.waveName() << "' defined but not used in any decay." << std::endl;
 			return false;
 		}
 	}
 
-	_idxAnchorChannel.resize(nrBins, std::numeric_limits<size_t>::max());
-	_waveComponentChannel.resize(boost::extents[nrBins][waveNames.size()]);
-	for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+	_idxAnchorChannel.resize(fitInformation->nrBins(), std::numeric_limits<size_t>::max());
+	_waveComponentChannel.resize(boost::extents[fitInformation->nrBins()][fitInformation->nrWaves()]);
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
 		// check which components this waves belongs to and which channel they are
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 			const componentConstPtr& component = _components[idxComponent];
@@ -182,21 +187,21 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 				const channel& channel = component->getChannel(idxChannel);
 
-				if(channel.getWaveName() == waveNames[idxWave] or find(waveNameAlternatives[idxWave].begin(), waveNameAlternatives[idxWave].end(), channel.getWaveName()) != waveNameAlternatives[idxWave].end()) {
+				if(channel.getWaveName() == wave.waveName() or find(wave.waveNameAlternatives().begin(), wave.waveNameAlternatives().end(), channel.getWaveName()) != wave.waveNameAlternatives().end()) {
 					for(size_t i = 0; i < channel.getBins().size(); ++i) {
 						const size_t idxBin = channel.getBins()[i];
 
 						_waveComponentChannel[idxBin][idxWave].push_back(std::pair<size_t, size_t>(idxComponent,idxChannel));
 					}
 
-					if(anchorWaveName == waveNames[idxWave] and anchorComponentName == component->getName()) {
-						if(_idxAnchorWave != std::numeric_limits<size_t>::max() and _idxAnchorWave != idxWave) {;
+					if(anchorWaveName == wave.waveName() and anchorComponentName == component->getName()) {
+						if(_idxAnchorWave != std::numeric_limits<size_t>::max() and _idxAnchorWave != idxWave) {
 							printErr << "second anchor wave found." << std::endl;
 							return false;
 						}
 						_idxAnchorWave = idxWave;
 
-						if(_idxAnchorComponent != std::numeric_limits<size_t>::max() and _idxAnchorComponent != idxComponent) {;
+						if(_idxAnchorComponent != std::numeric_limits<size_t>::max() and _idxAnchorComponent != idxComponent) {
 							printErr << "second anchor component found." << std::endl;
 							return false;
 						}
@@ -223,7 +228,7 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 		return false;
 	}
 	const componentPtr& anchorComponent = _components[_idxAnchorComponent];
-	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 		size_t firstChannel = 0;
 		// loop over channels of component and see if wave is there
 		for(size_t idxChannel = 0; idxChannel < anchorComponent->getNrChannels(); ++idxChannel) {
@@ -241,16 +246,16 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 		}
 	}
 	anchorComponent->setChannelAnchor(_idxAnchorChannel);
-	_nrParameters -= nrBins;
+	_nrParameters -= fitInformation->nrBins();
 
 	// can we simplify stuff by assuming all bins have the same mapping?
 	_mappingEqualInAllBins = true;
-	for(size_t idxBin = 1; idxBin < nrBins; ++idxBin) {
+	for(size_t idxBin = 1; idxBin < fitInformation->nrBins(); ++idxBin) {
 		if(_idxAnchorChannel[idxBin] != _idxAnchorChannel[0]) {
 			_mappingEqualInAllBins = false;
 			break;
 		}
-		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
 			if(_waveComponentChannel[idxBin][idxWave] != _waveComponentChannel[0][idxWave]) {
 				_mappingEqualInAllBins = false;
 				break;
@@ -264,8 +269,10 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 	std::ostringstream output;
 	if(_mappingEqualInAllBins) {
 		const size_t idxBin = 0;
-		for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
-			output << "    wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+			output << "    wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
 			for(size_t idxComponents = 0; idxComponents < _waveComponentChannel[idxBin][idxWave].size(); idxComponents++) {
 				const size_t idxComponent = _waveComponentChannel[idxBin][idxWave][idxComponents].first;
 				const componentConstPtr& component = _components[idxComponent];
@@ -294,10 +301,12 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 			}
 		}
 	} else {
-		for(size_t idxBin = 0; idxBin < nrBins; idxBin++) {
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); idxBin++) {
 			output << "    mapping used in bin " << idxBin << std::endl;
-			for(size_t idxWave = 0; idxWave < waveNames.size(); idxWave++) {
-				output << "        wave '" << waveNames[idxWave] << "' (index " << idxWave << ") used in" << std::endl;
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+				output << "        wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
 				for(size_t idxComponents = 0; idxComponents < _waveComponentChannel[idxBin][idxWave].size(); idxComponents++) {
 					const size_t idxComponent = _waveComponentChannel[idxBin][idxWave][idxComponents].first;
 					const componentConstPtr& component = _components[idxComponent];
@@ -327,7 +336,7 @@ rpwa::resonanceFit::model::initMapping(const size_t nrBins,
 			}
 		}
 	}
-	printInfo << waveNames.size() << " waves and " << _components.size() << " components in fit model:" << std::endl
+	printInfo << fitInformation->nrWaves() << " waves and " << _components.size() << " components in fit model:" << std::endl
 	          << output.str();
 
 	return true;

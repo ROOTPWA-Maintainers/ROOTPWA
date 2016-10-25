@@ -69,23 +69,53 @@ namespace rpwa {
 
 			};
 
-			information(const std::vector<rpwa::resonanceFit::information::bin>& bins);
+			class wave {
+
+			public:
+
+				wave(const std::string& waveName,
+				     const std::pair<double, double>& massLimits = std::pair<double, double>(-1.0, -1.0),
+				     const std::vector<std::string>& waveNameAlternatives = std::vector<std::string>());
+				~wave() {}
+
+				const std::string& waveName() const { return _waveName; }
+				const std::pair<double, double>& massLimits() const { return _massLimits; }
+				const std::vector<std::string>& waveNameAlternatives() const { return _waveNameAlternatives; }
+
+				std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
+
+			private:
+
+				std::string _waveName;
+				std::pair<double, double> _massLimits;
+				std::vector<std::string> _waveNameAlternatives;
+
+			};
+
+			information(const std::vector<rpwa::resonanceFit::information::bin>& bins,
+			            const std::vector<rpwa::resonanceFit::information::wave>& waves);
 			~information() {}
 
 			size_t nrBins() const { return _bins.size(); }
 			const std::vector<rpwa::resonanceFit::information::bin>& bins() const { return _bins; }
 			const rpwa::resonanceFit::information::bin& getBin(const size_t idxBin) const { return _bins[idxBin]; }
 
+			size_t nrWaves() const { return _waves.size(); }
+			const std::vector<rpwa::resonanceFit::information::wave>& waves() const { return _waves; }
+			const rpwa::resonanceFit::information::wave& getWave(const size_t idxWave) const { return _waves[idxWave]; }
+
 			std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
 			std::vector<rpwa::resonanceFit::information::bin> _bins;
+			std::vector<rpwa::resonanceFit::information::wave> _waves;
 
 		};
 
 		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information& information);
 		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information::bin& bin);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information::wave& wave);
 
 	} // end namespace resonanceFit
 
@@ -105,6 +135,14 @@ std::ostream&
 rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::information::bin& bin)
 {
 	return bin.print(out, false);
+}
+
+
+inline
+std::ostream&
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::information::wave& wave)
+{
+	return wave.print(out, false);
 }
 
 

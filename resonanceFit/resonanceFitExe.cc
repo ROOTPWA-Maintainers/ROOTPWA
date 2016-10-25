@@ -270,7 +270,7 @@ main(int    argc,
 		return 1;
 	}
 
-	rpwa::resonanceFit::cache cache(mdepFit.getNrWaves(),
+	rpwa::resonanceFit::cache cache(fitInformation->nrWaves(),
 	                                fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                fitModel->getMaxChannelsInComponent(),
 	                                fitInformation->nrBins(),
