@@ -48,7 +48,6 @@
 rpwa::resonanceFit::fsmd::fsmd(const size_t id)
 	: _id(id),
 	  _nrBins(0),
-	  _equalInAllBins(false),
 	  _maxParameters(0)
 {
 }
@@ -63,8 +62,8 @@ bool
 rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
                                rpwa::resonanceFit::parameters& fitParameters,
                                rpwa::resonanceFit::parameters& fitParametersError,
-                               const size_t nrBins,
-                               const bool sameMassBinning,
+                               const std::vector<size_t>& nrMassBins,
+                               const boost::multi_array<double, 2>& massBinCenters,
                                const bool debug)
 {
 	if(debug) {
@@ -76,6 +75,7 @@ rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
 		return false;
 	}
 
+	const size_t nrBins = nrMassBins.size();
 	if(configFsmd.IsSequence()) {
 		if(nrBins != configFsmd.size()) {
 			printErr << "incorrect number of final-state mass-dependencies provided, found " << configFsmd.size() << ", expected " << nrBins << "." << std::endl;
@@ -92,6 +92,12 @@ rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
 				printErr << "error while initializing final-state mass-dependence for bin " << idxBin << "." << std::endl;
 				return false;
 			}
+		}
+
+		// each value is only valid for the bin it has been calculated for
+		_binsEqualValues.assign(nrBins, std::vector<size_t>(1, 0));
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			_binsEqualValues[idxBin][0] = idxBin;
 		}
 	}
 
@@ -111,12 +117,44 @@ rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
 			_nrParameters[idxBin] = _nrParameters[0];
 			_parametersIndex[idxBin] = _parametersIndex[0];
 		}
-	}
 
-	// if all bins have the same mass binning and there is only one
-	// final-state mass dependence, the value in each mass bin is equal
-	// for all bins
-	_equalInAllBins = sameMassBinning and (_nrBins == 1);
+		// if all bins have the same mass binning and there is only one
+		// final-state mass dependence, the value in each mass bin is equal
+		// for all bins
+		_binsEqualValues.assign(nrBins, std::vector<size_t>());
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			if(_binsEqualValues[idxBin].size() != 0) {
+				continue;
+			}
+
+			std::vector<size_t> bins(1, idxBin);
+			for(size_t jdxBin = idxBin+1; jdxBin < nrBins; ++jdxBin) {
+				if(nrMassBins[idxBin] != nrMassBins[jdxBin]) {
+					continue;
+				}
+
+				bool sameBinning = true;
+				for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
+					if(massBinCenters[idxBin][idxMass] != massBinCenters[jdxBin][idxMass]) {
+						sameBinning = false;
+						break;
+					}
+				}
+				if(sameBinning) {
+					bins.push_back(jdxBin);
+				}
+			}
+
+			for(size_t jdxBin = 0; jdxBin < bins.size(); ++jdxBin) {
+				if(_binsEqualValues[bins[jdxBin]].size() != 0) {
+					printErr << "inconsistency when setting up bins used for caching." << std::endl;
+					return false;
+				}
+
+				_binsEqualValues[bins[jdxBin]] = bins;
+			}
+		}
+	}
 
 	if(debug) {
 		print(printDebug);
@@ -362,8 +400,16 @@ rpwa::resonanceFit::fsmd::importParameters(const double* par,
 		sumNrParameters += _nrParameters[idxBin];
 
 		if(invalidateCache) {
-			cache.setComponent(_id, ((_nrBins == 1) ? std::numeric_limits<size_t>::max() : idxBin), std::numeric_limits<size_t>::max(), 0.);
-			cache.setProdAmp(std::numeric_limits<size_t>::max(), ((_nrBins == 1) ? std::numeric_limits<size_t>::max() : idxBin), std::numeric_limits<size_t>::max(), 0.);
+			if(_binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
+				// the value is the same for all bins
+				cache.setComponent(_id, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+				cache.setProdAmp(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+			} else {
+				for(std::vector<size_t>::const_iterator it = _binsEqualValues[idxBin].begin(); it != _binsEqualValues[idxBin].end(); ++it) {
+					cache.setComponent(_id, *it, std::numeric_limits<size_t>::max(), 0.);
+					cache.setProdAmp(std::numeric_limits<size_t>::max(), *it, std::numeric_limits<size_t>::max(), 0.);
+				}
+			}
 		}
 	}
 
@@ -392,7 +438,14 @@ rpwa::resonanceFit::fsmd::val(const rpwa::resonanceFit::parameters& fitParameter
 	const std::complex<double> fsmd = _functions[idxBin]->EvalPar(&mass, fitParameters.getParameters(_id)+_parametersIndex[idxBin]);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
-		cache.setComponent(_id, (_equalInAllBins ? std::numeric_limits<size_t>::max() : idxBin), idxMass, fsmd);
+		if(_binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
+			// the value is the same for all bins
+			cache.setComponent(_id, std::numeric_limits<size_t>::max(), idxMass, fsmd);
+		} else {
+			for(std::vector<size_t>::const_iterator it = _binsEqualValues[idxBin].begin(); it != _binsEqualValues[idxBin].end(); ++it) {
+				cache.setComponent(_id, *it, idxMass, fsmd);
+			}
+		}
 	}
 
 	return fsmd;
@@ -403,7 +456,20 @@ std::ostream&
 rpwa::resonanceFit::fsmd::print(std::ostream& out) const
 {
 	out << "final-state mass-dependence (id " << _id << ")" << std::endl
-	    << "    use equal values for all bins for each mass bin: " << rpwa::yesNo(_equalInAllBins) << std::endl;
+	    << "    use equal values for each mass bin in group of bins: ";
+	std::set<size_t> printed;
+	for(size_t idxBin = 0; idxBin < _binsEqualValues.size(); ++idxBin) {
+		if(printed.count(idxBin) > 0) {
+			continue;
+		}
+		out << ((printed.size() > 0) ? ", " : "") << "{";
+		for(size_t idx = 0; idx < _binsEqualValues[idxBin].size(); ++idx) {
+			out << ((idx > 0) ? ", " : "") << _binsEqualValues[idxBin][idx];
+			printed.insert(_binsEqualValues[idxBin][idx]);
+		}
+		out << "}";
+	}
+	out << std::endl;
 
 	for(size_t i = 0; i < _nrBins; ++i) {
 		printBin(i, out);

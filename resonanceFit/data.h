@@ -72,6 +72,7 @@ namespace rpwa {
 
 			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
 			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
+			bool hasSameMassBinning() const;
 
 			const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 

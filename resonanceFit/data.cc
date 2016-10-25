@@ -310,3 +310,21 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.",
 	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.");
 }
+
+
+bool
+rpwa::resonanceFit::data::hasSameMassBinning() const
+{
+	for(size_t idxBin = 0; idxBin < _nrMassBins.size(); ++idxBin) {
+		if(_nrMassBins[idxBin] != _nrMassBins[0]) {
+			return false;
+		}
+		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+			if(_massBinCenters[idxBin][idxMass] != _massBinCenters[0][idxMass]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
