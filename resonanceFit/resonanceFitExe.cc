@@ -243,7 +243,18 @@ main(int    argc,
 	rpwa::resonanceFit::parameters fitParameters;
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
-	if(not mdepFit.readConfig(configRoot, fitData, fitModel, fitParameters, fitParametersError, fitQuality, doBranching, doCov, valTreeName, valBranchName)) {
+	std::vector<std::string> freeParameters;
+	if(not mdepFit.readConfig(configRoot,
+	                          fitData,
+	                          fitModel,
+	                          fitParameters,
+	                          fitParametersError,
+	                          fitQuality,
+	                          freeParameters,
+	                          doBranching,
+	                          doCov,
+	                          valTreeName,
+	                          valBranchName)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -267,7 +278,7 @@ main(int    argc,
 	} else {
 		rpwa::resonanceFit::minimizerRoot minimizer(fitModel,
 		                                            fitFunction,
-		                                            mdepFit.getFreeParameters(),
+		                                            freeParameters,
 		                                            maxNumberOfFunctionCalls,
 		                                            minimizerType,
 		                                            minimizerStrategy,
@@ -294,7 +305,12 @@ main(int    argc,
 		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
 	}
 	std::ofstream configFile(confFileName.c_str());
-	if(not mdepFit.writeConfig(configFile, fitModel, fitParameters, fitParametersError, fitQuality)) {
+	if(not mdepFit.writeConfig(configFile,
+	                           fitModel,
+	                           fitParameters,
+	                           fitParametersError,
+	                           fitQuality,
+	                           freeParameters)) {
 		printErr << "error while writing result to configuration file." << std::endl;
 		return 1;
 	}

@@ -59,6 +59,10 @@
 namespace {
 
 
+	// debug flag for functions in this (anonymous) namespace
+	bool debug = false;
+
+
 	template<typename T>
 	void
 	copyMultiArrayElement(const T& source,
@@ -738,6 +742,78 @@ namespace {
 	}
 
 
+	std::vector<std::string>
+	readFreeParameters(const YAML::Node& configRoot)
+	{
+		if(debug) {
+			printDebug << "reading 'freeparameters'." << std::endl;
+		}
+
+		const YAML::Node& configFreeParameters = configRoot["freeparameters"];
+
+		std::vector<std::string> freeParameters;
+		if(not configFreeParameters) {
+			printWarn << "release order of parameters not specified in configuration file, using default one." << std::endl;
+
+			freeParameters.push_back("coupling branching");
+			freeParameters.push_back("coupling branching mass m0");
+			freeParameters.push_back("*");
+
+			return freeParameters;
+		}
+
+		if(not configFreeParameters.IsSequence()) {
+			printErr << "'freeparameters' is not a YAML sequence." << std::endl;
+			throw;
+		}
+
+		const size_t nrItems = configFreeParameters.size();
+		if(nrItems == 0) {
+			printErr << "'freeparameters' is an empty sequence, when defined it must at least contain one entry." << std::endl;
+			throw;
+		}
+
+		for(size_t idxItem = 0; idxItem < nrItems; ++idxItem) {
+			if(debug) {
+				printDebug << "reading of entry " << idxItem << " in 'freeparameters'." << std::endl;
+			}
+
+			if(not checkVariableType(configFreeParameters[idxItem], rpwa::YamlCppUtils::TypeString)) {
+				printErr << "'freeparameters' entry at index " << idxItem << " is not a string." << std::endl;
+				throw;
+			}
+
+			freeParameters.push_back(configFreeParameters[idxItem].as<std::string>());
+
+			if(debug) {
+				printDebug << "read parameters to release: '" << freeParameters.back() << "'." << std::endl;
+			}
+		}
+
+		return freeParameters;
+	}
+
+
+	void
+	writeFreeParameters(YAML::Emitter& yamlOutput,
+	                    const std::vector<std::string>& freeParameters)
+	{
+		if(debug) {
+			printDebug << "writing 'freeparameters'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "freeparameters";
+		yamlOutput << YAML::Value << freeParameters;
+	}
+
+
+}
+
+
+void
+rpwa::resonanceFit::setDebug(const bool newDebug)
+{
+	debug = newDebug;
 }
 
 
@@ -751,6 +827,14 @@ rpwa::resonanceFit::massDepFit::massDepFit()
 }
 
 
+void
+rpwa::resonanceFit::massDepFit::setDebug(bool debug)
+{
+	_debug = debug;
+	rpwa::resonanceFit::setDebug(_debug);
+}
+
+
 bool
 rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                            rpwa::resonanceFit::dataConstPtr& fitData,
@@ -758,6 +842,7 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                            rpwa::resonanceFit::parameters& fitParameters,
                                            rpwa::resonanceFit::parameters& fitParametersError,
                                            std::map<std::string, double>& fitQuality,
+                                           std::vector<std::string>& freeParameters,
                                            const bool useBranchings,
                                            const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
                                            const std::string& valTreeName,
@@ -773,6 +858,9 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	} else {
 		fitQuality.clear();
 	}
+
+	// get information for which parameters to release in which order
+	freeParameters = readFreeParameters(configRoot);
 
 	// input section
 	const YAML::Node& configInput = configRoot["input"];
@@ -956,20 +1044,6 @@ rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
 	if(not readConfigInputWaves(configInputWaves)) {
 		printErr << "error while reading 'waves' in 'input'." << std::endl;
 		return false;
-	}
-
-	// get information for which parameters to release in which order
-	const YAML::Node& configInputFreeParameters = configInput["freeparameters"];
-	if(configInputFreeParameters) {
-		if(not readConfigInputFreeParameters(configInputFreeParameters)) {
-			printErr << "error while reading 'freeparameters' in 'input'." << std::endl;
-			return false;
-		}
-	} else {
-		_freeParameters.clear();
-		_freeParameters.push_back("coupling branching");
-		_freeParameters.push_back("coupling branching mass m0");
-		_freeParameters.push_back("*");
 	}
 
 	return true;
@@ -1228,47 +1302,6 @@ rpwa::resonanceFit::massDepFit::readConfigInputWaves(const YAML::Node& configInp
 	}
 	printInfo << _nrWaves << " waves to be used in fit:" << std::endl
 	          << output.str();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters)
-{
-	if(not configInputFreeParameters) {
-		printErr << "'configInputFreeParameters' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInputFreeParameters.IsSequence()) {
-		printErr << "'freeparameters' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	_freeParameters.clear();
-
-	const size_t nrItems = configInputFreeParameters.size();
-	if(nrItems == 0) {
-		printErr << "'freeparameters' is an empty sequence, when defined it must at least contain one entry." << std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "going to extract " << nrItems << " items from 'freeparameters'." << std::endl;
-	}
-
-	for(size_t idxItem=0; idxItem<nrItems; ++idxItem) {
-		if(not checkVariableType(configInputFreeParameters[idxItem], YamlCppUtils::TypeString)) {
-			printErr << "'freeparameters' entry at index " << idxItem << " is not a string." << std::endl;
-			return false;
-		}
-
-		const std::string name = configInputFreeParameters[idxItem].as<std::string>();
-		if(_debug) {
-			printDebug << idxItem << ": '" << name << "'." << std::endl;
-		}
-		_freeParameters.push_back(name);
-	}
 
 	return true;
 }
@@ -1557,7 +1590,8 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
                                             const rpwa::resonanceFit::modelConstPtr& fitModel,
                                             const rpwa::resonanceFit::parameters& fitParameters,
                                             const rpwa::resonanceFit::parameters& fitParametersError,
-                                            const std::map<std::string, double>& fitQuality) const
+                                            const std::map<std::string, double>& fitQuality,
+                                            const std::vector<std::string>& freeParameters) const
 {
 	if(_debug) {
 		printDebug << "writing configuration file." << std::endl;
@@ -1572,6 +1606,8 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 		printErr << "error while writing 'fitquality' to result file." << std::endl;
 		return false;
 	}
+
+	writeFreeParameters(yamlOutput, freeParameters);
 
 	yamlOutput << YAML::Key << "input";
 	yamlOutput << YAML::Value;
@@ -1637,13 +1673,6 @@ rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput) cons
 	yamlOutput << YAML::Value;
 	if(not writeConfigInputWaves(yamlOutput)) {
 		printErr << "error while writing 'waves' to result file." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::Key << "freeparameters";
-	yamlOutput << YAML::Value;
-	if(not writeConfigInputFreeParameters(yamlOutput)) {
-		printErr << "error while writing 'freeparameters' to result file." << std::endl;
 		return false;
 	}
 
@@ -1751,19 +1780,6 @@ rpwa::resonanceFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput)
 	}
 
 	yamlOutput << YAML::EndSeq;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const
-{
-	if(_debug) {
-		printDebug << "writing 'freeparameters'." << std::endl;
-	}
-
-	yamlOutput << _freeParameters;
 
 	return true;
 }

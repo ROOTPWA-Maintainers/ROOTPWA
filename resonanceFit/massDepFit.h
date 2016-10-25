@@ -61,6 +61,8 @@ namespace rpwa {
 		class cache;
 		class parameters;
 
+		void setDebug(const bool debug);
+
 		class massDepFit {
 
 		public:
@@ -74,6 +76,7 @@ namespace rpwa {
 			                rpwa::resonanceFit::parameters& fitParameters,
 			                rpwa::resonanceFit::parameters& fitParametersError,
 			                std::map<std::string, double>& fitQuality,
+			                std::vector<std::string>& freeParameters,
 			                const bool useBranchings,
 			                const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 			                const std::string& valTreeName   = "pwa",
@@ -87,7 +90,8 @@ namespace rpwa {
 			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                 const rpwa::resonanceFit::parameters& fitParameters,
 			                 const rpwa::resonanceFit::parameters& fitParametersError,
-			                 const std::map<std::string, double>& fitQuality) const;
+			                 const std::map<std::string, double>& fitQuality,
+			                 const std::vector<std::string>& freeParameters) const;
 
 // FIXME: make private
 			bool createPlots(const rpwa::resonanceFit::dataConstPtr& fitData,
@@ -98,13 +102,11 @@ namespace rpwa {
 			                 const bool rangePlotting,
 			                 const size_t extraBinning) const;
 
-// FIXME: get rid
-			const std::vector<std::string>& getFreeParameters() const { return _freeParameters; }
-
 			size_t getNrBins() const { return _nrBins; }
+
 			size_t getNrWaves() const { return _nrWaves; }
 
-			static void setDebug(bool debug) { _debug = debug; }
+			static void setDebug(bool debug);
 
 		private:
 
@@ -122,7 +124,6 @@ namespace rpwa {
 			bool readConfigInputFitResults(const YAML::Node& configInputFitResults);
 			bool readConfigInputFitResultSystematics(const YAML::Node& configInputFitResultSystematics);
 			bool readConfigInputWaves(const YAML::Node& configInputWaves);
-			bool readConfigInputFreeParameters(const YAML::Node& configInputFreeParameters);
 
 			bool readConfigModel(const YAML::Node& configModel,
 			                     const rpwa::resonanceFit::modelPtr& fitModel,
@@ -156,7 +157,6 @@ namespace rpwa {
 			bool writeConfigInputFitResultSystematics(YAML::Emitter& yamlOutput,
 			                                          const size_t idxBin) const;
 			bool writeConfigInputWaves(YAML::Emitter& yamlOutput) const;
-			bool writeConfigInputFreeParameters(YAML::Emitter& yamlOutput) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
 			                      const rpwa::resonanceFit::modelConstPtr& fitModel,
@@ -303,8 +303,6 @@ namespace rpwa {
 			std::map<std::string, size_t> _waveIndices;
 			std::map<std::string, std:: vector<size_t> > _waveBins;
 			std::vector<std::pair<double, double> > _waveMassLimits;
-
-			std::vector<std::string> _freeParameters;
 
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
