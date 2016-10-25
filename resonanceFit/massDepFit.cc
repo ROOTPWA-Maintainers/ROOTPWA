@@ -745,8 +745,7 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 
 rpwa::resonanceFit::massDepFit::massDepFit()
-	: _sameMassBinning(true),
-	  _nrBins(0),
+	: _nrBins(0),
 	  _nrWaves(0)
 {
 }
@@ -1330,7 +1329,12 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 	// get information for creating the final-state mass-dependence
 	const YAML::Node& configFsmd = configModel["finalStateMassDependence"];
 	if(configFsmd) {
-		if(not readConfigModelFsmd(configFsmd, fitModel, fitParameters, fitParametersError)) {
+		if(not readConfigModelFsmd(configFsmd,
+		                           fitModel,
+		                           fitParameters,
+		                           fitParametersError,
+		                           nrMassBins,
+		                           massBinCenters)) {
 			printErr << "error while reading 'finalStateMassDependence' in 'model'." << std::endl;
 			return false;
 		}
@@ -1489,7 +1493,9 @@ bool
 rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
                                                     const rpwa::resonanceFit::modelPtr& fitModel,
                                                     rpwa::resonanceFit::parameters& fitParameters,
-                                                    rpwa::resonanceFit::parameters& fitParametersError) const
+                                                    rpwa::resonanceFit::parameters& fitParametersError,
+                                                    const std::vector<size_t>& nrMassBins,
+                                                    const boost::multi_array<double, 2>& massBinCenters) const
 {
 	if(not configFsmd) {
 		printErr << "'configFsmd' is not a valid YAML node." << std::endl;
@@ -1505,7 +1511,12 @@ rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd
 	}
 
 	rpwa::resonanceFit::fsmdPtr fsmd(new rpwa::resonanceFit::fsmd(fitModel->getNrComponents()));
-	if(not fsmd->init(configFsmd, fitParameters, fitParametersError, _nrBins, _sameMassBinning, _debug)) {
+	if(not fsmd->init(configFsmd,
+	                  fitParameters,
+	                  fitParametersError,
+	                  nrMassBins,
+	                  massBinCenters,
+	                  _debug)) {
 		printErr << "error while initializing final-state mass-dependence." << std::endl;
 		return false;
 	}
@@ -1890,6 +1901,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
                                             const std::string& valBranchName)
 {
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		size_t tempNrMassBins;
+		boost::multi_array<double, 1> tempMassBinCenters;
 		boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
 		boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 		boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
@@ -1901,8 +1914,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
 		if(not readInFile(idxBin,
-		                  nrMassBins,
-		                  massBinCenters,
+		                  tempNrMassBins,
+		                  tempMassBinCenters,
 		                  tempPhaseSpaceIntegrals,
 		                  tempProductionAmplitudes,
 		                  tempProductionAmplitudesCovariance,
@@ -1918,6 +1931,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 			return false;
 		}
 
+		adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
+		adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
 		adjustSizeAndSet(phaseSpaceIntegrals, idxBin, tempPhaseSpaceIntegrals);
 		adjustSizeAndSet(productionAmplitudes, idxBin, tempProductionAmplitudes);
 		adjustSizeAndSet(productionAmplitudesCovariance, idxBin, tempProductionAmplitudesCovariance);
@@ -1979,8 +1994,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(std::vector<size_t>& nrMassBins,
 
 bool
 rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
-                                           std::vector<size_t>& nrMassBins,
-                                           boost::multi_array<double, 2>& massBinCenters,
+                                           size_t& nrMassBins,
+                                           boost::multi_array<double, 1>& massBinCenters,
                                            boost::multi_array<double, 2>& phaseSpaceIntegrals,
                                            boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                            boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
@@ -2031,49 +2046,24 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		return false;
 	}
 
-	size_t tempNrMassBins;
-	boost::multi_array<double, 1> tempMassBinCenters;
 	if(not readFitResultMassBins(inTree,
 	                             inFit,
-	                             tempNrMassBins,
-	                             tempMassBinCenters)) {
+	                             nrMassBins,
+	                             massBinCenters)) {
 		printErr << "could not extract mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
 		delete inFile;
 		return false;
 	}
 
-	adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
-	adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
-
-	bool readMapping(false);
 	std::vector<Long64_t> inMapping;
-	if(_sameMassBinning and idxBin > 0) {
-		if(checkFitResultMassBins(inTree,
-		                          inFit,
-		                          nrMassBins[idxBin-1],
-		                          massBinCenters[idxBin-1],
-		                          inMapping)) {
-			if(_debug) {
-				printDebug << "bin " << idxBin << " has the same mass binning as bin " << idxBin-1 << "." << std::endl;
-			}
-
-			readMapping = true;
-		} else {
-			printInfo << "bin " << idxBin << " does not have the same mass binning as bin " << idxBin-1 << ", use individual mass binning for each bin." << std::endl;
-
-			_sameMassBinning = false;
-		}
-	}
-	if(not readMapping) {
-		if(not checkFitResultMassBins(inTree,
-		                              inFit,
-		                              nrMassBins[idxBin],
-		                              massBinCenters[idxBin],
-		                              inMapping)) {
-			printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
-			delete inFile;
-			return false;
-		}
+	if(not checkFitResultMassBins(inTree,
+	                              inFit,
+	                              nrMassBins,
+	                              massBinCenters,
+	                              inMapping)) {
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName[idxBin] << "'." << std::endl;
+		delete inFile;
+		return false;
 	}
 
 	std::vector<std::string> waveNames;
@@ -2764,6 +2754,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 		printDebug << "start creating plots." << std::endl;
 	}
 
+	const bool sameMassBinning = fitData->hasSameMassBinning();
 	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
 		TDirectory* outDirectory = NULL;
 		if(_nrBins == 1) {
@@ -2790,7 +2781,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 			}
 		}
 
-		if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() != 1 or not _sameMassBinning)) {
+		if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() != 1 or not sameMassBinning)) {
 			if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outDirectory, rangePlotting, extraBinning, idxBin)) {
 				printErr << "error while creating plots for final-state mass-dependence in bin " << idxBin << "." << std::endl;
 				return false;
@@ -2798,7 +2789,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 		}
 	}
 
-	if(_nrBins != 1 and _sameMassBinning and fitModel->isMappingEqualInAllBins()) {
+	if(_nrBins != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			if(not createPlotsWaveSum(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, idxWave)) {
 				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
@@ -2807,7 +2798,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::dataConstP
 		}
 	}
 
-	if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() == 1 and _sameMassBinning)) {
+	if(fitModel->getFsmd() and (fitModel->getFsmd()->getNrBins() == 1 and sameMassBinning)) {
 		if(not createPlotsFsmd(fitData, fitModel, fitParameters, cache, outFile, rangePlotting, extraBinning, 0)) {
 			printErr << "error while creating plots for final-state mass-dependence." << std::endl;
 			return false;
@@ -2983,7 +2974,7 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::dat
 	}
 
 	// all mass binnings must be the same to be able to create the sum plots
-	if(not _sameMassBinning or not fitModel->isMappingEqualInAllBins()) {
+	if(not fitData->hasSameMassBinning() or not fitModel->isMappingEqualInAllBins()) {
 		printErr << "cannot create plots for wave '" << _waveNames[idxWave] << "' for sum over all bins if the bins used different mass binnings." << std::endl;
 		return false;
 	}

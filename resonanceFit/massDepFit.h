@@ -144,7 +144,9 @@ namespace rpwa {
 			bool readConfigModelFsmd(const YAML::Node& configFsmd,
 			                         const rpwa::resonanceFit::modelPtr& fitModel,
 			                         rpwa::resonanceFit::parameters& fitParameters,
-			                         rpwa::resonanceFit::parameters& fitParametersError) const;
+			                         rpwa::resonanceFit::parameters& fitParametersError,
+			                         const std::vector<size_t>& nrMassBins,
+			                         const boost::multi_array<double, 2>& massBinCenters) const;
 
 			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
 			                           const std::map<std::string, double>& fitQuality) const;
@@ -188,8 +190,8 @@ namespace rpwa {
 			                 const std::string& valTreeName   = "pwa",
 			                 const std::string& valBranchName = "fitResult_v2");
 			bool readInFile(const size_t idxBin,
-			                std::vector<size_t>& nrMassBins,
-			                boost::multi_array<double, 2>& massBinCenters,
+			                size_t& nrMassBins,
+			                boost::multi_array<double, 1>& massBinCenters,
 			                boost::multi_array<double, 2>& phaseSpaceIntegrals,
 			                boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
 			                boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
@@ -295,8 +297,6 @@ namespace rpwa {
 
 			std::vector<double> _rescaleErrors;
 			std::vector<double> _tPrimeMeans;
-
-			bool _sameMassBinning;
 
 			std::vector<std::string> _waveNames;
 			std::vector<std::vector<std::string> > _waveNameAlternatives;

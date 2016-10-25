@@ -61,8 +61,8 @@ namespace rpwa {
 			bool init(const YAML::Node& configComponent,
 			          rpwa::resonanceFit::parameters& fitParameters,
 			          rpwa::resonanceFit::parameters& fitParametersError,
-			          const size_t nrBins,
-			          const bool sameMassBinning,
+			          const std::vector<size_t>& nrMassBins,
+			          const boost::multi_array<double, 2>& massBinCenters,
 			          const bool debug);
 
 			bool write(YAML::Emitter& yamlOutput,
@@ -114,8 +114,9 @@ namespace rpwa {
 			const size_t _id;
 
 			size_t _nrBins;
-			bool _equalInAllBins;
 			size_t _maxParameters;
+
+			std::vector<std::vector<size_t> > _binsEqualValues;
 
 			std::vector<std::shared_ptr<TFormula> > _functions;
 
