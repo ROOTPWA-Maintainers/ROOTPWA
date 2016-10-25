@@ -939,6 +939,180 @@ namespace {
 	}
 
 
+	std::vector<rpwa::resonanceFit::information::wave>
+	readInformationWaves(const YAML::Node& configInput)
+	{
+		if(debug) {
+			printDebug << "reading 'waves'." << std::endl;
+		}
+
+		const YAML::Node& configInputWaves = configInput["waves"];
+
+		if(not configInputWaves) {
+			printErr << "'waves' does not exist in 'input'." << std::endl;
+			throw;
+		}
+		if(not configInputWaves.IsSequence()) {
+			printErr << "'waves' is not a YAML sequence." << std::endl;
+			throw;
+		}
+
+		std::vector<rpwa::resonanceFit::information::wave> waves;
+
+		const size_t nrWaves = configInputWaves.size();
+		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
+			if(debug) {
+				printDebug << "reading of entry " << idxWave << " in 'waves'." << std::endl;
+			}
+
+			const YAML::Node& configInputWave = configInputWaves[idxWave];
+
+			std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+			boost::assign::insert(mandatoryArguments)
+			                     ("name", rpwa::YamlCppUtils::TypeString);
+			if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
+				printErr << "'waves' entry at index " << idxWave << " does not contain all required variables." << std::endl;
+				throw;
+			}
+
+			const std::string waveName = configInputWave["name"].as<std::string>();
+
+			// check that wave does not yet exist
+			for(size_t idxCheckWave = 0; idxCheckWave < waves.size(); ++idxCheckWave) {
+				if(waves[idxCheckWave].waveName() == waveName) {
+					printErr << "wave '" << waveName << "' defined twice." << std::endl;
+					throw;
+				}
+				if(std::find(waves[idxCheckWave].waveNameAlternatives().begin(), waves[idxCheckWave].waveNameAlternatives().end(), waveName) != waves[idxCheckWave].waveNameAlternatives().end()) {
+					printErr << "wave '" << waveName << "' already defined as alternative name of wave '" << waves[idxCheckWave].waveName() << "'." << std::endl;
+					throw;
+				}
+			}
+
+			double massLower = -1.;
+			if(configInputWave["massLower"]) {
+				if(checkVariableType(configInputWave["massLower"], rpwa::YamlCppUtils::TypeFloat)) {
+					massLower = configInputWave["massLower"].as<double>();
+				} else {
+					printErr << "variable 'massLower' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
+					throw;
+				}
+			}
+			double massUpper = -1.;
+			if(configInputWave["massUpper"]) {
+				if(checkVariableType(configInputWave["massUpper"], rpwa::YamlCppUtils::TypeFloat)) {
+					massUpper = configInputWave["massUpper"].as<double>();
+				} else {
+					printErr << "variable 'massUpper' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
+					throw;
+				}
+			}
+
+			if(debug) {
+				printDebug << "read wave name: '" << waveName << "'." << std::endl;
+				printDebug << "read mass range: '" << massLower << "' to '" << massUpper << "'." << std::endl;
+			}
+
+			std::vector<std::string> waveNameAlternatives;
+			if(configInputWave["alternativeNames"]) {
+				if(checkVariableType(configInputWave["alternativeNames"], rpwa::YamlCppUtils::TypeSequence)) {
+					for(size_t idxAlt = 0; idxAlt < configInputWave["alternativeNames"].size(); ++idxAlt) {
+						if(not checkVariableType(configInputWave["alternativeNames"][idxAlt], rpwa::YamlCppUtils::TypeString)) {
+							printErr << "element " << idxAlt << " of variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a string." << std::endl;
+							throw;
+						}
+						const std::string waveNameAlternative = configInputWave["alternativeNames"][idxAlt].as<std::string>();
+
+						// check that the alternative name does not yet exist
+						if(waveNameAlternative == waveName) {
+							printErr << "alternative name '" << waveNameAlternative << "' is equal to name of wave '" << waveName << "'." << std::endl;
+							throw;
+						}
+						if(std::find(waveNameAlternatives.begin(), waveNameAlternatives.end(), waveNameAlternative) != waveNameAlternatives.end()) {
+							printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' defined twice." << std::endl;
+							throw;
+						}
+						for(size_t idxCheckWave = 0; idxCheckWave < waves.size(); ++idxCheckWave) {
+							if(waves[idxCheckWave].waveName() == waveNameAlternative) {
+								printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' already defined as separate wave." << std::endl;
+								throw;
+							}
+							if(std::find(waves[idxCheckWave].waveNameAlternatives().begin(), waves[idxCheckWave].waveNameAlternatives().end(), waveNameAlternative) != waves[idxCheckWave].waveNameAlternatives().end()) {
+								printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' already defined as alternative name of wave '" << waves[idxCheckWave].waveName() << "'." << std::endl;
+								throw;
+							}
+						}
+
+						waveNameAlternatives.push_back(waveNameAlternative);
+					}
+				} else {
+					printErr << "variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a sequence." << std::endl;
+					throw;
+				}
+			}
+
+			waves.push_back(rpwa::resonanceFit::information::wave(waveName,
+			                                                      std::make_pair(massLower, massUpper),
+			                                                      waveNameAlternatives));
+
+			if(debug) {
+				printDebug << waves.back() << std::endl;
+			}
+		}
+
+		std::ostringstream output;
+		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
+			output << "    " << waves[idxWave].waveName() << std::endl;
+		}
+		printInfo << nrWaves << " waves to be used in fit:" << std::endl
+		          << output.str();
+
+		return waves;
+	}
+
+
+	void
+	writeInformationWaves(YAML::Emitter& yamlOutput,
+	                      const std::vector<rpwa::resonanceFit::information::wave>& waves)
+	{
+		if(debug) {
+			printDebug << "writing 'waves'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "waves";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginSeq;
+		for(std::vector<rpwa::resonanceFit::information::wave>::const_iterator wave = waves.begin(); wave != waves.end(); ++wave) {
+			yamlOutput << YAML::BeginMap;
+
+			yamlOutput << YAML::Key << "name";
+			yamlOutput << YAML::Value << wave->waveName();
+
+			if(wave->massLimits().first >= 0) {
+				yamlOutput << YAML::Key << "massLower";
+				yamlOutput << YAML::Value << wave->massLimits().first;
+			}
+			if(wave->massLimits().second >= 0) {
+				yamlOutput << YAML::Key << "massUpper";
+				yamlOutput << YAML::Value << wave->massLimits().second;
+			}
+
+			if(wave->waveNameAlternatives().size() > 0) {
+				yamlOutput << YAML::Key << "alternativeNames";
+				yamlOutput << YAML::Value;
+
+				yamlOutput << YAML::Flow;
+				yamlOutput << wave->waveNameAlternatives();
+				yamlOutput << YAML::Block;
+			}
+
+			yamlOutput << YAML::EndMap;
+		}
+		yamlOutput << YAML::EndSeq;
+	}
+
+
 	rpwa::resonanceFit::informationConstPtr
 	readInformation(const YAML::Node& configRoot)
 	{
@@ -954,8 +1128,29 @@ namespace {
 		}
 
 		const std::vector<rpwa::resonanceFit::information::bin> bins = readInformationFitResults(configInput);
+		const std::vector<rpwa::resonanceFit::information::wave> waves = readInformationWaves(configInput);
 
-		return std::make_shared<rpwa::resonanceFit::information>(bins);
+		return std::make_shared<rpwa::resonanceFit::information>(bins, waves);
+	}
+
+
+	void
+	writeInformation(YAML::Emitter& yamlOutput,
+	                 const rpwa::resonanceFit::informationConstPtr& fitInformation)
+	{
+		if(debug) {
+			printDebug << "writing 'input'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "input";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+
+		writeInformationFitResults(yamlOutput, fitInformation->bins());
+		writeInformationWaves(yamlOutput, fitInformation->waves());
+
+		yamlOutput << YAML::EndMap;
 	}
 
 
@@ -973,7 +1168,6 @@ bool rpwa::resonanceFit::massDepFit::_debug = false;
 
 
 rpwa::resonanceFit::massDepFit::massDepFit()
-	: _nrWaves(0)
 {
 }
 
@@ -1014,22 +1208,11 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	// get information for which parameters to release in which order
 	freeParameters = readFreeParameters(configRoot);
 
-	// get fit results to use in the resonance fit
+	// get fit results and waves to use in the resonance fit
 	fitInformation = readInformation(configRoot);
 	if(not fitInformation) {
 		printErr << "error while reading 'input' in configuration file." << std::endl;
 		throw;
-	}
-
-	// input section
-	const YAML::Node& configInput = configRoot["input"];
-	if(not configInput) {
-		printErr << "'input' does not exist in configuration file." << std::endl;
-		return false;
-	}
-	if(not readConfigInput(configInput)) {
-		printErr << "error while reading 'input' in configuration file." << std::endl;
-		return false;
 	}
 
 	// extract information from fit results
@@ -1072,7 +1255,10 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 	// prepare mass limits
 	boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
-	if(not prepareMassLimits(nrMassBins, massBinCenters, wavePairMassBinLimits)) {
+	if(not prepareMassLimits(fitInformation,
+	                         nrMassBins,
+	                         massBinCenters,
+	                         wavePairMassBinLimits)) {
 		printErr << "error while determining which bins to use in the fit." << std::endl;
 		return false;
 	}
@@ -1098,8 +1284,10 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 	// prepare production amplitudes and corresponding covariance matrices
 	// for the fit
-	const size_t idxAnchorWave = std::find(_waveNames.begin(), _waveNames.end(), _anchorWaveName) - _waveNames.begin();
-	if(idxAnchorWave >= _waveNames.size()) {
+	std::vector<std::string> waveNames(fitInformation->nrWaves());
+	std::transform(fitInformation->waves().begin(), fitInformation->waves().end(), waveNames.begin(), [](const rpwa::resonanceFit::information::wave& wave){ return wave.waveName(); });
+	const size_t idxAnchorWave = std::find(waveNames.begin(), waveNames.end(), _anchorWaveName) - waveNames.begin();
+	if(idxAnchorWave >= waveNames.size()) {
 		printErr << "anchor wave '" << _anchorWaveName << "' not found in fit." << std::endl;
 		return false;
 	}
@@ -1168,171 +1356,6 @@ rpwa::resonanceFit::massDepFit::readConfigFitquality(const YAML::Node& configFit
 
 		fitQuality[key] = value;
 	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInput(const YAML::Node& configInput)
-{
-	if(not configInput) {
-		printErr << "'configInput' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInput.IsMap()) {
-		printErr << "'input' is not a YAML map." << std::endl;
-		return false;
-	}
-
-	// get information about waves to be used in the fit
-	const YAML::Node& configInputWaves = configInput["waves"];
-	if(not configInputWaves) {
-		printErr << "'waves' does not exist in 'input'." << std::endl;
-		return false;
-	}
-	if(not readConfigInputWaves(configInputWaves)) {
-		printErr << "error while reading 'waves' in 'input'." << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigInputWaves(const YAML::Node& configInputWaves)
-{
-	if(not configInputWaves) {
-		printErr << "'configInputWaves' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configInputWaves.IsSequence()) {
-		printErr << "'waves' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	_nrWaves = configInputWaves.size();
-	if(_debug) {
-		printDebug << "going to read information of " << _nrWaves << " waves to be used in the fit." << std::endl;
-	}
-
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		const YAML::Node& configInputWave = configInputWaves[idxWave];
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", YamlCppUtils::TypeString);
-		if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
-			printErr << "'waves' entry at index " << idxWave << " does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const std::string name = configInputWave["name"].as<std::string>();
-
-		double massLower = -1.;
-		if(configInputWave["massLower"]) {
-			if(checkVariableType(configInputWave["massLower"], YamlCppUtils::TypeFloat)) {
-				massLower = configInputWave["massLower"].as<double>();
-			} else {
-				printErr << "variable 'massLower' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
-				return false;
-			}
-		}
-		double massUpper = -1.;
-		if(configInputWave["massUpper"]) {
-			if(checkVariableType(configInputWave["massUpper"], YamlCppUtils::TypeFloat)) {
-				massUpper = configInputWave["massUpper"].as<double>();
-			} else {
-				printErr << "variable 'massUpper' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
-				return false;
-			}
-		}
-
-		std::vector<std::string> alternativeNames;
-		if(configInputWave["alternativeNames"]) {
-			if(checkVariableType(configInputWave["alternativeNames"], YamlCppUtils::TypeSequence)) {
-				for(size_t idxAlt = 0; idxAlt < configInputWave["alternativeNames"].size(); ++idxAlt) {
-					if(not checkVariableType(configInputWave["alternativeNames"][idxAlt], YamlCppUtils::TypeString)) {
-						printErr << "element " << idxAlt << " of variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a string." << std::endl;
-						return false;
-					}
-					const std::string alternativeName = configInputWave["alternativeNames"][idxAlt].as<std::string>();
-
-					// check that the alternative name does not yet exist
-					if(alternativeName == name) {
-						printErr << "alternative name '" << alternativeName << "' is equal to name of wave '" << name << "'." << std::endl;
-						return false;
-					}
-					if(find(alternativeNames.begin(), alternativeNames.end(), alternativeName) != alternativeNames.end()) {
-						printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' defined twice." << std::endl;
-						return false;
-					}
-					if(find(_waveNames.begin(), _waveNames.end(), alternativeName) != _waveNames.end()) {
-						printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' already defined as separate wave." << std::endl;
-						return false;
-					}
-					for(size_t i = 0; i < _waveNameAlternatives.size(); ++i) {
-						if(find(_waveNameAlternatives[i].begin(), _waveNameAlternatives[i].end(), alternativeName) != _waveNameAlternatives[i].end()) {
-							printErr << "alternative name '" << alternativeName << "' of wave '" << name << "' already defined as alternative name of wave '" << _waveNames[i] << "'." << std::endl;
-							return false;
-						}
-					}
-
-					alternativeNames.push_back(alternativeName);
-				}
-			} else {
-				printErr << "variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a sequence." << std::endl;
-				return false;
-			}
-		}
-
-		// check that wave does not yet exist
-		if(find(_waveNames.begin(), _waveNames.end(), name) != _waveNames.end()) {
-			printErr << "wave '" << name << "' defined twice." << std::endl;
-			return false;
-		}
-		for(size_t i = 0; i < _waveNameAlternatives.size(); ++i) {
-			if(find(_waveNameAlternatives[i].begin(), _waveNameAlternatives[i].end(), name) != _waveNameAlternatives[i].end()) {
-				printErr << "wave '" << name << "' already defined as alternative name of wave '" << _waveNames[i] << "'." << std::endl;
-				return false;
-			}
-		}
-
-		_waveNames.push_back(name);
-		_waveNameAlternatives.push_back(alternativeNames);
-		_waveIndices[name] = _waveNames.size() - 1;
-		for(size_t idxAlt = 0; idxAlt < alternativeNames.size(); ++idxAlt) {
-			_waveIndices[alternativeNames[idxAlt]] = _waveNames.size() - 1;
-		}
-		_waveMassLimits.push_back(std::make_pair(massLower, massUpper));
-
-		if(_debug) {
-			std::ostringstream alternatives;
-			if(alternativeNames.size() > 0) {
-				alternatives << ", alternative names: ";
-				for(size_t idxAlt = 0; idxAlt < alternativeNames.size(); ++idxAlt) {
-					if(idxAlt != 0) {
-						alternatives << ", ";
-					}
-					alternatives << "'" << alternativeNames[idxAlt] << "'";
-				}
-			}
-
-			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " GeV/c^2, index: " << _waveIndices[name] << alternatives.str() << ")" << std::endl;
-		}
-	}
-
-	if(_debug) {
-		printDebug << "read " << _nrWaves << " in total." << std::endl;
-	}
-
-	std::ostringstream output;
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		output << "    " << _waveNames[idxWave] << std::endl;
-	}
-	printInfo << _nrWaves << " waves to be used in fit:" << std::endl
-	          << output.str();
 
 	return true;
 }
@@ -1466,6 +1489,16 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 		printDebug << "reading " << nrComponents << " components from configuration file." << std::endl;
 	}
 
+	std::map<std::string, size_t> waveIndices;
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+		waveIndices[wave.waveName()] = idxWave;
+		for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
+			waveIndices[wave.waveNameAlternatives()[idxAlt]] = idxWave;
+		}
+	}
+
 	std::vector<double> tPrimeMeans;
 	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 		tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
@@ -1538,7 +1571,7 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 		                       fitParametersError,
 		                       nrMassBins,
 		                       massBinCenters,
-		                       _waveIndices,
+		                       waveIndices,
 		                       _waveBins,
 		                       phaseSpaceIntegrals,
 		                       useBranchings,
@@ -1606,9 +1639,7 @@ rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::informationConstP
                                      const rpwa::resonanceFit::modelPtr& fitModel,
                                      const rpwa::resonanceFit::functionPtr& fitFunction)
 {
-	if(not fitModel->init(fitInformation->nrBins(),
-	                      _waveNames,
-	                      _waveNameAlternatives,
+	if(not fitModel->init(fitInformation,
 	                      _anchorWaveName,
 	                      _anchorComponentName)) {
 		printErr << "error while initializing the fit model." << std::endl;
@@ -1649,13 +1680,7 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 	}
 
 	writeFreeParameters(yamlOutput, freeParameters);
-
-	yamlOutput << YAML::Key << "input";
-	yamlOutput << YAML::Value;
-	if(not writeConfigInput(yamlOutput, fitInformation)) {
-		printErr << "error while writing 'input' to result file." << std::endl;
-		return false;
-	}
+	writeInformation(yamlOutput, fitInformation);
 
 	yamlOutput << YAML::Key << "model";
 	yamlOutput << YAML::Value;
@@ -1689,79 +1714,6 @@ rpwa::resonanceFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
 	}
 
 	yamlOutput << YAML::EndMap;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInput(YAML::Emitter& yamlOutput,
-                                                 const rpwa::resonanceFit::informationConstPtr& fitInformation) const
-{
-	if(_debug) {
-		printDebug << "writing 'input'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	writeInformationFitResults(yamlOutput, fitInformation->bins());
-
-	yamlOutput << YAML::Key << "waves";
-	yamlOutput << YAML::Value;
-	if(not writeConfigInputWaves(yamlOutput)) {
-		printErr << "error while writing 'waves' to result file." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigInputWaves(YAML::Emitter& yamlOutput) const
-{
-	if(_debug) {
-		printDebug << "writing 'waves'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginSeq;
-
-	for (size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		yamlOutput << YAML::BeginMap;
-
-		yamlOutput << YAML::Key << "name";
-		yamlOutput << YAML::Value << _waveNames[idxWave];
-
-		if (_waveMassLimits[idxWave].first >= 0) {
-			yamlOutput << YAML::Key << "massLower";
-			yamlOutput << YAML::Value << _waveMassLimits[idxWave].first;
-		}
-		if (_waveMassLimits[idxWave].second >= 0) {
-			yamlOutput << YAML::Key << "massUpper";
-			yamlOutput << YAML::Value << _waveMassLimits[idxWave].second;
-		}
-
-		if(_waveNameAlternatives[idxWave].size() > 0) {
-			yamlOutput << YAML::Key << "alternativeNames";
-			yamlOutput << YAML::Value;
-
-			yamlOutput << YAML::Flow;
-			yamlOutput << YAML::BeginSeq;
-
-			for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
-				yamlOutput << _waveNameAlternatives[idxWave][idxAlt];
-			}
-
-			yamlOutput << YAML::EndSeq;
-			yamlOutput << YAML::Block;
-		}
-
-		yamlOutput << YAML::EndMap;
-	}
-
-	yamlOutput << YAML::EndSeq;
 
 	return true;
 }
@@ -1914,7 +1866,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
-		if(not readInFile(idxBin,
+		if(not readInFile(fitInformation,
+		                  idxBin,
 		                  bin,
 		                  tempNrMassBins,
 		                  tempMassBinCenters,
@@ -1953,11 +1906,11 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases(std::vector<size_t>(tempPlottingPhases.shape(), tempPlottingPhases.shape()+tempPlottingPhases.num_dimensions()));
 
 		for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
-			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
 				tempSysPlottingIntensities[idxMass][idxWave] = std::make_pair(tempPlottingIntensities[idxMass][idxWave].first,
 				                                                              tempPlottingIntensities[idxMass][idxWave].first);
 
-				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
 					tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
 					                                                                                         tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
 					tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
@@ -1969,7 +1922,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 		}
 
 		if(bin.sysFileNames().size() > 0) {
-			if(not readSystematicsFiles(idxBin,
+			if(not readSystematicsFiles(fitInformation,
+			                            idxBin,
 			                            bin,
 			                            nrMassBins[idxBin],
 			                            massBinCenters[idxBin],
@@ -1996,7 +1950,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 
 
 bool
-rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
+rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                           const size_t idxBin,
                                            const rpwa::resonanceFit::information::bin& bin,
                                            size_t& nrMassBins,
                                            boost::multi_array<double, 1>& massBinCenters,
@@ -2071,7 +2026,8 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 	}
 
 	std::vector<std::string> waveNames;
-	if(not readFitResultMatrices(inTree,
+	if(not readFitResultMatrices(fitInformation,
+	                             inTree,
 	                             inFit,
 	                             inMapping,
 	                             bin.rescaleErrors(),
@@ -2092,7 +2048,12 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 		_waveBins[*it].push_back(idxBin);
 	}
 
-	if(not readFitResultIntegrals(inTree, inFit, inMapping, waveNames, phaseSpaceIntegrals)) {
+	if(not readFitResultIntegrals(fitInformation,
+	                              inTree,
+	                              inFit,
+	                              inMapping,
+	                              waveNames,
+	                              phaseSpaceIntegrals)) {
 		printErr << "error while reading phase-space integrals from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
@@ -2104,7 +2065,8 @@ rpwa::resonanceFit::massDepFit::readInFile(const size_t idxBin,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
+rpwa::resonanceFit::massDepFit::readSystematicsFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                     const size_t idxBin,
                                                      const rpwa::resonanceFit::information::bin& bin,
                                                      const size_t nrMassBins,
                                                      const boost::multi_array<double, 1>& massBinCenters,
@@ -2125,7 +2087,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 	}
 
 	for(size_t idxSystematics = 0; idxSystematics < bin.sysFileNames().size(); ++idxSystematics) {
-		if(not readSystematicsFile(idxBin,
+		if(not readSystematicsFile(fitInformation,
+		                           idxBin,
 		                           bin,
 		                           idxSystematics,
 		                           nrMassBins,
@@ -2147,7 +2110,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const size_t idxBin,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
+rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                    const size_t idxBin,
                                                     const rpwa::resonanceFit::information::bin& bin,
                                                     const size_t idxSystematics,
                                                     const size_t nrMassBins,
@@ -2218,7 +2182,8 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
-	if(not readFitResultMatrices(sysTree,
+	if(not readFitResultMatrices(fitInformation,
+	                             sysTree,
 	                             sysFit,
 	                             sysMapping,
 	                             bin.rescaleErrors(),
@@ -2237,13 +2202,13 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const size_t idxBin,
 	}
 
 	for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
 			sysPlottingIntensities[idxMass][idxWave].first = std::min(sysPlottingIntensities[idxMass][idxWave].first,
 			                                                          tempSysPlottingIntensities[idxMass][idxWave].first);
 			sysPlottingIntensities[idxMass][idxWave].second = std::max(sysPlottingIntensities[idxMass][idxWave].second,
 			                                                           tempSysPlottingIntensities[idxMass][idxWave].first);
 
-			for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
 				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
 				                                                                                     tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
 				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second,
@@ -2425,7 +2390,8 @@ rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
+rpwa::resonanceFit::massDepFit::readFitResultMatrices(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                      TTree* tree,
                                                       rpwa::fitResult* fit,
                                                       const std::vector<Long64_t>& mapping,
                                                       const double rescaleErrors,
@@ -2445,45 +2411,45 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 	}
 
 	if(_debug) {
-		printDebug << "reading spin-density matrices for " << _nrWaves << " waves from fit result." << std::endl;
+		printDebug << "reading spin-density matrices for " << fitInformation->nrWaves() << " waves from fit result." << std::endl;
 	}
 
 	// read wave names from first fit result in tree
-	waveNames.resize(_nrWaves);
+	waveNames.resize(fitInformation->nrWaves());
 	if(tree->GetEntry(0) == 0) {
 		printErr << "error while reading entry " << 0 << " from tree." << std::endl;
 		return false;
 	}
-	for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
-		int idx = fit->waveIndex(_waveNames[idxWave]);
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		int idx = fit->waveIndex(fitInformation->getWave(idxWave).waveName());
 		// try alternative wave names
-		for(size_t idxAlt = 0; idxAlt < _waveNameAlternatives[idxWave].size(); ++idxAlt) {
-			const int altIdx = fit->waveIndex(_waveNameAlternatives[idxWave][idxAlt]);
+		for(size_t idxAlt = 0; idxAlt < fitInformation->getWave(idxWave).waveNameAlternatives().size(); ++idxAlt) {
+			const int altIdx = fit->waveIndex(fitInformation->getWave(idxWave).waveNameAlternatives()[idxAlt]);
 			if(altIdx != -1) {
 				if(idx != -1) {
-					printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << _waveNames[idxWave] << "'." << std::endl;
+					printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << fitInformation->getWave(idxWave).waveName() << "'." << std::endl;
 					return false;
 				}
 				idx = altIdx;
 			}
 		}
 		if(idx == -1) {
-			printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
+			printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
 			return false;
 		}
 		waveNames[idxWave] = fit->waveName(idx);
 	}
 
-	productionAmplitudes.resize(boost::extents[mapping.size()][_nrWaves]);
+	productionAmplitudes.resize(boost::extents[mapping.size()][waveNames.size()]);
 	productionAmplitudesCovariance.resize(boost::extents[mapping.size()]);
 
-	spinDensityMatrices.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
+	spinDensityMatrices.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
 	spinDensityCovarianceMatrices.resize(boost::extents[mapping.size()]);
 
-	plottingIntensities.resize(boost::extents[mapping.size()][_nrWaves]);
-	plottingSpinDensityMatrixElementsReal.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
-	plottingSpinDensityMatrixElementsImag.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
-	plottingPhases.resize(boost::extents[mapping.size()][_nrWaves][_nrWaves]);
+	plottingIntensities.resize(boost::extents[mapping.size()][waveNames.size()]);
+	plottingSpinDensityMatrixElementsReal.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+	plottingSpinDensityMatrixElementsImag.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+	plottingPhases.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
 
 	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 		if(_debug) {
@@ -2495,21 +2461,21 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 			return false;
 		}
 
-		spinDensityCovarianceMatrices[idxMass].ResizeTo(_nrWaves * (_nrWaves+1), _nrWaves * (_nrWaves+1));
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		spinDensityCovarianceMatrices[idxMass].ResizeTo(waveNames.size() * (waveNames.size() + 1), waveNames.size() * (waveNames.size() + 1));
+		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 			const int idx = fit->waveIndex(waveNames[idxWave]);
 			if(idx == -1) {
-				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << std::endl;
+				printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
 				return false;
 			}
 
 			plottingIntensities[idxMass][idxWave] = std::make_pair(fit->intensity(idx),
 			                                                       fit->intensityErr(idx) * sqrt(rescaleErrors));
 
-			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+			for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
 				const int jdx = fit->waveIndex(waveNames[jdxWave]);
 				if(jdx == -1) {
-					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << std::endl;
+					printErr << "wave '" << fitInformation->getWave(jdxWave).waveName() << "' not in fit result." << std::endl;
 					return false;
 				}
 
@@ -2525,7 +2491,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 				if(jdxWave >= idxWave) {
 					const TMatrixT<double> spinDensityMatrixElemCov = fit->spinDensityMatrixElemCov(idx, jdx) * rescaleErrors;
 
-					const size_t idxCov = _nrWaves*(_nrWaves+1) - (_nrWaves-idxWave)*(_nrWaves-idxWave+1) + 2*(jdxWave-idxWave);
+					const size_t idxCov = waveNames.size() * (waveNames.size() + 1) - (waveNames.size() - idxWave)*(waveNames.size() - idxWave + 1) + 2 * (jdxWave - idxWave);
 					spinDensityCovarianceMatrices[idxMass].SetSub(idxCov, idxCov, spinDensityMatrixElemCov);
 				}
 			}
@@ -2533,16 +2499,16 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 		// for the production amplitudes loop over the production
 		// amplitudes of the fit result
-		std::vector<unsigned int> prodAmpIndicesForCov(_nrWaves);
+		std::vector<unsigned int> prodAmpIndicesForCov(waveNames.size());
 		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
 			const std::string waveName = fit->waveNameForProdAmp(idxProdAmp);
 
-			const std::map<std::string, size_t>::const_iterator it = _waveIndices.find(waveName);
+			const std::vector<std::string>::const_iterator it = std::find(waveNames.begin(), waveNames.end(), waveName);
 			// most of the waves are ignored
-			if(it == _waveIndices.end()) {
+			if(it == waveNames.end()) {
 				continue;
 			}
-			size_t idxWave = it->second;
+			size_t idxWave = it - waveNames.begin();
 
 			int rank = fit->rankOfProdAmp(idxProdAmp);
 			// TODO: multiple ranks, in that case also check that rank is not -1
@@ -2567,12 +2533,12 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 			std::ostringstream outputCovariance;
 
 			outputProdAmp << " (";
-			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 				outputProdAmp << " " << productionAmplitudes[idxMass][idxWave];
 
 				outputProdAmpCovariance << " (";
 				output << " (";
-				for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+				for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
 					output << " " << spinDensityMatrices[idxMass][idxWave][jdxWave];
 
 					outputProdAmpCovariance << " (";
@@ -2586,7 +2552,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 					outputProdAmpCovariance << " )";
 
 					if(jdxWave >= idxWave) {
-						const size_t idxCov = _nrWaves*(_nrWaves+1) - (_nrWaves-idxWave)*(_nrWaves-idxWave+1) + 2*(jdxWave-idxWave);
+						const size_t idxCov = waveNames.size()*(waveNames.size()+1) - (waveNames.size()-idxWave)*(waveNames.size()-idxWave+1) + 2*(jdxWave-idxWave);
 						outputCovariance << " (";
 						for(size_t idx = 0; idx < 2; ++idx) {
 							outputCovariance << " (";
@@ -2615,7 +2581,8 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(TTree* tree,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
+rpwa::resonanceFit::massDepFit::readFitResultIntegrals(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                       TTree* tree,
                                                        rpwa::fitResult* fit,
                                                        const std::vector<Long64_t>& mapping,
                                                        const std::vector<std::string>& waveNames,
@@ -2626,10 +2593,10 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
 		return false;
 	}
 
-	phaseSpaceIntegrals.resize(boost::extents[mapping.size()][_nrWaves]);
+	phaseSpaceIntegrals.resize(boost::extents[mapping.size()][waveNames.size()]);
 
 	if(_debug) {
-		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from fit result." << std::endl;
+		printDebug << "reading phase-space integrals for " << waveNames.size() << " waves from fit result." << std::endl;
 	}
 
 	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
@@ -2641,19 +2608,19 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
 			return false;
 		}
 
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(waveNames[idxWave]);
 			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
 
 	if(_debug) {
-		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 			std::ostringstream output;
 			for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 			}
-			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << std::endl;
+			printDebug << "phase-space integrals for wave '" << fitInformation->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
 		}
 	}
 
@@ -2662,14 +2629,18 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 
 bool
-rpwa::resonanceFit::massDepFit::prepareMassLimits(const std::vector<size_t>& nrMassBins,
+rpwa::resonanceFit::massDepFit::prepareMassLimits(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                  const std::vector<size_t>& nrMassBins,
                                                   const boost::multi_array<double, 2>& massBinCenters,
                                                   boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
 {
 	for(size_t idxBin = 0; idxBin < nrMassBins.size(); ++idxBin) {
 		boost::multi_array<std::pair<size_t, size_t>, 2> tempWavePairMassBinLimits;
 
-		if(not prepareMassLimit(nrMassBins[idxBin], massBinCenters[idxBin], tempWavePairMassBinLimits)) {
+		if(not prepareMassLimit(fitInformation,
+		                        nrMassBins[idxBin],
+		                        massBinCenters[idxBin],
+		                        tempWavePairMassBinLimits)) {
 			printErr << "error while determine bins to use in fit for bin " << idxBin << "." << std::endl;
 			return false;
 		}
@@ -2682,7 +2653,8 @@ rpwa::resonanceFit::massDepFit::prepareMassLimits(const std::vector<size_t>& nrM
 
 
 bool
-rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
+rpwa::resonanceFit::massDepFit::prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                                 const size_t nrMassBins,
                                                  const boost::multi_array<double, 1>& massBinCenters,
                                                  boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
 {
@@ -2691,25 +2663,27 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
 		           << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
 	}
 
-	std::vector<std::pair<size_t, size_t> > waveMassBinLimits(_nrWaves);
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+	std::vector<std::pair<size_t, size_t> > waveMassBinLimits(fitInformation->nrWaves());
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
 		size_t binFirst = 0;
 		size_t binLast = nrMassBins-1;
 		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-			if(massBinCenters[idxMass] < _waveMassLimits[idxWave].first) {
+			if(massBinCenters[idxMass] < wave.massLimits().first) {
 				binFirst = idxMass+1;
 			}
-			if(massBinCenters[idxMass] == _waveMassLimits[idxWave].first) {
+			if(massBinCenters[idxMass] == wave.massLimits().first) {
 				binFirst = idxMass;
 			}
-			if(massBinCenters[idxMass] <= _waveMassLimits[idxWave].second) {
+			if(massBinCenters[idxMass] <= wave.massLimits().second) {
 				binLast = idxMass;
 			}
 		}
-		if(_waveMassLimits[idxWave].first < 0) {
+		if(wave.massLimits().first < 0) {
 			binFirst = 0;
 		}
-		if(_waveMassLimits[idxWave].second < 0) {
+		if(wave.massLimits().second < 0) {
 			binLast = nrMassBins-1;
 		}
 
@@ -2717,16 +2691,16 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
 		const double massFirst = massBinCenters[binFirst] - massStep/2.;
 		const double massLast = massBinCenters[binLast] + massStep/2.;
 		if(_debug) {
-			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
+			printDebug << idxWave << ": " << wave.waveName() << ": "
 			           << "mass range: " << massFirst << "-" << massLast << " GeV/c^2, "
 			           << "bin range: " << binFirst << "-" << binLast << std::endl;
 		}
 		waveMassBinLimits[idxWave] = std::make_pair(binFirst, binLast);
 	}
 
-	wavePairMassBinLimits.resize(boost::extents[_nrWaves][_nrWaves]);
-	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-		for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+	wavePairMassBinLimits.resize(boost::extents[fitInformation->nrWaves()][fitInformation->nrWaves()]);
+	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
 			wavePairMassBinLimits[idxWave][jdxWave] = std::make_pair(std::max(waveMassBinLimits[idxWave].first,  waveMassBinLimits[jdxWave].first),
 			                                                         std::min(waveMassBinLimits[idxWave].second, waveMassBinLimits[jdxWave].second));
 		}
@@ -2734,12 +2708,14 @@ rpwa::resonanceFit::massDepFit::prepareMassLimit(const size_t nrMassBins,
 
 	if(_debug) {
 		printDebug << "waves and mass limits:" << std::endl;
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
 			std::ostringstream output;
-			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
+			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
 				output << wavePairMassBinLimits[idxWave][jdxWave].first << "-" << wavePairMassBinLimits[idxWave][jdxWave].second << " ";
 			}
-			printDebug << _waveNames[idxWave] << " " << waveMassBinLimits[idxWave].first << "-" << waveMassBinLimits[idxWave].second
+			printDebug << wave.waveName() << " " << waveMassBinLimits[idxWave].first << "-" << waveMassBinLimits[idxWave].second
 			           << ": " << output.str() << std::endl;
 		}
 	}
@@ -2773,7 +2749,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informatio
 			outDirectory = outFile->mkdir(name.str().c_str());
 		}
 
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
 			if(not createPlotsWave(fitInformation,
 			                       fitData,
 			                       fitModel,
@@ -2784,13 +2760,13 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informatio
 			                       extraBinning,
 			                       idxWave,
 			                       idxBin)) {
-				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
+				printErr << "error while creating intensity plots for wave '" << fitInformation->getWave(idxWave).waveName() << "' in bin " << idxBin << "." << std::endl;
 				return false;
 			}
 		}
 
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			for(size_t jdxWave = idxWave+1; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
 				if(not createPlotsWavePair(fitInformation,
 				                           fitData,
 				                           fitModel,
@@ -2802,7 +2778,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informatio
 				                           idxWave,
 				                           jdxWave,
 				                           idxBin)) {
-					printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
+					printErr << "error while creating intensity plots for wave pair '" << fitInformation->getWave(idxWave).waveName() << "' and '" << fitInformation->getWave(jdxWave).waveName() << "' in bin " << idxBin << "." << std::endl;
 					return false;
 				}
 			}
@@ -2824,7 +2800,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informatio
 	}
 
 	if(fitInformation->nrBins() != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
-		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
 			if(not createPlotsWaveSum(fitInformation,
 			                          fitData,
 			                          fitModel,
@@ -2834,7 +2810,7 @@ rpwa::resonanceFit::massDepFit::createPlots(const rpwa::resonanceFit::informatio
 			                          rangePlotting,
 			                          extraBinning,
 			                          idxWave)) {
-				printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
+				printErr << "error while creating intensity plots for wave '" << fitInformation->getWave(idxWave).waveName() << "' for sum over all bins." << std::endl;
 				return false;
 			}
 		}
@@ -2875,39 +2851,39 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::inform
                                                 const size_t idxBin) const
 {
 	if(_debug) {
-		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' in bin " << idxBin << "." << std::endl;
+		printDebug << "start creating plots for wave '" << fitInformation->getWave(idxWave).waveName() << "' in bin " << idxBin << "." << std::endl;
 	}
 
 	TMultiGraph graphs;
-	graphs.SetName(_waveNames[idxWave].c_str());
-	graphs.SetTitle(_waveNames[idxWave].c_str());
+	graphs.SetName(fitInformation->getWave(idxWave).waveName().c_str());
+	graphs.SetTitle(fitInformation->getWave(idxWave).waveName().c_str());
 
 	TGraphErrors* systematics = NULL;
 	if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
 		systematics = new TGraphErrors;
-		systematics->SetName((_waveNames[idxWave] + "__sys").c_str());
-		systematics->SetTitle((_waveNames[idxWave] + "__sys").c_str());
+		systematics->SetName((fitInformation->getWave(idxWave).waveName() + "__sys").c_str());
+		systematics->SetTitle((fitInformation->getWave(idxWave).waveName() + "__sys").c_str());
 		systematics->SetLineColor(kAzure-9);
 		systematics->SetFillColor(kAzure-9);
 		graphs.Add(systematics, "2");
 	}
 
 	TGraphErrors* data = new TGraphErrors;
-	data->SetName((_waveNames[idxWave] + "__data").c_str());
-	data->SetTitle((_waveNames[idxWave] + "__data").c_str());
+	data->SetName((fitInformation->getWave(idxWave).waveName() + "__data").c_str());
+	data->SetTitle((fitInformation->getWave(idxWave).waveName() + "__data").c_str());
 	graphs.Add(data, "P");
 
 	TGraph* fit = new TGraph;
-	fit->SetName((_waveNames[idxWave] + "__fit").c_str());
-	fit->SetTitle((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetName((fitInformation->getWave(idxWave).waveName() + "__fit").c_str());
+	fit->SetTitle((fitInformation->getWave(idxWave).waveName() + "__fit").c_str());
 	fit->SetLineColor(kRed);
 	fit->SetLineWidth(2);
 	fit->SetMarkerColor(kRed);
 	graphs.Add(fit, "L");
 
 	TGraph* phaseSpace = new TGraph;
-	phaseSpace->SetName((_waveNames[idxWave] + "__ps").c_str());
-	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
+	phaseSpace->SetName((fitInformation->getWave(idxWave).waveName() + "__ps").c_str());
+	phaseSpace->SetTitle((fitInformation->getWave(idxWave).waveName() + "__ps").c_str());
 	graphs.Add(phaseSpace, "L");
 
 	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel->getComponentChannel(idxBin, idxWave);
@@ -2915,8 +2891,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWave(const rpwa::resonanceFit::inform
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
-		component->SetName((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
-		component->SetTitle((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetName((fitInformation->getWave(idxWave).waveName() + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((fitInformation->getWave(idxWave).waveName() + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
 
 		Color_t color = kBlue;
 		if(fitModel->getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
@@ -3021,28 +2997,28 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::inf
                                                    const size_t idxWave) const
 {
 	if(_debug) {
-		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "' for sum over all bins." << std::endl;
+		printDebug << "start creating plots for wave '" << fitInformation->getWave(idxWave).waveName() << "' for sum over all bins." << std::endl;
 	}
 
 	// all mass binnings must be the same to be able to create the sum plots
 	if(not fitData->hasSameMassBinning() or not fitModel->isMappingEqualInAllBins()) {
-		printErr << "cannot create plots for wave '" << _waveNames[idxWave] << "' for sum over all bins if the bins used different mass binnings." << std::endl;
+		printErr << "cannot create plots for wave '" << fitInformation->getWave(idxWave).waveName() << "' for sum over all bins if the bins used different mass binnings." << std::endl;
 		return false;
 	}
 	const size_t idxBin = 0;
 
 	TMultiGraph graphs;
-	graphs.SetName(_waveNames[idxWave].c_str());
-	graphs.SetTitle(_waveNames[idxWave].c_str());
+	graphs.SetName(fitInformation->getWave(idxWave).waveName().c_str());
+	graphs.SetTitle(fitInformation->getWave(idxWave).waveName().c_str());
 
 	TGraphErrors* data = new TGraphErrors;
-	data->SetName((_waveNames[idxWave] + "__data").c_str());
-	data->SetTitle((_waveNames[idxWave] + "__data").c_str());
+	data->SetName((fitInformation->getWave(idxWave).waveName() + "__data").c_str());
+	data->SetTitle((fitInformation->getWave(idxWave).waveName() + "__data").c_str());
 	graphs.Add(data, "P");
 
 	TGraph* fit = new TGraph;
-	fit->SetName((_waveNames[idxWave] + "__fit").c_str());
-	fit->SetTitle((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetName((fitInformation->getWave(idxWave).waveName() + "__fit").c_str());
+	fit->SetTitle((fitInformation->getWave(idxWave).waveName() + "__fit").c_str());
 	fit->SetLineColor(kRed);
 	fit->SetLineWidth(2);
 	fit->SetMarkerColor(kRed);
@@ -3053,8 +3029,8 @@ rpwa::resonanceFit::massDepFit::createPlotsWaveSum(const rpwa::resonanceFit::inf
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
-		component->SetName((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
-		component->SetTitle((_waveNames[idxWave] + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetName((fitInformation->getWave(idxWave).waveName() + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((fitInformation->getWave(idxWave).waveName() + "__" + fitModel->getComponent(idxComponent)->getName()).c_str());
 
 		Color_t color = kBlue;
 		if(fitModel->getComponent(idxComponent)->getName().find("bkg") != std::string::npos) {
@@ -3135,12 +3111,12 @@ rpwa::resonanceFit::massDepFit::createPlotsWavePair(const rpwa::resonanceFit::in
                                                     const size_t idxBin) const
 {
 	if(_debug) {
-		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "' in bin " << idxBin << "." << std::endl;
+		printDebug << "start creating plots for wave pair '" << fitInformation->getWave(idxWave).waveName() << "' and '" << fitInformation->getWave(jdxWave).waveName() << "' in bin " << idxBin << "." << std::endl;
 	}
 
-	const std::string realName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__real";
-	const std::string imagName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__imag";
-	const std::string phaseName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__phase";
+	const std::string realName = fitInformation->getWave(idxWave).waveName() + "__" + fitInformation->getWave(jdxWave).waveName() + "__real";
+	const std::string imagName = fitInformation->getWave(idxWave).waveName() + "__" + fitInformation->getWave(jdxWave).waveName() + "__imag";
+	const std::string phaseName = fitInformation->getWave(idxWave).waveName() + "__" + fitInformation->getWave(jdxWave).waveName() + "__phase";
 
 	TMultiGraph real;
 	real.SetName(realName.c_str());
