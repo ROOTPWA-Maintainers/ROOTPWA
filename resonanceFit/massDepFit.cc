@@ -1216,6 +1216,7 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	}
 
 	// extract information from fit results
+	boost::multi_array<std::string, 2> waveNames;
 	std::vector<size_t> nrMassBins;
 	boost::multi_array<double, 2> massBinCenters;
 	boost::multi_array<double, 3> phaseSpaceIntegrals;
@@ -1232,6 +1233,7 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
 	if(not readInFiles(fitInformation,
+	                   waveNames,
 	                   nrMassBins,
 	                   massBinCenters,
 	                   phaseSpaceIntegrals,
@@ -1274,6 +1276,7 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                       fitModel,
 	                       fitParameters,
 	                       fitParametersError,
+	                       waveNames,
 	                       nrMassBins,
 	                       massBinCenters,
 	                       phaseSpaceIntegrals,
@@ -1284,10 +1287,10 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 	// prepare production amplitudes and corresponding covariance matrices
 	// for the fit
-	std::vector<std::string> waveNames(fitInformation->nrWaves());
-	std::transform(fitInformation->waves().begin(), fitInformation->waves().end(), waveNames.begin(), [](const rpwa::resonanceFit::information::wave& wave){ return wave.waveName(); });
-	const size_t idxAnchorWave = std::find(waveNames.begin(), waveNames.end(), _anchorWaveName) - waveNames.begin();
-	if(idxAnchorWave >= waveNames.size()) {
+	std::vector<std::string> mainWaveNames(fitInformation->nrWaves());
+	std::transform(fitInformation->waves().begin(), fitInformation->waves().end(), mainWaveNames.begin(), [](const rpwa::resonanceFit::information::wave& wave){ return wave.waveName(); });
+	const size_t idxAnchorWave = std::find(mainWaveNames.begin(), mainWaveNames.end(), _anchorWaveName) - mainWaveNames.begin();
+	if(idxAnchorWave >= mainWaveNames.size()) {
 		printErr << "anchor wave '" << _anchorWaveName << "' not found in fit." << std::endl;
 		return false;
 	}
@@ -1367,6 +1370,7 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
                                                 const rpwa::resonanceFit::modelPtr& fitModel,
                                                 rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::parameters& fitParametersError,
+                                                const boost::multi_array<std::string, 2>& waveNames,
                                                 const std::vector<size_t>& nrMassBins,
                                                 const boost::multi_array<double, 2>& massBinCenters,
                                                 const boost::multi_array<double, 3>& phaseSpaceIntegrals,
@@ -1407,6 +1411,7 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 	                                 fitModel,
 	                                 fitParameters,
 	                                 fitParametersError,
+	                                 waveNames,
 	                                 nrMassBins,
 	                                 massBinCenters,
 	                                 phaseSpaceIntegrals,
@@ -1469,6 +1474,7 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
                                                           const rpwa::resonanceFit::modelPtr& fitModel,
                                                           rpwa::resonanceFit::parameters& fitParameters,
                                                           rpwa::resonanceFit::parameters& fitParametersError,
+                                                          const boost::multi_array<std::string, 2>& waveNames,
                                                           const std::vector<size_t>& nrMassBins,
                                                           const boost::multi_array<double, 2>& massBinCenters,
                                                           const boost::multi_array<double, 3>& phaseSpaceIntegrals,
@@ -1496,6 +1502,13 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 		waveIndices[wave.waveName()] = idxWave;
 		for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
 			waveIndices[wave.waveNameAlternatives()[idxAlt]] = idxWave;
+		}
+	}
+
+	std::map<std::string, std::vector<size_t> > waveBins;
+	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			waveBins[waveNames[idxBin][idxWave]].push_back(idxBin);
 		}
 	}
 
@@ -1572,7 +1585,7 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 		                       nrMassBins,
 		                       massBinCenters,
 		                       waveIndices,
-		                       _waveBins,
+		                       waveBins,
 		                       phaseSpaceIntegrals,
 		                       useBranchings,
 		                       _debug)) {
@@ -1833,6 +1846,7 @@ rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 
 bool
 rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                            boost::multi_array<std::string, 2>& waveNames,
                                             std::vector<size_t>& nrMassBins,
                                             boost::multi_array<double, 2>& massBinCenters,
                                             boost::multi_array<double, 3>& phaseSpaceIntegrals,
@@ -1854,6 +1868,7 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
 		const rpwa::resonanceFit::information::bin& bin = fitInformation->getBin(idxBin);
 
+		boost::multi_array<std::string, 1> tempWaveNames;
 		size_t tempNrMassBins;
 		boost::multi_array<double, 1> tempMassBinCenters;
 		boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
@@ -1867,8 +1882,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
 		if(not readInFile(fitInformation,
-		                  idxBin,
 		                  bin,
+		                  tempWaveNames,
 		                  tempNrMassBins,
 		                  tempMassBinCenters,
 		                  tempPhaseSpaceIntegrals,
@@ -1886,6 +1901,7 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 			return false;
 		}
 
+		adjustSizeAndSet(waveNames, idxBin, tempWaveNames);
 		adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
 		adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
 		adjustSizeAndSet(phaseSpaceIntegrals, idxBin, tempPhaseSpaceIntegrals);
@@ -1951,8 +1967,8 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 
 bool
 rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                           const size_t idxBin,
                                            const rpwa::resonanceFit::information::bin& bin,
+                                           boost::multi_array<std::string, 1>& waveNames,
                                            size_t& nrMassBins,
                                            boost::multi_array<double, 1>& massBinCenters,
                                            boost::multi_array<double, 2>& phaseSpaceIntegrals,
@@ -2025,7 +2041,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::information
 		return false;
 	}
 
-	std::vector<std::string> waveNames;
 	if(not readFitResultMatrices(fitInformation,
 	                             inTree,
 	                             inFit,
@@ -2043,9 +2058,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::information
 		printErr << "error while reading spin-density matrix from fit result tree in '" << bin.fileName() << "'." << std::endl;
 		delete inFile;
 		return false;
-	}
-	for(std::vector<std::string>::const_iterator it = waveNames.begin(); it != waveNames.end(); ++it) {
-		_waveBins[*it].push_back(idxBin);
 	}
 
 	if(not readFitResultIntegrals(fitInformation,
@@ -2173,7 +2185,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 		return false;
 	}
 
-	std::vector<std::string> waveNames;
+	boost::multi_array<std::string, 1> tempWaveNames;
 	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
@@ -2187,7 +2199,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 	                             sysFit,
 	                             sysMapping,
 	                             bin.rescaleErrors(),
-	                             waveNames,
+	                             tempWaveNames,
 	                             tempProductionAmplitudes,
 	                             tempProductionAmplitudesCovariance,
 	                             tempSpinDensityMatrices,
@@ -2395,7 +2407,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(const rpwa::resonanceFit::
                                                       rpwa::fitResult* fit,
                                                       const std::vector<Long64_t>& mapping,
                                                       const double rescaleErrors,
-                                                      std::vector<std::string>& waveNames,
+                                                      boost::multi_array<std::string, 1>& waveNames,
                                                       boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
                                                       boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
                                                       boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
@@ -2415,7 +2427,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(const rpwa::resonanceFit::
 	}
 
 	// read wave names from first fit result in tree
-	waveNames.resize(fitInformation->nrWaves());
+	waveNames.resize(boost::extents[fitInformation->nrWaves()]);
 	if(tree->GetEntry(0) == 0) {
 		printErr << "error while reading entry " << 0 << " from tree." << std::endl;
 		return false;
@@ -2503,7 +2515,7 @@ rpwa::resonanceFit::massDepFit::readFitResultMatrices(const rpwa::resonanceFit::
 		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
 			const std::string waveName = fit->waveNameForProdAmp(idxProdAmp);
 
-			const std::vector<std::string>::const_iterator it = std::find(waveNames.begin(), waveNames.end(), waveName);
+			const boost::multi_array<std::string, 1>::const_iterator it = std::find(waveNames.begin(), waveNames.end(), waveName);
 			// most of the waves are ignored
 			if(it == waveNames.end()) {
 				continue;
@@ -2585,7 +2597,7 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(const rpwa::resonanceFit:
                                                        TTree* tree,
                                                        rpwa::fitResult* fit,
                                                        const std::vector<Long64_t>& mapping,
-                                                       const std::vector<std::string>& waveNames,
+                                                       const boost::multi_array<std::string, 1>& waveNames,
                                                        boost::multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	if(not tree or not fit) {
