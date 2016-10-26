@@ -120,9 +120,6 @@ namespace rpwa {
 			                      const boost::multi_array<double, 1>& massBinCenters,
 			                      boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
 
-			bool readConfigFitquality(const YAML::Node& configFitquality,
-			                          std::map<std::string, double>& fitQuality) const;
-
 			bool readConfigModel(const YAML::Node& configModel,
 			                     const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                     const rpwa::resonanceFit::modelPtr& fitModel,
@@ -150,9 +147,6 @@ namespace rpwa {
 			                         rpwa::resonanceFit::parameters& fitParametersError,
 			                         const std::vector<size_t>& nrMassBins,
 			                         const boost::multi_array<double, 2>& massBinCenters) const;
-
-			bool writeConfigFitquality(YAML::Emitter& yamlOutput,
-			                           const std::map<std::string, double>& fitQuality) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
 			                      const rpwa::resonanceFit::modelConstPtr& fitModel,

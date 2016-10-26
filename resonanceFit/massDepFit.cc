@@ -743,6 +743,71 @@ namespace {
 	}
 
 
+	std::map<std::string, double>
+	readFitQuality(const YAML::Node& configRoot)
+	{
+		if(debug) {
+			printDebug << "reading 'fitquality'." << std::endl;
+		}
+
+		const YAML::Node& configFitQuality = configRoot["fitquality"];
+
+		std::map<std::string, double> fitQuality;
+		if(not configFitQuality) {
+			// it is perfectly okay for a config file to not
+			// contain fit quality information
+			return fitQuality;
+		}
+
+		if(not configFitQuality.IsMap()) {
+			printErr << "'fitquality' is not a YAML map." << std::endl;
+			throw;
+		}
+
+		for(YAML::const_iterator it = configFitQuality.begin(); it != configFitQuality.end(); ++it) {
+			if(not checkVariableType(it->first, rpwa::YamlCppUtils::TypeString) or not checkVariableType(it->second, rpwa::YamlCppUtils::TypeFloat)) {
+				printErr << "entries in 'fitquality' must be pairs of 'string' and 'double'." << std::endl;
+				throw;
+			}
+
+			const std::string key = it->first.as<std::string>();
+			const double value = it->second.as<double>();
+
+			if(fitQuality.count(key) != 0) {
+				printErr << "variable '" << key << "' of 'fitquality' given multiple times." << std::endl;
+				throw;
+			}
+			fitQuality[key] = value;
+
+			if(debug) {
+				printDebug << "read key '" << key << "' with value '" << value << "'." << std::endl;
+			}
+		}
+
+		return fitQuality;
+	}
+
+
+	void
+	writeFitQuality(YAML::Emitter& yamlOutput,
+	                const std::map<std::string, double>& fitQuality)
+	{
+		if(debug) {
+			printDebug << "writing 'fitquality'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "fitquality";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+		for(std::map<std::string, double>::const_iterator it = fitQuality.begin(); it != fitQuality.end(); ++it) {
+			yamlOutput << YAML::Key << it->first;
+			yamlOutput << YAML::Value << it->second;
+		}
+		yamlOutput << YAML::EndMap;
+	}
+
+
 	std::vector<std::string>
 	readFreeParameters(const YAML::Node& configRoot)
 	{
@@ -1194,16 +1259,9 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                            const std::string& valTreeName,
                                            const std::string& valBranchName)
 {
-	// fit result information
-	const YAML::Node& configFitquality = configRoot["fitquality"];
-	if(configFitquality) {
-		if(not readConfigFitquality(configFitquality, fitQuality)) {
-			printErr << "error while reading 'fitquality' in configuration file." << std::endl;
-			return false;
-		}
-	} else {
-		fitQuality.clear();
-	}
+	// get information of fit quality if a previous fit was stored in the
+	// configuration file
+	fitQuality = readFitQuality(configRoot);
 
 	// get information for which parameters to release in which order
 	freeParameters = readFreeParameters(configRoot);
@@ -1322,43 +1380,6 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                                           inSysPlottingSpinDensityMatrixElementsReal,
 	                                           inSysPlottingSpinDensityMatrixElementsImag,
 	                                           inSysPlottingPhases));
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigFitquality(const YAML::Node& configFitquality,
-                                                     std::map<std::string, double>& fitQuality) const
-{
-	// clear all information previously stored
-	fitQuality.clear();
-
-	if(not configFitquality) {
-		printErr << "'configFitquality' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configFitquality.IsMap()) {
-		printErr << "'fitquality' is not a YAML map." << std::endl;
-		return false;
-	}
-
-	for(YAML::const_iterator it = configFitquality.begin(); it != configFitquality.end(); ++it) {
-		if(not checkVariableType(it->first, YamlCppUtils::TypeString) or not checkVariableType(it->second, YamlCppUtils::TypeFloat)) {
-			printErr << "entries in 'fitquality' must be pairs of 'string' and 'double'." << std::endl;
-			return false;
-		}
-
-		const std::string key = it->first.as<std::string>();
-		const double value = it->second.as<double>();
-
-		if(fitQuality.count(key) != 0) {
-			printErr << "variable '" << key << "' of 'fitquality' given multiple times." << std::endl;
-			return false;
-		}
-
-		fitQuality[key] = value;
-	}
 
 	return true;
 }
@@ -1685,13 +1706,7 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 	YAML::Emitter yamlOutput(output);
 	yamlOutput << YAML::BeginMap;
 
-	yamlOutput << YAML::Key << "fitquality";
-	yamlOutput << YAML::Value;
-	if(not writeConfigFitquality(yamlOutput, fitQuality)) {
-		printErr << "error while writing 'fitquality' to result file." << std::endl;
-		return false;
-	}
-
+	writeFitQuality(yamlOutput, fitQuality);
 	writeFreeParameters(yamlOutput, freeParameters);
 	writeInformation(yamlOutput, fitInformation);
 
@@ -1706,27 +1721,6 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 
 	// newline at end-of-file
 	output << std::endl;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigFitquality(YAML::Emitter& yamlOutput,
-                                                      const std::map<std::string, double>& fitQuality) const
-{
-	if(_debug) {
-		printDebug << "writing 'fitquality'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	for(std::map<std::string, double>::const_iterator it = fitQuality.begin(); it != fitQuality.end(); ++it) {
-		yamlOutput << YAML::Key << it->first;
-		yamlOutput << YAML::Value << it->second;
-	}
-
-	yamlOutput << YAML::EndMap;
 
 	return true;
 }
