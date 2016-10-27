@@ -1788,6 +1788,314 @@ namespace {
 
 
 	void
+	readModelParameter(const YAML::Node& configComponent,
+	                   const std::string& parameterName,
+	                   rpwa::resonanceFit::parameter& parameter)
+	{
+		if(debug) {
+			printDebug << "reading parameter '" << parameterName << "'." << std::endl;
+		}
+
+		const YAML::Node& configParameter = configComponent[parameterName];
+		if(not configParameter) {
+			printErr << "final-state mass-dependence does not define parameter '" << parameterName << "'." << std::endl;
+			throw;
+		}
+
+		parameter.setName(parameterName);
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("val", rpwa::YamlCppUtils::TypeFloat)
+		                     ("fix", rpwa::YamlCppUtils::TypeBoolean);
+		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
+			printErr << "'" << parameterName << "' of final-state mass-dependence does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		const double startValue = configParameter["val"].as<double>();
+		parameter.setStartValue(startValue);
+
+		if(configParameter["error"]) {
+			if(checkVariableType(configParameter["error"], rpwa::YamlCppUtils::TypeFloat)) {
+				parameter.setStartError(configParameter["error"].as<double>());
+			} else {
+				printErr << "variable 'error' for parameter '" << parameterName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				throw;
+			}
+		}
+
+		parameter.setFixed(configParameter["fix"].as<bool>());
+
+		if(configParameter["lower"]) {
+			if(checkVariableType(configParameter["lower"], rpwa::YamlCppUtils::TypeFloat)) {
+				parameter.setLimitedLower(true);
+				parameter.setLimitLower(configParameter["lower"].as<double>());
+			} else {
+				printErr << "variable 'lower' for parameter '" << parameterName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				throw;
+			}
+		} else {
+			parameter.setLimitedLower(false);
+		}
+		if(configParameter["upper"]) {
+			if(checkVariableType(configParameter["upper"], rpwa::YamlCppUtils::TypeFloat)) {
+				parameter.setLimitedUpper(true);
+				parameter.setLimitUpper(configParameter["upper"].as<double>());
+			} else {
+				printErr << "variable 'upper' for parameter '" << parameterName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				throw;
+			}
+		} else {
+			parameter.setLimitedUpper(false);
+		}
+
+		if(configParameter["step"]) {
+			if(checkVariableType(configParameter["step"], rpwa::YamlCppUtils::TypeFloat)) {
+				parameter.setStep(configParameter["step"].as<double>());
+			} else {
+				printErr << "variable 'step' for parameter '" << parameterName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
+				throw;
+			}
+		}
+	}
+
+
+	void
+	writeModelParameter(YAML::Emitter& yamlOutput,
+	                    const rpwa::resonanceFit::parameter& parameter,
+	                    const double value,
+	                    const double error)
+	{
+		if(debug) {
+			printDebug << "writing parameter '" << parameter.name() << "'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << parameter.name();
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "val";
+		yamlOutput << YAML::Value << value;
+
+		yamlOutput << YAML::Key << "error";
+		yamlOutput << YAML::Value << error;
+
+		if(parameter.limitedLower()) {
+			yamlOutput << YAML::Key << "lower";
+			yamlOutput << YAML::Value << parameter.limitLower();
+		}
+
+		if(parameter.limitedUpper()) {
+			yamlOutput << YAML::Key << "upper";
+			yamlOutput << YAML::Value << parameter.limitUpper();
+		}
+
+		yamlOutput << YAML::Key << "step";
+		yamlOutput << YAML::Value << parameter.step();
+
+		yamlOutput << YAML::Key << "fix";
+		yamlOutput << YAML::Value << parameter.fixed();
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
+	void
+	readModelFsmdBin(const YAML::Node& configFsmd,
+	                 std::shared_ptr<TFormula>& function,
+	                 boost::multi_array<rpwa::resonanceFit::parameter, 1>& parameters)
+	{
+		if(debug) {
+			printDebug << "reading 'finalStateMassDependence' for an individual bin." << std::endl;
+		}
+
+		if(not configFsmd.IsMap()) {
+			printErr << "'finalStateMassDependence' for an individual bin is not a YAML map." << std::endl;
+			throw;
+		}
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("formula", rpwa::YamlCppUtils::TypeString);
+		if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
+			printErr << "'finalStateMassDependence' for an individual bin does not contain all required variables." << std::endl;
+			return throw;
+		}
+
+		const std::string formula = configFsmd["formula"].as<std::string>();
+		function.reset(new TFormula("finalStateMassDependence", formula.c_str()));
+
+		const size_t nrParameters = function->GetNpar();
+		parameters.resize(boost::extents[nrParameters]);
+
+		for(size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
+			const std::string parameterName = function->GetParName(idxParameter);
+
+			// set default value for step size
+			parameters[idxParameter].setStep(0.0001);
+
+			readModelParameter(configFsmd,
+			                   parameterName,
+			                   parameters[idxParameter]);
+		}
+	}
+
+
+	void
+	writeModelFsmdBin(YAML::Emitter& yamlOutput,
+	                  const rpwa::resonanceFit::fsmdConstPtr& fsmd,
+	                  const size_t idxBin,
+	                  const rpwa::resonanceFit::parameters& fitParameters,
+	                  const rpwa::resonanceFit::parameters& fitParametersError)
+	{
+		if(debug) {
+			printDebug << "writing 'finalStateMassDependence' for an individual bin." << std::endl;
+		}
+
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "formula";
+		yamlOutput << YAML::Value << fsmd->getFunction(idxBin)->GetTitle();
+
+		for(size_t idxParameter = 0; idxParameter < fsmd->getNrParameters(idxBin); ++idxParameter) {
+			writeModelParameter(yamlOutput,
+			                    fsmd->getParameter(idxBin, idxParameter),
+			                    fitParameters.getParameter(fsmd->getId(), fsmd->getParameterIndex(idxBin)+idxParameter),
+			                    fitParametersError.getParameter(fsmd->getId(), fsmd->getParameterIndex(idxBin)+idxParameter));
+		}
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
+	rpwa::resonanceFit::fsmdPtr
+	readModelFsmd(const YAML::Node& configModel,
+	              rpwa::resonanceFit::parameters& fitParameters,
+	              rpwa::resonanceFit::parameters& fitParametersError,
+	              const size_t id,
+	              const std::vector<size_t>& nrMassBins,
+	              const boost::multi_array<double, 2>& massBinCenters)
+	{
+		if(debug) {
+			printDebug << "reading 'finalStateMassDependence'." << std::endl;
+		}
+
+		const YAML::Node& configFsmd = configModel["finalStateMassDependence"];
+		if(not configFsmd) {
+			// final-state mass-dependence might not be specified
+			return rpwa::resonanceFit::fsmdPtr();
+		}
+
+		if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
+			printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
+			throw;
+		}
+
+		rpwa::resonanceFit::fsmdPtr fsmd;
+		if(configFsmd.IsMap()) {
+			// a single final-state mass-dependence is given
+			std::shared_ptr<TFormula> function;
+			boost::multi_array<rpwa::resonanceFit::parameter, 1> parameters;
+
+			readModelFsmdBin(configFsmd,
+			                 function,
+			                 parameters);
+
+			const size_t nrParameters = function->GetNpar();
+			fitParameters.resize(id+1, 0, nrParameters, 0);
+			fitParametersError.resize(id+1, 0, nrParameters, 0);
+
+			for(size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
+				fitParameters.setParameter(id, idxParameter, parameters[idxParameter].startValue());
+				fitParametersError.setParameter(id, idxParameter, parameters[idxParameter].startError());
+			}
+
+			fsmd.reset(new rpwa::resonanceFit::fsmd(id,
+			                                        nrMassBins,
+			                                        massBinCenters,
+			                                        function,
+			                                        parameters));
+		} else {
+			// a final-state mass-dependence for each bin is given
+			std::vector<std::shared_ptr<TFormula> > functions;
+			boost::multi_array<rpwa::resonanceFit::parameter, 2> parameters;
+
+			size_t nrParametersSum = 0;
+			const size_t nrBins = configFsmd.size();
+			for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+				std::shared_ptr<TFormula> tempFunction;
+				boost::multi_array<rpwa::resonanceFit::parameter, 1> tempParameters;
+
+				readModelFsmdBin(configFsmd[idxBin],
+				                 tempFunction,
+				                 tempParameters);
+
+				rpwa::resonanceFit::adjustSizeAndSet(functions, idxBin, tempFunction);
+				rpwa::resonanceFit::adjustSizeAndSet(parameters, idxBin, tempParameters);
+
+				const size_t idxParameterFirst = nrParametersSum;
+				const size_t nrParameters = tempFunction->GetNpar();
+				nrParametersSum += nrParameters;
+
+				fitParameters.resize(id+1, 0, nrParametersSum, nrBins);
+				fitParametersError.resize(id+1, 0, nrParametersSum, nrBins);
+
+				for(size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
+					fitParameters.setParameter(id, idxParameterFirst+idxParameter, tempParameters[idxParameter].startValue());
+					fitParametersError.setParameter(id, idxParameterFirst+idxParameter, tempParameters[idxParameter].startError());
+				}
+			}
+
+			fsmd.reset(new rpwa::resonanceFit::fsmd(id,
+			                                        nrMassBins,
+			                                        massBinCenters,
+			                                        functions,
+			                                        parameters));
+		}
+
+		if(debug) {
+			printDebug << *fsmd;
+		}
+
+		return fsmd;
+	}
+
+
+	void
+	writeModelFsmd(YAML::Emitter& yamlOutput,
+	               const rpwa::resonanceFit::fsmdConstPtr& fsmd,
+	               const rpwa::resonanceFit::parameters& fitParameters,
+	               const rpwa::resonanceFit::parameters& fitParametersError)
+	{
+		if(debug) {
+			printDebug << "writing 'finalStateMassDependence'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "finalStateMassDependence";
+		yamlOutput << YAML::Value;
+
+		if(not fsmd->isSameFunctionForAllBins()) {
+			yamlOutput << YAML::BeginSeq;
+		}
+
+		const size_t maxNrBins = fsmd->isSameFunctionForAllBins() ? 1 : fsmd->getNrBins();
+		for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
+			writeModelFsmdBin(yamlOutput,
+			                  fsmd,
+			                  idxBin,
+			                  fitParameters,
+			                  fitParametersError);
+		}
+
+		if(not fsmd->isSameFunctionForAllBins()) {
+			yamlOutput << YAML::EndSeq;
+		}
+	}
+
+
+	void
 	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                 const size_t nrMassBins,
 	                 const boost::multi_array<double, 1>& massBinCenters,
@@ -2702,17 +3010,14 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 	}
 
 	// get information for creating the final-state mass-dependence
-	const YAML::Node& configFsmd = configModel["finalStateMassDependence"];
-	if(configFsmd) {
-		if(not readConfigModelFsmd(configFsmd,
-		                           fitModel,
-		                           fitParameters,
-		                           fitParametersError,
-		                           nrMassBins,
-		                           massBinCenters)) {
-			printErr << "error while reading 'finalStateMassDependence' in 'model'." << std::endl;
-			return false;
-		}
+	const rpwa::resonanceFit::fsmdPtr& fsmd = readModelFsmd(configModel,
+	                                                        fitParameters,
+	                                                        fitParametersError,
+	                                                        fitModel->getNrComponents(),
+	                                                        nrMassBins,
+	                                                        massBinCenters);
+	if(fsmd) {
+		fitModel->setFsmd(fsmd);
 	} else {
 		printInfo << "not using final-state mass-dependence." << std::endl;
 	}
@@ -2889,45 +3194,6 @@ rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& conf
 
 
 bool
-rpwa::resonanceFit::massDepFit::readConfigModelFsmd(const YAML::Node& configFsmd,
-                                                    const rpwa::resonanceFit::modelPtr& fitModel,
-                                                    rpwa::resonanceFit::parameters& fitParameters,
-                                                    rpwa::resonanceFit::parameters& fitParametersError,
-                                                    const std::vector<size_t>& nrMassBins,
-                                                    const boost::multi_array<double, 2>& massBinCenters) const
-{
-	if(not configFsmd) {
-		printErr << "'configFsmd' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
-		printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "reading final-state mass-dependence from configuration file." << std::endl;
-	}
-
-	rpwa::resonanceFit::fsmdPtr fsmd(new rpwa::resonanceFit::fsmd(fitModel->getNrComponents()));
-	if(not fsmd->init(configFsmd,
-	                  fitParameters,
-	                  fitParametersError,
-	                  nrMassBins,
-	                  massBinCenters,
-	                  _debug)) {
-		printErr << "error while initializing final-state mass-dependence." << std::endl;
-		return false;
-	}
-	fitModel->setFsmd(fsmd);
-
-	printInfo << "using final-state mass-dependence as defined in the configuration file." << std::endl;
-
-	return true;
-}
-
-
-bool
 rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                      const rpwa::resonanceFit::dataConstPtr& fitData,
                                      const rpwa::resonanceFit::modelPtr& fitModel,
@@ -3012,14 +3278,10 @@ rpwa::resonanceFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
 		return false;
 	}
 
-	yamlOutput << YAML::Key << "finalStateMassDependence";
-	yamlOutput << YAML::Value;
-	if(fitModel->getFsmd()) {
-		if(not writeConfigModelFsmd(yamlOutput, fitModel, fitParameters, fitParametersError)) {
-			printErr << "error while writing 'finalStateMassDependence' to result file." << std::endl;
-			return false;
-		}
-	}
+	writeModelFsmd(yamlOutput,
+	               fitModel->getFsmd(),
+	               fitParameters,
+	               fitParametersError);
 
 	yamlOutput << YAML::EndMap;
 
@@ -3069,30 +3331,6 @@ rpwa::resonanceFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOu
 	}
 
 	yamlOutput << YAML::EndSeq;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
-                                                     const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                                     const rpwa::resonanceFit::parameters& fitParameters,
-                                                     const rpwa::resonanceFit::parameters& fitParametersError) const
-{
-	if(_debug) {
-		printDebug << "writing 'finalStateMassDependence'." << std::endl;
-	}
-
-	if(not fitModel->getFsmd()) {
-		printErr << "writing final-state mass-dependence requested, but there is no final-state mass-dependence." << std::endl;
-		return false;
-	}
-
-	if(not fitModel->getFsmd()->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
-		printErr << "error while writing final-state mass-dependence to result file." << std::endl;
-		return false;
-	}
 
 	return true;
 }

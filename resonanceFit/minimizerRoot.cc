@@ -442,7 +442,8 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 	// set parameters for final-state mass-dependence
 	if(_fitModel->getFsmd()) {
 		const rpwa::resonanceFit::fsmdConstPtr& fsmd = _fitModel->getFsmd();
-		for(size_t idxBin = 0; idxBin < fsmd->getNrBins(); ++idxBin) {
+		const size_t maxNrBins = fsmd->isSameFunctionForAllBins() ? 1 : fsmd->getNrBins();
+		for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
 			for(size_t idxParameter = 0; idxParameter < fsmd->getNrParameters(idxBin); ++idxParameter) {
 				const rpwa::resonanceFit::parameter& parameter = fsmd->getParameter(idxBin, idxParameter);
 				std::ostringstream name;

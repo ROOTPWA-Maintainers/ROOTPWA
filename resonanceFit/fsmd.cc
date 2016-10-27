@@ -29,347 +29,184 @@
 
 #include "fsmd.h"
 
-#include <map>
-
-#include <boost/assign/std/vector.hpp>
-
-#include <yaml-cpp/yaml.h>
+#include <set>
 
 #include <TFormula.h>
 
-#include <conversionUtils.hpp>
 #include <reportingUtils.hpp>
-#include <yamlCppUtils.hpp>
 
 #include "cache.h"
 #include "parameters.h"
+#include "resonanceFitHelper.h"
 
 
-rpwa::resonanceFit::fsmd::fsmd(const size_t id)
+rpwa::resonanceFit::fsmd::fsmd(const size_t id,
+                               const std::vector<size_t>& nrMassBins,
+                               const boost::multi_array<double, 2>& massBinCenters,
+                               const std::shared_ptr<TFormula>& function,
+                               const boost::multi_array<rpwa::resonanceFit::parameter, 1>& parameters)
 	: _id(id),
-	  _nrBins(0),
-	  _maxParameters(0)
+	  _sameFunctionForAllBins(true)
 {
+	// a single final-state mass-dependence for all bins is used
+	// get dimensions from one array and make sure that all other arrays
+	// have the same dimensions
+	_nrBins = nrMassBins.size();
+	if(_nrBins == 0) {
+		printErr << "number of bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
+	if(maxMassBins == 0) {
+		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	checkSize(nrMassBins,
+	          _nrBins, "number of bins is not correct for number of mass bins.");
+	checkSize(massBinCenters,
+	          _nrBins, "number of bins is not correct for centers of mass bins.",
+	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+
+	_functions.assign(_nrBins, function);
+
+	_maxParameters = function->GetNpar();
+	_nrParameters.assign(_nrBins, _maxParameters);
+	_parametersIndex.assign(_nrBins, 0);
+
+	_parameters.resize(boost::extents[_nrBins][_maxParameters]);
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		adjustSizeAndSet(_parameters, idxBin, parameters);
+	}
+
+	for(size_t idxParameter = 0; idxParameter < _maxParameters; ++idxParameter) {
+		if(_parameters[0][idxParameter].name() != _functions[0]->GetParName(idxParameter)) {
+			printErr << "inconsistent naming of parameters for final-state mass-dependence, "
+			         << "expected '" << _functions[0]->GetParName(idxParameter) << "', "
+			         << "found '" << _parameters[0][idxParameter].name() << "' for parameter at index " << idxParameter << ". "
+			         << "Aborting..." << std::endl;
+			throw;
+		}
+	}
+
+	// if all bins have the same mass binning, the value in each mass bin
+	// is equal for all bins
+	_binsEqualValues.assign(_nrBins, std::vector<size_t>());
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		if(_binsEqualValues[idxBin].size() != 0) {
+			continue;
+		}
+
+		std::vector<size_t> bins(1, idxBin);
+		for(size_t jdxBin = idxBin+1; jdxBin < _nrBins; ++jdxBin) {
+			if(nrMassBins[idxBin] != nrMassBins[jdxBin]) {
+				continue;
+			}
+
+			bool sameBinning = true;
+			for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
+				if(massBinCenters[idxBin][idxMass] != massBinCenters[jdxBin][idxMass]) {
+					sameBinning = false;
+					break;
+				}
+			}
+			if(sameBinning) {
+				bins.push_back(jdxBin);
+			}
+		}
+
+		for(size_t jdxBin = 0; jdxBin < bins.size(); ++jdxBin) {
+			if(_binsEqualValues[bins[jdxBin]].size() != 0) {
+				printErr << "inconsistency when setting up bins used for caching." << std::endl;
+				throw;
+			}
+
+			_binsEqualValues[bins[jdxBin]] = bins;
+		}
+	}
+}
+
+
+rpwa::resonanceFit::fsmd::fsmd(const size_t id,
+                               const std::vector<size_t>& nrMassBins,
+                               const boost::multi_array<double, 2>& massBinCenters,
+                               const std::vector<std::shared_ptr<TFormula> >& functions,
+                               const boost::multi_array<rpwa::resonanceFit::parameter, 2>& parameters)
+	: _id(id),
+	  _sameFunctionForAllBins(false),
+	  _functions(functions),
+	  _parameters(parameters)
+{
+	// a different final-state mass-dependence for each bin is used
+	// get dimensions from one array and make sure that all other arrays
+	// have the same dimensions
+	_nrBins = nrMassBins.size();
+	if(_nrBins == 0) {
+		printErr << "number of bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
+	if(maxMassBins == 0) {
+		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	checkSize(nrMassBins,
+	          _nrBins, "number of bins is not correct for number of mass bins.");
+	checkSize(massBinCenters,
+	          _nrBins, "number of bins is not correct for centers of mass bins.",
+	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+
+	checkSize(_functions,
+	          _nrBins, "number of bins is not correct for functions.");
+
+	_nrParameters.resize(_nrBins);
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		_nrParameters[idxBin] = _functions[idxBin]->GetNpar();
+	}
+	_maxParameters = *(std::max_element(_nrParameters.begin(), _nrParameters.end()));
+
+	checkSize(_nrParameters,
+	          _nrBins, "number of bins is not correct for number of parameters.");
+
+	_parametersIndex.assign(_nrBins, 0);
+	for(size_t idxBin = 1; idxBin < _nrBins; ++idxBin) {
+		_parametersIndex[idxBin] = _parametersIndex[idxBin-1] + _nrParameters[idxBin-1];
+	}
+
+	checkSize(_parametersIndex,
+	          _nrBins, "number of bins is not correct for parameter indices.");
+
+	checkSize(_parameters,
+	          _nrBins, "number of bins is not correct for parameters.",
+	          _maxParameters, "maximal number of parameters is not correct for parameters.");
+
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
+			if(_parameters[idxBin][idxParameter].name() != _functions[idxBin]->GetParName(idxParameter)) {
+				printErr << "inconsistent naming of parameters for final-state mass-dependence, "
+				         << "expected '" << _functions[idxBin]->GetParName(idxParameter) << "', "
+				         << "found '" << _parameters[idxBin][idxParameter].name() << "' "
+				         << "for parameter at index " << idxParameter << " in bin " << idxBin << ". "
+				         << "Aborting..." << std::endl;
+				throw;
+			}
+		}
+	}
+
+
+	// each value is only valid for the bin it has been calculated for
+	_binsEqualValues.assign(_nrBins, std::vector<size_t>(1, 0));
+	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+		_binsEqualValues[idxBin][0] = idxBin;
+	}
 }
 
 
 rpwa::resonanceFit::fsmd::~fsmd()
 {
-}
-
-
-bool
-rpwa::resonanceFit::fsmd::init(const YAML::Node& configFsmd,
-                               rpwa::resonanceFit::parameters& fitParameters,
-                               rpwa::resonanceFit::parameters& fitParametersError,
-                               const std::vector<size_t>& nrMassBins,
-                               const boost::multi_array<double, 2>& massBinCenters,
-                               const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing final-state mass-dependence." << std::endl;
-	}
-
-	if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
-		printErr << "'finalStateMassDependence' is not a YAML map or sequence." << std::endl;
-		return false;
-	}
-
-	const size_t nrBins = nrMassBins.size();
-	if(configFsmd.IsSequence()) {
-		if(nrBins != configFsmd.size()) {
-			printErr << "incorrect number of final-state mass-dependencies provided, found " << configFsmd.size() << ", expected " << nrBins << "." << std::endl;
-			return false;
-		}
-
-		_nrBins = nrBins;
-		_functions.resize(_nrBins);
-		_nrParameters.resize(_nrBins, 0);
-		_parametersIndex.resize(_nrBins, 0);
-
-		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-			if(not initBin(configFsmd[idxBin], fitParameters, fitParametersError, idxBin, debug)) {
-				printErr << "error while initializing final-state mass-dependence for bin " << idxBin << "." << std::endl;
-				return false;
-			}
-		}
-
-		// each value is only valid for the bin it has been calculated for
-		_binsEqualValues.assign(nrBins, std::vector<size_t>(1, 0));
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			_binsEqualValues[idxBin][0] = idxBin;
-		}
-	}
-
-	if(configFsmd.IsMap()) {
-		_nrBins = 1;
-		_functions.resize(nrBins);
-		_nrParameters.resize(nrBins, 0);
-		_parametersIndex.resize(nrBins, 0);
-
-		if(not initBin(configFsmd, fitParameters, fitParametersError, 0, debug)) {
-			printErr << "error while initializing final-state mass-dependence for bin 0." << std::endl;
-			return false;
-		}
-
-		for(size_t idxBin = 1; idxBin < nrBins; ++idxBin) {
-			_functions[idxBin] = _functions[0];
-			_nrParameters[idxBin] = _nrParameters[0];
-			_parametersIndex[idxBin] = _parametersIndex[0];
-		}
-
-		// if all bins have the same mass binning and there is only one
-		// final-state mass dependence, the value in each mass bin is equal
-		// for all bins
-		_binsEqualValues.assign(nrBins, std::vector<size_t>());
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			if(_binsEqualValues[idxBin].size() != 0) {
-				continue;
-			}
-
-			std::vector<size_t> bins(1, idxBin);
-			for(size_t jdxBin = idxBin+1; jdxBin < nrBins; ++jdxBin) {
-				if(nrMassBins[idxBin] != nrMassBins[jdxBin]) {
-					continue;
-				}
-
-				bool sameBinning = true;
-				for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
-					if(massBinCenters[idxBin][idxMass] != massBinCenters[jdxBin][idxMass]) {
-						sameBinning = false;
-						break;
-					}
-				}
-				if(sameBinning) {
-					bins.push_back(jdxBin);
-				}
-			}
-
-			for(size_t jdxBin = 0; jdxBin < bins.size(); ++jdxBin) {
-				if(_binsEqualValues[bins[jdxBin]].size() != 0) {
-					printErr << "inconsistency when setting up bins used for caching." << std::endl;
-					return false;
-				}
-
-				_binsEqualValues[bins[jdxBin]] = bins;
-			}
-		}
-	}
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing final-state mass-dependence." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
-                                  rpwa::resonanceFit::parameters& fitParameters,
-                                  rpwa::resonanceFit::parameters& fitParametersError,
-                                  const size_t idxBin,
-                                  const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing final-state mass-dependence for bin " << idxBin << "." << std::endl;
-	}
-
-	if(not configFsmd.IsMap()) {
-		printErr << "'finalStateMassDependence' for bin " << idxBin << " is not a YAML map." << std::endl;
-		return false;
-	}
-
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("formula", YamlCppUtils::TypeString);
-	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
-		printErr << "'finalStateMassDependence' does not contain all required variables." << std::endl;
-		return false;
-	}
-
-	const std::string formula = configFsmd["formula"].as<std::string>();
-
-	_functions[idxBin] = std::make_shared<TFormula>("finalStateMassDependence", formula.c_str());
-
-	_nrParameters[idxBin] = _functions[idxBin]->GetNpar();
-	if(idxBin > 0) {
-		_parametersIndex[idxBin] = _parametersIndex[idxBin-1] + _nrParameters[idxBin-1];
-	}
-
-	if(_nrParameters[idxBin] > _maxParameters) {
-		_parameters.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_maxParameters = _nrParameters[idxBin];
-	}
-
-	fitParameters.resize(_id+1, 0, _parametersIndex[idxBin]+_nrParameters[idxBin]+1, 0);
-	fitParametersError.resize(_id+1, 0, _parametersIndex[idxBin]+_nrParameters[idxBin]+1, 0);
-
-	for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
-		const std::string parName = _functions[idxBin]->GetParName(idxParameter);
-		_parameters[idxBin][idxParameter].setName(parName);
-
-		if(debug) {
-			printDebug << "reading parameter '" << parName << "'." << std::endl;
-		}
-
-		const YAML::Node& configParameter = configFsmd[parName];
-		if(not configParameter) {
-			printErr << "final-state mass-dependence does not define parameter '" << parName << "'." << std::endl;
-			return false;
-		}
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("val", YamlCppUtils::TypeFloat)
-		                     ("fix", YamlCppUtils::TypeBoolean);
-		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "'" << parName << "' of final-state mass-dependence does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const double parameter = configParameter["val"].as<double>();
-		_parameters[idxBin][idxParameter].setStartValue(parameter);
-		fitParameters.setParameter(_id, _parametersIndex[idxBin]+idxParameter, parameter);
-
-		if(configParameter["error"]) {
-			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
-				const double error = configParameter["error"].as<double>();
-				_parameters[idxBin][idxParameter].setStartError(error);
-				fitParametersError.setParameter(_id, _parametersIndex[idxBin]+idxParameter, error);
-			} else {
-				printErr << "variable 'error' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		}
-
-		const bool fixed = configParameter["fix"].as<bool>();
-		_parameters[idxBin][idxParameter].setFixed(fixed);
-
-		if(configParameter["lower"]) {
-			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxBin][idxParameter].setLimitedLower(true);
-				_parameters[idxBin][idxParameter].setLimitLower(configParameter["lower"].as<double>());
-			} else {
-				printErr << "variable 'lower' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_parameters[idxBin][idxParameter].setLimitedLower(false);
-		}
-		if(configParameter["upper"]) {
-			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxBin][idxParameter].setLimitedUpper(true);
-				_parameters[idxBin][idxParameter].setLimitUpper(configParameter["upper"].as<double>());
-			} else {
-				printErr << "variable 'upper' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_parameters[idxBin][idxParameter].setLimitedUpper(false);
-		}
-
-		if(configParameter["step"]) {
-			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxBin][idxParameter].setStep(configParameter["step"].as<double>());
-			} else {
-				printErr << "variable 'step' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_parameters[idxBin][idxParameter].setStep(0.0001);
-		}
-	}
-
-	if(debug) {
-		printDebug << "finished initializing final-state mass-dependence for bin " << idxBin << "." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::fsmd::write(YAML::Emitter& yamlOutput,
-                                const rpwa::resonanceFit::parameters& fitParameters,
-                                const rpwa::resonanceFit::parameters& fitParametersError,
-                                const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing final-state mass-dependence." << std::endl;
-		print(printDebug);
-	}
-
-	if(_nrBins > 1) {
-		yamlOutput << YAML::BeginSeq;
-	}
-
-	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-		if(not writeBin(yamlOutput, fitParameters, fitParametersError, idxBin, debug)) {
-			printErr << "error while writing final-state mass-dependence for bin " << idxBin << "." << std::endl;
-			return false;
-		}
-	}
-
-	if(_nrBins > 1) {
-		yamlOutput << YAML::EndSeq;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
-                                   const rpwa::resonanceFit::parameters& fitParameters,
-                                   const rpwa::resonanceFit::parameters& fitParametersError,
-                                   const size_t idxBin,
-                                   const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing final-state mass-dependence for bin " << idxBin << "." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	yamlOutput << YAML::Key << "formula";
-	yamlOutput << YAML::Value << _functions[idxBin]->GetTitle();
-
-	for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
-		yamlOutput << YAML::Key << _parameters[idxBin][idxParameter].name();
-		yamlOutput << YAML::Value;
-
-		yamlOutput << YAML::BeginMap;
-
-		yamlOutput << YAML::Key << "val";
-		yamlOutput << YAML::Value << fitParameters.getParameter(_id, _parametersIndex[idxBin]+idxParameter);
-
-		yamlOutput << YAML::Key << "error";
-		yamlOutput << YAML::Value << fitParametersError.getParameter(_id, _parametersIndex[idxBin]+idxParameter);
-
-		if(_parameters[idxBin][idxParameter].limitedLower()) {
-			yamlOutput << YAML::Key << "lower";
-			yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].limitLower();
-		}
-
-		if(_parameters[idxBin][idxParameter].limitedUpper()) {
-			yamlOutput << YAML::Key << "upper";
-			yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].limitUpper();
-		}
-
-		yamlOutput << YAML::Key << "step";
-		yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].step();
-
-		yamlOutput << YAML::Key << "fix";
-		yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].fixed();
-
-		yamlOutput << YAML::EndMap;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	return true;
 }
 
 
@@ -379,7 +216,8 @@ rpwa::resonanceFit::fsmd::importParameters(const double* par,
                                            rpwa::resonanceFit::cache& cache)
 {
 	size_t sumNrParameters = 0;
-	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
+	const size_t maxNrBins = _sameFunctionForAllBins ? 1 : _nrBins;
+	for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
 		bool invalidateCache = false;
 		for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
 			const size_t parIndex = _parametersIndex[idxBin] + idxParameter;
@@ -391,7 +229,7 @@ rpwa::resonanceFit::fsmd::importParameters(const double* par,
 		sumNrParameters += _nrParameters[idxBin];
 
 		if(invalidateCache) {
-			if(_binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
+			if(_sameFunctionForAllBins or _binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
 				// the value is the same for all bins
 				cache.setComponent(_id, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 				cache.setProdAmp(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
@@ -462,8 +300,12 @@ rpwa::resonanceFit::fsmd::print(std::ostream& out) const
 	}
 	out << std::endl;
 
-	for(size_t i = 0; i < _nrBins; ++i) {
+	const size_t maxNrBins = _sameFunctionForAllBins ? 1 : _nrBins;
+	for(size_t i = 0; i < maxNrBins; ++i) {
 		printBin(i, out);
+	}
+	if(_sameFunctionForAllBins) {
+		out << "this final-state mass-dependence is used for all bins." << std::endl;
 	}
 
 	return out;
