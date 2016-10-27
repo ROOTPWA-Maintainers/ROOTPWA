@@ -1220,6 +1220,101 @@ namespace {
 
 
 	void
+	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                 const size_t nrMassBins,
+	                 const boost::multi_array<double, 1>& massBinCenters,
+	                 boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
+	{
+		if(debug) {
+			printDebug << "determine which mass bins to use in the fit for " << nrMassBins << " mass bins, center of first and last mass bins: "
+			           << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
+		}
+
+		// determine which mass bins to use for a single wave
+		std::vector<std::pair<size_t, size_t> > waveMassBinLimits(fitInformation->nrWaves());
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+			size_t binFirst = 0;
+			size_t binLast = nrMassBins-1;
+			for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
+				if(massBinCenters[idxMass] < wave.massLimits().first) {
+					binFirst = idxMass+1;
+				}
+				if(massBinCenters[idxMass] == wave.massLimits().first) {
+					binFirst = idxMass;
+				}
+				if(massBinCenters[idxMass] <= wave.massLimits().second) {
+					binLast = idxMass;
+				}
+			}
+			if(wave.massLimits().first < 0) {
+				binFirst = 0;
+			}
+			if(wave.massLimits().second < 0) {
+				binLast = nrMassBins-1;
+			}
+
+			const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
+			const double massFirst = massBinCenters[binFirst] - massStep/2.;
+			const double massLast = massBinCenters[binLast] + massStep/2.;
+			if(debug) {
+				printDebug << idxWave << ": " << wave.waveName() << ": "
+				           << "mass range: " << massFirst << "-" << massLast << " GeV/c^2, "
+				           << "bin range: " << binFirst << "-" << binLast << std::endl;
+			}
+			waveMassBinLimits[idxWave] = std::make_pair(binFirst, binLast);
+		}
+
+		// determine which mass bins to use for each pair of waves
+		wavePairMassBinLimits.resize(boost::extents[fitInformation->nrWaves()][fitInformation->nrWaves()]);
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+				wavePairMassBinLimits[idxWave][jdxWave] = std::make_pair(std::max(waveMassBinLimits[idxWave].first,  waveMassBinLimits[jdxWave].first),
+				                                                         std::min(waveMassBinLimits[idxWave].second, waveMassBinLimits[jdxWave].second));
+			}
+		}
+
+		if(debug) {
+			printDebug << "waves and mass limits:" << std::endl;
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+				std::ostringstream output;
+				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+					output << wavePairMassBinLimits[idxWave][jdxWave].first << "-" << wavePairMassBinLimits[idxWave][jdxWave].second << " ";
+				}
+				printDebug << wave.waveName() << " " << waveMassBinLimits[idxWave].first << "-" << waveMassBinLimits[idxWave].second
+				           << ": " << output.str() << std::endl;
+			}
+		}
+	}
+
+
+	void
+	prepareMassLimits(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                  const std::vector<size_t>& nrMassBins,
+	                  const boost::multi_array<double, 2>& massBinCenters,
+	                  boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
+	{
+		if(debug) {
+			printDebug << "determine which mass bins to use in the fit." << std::endl;
+		}
+
+		for(size_t idxBin = 0; idxBin < nrMassBins.size(); ++idxBin) {
+			boost::multi_array<std::pair<size_t, size_t>, 2> tempWavePairMassBinLimits;
+
+			prepareMassLimit(fitInformation,
+			                 nrMassBins[idxBin],
+			                 massBinCenters[idxBin],
+			                 tempWavePairMassBinLimits);
+
+			adjustSizeAndSet(wavePairMassBinLimits, idxBin, tempWavePairMassBinLimits);
+		}
+	}
+
+
+	void
 	createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                const rpwa::resonanceFit::dataConstPtr& fitData,
 	                const rpwa::resonanceFit::modelConstPtr& fitModel,
@@ -1918,13 +2013,10 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 	// prepare mass limits
 	boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
-	if(not prepareMassLimits(fitInformation,
-	                         nrMassBins,
-	                         massBinCenters,
-	                         wavePairMassBinLimits)) {
-		printErr << "error while determining which bins to use in the fit." << std::endl;
-		return false;
-	}
+	prepareMassLimits(fitInformation,
+	                  nrMassBins,
+	                  massBinCenters,
+	                  wavePairMassBinLimits);
 
 	// set-up fit model (resonances, background, final-state mass-dependence)
 	const YAML::Node& configModel = configRoot["model"];
@@ -3230,102 +3322,6 @@ rpwa::resonanceFit::massDepFit::readFitResultIntegrals(const rpwa::resonanceFit:
 				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 			}
 			printDebug << "phase-space integrals for wave '" << fitInformation->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
-		}
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::prepareMassLimits(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                  const std::vector<size_t>& nrMassBins,
-                                                  const boost::multi_array<double, 2>& massBinCenters,
-                                                  boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
-{
-	for(size_t idxBin = 0; idxBin < nrMassBins.size(); ++idxBin) {
-		boost::multi_array<std::pair<size_t, size_t>, 2> tempWavePairMassBinLimits;
-
-		if(not prepareMassLimit(fitInformation,
-		                        nrMassBins[idxBin],
-		                        massBinCenters[idxBin],
-		                        tempWavePairMassBinLimits)) {
-			printErr << "error while determine bins to use in fit for bin " << idxBin << "." << std::endl;
-			return false;
-		}
-
-		adjustSizeAndSet(wavePairMassBinLimits, idxBin, tempWavePairMassBinLimits);
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                 const size_t nrMassBins,
-                                                 const boost::multi_array<double, 1>& massBinCenters,
-                                                 boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
-{
-	if(_debug) {
-		printDebug << "determine which mass bins to use in the fit for " << nrMassBins << " mass bins, center of first and last mass bins: "
-		           << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
-	}
-
-	std::vector<std::pair<size_t, size_t> > waveMassBinLimits(fitInformation->nrWaves());
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
-
-		size_t binFirst = 0;
-		size_t binLast = nrMassBins-1;
-		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-			if(massBinCenters[idxMass] < wave.massLimits().first) {
-				binFirst = idxMass+1;
-			}
-			if(massBinCenters[idxMass] == wave.massLimits().first) {
-				binFirst = idxMass;
-			}
-			if(massBinCenters[idxMass] <= wave.massLimits().second) {
-				binLast = idxMass;
-			}
-		}
-		if(wave.massLimits().first < 0) {
-			binFirst = 0;
-		}
-		if(wave.massLimits().second < 0) {
-			binLast = nrMassBins-1;
-		}
-
-		const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
-		const double massFirst = massBinCenters[binFirst] - massStep/2.;
-		const double massLast = massBinCenters[binLast] + massStep/2.;
-		if(_debug) {
-			printDebug << idxWave << ": " << wave.waveName() << ": "
-			           << "mass range: " << massFirst << "-" << massLast << " GeV/c^2, "
-			           << "bin range: " << binFirst << "-" << binLast << std::endl;
-		}
-		waveMassBinLimits[idxWave] = std::make_pair(binFirst, binLast);
-	}
-
-	wavePairMassBinLimits.resize(boost::extents[fitInformation->nrWaves()][fitInformation->nrWaves()]);
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
-			wavePairMassBinLimits[idxWave][jdxWave] = std::make_pair(std::max(waveMassBinLimits[idxWave].first,  waveMassBinLimits[jdxWave].first),
-			                                                         std::min(waveMassBinLimits[idxWave].second, waveMassBinLimits[jdxWave].second));
-		}
-	}
-
-	if(_debug) {
-		printDebug << "waves and mass limits:" << std::endl;
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
-
-			std::ostringstream output;
-			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
-				output << wavePairMassBinLimits[idxWave][jdxWave].first << "-" << wavePairMassBinLimits[idxWave][jdxWave].second << " ";
-			}
-			printDebug << wave.waveName() << " " << waveMassBinLimits[idxWave].first << "-" << waveMassBinLimits[idxWave].second
-			           << ": " << output.str() << std::endl;
 		}
 	}
 
