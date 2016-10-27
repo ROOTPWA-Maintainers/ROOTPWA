@@ -335,17 +335,14 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	if(not mdepFit.createPlots(fitInformation,
-	                           fitData,
-	                           fitModel,
-	                           fitParameters,
-	                           cache,
-	                           outFile.get(),
-	                           rangePlotting,
-	                           extraBinning)) {
-		printErr << "error while creating plots." << std::endl;
-		return 1;
-	}
+	rpwa::resonanceFit::createPlots(fitInformation,
+	                                fitData,
+	                                fitModel,
+	                                fitParameters,
+	                                cache,
+	                                outFile.get(),
+	                                rangePlotting,
+	                                extraBinning);
 	outFile->Close();
 
 	return 0;
