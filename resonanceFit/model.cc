@@ -95,7 +95,8 @@ void
 rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
 {
 	if(_fsmd) {
-		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
+		const size_t maxNrBins = _fsmd->isSameFunctionForAllBins() ? 1 : _fsmd->getNrBins();
+		for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
 			_nrParameters -= _fsmd->getNrParameters(idxBin);
 		}
 	}
@@ -104,7 +105,8 @@ rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
 
 	if(_fsmd) {
 		size_t sumNrParameters = 0;
-		for(size_t idxBin = 0; idxBin < _fsmd->getNrBins(); ++idxBin) {
+		const size_t maxNrBins = _fsmd->isSameFunctionForAllBins() ? 1 : _fsmd->getNrBins();
+		for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
 			sumNrParameters += _fsmd->getNrParameters(idxBin);
 		}
 		_maxParametersInComponent = std::max(_maxParametersInComponent, sumNrParameters);

@@ -57,20 +57,23 @@ namespace rpwa {
 
 		public:
 
-			fsmd(const size_t id);
+			fsmd(const size_t id,
+			     const std::vector<size_t>& nrMassBins,
+			     const boost::multi_array<double, 2>& massBinCenters,
+			     const std::shared_ptr<TFormula>& function,
+			     const boost::multi_array<rpwa::resonanceFit::parameter, 1>& parameters);
+			fsmd(const size_t id,
+			     const std::vector<size_t>& nrMassBins,
+			     const boost::multi_array<double, 2>& massBinCenters,
+			     const std::vector<std::shared_ptr<TFormula> >& functions,
+			     const boost::multi_array<rpwa::resonanceFit::parameter, 2>& parameters);
 			~fsmd();
 
-			bool init(const YAML::Node& configComponent,
-			          rpwa::resonanceFit::parameters& fitParameters,
-			          rpwa::resonanceFit::parameters& fitParametersError,
-			          const std::vector<size_t>& nrMassBins,
-			          const boost::multi_array<double, 2>& massBinCenters,
-			          const bool debug);
+			size_t getId() const { return _id; }
 
-			bool write(YAML::Emitter& yamlOutput,
-			           const rpwa::resonanceFit::parameters& fitParameters,
-			           const rpwa::resonanceFit::parameters& fitParametersError,
-			           const bool debug) const;
+			bool isSameFunctionForAllBins() const { return _sameFunctionForAllBins; }
+
+			const std::shared_ptr<TFormula>& getFunction(const size_t idxBin) const { return _functions[idxBin]; }
 
 			size_t getNrBins() const { return _nrBins; }
 
@@ -92,22 +95,12 @@ namespace rpwa {
 
 		private:
 
-			bool initBin(const YAML::Node& configComponent,
-			             rpwa::resonanceFit::parameters& fitParameters,
-			             rpwa::resonanceFit::parameters& fitParametersError,
-			             const size_t idxBin,
-			             const bool debug);
-
-			bool writeBin(YAML::Emitter& yamlOutput,
-			              const rpwa::resonanceFit::parameters& fitParameters,
-			              const rpwa::resonanceFit::parameters& fitParametersError,
-			              const size_t idxBin,
-			              const bool debug) const;
-
 			std::ostream& printBin(const size_t idxBin,
 			                       std::ostream& out = std::cout) const;
 
 			const size_t _id;
+
+			bool _sameFunctionForAllBins;
 
 			size_t _nrBins;
 			size_t _maxParameters;
