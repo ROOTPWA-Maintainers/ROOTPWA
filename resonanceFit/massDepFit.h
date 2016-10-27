@@ -62,6 +62,15 @@ namespace rpwa {
 		class cache;
 		class parameters;
 
+		void createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                 const rpwa::resonanceFit::dataConstPtr& fitData,
+		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
+		                 const rpwa::resonanceFit::parameters& fitParameters,
+		                 rpwa::resonanceFit::cache& cache,
+		                 TFile* outFile,
+		                 const bool rangePlotting,
+		                 const size_t extraBinning);
+
 		void setDebug(const bool debug);
 
 		class massDepFit {
@@ -96,16 +105,6 @@ namespace rpwa {
 			                 const rpwa::resonanceFit::parameters& fitParametersError,
 			                 const std::map<std::string, double>& fitQuality,
 			                 const std::vector<std::string>& freeParameters) const;
-
-// FIXME: make private
-			bool createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                 const rpwa::resonanceFit::dataConstPtr& fitData,
-			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                 const rpwa::resonanceFit::parameters& fitParameters,
-			                 rpwa::resonanceFit::cache& cache,
-			                 TFile* outFile,
-			                 const bool rangePlotting,
-			                 const size_t extraBinning) const;
 
 			static void setDebug(bool debug);
 
@@ -253,45 +252,6 @@ namespace rpwa {
 			                            const std::vector<Long64_t>& mapping,
 			                            const boost::multi_array<std::string, 1>& waveNames,
 			                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
-
-			bool createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                     const rpwa::resonanceFit::dataConstPtr& fitData,
-			                     const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                     const rpwa::resonanceFit::parameters& fitParameters,
-			                     rpwa::resonanceFit::cache& cache,
-			                     TDirectory* outDirectory,
-			                     const bool rangePlotting,
-			                     const size_t extraBinning,
-			                     const size_t idxWave,
-			                     const size_t idxBin) const;
-			bool createPlotsWaveSum(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                        const rpwa::resonanceFit::dataConstPtr& fitData,
-			                        const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                        const rpwa::resonanceFit::parameters& fitParameters,
-			                        rpwa::resonanceFit::cache& cache,
-			                        TDirectory* outDirectory,
-			                        const bool rangePlotting,
-			                        const size_t extraBinning,
-			                        const size_t idxWave) const;
-			bool createPlotsWavePair(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                         const rpwa::resonanceFit::dataConstPtr& fitData,
-			                         const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                         const rpwa::resonanceFit::parameters& fitParameters,
-			                         rpwa::resonanceFit::cache& cache,
-			                         TDirectory* outDirectory,
-			                         const bool rangePlotting,
-			                         const size_t extraBinning,
-			                         const size_t idxWave,
-			                         const size_t jdxWave,
-			                         const size_t idxBin) const;
-			bool createPlotsFsmd(const rpwa::resonanceFit::dataConstPtr& fitData,
-			                     const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                     const rpwa::resonanceFit::parameters& fitParameters,
-			                     rpwa::resonanceFit::cache& cache,
-			                     TDirectory* outDirectory,
-			                     const bool rangePlotting,
-			                     const size_t extraBinning,
-			                     const size_t idxBin) const;
 
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;
