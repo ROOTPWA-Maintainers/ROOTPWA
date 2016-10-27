@@ -1616,6 +1616,370 @@ namespace {
 
 
 	void
+	readInFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	           const rpwa::resonanceFit::information::bin& bin,
+	           boost::multi_array<std::string, 1>& waveNames,
+	           size_t& nrMassBins,
+	           boost::multi_array<double, 1>& massBinCenters,
+	           boost::multi_array<double, 2>& phaseSpaceIntegrals,
+	           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
+	           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+	           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+	           boost::multi_array<TMatrixT<double>, 1>& spinDensityMatricesCovariance,
+	           boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
+	           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
+	           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
+	           boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+	           const std::string& valTreeName = "pwa",
+	           const std::string& valBranchName = "fitResult_v2")
+	{
+		if(debug) {
+			printDebug << "reading fit result from file '" << bin.fileName() << "'." << std::endl;
+		}
+
+		std::unique_ptr<TFile> inFile(TFile::Open(bin.fileName().c_str()));
+		if(not inFile) {
+			printErr << "input file '" << bin.fileName() << "' not found."<< std::endl;
+			throw;
+		}
+		if(inFile->IsZombie()) {
+			printErr << "error while reading input file '" << bin.fileName() << "'."<< std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.fileName() << "'." << std::endl;
+		}
+
+		TTree* inTree;
+		inFile->GetObject(valTreeName.c_str(), inTree);
+		if(not inTree) {
+			printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.fileName() << "'."<< std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << std::endl;
+		}
+
+		rpwa::fitResult* inFit = NULL;
+		if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
+			printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
+			throw;
+		}
+
+		readFitResultMassBins(inTree,
+		                      inFit,
+		                      nrMassBins,
+		                      massBinCenters);
+
+		std::vector<Long64_t> inMapping;
+		checkFitResultMassBins(inTree,
+		                       inFit,
+		                       nrMassBins,
+		                       massBinCenters,
+		                       inMapping);
+
+		readFitResultWaveNames(fitInformation,
+		                       inTree,
+		                       inFit,
+		                       waveNames);
+
+		readFitResultMatrices(fitInformation,
+		                      inTree,
+		                      inFit,
+		                      inMapping,
+		                      bin.rescaleErrors(),
+		                      waveNames,
+		                      productionAmplitudes,
+		                      productionAmplitudesCovariance,
+		                      spinDensityMatrices,
+		                      spinDensityMatricesCovariance,
+		                      plottingIntensities,
+		                      plottingSpinDensityMatrixElementsReal,
+		                      plottingSpinDensityMatrixElementsImag,
+		                      plottingPhases);
+
+		readFitResultIntegrals(fitInformation,
+		                       inTree,
+		                       inFit,
+		                       inMapping,
+		                       waveNames,
+		                       phaseSpaceIntegrals);
+	}
+
+
+	void
+	readSystematicsFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                    const size_t idxBin,
+	                    const rpwa::resonanceFit::information::bin& bin,
+	                    const size_t idxSystematics,
+	                    const boost::multi_array<std::string, 1>& waveNames,
+	                    const size_t nrMassBins,
+	                    const boost::multi_array<double, 1>& massBinCenters,
+	                    const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+	                    boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+	                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+	                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+	                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
+	                    const std::string& valTreeName = "pwa",
+	                    const std::string& valBranchName = "fitResult_v2")
+	{
+		if(debug) {
+			printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
+		}
+
+		std::unique_ptr<TFile> sysFile(TFile::Open(bin.sysFileNames()[idxSystematics].c_str()));
+		if(not sysFile) {
+			printErr << "input file '" << bin.sysFileNames()[idxSystematics] << "' not found."<< std::endl;
+			throw;
+		}
+		if(sysFile->IsZombie()) {
+			printErr << "error while reading input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
+		}
+
+		TTree* sysTree;
+		sysFile->GetObject(valTreeName.c_str(), sysTree);
+		if(not sysTree) {
+			printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << std::endl;
+		}
+
+		rpwa::fitResult* sysFit = NULL;
+		if(sysTree->SetBranchAddress(valBranchName.c_str(), &sysFit)) {
+			printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
+			throw;
+		}
+
+		std::vector<Long64_t> sysMapping;
+		checkFitResultMassBins(sysTree,
+		                       sysFit,
+		                       nrMassBins,
+		                       massBinCenters,
+		                       sysMapping);
+
+		boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
+		boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
+		boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
+		boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
+		boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities;
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
+		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
+		readFitResultMatrices(fitInformation,
+		                      sysTree,
+		                      sysFit,
+		                      sysMapping,
+		                      bin.rescaleErrors(),
+		                      waveNames,
+		                      tempProductionAmplitudes,
+		                      tempProductionAmplitudesCovariance,
+		                      tempSpinDensityMatrices,
+		                      tempSpinDensityCovarianceMatrices,
+		                      tempSysPlottingIntensities,
+		                      tempSysPlottingSpinDensityMatrixElementsReal,
+		                      tempSysPlottingSpinDensityMatrixElementsImag,
+		                      tempSysPlottingPhases);
+
+		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				sysPlottingIntensities[idxMass][idxWave].first = std::min(sysPlottingIntensities[idxMass][idxWave].first,
+				                                                          tempSysPlottingIntensities[idxMass][idxWave].first);
+				sysPlottingIntensities[idxMass][idxWave].second = std::max(sysPlottingIntensities[idxMass][idxWave].second,
+				                                                           tempSysPlottingIntensities[idxMass][idxWave].first);
+
+				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+					sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
+					                                                                                     tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+					sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second,
+					                                                                                      tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+
+					sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
+					                                                                                     tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+					sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second,
+					                                                                                      tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+
+					// rotate phase by +- 360 degrees to be as
+					// close as possible to the data used in the
+					// fit
+					if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first+360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
+						tempSysPlottingPhases[idxMass][idxWave][jdxWave].first += 360.;
+					} else if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first-360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
+						tempSysPlottingPhases[idxMass][idxWave][jdxWave].first -= 360.;
+					}
+
+					sysPlottingPhases[idxMass][idxWave][jdxWave].first = std::min(sysPlottingPhases[idxMass][idxWave][jdxWave].first,
+					                                                              tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+					sysPlottingPhases[idxMass][idxWave][jdxWave].second = std::max(sysPlottingPhases[idxMass][idxWave][jdxWave].second,
+					                                                               tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
+				}
+			}
+		}
+	}
+
+
+	void
+	readSystematicsFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                     const size_t idxBin,
+	                     const rpwa::resonanceFit::information::bin& bin,
+	                     const boost::multi_array<std::string, 1>& waveNames,
+	                     const size_t nrMassBins,
+	                     const boost::multi_array<double, 1>& massBinCenters,
+	                     const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
+	                     boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
+	                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
+	                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
+	                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
+	                     const std::string& valTreeName = "pwa",
+	                     const std::string& valBranchName = "fitResult_v2")
+	{
+		if(debug) {
+			printDebug << "reading fit results for systematic errors for bin " << idxBin << " from " << bin.sysFileNames().size() << " files." << std::endl;
+		}
+
+		for(size_t idxSystematics = 0; idxSystematics < bin.sysFileNames().size(); ++idxSystematics) {
+			readSystematicsFile(fitInformation,
+			                    idxBin,
+			                    bin,
+			                    idxSystematics,
+			                    waveNames,
+			                    nrMassBins,
+			                    massBinCenters,
+			                    plottingPhases,
+			                    sysPlottingIntensities,
+			                    sysPlottingSpinDensityMatrixElementsReal,
+			                    sysPlottingSpinDensityMatrixElementsImag,
+			                    sysPlottingPhases,
+			                    valTreeName,
+			                    valBranchName);
+		}
+	}
+
+
+	void
+	readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	            boost::multi_array<std::string, 2>& waveNames,
+	            std::vector<size_t>& nrMassBins,
+	            boost::multi_array<double, 2>& massBinCenters,
+	            boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	            boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+	            boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
+	            boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
+	            boost::multi_array<TMatrixT<double>, 2>& spinDensityMatricesCovariance,
+	            boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+	            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+	            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+	            boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+	            boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+	            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+	            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+	            boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases,
+	            const std::string& valTreeName = "pwa",
+	            const std::string& valBranchName = "fitResult_v2")
+	{
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			const rpwa::resonanceFit::information::bin& bin = fitInformation->getBin(idxBin);
+
+			boost::multi_array<std::string, 1> tempWaveNames;
+			size_t tempNrMassBins;
+			boost::multi_array<double, 1> tempMassBinCenters;
+			boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
+			boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
+			boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
+			boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
+			boost::multi_array<TMatrixT<double>, 1> tempSpinDensityMatricesCovariance;
+			boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
+			boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
+			boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
+			boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
+
+			readInFile(fitInformation,
+			           bin,
+			           tempWaveNames,
+			           tempNrMassBins,
+			           tempMassBinCenters,
+			           tempPhaseSpaceIntegrals,
+			           tempProductionAmplitudes,
+			           tempProductionAmplitudesCovariance,
+			           tempSpinDensityMatrices,
+			           tempSpinDensityMatricesCovariance,
+			           tempPlottingIntensities,
+			           tempPlottingSpinDensityMatrixElementsReal,
+			           tempPlottingSpinDensityMatrixElementsImag,
+			           tempPlottingPhases,
+			           valTreeName,
+			           valBranchName);
+
+			adjustSizeAndSet(waveNames, idxBin, tempWaveNames);
+			adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
+			adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
+			adjustSizeAndSet(phaseSpaceIntegrals, idxBin, tempPhaseSpaceIntegrals);
+			adjustSizeAndSet(productionAmplitudes, idxBin, tempProductionAmplitudes);
+			adjustSizeAndSet(productionAmplitudesCovariance, idxBin, tempProductionAmplitudesCovariance);
+			adjustSizeAndSet(spinDensityMatrices, idxBin, tempSpinDensityMatrices);
+			adjustSizeAndSet(spinDensityMatricesCovariance, idxBin, tempSpinDensityMatricesCovariance);
+			adjustSizeAndSet(plottingIntensities, idxBin, tempPlottingIntensities);
+			adjustSizeAndSet(plottingSpinDensityMatrixElementsReal, idxBin, tempPlottingSpinDensityMatrixElementsReal);
+			adjustSizeAndSet(plottingSpinDensityMatrixElementsImag, idxBin, tempPlottingSpinDensityMatrixElementsImag);
+			adjustSizeAndSet(plottingPhases, idxBin, tempPlottingPhases);
+
+			// extract information for systematic errors
+			// initialize with real fit result
+			boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities(std::vector<size_t>(tempPlottingIntensities.shape(), tempPlottingIntensities.shape()+tempPlottingIntensities.num_dimensions()));
+			boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsReal.shape(), tempPlottingSpinDensityMatrixElementsReal.shape()+tempPlottingSpinDensityMatrixElementsReal.num_dimensions()));
+			boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsImag.shape(), tempPlottingSpinDensityMatrixElementsImag.shape()+tempPlottingSpinDensityMatrixElementsImag.num_dimensions()));
+			boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases(std::vector<size_t>(tempPlottingPhases.shape(), tempPlottingPhases.shape()+tempPlottingPhases.num_dimensions()));
+
+			for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
+				for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+					tempSysPlottingIntensities[idxMass][idxWave] = std::make_pair(tempPlottingIntensities[idxMass][idxWave].first,
+					                                                              tempPlottingIntensities[idxMass][idxWave].first);
+
+					for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+						tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
+						                                                                                         tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
+						tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
+						                                                                                         tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
+						tempSysPlottingPhases[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingPhases[idxMass][idxWave][jdxWave].first,
+						                                                                  tempPlottingPhases[idxMass][idxWave][jdxWave].first);
+					}
+				}
+			}
+
+			if(bin.sysFileNames().size() > 0) {
+				readSystematicsFiles(fitInformation,
+				                     idxBin,
+				                     bin,
+				                     waveNames[idxBin],
+				                     nrMassBins[idxBin],
+				                     massBinCenters[idxBin],
+				                     tempPlottingPhases,
+				                     tempSysPlottingIntensities,
+				                     tempSysPlottingSpinDensityMatrixElementsReal,
+				                     tempSysPlottingSpinDensityMatrixElementsImag,
+				                     tempSysPlottingPhases,
+				                     valTreeName,
+				                     valBranchName);
+			}
+
+			adjustSizeAndSet(sysPlottingIntensities, idxBin, tempSysPlottingIntensities);
+			adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsReal, idxBin, tempSysPlottingSpinDensityMatrixElementsReal);
+			adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsImag, idxBin, tempSysPlottingSpinDensityMatrixElementsImag);
+			adjustSizeAndSet(sysPlottingPhases, idxBin, tempSysPlottingPhases);
+		}
+	}
+
+
+	void
 	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                 const size_t nrMassBins,
 	                 const boost::multi_array<double, 1>& massBinCenters,
@@ -2384,28 +2748,25 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
-	if(not readInFiles(fitInformation,
-	                   waveNames,
-	                   nrMassBins,
-	                   massBinCenters,
-	                   phaseSpaceIntegrals,
-	                   inProductionAmplitudes,
-	                   inProductionAmplitudesCovariance,
-	                   inSpinDensityMatrices,
-	                   inSpinDensityMatricesCovariance,
-	                   inPlottingIntensities,
-	                   inPlottingSpinDensityMatrixElementsReal,
-	                   inPlottingSpinDensityMatrixElementsImag,
-	                   inPlottingPhases,
-	                   inSysPlottingIntensities,
-	                   inSysPlottingSpinDensityMatrixElementsReal,
-	                   inSysPlottingSpinDensityMatrixElementsImag,
-	                   inSysPlottingPhases,
-	                   valTreeName,
-	                   valBranchName)) {
-		printErr << "error while reading fit result." << std::endl;
-		return false;
-	}
+	readInFiles(fitInformation,
+	            waveNames,
+	            nrMassBins,
+	            massBinCenters,
+	            phaseSpaceIntegrals,
+	            inProductionAmplitudes,
+	            inProductionAmplitudesCovariance,
+	            inSpinDensityMatrices,
+	            inSpinDensityMatricesCovariance,
+	            inPlottingIntensities,
+	            inPlottingSpinDensityMatrixElementsReal,
+	            inPlottingSpinDensityMatrixElementsImag,
+	            inPlottingPhases,
+	            inSysPlottingIntensities,
+	            inSysPlottingSpinDensityMatrixElementsReal,
+	            inSysPlottingSpinDensityMatrixElementsImag,
+	            inSysPlottingPhases,
+	            valTreeName,
+	            valBranchName);
 
 	// prepare mass limits
 	boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
@@ -2923,391 +3284,6 @@ rpwa::resonanceFit::massDepFit::writeConfigModelFsmd(YAML::Emitter& yamlOutput,
 	if(not fitModel->getFsmd()->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
 		printErr << "error while writing final-state mass-dependence to result file." << std::endl;
 		return false;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                            boost::multi_array<std::string, 2>& waveNames,
-                                            std::vector<size_t>& nrMassBins,
-                                            boost::multi_array<double, 2>& massBinCenters,
-                                            boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                            boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-                                            boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovariance,
-                                            boost::multi_array<std::complex<double>, 4>& spinDensityMatrices,
-                                            boost::multi_array<TMatrixT<double>, 2>& spinDensityMatricesCovariance,
-                                            boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
-                                            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
-                                            boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
-                                            boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
-                                            boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
-                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
-                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
-                                            boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases,
-                                            const std::string& valTreeName,
-                                            const std::string& valBranchName)
-{
-	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-		const rpwa::resonanceFit::information::bin& bin = fitInformation->getBin(idxBin);
-
-		boost::multi_array<std::string, 1> tempWaveNames;
-		size_t tempNrMassBins;
-		boost::multi_array<double, 1> tempMassBinCenters;
-		boost::multi_array<double, 2> tempPhaseSpaceIntegrals;
-		boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
-		boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
-		boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
-		boost::multi_array<TMatrixT<double>, 1> tempSpinDensityMatricesCovariance;
-		boost::multi_array<std::pair<double, double>, 2> tempPlottingIntensities;
-		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsReal;
-		boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
-		boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
-
-		if(not readInFile(fitInformation,
-		                  bin,
-		                  tempWaveNames,
-		                  tempNrMassBins,
-		                  tempMassBinCenters,
-		                  tempPhaseSpaceIntegrals,
-		                  tempProductionAmplitudes,
-		                  tempProductionAmplitudesCovariance,
-		                  tempSpinDensityMatrices,
-		                  tempSpinDensityMatricesCovariance,
-		                  tempPlottingIntensities,
-		                  tempPlottingSpinDensityMatrixElementsReal,
-		                  tempPlottingSpinDensityMatrixElementsImag,
-		                  tempPlottingPhases,
-		                  valTreeName,
-		                  valBranchName)) {
-			printErr << "error while reading file entry " << idxBin << "." << std::endl;
-			return false;
-		}
-
-		adjustSizeAndSet(waveNames, idxBin, tempWaveNames);
-		adjustSizeAndSet(nrMassBins, idxBin, tempNrMassBins);
-		adjustSizeAndSet(massBinCenters, idxBin, tempMassBinCenters);
-		adjustSizeAndSet(phaseSpaceIntegrals, idxBin, tempPhaseSpaceIntegrals);
-		adjustSizeAndSet(productionAmplitudes, idxBin, tempProductionAmplitudes);
-		adjustSizeAndSet(productionAmplitudesCovariance, idxBin, tempProductionAmplitudesCovariance);
-		adjustSizeAndSet(spinDensityMatrices, idxBin, tempSpinDensityMatrices);
-		adjustSizeAndSet(spinDensityMatricesCovariance, idxBin, tempSpinDensityMatricesCovariance);
-		adjustSizeAndSet(plottingIntensities, idxBin, tempPlottingIntensities);
-		adjustSizeAndSet(plottingSpinDensityMatrixElementsReal, idxBin, tempPlottingSpinDensityMatrixElementsReal);
-		adjustSizeAndSet(plottingSpinDensityMatrixElementsImag, idxBin, tempPlottingSpinDensityMatrixElementsImag);
-		adjustSizeAndSet(plottingPhases, idxBin, tempPlottingPhases);
-
-		// extract information for systematic errors
-		// initialize with real fit result
-		boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities(std::vector<size_t>(tempPlottingIntensities.shape(), tempPlottingIntensities.shape()+tempPlottingIntensities.num_dimensions()));
-		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsReal.shape(), tempPlottingSpinDensityMatrixElementsReal.shape()+tempPlottingSpinDensityMatrixElementsReal.num_dimensions()));
-		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag(std::vector<size_t>(tempPlottingSpinDensityMatrixElementsImag.shape(), tempPlottingSpinDensityMatrixElementsImag.shape()+tempPlottingSpinDensityMatrixElementsImag.num_dimensions()));
-		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases(std::vector<size_t>(tempPlottingPhases.shape(), tempPlottingPhases.shape()+tempPlottingPhases.num_dimensions()));
-
-		for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-				tempSysPlottingIntensities[idxMass][idxWave] = std::make_pair(tempPlottingIntensities[idxMass][idxWave].first,
-				                                                              tempPlottingIntensities[idxMass][idxWave].first);
-
-				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
-					tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
-					                                                                                         tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
-					tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
-					                                                                                         tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
-					tempSysPlottingPhases[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingPhases[idxMass][idxWave][jdxWave].first,
-					                                                                  tempPlottingPhases[idxMass][idxWave][jdxWave].first);
-				}
-			}
-		}
-
-		if(bin.sysFileNames().size() > 0) {
-			if(not readSystematicsFiles(fitInformation,
-			                            idxBin,
-			                            bin,
-			                            waveNames[idxBin],
-			                            nrMassBins[idxBin],
-			                            massBinCenters[idxBin],
-			                            tempPlottingPhases,
-			                            tempSysPlottingIntensities,
-			                            tempSysPlottingSpinDensityMatrixElementsReal,
-			                            tempSysPlottingSpinDensityMatrixElementsImag,
-			                            tempSysPlottingPhases,
-			                            valTreeName,
-			                            valBranchName)) {
-				printErr << "error while reading fit results for systematic errors in bin " << idxBin << "." << std::endl;
-				return false;
-			}
-		}
-
-		adjustSizeAndSet(sysPlottingIntensities, idxBin, tempSysPlottingIntensities);
-		adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsReal, idxBin, tempSysPlottingSpinDensityMatrixElementsReal);
-		adjustSizeAndSet(sysPlottingSpinDensityMatrixElementsImag, idxBin, tempSysPlottingSpinDensityMatrixElementsImag);
-		adjustSizeAndSet(sysPlottingPhases, idxBin, tempSysPlottingPhases);
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                           const rpwa::resonanceFit::information::bin& bin,
-                                           boost::multi_array<std::string, 1>& waveNames,
-                                           size_t& nrMassBins,
-                                           boost::multi_array<double, 1>& massBinCenters,
-                                           boost::multi_array<double, 2>& phaseSpaceIntegrals,
-                                           boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
-                                           boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
-                                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-                                           boost::multi_array<TMatrixT<double>, 1>& spinDensityMatricesCovariance,
-                                           boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
-                                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
-                                           boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
-                                           boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
-                                           const std::string& valTreeName,
-                                           const std::string& valBranchName)
-{
-	if(_debug) {
-		printDebug << "reading fit result from file '" << bin.fileName() << "'." << std::endl;
-	}
-
-	std::unique_ptr<TFile> inFile(TFile::Open(bin.fileName().c_str()));
-	if(not inFile) {
-		printErr << "input file '" << bin.fileName() << "' not found."<< std::endl;
-		return false;
-	}
-	if(inFile->IsZombie()) {
-		printErr << "error while reading input file '" << bin.fileName() << "'."<< std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.fileName() << "'." << std::endl;
-	}
-
-	TTree* inTree;
-	inFile->GetObject(valTreeName.c_str(), inTree);
-	if(not inTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.fileName() << "'."<< std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << std::endl;
-	}
-
-	fitResult* inFit = NULL;
-	if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
-		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
-		return false;
-	}
-
-	readFitResultMassBins(inTree,
-	                      inFit,
-	                      nrMassBins,
-	                      massBinCenters);
-
-	std::vector<Long64_t> inMapping;
-	checkFitResultMassBins(inTree,
-	                       inFit,
-	                       nrMassBins,
-	                       massBinCenters,
-	                       inMapping);
-
-	readFitResultWaveNames(fitInformation,
-	                       inTree,
-	                       inFit,
-	                       waveNames);
-
-	readFitResultMatrices(fitInformation,
-	                      inTree,
-	                      inFit,
-	                      inMapping,
-	                      bin.rescaleErrors(),
-	                      waveNames,
-	                      productionAmplitudes,
-	                      productionAmplitudesCovariance,
-	                      spinDensityMatrices,
-	                      spinDensityMatricesCovariance,
-	                      plottingIntensities,
-	                      plottingSpinDensityMatrixElementsReal,
-	                      plottingSpinDensityMatrixElementsImag,
-	                      plottingPhases);
-
-	readFitResultIntegrals(fitInformation,
-	                       inTree,
-	                       inFit,
-	                       inMapping,
-	                       waveNames,
-	                       phaseSpaceIntegrals);
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readSystematicsFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                     const size_t idxBin,
-                                                     const rpwa::resonanceFit::information::bin& bin,
-                                                     const boost::multi_array<std::string, 1>& waveNames,
-                                                     const size_t nrMassBins,
-                                                     const boost::multi_array<double, 1>& massBinCenters,
-                                                     const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
-                                                     boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
-                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
-                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
-                                                     boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
-                                                     const std::string& valTreeName,
-                                                     const std::string& valBranchName)
-{
-	if(bin.sysFileNames().size() == 0) {
-		return true;
-	}
-
-	if(_debug) {
-		printDebug << "reading fit results for systematic errors for bin " << idxBin << " from " << bin.sysFileNames().size() << " files." << std::endl;
-	}
-
-	for(size_t idxSystematics = 0; idxSystematics < bin.sysFileNames().size(); ++idxSystematics) {
-		if(not readSystematicsFile(fitInformation,
-		                           idxBin,
-		                           bin,
-		                           idxSystematics,
-		                           waveNames,
-		                           nrMassBins,
-		                           massBinCenters,
-		                           plottingPhases,
-		                           sysPlottingIntensities,
-		                           sysPlottingSpinDensityMatrixElementsReal,
-		                           sysPlottingSpinDensityMatrixElementsImag,
-		                           sysPlottingPhases,
-		                           valTreeName,
-		                           valBranchName)) {
-			printErr << "error while reading fit results for systematic errors." << std::endl;
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                    const size_t idxBin,
-                                                    const rpwa::resonanceFit::information::bin& bin,
-                                                    const size_t idxSystematics,
-                                                    const boost::multi_array<std::string, 1>& waveNames,
-                                                    const size_t nrMassBins,
-                                                    const boost::multi_array<double, 1>& massBinCenters,
-                                                    const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
-                                                    boost::multi_array<std::pair<double, double>, 2>& sysPlottingIntensities,
-                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsReal,
-                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingSpinDensityMatrixElementsImag,
-                                                    boost::multi_array<std::pair<double, double>, 3>& sysPlottingPhases,
-                                                    const std::string& valTreeName,
-                                                    const std::string& valBranchName)
-{
-	if(_debug) {
-		printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
-	}
-
-	std::unique_ptr<TFile> sysFile(TFile::Open(bin.sysFileNames()[idxSystematics].c_str()));
-	if(not sysFile) {
-		printErr << "input file '" << bin.sysFileNames()[idxSystematics] << "' not found."<< std::endl;
-		return false;
-	}
-	if(sysFile->IsZombie()) {
-		printErr << "error while reading input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
-	}
-
-	TTree* sysTree;
-	sysFile->GetObject(valTreeName.c_str(), sysTree);
-	if(not sysTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << std::endl;
-	}
-
-	fitResult* sysFit = NULL;
-	if(sysTree->SetBranchAddress(valBranchName.c_str(), &sysFit)) {
-		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
-		return false;
-	}
-
-	std::vector<Long64_t> sysMapping;
-	checkFitResultMassBins(sysTree,
-	                       sysFit,
-	                       nrMassBins,
-	                       massBinCenters,
-	                       sysMapping);
-
-	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
-	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
-	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
-	boost::multi_array<TMatrixT<double>, 1> tempSpinDensityCovarianceMatrices;
-	boost::multi_array<std::pair<double, double>, 2> tempSysPlottingIntensities;
-	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
-	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
-	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
-	readFitResultMatrices(fitInformation,
-	                      sysTree,
-	                      sysFit,
-	                      sysMapping,
-	                      bin.rescaleErrors(),
-	                      waveNames,
-	                      tempProductionAmplitudes,
-	                      tempProductionAmplitudesCovariance,
-	                      tempSpinDensityMatrices,
-	                      tempSpinDensityCovarianceMatrices,
-	                      tempSysPlottingIntensities,
-	                      tempSysPlottingSpinDensityMatrixElementsReal,
-	                      tempSysPlottingSpinDensityMatrixElementsImag,
-	                      tempSysPlottingPhases);
-
-	for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			sysPlottingIntensities[idxMass][idxWave].first = std::min(sysPlottingIntensities[idxMass][idxWave].first,
-			                                                          tempSysPlottingIntensities[idxMass][idxWave].first);
-			sysPlottingIntensities[idxMass][idxWave].second = std::max(sysPlottingIntensities[idxMass][idxWave].second,
-			                                                           tempSysPlottingIntensities[idxMass][idxWave].first);
-
-			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
-				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
-				                                                                                     tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
-				sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second,
-				                                                                                      tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
-
-				sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
-				                                                                                     tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
-				sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].second,
-				                                                                                      tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first);
-
-				// rotate phase by +- 360 degrees to be as
-				// close as possible to the data used in the
-				// fit
-				if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first+360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
-					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first += 360.;
-				} else if(std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first-360. - plottingPhases[idxMass][idxWave][jdxWave].first) < std::abs(tempSysPlottingPhases[idxMass][idxWave][jdxWave].first - plottingPhases[idxMass][idxWave][jdxWave].first)) {
-					tempSysPlottingPhases[idxMass][idxWave][jdxWave].first -= 360.;
-				}
-
-				sysPlottingPhases[idxMass][idxWave][jdxWave].first = std::min(sysPlottingPhases[idxMass][idxWave][jdxWave].first,
-				                                                              tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
-				sysPlottingPhases[idxMass][idxWave][jdxWave].second = std::max(sysPlottingPhases[idxMass][idxWave][jdxWave].second,
-				                                                               tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
-			}
-		}
 	}
 
 	return true;
