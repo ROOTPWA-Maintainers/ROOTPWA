@@ -1220,6 +1220,402 @@ namespace {
 
 
 	void
+	readFitResultMassBins(TTree* tree,
+	                      rpwa::fitResult* fit,
+	                      size_t& nrMassBins,
+	                      boost::multi_array<double, 1>& massBinCenters)
+	{
+		if(not tree or not fit) {
+			printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
+			throw;
+		}
+
+		// extract data from tree
+		const Long64_t nrEntries = tree->GetEntries();
+
+		if(debug) {
+			printDebug << "getting center of mass bins from " << nrEntries << " entries in tree." << std::endl;
+		}
+
+		nrMassBins = 0;
+		for(Long64_t idx = 0; idx < nrEntries; ++idx) {
+			if(tree->GetEntry(idx) == 0) {
+				printErr << "error while reading entry " << idx << " from tree." << std::endl;
+				throw;
+			}
+			const double newMass = fit->massBinCenter();
+
+			if(debug) {
+				printDebug << "entry " << idx << ": center of mass bin at " << newMass << " GeV/c^2" << std::endl;
+			}
+
+			bool found = false;
+			for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
+				if(std::abs(massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
+					found = true;
+					if(debug) {
+						printDebug << "this center of mass bin already was encountered before." << std::endl;
+					}
+					break;
+				}
+			}
+
+			if(not found) {
+				adjustSizeAndSet(massBinCenters, nrMassBins++, newMass);
+			}
+		} // end loop over entries in tree
+
+		// sort mass bins
+		std::sort(massBinCenters.data(), massBinCenters.data() + nrMassBins);
+
+		printInfo << "found " << nrMassBins << " mass bins, center of first and last mass bins: "
+		          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
+
+		const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
+		for(size_t idxMass = 1; idxMass < nrMassBins; ++idxMass) {
+			if(std::abs(massBinCenters[idxMass]-massBinCenters[idxMass-1] - massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
+				printErr << "mass distance between bins " << idxMass-1 << " (" << massBinCenters[idxMass-1] << " GeV/c^2) and "
+				         << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
+				         << massStep << " GeV/c^2" << std::endl;
+				throw;
+			}
+		}
+	}
+
+
+	void
+	checkFitResultMassBins(TTree* tree,
+	                       rpwa::fitResult* fit,
+	                       const size_t nrMassBins,
+	                       const boost::multi_array<double, 1>& massBinCenters,
+	                       std::vector<Long64_t>& mapping)
+	{
+		if(not tree or not fit) {
+			printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
+			throw;
+		}
+
+		// reset mapping
+		mapping.assign(nrMassBins, std::numeric_limits<Long64_t>::max());
+
+		// extract data from tree
+		const Long64_t nrEntries = tree->GetEntries();
+
+		if(debug) {
+			printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
+			           << "and map the " << nrMassBins << " mass bins to those entries." << std::endl;
+		}
+
+		for(Long64_t idx = 0; idx < nrEntries; ++idx) {
+			if(tree->GetEntry(idx) == 0) {
+				printErr << "error while reading entry " << idx << " from tree." << std::endl;
+				throw;
+			}
+			//FIXME: this would also be the place to select the best fit in case one file contains more than one fit result per mass bin
+			const double mass = fit->massBinCenter();
+
+			if(debug) {
+				printDebug << "entry " << idx << ": center of mass bin at " << mass << " GeV/c^2" << std::endl;
+			}
+
+			bool found = false;
+			size_t idxMass = 0;
+			while(idxMass < nrMassBins) {
+				if(std::abs(massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
+					found = true;
+					break;
+				}
+				++idxMass;
+			}
+
+			if(not found) {
+				printErr << "could not map mass bin centered at " << mass << " GeV/c^2 to a known mass bin." << std::endl;
+				throw;
+			}
+
+			if(mapping[idxMass] != std::numeric_limits<Long64_t>::max()) {
+				printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2)  "
+				         << "which is already mapped to tree entry " << mapping[idxMass] << "." << std::endl;
+				throw;
+			}
+
+			if(debug) {
+				printDebug << "mapping mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
+			}
+			mapping[idxMass] = idx;
+		} // end loop over entries in tree
+
+		// check that all mass bins are mapped
+		for(size_t idx = 0; idx < mapping.size(); ++idx) {
+			if(mapping[idx] == std::numeric_limits<Long64_t>::max()) {
+				printErr << "mass bin " << idx << " (" << massBinCenters[idx] << " GeV/c^2) not mapped." << std::endl;
+				throw;
+			}
+		}
+
+		if(debug) {
+			std::ostringstream output;
+			for(size_t idx = 0; idx < mapping.size(); ++idx) {
+				output << " " << idx << "->" << mapping[idx];
+			}
+			printDebug << "established mapping:" << output.str() << std::endl;
+		}
+	}
+
+
+	void
+	readFitResultWaveNames(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                       TTree* tree,
+	                       rpwa::fitResult* fit,
+	                       boost::multi_array<std::string, 1>& waveNames)
+	{
+		if(not tree or not fit) {
+			printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "getting wave names to use for current fit result." << std::endl;
+		}
+
+		// read wave names from first fit result in tree
+		waveNames.resize(boost::extents[fitInformation->nrWaves()]);
+		if(tree->GetEntry(0) == 0) {
+			printErr << "error while reading entry " << 0 << " from tree." << std::endl;
+			throw;
+		}
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			int idx = fit->waveIndex(fitInformation->getWave(idxWave).waveName());
+			// try alternative wave names
+			for(size_t idxAlt = 0; idxAlt < fitInformation->getWave(idxWave).waveNameAlternatives().size(); ++idxAlt) {
+				const int altIdx = fit->waveIndex(fitInformation->getWave(idxWave).waveNameAlternatives()[idxAlt]);
+				if(altIdx != -1) {
+					if(idx != -1) {
+						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << fitInformation->getWave(idxWave).waveName() << "'." << std::endl;
+						throw;
+					}
+					idx = altIdx;
+				}
+			}
+			if(idx == -1) {
+				printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
+				throw;
+			}
+			waveNames[idxWave] = fit->waveName(idx);
+		}
+	}
+
+
+	void
+	readFitResultMatrices(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                      TTree* tree,
+	                      rpwa::fitResult* fit,
+	                      const std::vector<Long64_t>& mapping,
+	                      const double rescaleErrors,
+	                      const boost::multi_array<std::string, 1>& waveNames,
+	                      boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
+	                      boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
+	                      boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+	                      boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
+	                      boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
+	                      boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
+	                      boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
+	                      boost::multi_array<std::pair<double, double>, 3>& plottingPhases)
+	{
+		if(not tree or not fit) {
+			printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
+			throw;
+		}
+
+		if(debug) {
+			printDebug << "reading spin-density matrices for " << fitInformation->nrWaves() << " waves from fit result." << std::endl;
+		}
+
+		productionAmplitudes.resize(boost::extents[mapping.size()][waveNames.size()]);
+		productionAmplitudesCovariance.resize(boost::extents[mapping.size()]);
+
+		spinDensityMatrices.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+		spinDensityCovarianceMatrices.resize(boost::extents[mapping.size()]);
+
+		plottingIntensities.resize(boost::extents[mapping.size()][waveNames.size()]);
+		plottingSpinDensityMatrixElementsReal.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+		plottingSpinDensityMatrixElementsImag.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+		plottingPhases.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
+
+		for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
+			if(debug) {
+				printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
+			}
+			// FIXME: in case of reading the fit result for a systematic tree this might happen, so this should be allowed in certain cases
+			if(tree->GetEntry(mapping[idxMass]) == 0) {
+				printErr << "error while reading entry " << mapping[idxMass] << " from tree." << std::endl;
+				throw;
+			}
+
+			spinDensityCovarianceMatrices[idxMass].ResizeTo(waveNames.size() * (waveNames.size() + 1), waveNames.size() * (waveNames.size() + 1));
+			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+				const int idx = fit->waveIndex(waveNames[idxWave]);
+				if(idx == -1) {
+					printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
+					throw;
+				}
+
+				plottingIntensities[idxMass][idxWave] = std::make_pair(fit->intensity(idx),
+				                                                       fit->intensityErr(idx) * sqrt(rescaleErrors));
+
+				for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
+					const int jdx = fit->waveIndex(waveNames[jdxWave]);
+					if(jdx == -1) {
+						printErr << "wave '" << fitInformation->getWave(jdxWave).waveName() << "' not in fit result." << std::endl;
+						throw;
+					}
+
+					plottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(fit->spinDensityMatrixElem(idx, jdx).real(),
+					                                                                                  sqrt(fit->spinDensityMatrixElemCov(idx, jdx)(0, 0) * rescaleErrors));
+					plottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(fit->spinDensityMatrixElem(idx, jdx).imag(),
+					                                                                                  sqrt(fit->spinDensityMatrixElemCov(idx, jdx)(1, 1) * rescaleErrors));
+					plottingPhases[idxMass][idxWave][jdxWave] = std::make_pair(fit->phase(idx, jdx),
+					                                                           fit->phaseErr(idx, jdx) * sqrt(rescaleErrors));
+
+					spinDensityMatrices[idxMass][idxWave][jdxWave] = fit->spinDensityMatrixElem(idx, jdx);
+
+					if(jdxWave >= idxWave) {
+						const TMatrixT<double> spinDensityMatrixElemCov = fit->spinDensityMatrixElemCov(idx, jdx) * rescaleErrors;
+
+						const size_t idxCov = waveNames.size() * (waveNames.size() + 1) - (waveNames.size() - idxWave) * ( waveNames.size() - idxWave + 1) + 2 * (jdxWave - idxWave);
+						spinDensityCovarianceMatrices[idxMass].SetSub(idxCov, idxCov, spinDensityMatrixElemCov);
+					}
+				}
+			}
+
+			// for the production amplitudes loop over the production
+			// amplitudes of the fit result
+			std::vector<unsigned int> prodAmpIndicesForCov(waveNames.size());
+			for(unsigned int idxProdAmp = 0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
+				const std::string waveName = fit->waveNameForProdAmp(idxProdAmp);
+
+				const boost::multi_array<std::string, 1>::const_iterator it = std::find(waveNames.begin(), waveNames.end(), waveName);
+				// most of the waves are ignored
+				if(it == waveNames.end()) {
+					continue;
+				}
+				size_t idxWave = it - waveNames.begin();
+
+				int rank = fit->rankOfProdAmp(idxProdAmp);
+				// TODO: multiple ranks, in that case also check that rank is not -1
+				if(rank != 0) {
+					printErr << "can only handle rank-1 fit (production amplitude '" << fit->prodAmpName(idxProdAmp)
+					         << "' of wave '" << waveName << "' has rank " << rank << ")." << std::endl;
+					throw;
+				}
+
+				productionAmplitudes[idxMass][idxWave] = fit->prodAmp(idxProdAmp);
+
+				prodAmpIndicesForCov[idxWave] = idxProdAmp;
+			}
+			const TMatrixT<double> prodAmpCov = fit->prodAmpCov(prodAmpIndicesForCov) * rescaleErrors;
+			productionAmplitudesCovariance[idxMass].ResizeTo(prodAmpCov);
+			productionAmplitudesCovariance[idxMass] = prodAmpCov;
+
+			if(debug) {
+				std::ostringstream outputProdAmp;
+				std::ostringstream outputProdAmpCovariance;
+				std::ostringstream output;
+				std::ostringstream outputCovariance;
+
+				outputProdAmp << " (";
+				for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+					outputProdAmp << " " << productionAmplitudes[idxMass][idxWave];
+
+					outputProdAmpCovariance << " (";
+					output << " (";
+					for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
+						output << " " << spinDensityMatrices[idxMass][idxWave][jdxWave];
+
+						outputProdAmpCovariance << " (";
+						for(size_t idx = 0; idx < 2; ++idx) {
+							outputProdAmpCovariance << " (";
+							for(size_t jdx = 0; jdx < 2; ++jdx) {
+								outputProdAmpCovariance << " " << productionAmplitudesCovariance[idxMass](idxWave+idx, jdxWave+jdx);
+							}
+							outputProdAmpCovariance << " )";
+						}
+						outputProdAmpCovariance << " )";
+
+						if(jdxWave >= idxWave) {
+							const size_t idxCov = waveNames.size()*(waveNames.size()+1) - (waveNames.size()-idxWave)*(waveNames.size()-idxWave+1) + 2*(jdxWave-idxWave);
+							outputCovariance << " (";
+							for(size_t idx = 0; idx < 2; ++idx) {
+								outputCovariance << " (";
+								for(size_t jdx = 0; jdx < 2; ++jdx) {
+									outputCovariance << " " << spinDensityCovarianceMatrices[idxMass](idxCov+idx, idxCov+jdx);
+								}
+								outputCovariance << " )";
+							}
+							outputCovariance << " )";
+						}
+					}
+					outputProdAmpCovariance << " )";
+					output << " )";
+				}
+				outputProdAmp << " )";
+
+				printDebug << "production amplitudes: " << outputProdAmp.str() << std::endl;
+				printDebug << "production amplitudes covariances: " << outputProdAmpCovariance.str() << std::endl;
+				printDebug << "spin-density matrix: " << output.str() << std::endl;
+				printDebug << "spin-density covariance matrix (diagonal elements): " << outputCovariance.str() << std::endl;
+			}
+		} // end loop over mass bins
+	}
+
+
+	void
+	readFitResultIntegrals(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                       TTree* tree,
+	                       rpwa::fitResult* fit,
+	                       const std::vector<Long64_t>& mapping,
+	                       const boost::multi_array<std::string, 1>& waveNames,
+	                       boost::multi_array<double, 2>& phaseSpaceIntegrals)
+	{
+		if(not tree or not fit) {
+			printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
+			throw;
+		}
+
+		phaseSpaceIntegrals.resize(boost::extents[mapping.size()][waveNames.size()]);
+
+		if(debug) {
+			printDebug << "reading phase-space integrals for " << waveNames.size() << " waves from fit result." << std::endl;
+		}
+
+		for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
+			if(debug) {
+				printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
+			}
+			if(tree->GetEntry(mapping[idxMass]) == 0) {
+				printErr << "error while reading entry " << mapping[idxMass] << " from tree." << std::endl;
+				throw;
+			}
+
+			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+				const double ps = fit->phaseSpaceIntegral(waveNames[idxWave]);
+				phaseSpaceIntegrals[idxMass][idxWave] = ps;
+			}
+		}
+
+		if(debug) {
+			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
+				std::ostringstream output;
+				for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
+					output << " " << phaseSpaceIntegrals[idxMass][idxWave];
+				}
+				printDebug << "phase-space integrals for wave '" << fitInformation->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
+			}
+		}
+	}
+
+
+	void
 	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                 const size_t nrMassBins,
 	                 const boost::multi_array<double, 1>& massBinCenters,
@@ -2630,6 +3026,7 @@ rpwa::resonanceFit::massDepFit::readInFiles(const rpwa::resonanceFit::informatio
 			if(not readSystematicsFiles(fitInformation,
 			                            idxBin,
 			                            bin,
+			                            waveNames[idxBin],
 			                            nrMassBins[idxBin],
 			                            massBinCenters[idxBin],
 			                            tempPlottingPhases,
@@ -2676,14 +3073,13 @@ rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::information
 		printDebug << "reading fit result from file '" << bin.fileName() << "'." << std::endl;
 	}
 
-	TFile* inFile = TFile::Open(bin.fileName().c_str());
+	std::unique_ptr<TFile> inFile(TFile::Open(bin.fileName().c_str()));
 	if(not inFile) {
 		printErr << "input file '" << bin.fileName() << "' not found."<< std::endl;
 		return false;
 	}
 	if(inFile->IsZombie()) {
 		printErr << "error while reading input file '" << bin.fileName() << "'."<< std::endl;
-		delete inFile;
 		return false;
 	}
 
@@ -2695,7 +3091,6 @@ rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::information
 	inFile->GetObject(valTreeName.c_str(), inTree);
 	if(not inTree) {
 		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.fileName() << "'."<< std::endl;
-		delete inFile;
 		return false;
 	}
 
@@ -2706,61 +3101,48 @@ rpwa::resonanceFit::massDepFit::readInFile(const rpwa::resonanceFit::information
 	fitResult* inFit = NULL;
 	if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
 		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
-		delete inFile;
 		return false;
 	}
 
-	if(not readFitResultMassBins(inTree,
-	                             inFit,
-	                             nrMassBins,
-	                             massBinCenters)) {
-		printErr << "could not extract mass bins from fit result tree in '" << bin.fileName() << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
+	readFitResultMassBins(inTree,
+	                      inFit,
+	                      nrMassBins,
+	                      massBinCenters);
 
 	std::vector<Long64_t> inMapping;
-	if(not checkFitResultMassBins(inTree,
-	                              inFit,
-	                              nrMassBins,
-	                              massBinCenters,
-	                              inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << bin.fileName() << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
+	checkFitResultMassBins(inTree,
+	                       inFit,
+	                       nrMassBins,
+	                       massBinCenters,
+	                       inMapping);
 
-	if(not readFitResultMatrices(fitInformation,
-	                             inTree,
-	                             inFit,
-	                             inMapping,
-	                             bin.rescaleErrors(),
-	                             waveNames,
-	                             productionAmplitudes,
-	                             productionAmplitudesCovariance,
-	                             spinDensityMatrices,
-	                             spinDensityMatricesCovariance,
-	                             plottingIntensities,
-	                             plottingSpinDensityMatrixElementsReal,
-	                             plottingSpinDensityMatrixElementsImag,
-	                             plottingPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << bin.fileName() << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
+	readFitResultWaveNames(fitInformation,
+	                       inTree,
+	                       inFit,
+	                       waveNames);
 
-	if(not readFitResultIntegrals(fitInformation,
-	                              inTree,
-	                              inFit,
-	                              inMapping,
-	                              waveNames,
-	                              phaseSpaceIntegrals)) {
-		printErr << "error while reading phase-space integrals from fit result tree in '" << bin.fileName() << "'." << std::endl;
-		delete inFile;
-		return false;
-	}
+	readFitResultMatrices(fitInformation,
+	                      inTree,
+	                      inFit,
+	                      inMapping,
+	                      bin.rescaleErrors(),
+	                      waveNames,
+	                      productionAmplitudes,
+	                      productionAmplitudesCovariance,
+	                      spinDensityMatrices,
+	                      spinDensityMatricesCovariance,
+	                      plottingIntensities,
+	                      plottingSpinDensityMatrixElementsReal,
+	                      plottingSpinDensityMatrixElementsImag,
+	                      plottingPhases);
 
-	delete inFile;
+	readFitResultIntegrals(fitInformation,
+	                       inTree,
+	                       inFit,
+	                       inMapping,
+	                       waveNames,
+	                       phaseSpaceIntegrals);
+
 	return true;
 }
 
@@ -2769,6 +3151,7 @@ bool
 rpwa::resonanceFit::massDepFit::readSystematicsFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                                      const size_t idxBin,
                                                      const rpwa::resonanceFit::information::bin& bin,
+                                                     const boost::multi_array<std::string, 1>& waveNames,
                                                      const size_t nrMassBins,
                                                      const boost::multi_array<double, 1>& massBinCenters,
                                                      const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
@@ -2792,6 +3175,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFiles(const rpwa::resonanceFit::i
 		                           idxBin,
 		                           bin,
 		                           idxSystematics,
+		                           waveNames,
 		                           nrMassBins,
 		                           massBinCenters,
 		                           plottingPhases,
@@ -2815,6 +3199,7 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
                                                     const size_t idxBin,
                                                     const rpwa::resonanceFit::information::bin& bin,
                                                     const size_t idxSystematics,
+                                                    const boost::multi_array<std::string, 1>& waveNames,
                                                     const size_t nrMassBins,
                                                     const boost::multi_array<double, 1>& massBinCenters,
                                                     const boost::multi_array<std::pair<double, double>, 3>& plottingPhases,
@@ -2829,14 +3214,13 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 		printDebug << "reading fit result for systematics for bin " << idxBin << " from file at index " << idxSystematics << ": '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
 	}
 
-	TFile* sysFile = TFile::Open(bin.sysFileNames()[idxSystematics].c_str());
+	std::unique_ptr<TFile> sysFile(TFile::Open(bin.sysFileNames()[idxSystematics].c_str()));
 	if(not sysFile) {
 		printErr << "input file '" << bin.sysFileNames()[idxSystematics] << "' not found."<< std::endl;
 		return false;
 	}
 	if(sysFile->IsZombie()) {
 		printErr << "error while reading input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
-		delete sysFile;
 		return false;
 	}
 
@@ -2848,7 +3232,6 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 	sysFile->GetObject(valTreeName.c_str(), sysTree);
 	if(not sysTree) {
 		printErr << "input tree '" << valTreeName << "' not found in input file '" << bin.sysFileNames()[idxSystematics] << "'."<< std::endl;
-		delete sysFile;
 		return false;
 	}
 
@@ -2859,22 +3242,16 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 	fitResult* sysFit = NULL;
 	if(sysTree->SetBranchAddress(valBranchName.c_str(), &sysFit)) {
 		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << std::endl;
-		delete sysFile;
 		return false;
 	}
 
 	std::vector<Long64_t> sysMapping;
-	if(not checkFitResultMassBins(sysTree,
-	                              sysFit,
-	                              nrMassBins,
-	                              massBinCenters,
-	                              sysMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
-		delete sysFile;
-		return false;
-	}
+	checkFitResultMassBins(sysTree,
+	                       sysFit,
+	                       nrMassBins,
+	                       massBinCenters,
+	                       sysMapping);
 
-	boost::multi_array<std::string, 1> tempWaveNames;
 	boost::multi_array<std::complex<double>, 2> tempProductionAmplitudes;
 	boost::multi_array<TMatrixT<double>, 1> tempProductionAmplitudesCovariance;
 	boost::multi_array<std::complex<double>, 3> tempSpinDensityMatrices;
@@ -2883,24 +3260,20 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
-	if(not readFitResultMatrices(fitInformation,
-	                             sysTree,
-	                             sysFit,
-	                             sysMapping,
-	                             bin.rescaleErrors(),
-	                             tempWaveNames,
-	                             tempProductionAmplitudes,
-	                             tempProductionAmplitudesCovariance,
-	                             tempSpinDensityMatrices,
-	                             tempSpinDensityCovarianceMatrices,
-	                             tempSysPlottingIntensities,
-	                             tempSysPlottingSpinDensityMatrixElementsReal,
-	                             tempSysPlottingSpinDensityMatrixElementsImag,
-	                             tempSysPlottingPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << bin.sysFileNames()[idxSystematics] << "'." << std::endl;
-		delete sysFile;
-		return false;
-	}
+	readFitResultMatrices(fitInformation,
+	                      sysTree,
+	                      sysFit,
+	                      sysMapping,
+	                      bin.rescaleErrors(),
+	                      waveNames,
+	                      tempProductionAmplitudes,
+	                      tempProductionAmplitudesCovariance,
+	                      tempSpinDensityMatrices,
+	                      tempSpinDensityCovarianceMatrices,
+	                      tempSysPlottingIntensities,
+	                      tempSysPlottingSpinDensityMatrixElementsReal,
+	                      tempSysPlottingSpinDensityMatrixElementsImag,
+	                      tempSysPlottingPhases);
 
 	for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
 		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
@@ -2934,394 +3307,6 @@ rpwa::resonanceFit::massDepFit::readSystematicsFile(const rpwa::resonanceFit::in
 				sysPlottingPhases[idxMass][idxWave][jdxWave].second = std::max(sysPlottingPhases[idxMass][idxWave][jdxWave].second,
 				                                                               tempSysPlottingPhases[idxMass][idxWave][jdxWave].first);
 			}
-		}
-	}
-
-	delete sysFile;
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::checkFitResultMassBins(TTree* tree,
-                                                       rpwa::fitResult* fit,
-                                                       const size_t nrMassBins,
-                                                       const boost::multi_array<double, 1>& massBinCenters,
-                                                       std::vector<Long64_t>& mapping) const
-{
-	if(not tree or not fit) {
-		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
-	// reset mapping
-	mapping.assign(nrMassBins, std::numeric_limits<Long64_t>::max());
-
-	// extract data from tree
-	const Long64_t nrEntries = tree->GetEntries();
-
-	if(_debug) {
-		printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
-		           << "and map the " << nrMassBins << " mass bins to those entries." << std::endl;
-	}
-
-	for(Long64_t idx=0; idx<nrEntries; ++idx) {
-		if(tree->GetEntry(idx) == 0) {
-			printErr << "error while reading entry " << idx << " from tree." << std::endl;
-			return false;
-		}
-		//FIXME: this would also be the place to select the best fit in case one file contains more than one fit result per mass bin
-		const double mass = fit->massBinCenter();
-
-		if(_debug) {
-			printDebug << "entry " << idx << ": center of mass bin at " << mass << " GeV/c^2" << std::endl;
-		}
-
-		bool found = false;
-		size_t idxMass=0;
-		while(idxMass<nrMassBins) {
-			if(std::abs(massBinCenters[idxMass]-mass) < 1000.*std::numeric_limits<double>::epsilon()) {
-				found = true;
-				break;
-			}
-			++idxMass;
-		}
-
-		if(not found) {
-			printErr << "could not map mass bin centered at " << mass << " GeV/c^2 to a known mass bin." << std::endl;
-			return false;
-		}
-
-		if(mapping[idxMass] != std::numeric_limits<Long64_t>::max()) {
-			printErr << "cannot map tree entry " << idx << " to mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2)  "
-			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << std::endl;
-			return false;
-		}
-
-		if(_debug) {
-			printDebug << "mapping mass bin " << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) to tree entry " << idx << "." << std::endl;
-		}
-		mapping[idxMass] = idx;
-	} // end loop over entries in tree
-
-	// check that all mass bins are mapped
-	for(size_t idx=0; idx<mapping.size(); ++idx) {
-		if(mapping[idx] == std::numeric_limits<Long64_t>::max()) {
-			printErr << "mass bin " << idx << " (" << massBinCenters[idx] << " GeV/c^2) not mapped." << std::endl;
-			return false;
-		}
-	}
-
-	if(_debug) {
-		std::ostringstream output;
-		for(size_t idx=0; idx<mapping.size(); ++idx) {
-			output << " " << idx << "->" << mapping[idx];
-		}
-		printDebug << "established mapping:" << output.str() << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readFitResultMassBins(TTree* tree,
-                                                      rpwa::fitResult* fit,
-                                                      size_t& nrMassBins,
-                                                      boost::multi_array<double, 1>& massBinCenters) const
-{
-	if(not tree or not fit) {
-		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
-	// extract data from tree
-	const Long64_t nrEntries = tree->GetEntries();
-
-	if(_debug) {
-		printDebug << "getting center of mass bins from " << nrEntries << " entries in tree." << std::endl;
-	}
-
-	nrMassBins = 0;
-	for(Long64_t idx=0; idx<nrEntries; ++idx) {
-		if(tree->GetEntry(idx) == 0) {
-			printErr << "error while reading entry " << idx << " from tree." << std::endl;
-			return false;
-		}
-		const double newMass = fit->massBinCenter();
-
-		if(_debug) {
-			printDebug << "entry " << idx << ": center of mass bin at " << newMass << " GeV/c^2" << std::endl;
-		}
-
-		bool found = false;
-		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-			if(std::abs(massBinCenters[idxMass]-newMass) < 1000.*std::numeric_limits<double>::epsilon()) {
-				found = true;
-				if(_debug) {
-					printDebug << "this center of mass bin already was encountered before." << std::endl;
-				}
-				break;
-			}
-		}
-
-		if(not found) {
-			adjustSizeAndSet(massBinCenters, nrMassBins++, newMass);
-		}
-	} // end loop over entries in tree
-
-	// sort mass bins
-	std::sort(massBinCenters.data(), massBinCenters.data() + nrMassBins);
-
-	printInfo << "found " << nrMassBins << " mass bins, center of first and last mass bins: "
-	          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
-
-	const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
-	for(size_t idxMass = 1; idxMass < nrMassBins; ++idxMass) {
-		if(std::abs(massBinCenters[idxMass]-massBinCenters[idxMass-1] - massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
-			printErr << "mass distance between bins " << idxMass-1 << " (" << massBinCenters[idxMass-1] << " GeV/c^2) and "
-			         << idxMass << " (" << massBinCenters[idxMass] << " GeV/c^2) does not agree with nominal distance "
-			         << massStep << " GeV/c^2" << std::endl;
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readFitResultMatrices(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                      TTree* tree,
-                                                      rpwa::fitResult* fit,
-                                                      const std::vector<Long64_t>& mapping,
-                                                      const double rescaleErrors,
-                                                      boost::multi_array<std::string, 1>& waveNames,
-                                                      boost::multi_array<std::complex<double>, 2>& productionAmplitudes,
-                                                      boost::multi_array<TMatrixT<double>, 1>& productionAmplitudesCovariance,
-                                                      boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-                                                      boost::multi_array<TMatrixT<double>, 1>& spinDensityCovarianceMatrices,
-                                                      boost::multi_array<std::pair<double, double>, 2>& plottingIntensities,
-                                                      boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsReal,
-                                                      boost::multi_array<std::pair<double, double>, 3>& plottingSpinDensityMatrixElementsImag,
-                                                      boost::multi_array<std::pair<double, double>, 3>& plottingPhases) const
-{
-	if(not tree or not fit) {
-		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "reading spin-density matrices for " << fitInformation->nrWaves() << " waves from fit result." << std::endl;
-	}
-
-	// read wave names from first fit result in tree
-	waveNames.resize(boost::extents[fitInformation->nrWaves()]);
-	if(tree->GetEntry(0) == 0) {
-		printErr << "error while reading entry " << 0 << " from tree." << std::endl;
-		return false;
-	}
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		int idx = fit->waveIndex(fitInformation->getWave(idxWave).waveName());
-		// try alternative wave names
-		for(size_t idxAlt = 0; idxAlt < fitInformation->getWave(idxWave).waveNameAlternatives().size(); ++idxAlt) {
-			const int altIdx = fit->waveIndex(fitInformation->getWave(idxWave).waveNameAlternatives()[idxAlt]);
-			if(altIdx != -1) {
-				if(idx != -1) {
-					printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << fitInformation->getWave(idxWave).waveName() << "'." << std::endl;
-					return false;
-				}
-				idx = altIdx;
-			}
-		}
-		if(idx == -1) {
-			printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
-			return false;
-		}
-		waveNames[idxWave] = fit->waveName(idx);
-	}
-
-	productionAmplitudes.resize(boost::extents[mapping.size()][waveNames.size()]);
-	productionAmplitudesCovariance.resize(boost::extents[mapping.size()]);
-
-	spinDensityMatrices.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
-	spinDensityCovarianceMatrices.resize(boost::extents[mapping.size()]);
-
-	plottingIntensities.resize(boost::extents[mapping.size()][waveNames.size()]);
-	plottingSpinDensityMatrixElementsReal.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
-	plottingSpinDensityMatrixElementsImag.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
-	plottingPhases.resize(boost::extents[mapping.size()][waveNames.size()][waveNames.size()]);
-
-	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
-		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
-		}
-		// FIXME: in case of reading the fit result for a systematic tree this might happen, so this should be allowed in certain cases
-		if(tree->GetEntry(mapping[idxMass]) == 0) {
-			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << std::endl;
-			return false;
-		}
-
-		spinDensityCovarianceMatrices[idxMass].ResizeTo(waveNames.size() * (waveNames.size() + 1), waveNames.size() * (waveNames.size() + 1));
-		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
-			const int idx = fit->waveIndex(waveNames[idxWave]);
-			if(idx == -1) {
-				printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
-				return false;
-			}
-
-			plottingIntensities[idxMass][idxWave] = std::make_pair(fit->intensity(idx),
-			                                                       fit->intensityErr(idx) * sqrt(rescaleErrors));
-
-			for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
-				const int jdx = fit->waveIndex(waveNames[jdxWave]);
-				if(jdx == -1) {
-					printErr << "wave '" << fitInformation->getWave(jdxWave).waveName() << "' not in fit result." << std::endl;
-					return false;
-				}
-
-				plottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(fit->spinDensityMatrixElem(idx, jdx).real(),
-				                                                                                  sqrt(fit->spinDensityMatrixElemCov(idx, jdx)(0, 0) * rescaleErrors));
-				plottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(fit->spinDensityMatrixElem(idx, jdx).imag(),
-				                                                                                  sqrt(fit->spinDensityMatrixElemCov(idx, jdx)(1, 1) * rescaleErrors));
-				plottingPhases[idxMass][idxWave][jdxWave] = std::make_pair(fit->phase(idx, jdx),
-				                                                           fit->phaseErr(idx, jdx) * sqrt(rescaleErrors));
-
-				spinDensityMatrices[idxMass][idxWave][jdxWave] = fit->spinDensityMatrixElem(idx, jdx);
-
-				if(jdxWave >= idxWave) {
-					const TMatrixT<double> spinDensityMatrixElemCov = fit->spinDensityMatrixElemCov(idx, jdx) * rescaleErrors;
-
-					const size_t idxCov = waveNames.size() * (waveNames.size() + 1) - (waveNames.size() - idxWave)*(waveNames.size() - idxWave + 1) + 2 * (jdxWave - idxWave);
-					spinDensityCovarianceMatrices[idxMass].SetSub(idxCov, idxCov, spinDensityMatrixElemCov);
-				}
-			}
-		}
-
-		// for the production amplitudes loop over the production
-		// amplitudes of the fit result
-		std::vector<unsigned int> prodAmpIndicesForCov(waveNames.size());
-		for(unsigned int idxProdAmp=0; idxProdAmp < fit->nmbProdAmps(); ++idxProdAmp) {
-			const std::string waveName = fit->waveNameForProdAmp(idxProdAmp);
-
-			const boost::multi_array<std::string, 1>::const_iterator it = std::find(waveNames.begin(), waveNames.end(), waveName);
-			// most of the waves are ignored
-			if(it == waveNames.end()) {
-				continue;
-			}
-			size_t idxWave = it - waveNames.begin();
-
-			int rank = fit->rankOfProdAmp(idxProdAmp);
-			// TODO: multiple ranks, in that case also check that rank is not -1
-			if(rank != 0) {
-				printErr << "can only handle rank-1 fit (production amplitude '" << fit->prodAmpName(idxProdAmp)
-				         << "' of wave '" << waveName << "' has rank " << rank << ")." << std::endl;
-				return false;
-			}
-
-			productionAmplitudes[idxMass][idxWave] = fit->prodAmp(idxProdAmp);
-
-			prodAmpIndicesForCov[idxWave] = idxProdAmp;
-		}
-		const TMatrixT<double> prodAmpCov = fit->prodAmpCov(prodAmpIndicesForCov) * rescaleErrors;
-		productionAmplitudesCovariance[idxMass].ResizeTo(prodAmpCov);
-		productionAmplitudesCovariance[idxMass] = prodAmpCov;
-
-		if(_debug) {
-			std::ostringstream outputProdAmp;
-			std::ostringstream outputProdAmpCovariance;
-			std::ostringstream output;
-			std::ostringstream outputCovariance;
-
-			outputProdAmp << " (";
-			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
-				outputProdAmp << " " << productionAmplitudes[idxMass][idxWave];
-
-				outputProdAmpCovariance << " (";
-				output << " (";
-				for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
-					output << " " << spinDensityMatrices[idxMass][idxWave][jdxWave];
-
-					outputProdAmpCovariance << " (";
-					for(size_t idx=0; idx<2; ++idx) {
-						outputProdAmpCovariance << " (";
-						for(size_t jdx=0; jdx<2; ++jdx) {
-							outputProdAmpCovariance << " " << productionAmplitudesCovariance[idxMass](idxWave+idx, jdxWave+jdx);
-						}
-						outputProdAmpCovariance << " )";
-					}
-					outputProdAmpCovariance << " )";
-
-					if(jdxWave >= idxWave) {
-						const size_t idxCov = waveNames.size()*(waveNames.size()+1) - (waveNames.size()-idxWave)*(waveNames.size()-idxWave+1) + 2*(jdxWave-idxWave);
-						outputCovariance << " (";
-						for(size_t idx = 0; idx < 2; ++idx) {
-							outputCovariance << " (";
-							for(size_t jdx = 0; jdx < 2; ++jdx) {
-								outputCovariance << " " << spinDensityCovarianceMatrices[idxMass](idxCov+idx, idxCov+jdx);
-							}
-							outputCovariance << " )";
-						}
-						outputCovariance << " )";
-					}
-				}
-				outputProdAmpCovariance << " )";
-				output << " )";
-			}
-			outputProdAmp << " )";
-
-			printDebug << "production amplitudes: " << outputProdAmp.str() << std::endl;
-			printDebug << "production amplitudes covariances: " << outputProdAmpCovariance.str() << std::endl;
-			printDebug << "spin-density matrix: " << output.str() << std::endl;
-			printDebug << "spin-density covariance matrix (diagonal elements): " << outputCovariance.str() << std::endl;
-		}
-	} // end loop over mass bins
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readFitResultIntegrals(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                       TTree* tree,
-                                                       rpwa::fitResult* fit,
-                                                       const std::vector<Long64_t>& mapping,
-                                                       const boost::multi_array<std::string, 1>& waveNames,
-                                                       boost::multi_array<double, 2>& phaseSpaceIntegrals) const
-{
-	if(not tree or not fit) {
-		printErr << "'tree' or 'fit' is not a pointer to a valid object." << std::endl;
-		return false;
-	}
-
-	phaseSpaceIntegrals.resize(boost::extents[mapping.size()][waveNames.size()]);
-
-	if(_debug) {
-		printDebug << "reading phase-space integrals for " << waveNames.size() << " waves from fit result." << std::endl;
-	}
-
-	for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
-		if(_debug) {
-			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " from tree." << std::endl;
-		}
-		if(tree->GetEntry(mapping[idxMass]) == 0) {
-			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << std::endl;
-			return false;
-		}
-
-		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
-			const double ps = fit->phaseSpaceIntegral(waveNames[idxWave]);
-			phaseSpaceIntegrals[idxMass][idxWave] = ps;
-		}
-	}
-
-	if(_debug) {
-		for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
-			std::ostringstream output;
-			for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
-				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
-			}
-			printDebug << "phase-space integrals for wave '" << fitInformation->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
 		}
 	}
 
