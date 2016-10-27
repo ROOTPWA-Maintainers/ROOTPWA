@@ -110,15 +110,6 @@ namespace rpwa {
 
 		private:
 
-			bool prepareMassLimits(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                       const std::vector<size_t>& nrMassBins,
-			                       const boost::multi_array<double, 2>& massBinCenters,
-			                       boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits);
-			bool prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                      const size_t nrMassBins,
-			                      const boost::multi_array<double, 1>& massBinCenters,
-			                      boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits);
-
 			bool readConfigModel(const YAML::Node& configModel,
 			                     const rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                     const rpwa::resonanceFit::modelPtr& fitModel,
