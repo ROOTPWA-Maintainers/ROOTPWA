@@ -248,14 +248,14 @@ rpwa::resonanceFit::function::logPriorLikelihood(const rpwa::resonanceFit::param
 		const size_t nrParameters = component->getNrParameters();
 		for (size_t idxParameter = 0; idxParameter < nrParameters; ++idxParameter) {
 			// fixed parameters to no contribute to prior likelihood
-			if (component->getParameterFixed(idxParameter))
+			if(component->getParameter(idxParameter).fixed())
 				continue;
 
 			// parameters with 0 error are assumed to have a flat prior
-			if (component->getParameterError(idxParameter) == 0.0)
+			if(component->getParameter(idxParameter).startError() == 0.0)
 				continue;
 
-			logPrior += -0.5 * std::pow((fitParameters.getParameter(idxComponent, idxParameter) - component->getParameterStart(idxParameter)) / component->getParameterError(idxParameter), 2.);
+			logPrior += -0.5 * std::pow((fitParameters.getParameter(idxComponent, idxParameter) - component->getParameter(idxParameter).startValue()) / component->getParameter(idxParameter).startError(), 2.);
 		}
 	}
 
