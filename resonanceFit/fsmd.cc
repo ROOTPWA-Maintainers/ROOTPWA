@@ -199,20 +199,7 @@ rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
 	}
 
 	if(_nrParameters[idxBin] > _maxParameters) {
-		_parametersFixed.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersLimitLower.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersLimitedLower.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersLimitUpper.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersLimitedUpper.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersName.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-		_parametersStep.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
-
-		for(size_t i = 0; i < _nrBins; ++i) {
-			for(size_t j = _maxParameters; j < _nrParameters[idxBin]; ++j) {
-				_parametersStep[i][j] = 0.0001;
-			}
-		}
-
+		_parameters.resize(boost::extents[_nrBins][_nrParameters[idxBin]]);
 		_maxParameters = _nrParameters[idxBin];
 	}
 
@@ -221,7 +208,7 @@ rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
 
 	for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
 		const std::string parName = _functions[idxBin]->GetParName(idxParameter);
-		_parametersName[idxBin][idxParameter] = parName;
+		_parameters[idxBin][idxParameter].setName(parName);
 
 		if(debug) {
 			printDebug << "reading parameter '" << parName << "'." << std::endl;
@@ -243,11 +230,13 @@ rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
 		}
 
 		const double parameter = configParameter["val"].as<double>();
+		_parameters[idxBin][idxParameter].setStartValue(parameter);
 		fitParameters.setParameter(_id, _parametersIndex[idxBin]+idxParameter, parameter);
 
 		if(configParameter["error"]) {
 			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
 				const double error = configParameter["error"].as<double>();
+				_parameters[idxBin][idxParameter].setStartError(error);
 				fitParametersError.setParameter(_id, _parametersIndex[idxBin]+idxParameter, error);
 			} else {
 				printErr << "variable 'error' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
@@ -256,38 +245,40 @@ rpwa::resonanceFit::fsmd::initBin(const YAML::Node& configFsmd,
 		}
 
 		const bool fixed = configParameter["fix"].as<bool>();
-		_parametersFixed[idxBin][idxParameter] = fixed;
+		_parameters[idxBin][idxParameter].setFixed(fixed);
 
 		if(configParameter["lower"]) {
 			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
-				_parametersLimitedLower[idxBin][idxParameter] = true;
-				_parametersLimitLower[idxBin][idxParameter] = configParameter["lower"].as<double>();
+				_parameters[idxBin][idxParameter].setLimitedLower(true);
+				_parameters[idxBin][idxParameter].setLimitLower(configParameter["lower"].as<double>());
 			} else {
 				printErr << "variable 'lower' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
-			_parametersLimitedLower[idxBin][idxParameter] = false;
+			_parameters[idxBin][idxParameter].setLimitedLower(false);
 		}
 		if(configParameter["upper"]) {
 			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
-				_parametersLimitedUpper[idxBin][idxParameter] = true;
-				_parametersLimitUpper[idxBin][idxParameter] = configParameter["upper"].as<double>();
+				_parameters[idxBin][idxParameter].setLimitedUpper(true);
+				_parameters[idxBin][idxParameter].setLimitUpper(configParameter["upper"].as<double>());
 			} else {
 				printErr << "variable 'upper' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
-			_parametersLimitedUpper[idxBin][idxParameter] = false;
+			_parameters[idxBin][idxParameter].setLimitedUpper(false);
 		}
 
 		if(configParameter["step"]) {
 			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
-				_parametersStep[idxBin][idxParameter] = configParameter["step"].as<double>();
+				_parameters[idxBin][idxParameter].setStep(configParameter["step"].as<double>());
 			} else {
 				printErr << "variable 'step' for parameter '" << parName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				return false;
 			}
+		} else {
+			_parameters[idxBin][idxParameter].setStep(0.0001);
 		}
 	}
 
@@ -346,7 +337,7 @@ rpwa::resonanceFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
 	yamlOutput << YAML::Value << _functions[idxBin]->GetTitle();
 
 	for(size_t idxParameter = 0; idxParameter < _nrParameters[idxBin]; ++idxParameter) {
-		yamlOutput << YAML::Key << _parametersName[idxBin][idxParameter];
+		yamlOutput << YAML::Key << _parameters[idxBin][idxParameter].name();
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginMap;
@@ -357,21 +348,21 @@ rpwa::resonanceFit::fsmd::writeBin(YAML::Emitter& yamlOutput,
 		yamlOutput << YAML::Key << "error";
 		yamlOutput << YAML::Value << fitParametersError.getParameter(_id, _parametersIndex[idxBin]+idxParameter);
 
-		if(_parametersLimitedLower[idxBin][idxParameter]) {
+		if(_parameters[idxBin][idxParameter].limitedLower()) {
 			yamlOutput << YAML::Key << "lower";
-			yamlOutput << YAML::Value << _parametersLimitLower[idxBin][idxParameter];
+			yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].limitLower();
 		}
 
-		if(_parametersLimitedUpper[idxBin][idxParameter]) {
+		if(_parameters[idxBin][idxParameter].limitedUpper()) {
 			yamlOutput << YAML::Key << "upper";
-			yamlOutput << YAML::Value << _parametersLimitUpper[idxBin][idxParameter];
+			yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].limitUpper();
 		}
 
 		yamlOutput << YAML::Key << "step";
-		yamlOutput << YAML::Value << _parametersStep[idxBin][idxParameter];
+		yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].step();
 
 		yamlOutput << YAML::Key << "fix";
-		yamlOutput << YAML::Value << _parametersFixed[idxBin][idxParameter];
+		yamlOutput << YAML::Value << _parameters[idxBin][idxParameter].fixed();
 
 		yamlOutput << YAML::EndMap;
 	}
@@ -488,16 +479,16 @@ rpwa::resonanceFit::fsmd::printBin(const size_t idxBin,
 
 	for(size_t i = 0; i < _nrParameters[idxBin]; ++i) {
 		out << "    [" << i << "] ";
-		if(_parametersLimitedLower[idxBin][i] and _parametersLimitedUpper[idxBin][i]) {
-			out << "limits: " << _parametersLimitLower[idxBin][i] << "-" << _parametersLimitUpper[idxBin][i] << " GeV/c^2";
-		} else if(_parametersLimitedLower[idxBin][i]) {
-			out << "lower limit: " << _parametersLimitLower[idxBin][i] << " GeV/c^2";
-		} else if(_parametersLimitedUpper[idxBin][i]) {
-			out << "upper limit: " << _parametersLimitUpper[idxBin][i] << " GeV/c^2";
+		if(_parameters[idxBin][i].limitedLower() and _parameters[idxBin][i].limitedUpper()) {
+			out << "limits: " << _parameters[idxBin][i].limitLower() << "-" << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
+		} else if(_parameters[idxBin][i].limitedLower()) {
+			out << "lower limit: " << _parameters[idxBin][i].limitLower() << " GeV/c^2";
+		} else if(_parameters[idxBin][i].limitedUpper()) {
+			out << "upper limit: " << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
 		} else {
 			out << "unlimited";
 		}
-		out << (_parametersFixed[idxBin][i] ? " (FIXED) " : "") << std::endl;
+		out << (_parameters[idxBin][i].fixed() ? " (FIXED) " : "") << std::endl;
 	}
 
 	return out;

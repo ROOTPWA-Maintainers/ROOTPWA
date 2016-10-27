@@ -138,15 +138,7 @@ rpwa::resonanceFit::component::component(const size_t id,
 	  _nrParameters(nrParameters),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
-	  _parametersStart(nrParameters),
-	  _parametersError(nrParameters),
-	  _parametersFixed(nrParameters),
-	  _parametersLimitLower(nrParameters),
-	  _parametersLimitedLower(nrParameters),
-	  _parametersLimitUpper(nrParameters),
-	  _parametersLimitedUpper(nrParameters),
-	  _parametersName(nrParameters),
-	  _parametersStep(nrParameters)
+	  _parameters(nrParameters)
 {
 }
 
@@ -182,12 +174,12 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "reading parameter '" << _parametersName[idxParameter] << "'." << std::endl;
+			printDebug << "reading parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
 		}
 
-		const YAML::Node& configParameter = configComponent[_parametersName[idxParameter]];
+		const YAML::Node& configParameter = configComponent[_parameters[idxParameter].name()];
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' does not define parameter '" << _parametersName[idxParameter] << "'." << std::endl;
+			printErr << "component '" << getName() << "' does not define parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
 			return false;
 		}
 
@@ -196,18 +188,18 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 		                     ("val", YamlCppUtils::TypeFloat)
 		                     ("fix", YamlCppUtils::TypeBoolean);
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "'" << _parametersName[idxParameter] << "' of component '" << getName() << "' does not contain all required variables." << std::endl;
+			printErr << "'" << _parameters[idxParameter].name() << "' of component '" << getName() << "' does not contain all required variables." << std::endl;
 			return false;
 		}
 
 		const double parameter = configParameter["val"].as<double>();
-		_parametersStart[idxParameter] = parameter;
+		_parameters[idxParameter].setStartValue(parameter);
 		fitParameters.setParameter(getId(), idxParameter, parameter);
 
 		if(configParameter["error"]) {
 			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
 				const double error = configParameter["error"].as<double>();
-				_parametersError[idxParameter] = error;
+				_parameters[idxParameter].setStartError(error);
 				fitParametersError.setParameter(getId(), idxParameter, error);
 			} else if(checkVariableType(configParameter["error"], YamlCppUtils::TypeString) and configParameter["error"].as<std::string>() == "nan") {
 				// some systems cannot convert the string 'nan'
@@ -216,45 +208,45 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 				// really matter as the error is usually not
 				// used.
 				const double error = std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0;
-				_parametersError[idxParameter] = error;
+				_parameters[idxParameter].setStartError(error);
 				fitParametersError.setParameter(getId(), idxParameter, error);
 			} else {
-				printErr << "variable 'error' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				printErr << "variable 'error' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		}
 
 		const bool fixed = configParameter["fix"].as<bool>();
-		_parametersFixed[idxParameter] = fixed;
+		_parameters[idxParameter].setFixed(fixed);
 
 		if(configParameter["lower"]) {
 			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
-				_parametersLimitedLower[idxParameter] = true;
-				_parametersLimitLower[idxParameter] = configParameter["lower"].as<double>();
+				_parameters[idxParameter].setLimitedLower(true);
+				_parameters[idxParameter].setLimitLower(configParameter["lower"].as<double>());
 			} else {
-				printErr << "variable 'lower' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				printErr << "variable 'lower' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
-			_parametersLimitedLower[idxParameter] = false;
+			_parameters[idxParameter].setLimitedLower(false);
 		}
 		if(configParameter["upper"]) {
 			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
-				_parametersLimitedUpper[idxParameter] = true;
-				_parametersLimitUpper[idxParameter] = configParameter["upper"].as<double>();
+				_parameters[idxParameter].setLimitedUpper(true);
+				_parameters[idxParameter].setLimitUpper(configParameter["upper"].as<double>());
 			} else {
-				printErr << "variable 'upper' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				printErr << "variable 'upper' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		} else {
-			_parametersLimitedUpper[idxParameter] = false;
+			_parameters[idxParameter].setLimitedUpper(false);
 		}
 
 		if(configParameter["step"]) {
 			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
-				_parametersStep[idxParameter] = configParameter["step"].as<double>();
+				_parameters[idxParameter].setStep(configParameter["step"].as<double>());
 			} else {
-				printErr << "variable 'step' for parameter '" << _parametersName[idxParameter] << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
+				printErr << "variable 'step' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
 				return false;
 			}
 		}
@@ -511,10 +503,10 @@ rpwa::resonanceFit::component::write(YAML::Emitter& yamlOutput,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "writing parameter '" << _parametersName[idxParameter] << "'." << std::endl;
+			printDebug << "writing parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
 		}
 
-		yamlOutput << YAML::Key << _parametersName[idxParameter];
+		yamlOutput << YAML::Key << _parameters[idxParameter].name();
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginMap;
@@ -525,21 +517,21 @@ rpwa::resonanceFit::component::write(YAML::Emitter& yamlOutput,
 		yamlOutput << YAML::Key << "error";
 		yamlOutput << YAML::Value << fitParametersError.getParameter(getId(), idxParameter);
 
-		if(_parametersLimitedLower[idxParameter]) {
+		if(_parameters[idxParameter].limitedLower()) {
 			yamlOutput << YAML::Key << "lower";
-			yamlOutput << YAML::Value << _parametersLimitLower[idxParameter];
+			yamlOutput << YAML::Value << _parameters[idxParameter].limitLower();
 		}
 
-		if(_parametersLimitedUpper[idxParameter]) {
+		if(_parameters[idxParameter].limitedUpper()) {
 			yamlOutput << YAML::Key << "upper";
-			yamlOutput << YAML::Value << _parametersLimitUpper[idxParameter];
+			yamlOutput << YAML::Value << _parameters[idxParameter].limitUpper();
 		}
 
 		yamlOutput << YAML::Key << "step";
-		yamlOutput << YAML::Value << _parametersStep[idxParameter];
+		yamlOutput << YAML::Value << _parameters[idxParameter].step();
 
 		yamlOutput << YAML::Key << "fix";
-		yamlOutput << YAML::Value << _parametersFixed[idxParameter];
+		yamlOutput << YAML::Value << _parameters[idxParameter].fixed();
 
 		yamlOutput << YAML::EndMap;
 	}
@@ -779,11 +771,11 @@ rpwa::resonanceFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id
                                                                  const std::string& name)
 	: component(id, name, "fixedWidthBreitWigner", 2)
 {
-	_parametersName[0] = "mass";
-	_parametersName[1] = "width";
+	_parameters[0].setName("mass");
+	_parameters[1].setName("width");
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 0.001;
+	_parameters[0].setStep(0.001);
+	_parameters[1].setStep(0.001);
 }
 
 
@@ -870,30 +862,30 @@ rpwa::resonanceFit::fixedWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
-	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
-	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
-	} else if(_parametersLimitedLower[1]) {
-		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[1]) {
-		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
+	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
+	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
+		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
+	} else if(_parameters[1].limitedLower()) {
+		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
+	} else if(_parameters[1].limitedUpper()) {
+		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
 
 	return component::print(out);
 }
@@ -903,11 +895,11 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_
                                                                      const std::string& name)
 	: component(id, name, "dynamicWidthBreitWigner", 2)
 {
-	_parametersName[0] = "mass";
-	_parametersName[1] = "width";
+	_parameters[0].setName("mass");
+	_parameters[1].setName("width");
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 0.001;
+	_parameters[0].setStep(0.001);
+	_parameters[1].setStep(0.001);
 }
 
 
@@ -1125,30 +1117,30 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
-	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
-	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
-	} else if(_parametersLimitedLower[1]) {
-		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[1]) {
-		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
+	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
+	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
+		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
+	} else if(_parameters[1].limitedLower()) {
+		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
+	} else if(_parameters[1].limitedUpper()) {
+		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    " << _ratio.size() << " decay channels:" << std::endl;
 	for(size_t i=0; i<_ratio.size(); ++i) {
@@ -1165,11 +1157,11 @@ rpwa::resonanceFit::integralWidthBreitWigner::integralWidthBreitWigner(const siz
                                                                        const std::string& name)
 	: component(id, name, "integralWidthBreitWigner", 2)
 {
-	_parametersName[0] = "mass";
-	_parametersName[1] = "width";
+	_parameters[0].setName("mass");
+	_parameters[1].setName("width");
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 0.001;
+	_parameters[0].setStep(0.001);
+	_parameters[1].setStep(0.001);
 }
 
 
@@ -1420,30 +1412,30 @@ rpwa::resonanceFit::integralWidthBreitWigner::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (integralWidthBreitWigner):" << std::endl;
 
 	out << "    mass ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    width ";
-	out << "start value: " << _parametersStart[1] << " +/- " << _parametersError[1] << " ";
-	if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
-		out << "limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " GeV/c^2";
-	} else if(_parametersLimitedLower[1]) {
-		out << "lower limit: " << _parametersLimitLower[1] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[1]) {
-		out << "upper limit: " << _parametersLimitUpper[1] << " GeV/c^2";
+	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
+	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
+		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
+	} else if(_parameters[1].limitedLower()) {
+		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
+	} else if(_parameters[1].limitedUpper()) {
+		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[1] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
 
 	return component::print(out);
 }
@@ -1546,9 +1538,9 @@ rpwa::resonanceFit::exponentialBackground::exponentialBackground(const size_t id
                                                                  const std::string& name)
 	: component(id, name, "exponentialBackground", 1)
 {
-	_parametersName[0] = "g";
+	_parameters[0].setName("g");
 
-	_parametersStep[0] = 1.0;
+	_parameters[0].setStep(1.0);
 }
 
 
@@ -1705,17 +1697,17 @@ rpwa::resonanceFit::exponentialBackground::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
 
 	out << "    width ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
@@ -1729,17 +1721,17 @@ rpwa::resonanceFit::tPrimeDependentBackground::tPrimeDependentBackground(const s
                                                                          const std::string& name)
 	: component(id, name, "tPrimeDependentBackground", 5)
 {
-	_parametersName[0] = "m0";
-	_parametersName[1] = "c0";
-	_parametersName[2] = "c1";
-	_parametersName[3] = "c2";
-	_parametersName[4] = "c3";
+	_parameters[0].setName("m0");
+	_parameters[1].setName("c0");
+	_parameters[2].setName("c1");
+	_parameters[3].setName("c2");
+	_parameters[4].setName("c3");
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 0.001;
-	_parametersStep[2] = 1.0;
-	_parametersStep[3] = 1.0;
-	_parametersStep[4] = 1.0;
+	_parameters[0].setStep(0.001);
+	_parameters[1].setStep(0.001);
+	_parameters[2].setStep(1.0);
+	_parameters[3].setStep(1.0);
+	_parameters[4].setStep(1.0);
 }
 
 
@@ -1913,31 +1905,31 @@ rpwa::resonanceFit::tPrimeDependentBackground::print(std::ostream& out) const
 	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
 
 	out << "    mass threshold ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	for(size_t i=1; i<5; ++i) {
 		out << "    c" << i-1 << " ";
-		out << "start value: " << _parametersStart[i] << " +/- " << _parametersError[i] << " ";
-		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
-			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
-		} else if(_parametersLimitedLower[i]) {
-			out << "lower limit: " << _parametersLimitLower[i] << " GeV/c^2";
-		} else if(_parametersLimitedUpper[i]) {
-			out << "upper limit: " << _parametersLimitUpper[i] << " GeV/c^2";
+		out << "start value: " << _parameters[i].startValue() << " +/- " << _parameters[i].startError() << " ";
+		if(_parameters[i].limitedLower() and _parameters[i].limitedUpper()) {
+			out << "limits: " << _parameters[i].limitLower() << "-" << _parameters[i].limitUpper() << " GeV/c^2";
+		} else if(_parameters[i].limitedLower()) {
+			out << "lower limit: " << _parameters[i].limitLower() << " GeV/c^2";
+		} else if(_parameters[i].limitedUpper()) {
+			out << "upper limit: " << _parameters[i].limitUpper() << " GeV/c^2";
 		} else {
 			out << "unlimited";
 		}
-		out << (_parametersFixed[i] ? " (FIXED)" : "") << std::endl;
+		out << (_parameters[i].fixed() ? " (FIXED)" : "") << std::endl;
 	}
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
@@ -1958,9 +1950,9 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral
                                                                                  const std::string& name)
 	: component(id, name, "exponentialBackgroundIntegral", 1)
 {
-	_parametersName[0] = "g";
+	_parameters[0].setName("g");
 
-	_parametersStep[0] = 1.0;
+	_parameters[0].setStep(1.0);
 }
 
 
@@ -2135,17 +2127,17 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::print(std::ostream& out) cons
 	out << "component " << getId() << " '" << getName() << "' (exponentialBackgroundIntegral):" << std::endl;
 
 	out << "    width ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	out << "    exponent of phase-space integral: " << _exponent << std::endl;
 
@@ -2157,17 +2149,17 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackground
                                                                                          const std::string& name)
 	: component(id, name, "tPrimeDependentBackgroundIntegral", 5)
 {
-	_parametersName[0] = "m0";
-	_parametersName[1] = "c0";
-	_parametersName[2] = "c1";
-	_parametersName[3] = "c2";
-	_parametersName[4] = "c3";
+	_parameters[0].setName("m0");
+	_parameters[1].setName("c0");
+	_parameters[2].setName("c1");
+	_parameters[3].setName("c2");
+	_parameters[4].setName("c3");
 
-	_parametersStep[0] = 0.001;
-	_parametersStep[1] = 0.001;
-	_parametersStep[2] = 1.0;
-	_parametersStep[3] = 1.0;
-	_parametersStep[4] = 1.0;
+	_parameters[0].setStep(0.001);
+	_parameters[1].setStep(0.001);
+	_parameters[2].setStep(1.0);
+	_parameters[3].setStep(1.0);
+	_parameters[4].setStep(1.0);
 }
 
 
@@ -2359,31 +2351,31 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::print(std::ostream& out) 
 	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackgroundIntegral):" << std::endl;
 
 	out << "    mass threshold ";
-	out << "start value: " << _parametersStart[0] << " +/- " << _parametersError[0] << " ";
-	if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
-		out << "limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " GeV/c^2";
-	} else if(_parametersLimitedLower[0]) {
-		out << "lower limit: " << _parametersLimitLower[0] << " GeV/c^2";
-	} else if(_parametersLimitedUpper[0]) {
-		out << "upper limit: " << _parametersLimitUpper[0] << " GeV/c^2";
+	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
+	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
+		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
+	} else if(_parameters[0].limitedLower()) {
+		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
+	} else if(_parameters[0].limitedUpper()) {
+		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
 	} else {
 		out << "unlimited";
 	}
-	out << (_parametersFixed[0] ? " (FIXED)" : "") << std::endl;
+	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
 	for(size_t i=1; i<5; ++i) {
 		out << "    c" << i-1 << " ";
-		out << "start value: " << _parametersStart[i] << " +/- " << _parametersError[i] << " ";
-		if(_parametersLimitedLower[i] && _parametersLimitedUpper[i]) {
-			out << "limits: " << _parametersLimitLower[i] << "-" << _parametersLimitUpper[i] << " GeV/c^2";
-		} else if(_parametersLimitedLower[i]) {
-			out << "lower limit: " << _parametersLimitLower[i] << " GeV/c^2";
-		} else if(_parametersLimitedUpper[i]) {
-			out << "upper limit: " << _parametersLimitUpper[i] << " GeV/c^2";
+		out << "start value: " << _parameters[i].startValue() << " +/- " << _parameters[i].startError() << " ";
+		if(_parameters[i].limitedLower() and _parameters[i].limitedUpper()) {
+			out << "limits: " << _parameters[i].limitLower() << "-" << _parameters[i].limitUpper() << " GeV/c^2";
+		} else if(_parameters[i].limitedLower()) {
+			out << "lower limit: " << _parameters[i].limitLower() << " GeV/c^2";
+		} else if(_parameters[i].limitedUpper()) {
+			out << "upper limit: " << _parameters[i].limitUpper() << " GeV/c^2";
 		} else {
 			out << "unlimited";
 		}
-		out << (_parametersFixed[i] ? " (FIXED)" : "") << std::endl;
+		out << (_parameters[i].fixed() ? " (FIXED)" : "") << std::endl;
 	}
 
 	out << "    exponent of phase-space integral: " << _exponent << std::endl;

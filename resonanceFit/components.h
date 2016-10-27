@@ -43,6 +43,7 @@
 #include <Math/Interpolator.h>
 
 #include "cache.h"
+#include "parameter.h"
 #include "parameters.h"
 
 namespace YAML {
@@ -151,16 +152,7 @@ namespace rpwa {
 
 			bool isBranchingFixed(const size_t idxBranching) const { return _branchingsFixed[idxBranching]; }
 
-			double getParameterStart(const size_t idxParameter) const { return _parametersStart[idxParameter]; }
-			double getParameterError(const size_t idxParameter) const { return _parametersError[idxParameter]; }
-
-			bool getParameterFixed(const size_t idxParameter) const { return _parametersFixed[idxParameter]; }
-			double getParameterLimitLower(const size_t idxParameter) const { return _parametersLimitLower[idxParameter]; }
-			bool getParameterLimitedLower(const size_t idxParameter) const { return _parametersLimitedLower[idxParameter]; }
-			double getParameterLimitUpper(const size_t idxParameter) const { return _parametersLimitUpper[idxParameter]; }
-			bool getParameterLimitedUpper(const size_t idxParameter) const { return _parametersLimitedUpper[idxParameter]; }
-			const std::string& getParameterName(const size_t idxParameter) const { return _parametersName[idxParameter]; }
-			double getParameterStep(const size_t idxParameter) const { return _parametersStep[idxParameter]; }
+			const rpwa::resonanceFit::parameter& getParameter(const size_t idxParameter) const { return _parameters[idxParameter]; }
 
 			std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                         rpwa::resonanceFit::cache& cache,
@@ -203,16 +195,7 @@ namespace rpwa {
 
 			std::vector<std::vector<size_t> > _binsEqualValues;
 
-			std::vector<double> _parametersStart;
-			std::vector<double> _parametersError;
-
-			std::vector<bool> _parametersFixed;
-			std::vector<double> _parametersLimitLower;
-			std::vector<bool> _parametersLimitedLower;
-			std::vector<double> _parametersLimitUpper;
-			std::vector<bool> _parametersLimitedUpper;
-			std::vector<std::string> _parametersName;
-			std::vector<double> _parametersStep;
+			std::vector<rpwa::resonanceFit::parameter> _parameters;
 
 		};
 

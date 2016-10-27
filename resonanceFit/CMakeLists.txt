@@ -54,6 +54,7 @@ set(SOURCES
 	information.cc
 	minimizerRoot.cc
 	model.cc
+	parameter.cc
 	parameters.cc
 	)
 

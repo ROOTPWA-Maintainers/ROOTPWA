@@ -38,6 +38,8 @@
 
 #include <boost/multi_array.hpp>
 
+#include "parameter.h"
+
 namespace YAML {
 	class Emitter;
 	class Node;
@@ -78,13 +80,7 @@ namespace rpwa {
 			                        rpwa::resonanceFit::parameters& fitParameters,
 			                        rpwa::resonanceFit::cache& cache);
 
-			bool getParameterFixed(const size_t idxBin, const size_t idxParameter) const { return _parametersFixed[idxBin][idxParameter]; }
-			double getParameterLimitLower(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitLower[idxBin][idxParameter]; }
-			bool getParameterLimitedLower(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitedLower[idxBin][idxParameter]; }
-			double getParameterLimitUpper(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitUpper[idxBin][idxParameter]; }
-			bool getParameterLimitedUpper(const size_t idxBin, const size_t idxParameter) const { return _parametersLimitedUpper[idxBin][idxParameter]; }
-			const std::string& getParameterName(const size_t idxBin, const size_t idxParameter) const { return _parametersName[idxBin][idxParameter]; }
-			double getParameterStep(const size_t idxBin, const size_t idxParameter) const { return _parametersStep[idxBin][idxParameter]; }
+			const rpwa::resonanceFit::parameter& getParameter(const size_t idxBin, const size_t idxParameter) const { return _parameters[idxBin][idxParameter]; }
 
 			std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                         rpwa::resonanceFit::cache& cache,
@@ -123,13 +119,8 @@ namespace rpwa {
 			std::vector<size_t> _nrParameters;
 			std::vector<size_t> _parametersIndex;
 
-			boost::multi_array<bool, 2> _parametersFixed;
-			boost::multi_array<double, 2> _parametersLimitLower;
-			boost::multi_array<bool, 2> _parametersLimitedLower;
-			boost::multi_array<double, 2> _parametersLimitUpper;
-			boost::multi_array<bool, 2> _parametersLimitedUpper;
-			boost::multi_array<std::string, 2> _parametersName;
-			boost::multi_array<double, 2> _parametersStep;
+			boost::multi_array<rpwa::resonanceFit::parameter, 2> _parameters;
+
 		};
 
 		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::fsmd& fsmd);
