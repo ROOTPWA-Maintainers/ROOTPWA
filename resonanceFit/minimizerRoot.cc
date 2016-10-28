@@ -256,7 +256,7 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 	for(size_t idxComponent = 0; idxComponent < _fitModel->getNrComponents(); ++idxComponent) {
 		const rpwa::resonanceFit::componentConstPtr& comp = _fitModel->getComponent(idxComponent);
 		for(size_t idxCoupling=0; idxCoupling<comp->getNrCouplings(); ++idxCoupling) {
-			const rpwa::resonanceFit::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
+			const rpwa::resonanceFit::component::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
 			const std::vector<size_t>& bins = channel.getBins();
 			for(size_t i = 0; i < bins.size(); ++i) {
 				const size_t idxBin = bins[i];
@@ -326,7 +326,7 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 				continue;
 			}
 
-			const rpwa::resonanceFit::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
+			const rpwa::resonanceFit::component::channel& channel = comp->getChannelFromBranchingIdx(idxBranching);
 			const std::string waveQN = channel.getWaveName().substr(0, channel.getWaveName().find("="));
 			const std::string waveDecay = channel.getWaveName().substr(channel.getWaveName().find("=")+1);
 			std::ostringstream prefixName;

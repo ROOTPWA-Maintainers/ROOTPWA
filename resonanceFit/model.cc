@@ -75,7 +75,7 @@ rpwa::resonanceFit::model::add(const rpwa::resonanceFit::componentPtr& comp)
 
 	// number of coupling parameters
 	for(size_t idxCoupling = 0; idxCoupling < comp->getNrCouplings(); ++idxCoupling) {
-		const channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
+		const rpwa::resonanceFit::component::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
 		_nrParameters += 2 * channel.getBins().size();
 	}
 
@@ -126,7 +126,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 		const componentConstPtr& component = _components[idxComponent];
 		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-			const channel& channel = component->getChannel(idxChannel);
+			const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
 			bool found = false;
 			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
@@ -158,7 +158,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 			const componentConstPtr& component = _components[idxComponent];
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-				const channel& channel = component->getChannel(idxChannel);
+				const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
 				if(channel.getWaveName() == wave.waveName()) {
 					found = true;
@@ -187,7 +187,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 			const componentConstPtr& component = _components[idxComponent];
 			// loop over channels of component and see if wave is there
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-				const channel& channel = component->getChannel(idxChannel);
+				const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
 				if(channel.getWaveName() == wave.waveName() or find(wave.waveNameAlternatives().begin(), wave.waveNameAlternatives().end(), channel.getWaveName()) != wave.waveNameAlternatives().end()) {
 					for(size_t i = 0; i < channel.getBins().size(); ++i) {
@@ -234,7 +234,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 		size_t firstChannel = 0;
 		// loop over channels of component and see if wave is there
 		for(size_t idxChannel = 0; idxChannel < anchorComponent->getNrChannels(); ++idxChannel) {
-			const channel& channel = anchorComponent->getChannel(idxChannel);
+			const rpwa::resonanceFit::component::channel& channel = anchorComponent->getChannel(idxChannel);
 			const std::vector<size_t>& bins = channel.getBins();
 			if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
 				firstChannel = idxChannel;
@@ -290,7 +290,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 
 			bool printedHeader = false;
 			for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-				const channel& channel = component->getChannel(idxChannel);
+				const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 				const std::vector<size_t>& bins = channel.getBins();
 				if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
 					if(not printedHeader) {
@@ -324,7 +324,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 
 				bool printedHeader = false;
 				for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
-					const channel& channel = component->getChannel(idxChannel);
+					const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 					const std::vector<size_t>& bins = channel.getBins();
 					if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
 						if(not printedHeader) {
