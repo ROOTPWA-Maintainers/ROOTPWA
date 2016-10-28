@@ -121,26 +121,12 @@ namespace rpwa {
 			                     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			                     const bool useBranchings);
 			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
-			bool readConfigModelComponents(const YAML::Node& configComponents,
-			                               const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                               const rpwa::resonanceFit::modelPtr& fitModel,
-			                               rpwa::resonanceFit::parameters& fitParameters,
-			                               rpwa::resonanceFit::parameters& fitParametersError,
-			                               const boost::multi_array<std::string, 2>& waveNames,
-			                               const std::vector<size_t>& nrMassBins,
-			                               const boost::multi_array<double, 2>& massBinCenters,
-			                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-			                               const bool useBranchings) const;
 
 			bool writeConfigModel(YAML::Emitter& yamlOutput,
 			                      const rpwa::resonanceFit::modelConstPtr& fitModel,
 			                      const rpwa::resonanceFit::parameters& fitParameters,
 			                      const rpwa::resonanceFit::parameters& fitParametersError) const;
 			bool writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const;
-			bool writeConfigModelComponents(YAML::Emitter& yamlOutput,
-			                                const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                                const rpwa::resonanceFit::parameters& fitParameters,
-			                                const rpwa::resonanceFit::parameters& fitParametersError) const;
 
 			std::string _anchorWaveName;
 			std::string _anchorComponentName;

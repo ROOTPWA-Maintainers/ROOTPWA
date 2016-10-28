@@ -1819,6 +1819,13 @@ namespace {
 		if(configParameter["error"]) {
 			if(checkVariableType(configParameter["error"], rpwa::YamlCppUtils::TypeFloat)) {
 				parameter.setStartError(configParameter["error"].as<double>());
+			} else if(checkVariableType(configParameter["error"], rpwa::YamlCppUtils::TypeString) and configParameter["error"].as<std::string>() == "nan") {
+				// some systems cannot convert the string 'nan'
+				// to a floating point number, so this is to be
+				// done manually. in any case this does not
+				// really matter as the error is usually not
+				// used.
+				parameter.setStartError(std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0);
 			} else {
 				printErr << "variable 'error' for parameter '" << parameterName << "' of final-state mass-dependence defined, but not a floating point number." << std::endl;
 				throw;
@@ -1899,6 +1906,1264 @@ namespace {
 		yamlOutput << YAML::Value << parameter.fixed();
 
 		yamlOutput << YAML::EndMap;
+	}
+
+
+	double
+	readModelComponentDecayChannelBranchingRatio(const YAML::Node& configDecayChannel)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("branchingRatio", rpwa::YamlCppUtils::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		return configDecayChannel["branchingRatio"].as<double>();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelBranchingRatio(YAML::Emitter& yamlOutput,
+	                                              const std::shared_ptr<const T>& component,
+	                                              const size_t idxDecayChannel)
+	{
+		yamlOutput << YAML::Key << "branchingRatio";
+		yamlOutput << YAML::Value << component->branchingRatio()[idxDecayChannel];
+	}
+
+
+	double
+	readModelComponentDecayChannelExponent(const YAML::Node& configDecayChannel)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("exponent", rpwa::YamlCppUtils::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		return configDecayChannel["exponent"].as<double>();
+	}
+
+
+	double
+	readModelComponentDecayChannelExponent(const YAML::Node& configDecayChannel,
+	                                       const double defaultExponent)
+	{
+		if(configDecayChannel["exponent"]) {
+			if(checkVariableType(configDecayChannel["exponent"], rpwa::YamlCppUtils::TypeFloat)) {
+				return configDecayChannel["exponent"].as<double>();
+			} else {
+				printErr << "variable 'exponent' defined, but not a floating-point number." << std::endl;
+				throw;
+			}
+		}
+
+		printInfo << "variable 'exponent' not defined, using default value " << defaultExponent << "." << std::endl;
+		return defaultExponent;
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelExponent(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component)
+	{
+		yamlOutput << YAML::Key << "exponent";
+		yamlOutput << YAML::Value << component->exponent();
+	}
+
+
+	void
+	readModelComponentDecayChannelIntegral(const YAML::Node& configDecayChannel,
+	                                       std::vector<double>& masses,
+	                                       std::vector<double>& values)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("integral", rpwa::YamlCppUtils::TypeSequence);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		const YAML::Node& integrals = configDecayChannel["integral"];
+
+		const size_t nrValues = integrals.size();
+		if(nrValues < 2) {
+			printErr << "phase-space integral has to contain at least two points." << std::endl;
+			throw;
+		}
+
+		masses.clear();
+		values.clear();
+
+		for(size_t idx = 0; idx < nrValues; ++idx) {
+			const YAML::Node& integral = integrals[idx];
+			if(not integral.IsSequence()) {
+				printErr << "phase-space integral has to consist of arrays of two floating point numbers." << std::endl;
+				throw;
+			}
+			if(integral.size() != 2) {
+				printErr << "phase-space integral has to consist of arrays of two floating point numbers." << std::endl;
+				throw;
+			}
+			if(not checkVariableType(integral[0], rpwa::YamlCppUtils::TypeFloat)) {
+				printErr << "phase-space integral has to consist of arrays of two floating point numbers." << std::endl;
+				throw;
+			}
+			if(not checkVariableType(integral[1], rpwa::YamlCppUtils::TypeFloat)) {
+				printErr << "phase-space integral has to consist of arrays of two floating point numbers." << std::endl;
+				throw;
+			}
+
+			const double mass = integral[0].as<double>();
+			const double val = integral[1].as<double>();
+
+			if(masses.size() > 0 and masses.back() > mass) {
+				printErr << "masses of phase-space integral have to be strictly ordered." << std::endl;
+				throw;
+			}
+
+			masses.push_back(mass);
+			values.push_back(val);
+		}
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelIntegral(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component)
+	{
+		yamlOutput << YAML::Key << "integral";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::Flow;
+		yamlOutput << YAML::BeginSeq;
+
+		const std::vector<double> masses =  component->masses();
+		const std::vector<double> values =  component->values();
+		for(size_t idx = 0; idx < masses.size(); ++idx) {
+			yamlOutput << YAML::BeginSeq;
+			yamlOutput << masses[idx];
+			yamlOutput << values[idx];
+			yamlOutput << YAML::EndSeq;
+		}
+
+		yamlOutput << YAML::EndSeq;
+		yamlOutput << YAML::Block;
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelIntegral(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component,
+	                                        const size_t idxDecayChannel)
+	{
+		yamlOutput << YAML::Key << "integral";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::Flow;
+		yamlOutput << YAML::BeginSeq;
+
+		const std::vector<double> masses =  component->masses()[idxDecayChannel];
+		const std::vector<double> values =  component->values()[idxDecayChannel];
+		for(size_t idx = 0; idx < masses.size(); ++idx) {
+			yamlOutput << YAML::BeginSeq;
+			yamlOutput << masses[idx];
+			yamlOutput << values[idx];
+			yamlOutput << YAML::EndSeq;
+		}
+
+		yamlOutput << YAML::EndSeq;
+		yamlOutput << YAML::Block;
+	}
+
+
+	double
+	readModelComponentDecayChannelMIsobar1(const YAML::Node& configDecayChannel)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("mIsobar1", rpwa::YamlCppUtils::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		return configDecayChannel["mIsobar1"].as<double>();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelMIsobar1(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component)
+	{
+		yamlOutput << YAML::Key << "mIsobar1";
+		yamlOutput << YAML::Value << component->mIsobar1();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelMIsobar1(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component,
+	                                        const size_t idxDecayChannel)
+	{
+		yamlOutput << YAML::Key << "mIsobar1";
+		yamlOutput << YAML::Value << component->mIsobar1()[idxDecayChannel];
+	}
+
+
+	double
+	readModelComponentDecayChannelMIsobar2(const YAML::Node& configDecayChannel)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("mIsobar2", rpwa::YamlCppUtils::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		return configDecayChannel["mIsobar2"].as<double>();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelMIsobar2(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component)
+	{
+		yamlOutput << YAML::Key << "mIsobar2";
+		yamlOutput << YAML::Value << component->mIsobar2();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelMIsobar2(YAML::Emitter& yamlOutput,
+	                                        const std::shared_ptr<const T>& component,
+	                                        const size_t idxDecayChannel)
+	{
+		yamlOutput << YAML::Key << "mIsobar2";
+		yamlOutput << YAML::Value << component->mIsobar2()[idxDecayChannel];
+	}
+
+
+	int
+	readModelComponentDecayChannelRelAngularMom(const YAML::Node& configDecayChannel)
+	{
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("relAngularMom", rpwa::YamlCppUtils::TypeInt);
+		if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+			printErr << "decay channel does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		return configDecayChannel["relAngularMom"].as<int>();
+	}
+
+
+	int
+	readModelComponentDecayChannelRelAngularMom(const YAML::Node& configDecayChannel,
+	                                            const int defaultRelAngularMom)
+	{
+		if(configDecayChannel["relAngularMom"]) {
+			if(checkVariableType(configDecayChannel["relAngularMom"], rpwa::YamlCppUtils::TypeInt)) {
+				return configDecayChannel["relAngularMom"].as<int>();
+			} else {
+				printErr << "variable 'relAngularMom' defined, but not an integer." << std::endl;
+				throw;
+			}
+		}
+
+		printInfo << "variable 'relAngularMom' not defined, using default value " << defaultRelAngularMom << "." << std::endl;
+		return defaultRelAngularMom;
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelRelAngularMom(YAML::Emitter& yamlOutput,
+	                                             const std::shared_ptr<const T>& component)
+	{
+		yamlOutput << YAML::Key << "relAngularMom";
+		yamlOutput << YAML::Value << component->relAngularMom();
+	}
+
+
+	template<typename T>
+	void
+	writeModelComponentDecayChannelRelAngularMom(YAML::Emitter& yamlOutput,
+	                                             const std::shared_ptr<const T>& component,
+	                                             const size_t idxDecayChannel)
+	{
+		yamlOutput << YAML::Key << "relAngularMom";
+		yamlOutput << YAML::Value << component->relAngularMom()[idxDecayChannel];
+	}
+
+
+	std::vector<rpwa::resonanceFit::component::channel>
+	readModelComponentDecayChannels(const YAML::Node& configComponent,
+	                                const std::string& componentName,
+	                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                const boost::multi_array<std::string, 2>& waveNames,
+	                                const std::vector<size_t>& nrMassBins,
+	                                const boost::multi_array<double, 2>& massBinCenters,
+	                                const boost::multi_array<double, 3>& phaseSpaceIntegrals)
+	{
+		if(debug) {
+			printDebug << "reading 'decaychannels'." << std::endl;
+		}
+
+		std::map<std::string, size_t> waveIndices;
+		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+			waveIndices[wave.waveName()] = idxWave;
+			for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
+				waveIndices[wave.waveNameAlternatives()[idxAlt]] = idxWave;
+			}
+		}
+
+		std::map<std::string, std::vector<size_t> > waveBins;
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				waveBins[waveNames[idxBin][idxWave]].push_back(idxBin);
+			}
+		}
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("decaychannels", rpwa::YamlCppUtils::TypeSequence);
+		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+			printErr << "'components' entry of component '" << componentName << "' does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		const YAML::Node& configDecayChannels = configComponent["decaychannels"];
+
+		std::vector<rpwa::resonanceFit::component::channel> decayChannels;
+		const size_t nrDecayChannels = configDecayChannels.size();
+		for(size_t idxDecayChannel = 0; idxDecayChannel < nrDecayChannels; ++idxDecayChannel) {
+			const YAML::Node& configDecayChannel = configDecayChannels[idxDecayChannel];
+
+			std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+			boost::assign::insert(mandatoryArguments)
+			                     ("amp", rpwa::YamlCppUtils::TypeString);
+			if(not checkIfAllVariablesAreThere(configDecayChannel, mandatoryArguments)) {
+				printErr << "one of the decay channels of component '" << componentName << "' does not contain all required variables." << std::endl;
+				throw;
+			}
+
+			const std::string waveName = configDecayChannel["amp"].as<std::string>();
+
+			// check that a wave with this wave is not yet in the decay channels
+			for(size_t idxChannel = 0; idxChannel < decayChannels.size(); ++idxChannel) {
+				if(decayChannels[idxChannel].getWaveName() == waveName) {
+					printErr << "wave '" << waveName << "' defined twice in the decay channels of component '" << componentName << "'." << std::endl;
+					throw;
+				}
+			}
+
+			// get index of wave in array for wave names, phase-space integrals, ...
+			const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
+			if(it == waveIndices.end()) {
+				printErr << "wave '" << waveName << "' not in fit, but used as decay channel in component '" << componentName << "'." << std::endl;
+				throw;
+			}
+			const size_t waveIdx = it->second;
+
+			// get list of bins this wave is defined in
+			const std::map<std::string, std::vector<size_t> >::const_iterator it2 = waveBins.find(waveName);
+			if(it2 == waveBins.end()) {
+				printErr << "wave '" << waveName << "' not in fit, but used as decay channel in component '" << componentName << "'." << std::endl;
+				throw;
+			}
+			const std::vector<size_t>& binsForWave = it2->second;
+
+			// get a view for the current wave for all bins and all mass bins
+			boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][waveIdx]];
+			decayChannels.push_back(rpwa::resonanceFit::component::channel(waveIdx,
+			                                                               waveName,
+			                                                               binsForWave,
+			                                                               nrMassBins,
+			                                                               massBinCenters,
+			                                                               view));
+		}
+
+		return decayChannels;
+	}
+
+
+	template<typename T>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent(const YAML::Node& /*configComponent*/,
+	                   const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                   const size_t id,
+	                   const std::string& name,
+	                   const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                   const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                   const std::vector<size_t>& nrMassBins,
+	                   const boost::multi_array<double, 2>& massBinCenters,
+	                   const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of non-specialized type." << std::endl;
+		}
+
+		return std::make_shared<T>(id,
+		                           name,
+		                           parameters,
+		                           decayChannels,
+		                           nrMassBins,
+		                           massBinCenters,
+		                           useBranchings);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::dynamicWidthBreitWigner>(const YAML::Node& configComponent,
+	                                                                const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                const size_t id,
+	                                                                const std::string& name,
+	                                                                const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                                const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                                const std::vector<size_t>& nrMassBins,
+	                                                                const boost::multi_array<double, 2>& massBinCenters,
+	                                                                const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'dynamicWidthBreitWigner'." << std::endl;
+		}
+
+		std::vector<double> branchingRatio;
+		std::vector<int> relAngularMom;
+		std::vector<double> mIsobar1;
+		std::vector<double> mIsobar2;
+
+		const YAML::Node& configDecayChannels = configComponent["decaychannels"];
+		if(not configDecayChannels) {
+			printErr << "a component of type 'dynamicWidthBreitWigner' has no decay channels." << std::endl;
+			throw;
+		}
+
+		const size_t nrDecayChannels = configDecayChannels.size();
+		for(size_t idxDecayChannel = 0; idxDecayChannel < nrDecayChannels; ++idxDecayChannel) {
+			const YAML::Node& configDecayChannel = configDecayChannels[idxDecayChannel];
+
+			branchingRatio.push_back(readModelComponentDecayChannelBranchingRatio(configDecayChannel));
+			relAngularMom.push_back(readModelComponentDecayChannelRelAngularMom(configDecayChannel));
+			mIsobar1.push_back(readModelComponentDecayChannelMIsobar1(configDecayChannel));
+			mIsobar2.push_back(readModelComponentDecayChannelMIsobar2(configDecayChannel));
+		}
+
+		const YAML::Node& configExtraDecayChannels = configComponent["extradecaychannels"];
+		const size_t nrExtraDecayChannels = configExtraDecayChannels ? configExtraDecayChannels.size() : 0;
+		for(size_t idxExtraDecayChannel = 0; idxExtraDecayChannel < nrExtraDecayChannels; ++idxExtraDecayChannel) {
+			const YAML::Node& configExtraDecayChannel = configExtraDecayChannels[idxExtraDecayChannel];
+
+			branchingRatio.push_back(readModelComponentDecayChannelBranchingRatio(configExtraDecayChannel));
+			relAngularMom.push_back(readModelComponentDecayChannelRelAngularMom(configExtraDecayChannel));
+			mIsobar1.push_back(readModelComponentDecayChannelMIsobar1(configExtraDecayChannel));
+			mIsobar2.push_back(readModelComponentDecayChannelMIsobar2(configExtraDecayChannel));
+		}
+
+		return std::make_shared<rpwa::resonanceFit::dynamicWidthBreitWigner>(id,
+		                                                                     name,
+		                                                                     parameters,
+		                                                                     decayChannels,
+		                                                                     nrMassBins,
+		                                                                     massBinCenters,
+		                                                                     useBranchings,
+		                                                                     branchingRatio,
+		                                                                     relAngularMom,
+		                                                                     mIsobar1,
+		                                                                     mIsobar2);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::integralWidthBreitWigner>(const YAML::Node& configComponent,
+	                                                                 const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                 const size_t id,
+	                                                                 const std::string& name,
+	                                                                 const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                                 const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                                 const std::vector<size_t>& nrMassBins,
+	                                                                 const boost::multi_array<double, 2>& massBinCenters,
+	                                                                 const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'integralWidthBreitWigner'." << std::endl;
+		}
+
+		std::vector<double> branchingRatio;
+		std::vector<std::vector<double> > masses;
+		std::vector<std::vector<double> > values;
+
+		const YAML::Node& configDecayChannels = configComponent["decaychannels"];
+		if(not configDecayChannels) {
+			printErr << "a component of type 'integralWidthBreitWigner' has no decay channels." << std::endl;
+			throw;
+		}
+
+		const size_t nrDecayChannels = configDecayChannels.size();
+		for(size_t idxDecayChannel = 0; idxDecayChannel < nrDecayChannels; ++idxDecayChannel) {
+			const YAML::Node& configDecayChannel = configDecayChannels[idxDecayChannel];
+
+			branchingRatio.push_back(readModelComponentDecayChannelBranchingRatio(configDecayChannel));
+
+			std::vector<double> tempMasses;
+			std::vector<double> tempValues;
+			readModelComponentDecayChannelIntegral(configDecayChannel, tempMasses, tempValues);
+			masses.push_back(tempMasses);
+			values.push_back(tempValues);
+		}
+
+		const YAML::Node& configExtraDecayChannels = configComponent["extradecaychannels"];
+		const size_t nrExtraDecayChannels = configExtraDecayChannels ? configExtraDecayChannels.size() : 0;
+		for(size_t idxExtraDecayChannel = 0; idxExtraDecayChannel < nrExtraDecayChannels; ++idxExtraDecayChannel) {
+			const YAML::Node& configExtraDecayChannel = configExtraDecayChannels[idxExtraDecayChannel];
+
+			branchingRatio.push_back(readModelComponentDecayChannelBranchingRatio(configExtraDecayChannel));
+
+			std::vector<double> tempMasses;
+			std::vector<double> tempValues;
+			readModelComponentDecayChannelIntegral(configExtraDecayChannel, tempMasses, tempValues);
+			masses.push_back(tempMasses);
+			values.push_back(tempValues);
+		}
+
+		return std::make_shared<rpwa::resonanceFit::integralWidthBreitWigner>(id,
+		                                                                      name,
+		                                                                      parameters,
+		                                                                      decayChannels,
+		                                                                      nrMassBins,
+		                                                                      massBinCenters,
+		                                                                      useBranchings,
+		                                                                      branchingRatio,
+		                                                                      masses,
+		                                                                      values);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::exponentialBackground>(const YAML::Node& configComponent,
+	                                                              const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                              const size_t id,
+	                                                              const std::string& name,
+	                                                              const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                              const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                              const std::vector<size_t>& nrMassBins,
+	                                                              const boost::multi_array<double, 2>& massBinCenters,
+	                                                              const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'exponentialBackground'." << std::endl;
+		}
+
+		const int relAngularMom = readModelComponentDecayChannelRelAngularMom(configComponent, 0);
+		const double mIsobar1 = readModelComponentDecayChannelMIsobar1(configComponent);
+		const double mIsobar2 = readModelComponentDecayChannelMIsobar2(configComponent);
+		const double exponent = readModelComponentDecayChannelExponent(configComponent, 2.0);
+
+		return std::make_shared<rpwa::resonanceFit::exponentialBackground>(id,
+		                                                                   name,
+		                                                                   parameters,
+		                                                                   decayChannels,
+		                                                                   nrMassBins,
+		                                                                   massBinCenters,
+		                                                                   useBranchings,
+		                                                                   relAngularMom,
+		                                                                   mIsobar1,
+		                                                                   mIsobar2,
+		                                                                   exponent);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackground>(const YAML::Node& configComponent,
+	                                                                  const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                                                  const size_t id,
+	                                                                  const std::string& name,
+	                                                                  const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                                  const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                                  const std::vector<size_t>& nrMassBins,
+	                                                                  const boost::multi_array<double, 2>& massBinCenters,
+	                                                                  const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'tPrimeDependentBackground'." << std::endl;
+		}
+
+		std::vector<double> tPrimeMeans;
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
+		}
+
+		const int relAngularMom = readModelComponentDecayChannelRelAngularMom(configComponent, 0);
+		const double mIsobar1 = readModelComponentDecayChannelMIsobar1(configComponent);
+		const double mIsobar2 = readModelComponentDecayChannelMIsobar2(configComponent);
+		const double exponent = readModelComponentDecayChannelExponent(configComponent, 2.0);
+
+		return std::make_shared<rpwa::resonanceFit::tPrimeDependentBackground>(id,
+		                                                                       name,
+		                                                                       parameters,
+		                                                                       decayChannels,
+		                                                                       nrMassBins,
+		                                                                       massBinCenters,
+		                                                                       useBranchings,
+		                                                                       tPrimeMeans,
+		                                                                       relAngularMom,
+		                                                                       mIsobar1,
+		                                                                       mIsobar2,
+		                                                                       exponent);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::exponentialBackgroundIntegral>(const YAML::Node& configComponent,
+	                                                                      const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                      const size_t id,
+	                                                                      const std::string& name,
+	                                                                      const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                                      const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                                      const std::vector<size_t>& nrMassBins,
+	                                                                      const boost::multi_array<double, 2>& massBinCenters,
+	                                                                      const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'exponentialBackgroundIntegral'." << std::endl;
+		}
+
+		std::vector<double> masses;
+		std::vector<double> values;
+		readModelComponentDecayChannelIntegral(configComponent, masses, values);
+		const double exponent = readModelComponentDecayChannelExponent(configComponent);
+
+		return std::make_shared<rpwa::resonanceFit::exponentialBackgroundIntegral>(id,
+		                                                                           name,
+		                                                                           parameters,
+		                                                                           decayChannels,
+		                                                                           nrMassBins,
+		                                                                           massBinCenters,
+		                                                                           useBranchings,
+		                                                                           masses,
+		                                                                           values,
+		                                                                           exponent);
+	}
+
+
+	template<>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(const YAML::Node& configComponent,
+	                                                                          const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                                                          const size_t id,
+	                                                                          const std::string& name,
+	                                                                          const std::vector<rpwa::resonanceFit::parameter>& parameters,
+	                                                                          const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+	                                                                          const std::vector<size_t>& nrMassBins,
+	                                                                          const boost::multi_array<double, 2>& massBinCenters,
+	                                                                          const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'tPrimeDependentBackgroundIntegral'." << std::endl;
+		}
+
+		std::vector<double> tPrimeMeans;
+		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
+		}
+
+		std::vector<double> masses;
+		std::vector<double> values;
+		readModelComponentDecayChannelIntegral(configComponent, masses, values);
+		const double exponent = readModelComponentDecayChannelExponent(configComponent);
+
+		return std::make_shared<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(id,
+		                                                                               name,
+		                                                                               parameters,
+		                                                                               decayChannels,
+		                                                                               nrMassBins,
+		                                                                               massBinCenters,
+		                                                                               useBranchings,
+		                                                                               tPrimeMeans,
+		                                                                               masses,
+		                                                                               values,
+		                                                                               exponent);
+	}
+
+
+	template<typename T>
+	rpwa::resonanceFit::componentPtr
+	readModelComponent(const YAML::Node& configComponent,
+	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   const size_t id,
+	                   const boost::multi_array<std::string, 2>& waveNames,
+	                   const std::vector<size_t>& nrMassBins,
+	                   const boost::multi_array<double, 2>& massBinCenters,
+	                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	                   const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component of type 'component'." << std::endl;
+		}
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("name", rpwa::YamlCppUtils::TypeString);
+		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+			printErr << "'components' entry does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		const std::string name = configComponent["name"].as<std::string>();
+
+		std::vector<rpwa::resonanceFit::parameter> parameters = T::getDefaultParameters();
+		for(size_t idxParameter = 0; idxParameter < parameters.size(); ++idxParameter) {
+			const std::string parameterName = parameters[idxParameter].name();
+			readModelParameter(configComponent,
+			                   parameterName,
+			                   parameters[idxParameter]);
+		}
+
+		const std::vector<rpwa::resonanceFit::component::channel> decayChannels = readModelComponentDecayChannels(configComponent,
+		                                                                                                          name,
+		                                                                                                          fitInformation,
+		                                                                                                          waveNames,
+		                                                                                                          nrMassBins,
+		                                                                                                          massBinCenters,
+		                                                                                                          phaseSpaceIntegrals);
+
+		return readModelComponent<T>(configComponent,
+		                             fitInformation,
+		                             id,
+		                             name,
+		                             parameters,
+		                             decayChannels,
+		                             nrMassBins,
+		                             massBinCenters,
+		                             useBranchings);
+	}
+
+
+	rpwa::resonanceFit::componentPtr
+	readModelComponent(const YAML::Node& configComponent,
+	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   const size_t id,
+	                   const boost::multi_array<std::string, 2>& waveNames,
+	                   const std::vector<size_t>& nrMassBins,
+	                   const boost::multi_array<double, 2>& massBinCenters,
+	                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	                   const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component." << std::endl;
+		}
+
+		std::string type = "fixedWidthBreitWigner";
+		if(configComponent["type"]) {
+			if(not checkVariableType(configComponent["type"], rpwa::YamlCppUtils::TypeString)) {
+				printErr << "a component has a type that is not a string." << std::endl;
+				throw;
+			}
+			type = configComponent["type"].as<std::string>();
+		}
+
+		if(debug) {
+			printDebug << "found component of type '" << type << "'." << std::endl;
+		}
+
+		rpwa::resonanceFit::componentPtr component;
+		if(type == "fixedWidthBreitWigner") {
+			component = readModelComponent<rpwa::resonanceFit::fixedWidthBreitWigner>(configComponent,
+			                                                                          fitInformation,
+			                                                                          id,
+			                                                                          waveNames,
+			                                                                          nrMassBins,
+			                                                                          massBinCenters,
+			                                                                          phaseSpaceIntegrals,
+			                                                                          useBranchings);
+		} else if(type == "dynamicWidthBreitWigner") {
+			component = readModelComponent<rpwa::resonanceFit::dynamicWidthBreitWigner>(configComponent,
+			                                                                            fitInformation,
+			                                                                            id,
+			                                                                            waveNames,
+			                                                                            nrMassBins,
+			                                                                            massBinCenters,
+			                                                                            phaseSpaceIntegrals,
+			                                                                            useBranchings);
+		} else if(type == "integralWidthBreitWigner") {
+			component = readModelComponent<rpwa::resonanceFit::integralWidthBreitWigner>(configComponent,
+			                                                                             fitInformation,
+			                                                                             id,
+			                                                                             waveNames,
+			                                                                             nrMassBins,
+			                                                                             massBinCenters,
+			                                                                             phaseSpaceIntegrals,
+			                                                                             useBranchings);
+		} else if(type == "constantBackground") {
+			component = readModelComponent<rpwa::resonanceFit::constantBackground>(configComponent,
+			                                                                       fitInformation,
+			                                                                       id,
+			                                                                       waveNames,
+			                                                                       nrMassBins,
+			                                                                       massBinCenters,
+			                                                                       phaseSpaceIntegrals,
+			                                                                       useBranchings);
+		} else if(type == "exponentialBackground") {
+			component = readModelComponent<rpwa::resonanceFit::exponentialBackground>(configComponent,
+			                                                                          fitInformation,
+			                                                                          id,
+			                                                                          waveNames,
+			                                                                          nrMassBins,
+			                                                                          massBinCenters,
+			                                                                          phaseSpaceIntegrals,
+			                                                                          useBranchings);
+		} else if(type == "tPrimeDependentBackground") {
+			component = readModelComponent<rpwa::resonanceFit::tPrimeDependentBackground>(configComponent,
+			                                                                              fitInformation,
+			                                                                              id,
+			                                                                              waveNames,
+			                                                                              nrMassBins,
+			                                                                              massBinCenters,
+			                                                                              phaseSpaceIntegrals,
+			                                                                              useBranchings);
+		} else if(type == "exponentialBackgroundIntegral") {
+			component = readModelComponent<rpwa::resonanceFit::exponentialBackgroundIntegral>(configComponent,
+			                                                                                  fitInformation,
+			                                                                                  id,
+			                                                                                  waveNames,
+			                                                                                  nrMassBins,
+			                                                                                  massBinCenters,
+			                                                                                  phaseSpaceIntegrals,
+			                                                                                  useBranchings);
+		} else if(type == "tPrimeDependentBackgroundIntegral") {
+			component = readModelComponent<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(configComponent,
+			                                                                                      fitInformation,
+			                                                                                      id,
+			                                                                                      waveNames,
+			                                                                                      nrMassBins,
+			                                                                                      massBinCenters,
+			                                                                                      phaseSpaceIntegrals,
+			                                                                                      useBranchings);
+		} else {
+			printErr << "unknown type '" << type << "'." << std::endl;
+			throw;
+		}
+
+		if(debug) {
+			component->print(printDebug);
+		}
+
+		return component;
+	}
+
+
+	rpwa::resonanceFit::componentPtr
+	readModelComponent(const YAML::Node& configComponent,
+	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   rpwa::resonanceFit::parameters& fitParameters,
+	                   rpwa::resonanceFit::parameters& fitParametersError,
+	                   const size_t id,
+	                   const boost::multi_array<std::string, 2>& waveNames,
+	                   const std::vector<size_t>& nrMassBins,
+	                   const boost::multi_array<double, 2>& massBinCenters,
+	                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	                   const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading component and its parameters." << std::endl;
+		}
+
+		const rpwa::resonanceFit::componentPtr& component = readModelComponent(configComponent,
+		                                                                       fitInformation,
+		                                                                       id,
+		                                                                       waveNames,
+		                                                                       nrMassBins,
+		                                                                       massBinCenters,
+		                                                                       phaseSpaceIntegrals,
+		                                                                       useBranchings);
+
+		fitParameters.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInformation->nrBins());
+		fitParametersError.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInformation->nrBins());
+
+		for(size_t idxParameter = 0; idxParameter < component->getNrParameters(); ++idxParameter) {
+			fitParameters.setParameter(id, idxParameter, component->getParameter(idxParameter).startValue());
+			fitParametersError.setParameter(id, idxParameter, component->getParameter(idxParameter).startError());
+		}
+
+		for(size_t idxDecayChannel = 0; idxDecayChannel < component->getNrChannels(); ++idxDecayChannel) {
+			const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxDecayChannel);
+			const YAML::Node& configDecayChannel = configComponent["decaychannels"][idxDecayChannel];
+
+			if(component->mapCouplingToMasterChannel(component->mapChannelToCoupling(idxDecayChannel)) == idxDecayChannel) {
+				const YAML::Node& configCouplings = configDecayChannel["couplings"];
+				if(not configCouplings) {
+					printErr << "decay channel '" << channel.getWaveName() << "' of component '" << component->getName() << "' has no couplings." << std::endl;
+					throw;
+				}
+				if(not configCouplings.IsSequence()) {
+					printErr << "decay channel '" << channel.getWaveName() << "' of component '" << component->getName() << "' has no couplings." << std::endl;
+					throw;
+				}
+
+				const size_t nrCouplings = configCouplings.size();
+				if(nrCouplings != channel.getBins().size()) {
+					printErr << "decay channel '" << channel.getWaveName() << "' of component '" << component->getName() << "' has " << nrCouplings << " couplings, not " << channel.getBins().size() << "." << std::endl;
+					throw;
+				}
+
+				for(size_t idxCoupling = 0; idxCoupling < nrCouplings; ++idxCoupling) {
+					const YAML::Node& configCoupling = configCouplings[idxCoupling];
+					if(not checkVariableType(configCoupling, rpwa::YamlCppUtils::TypeSequence)) {
+						printErr << "one of the couplings of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' is not a YAML sequence." << std::endl;
+						throw;
+					}
+					if(configCoupling.size() != 2) {
+						printErr << "one of the couplings of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' does not contain exactly two entries." << std::endl;
+						throw;
+					}
+
+					if(not checkVariableType(configCoupling[0], rpwa::YamlCppUtils::TypeFloat)) {
+						printErr << "real part of one of the couplings of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' is not a floating point number." << std::endl;
+						throw;
+					}
+					if(not checkVariableType(configCoupling[1], rpwa::YamlCppUtils::TypeFloat)) {
+						printErr << "imaginary part of one of the couplings of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' is not a floating point number." << std::endl;
+						throw;
+					}
+
+					const double couplingReal = configCoupling[0].as<double>();
+					const double couplingImag = configCoupling[1].as<double>();
+
+					const std::complex<double> coupling(couplingReal, couplingImag);
+					fitParameters.setCoupling(id, component->mapChannelToCoupling(idxDecayChannel), channel.getBins()[idxCoupling], coupling);
+				}
+			}
+
+			if(component->getNrBranchings() > 1) {
+				if(component->mapBranchingToMasterChannel(component->mapChannelToBranching(idxDecayChannel)) == idxDecayChannel) {
+					const YAML::Node& configBranching = configDecayChannel["branching"];
+					if(not configBranching) {
+						printErr << "decay channel '" << channel.getWaveName() << "' of component '" << component->getName() << "' has no branching." << std::endl;
+						throw;
+					}
+					if(not configBranching.IsSequence()) {
+						printErr << "decay channel '" << channel.getWaveName() << "' of component '" << component->getName() << "' has no branching." << std::endl;
+						throw;
+					}
+
+					if(configBranching.size() != 2) {
+						printErr << "branching of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' does not contain exactly two entries." << std::endl;
+						throw;
+					}
+
+					if(not checkVariableType(configBranching[0], rpwa::YamlCppUtils::TypeFloat)) {
+						printErr << "real part of branching of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' is not a floating point number." << std::endl;
+						throw;
+					}
+					if(not checkVariableType(configBranching[1], rpwa::YamlCppUtils::TypeFloat)) {
+						printErr << "imaginary part of branching of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' is not a floating point number." << std::endl;
+						throw;
+					}
+
+					double branchingReal = configBranching[0].as<double>();
+					double branchingImag = configBranching[1].as<double>();
+
+					if(component->isBranchingFixed(component->mapChannelToBranching(idxDecayChannel))) {
+						// the first branching should always be 1.
+						if(branchingReal != 1.0 or branchingImag != 0.0) {
+							printWarn << "branching of the decay channel '" << channel.getWaveName() << "' of the component '" << component->getName() << "' forced to 1." << std::endl;
+							branchingReal = 1.0;
+							branchingImag = 0.0;
+						}
+					}
+
+					const std::complex<double> branching(branchingReal, branchingImag);
+					fitParameters.setBranching(id, component->mapChannelToBranching(idxDecayChannel), branching);
+				}
+			} else {
+				const std::complex<double> branching(1.0, 0.0);
+				fitParameters.setBranching(id, 0, branching);
+			}
+		}
+
+		return component;
+	}
+
+
+	void
+	writeModelComponent(YAML::Emitter& yamlOutput,
+	                    const rpwa::resonanceFit::componentConstPtr& component,
+	                    const rpwa::resonanceFit::parameters& fitParameters,
+	                    const rpwa::resonanceFit::parameters& fitParametersError)
+	{
+		if(debug) {
+			printDebug << "writing component and its parameters." << std::endl;
+		}
+
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "name";
+		yamlOutput << YAML::Value << component->getName();
+
+		yamlOutput << YAML::Key << "type";
+		yamlOutput << YAML::Value << component->getType();
+
+		for(size_t idxParameter = 0; idxParameter < component->getNrParameters(); ++idxParameter) {
+			writeModelParameter(yamlOutput,
+			                    component->getParameter(idxParameter),
+			                    fitParameters.getParameter(component->getId(), idxParameter),
+			                    fitParametersError.getParameter(component->getId(), idxParameter));
+		}
+
+		yamlOutput << YAML::Key << "decaychannels";
+		yamlOutput << YAML::Value;
+		yamlOutput << YAML::BeginSeq;
+
+		for(size_t idxDecayChannel = 0; idxDecayChannel < component->getNrChannels(); ++idxDecayChannel) {
+			yamlOutput << YAML::BeginMap;
+
+			yamlOutput << YAML::Key << "amp";
+			yamlOutput << YAML::Value << component->getChannel(idxDecayChannel).getWaveName();
+
+			if(component->mapCouplingToMasterChannel(component->mapChannelToCoupling(idxDecayChannel)) == idxDecayChannel) {
+				yamlOutput << YAML::Key << "couplings";
+				yamlOutput << YAML::Value;
+				yamlOutput << YAML::BeginSeq;
+
+				const std::vector<size_t>& bins = component->getChannel(idxDecayChannel).getBins();
+				for(size_t i = 0; i < bins.size(); ++i) {
+					const size_t idxBin = bins[i];
+					yamlOutput << YAML::Flow;
+					yamlOutput << YAML::BeginSeq;
+
+					yamlOutput << fitParameters.getCoupling(component->getId(), component->mapChannelToCoupling(idxDecayChannel), idxBin).real();
+					yamlOutput << fitParameters.getCoupling(component->getId(), component->mapChannelToCoupling(idxDecayChannel), idxBin).imag();
+
+					yamlOutput << YAML::EndSeq;
+					yamlOutput << YAML::Block;
+				}
+
+				yamlOutput << YAML::EndSeq;
+			}
+
+			if(component->getNrBranchings() > 1) {
+				if(component->mapBranchingToMasterChannel(component->mapChannelToBranching(idxDecayChannel)) == idxDecayChannel) {
+					yamlOutput << YAML::Key << "branching";
+					yamlOutput << YAML::Value;
+
+					yamlOutput << YAML::Flow;
+					yamlOutput << YAML::BeginSeq;
+
+					yamlOutput << fitParameters.getBranching(component->getId(), component->mapChannelToBranching(idxDecayChannel)).real();
+					yamlOutput << fitParameters.getBranching(component->getId(), component->mapChannelToBranching(idxDecayChannel)).imag();
+
+					yamlOutput << YAML::EndSeq;
+					yamlOutput << YAML::Block;
+				}
+			}
+
+			if(std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component)) {
+				writeModelComponentDecayChannelMIsobar1(yamlOutput,
+				                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+				                                        idxDecayChannel);
+				writeModelComponentDecayChannelMIsobar2(yamlOutput,
+				                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+				                                        idxDecayChannel);
+				writeModelComponentDecayChannelRelAngularMom(yamlOutput,
+				                                             std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+				                                             idxDecayChannel);
+				writeModelComponentDecayChannelBranchingRatio(yamlOutput,
+				                                              std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+				                                              idxDecayChannel);
+			}
+			if(std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component)) {
+				writeModelComponentDecayChannelIntegral(yamlOutput,
+				                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component),
+				                                        idxDecayChannel);
+				writeModelComponentDecayChannelBranchingRatio(yamlOutput,
+				                                              std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component),
+				                                              idxDecayChannel);
+			}
+
+			yamlOutput << YAML::EndMap;
+		}
+
+		yamlOutput << YAML::EndSeq;
+
+		if(component->getTotalNrChannels() > component->getNrChannels()) {
+			yamlOutput << YAML::Key << "extradecaychannels";
+			yamlOutput << YAML::Value;
+			yamlOutput << YAML::BeginSeq;
+
+			for(size_t idxDecayChannel = component->getNrChannels(); idxDecayChannel < component->getTotalNrChannels(); ++idxDecayChannel) {
+				yamlOutput << YAML::BeginMap;
+
+				if(std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component)) {
+					writeModelComponentDecayChannelMIsobar1(yamlOutput,
+					                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+					                                        idxDecayChannel);
+					writeModelComponentDecayChannelMIsobar2(yamlOutput,
+					                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+					                                        idxDecayChannel);
+					writeModelComponentDecayChannelRelAngularMom(yamlOutput,
+					                                             std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+					                                             idxDecayChannel);
+					writeModelComponentDecayChannelBranchingRatio(yamlOutput,
+					                                              std::dynamic_pointer_cast<const rpwa::resonanceFit::dynamicWidthBreitWigner>(component),
+					                                              idxDecayChannel);
+				}
+				if(std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component)) {
+					writeModelComponentDecayChannelIntegral(yamlOutput,
+					                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component),
+					                                        idxDecayChannel);
+					writeModelComponentDecayChannelBranchingRatio(yamlOutput,
+					                                              std::dynamic_pointer_cast<const rpwa::resonanceFit::integralWidthBreitWigner>(component),
+					                                              idxDecayChannel);
+				}
+
+				yamlOutput << YAML::EndMap;
+			}
+
+			yamlOutput << YAML::EndSeq;
+		}
+
+		if(std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackground>(component)) {
+			writeModelComponentDecayChannelMIsobar1(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackground>(component));
+			writeModelComponentDecayChannelMIsobar2(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackground>(component));
+			writeModelComponentDecayChannelRelAngularMom(yamlOutput,
+			                                             std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackground>(component));
+			writeModelComponentDecayChannelExponent(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackground>(component));
+		}
+		if(std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackground>(component)) {
+			writeModelComponentDecayChannelMIsobar1(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackground>(component));
+			writeModelComponentDecayChannelMIsobar2(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackground>(component));
+			writeModelComponentDecayChannelRelAngularMom(yamlOutput,
+			                                             std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackground>(component));
+			writeModelComponentDecayChannelExponent(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackground>(component));
+		}
+		if(std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackgroundIntegral>(component)) {
+			writeModelComponentDecayChannelIntegral(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackgroundIntegral>(component));
+			writeModelComponentDecayChannelExponent(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::exponentialBackgroundIntegral>(component));
+		}
+		if(std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(component)) {
+			writeModelComponentDecayChannelIntegral(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(component));
+			writeModelComponentDecayChannelExponent(yamlOutput,
+			                                        std::dynamic_pointer_cast<const rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(component));
+		}
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
+	std::vector<rpwa::resonanceFit::componentPtr>
+	readModelComponents(const YAML::Node& configModel,
+	                    const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                    rpwa::resonanceFit::parameters& fitParameters,
+	                    rpwa::resonanceFit::parameters& fitParametersError,
+	                    const boost::multi_array<std::string, 2>& waveNames,
+	                    const std::vector<size_t>& nrMassBins,
+	                    const boost::multi_array<double, 2>& massBinCenters,
+	                    const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	                    const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading 'components'." << std::endl;
+		}
+
+		const YAML::Node& configComponents = configModel["components"];
+		if(not configComponents) {
+			printErr << "'components' is not a valid YAML node." << std::endl;
+			throw;
+		}
+		if(not configComponents.IsSequence()) {
+			printErr << "'components' is not a YAML sequence." << std::endl;
+			throw;
+		}
+
+		const size_t nrComponents = configComponents.size();
+		if(debug) {
+			printDebug << "reading " << nrComponents << " components from configuration file." << std::endl;
+		}
+
+		std::vector<rpwa::resonanceFit::componentPtr> components;
+		for(size_t idxComponent = 0; idxComponent < nrComponents; ++idxComponent) {
+			const YAML::Node& configComponent = configComponents[idxComponent];
+
+			const rpwa::resonanceFit::componentPtr& component = readModelComponent(configComponent,
+			                                                                       fitInformation,
+			                                                                       fitParameters,
+			                                                                       fitParametersError,
+			                                                                       components.size(),
+			                                                                       waveNames,
+			                                                                       nrMassBins,
+			                                                                       massBinCenters,
+			                                                                       phaseSpaceIntegrals,
+			                                                                       useBranchings);
+
+			for(size_t idx = 0; idx < components.size(); ++idx) {
+				if(components[idx]->getName() == component->getName()) {
+					printErr << "component '" << component->getName() << "' defined twice." << std::endl;
+					throw;
+				}
+			}
+
+			components.push_back(component);
+		}
+
+		return components;
+	}
+
+
+	void
+	writeModelComponents(YAML::Emitter& yamlOutput,
+	                     const std::vector<rpwa::resonanceFit::componentConstPtr>& components,
+	                     const rpwa::resonanceFit::parameters& fitParameters,
+	                     const rpwa::resonanceFit::parameters& fitParametersError)
+	{
+		if(debug) {
+			printDebug << "writing 'components'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "components";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginSeq;
+
+		for(size_t idxComponent = 0; idxComponent < components.size(); ++idxComponent) {
+			writeModelComponent(yamlOutput,
+			                    components[idxComponent],
+			                    fitParameters,
+			                    fitParametersError);
+		}
+
+		yamlOutput << YAML::EndSeq;
 	}
 
 
@@ -2989,24 +4254,17 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 		return false;
 	}
 
-	// read information for the individual components
-	const YAML::Node& configComponents = configModel["components"];
-	if(not configComponents) {
-		printErr << "'components' does not exist in 'model'." << std::endl;
-		return false;
-	}
-	if(not readConfigModelComponents(configComponents,
-	                                 fitInformation,
-	                                 fitModel,
-	                                 fitParameters,
-	                                 fitParametersError,
-	                                 waveNames,
-	                                 nrMassBins,
-	                                 massBinCenters,
-	                                 phaseSpaceIntegrals,
-	                                 useBranchings)) {
-		printErr << "error while reading 'components' in 'model'." << std::endl;
-		return false;
+	const std::vector<rpwa::resonanceFit::componentPtr>& components = readModelComponents(configModel,
+	                                                                                      fitInformation,
+	                                                                                      fitParameters,
+	                                                                                      fitParametersError,
+	                                                                                      waveNames,
+	                                                                                      nrMassBins,
+	                                                                                      massBinCenters,
+	                                                                                      phaseSpaceIntegrals,
+	                                                                                      useBranchings);
+	for(std::vector<rpwa::resonanceFit::componentPtr>::const_iterator it = components.begin(); it != components.end(); ++it) {
+		fitModel->add(*it);
 	}
 
 	// get information for creating the final-state mass-dependence
@@ -3021,6 +4279,13 @@ rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
 	} else {
 		printInfo << "not using final-state mass-dependence." << std::endl;
 	}
+
+	std::ostringstream output;
+	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
+	}
+	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
+	          << output.str();
 
 	return true;
 }
@@ -3049,145 +4314,6 @@ rpwa::resonanceFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& conf
 
 	_anchorWaveName = configAnchorWave["name"].as<std::string>();
 	_anchorComponentName = configAnchorWave["resonance"].as<std::string>();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigModelComponents(const YAML::Node& configComponents,
-                                                          const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                          const rpwa::resonanceFit::modelPtr& fitModel,
-                                                          rpwa::resonanceFit::parameters& fitParameters,
-                                                          rpwa::resonanceFit::parameters& fitParametersError,
-                                                          const boost::multi_array<std::string, 2>& waveNames,
-                                                          const std::vector<size_t>& nrMassBins,
-                                                          const boost::multi_array<double, 2>& massBinCenters,
-                                                          const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                          const bool useBranchings) const
-{
-	if(not configComponents) {
-		printErr << "'configComponents' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configComponents.IsSequence()) {
-		printErr << "'components' is not a YAML sequence." << std::endl;
-		return false;
-	}
-
-	const size_t nrComponents = configComponents.size();
-
-	if(_debug) {
-		printDebug << "reading " << nrComponents << " components from configuration file." << std::endl;
-	}
-
-	std::map<std::string, size_t> waveIndices;
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
-
-		waveIndices[wave.waveName()] = idxWave;
-		for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
-			waveIndices[wave.waveNameAlternatives()[idxAlt]] = idxWave;
-		}
-	}
-
-	std::map<std::string, std::vector<size_t> > waveBins;
-	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			waveBins[waveNames[idxBin][idxWave]].push_back(idxBin);
-		}
-	}
-
-	std::vector<double> tPrimeMeans;
-	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-		tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
-	}
-
-	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		const YAML::Node& configComponent = configComponents[idxComponent];
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", YamlCppUtils::TypeString);
-		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-			printErr << "'components' entry at index " << idxComponent << " does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const std::string name = configComponent["name"].as<std::string>();
-
-		for(size_t idx = 0; idx < fitModel->getNrComponents(); ++idx) {
-			if(fitModel->getComponent(idx)->getName() == name) {
-				printErr << "component '" << name << "' defined twice." << std::endl;
-				return false;
-			}
-		}
-
-		std::string type;
-		if(configComponent["type"]) {
-			if(not checkVariableType(configComponent["type"], YamlCppUtils::TypeString)) {
-				printErr << "component '" << name << "' has a type that is not a string." << std::endl;
-				return false;
-			}
-			type = configComponent["type"].as<std::string>();
-		} else {
-			if(_debug) {
-				printDebug << "component '" << name << "' has no type, use 'fixedWidthBreitWigner'." << std::endl;
-			}
-			type = "fixedWidthBreitWigner";
-		}
-
-		if(_debug) {
-			printDebug << "found component '" << name << "' with type '" << type << "'." << std::endl;
-		}
-
-		rpwa::resonanceFit::componentPtr component;
-		if(type == "fixedWidthBreitWigner") {
-			component = std::make_shared<rpwa::resonanceFit::fixedWidthBreitWigner>(fitModel->getNrComponents(), name);
-		} else if(type == "dynamicWidthBreitWigner") {
-			component = std::make_shared<rpwa::resonanceFit::dynamicWidthBreitWigner>(fitModel->getNrComponents(), name);
-		} else if(type == "integralWidthBreitWigner") {
-			component = std::make_shared<rpwa::resonanceFit::integralWidthBreitWigner>(fitModel->getNrComponents(), name);
-		} else if(type == "constantBackground") {
-			component = std::make_shared<rpwa::resonanceFit::constantBackground>(fitModel->getNrComponents(), name);
-		} else if(type == "exponentialBackground") {
-			component = std::make_shared<rpwa::resonanceFit::exponentialBackground>(fitModel->getNrComponents(), name);
-		} else if(type == "tPrimeDependentBackground") {
-			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackground>(fitModel->getNrComponents(), name);
-			std::dynamic_pointer_cast<tPrimeDependentBackground>(component)->setTPrimeMeans(tPrimeMeans);
-		} else if(type == "exponentialBackgroundIntegral") {
-			component = std::make_shared<rpwa::resonanceFit::exponentialBackgroundIntegral>(fitModel->getNrComponents(), name);
-		} else if(type == "tPrimeDependentBackgroundIntegral") {
-			component = std::make_shared<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(fitModel->getNrComponents(), name);
-			std::dynamic_pointer_cast<tPrimeDependentBackgroundIntegral>(component)->setTPrimeMeans(tPrimeMeans);
-		} else {
-			printErr << "unknown type '" << type << "' for component '" << name << "'." << std::endl;
-			return false;
-		}
-
-		if(not component->init(configComponent,
-		                       fitParameters,
-		                       fitParametersError,
-		                       nrMassBins,
-		                       massBinCenters,
-		                       waveIndices,
-		                       waveBins,
-		                       phaseSpaceIntegrals,
-		                       useBranchings,
-		                       _debug)) {
-			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << std::endl;
-			return false;
-		}
-
-		fitModel->add(component);
-	}
-
-	std::ostringstream output;
-	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
-		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
-	}
-	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
-	          << output.str();
 
 	return true;
 }
@@ -3271,12 +4397,14 @@ rpwa::resonanceFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
 		return false;
 	}
 
-	yamlOutput << YAML::Key << "components";
-	yamlOutput << YAML::Value;
-	if(not writeConfigModelComponents(yamlOutput, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while writing 'components' to result file." << std::endl;
-		return false;
+	std::vector<rpwa::resonanceFit::componentConstPtr> components;
+	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+		components.push_back(fitModel->getComponent(idxComponent));
 	}
+	writeModelComponents(yamlOutput,
+	                     components,
+	                     fitParameters,
+	                     fitParametersError);
 
 	writeModelFsmd(yamlOutput,
 	               fitModel->getFsmd(),
@@ -3305,32 +4433,6 @@ rpwa::resonanceFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOu
 	yamlOutput << YAML::Value << _anchorComponentName;
 
 	yamlOutput << YAML::EndMap;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigModelComponents(YAML::Emitter& yamlOutput,
-                                                           const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                                           const rpwa::resonanceFit::parameters& fitParameters,
-                                                           const rpwa::resonanceFit::parameters& fitParametersError) const
-{
-	if(_debug) {
-		printDebug << "writing 'components'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginSeq;
-
-	const size_t nrComponents = fitModel->getNrComponents();
-	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		if(not fitModel->getComponent(idxComponent)->write(yamlOutput, fitParameters, fitParametersError, _debug)) {
-			printErr << "error while writing component at index " << idxComponent << " to result file." << std::endl;
-			return false;
-		}
-	}
-
-	yamlOutput << YAML::EndSeq;
 
 	return true;
 }

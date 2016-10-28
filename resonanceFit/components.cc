@@ -29,13 +29,12 @@
 
 #include "components.h"
 
-#include <boost/assign/std/vector.hpp>
-
-#include <yaml-cpp/yaml.h>
+#include <set>
 
 #include <physUtils.hpp>
 #include <reportingUtils.hpp>
-#include <yamlCppUtils.hpp>
+
+#include "resonanceFitHelper.h"
 
 
 namespace {
@@ -98,32 +97,77 @@ namespace {
 	}
 
 
+	template<typename T>
+	void
+	checkParameters(const T& component)
+	{
+		const std::vector<rpwa::resonanceFit::parameter> defaultParameters = T::getDefaultParameters();
+
+		// check that all parameters are there
+		if(component.getNrParameters() != defaultParameters.size()) {
+			printErr << "inconsistent number of parameters for component '" << component.getName() << "', "
+			         << "expected " << defaultParameters.size() << ", found " << component.getNrParameters() << ". "
+			         << "Aborting..." << std::endl;
+			throw;
+		}
+
+		// check that the correct parameters are at the correct position
+		for(size_t idxParameter = 0; idxParameter < component.getNrParameters(); ++idxParameter) {
+			if(component.getParameter(idxParameter).name() != defaultParameters[idxParameter].name()) {
+				printErr << "inconsistent naming of parameters for component '" << component.getName() << "', "
+				         << "expected '" << defaultParameters[idxParameter].name() << "', "
+				         << "found '" << component.getParameter(idxParameter).name() << "' for parameter at index " << idxParameter << ". "
+				         << "Aborting..." << std::endl;
+				throw;
+			}
+		}
+	}
+
+
 }
 
 
-rpwa::resonanceFit::channel::channel(const size_t waveIdx,
-                                     const std::string& waveName,
-                                     const std::vector<size_t>& bins,
-                                     const std::vector<size_t>& nrMassBins,
-                                     const boost::multi_array<double, 2>& massBinCenters,
-                                     const boost::multi_array<double, 2>& phaseSpace)
+rpwa::resonanceFit::component::channel::channel(const size_t waveIdx,
+                                                const std::string& waveName,
+                                                const std::vector<size_t>& bins,
+                                                const std::vector<size_t>& nrMassBins,
+                                                const boost::multi_array<double, 2>& massBinCenters,
+                                                const boost::multi_array<double, 2>& phaseSpaceIntegrals)
 	: _waveIdx(waveIdx),
 	  _waveName(waveName),
 	  _bins(bins),
-	  _phaseSpace(phaseSpace)
+	  _phaseSpaceIntegrals(phaseSpaceIntegrals)
 {
+	// get dimensions from one array and make sure that all other arrays
+	// have the same dimensions
 	const size_t nrBins = nrMassBins.size();
-	assert(nrBins == massBinCenters.shape()[0] and nrBins == _phaseSpace.shape()[0]);
+	if(nrBins == 0) {
+		printErr << "number of bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
 
-	_anchor.resize(nrBins, false),
+	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
+	if(maxMassBins == 0) {
+		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
 
-	_interpolator.resize(nrBins);
+	checkSize(massBinCenters,
+	          nrBins, "number of bins is not correct for centers of mass bins.",
+	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+	checkSize(_phaseSpaceIntegrals,
+	          nrBins, "number of bins is not correct for phase-space integrals.",
+	          maxMassBins, "maximal number of mass bins is not correct for phase-space integrals.");
+
+	_anchors.resize(nrBins, false),
+
+	_interpolators.resize(nrBins);
 	for(size_t i = 0; i < _bins.size(); ++i) {
 		const size_t idxBin = _bins[i];
 
 		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
-		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpace[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
-		_interpolator[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
+		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
+		_interpolators[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 	}
 }
 
@@ -131,188 +175,59 @@ rpwa::resonanceFit::channel::channel(const size_t waveIdx,
 rpwa::resonanceFit::component::component(const size_t id,
                                          const std::string& name,
                                          const std::string& type,
-                                         const size_t nrParameters)
+                                         const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                         const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                         const std::vector<size_t>& nrMassBins,
+                                         const boost::multi_array<double, 2>& massBinCenters,
+                                         const bool useBranchings)
 	: _id(id),
 	  _name(name),
 	  _type(type),
-	  _nrParameters(nrParameters),
+	  _channels(decayChannels),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
-	  _parameters(nrParameters)
+	  _parameters(parameters)
 {
-}
-
-
-bool
-rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
-                                    rpwa::resonanceFit::parameters& fitParameters,
-                                    rpwa::resonanceFit::parameters& fitParametersError,
-                                    const std::vector<size_t>& nrMassBins,
-                                    const boost::multi_array<double, 2>& massBinCenters,
-                                    const std::map<std::string, size_t>& waveIndices,
-                                    const std::map<std::string, std::vector<size_t> >& waveBins,
-                                    const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                    const bool useBranchings,
-                                    const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing 'component' for component '" << getName() << "'." << std::endl;
+	// get dimensions from one array and make sure that all other arrays
+	// have the same dimensions
+	const size_t nrBins = nrMassBins.size();
+	if(nrBins == 0) {
+		printErr << "number of bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
 	}
 
-	const size_t nrBins = nrMassBins.size();
-	assert(nrBins == massBinCenters.shape()[0] and nrBins == phaseSpaceIntegrals.shape()[0]);
+	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
+	if(maxMassBins == 0) {
+		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	checkSize(nrMassBins,
+	          nrBins, "number of bins is not correct for number of mass bins.");
+	checkSize(massBinCenters,
+	          nrBins, "number of bins is not correct for centers of mass bins.",
+	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
 
 	// initialize the bins that can be used for the caching, the function
 	// value might be the same in several bins, but by default each value
 	// is only cached for the given bin in val()
 	_binsEqualValues = initBinsEqualValuesForSingleBins(nrBins);
 
-	// resize fitParameters without affecting the number of channels first
-	// as this is not yet known
-	fitParameters.resize(_id+1, 0, _nrParameters, nrBins);
-	fitParametersError.resize(_id+1, 0, _nrParameters, nrBins);
-
-	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		if(debug) {
-			printDebug << "reading parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
-		}
-
-		const YAML::Node& configParameter = configComponent[_parameters[idxParameter].name()];
-		if(not configParameter) {
-			printErr << "component '" << getName() << "' does not define parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
-			return false;
-		}
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("val", YamlCppUtils::TypeFloat)
-		                     ("fix", YamlCppUtils::TypeBoolean);
-		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "'" << _parameters[idxParameter].name() << "' of component '" << getName() << "' does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const double parameter = configParameter["val"].as<double>();
-		_parameters[idxParameter].setStartValue(parameter);
-		fitParameters.setParameter(getId(), idxParameter, parameter);
-
-		if(configParameter["error"]) {
-			if(checkVariableType(configParameter["error"], YamlCppUtils::TypeFloat)) {
-				const double error = configParameter["error"].as<double>();
-				_parameters[idxParameter].setStartError(error);
-				fitParametersError.setParameter(getId(), idxParameter, error);
-			} else if(checkVariableType(configParameter["error"], YamlCppUtils::TypeString) and configParameter["error"].as<std::string>() == "nan") {
-				// some systems cannot convert the string 'nan'
-				// to a floating point number, so this is to be
-				// done manually. in any case this does not
-				// really matter as the error is usually not
-				// used.
-				const double error = std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0;
-				_parameters[idxParameter].setStartError(error);
-				fitParametersError.setParameter(getId(), idxParameter, error);
-			} else {
-				printErr << "variable 'error' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		}
-
-		const bool fixed = configParameter["fix"].as<bool>();
-		_parameters[idxParameter].setFixed(fixed);
-
-		if(configParameter["lower"]) {
-			if(checkVariableType(configParameter["lower"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxParameter].setLimitedLower(true);
-				_parameters[idxParameter].setLimitLower(configParameter["lower"].as<double>());
-			} else {
-				printErr << "variable 'lower' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_parameters[idxParameter].setLimitedLower(false);
-		}
-		if(configParameter["upper"]) {
-			if(checkVariableType(configParameter["upper"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxParameter].setLimitedUpper(true);
-				_parameters[idxParameter].setLimitUpper(configParameter["upper"].as<double>());
-			} else {
-				printErr << "variable 'upper' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		} else {
-			_parameters[idxParameter].setLimitedUpper(false);
-		}
-
-		if(configParameter["step"]) {
-			if(checkVariableType(configParameter["step"], YamlCppUtils::TypeFloat)) {
-				_parameters[idxParameter].setStep(configParameter["step"].as<double>());
-			} else {
-				printErr << "variable 'step' for parameter '" << _parameters[idxParameter].name() << "' of component '" << getName() << "' defined, but not a floating point number." << std::endl;
-				return false;
-			}
-		}
-	}
-
-	const YAML::Node& decayChannels = configComponent["decaychannels"];
-	if(not decayChannels) {
-		printErr << "component '" << getName() << "' has no decay channels." << std::endl;
-		return false;
-	}
-
-	const size_t nrDecayChannels = decayChannels.size();
-
-	// resize fitParameters to the correct number of channels
-	fitParameters.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
-	fitParametersError.resize(_id+1, nrDecayChannels, _nrParameters, nrBins);
-
 	std::map<std::pair<std::string, size_t>, size_t> couplingsQN;
-	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		const YAML::Node& decayChannel = decayChannels[idxDecayChannel];
-
-		std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("amp", YamlCppUtils::TypeString);
-		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
-			return false;
-		}
-
-		const std::string waveName = decayChannel["amp"].as<std::string>();
-
-		// check that a wave with this wave is not yet in the decay channels
-		for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-			if(_channels[idxChannel].getWaveName() == waveName) {
-				printErr << "wave '" << waveName << "' defined twice in the decay channels of '" << getName() << "'." << std::endl;
-				return false;
-			}
-		}
-
-		// get index of wave in array for wave names, phase-space integrals, ...
-		const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
-		if(it == waveIndices.end()) {
-			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
-			return false;
-		}
-		const size_t waveIdx = it->second;
+	for(size_t idxDecayChannel = 0; idxDecayChannel < _channels.size(); ++idxDecayChannel) {
+		const std::string waveName = _channels[idxDecayChannel].getWaveName();
 
 		// get list of bins this wave is defined in
-		const std::map<std::string, std::vector<size_t> >::const_iterator it2 = waveBins.find(waveName);
-		if(it2 == waveBins.end()) {
-			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << std::endl;
-			return false;
-		}
-		const std::vector<size_t>& binsForWave = it2->second;
+		const std::vector<size_t>& binsForWave = _channels[idxDecayChannel].getBins();
 
 		bool readCouplings = true;
 		bool readBranching = false;
 		bool fixedBranching = true;
 		size_t couplingIndex = _nrCouplings;
 		size_t branchingIndex = _nrBranchings;
-		if(useBranchings && nrDecayChannels > 1) {
+		if(useBranchings and _channels.size() > 1) {
 			const std::string waveQN = waveName.substr(0, waveName.find("="));
 			const std::string waveDecay = waveName.substr(waveName.find("=")+1);
-			if(debug) {
-				printDebug << "extracted quantum numbers '" << waveQN << "' and decay chain '" << waveDecay << "' from wave name '" << waveName << "'." << std::endl;
-			}
 
 			for(size_t i = 0; i < binsForWave.size(); ++i) {
 				const size_t idxBin = binsForWave[i];
@@ -323,7 +238,7 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 
 					if(i > 1 and (not readCouplings or not fixedBranching)) {
 						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
-						return false;
+						throw;
 					}
 
 					readCouplings = true;
@@ -331,7 +246,7 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 				} else {
 					if(i > 1 and (readCouplings or fixedBranching or couplingIndex != mappingQN->second)) {
 						printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
-						return false;
+						throw;
 					}
 
 					readCouplings = false;
@@ -341,7 +256,7 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 
 				if(i > 1 and (not readBranching)) {
 					printErr << "inconsistent status of couplings and branchings across bins." << std::endl;
-					return false;
+					throw;
 				}
 
 				readBranching = true;
@@ -352,53 +267,7 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 			// new coupling, so this should be the last coupling up to now
 			assert(couplingIndex == _nrCouplings);
 
-			boost::assign::insert(mandatoryArguments)
-			                     ("couplings", YamlCppUtils::TypeSequence);
-			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
-				return false;
-			}
-
-			const YAML::Node& configCouplings = decayChannel["couplings"];
-			if(not configCouplings) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has no couplings." << std::endl;
-				return false;
-			}
-
-			const size_t nrCouplings = configCouplings.size();
-			if(nrCouplings != binsForWave.size()) {
-				printErr << "decay channel '" << waveName << "' of component '" << getName() << "' has " << nrCouplings << " couplings, not " << binsForWave.size() << "." << std::endl;
-				return false;
-			}
-
-			for(size_t idxCoupling=0; idxCoupling<nrCouplings; ++idxCoupling) {
-				const YAML::Node& configCoupling = configCouplings[idxCoupling];
-				if(not checkVariableType(configCoupling, YamlCppUtils::TypeSequence)) {
-					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a YAML sequence." << std::endl;
-					return false;
-				}
-				if(configCoupling.size() != 2) {
-					printErr << "one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain exactly two entries." << std::endl;
-					return false;
-				}
-
-				if(not checkVariableType(configCoupling[0], YamlCppUtils::TypeFloat)) {
-					printErr << "real part of one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-					return false;
-				}
-				if(not checkVariableType(configCoupling[1], YamlCppUtils::TypeFloat)) {
-					printErr << "imaginary part of one of the couplings of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-					return false;
-				}
-
-				const double couplingReal = configCoupling[0].as<double>();
-				const double couplingImag = configCoupling[1].as<double>();
-
-				const std::complex<double> coupling(couplingReal, couplingImag);
-				fitParameters.setCoupling(getId(), couplingIndex, binsForWave[idxCoupling], coupling);
-			}
-
-			_channelsFromCoupling.push_back(_channels.size());
+			_channelsFromCoupling.push_back(idxDecayChannel);
 			++_nrCouplings;
 		}
 
@@ -406,212 +275,28 @@ rpwa::resonanceFit::component::init(const YAML::Node& configComponent,
 			// new branching, so this should be the last branching up to now
 			assert(branchingIndex == _nrBranchings);
 
-			boost::assign::insert(mandatoryArguments)
-			                     ("branching", YamlCppUtils::TypeSequence);
-			if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-				printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required variables." << std::endl;
-				return false;
-			}
-
-			const YAML::Node& configBranching = decayChannel["branching"];
-			if(configBranching.size() != 2) {
-				printErr << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' does not contain exactly two entries." << std::endl;
-				return false;
-			}
-
-			if(not checkVariableType(configBranching[0], YamlCppUtils::TypeFloat)) {
-				printErr << "real part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-				return false;
-			}
-			if(not checkVariableType(configBranching[1], YamlCppUtils::TypeFloat)) {
-				printErr << "imaginary part of branching of the decay channel '" << waveName << "' of the component '" << getName() << "' is not a floating point number." << std::endl;
-				return false;
-			}
-
-			double branchingReal = configBranching[0].as<double>();
-			double branchingImag = configBranching[1].as<double>();
-
-			if(fixedBranching) {
-				// the first branching should always be 1.
-				if(branchingReal != 1.0 || branchingImag != 0.0) {
-					printWarn << "branching of the decay channel '" << waveName << "' of the component '" << getName() << "' forced to 1." << std::endl;
-					branchingReal = 1.0;
-					branchingImag = 0.0;
-				}
-			}
-
-			const std::complex<double> branching(branchingReal, branchingImag);
-			fitParameters.setBranching(getId(), branchingIndex, branching);
-
-			_channelsFromBranching.push_back(_channels.size());
+			_channelsFromBranching.push_back(idxDecayChannel);
 			_branchingsFixed.push_back(fixedBranching);
 			++_nrBranchings;
 		}
 
-		boost::multi_array<double, 3>::const_array_view<2>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][waveIdx]];
-		_channels.push_back(rpwa::resonanceFit::channel(waveIdx, waveName, binsForWave, nrMassBins, massBinCenters, view));
 		_channelsCoupling.push_back(couplingIndex);
 		_channelsBranching.push_back(branchingIndex);
-
-		if (not readDecayChannel(decayChannel, idxDecayChannel, debug)) {
-			printErr << "error while reading extra information for decay channel at index " << idxDecayChannel << " for component '" << getName() << "'." << std::endl;
-			return false;
-		}
 	}
 
 	// if no branchings are read at all make sure that there is one equal to 1.
-	if (_nrBranchings == 0) {
+	if(_nrBranchings == 0) {
 		_channelsFromBranching.push_back(0);
 		_branchingsFixed.push_back(true);
 		_nrBranchings++;
-
-		fitParameters.setBranching(getId(), 0, std::complex<double>(1., 0.));
 	}
-
-	if(debug) {
-		printDebug << "finished initializing 'component'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::component::readDecayChannel(const YAML::Node& /*decayChannel*/,
-                                                const size_t /*idxDecayChannel*/,
-                                                const bool /*debug*/)
-{
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::component::write(YAML::Emitter& yamlOutput,
-                                     const rpwa::resonanceFit::parameters& fitParameters,
-                                     const rpwa::resonanceFit::parameters& fitParametersError,
-                                     const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'component' for component '" << getName() << "'." << std::endl;
-	}
-
-	yamlOutput << YAML::Key << "name";
-	yamlOutput << YAML::Value << getName();
-
-	yamlOutput << YAML::Key << "type";
-	yamlOutput << YAML::Value << getType();
-
-	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		if(debug) {
-			printDebug << "writing parameter '" << _parameters[idxParameter].name() << "'." << std::endl;
-		}
-
-		yamlOutput << YAML::Key << _parameters[idxParameter].name();
-		yamlOutput << YAML::Value;
-
-		yamlOutput << YAML::BeginMap;
-
-		yamlOutput << YAML::Key << "val";
-		yamlOutput << YAML::Value << fitParameters.getParameter(getId(), idxParameter);
-
-		yamlOutput << YAML::Key << "error";
-		yamlOutput << YAML::Value << fitParametersError.getParameter(getId(), idxParameter);
-
-		if(_parameters[idxParameter].limitedLower()) {
-			yamlOutput << YAML::Key << "lower";
-			yamlOutput << YAML::Value << _parameters[idxParameter].limitLower();
-		}
-
-		if(_parameters[idxParameter].limitedUpper()) {
-			yamlOutput << YAML::Key << "upper";
-			yamlOutput << YAML::Value << _parameters[idxParameter].limitUpper();
-		}
-
-		yamlOutput << YAML::Key << "step";
-		yamlOutput << YAML::Value << _parameters[idxParameter].step();
-
-		yamlOutput << YAML::Key << "fix";
-		yamlOutput << YAML::Value << _parameters[idxParameter].fixed();
-
-		yamlOutput << YAML::EndMap;
-	}
-
-	yamlOutput << YAML::Key << "decaychannels";
-	yamlOutput << YAML::Value;
-	yamlOutput << YAML::BeginSeq;
-
-	const size_t nrDecayChannels = getNrChannels();
-	for(size_t idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-		yamlOutput << YAML::BeginMap;
-
-		yamlOutput << YAML::Key << "amp";
-		yamlOutput << YAML::Value << getChannel(idxDecayChannel).getWaveName();
-
-		if(idxDecayChannel == _channelsFromCoupling[_channelsCoupling[idxDecayChannel]]) {
-			yamlOutput << YAML::Key << "couplings";
-			yamlOutput << YAML::Value;
-			yamlOutput << YAML::BeginSeq;
-
-			const std::vector<size_t>& bins = getChannel(idxDecayChannel).getBins();
-			for(size_t i = 0; i < bins.size(); ++i) {
-				const size_t idxBin = bins[i];
-				yamlOutput << YAML::Flow;
-				yamlOutput << YAML::BeginSeq;
-
-				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).real();
-				yamlOutput << fitParameters.getCoupling(getId(), _channelsCoupling[idxDecayChannel], idxBin).imag();
-
-				yamlOutput << YAML::EndSeq;
-				yamlOutput << YAML::Block;
-			}
-
-			yamlOutput << YAML::EndSeq;
-		}
-
-		if(_nrBranchings > 1) {
-			if(idxDecayChannel == _channelsFromBranching[_channelsBranching[idxDecayChannel]]) {
-				yamlOutput << YAML::Key << "branching";
-				yamlOutput << YAML::Value;
-
-				yamlOutput << YAML::Flow;
-				yamlOutput << YAML::BeginSeq;
-
-				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).real();
-				yamlOutput << fitParameters.getBranching(getId(), _channelsBranching[idxDecayChannel]).imag();
-
-				yamlOutput << YAML::EndSeq;
-				yamlOutput << YAML::Block;
-			}
-		}
-
-		writeDecayChannel(yamlOutput, idxDecayChannel, debug);
-
-		yamlOutput << YAML::EndMap;
-	}
-
-	yamlOutput << YAML::EndSeq;
-
-	if(debug) {
-		printDebug << "finished writing 'component'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::component::writeDecayChannel(YAML::Emitter& /*yamlOutput*/,
-                                                 const size_t /*idxDecayChannel*/,
-                                                 const bool /*debug*/) const
-{
-	return true;
 }
 
 
 void
 rpwa::resonanceFit::component::setChannelAnchor(const std::vector<size_t>& channels)
 {
-	for(size_t idxBin = 0; idxBin < channels.size(); idxBin++) {
+	for(size_t idxBin = 0; idxBin < channels.size(); ++idxBin) {
 		_channels[channels[idxBin]].setAnchor(idxBin);
 	}
 }
@@ -622,9 +307,9 @@ rpwa::resonanceFit::component::importCouplings(const double* par,
                                                rpwa::resonanceFit::parameters& fitParameters,
                                                rpwa::resonanceFit::cache& cache)
 {
-	size_t counter=0;
-	for(size_t idxCoupling=0; idxCoupling<_nrCouplings; ++idxCoupling) {
-		rpwa::resonanceFit::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
+	size_t counter = 0;
+	for(size_t idxCoupling = 0; idxCoupling < _nrCouplings; ++idxCoupling) {
+		rpwa::resonanceFit::component::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
 		const std::vector<size_t>& bins = channel.getBins();
 		for(size_t i = 0; i < bins.size(); ++i) {
 			const size_t idxBin = bins[i];
@@ -637,12 +322,12 @@ rpwa::resonanceFit::component::importCouplings(const double* par,
 				counter += 2;
 			}
 
-			if (fitParameters.getCoupling(getId(), idxCoupling, idxBin) != coupling) {
+			if(fitParameters.getCoupling(getId(), idxCoupling, idxBin) != coupling) {
 				fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);
 
 				// invalidate the cache
-				for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-					if (_channelsCoupling[idxChannel] == idxCoupling) {
+				for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
+					if(_channelsCoupling[idxChannel] == idxCoupling) {
 						cache.setCoupling(getId(), idxChannel, idxBin, std::numeric_limits<size_t>::max(), 0.);
 						cache.setProdAmp(_channels[idxChannel].getWaveIdx(), idxBin, std::numeric_limits<size_t>::max(), 0.);
 					}
@@ -660,7 +345,7 @@ rpwa::resonanceFit::component::importBranchings(const double* par,
                                                 rpwa::resonanceFit::parameters& fitParameters,
                                                 rpwa::resonanceFit::cache& cache)
 {
-	size_t counter=0;
+	size_t counter = 0;
 	for(size_t idxBranching = 0; idxBranching < _nrBranchings; ++idxBranching) {
 		std::complex<double> branching(1., 0.);
 		if(not _branchingsFixed[idxBranching]) {
@@ -668,12 +353,12 @@ rpwa::resonanceFit::component::importBranchings(const double* par,
 			counter += 2;
 		}
 
-		if (fitParameters.getBranching(getId(), idxBranching) != branching) {
+		if(fitParameters.getBranching(getId(), idxBranching) != branching) {
 			fitParameters.setBranching(getId(), idxBranching, branching);
 
 			// invalidate the cache
-			for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
-				if (_channelsBranching[idxChannel] == idxBranching) {
+			for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
+				if(_channelsBranching[idxChannel] == idxBranching) {
 					cache.setCoupling(getId(), idxChannel, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 					cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 				}
@@ -691,21 +376,21 @@ rpwa::resonanceFit::component::importParameters(const double* par,
                                                 rpwa::resonanceFit::cache& cache)
 {
 	bool invalidateCache = false;
-	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
-		if (fitParameters.getParameter(getId(), idxParameter) != par[idxParameter]) {
+	for(size_t idxParameter = 0; idxParameter < _parameters.size(); ++idxParameter) {
+		if(fitParameters.getParameter(getId(), idxParameter) != par[idxParameter]) {
 			fitParameters.setParameter(getId(), idxParameter, par[idxParameter]);
 			invalidateCache = true;
 		}
 	}
 
-	if (invalidateCache) {
+	if(invalidateCache) {
 		cache.setComponent(getId(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
-		for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+		for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
 			cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 		}
 	}
 
-	return _nrParameters;
+	return _parameters.size();
 }
 
 
@@ -779,7 +464,7 @@ rpwa::resonanceFit::component::print(std::ostream& out, const bool newLine) cons
 
 	out << "Decay modes:";
 	for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
-		const rpwa::resonanceFit::channel& channel = _channels[idxChannel];
+		const rpwa::resonanceFit::component::channel& channel = _channels[idxChannel];
 		out << std::endl << "    " << idxChannel << ": '" << channel.getWaveName() << "'";
 	}
 
@@ -791,78 +476,42 @@ rpwa::resonanceFit::component::print(std::ostream& out, const bool newLine) cons
 }
 
 
-rpwa::resonanceFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
-                                                                 const std::string& name)
-	: component(id, name, "fixedWidthBreitWigner", 2)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::fixedWidthBreitWigner::getDefaultParameters()
 {
-	_parameters[0].setName("mass");
-	_parameters[1].setName("width");
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(2);
+	defaultParameters[0].setName("mass");
+	defaultParameters[0].setStep(0.001);
+	defaultParameters[1].setName("width");
+	defaultParameters[1].setStep(0.001);
 
-	_parameters[0].setStep(0.001);
-	_parameters[1].setStep(0.001);
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::fixedWidthBreitWigner::init(const YAML::Node& configComponent,
-                                                rpwa::resonanceFit::parameters& fitParameters,
-                                                rpwa::resonanceFit::parameters& fitParametersError,
-                                                const std::vector<size_t>& nrMassBins,
-                                                const boost::multi_array<double, 2>& massBinCenters,
-                                                const std::map<std::string, size_t>& waveIndices,
-                                                const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                const bool useBranchings,
-                                                const bool debug)
+rpwa::resonanceFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id,
+                                                                 const std::string& name,
+                                                                 const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                 const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                 const std::vector<size_t>& nrMassBins,
+                                                                 const boost::multi_array<double, 2>& massBinCenters,
+                                                                 const bool useBranchings)
+	: component(id,
+	            name,
+	            "fixedWidthBreitWigner",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings)
 {
-	if(debug) {
-		printDebug << "start initializing 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	// initialize the bins that can be used for the caching, the function
 	// value for this component type is the same in bins with an equal
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'fixedWidthBreitWigner'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::fixedWidthBreitWigner::write(YAML::Emitter& yamlOutput,
-                                                 const rpwa::resonanceFit::parameters& fitParameters,
-                                                 const rpwa::resonanceFit::parameters& fitParametersError,
-                                                 const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'fixedWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'fixedWidthBreitWigner'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'fixedWidthBreitWigner'." << std::endl;
-	}
-
-	return true;
+	// check presence of all parameters
+	checkParameters(*this);
 }
 
 
@@ -880,183 +529,67 @@ rpwa::resonanceFit::fixedWidthBreitWigner::val(const rpwa::resonanceFit::paramet
 }
 
 
-rpwa::resonanceFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
-                                                                     const std::string& name)
-	: component(id, name, "dynamicWidthBreitWigner", 2)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::dynamicWidthBreitWigner::getDefaultParameters()
 {
-	_parameters[0].setName("mass");
-	_parameters[1].setName("width");
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(2);
+	defaultParameters[0].setName("mass");
+	defaultParameters[0].setStep(0.001);
+	defaultParameters[1].setName("width");
+	defaultParameters[1].setStep(0.001);
 
-	_parameters[0].setStep(0.001);
-	_parameters[1].setStep(0.001);
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::dynamicWidthBreitWigner::init(const YAML::Node& configComponent,
-                                                  rpwa::resonanceFit::parameters& fitParameters,
-                                                  rpwa::resonanceFit::parameters& fitParametersError,
-                                                  const std::vector<size_t>& nrMassBins,
-                                                  const boost::multi_array<double, 2>& massBinCenters,
-                                                  const std::map<std::string, size_t>& waveIndices,
-                                                  const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                  const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                  const bool useBranchings,
-                                                  const bool debug)
+rpwa::resonanceFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_t id,
+                                                                     const std::string& name,
+                                                                     const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                     const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                     const std::vector<size_t>& nrMassBins,
+                                                                     const boost::multi_array<double, 2>& massBinCenters,
+                                                                     const bool useBranchings,
+                                                                     const std::vector<double>& branchingRatio,
+                                                                     const std::vector<int>& relAngularMom,
+                                                                     const std::vector<double>& mIsobar1,
+                                                                     const std::vector<double>& mIsobar2)
+	: component(id,
+	            name,
+	            "dynamicWidthBreitWigner",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _ratio(branchingRatio),
+	  _l(relAngularMom),
+	  _m1(mIsobar1),
+	  _m2(mIsobar2)
 {
-	if(debug) {
-		printDebug << "start initializing 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	// initialize the bins that can be used for the caching, the function
 	// value for this component type is the same in bins with an equal
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	const size_t nrDecayChannels = getNrChannels();
+	// check presence of all parameters
+	checkParameters(*this);
 
-	const YAML::Node& extraDecayChannels = configComponent["extradecaychannels"];
-	const size_t nrExtraDecayChannels = extraDecayChannels ? extraDecayChannels.size() : 0;
-	for(size_t idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
-		const YAML::Node& decayChannel = extraDecayChannels[idxExtraDecayChannel];
-		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
-			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
-			return false;
-		}
+	const size_t totalDecayChannels = _ratio.size();
+	if(totalDecayChannels < getNrChannels()) {
+		printErr << "total number of decay channels is smaller than number of proper decay channels." << std::endl;
+		throw;
 	}
+	checkSize(_ratio,
+	          totalDecayChannels, "total number of decay channels is not correct for branching ratios.");
+	checkSize(_l,
+	          totalDecayChannels, "total number of decay channels is not correct for relative orbital angular momenta.");
+	checkSize(_m1,
+	          totalDecayChannels, "total number of decay channels is not correct for mass of isobar 1.");
+	checkSize(_m2,
+	          totalDecayChannels, "total number of decay channels is not correct for mass of isobar 2.");
 
-	assert(_ratio.size() == _m1.size() && _ratio.size() == _m2.size() && _ratio.size() == _l.size());
-	if (_ratio.size() != nrDecayChannels + nrExtraDecayChannels) {
-		printErr << "inconsistent vector size for decay channel information of component '" << getName() << "'." << std::endl;
-		return false;
-	}
-
-	if(nrDecayChannels + nrExtraDecayChannels > 1) {
-		double sum = 0.;
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			sum += _ratio[i];
-		}
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			_ratio[i] *= 1. / sum;
-		}
-	} else {
-		_ratio[0] = 1.;
-	}
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'dynamicWidthBreitWigner'." << std::endl;
-	}
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::dynamicWidthBreitWigner::readDecayChannel(const YAML::Node& decayChannel,
-                                                              const size_t idxDecayChannel,
-                                                              const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing decay channel at index " << idxDecayChannel << " in 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	// make sure there are no holes in the vectors
-	assert(_ratio.size() == _m1.size() && _ratio.size() == _m2.size() && _ratio.size() == _l.size());
-	if (_ratio.size() != idxDecayChannel) {
-		printErr << "wrong index for decay channel to read for component '" << getName() << "', got " << idxDecayChannel << ", expected " << _ratio.size() << "." << std::endl;
-		return false;
-	}
-
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("mIsobar1", YamlCppUtils::TypeFloat)
-	                     ("mIsobar2", YamlCppUtils::TypeFloat)
-	                     ("relAngularMom", YamlCppUtils::TypeInt)
-	                     ("branchingRatio", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
-		return false;
-	}
-
-	_m1.push_back(decayChannel["mIsobar1"].as<double>());
-	_m2.push_back(decayChannel["mIsobar2"].as<double>());
-	_l.push_back(decayChannel["relAngularMom"].as<int>());
-	_ratio.push_back(decayChannel["branchingRatio"].as<double>());
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::dynamicWidthBreitWigner::write(YAML::Emitter& yamlOutput,
-                                                   const rpwa::resonanceFit::parameters& fitParameters,
-                                                   const rpwa::resonanceFit::parameters& fitParametersError,
-                                                   const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'dynamicWidthBreitWigner'." << std::endl;
-		return false;
-	}
-
-	if (_ratio.size() > getNrChannels()) {
-		yamlOutput << YAML::Key << "extradecaychannels";
-		yamlOutput << YAML::Value;
-		yamlOutput << YAML::BeginSeq;
-
-		const size_t nrDecayChannels = _ratio.size();
-		for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-			yamlOutput << YAML::BeginMap;
-			writeDecayChannel(yamlOutput, idxDecayChannel, debug);
-			yamlOutput << YAML::EndMap;
-		}
-
-		yamlOutput << YAML::EndSeq;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'dynamicWidthBreitWigner'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::dynamicWidthBreitWigner::writeDecayChannel(YAML::Emitter& yamlOutput,
-                                                               const size_t idxDecayChannel,
-                                                               const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing decay channel at index " << idxDecayChannel << " in 'dynamicWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	yamlOutput << YAML::Key << "mIsobar1";
-	yamlOutput << YAML::Value << _m1[idxDecayChannel];
-
-	yamlOutput << YAML::Key << "mIsobar2";
-	yamlOutput << YAML::Value <<_m2[idxDecayChannel];
-
-	yamlOutput << YAML::Key << "relAngularMom";
-	yamlOutput << YAML::Value <<_l[idxDecayChannel];
-
-	yamlOutput << YAML::Key << "branchingRatio";
-	yamlOutput << YAML::Value <<_ratio[idxDecayChannel];
-
-	return true;
+	const double sum = std::accumulate(_ratio.begin(), _ratio.end(), 0.0);
+	std::transform(_ratio.begin(), _ratio.end(), _ratio.begin(), [&sum](const double v){ return v/sum; });
 }
 
 
@@ -1069,14 +602,14 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::val(const rpwa::resonanceFit::param
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
 	double gamma = 0.;
-	for(size_t i=0; i<_ratio.size(); ++i) {
+	for(size_t i = 0; i < _ratio.size(); ++i) {
 		// calculation of the break-up momentum will fail if the
 		// sum of the two isobar masses is heavier than the mother
 		// mass, which is probably a good thing as some more advanced
 		// stuff should be used for at- or sub-threshold decays.
 		// but if the branching ratio for this channel is 0, then
 		// simply ignore this channel
-		if (_ratio[i] == 0.) {
+		if(_ratio[i] == 0.) {
 			continue;
 		}
 
@@ -1121,228 +654,67 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::print(std::ostream& out, const bool
 }
 
 
-rpwa::resonanceFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
-                                                                       const std::string& name)
-	: component(id, name, "integralWidthBreitWigner", 2)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::integralWidthBreitWigner::getDefaultParameters()
 {
-	_parameters[0].setName("mass");
-	_parameters[1].setName("width");
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(2);
+	defaultParameters[0].setName("mass");
+	defaultParameters[0].setStep(0.001);
+	defaultParameters[1].setName("width");
+	defaultParameters[1].setStep(0.001);
 
-	_parameters[0].setStep(0.001);
-	_parameters[1].setStep(0.001);
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::integralWidthBreitWigner::init(const YAML::Node& configComponent,
-                                                   rpwa::resonanceFit::parameters& fitParameters,
-                                                   rpwa::resonanceFit::parameters& fitParametersError,
-                                                   const std::vector<size_t>& nrMassBins,
-                                                   const boost::multi_array<double, 2>& massBinCenters,
-                                                   const std::map<std::string, size_t>& waveIndices,
-                                                   const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                   const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                   const bool useBranchings,
-                                                   const bool debug)
+rpwa::resonanceFit::integralWidthBreitWigner::integralWidthBreitWigner(const size_t id,
+                                                                       const std::string& name,
+                                                                       const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                       const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                       const std::vector<size_t>& nrMassBins,
+                                                                       const boost::multi_array<double, 2>& massBinCenters,
+                                                                       const bool useBranchings,
+                                                                       const std::vector<double>& branchingRatio,
+                                                                       const std::vector<std::vector<double> >& masses,
+                                                                       const std::vector<std::vector<double> >& values)
+	: component(id,
+	            name,
+	            "integralWidthBreitWigner",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _ratio(branchingRatio),
+	  _masses(masses),
+	  _values(values)
 {
-	if(debug) {
-		printDebug << "start initializing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	// initialize the bins that can be used for the caching, the function
 	// value for this component type is the same in bins with an equal
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	const size_t nrDecayChannels = getNrChannels();
+	// check presence of all parameters
+	checkParameters(*this);
 
-	const YAML::Node& extraDecayChannels = configComponent["extradecaychannels"];
-	const size_t nrExtraDecayChannels = extraDecayChannels ? extraDecayChannels.size() : 0;
-	for(size_t idxExtraDecayChannel=0; idxExtraDecayChannel<nrExtraDecayChannels; ++idxExtraDecayChannel) {
-		const YAML::Node& decayChannel = extraDecayChannels[idxExtraDecayChannel];
-		if (not readDecayChannel(decayChannel, nrDecayChannels + idxExtraDecayChannel, debug)) {
-			printErr << "error while reading extra information for extra decay channel at index " << idxExtraDecayChannel << " for component '" << getName() << "'." << std::endl;
-			return false;
-		}
+	const size_t totalDecayChannels = _ratio.size();
+	if(totalDecayChannels < getNrChannels()) {
+		printErr << "total number of decay channels is smaller than number of proper decay channels." << std::endl;
+		throw;
+	}
+	checkSize(_ratio,
+	          totalDecayChannels, "total number of decay channels is not correct for branching ratios.");
+	checkSize(_masses,
+	          totalDecayChannels, "total number of decay channels is not correct for mass points of phase-space integrals.");
+	checkSize(_values,
+	          totalDecayChannels, "total number of decay channels is not correct for values of phase-space integrals.");
+
+	for(size_t idxDecayChannel = 0; idxDecayChannel < totalDecayChannels; ++idxDecayChannel) {
+		_interpolator.push_back(std::make_shared<ROOT::Math::Interpolator>(_masses[idxDecayChannel], _values[idxDecayChannel], ROOT::Math::Interpolation::kLINEAR));
 	}
 
-	assert(_ratio.size() == _masses.size() && _ratio.size() == _values.size() && _ratio.size() == _interpolator.size());
-	if (_ratio.size() != nrDecayChannels + nrExtraDecayChannels) {
-		printErr << "inconsistent vector size for decay channel information of component '" << getName() << "'." << std::endl;
-		return false;
-	}
-
-	if(nrDecayChannels + nrExtraDecayChannels > 1) {
-		double sum = 0.;
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			sum += _ratio[i];
-		}
-		for(size_t i=0; i<_ratio.size(); ++i) {
-			_ratio[i] *= 1. / sum;
-		}
-	} else {
-		_ratio[0] = 1.;
-	}
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'integralWidthBreitWigner'." << std::endl;
-	}
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::integralWidthBreitWigner::readDecayChannel(const YAML::Node& decayChannel,
-                                                               const size_t idxDecayChannel,
-                                                               const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing decay channel at index " << idxDecayChannel << " in 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	// make sure there are no holes in the vectors
-	assert(_ratio.size() == _masses.size() && _ratio.size() == _values.size() && _ratio.size() == _interpolator.size());
-	if (_ratio.size() != idxDecayChannel) {
-		printErr << "wrong index for decay channel to read for component '" << getName() << "', got " << idxDecayChannel << ", expected " << _ratio.size() << "." << std::endl;
-		return false;
-	}
-
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("integral", YamlCppUtils::TypeSequence)
-	                     ("branchingRatio", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
-		printErr << "decay channel at index " << idxDecayChannel << " of component '" << getName() << "' does not contain all required variables." << std::endl;
-		return false;
-	}
-
-	const YAML::Node& integrals = decayChannel["integral"];
-
-	const size_t nrValues = integrals.size();
-	if(nrValues < 2) {
-		printErr << "phase-space integrals of component '" << getName() << "' has to contain at least two points." << std::endl;
-		return false;
-	}
-
-	std::vector<double> masses;
-	std::vector<double> values;
-
-	for(size_t idx=0; idx<nrValues; ++idx) {
-		const YAML::Node& integral = integrals[idx];
-		if(not integral.IsSequence()) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(integral.size() != 2) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-
-		const double mass = integral[0].as<double>();
-		const double val = integral[1].as<double>();
-
-		if (masses.size() > 0 && masses.back() > mass) {
-			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
-			return false;
-		}
-
-		masses.push_back(mass);
-		values.push_back(val);
-	}
-
-	_masses.push_back(masses);
-	_values.push_back(values);
-	_interpolator.push_back(std::make_shared<ROOT::Math::Interpolator>(masses, values, ROOT::Math::Interpolation::kLINEAR));
-	_ratio.push_back(decayChannel["branchingRatio"].as<double>());
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::integralWidthBreitWigner::write(YAML::Emitter& yamlOutput,
-                                                    const rpwa::resonanceFit::parameters& fitParameters,
-                                                    const rpwa::resonanceFit::parameters& fitParametersError,
-                                                    const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'integralWidthBreitWigner'." << std::endl;
-		return false;
-	}
-
-	if (_ratio.size() > getNrChannels()) {
-		yamlOutput << YAML::Key << "extradecaychannels";
-		yamlOutput << YAML::Value;
-		yamlOutput << YAML::BeginSeq;
-
-		const size_t nrDecayChannels = _ratio.size();
-		for (size_t idxDecayChannel=getNrChannels(); idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
-			yamlOutput << YAML::BeginMap;
-			writeDecayChannel(yamlOutput, idxDecayChannel, debug);
-			yamlOutput << YAML::EndMap;
-		}
-
-		yamlOutput << YAML::EndSeq;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'integralWidthBreitWigner'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::integralWidthBreitWigner::writeDecayChannel(YAML::Emitter& yamlOutput,
-                                                                const size_t idxDecayChannel,
-                                                                const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing decay channel at index " << idxDecayChannel << " in 'integralWidthBreitWigner' for component '" << getName() << "'." << std::endl;
-	}
-
-	yamlOutput << YAML::Key << "integral";
-	yamlOutput << YAML::Value;
-
-	yamlOutput << YAML::Flow;
-	yamlOutput << YAML::BeginSeq;
-	for (size_t idx=0; idx<_masses[idxDecayChannel].size(); ++idx) {
-		yamlOutput << YAML::BeginSeq;
-		yamlOutput << _masses[idxDecayChannel][idx];
-		yamlOutput << _values[idxDecayChannel][idx];
-		yamlOutput << YAML::EndSeq;
-	}
-	yamlOutput << YAML::EndSeq;
-	yamlOutput << YAML::Block;
-
-	yamlOutput << YAML::Key << "branchingRatio";
-	yamlOutput << YAML::Value <<_ratio[idxDecayChannel];
-
-	return true;
+	const double sum = std::accumulate(_ratio.begin(), _ratio.end(), 0.0);
+	std::transform(_ratio.begin(), _ratio.end(), _ratio.begin(), [&sum](const double v){ return v/sum; });
 }
 
 
@@ -1355,9 +727,9 @@ rpwa::resonanceFit::integralWidthBreitWigner::val(const rpwa::resonanceFit::para
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
 	double gamma = 0.;
-	for(size_t i=0; i<_ratio.size(); ++i) {
+	for(size_t i = 0; i < _ratio.size(); ++i) {
 		// save some time not calculating stuff that is ignored
-		if (_ratio[i] == 0.) {
+		if(_ratio[i] == 0.) {
 			continue;
 		}
 
@@ -1374,37 +746,34 @@ rpwa::resonanceFit::integralWidthBreitWigner::val(const rpwa::resonanceFit::para
 }
 
 
-rpwa::resonanceFit::constantBackground::constantBackground(const size_t id,
-                                                           const std::string& name)
-	: component(id, name, "constantBackground", 0)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::constantBackground::getDefaultParameters()
 {
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(0);
+
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::constantBackground::init(const YAML::Node& configComponent,
-                                             rpwa::resonanceFit::parameters& fitParameters,
-                                             rpwa::resonanceFit::parameters& fitParametersError,
-                                             const std::vector<size_t>& nrMassBins,
-                                             const boost::multi_array<double, 2>& massBinCenters,
-                                             const std::map<std::string, size_t>& waveIndices,
-                                             const std::map<std::string, std::vector<size_t> >& waveBins,
-                                             const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                             const bool useBranchings,
-                                             const bool debug)
+rpwa::resonanceFit::constantBackground::constantBackground(const size_t id,
+                                                           const std::string& name,
+                                                           const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                           const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                           const std::vector<size_t>& nrMassBins,
+                                                           const boost::multi_array<double, 2>& massBinCenters,
+                                                           const bool useBranchings)
+	: component(id,
+	            name,
+	            "constantBackground",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings)
 {
-	if(debug) {
-		printDebug << "start initializing 'constantBackground' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	if(getNrChannels() != 1) {
 		printErr << "component '" << getName() << "' of type 'constantBackground' needs to have exactly one decay channel." << std::endl;
-		return false;
+		throw;
 	}
 
 	// initialize the bins that can be used for the caching, the function
@@ -1412,40 +781,8 @@ rpwa::resonanceFit::constantBackground::init(const YAML::Node& configComponent,
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'constantBackground'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::constantBackground::write(YAML::Emitter& yamlOutput,
-                                              const rpwa::resonanceFit::parameters& fitParameters,
-                                              const rpwa::resonanceFit::parameters& fitParametersError,
-                                              const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'constantBackground' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'constantBackground'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'constantBackground'." << std::endl;
-	}
-
-	return true;
+	// check presence of all parameters
+	checkParameters(*this);
 }
 
 
@@ -1458,40 +795,44 @@ rpwa::resonanceFit::constantBackground::val(const rpwa::resonanceFit::parameters
 }
 
 
-rpwa::resonanceFit::exponentialBackground::exponentialBackground(const size_t id,
-                                                                 const std::string& name)
-	: component(id, name, "exponentialBackground", 1)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::exponentialBackground::getDefaultParameters()
 {
-	_parameters[0].setName("g");
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(1);
+	defaultParameters[0].setName("g");
+	defaultParameters[0].setStep(1.0);
 
-	_parameters[0].setStep(1.0);
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::exponentialBackground::init(const YAML::Node& configComponent,
-                                                rpwa::resonanceFit::parameters& fitParameters,
-                                                rpwa::resonanceFit::parameters& fitParametersError,
-                                                const std::vector<size_t>& nrMassBins,
-                                                const boost::multi_array<double, 2>& massBinCenters,
-                                                const std::map<std::string, size_t>& waveIndices,
-                                                const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                const bool useBranchings,
-                                                const bool debug)
+rpwa::resonanceFit::exponentialBackground::exponentialBackground(const size_t id,
+                                                                 const std::string& name,
+                                                                 const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                 const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                 const std::vector<size_t>& nrMassBins,
+                                                                 const boost::multi_array<double, 2>& massBinCenters,
+                                                                 const bool useBranchings,
+                                                                 const int relAngularMom,
+                                                                 const double mIsobar1,
+                                                                 const double mIsobar2,
+                                                                 const double exponent)
+	: component(id,
+	            name,
+	            "exponentialBackground",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _l(relAngularMom),
+	  _m1(mIsobar1),
+	  _m2(mIsobar2),
+	  _exponent(exponent)
 {
-	if(debug) {
-		printDebug << "start initializing 'exponentialBackground' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	if(getNrChannels() != 1) {
 		printErr << "component '" << getName() << "' of type 'exponentialBackground' needs to have exactly one decay channel." << std::endl;
-		return false;
+		throw;
 	}
 
 	// initialize the bins that can be used for the caching, the function
@@ -1499,41 +840,8 @@ rpwa::resonanceFit::exponentialBackground::init(const YAML::Node& configComponen
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	std::map<std::string, YamlCppUtils::Type> mandatoryArgumentsIsobarMasses;
-	boost::assign::insert(mandatoryArgumentsIsobarMasses)
-	                     ("mIsobar1", YamlCppUtils::TypeFloat)
-	                     ("mIsobar2", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
-		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
-		return false;
-	}
-
-	_m1 = configComponent["mIsobar1"].as<double>();
-	_m2 = configComponent["mIsobar2"].as<double>();
-
-	if (configComponent["relAngularMom"]) {
-		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
-			_l = configComponent["relAngularMom"].as<int>();
-		} else {
-			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
-			return false;
-		}
-	} else {
-		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
-		_l = 0;
-	}
-
-	if (configComponent["exponent"]) {
-		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
-			_exponent = configComponent["exponent"].as<double>();
-		} else {
-			printErr << "variable 'exponent' for component '" << getName() << "' defined, but not a floating point number." << std::endl;
-			return false;
-		}
-	} else {
-		printInfo << "variable 'exponent' for component '" << getName() << "' not defined, using default value 2.0." << std::endl;
-		_exponent = 2.0;
-	}
+	// check presence of all parameters
+	checkParameters(*this);
 
 	// select the maximum of the mass only from the used bins
 	const std::vector<size_t>& bins = getChannel(0).getBins();
@@ -1546,53 +854,6 @@ rpwa::resonanceFit::exponentialBackground::init(const YAML::Node& configComponen
 	const double q = rpwa::breakupMomentum(maxMass, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
 	_norm = 1. / (q*f2);
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'exponentialBackground'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::exponentialBackground::write(YAML::Emitter& yamlOutput,
-                                                 const rpwa::resonanceFit::parameters& fitParameters,
-                                                 const rpwa::resonanceFit::parameters& fitParametersError,
-                                                 const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'exponentialBackground' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'exponentialBackground'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::Key << "mIsobar1";
-	yamlOutput << YAML::Value << _m1;
-
-	yamlOutput << YAML::Key << "mIsobar2";
-	yamlOutput << YAML::Value << _m2;
-
-	yamlOutput << YAML::Key << "relAngularMom";
-	yamlOutput << YAML::Value <<_l;
-
-	yamlOutput << YAML::Key << "exponent";
-	yamlOutput << YAML::Value <<_exponent;
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'exponentialBackground'." << std::endl;
-	}
-
-	return true;
 }
 
 
@@ -1632,96 +893,62 @@ rpwa::resonanceFit::exponentialBackground::print(std::ostream& out, const bool n
 }
 
 
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::tPrimeDependentBackground::getDefaultParameters()
+{
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(5);
+	defaultParameters[0].setName("m0");
+	defaultParameters[0].setStep(0.001);
+	defaultParameters[1].setName("c0");
+	defaultParameters[1].setStep(0.001);
+	defaultParameters[2].setName("c1");
+	defaultParameters[2].setStep(1.0);
+	defaultParameters[3].setName("c2");
+	defaultParameters[3].setStep(1.0);
+	defaultParameters[4].setName("c3");
+	defaultParameters[4].setStep(1.0);
+
+	return defaultParameters;
+}
+
+
 rpwa::resonanceFit::tPrimeDependentBackground::tPrimeDependentBackground(const size_t id,
-                                                                         const std::string& name)
-	: component(id, name, "tPrimeDependentBackground", 5)
+                                                                         const std::string& name,
+                                                                         const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                         const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                         const std::vector<size_t>& nrMassBins,
+                                                                         const boost::multi_array<double, 2>& massBinCenters,
+                                                                         const bool useBranchings,
+                                                                         const std::vector<double>& tPrimeMeans,
+                                                                         const int relAngularMom,
+                                                                         const double mIsobar1,
+                                                                         const double mIsobar2,
+                                                                         const double exponent)
+	: component(id,
+	            name,
+	            "tPrimeDependentBackground",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _tPrimeMeans(tPrimeMeans),
+	  _l(relAngularMom),
+	  _m1(mIsobar1),
+	  _m2(mIsobar2),
+	  _exponent(exponent)
 {
-	_parameters[0].setName("m0");
-	_parameters[1].setName("c0");
-	_parameters[2].setName("c1");
-	_parameters[3].setName("c2");
-	_parameters[4].setName("c3");
-
-	_parameters[0].setStep(0.001);
-	_parameters[1].setStep(0.001);
-	_parameters[2].setStep(1.0);
-	_parameters[3].setStep(1.0);
-	_parameters[4].setStep(1.0);
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackground::setTPrimeMeans(const std::vector<double>& tPrimeMeans)
-{
-	_tPrimeMeans = tPrimeMeans;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackground::init(const YAML::Node& configComponent,
-                                                    rpwa::resonanceFit::parameters& fitParameters,
-                                                    rpwa::resonanceFit::parameters& fitParametersError,
-                                                    const std::vector<size_t>& nrMassBins,
-                                                    const boost::multi_array<double, 2>& massBinCenters,
-                                                    const std::map<std::string, size_t>& waveIndices,
-                                                    const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                    const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                    const bool useBranchings,
-                                                    const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
-	}
-
-	const size_t nrBins = nrMassBins.size();
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	if(getNrChannels() != 1) {
 		printErr << "component '" << getName() << "' of type 'tPrimeDependentBackground' needs to have exactly one decay channel." << std::endl;
-		return false;
+		throw;
 	}
 
-	std::map<std::string, YamlCppUtils::Type> mandatoryArgumentsIsobarMasses;
-	boost::assign::insert(mandatoryArgumentsIsobarMasses)
-	                     ("mIsobar1", YamlCppUtils::TypeFloat)
-	                     ("mIsobar2", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
-		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << std::endl;
-		return false;
-	}
+	// check presence of all parameters
+	checkParameters(*this);
 
-	_m1 = configComponent["mIsobar1"].as<double>();
-	_m2 = configComponent["mIsobar2"].as<double>();
-
-	if (configComponent["relAngularMom"]) {
-		if (checkVariableType(configComponent["relAngularMom"], YamlCppUtils::TypeInt)) {
-			_l = configComponent["relAngularMom"].as<int>();
-		} else {
-			printErr << "variable 'relAngularMom' for component '" << getName() << "' defined, but not an integer." << std::endl;
-			return false;
-		}
-	} else {
-		printInfo << "variable 'relAngularMom' for component '" << getName() << "' not defined, using default value 0." << std::endl;
-		_l = 0;
-	}
-
-	if (configComponent["exponent"]) {
-		if (checkVariableType(configComponent["exponent"], YamlCppUtils::TypeFloat)) {
-			_exponent = configComponent["exponent"].as<double>();
-		} else {
-			printErr << "variable 'exponent' for component '" << getName() << "' defined, but not a floating point number." << std::endl;
-			return false;
-		}
-	} else {
-		printInfo << "variable 'exponent' for component '" << getName() << "' not defined, using default value 2.0." << std::endl;
-		_exponent = 2.0;
-	}
+	const size_t nrBins = nrMassBins.size();
+	checkSize(_tPrimeMeans,
+	          nrBins, "number of bins is not correct for mean t' value per bin.");
 
 	// select the maximum of the mass only from the used bins
 	const std::vector<size_t>& bins = getChannel(0).getBins();
@@ -1734,58 +961,6 @@ rpwa::resonanceFit::tPrimeDependentBackground::init(const YAML::Node& configComp
 	const double q = rpwa::breakupMomentum(maxMass, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
 	_norm = 1. / (q*f2);
-
-	if(_tPrimeMeans.size() != nrBins) {
-		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
-		return false;
-	}
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'tPrimeDependentBackground'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackground::write(YAML::Emitter& yamlOutput,
-                                                     const rpwa::resonanceFit::parameters& fitParameters,
-                                                     const rpwa::resonanceFit::parameters& fitParametersError,
-                                                     const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'tPrimeDependentBackground' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'tPrimeDependentBackground'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::Key << "mIsobar1";
-	yamlOutput << YAML::Value << _m1;
-
-	yamlOutput << YAML::Key << "mIsobar2";
-	yamlOutput << YAML::Value << _m2;
-
-	yamlOutput << YAML::Key << "relAngularMom";
-	yamlOutput << YAML::Value <<_l;
-
-	yamlOutput << YAML::Key << "exponent";
-	yamlOutput << YAML::Value <<_exponent;
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'tPrimeDependentBackground'." << std::endl;
-	}
-
-	return true;
 }
 
 
@@ -1836,40 +1011,42 @@ rpwa::resonanceFit::tPrimeDependentBackground::print(std::ostream& out, const bo
 }
 
 
-rpwa::resonanceFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
-                                                                                 const std::string& name)
-	: component(id, name, "exponentialBackgroundIntegral", 1)
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::exponentialBackgroundIntegral::getDefaultParameters()
 {
-	_parameters[0].setName("g");
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(1);
+	defaultParameters[0].setName("g");
+	defaultParameters[0].setStep(1.0);
 
-	_parameters[0].setStep(1.0);
+	return defaultParameters;
 }
 
 
-bool
-rpwa::resonanceFit::exponentialBackgroundIntegral::init(const YAML::Node& configComponent,
-                                                        rpwa::resonanceFit::parameters& fitParameters,
-                                                        rpwa::resonanceFit::parameters& fitParametersError,
-                                                        const std::vector<size_t>& nrMassBins,
-                                                        const boost::multi_array<double, 2>& massBinCenters,
-                                                        const std::map<std::string, size_t>& waveIndices,
-                                                        const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                        const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                        const bool useBranchings,
-                                                        const bool debug)
+rpwa::resonanceFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral(const size_t id,
+                                                                                 const std::string& name,
+                                                                                 const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                                 const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                                 const std::vector<size_t>& nrMassBins,
+                                                                                 const boost::multi_array<double, 2>& massBinCenters,
+                                                                                 const bool useBranchings,
+                                                                                 const std::vector<double>& masses,
+                                                                                 const std::vector<double>& values,
+                                                                                 const double exponent)
+	: component(id,
+	            name,
+	            "exponentialBackgroundIntegral",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _masses(masses),
+	  _values(values),
+	  _exponent(exponent)
 {
-	if(debug) {
-		printDebug << "start initializing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
-	}
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	if(getNrChannels() != 1) {
 		printErr << "component '" << getName() << "' of type 'exponentialBackgroundIntegral' needs to have exactly one decay channel." << std::endl;
-		return false;
+		throw;
 	}
 
 	// initialize the bins that can be used for the caching, the function
@@ -1877,61 +1054,11 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::init(const YAML::Node& config
 	// mass binning
 	_binsEqualValues = initBinsEqualValuesFromMassBinning(nrMassBins, massBinCenters);
 
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("integral", YamlCppUtils::TypeSequence)
-	                     ("exponent", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-		printErr << "not all required variables are defined for the component '" << getName() << "'." << std::endl;
-		return false;
-	}
-
-	const YAML::Node& integrals = configComponent["integral"];
-
-	const size_t nrValues = integrals.size();
-	if(nrValues < 2) {
-		printErr << "phase-space integral of component '" << getName() << "' has to contain at least two points." << std::endl;
-		return false;
-	}
-
-	_masses.clear();
-	_values.clear();
-
-	for(size_t idx=0; idx<nrValues; ++idx) {
-		const YAML::Node& integral = integrals[idx];
-		if(not integral.IsSequence()) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(integral.size() != 2) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-
-		const double mass = integral[0].as<double>();
-		const double val = integral[1].as<double>();
-
-		if (_masses.size() > 0 && _masses.back() > mass) {
-			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
-			return false;
-		}
-
-		_masses.push_back(mass);
-		_values.push_back(val);
-	}
+	// check presence of all parameters
+	checkParameters(*this);
 
 	assert(not _interpolator);
 	_interpolator = std::make_shared<ROOT::Math::Interpolator>(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
-
-	_exponent = configComponent["exponent"].as<double>();
 
 	// select the maximum of the mass only from the used bins
 	const std::vector<size_t>& bins = getChannel(0).getBins();
@@ -1942,58 +1069,6 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::init(const YAML::Node& config
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	_norm = 1. / (maxMass * _interpolator->Eval(maxMass));
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'exponentialBackgroundIntegral'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::exponentialBackgroundIntegral::write(YAML::Emitter& yamlOutput,
-                                                         const rpwa::resonanceFit::parameters& fitParameters,
-                                                         const rpwa::resonanceFit::parameters& fitParametersError,
-                                                         const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'exponentialBackgroundIntegral' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'exponentialBackgroundIntegral'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::Key << "integral";
-	yamlOutput << YAML::Value;
-
-	yamlOutput << YAML::Flow;
-	yamlOutput << YAML::BeginSeq;
-	for (size_t idx=0; idx<_masses.size(); ++idx) {
-		yamlOutput << YAML::BeginSeq;
-		yamlOutput << _masses[idx];
-		yamlOutput << _values[idx];
-		yamlOutput << YAML::EndSeq;
-	}
-	yamlOutput << YAML::EndSeq;
-	yamlOutput << YAML::Block;
-
-	yamlOutput << YAML::Key << "exponent";
-	yamlOutput << YAML::Value <<_exponent;
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'exponentialBackgroundIntegral'." << std::endl;
-	}
-
-	return true;
 }
 
 
@@ -2026,116 +1101,63 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::print(std::ostream& out, cons
 }
 
 
+std::vector<rpwa::resonanceFit::parameter>
+rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::getDefaultParameters()
+{
+	std::vector<rpwa::resonanceFit::parameter> defaultParameters(5);
+	defaultParameters[0].setName("m0");
+	defaultParameters[0].setStep(0.001);
+	defaultParameters[1].setName("c0");
+	defaultParameters[1].setStep(0.001);
+	defaultParameters[2].setName("c1");
+	defaultParameters[2].setStep(1.0);
+	defaultParameters[3].setName("c2");
+	defaultParameters[3].setStep(1.0);
+	defaultParameters[4].setName("c3");
+	defaultParameters[4].setStep(1.0);
+
+	return defaultParameters;
+}
+
+
 rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackgroundIntegral(const size_t id,
-                                                                                         const std::string& name)
-	: component(id, name, "tPrimeDependentBackgroundIntegral", 5)
+                                                                                         const std::string& name,
+                                                                                         const std::vector<rpwa::resonanceFit::parameter>& parameters,
+                                                                                         const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
+                                                                                         const std::vector<size_t>& nrMassBins,
+                                                                                         const boost::multi_array<double, 2>& massBinCenters,
+                                                                                         const bool useBranchings,
+                                                                                         const std::vector<double>& tPrimeMeans,
+                                                                                         const std::vector<double>& masses,
+                                                                                         const std::vector<double>& values,
+                                                                                         const double exponent)
+	: component(id,
+	            name,
+	            "tPrimeDependentBackgroundIntegral",
+	            parameters,
+	            decayChannels,
+	            nrMassBins,
+	            massBinCenters,
+	            useBranchings),
+	  _tPrimeMeans(tPrimeMeans),
+	  _masses(masses),
+	  _values(values),
+	  _exponent(exponent)
 {
-	_parameters[0].setName("m0");
-	_parameters[1].setName("c0");
-	_parameters[2].setName("c1");
-	_parameters[3].setName("c2");
-	_parameters[4].setName("c3");
-
-	_parameters[0].setStep(0.001);
-	_parameters[1].setStep(0.001);
-	_parameters[2].setStep(1.0);
-	_parameters[3].setStep(1.0);
-	_parameters[4].setStep(1.0);
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::setTPrimeMeans(const std::vector<double>& tPrimeMeans)
-{
-	_tPrimeMeans = tPrimeMeans;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& configComponent,
-                                                            rpwa::resonanceFit::parameters& fitParameters,
-                                                            rpwa::resonanceFit::parameters& fitParametersError,
-                                                            const std::vector<size_t>& nrMassBins,
-                                                            const boost::multi_array<double, 2>& massBinCenters,
-                                                            const std::map<std::string, size_t>& waveIndices,
-                                                            const std::map<std::string, std::vector<size_t> >& waveBins,
-                                                            const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                            const bool useBranchings,
-                                                            const bool debug)
-{
-	if(debug) {
-		printDebug << "start initializing 'tPrimeDependentBackgroundIntegral' for component '" << getName() << "'." << std::endl;
-	}
-
-	const size_t nrBins = nrMassBins.size();
-
-	if(not component::init(configComponent, fitParameters, fitParametersError, nrMassBins, massBinCenters, waveIndices, waveBins, phaseSpaceIntegrals, useBranchings, debug)) {
-		printErr << "error while reading configuration of 'component' class." << std::endl;
-		return false;
-	}
-
 	if(getNrChannels() != 1) {
 		printErr << "component '" << getName() << "' of type 'tPrimeDependentBackgroundIntegral' needs to have exactly one decay channel." << std::endl;
-		return false;
+		throw;
 	}
 
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("integral", YamlCppUtils::TypeSequence)
-	                     ("exponent", YamlCppUtils::TypeFloat);
-	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
-		printErr << "not all required variables are defined for the component '" << getName() << "'." << std::endl;
-		return false;
-	}
+	// check presence of all parameters
+	checkParameters(*this);
 
-	const YAML::Node& integrals = configComponent["integral"];
-
-	const size_t nrValues = integrals.size();
-	if(nrValues < 2) {
-		printErr << "phase-space integral of component '" << getName() << "' has to contain at least two points." << std::endl;
-		return false;
-	}
-
-	_masses.clear();
-	_values.clear();
-
-	for(size_t idx=0; idx<nrValues; ++idx) {
-		const YAML::Node& integral = integrals[idx];
-		if(not integral.IsSequence()) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(integral.size() != 2) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[0], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-		if(not checkVariableType(integral[1], YamlCppUtils::TypeFloat)) {
-			printErr << "phase-space integrals of component '" << getName() << "' has to consist of arrays of two floating point numbers." << std::endl;
-			return false;
-		}
-
-		const double mass = integral[0].as<double>();
-		const double val = integral[1].as<double>();
-
-		if (_masses.size() > 0 && _masses.back() > mass) {
-			printErr << "masses of phase-space integrals of component '" << getName() << "' have to be strictly ordered." << std::endl;
-			return false;
-		}
-
-		_masses.push_back(mass);
-		_values.push_back(val);
-	}
+	const size_t nrBins = nrMassBins.size();
+	checkSize(_tPrimeMeans,
+	          nrBins, "number of bins is not correct for mean t' value per bin.");
 
 	assert(not _interpolator);
 	_interpolator = std::make_shared<ROOT::Math::Interpolator>(_masses, _values, ROOT::Math::Interpolation::kLINEAR);
-
-	_exponent = configComponent["exponent"].as<double>();
 
 	// select the maximum of the mass only from the used bins
 	const std::vector<size_t>& bins = getChannel(0).getBins();
@@ -2146,63 +1168,6 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::init(const YAML::Node& co
 	}
 	const double maxMass = *std::max_element(maxMasses.begin(), maxMasses.end());
 	_norm = 1. / (maxMass * _interpolator->Eval(maxMass));
-
-	if(_tPrimeMeans.size() != nrBins) {
-		printErr << "array of mean t' value in each bin does not contain the correct number of entries (is: " << _tPrimeMeans.size() << ", expected: " << nrBins << ")." << std::endl;
-		return false;
-	}
-
-	if(debug) {
-		print(printDebug);
-		printDebug << "finished initializing 'tPrimeDependentBackgroundIntegral'." << std::endl;
-	}
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::write(YAML::Emitter& yamlOutput,
-                                                             const rpwa::resonanceFit::parameters& fitParameters,
-                                                             const rpwa::resonanceFit::parameters& fitParametersError,
-                                                             const bool debug) const
-{
-	if(debug) {
-		printDebug << "start writing 'tPrimeDependentBackgroundIntegral' for component '" << getName() << "'." << std::endl;
-		print(printDebug);
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	if(not component::write(yamlOutput, fitParameters, fitParametersError, debug)) {
-		printErr << "error while writing 'component' part of 'tPrimeDependentBackgroundIntegral'." << std::endl;
-		return false;
-	}
-
-	yamlOutput << YAML::Key << "integral";
-	yamlOutput << YAML::Value;
-
-	yamlOutput << YAML::Flow;
-	yamlOutput << YAML::BeginSeq;
-	for (size_t idx=0; idx<_masses.size(); ++idx) {
-		yamlOutput << YAML::BeginSeq;
-		yamlOutput << _masses[idx];
-		yamlOutput << _values[idx];
-		yamlOutput << YAML::EndSeq;
-	}
-	yamlOutput << YAML::EndSeq;
-	yamlOutput << YAML::Block;
-
-	yamlOutput << YAML::Key << "exponent";
-	yamlOutput << YAML::Value <<_exponent;
-
-	yamlOutput << YAML::EndMap;
-
-	if(debug) {
-		printDebug << "finished writing 'tPrimeDependentBackgroundIntegral'." << std::endl;
-	}
-
-	return true;
 }
 
 
