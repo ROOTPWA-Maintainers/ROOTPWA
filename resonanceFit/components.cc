@@ -741,8 +741,27 @@ rpwa::resonanceFit::component::val(const rpwa::resonanceFit::parameters& fitPara
 
 
 std::ostream&
-rpwa::resonanceFit::component::print(std::ostream& out) const
+rpwa::resonanceFit::component::print(std::ostream& out, const bool newLine) const
 {
+	out << "component " << getId() << " '" << getName() << "' (" << getType() << "):" << std::endl;
+
+	for(size_t idxParameter = 0; idxParameter < getNrParameters(); ++idxParameter) {
+		const rpwa::resonanceFit::parameter& parameter = getParameter(idxParameter);
+
+		out << "    * '" << parameter.name() << "' ";
+		out << "start value: " << parameter.startValue() << " +/- " << parameter.startError() << " ";
+		if(parameter.limitedLower() and parameter.limitedUpper()) {
+			out << "limits: " << parameter.limitLower() << "-" << parameter.limitUpper() << " GeV/c^2";
+		} else if(parameter.limitedLower()) {
+			out << "lower limit: " << parameter.limitLower() << " GeV/c^2";
+		} else if(parameter.limitedUpper()) {
+			out << "upper limit: " << parameter.limitUpper() << " GeV/c^2";
+		} else {
+			out << "unlimited";
+		}
+		out << (parameter.fixed() ? " (FIXED)" : "") << std::endl;
+	}
+
 	out << "    use equal values for each mass bin in group of bins: ";
 	std::set<size_t> printed;
 	for(size_t idxBin = 0; idxBin < _binsEqualValues.size(); ++idxBin) {
@@ -758,11 +777,16 @@ rpwa::resonanceFit::component::print(std::ostream& out) const
 	}
 	out << std::endl;
 
-	out << "Decay modes:" << std::endl;
-	for(size_t idxChannel=0; idxChannel<_channels.size(); ++idxChannel) {
+	out << "Decay modes:";
+	for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
 		const rpwa::resonanceFit::channel& channel = _channels[idxChannel];
-		out << "    " << idxChannel << ", '" << channel.getWaveName() << "'" << std::endl;
+		out << std::endl << "    " << idxChannel << ": '" << channel.getWaveName() << "'";
 	}
+
+	if(newLine) {
+		out << std::endl;
+	}
+
 	return out;
 }
 
@@ -853,41 +877,6 @@ rpwa::resonanceFit::fixedWidthBreitWigner::val(const rpwa::resonanceFit::paramet
 	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
 
 	return component;
-}
-
-
-std::ostream&
-rpwa::resonanceFit::fixedWidthBreitWigner::print(std::ostream& out) const
-{
-	out << "component " << getId() << " '" << getName() << "' (fixedWidthBreitWigner):" << std::endl;
-
-	out << "    mass ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
-
-	out << "    width ";
-	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
-	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
-		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
-	} else if(_parameters[1].limitedLower()) {
-		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
-	} else if(_parameters[1].limitedUpper()) {
-		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
-
-	return component::print(out);
 }
 
 
@@ -1112,44 +1101,23 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::val(const rpwa::resonanceFit::param
 
 
 std::ostream&
-rpwa::resonanceFit::dynamicWidthBreitWigner::print(std::ostream& out) const
+rpwa::resonanceFit::dynamicWidthBreitWigner::print(std::ostream& out, const bool newLine) const
 {
-	out << "component " << getId() << " '" << getName() << "' (dynamicWidthBreitWigner):" << std::endl;
+	component::print(out, true);
 
-	out << "    mass ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
-
-	out << "    width ";
-	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
-	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
-		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
-	} else if(_parameters[1].limitedLower()) {
-		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
-	} else if(_parameters[1].limitedUpper()) {
-		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
-
-	out << "    " << _ratio.size() << " decay channels:" << std::endl;
-	for(size_t i=0; i<_ratio.size(); ++i) {
-		out << "      * decay channel " << i << ", branching ratio: " << _ratio[i] << std::endl;
-		out << "        mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << std::endl;
-		out << "        relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)" << std::endl;
+	out << "Decay modes considered for dynamic width (" << _ratio.size() << "):";
+	for(size_t i = 0; i < _ratio.size(); ++i) {
+		out << std::endl
+		    << "    * decay mode " << i << ", branching ratio: " << _ratio[i] << std::endl
+		    << "      mass of isobar 1: " << _m1[i] << " GeV/c^2, mass of isobar 2: " << _m2[i] << " GeV/c^2" << std::endl
+		    << "      relative orbital angular momentum between isobars: " << _l[i] << " (in units of hbar)";
 	}
 
-	return component::print(out);
+	if(newLine) {
+		out << std::endl;
+	}
+
+	return out;
 }
 
 
@@ -1406,41 +1374,6 @@ rpwa::resonanceFit::integralWidthBreitWigner::val(const rpwa::resonanceFit::para
 }
 
 
-std::ostream&
-rpwa::resonanceFit::integralWidthBreitWigner::print(std::ostream& out) const
-{
-	out << "component " << getId() << " '" << getName() << "' (integralWidthBreitWigner):" << std::endl;
-
-	out << "    mass ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
-
-	out << "    width ";
-	out << "start value: " << _parameters[1].startValue() << " +/- " << _parameters[1].startError() << " ";
-	if(_parameters[1].limitedLower() and _parameters[1].limitedUpper()) {
-		out << "limits: " << _parameters[1].limitLower() << "-" << _parameters[1].limitUpper() << " GeV/c^2";
-	} else if(_parameters[1].limitedLower()) {
-		out << "lower limit: " << _parameters[1].limitLower() << " GeV/c^2";
-	} else if(_parameters[1].limitedUpper()) {
-		out << "upper limit: " << _parameters[1].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[1].fixed() ? " (FIXED)" : "") << std::endl;
-
-	return component::print(out);
-}
-
-
 rpwa::resonanceFit::constantBackground::constantBackground(const size_t id,
                                                            const std::string& name)
 	: component(id, name, "constantBackground", 0)
@@ -1522,15 +1455,6 @@ rpwa::resonanceFit::constantBackground::val(const rpwa::resonanceFit::parameters
                                             const double /*m*/) const
 {
 	return 1.;
-}
-
-
-std::ostream&
-rpwa::resonanceFit::constantBackground::print(std::ostream& out) const
-{
-	out << "component " << getId() << " '" << getName() << "' (constantBackground):" << std::endl;
-
-	return component::print(out);
 }
 
 
@@ -1692,28 +1616,19 @@ rpwa::resonanceFit::exponentialBackground::val(const rpwa::resonanceFit::paramet
 
 
 std::ostream&
-rpwa::resonanceFit::exponentialBackground::print(std::ostream& out) const
+rpwa::resonanceFit::exponentialBackground::print(std::ostream& out, const bool newLine) const
 {
-	out << "component " << getId() << " '" << getName() << "' (exponentialBackground):" << std::endl;
-
-	out << "    width ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
+	component::print(out, true);
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
-	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
+	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent;
 
-	return component::print(out);
+	if(newLine) {
+		out << std::endl;
+	}
+
+	return out;
 }
 
 
@@ -1900,49 +1815,24 @@ rpwa::resonanceFit::tPrimeDependentBackground::val(const rpwa::resonanceFit::par
 
 
 std::ostream&
-rpwa::resonanceFit::tPrimeDependentBackground::print(std::ostream& out) const
+rpwa::resonanceFit::tPrimeDependentBackground::print(std::ostream& out, const bool newLine) const
 {
-	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackground):" << std::endl;
-
-	out << "    mass threshold ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
-
-	for(size_t i=1; i<5; ++i) {
-		out << "    c" << i-1 << " ";
-		out << "start value: " << _parameters[i].startValue() << " +/- " << _parameters[i].startError() << " ";
-		if(_parameters[i].limitedLower() and _parameters[i].limitedUpper()) {
-			out << "limits: " << _parameters[i].limitLower() << "-" << _parameters[i].limitUpper() << " GeV/c^2";
-		} else if(_parameters[i].limitedLower()) {
-			out << "lower limit: " << _parameters[i].limitLower() << " GeV/c^2";
-		} else if(_parameters[i].limitedUpper()) {
-			out << "upper limit: " << _parameters[i].limitUpper() << " GeV/c^2";
-		} else {
-			out << "unlimited";
-		}
-		out << (_parameters[i].fixed() ? " (FIXED)" : "") << std::endl;
-	}
+	component::print(out, true);
 
 	out << "    mass of isobar 1: " << _m1 << " GeV/c^2, mass of isobar 2: " << _m2 << " GeV/c^2" << std::endl;
 	out << "    relative orbital angular momentum between isobars: " << _l << " (in units of hbar)" << std::endl;
 	out << "    exponent of break-up momentum times barrier-factor squared: " << _exponent << std::endl;
 
 	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
-	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
+	for(size_t i = 1; i < _tPrimeMeans.size(); ++i) {
 		out << ", " << _tPrimeMeans[i];
 	}
-	out << std::endl;
 
-	return component::print(out);
+	if(newLine) {
+		out << std::endl;
+	}
+
+	return out;
 }
 
 
@@ -2122,26 +2012,17 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::val(const rpwa::resonanceFit:
 
 
 std::ostream&
-rpwa::resonanceFit::exponentialBackgroundIntegral::print(std::ostream& out) const
+rpwa::resonanceFit::exponentialBackgroundIntegral::print(std::ostream& out, const bool newLine) const
 {
-	out << "component " << getId() << " '" << getName() << "' (exponentialBackgroundIntegral):" << std::endl;
+	component::print(out, true);
 
-	out << "    width ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
+	out << "    exponent of phase-space integral: " << _exponent;
+
+	if(newLine) {
+		out << std::endl;
 	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
 
-	out << "    exponent of phase-space integral: " << _exponent << std::endl;
-
-	return component::print(out);
+	return out;
 }
 
 
@@ -2346,45 +2227,20 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::val(const rpwa::resonance
 
 
 std::ostream&
-rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::print(std::ostream& out) const
+rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::print(std::ostream& out, const bool newLine) const
 {
-	out << "component " << getId() << " '" << getName() << "' (tPrimeDependentBackgroundIntegral):" << std::endl;
-
-	out << "    mass threshold ";
-	out << "start value: " << _parameters[0].startValue() << " +/- " << _parameters[0].startError() << " ";
-	if(_parameters[0].limitedLower() and _parameters[0].limitedUpper()) {
-		out << "limits: " << _parameters[0].limitLower() << "-" << _parameters[0].limitUpper() << " GeV/c^2";
-	} else if(_parameters[0].limitedLower()) {
-		out << "lower limit: " << _parameters[0].limitLower() << " GeV/c^2";
-	} else if(_parameters[0].limitedUpper()) {
-		out << "upper limit: " << _parameters[0].limitUpper() << " GeV/c^2";
-	} else {
-		out << "unlimited";
-	}
-	out << (_parameters[0].fixed() ? " (FIXED)" : "") << std::endl;
-
-	for(size_t i=1; i<5; ++i) {
-		out << "    c" << i-1 << " ";
-		out << "start value: " << _parameters[i].startValue() << " +/- " << _parameters[i].startError() << " ";
-		if(_parameters[i].limitedLower() and _parameters[i].limitedUpper()) {
-			out << "limits: " << _parameters[i].limitLower() << "-" << _parameters[i].limitUpper() << " GeV/c^2";
-		} else if(_parameters[i].limitedLower()) {
-			out << "lower limit: " << _parameters[i].limitLower() << " GeV/c^2";
-		} else if(_parameters[i].limitedUpper()) {
-			out << "upper limit: " << _parameters[i].limitUpper() << " GeV/c^2";
-		} else {
-			out << "unlimited";
-		}
-		out << (_parameters[i].fixed() ? " (FIXED)" : "") << std::endl;
-	}
+	component::print(out, true);
 
 	out << "    exponent of phase-space integral: " << _exponent << std::endl;
 
 	out << "    for " << _tPrimeMeans.size() << " bin" << ((_tPrimeMeans.size()>1)?"s":"") << " with mean t' value" << ((_tPrimeMeans.size()>1)?"s":"") << ": " << _tPrimeMeans[0];
-	for(size_t i=1; i<_tPrimeMeans.size(); ++i) {
+	for(size_t i = 1; i < _tPrimeMeans.size(); ++i) {
 		out << ", " << _tPrimeMeans[i];
 	}
-	out << std::endl;
 
-	return component::print(out);
+	if(newLine) {
+		out << std::endl;
+	}
+
+	return out;
 }
