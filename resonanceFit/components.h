@@ -167,7 +167,7 @@ namespace rpwa {
 			                                           const double mass,
 			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -224,8 +224,6 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
-
 		private:
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
@@ -263,7 +261,7 @@ namespace rpwa {
 			                               const size_t idxDecayChannel,
 			                               const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -307,8 +305,6 @@ namespace rpwa {
 			                               const size_t idxDecayChannel,
 			                               const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
-
 		private:
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
@@ -345,8 +341,6 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
-
 		private:
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
@@ -378,7 +372,7 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -420,7 +414,7 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -461,7 +455,7 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -503,7 +497,7 @@ namespace rpwa {
 			                   const rpwa::resonanceFit::parameters& fitParametersError,
 			                   const bool debug) const;
 
-			virtual std::ostream& print(std::ostream& out = std::cout) const;
+			virtual std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -576,7 +570,7 @@ inline
 std::ostream&
 rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::component& component)
 {
-	return component.print(out);
+	return component.print(out, false);
 }
 
 
