@@ -234,18 +234,18 @@ main(int    argc,
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
 	std::vector<std::string> freeParameters;
-	rpwa::resonanceFit::readConfig(configFileName,
-	                               fitInformation,
-	                               fitData,
-	                               fitModel,
-	                               fitParameters,
-	                               fitParametersError,
-	                               fitQuality,
-	                               freeParameters,
-	                               doBranching,
-	                               doCov,
-	                               valTreeName,
-	                               valBranchName);
+	rpwa::resonanceFit::read(configFileName,
+	                         fitInformation,
+	                         fitData,
+	                         fitModel,
+	                         fitParameters,
+	                         fitParametersError,
+	                         fitQuality,
+	                         freeParameters,
+	                         doBranching,
+	                         doCov,
+	                         valTreeName,
+	                         valBranchName);
 	if(not fitInformation or not fitData or not fitModel) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;

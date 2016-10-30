@@ -28,6 +28,7 @@
 
 
 #include "resonanceFit.h"
+#include "resonanceFitInternal.h"
 
 #include <boost/multi_array.hpp>
 
