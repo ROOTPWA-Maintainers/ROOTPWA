@@ -45,7 +45,6 @@ include_directories(
 
 # source files that are compiled into library
 set(SOURCES
-	massDepFit.cc
 	cache.cc
 	components.cc
 	data.cc
@@ -56,6 +55,7 @@ set(SOURCES
 	model.cc
 	parameter.cc
 	parameters.cc
+	resonanceFit.cc
 	)
 
 

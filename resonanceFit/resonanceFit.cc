@@ -27,7 +27,7 @@
 //-------------------------------------------------------------------------
 
 
-#include "massDepFit.h"
+#include "resonanceFit.h"
 
 #include <algorithm>
 #include <complex>

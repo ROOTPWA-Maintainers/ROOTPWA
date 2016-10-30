@@ -45,10 +45,10 @@
 #include "data.h"
 #include "function.h"
 #include "information.h"
-#include "massDepFit.h"
 #include "minimizerRoot.h"
 #include "model.h"
 #include "parameters.h"
+#include "resonanceFit.h"
 
 
 void
