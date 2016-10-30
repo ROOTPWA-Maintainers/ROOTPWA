@@ -1788,6 +1788,63 @@ namespace {
 
 
 	void
+	readModelAnchors(const YAML::Node& configModel,
+	                 std::string& anchorWaveName,
+	                 std::string& anchorComponentName)
+	{
+		if(debug) {
+			printDebug << "reading 'anchorwave'." << std::endl;
+		}
+
+		const YAML::Node& configAnchors = configModel["anchorwave"];
+		if(not configAnchors) {
+			printErr << "'anchorwave' is not a valid YAML node." << std::endl;
+			throw;
+		}
+		if(not configAnchors.IsMap()) {
+			printErr << "'anchorwave' is not a YAML map." << std::endl;
+			throw;
+		}
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("name", rpwa::YamlCppUtils::TypeString)
+		                     ("resonance", rpwa::YamlCppUtils::TypeString);
+		if(not checkIfAllVariablesAreThere(configAnchors, mandatoryArguments)) {
+			printErr << "'anchorwave' does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		anchorWaveName = configAnchors["name"].as<std::string>();
+		anchorComponentName = configAnchors["resonance"].as<std::string>();
+	}
+
+
+	void
+	writeModelAnchors(YAML::Emitter& yamlOutput,
+	                  const std::string& anchorWaveName,
+	                  const std::string& anchorComponentName)
+	{
+		if(debug) {
+			printDebug << "writing 'anchorwave'." << std::endl;
+		}
+
+		yamlOutput << YAML::Key << "anchorwave";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+
+		yamlOutput << YAML::Key << "name";
+		yamlOutput << YAML::Value << anchorWaveName;
+
+		yamlOutput << YAML::Key << "resonance";
+		yamlOutput << YAML::Value << anchorComponentName;
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
+	void
 	readModelParameter(const YAML::Node& configComponent,
 	                   const std::string& parameterName,
 	                   rpwa::resonanceFit::parameter& parameter)
@@ -3360,6 +3417,93 @@ namespace {
 	}
 
 
+	rpwa::resonanceFit::modelConstPtr
+	readModel(const YAML::Node& configRoot,
+	          const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	          rpwa::resonanceFit::parameters& fitParameters,
+	          rpwa::resonanceFit::parameters& fitParametersError,
+	          const boost::multi_array<std::string, 2>& waveNames,
+	          const std::vector<size_t>& nrMassBins,
+	          const boost::multi_array<double, 2>& massBinCenters,
+	          const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+	          const bool useBranchings)
+	{
+		if(debug) {
+			printDebug << "reading 'model'." << std::endl;
+		}
+
+		const YAML::Node& configModel = configRoot["model"];
+
+		if(not configModel) {
+			printErr << "'model' does not exist in configuration file." << std::endl;
+			throw;
+		}
+
+		std::string anchorWaveName;
+		std::string anchorComponentName;
+		readModelAnchors(configModel,
+		                 anchorWaveName,
+		                 anchorComponentName);
+
+		const std::vector<rpwa::resonanceFit::componentPtr> components = readModelComponents(configModel,
+		                                                                                     fitInformation,
+		                                                                                     fitParameters,
+		                                                                                     fitParametersError,
+		                                                                                     waveNames,
+		                                                                                     nrMassBins,
+		                                                                                     massBinCenters,
+		                                                                                     phaseSpaceIntegrals,
+		                                                                                     useBranchings);
+
+		// get information for creating the final-state mass-dependence
+		const rpwa::resonanceFit::fsmdPtr& fsmd = readModelFsmd(configModel,
+		                                                        fitParameters,
+		                                                        fitParametersError,
+		                                                        components.size(),
+		                                                        nrMassBins,
+		                                                        massBinCenters);
+
+		return std::make_shared<rpwa::resonanceFit::model>(fitInformation,
+		                                                   components,
+		                                                   fsmd,
+		                                                   anchorWaveName,
+		                                                   anchorComponentName);
+	}
+
+
+	void
+	writeModel(YAML::Emitter& yamlOutput,
+	           const rpwa::resonanceFit::modelConstPtr& fitModel,
+	           const rpwa::resonanceFit::parameters& fitParameters,
+	           const rpwa::resonanceFit::parameters& fitParametersError)
+	{
+		yamlOutput << YAML::Key << "model";
+		yamlOutput << YAML::Value;
+
+		yamlOutput << YAML::BeginMap;
+
+		writeModelAnchors(yamlOutput,
+		                  fitModel->getAnchorWaveName(),
+		                  fitModel->getAnchorComponentName());
+
+		std::vector<rpwa::resonanceFit::componentConstPtr> components;
+		for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+			components.push_back(fitModel->getComponent(idxComponent));
+		}
+		writeModelComponents(yamlOutput,
+		                     components,
+		                     fitParameters,
+		                     fitParametersError);
+
+		writeModelFsmd(yamlOutput,
+		               fitModel->getFsmd(),
+		               fitParameters,
+		               fitParametersError);
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
 	void
 	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                 const size_t nrMassBins,
@@ -4088,7 +4232,7 @@ bool
 rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
                                            rpwa::resonanceFit::informationConstPtr& fitInformation,
                                            rpwa::resonanceFit::dataConstPtr& fitData,
-                                           const rpwa::resonanceFit::modelPtr& fitModel,
+                                           rpwa::resonanceFit::modelConstPtr& fitModel,
                                            rpwa::resonanceFit::parameters& fitParameters,
                                            rpwa::resonanceFit::parameters& fitParametersError,
                                            std::map<std::string, double>& fitQuality,
@@ -4157,36 +4301,32 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 	                  wavePairMassBinLimits);
 
 	// set-up fit model (resonances, background, final-state mass-dependence)
-	const YAML::Node& configModel = configRoot["model"];
-	if(not configModel) {
-		printErr << "'model' does not exist in configuration file." << std::endl;
-		return false;
+	fitModel = readModel(configRoot,
+	                     fitInformation,
+	                     fitParameters,
+	                     fitParametersError,
+	                     waveNames,
+	                     nrMassBins,
+	                     massBinCenters,
+	                     phaseSpaceIntegrals,
+	                     useBranchings);
+
+	std::ostringstream output;
+	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
 	}
-	if(not readConfigModel(configModel,
-	                       fitInformation,
-	                       fitModel,
-	                       fitParameters,
-	                       fitParametersError,
-	                       waveNames,
-	                       nrMassBins,
-	                       massBinCenters,
-	                       phaseSpaceIntegrals,
-	                       useBranchings)) {
-		printErr << "error while reading 'model' in configuration file." << std::endl;
-		return false;
+	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
+	          << output.str();
+	if(fitModel->getFsmd()) {
+		printInfo << "using final-state mass-dependence." << std::endl;
+	} else {
+		printInfo << "not using final-state mass-dependence." << std::endl;
 	}
 
 	// prepare production amplitudes and corresponding covariance matrices
 	// for the fit
-	std::vector<std::string> mainWaveNames(fitInformation->nrWaves());
-	std::transform(fitInformation->waves().begin(), fitInformation->waves().end(), mainWaveNames.begin(), [](const rpwa::resonanceFit::information::wave& wave){ return wave.waveName(); });
-	const size_t idxAnchorWave = std::find(mainWaveNames.begin(), mainWaveNames.end(), _anchorWaveName) - mainWaveNames.begin();
-	if(idxAnchorWave >= mainWaveNames.size()) {
-		printErr << "anchor wave '" << _anchorWaveName << "' not found in fit." << std::endl;
-		return false;
-	}
 	prepareProductionAmplitudes(useCovariance,
-	                            idxAnchorWave,
+	                            fitModel->getAnchorWave(),
 	                            wavePairMassBinLimits,
 	                            inProductionAmplitudes,
 	                            inProductionAmplitudesCovariance);
@@ -4219,119 +4359,10 @@ rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
 
 
 bool
-rpwa::resonanceFit::massDepFit::readConfigModel(const YAML::Node& configModel,
-                                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                                const rpwa::resonanceFit::modelPtr& fitModel,
-                                                rpwa::resonanceFit::parameters& fitParameters,
-                                                rpwa::resonanceFit::parameters& fitParametersError,
-                                                const boost::multi_array<std::string, 2>& waveNames,
-                                                const std::vector<size_t>& nrMassBins,
-                                                const boost::multi_array<double, 2>& massBinCenters,
-                                                const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                                                const bool useBranchings)
-{
-	if(not configModel) {
-		printErr << "'configModel' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configModel.IsMap()) {
-		printErr << "'model' is not a YAML map." << std::endl;
-		return false;
-	}
-
-	if(_debug) {
-		printDebug << "reading fit model from configuration file." << std::endl;
-	}
-
-	// get information about anchor wave
-	const YAML::Node& configAnchorWave = configModel["anchorwave"];
-	if(not configAnchorWave) {
-		printErr << "'anchorwave' does not exist in 'model'." << std::endl;
-		return false;
-	}
-	if(not readConfigModelAnchorWave(configAnchorWave)) {
-		printErr << "error while reading 'anchorwave' in 'model'." << std::endl;
-		return false;
-	}
-
-	const std::vector<rpwa::resonanceFit::componentPtr>& components = readModelComponents(configModel,
-	                                                                                      fitInformation,
-	                                                                                      fitParameters,
-	                                                                                      fitParametersError,
-	                                                                                      waveNames,
-	                                                                                      nrMassBins,
-	                                                                                      massBinCenters,
-	                                                                                      phaseSpaceIntegrals,
-	                                                                                      useBranchings);
-	for(std::vector<rpwa::resonanceFit::componentPtr>::const_iterator it = components.begin(); it != components.end(); ++it) {
-		fitModel->add(*it);
-	}
-
-	// get information for creating the final-state mass-dependence
-	const rpwa::resonanceFit::fsmdPtr& fsmd = readModelFsmd(configModel,
-	                                                        fitParameters,
-	                                                        fitParametersError,
-	                                                        fitModel->getNrComponents(),
-	                                                        nrMassBins,
-	                                                        massBinCenters);
-	if(fsmd) {
-		fitModel->setFsmd(fsmd);
-	} else {
-		printInfo << "not using final-state mass-dependence." << std::endl;
-	}
-
-	std::ostringstream output;
-	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
-		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
-	}
-	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
-	          << output.str();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfigModelAnchorWave(const YAML::Node& configAnchorWave)
-{
-	if(not configAnchorWave) {
-		printErr << "'configInputAnchorWave' is not a valid YAML node." << std::endl;
-		return false;
-	}
-	if(not configAnchorWave.IsMap()) {
-		printErr << "'anchorwave' is not a YAML map." << std::endl;
-		return false;
-	}
-
-	std::map<std::string, YamlCppUtils::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("name", YamlCppUtils::TypeString)
-	                     ("resonance", YamlCppUtils::TypeString);
-	if(not checkIfAllVariablesAreThere(configAnchorWave, mandatoryArguments)) {
-		printErr << "'anchorwave' does not contain all required variables." << std::endl;
-		return false;
-	}
-
-	_anchorWaveName = configAnchorWave["name"].as<std::string>();
-	_anchorComponentName = configAnchorWave["resonance"].as<std::string>();
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                     const rpwa::resonanceFit::dataConstPtr& fitData,
-                                     const rpwa::resonanceFit::modelPtr& fitModel,
+rpwa::resonanceFit::massDepFit::init(const rpwa::resonanceFit::dataConstPtr& fitData,
+                                     const rpwa::resonanceFit::modelConstPtr& fitModel,
                                      const rpwa::resonanceFit::functionPtr& fitFunction)
 {
-	if(not fitModel->init(fitInformation,
-	                      _anchorWaveName,
-	                      _anchorComponentName)) {
-		printErr << "error while initializing the fit model." << std::endl;
-		return false;
-	}
-
 	if(not fitFunction->init(fitData,
 	                         fitModel)) {
 		printErr << "error while initializing the function to minimize." << std::endl;
@@ -4361,78 +4392,12 @@ rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
 	writeFitQuality(yamlOutput, fitQuality);
 	writeFreeParameters(yamlOutput, freeParameters);
 	writeInformation(yamlOutput, fitInformation);
-
-	yamlOutput << YAML::Key << "model";
-	yamlOutput << YAML::Value;
-	if(not writeConfigModel(yamlOutput, fitModel, fitParameters, fitParametersError)) {
-		printErr << "error while writing 'model' to result file." << std::endl;
-		return false;
-	}
+	writeModel(yamlOutput, fitModel, fitParameters, fitParametersError);
 
 	yamlOutput << YAML::EndMap;
 
 	// newline at end-of-file
 	output << std::endl;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigModel(YAML::Emitter& yamlOutput,
-                                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                                 const rpwa::resonanceFit::parameters& fitParameters,
-                                                 const rpwa::resonanceFit::parameters& fitParametersError) const
-{
-	if(_debug) {
-		printDebug << "writing 'model'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	yamlOutput << YAML::Key << "anchorwave";
-	yamlOutput << YAML::Value;
-	if(not writeConfigModelAnchorWave(yamlOutput)) {
-		printErr << "error while writing 'anchorwave' to result file." << std::endl;
-		return false;
-	}
-
-	std::vector<rpwa::resonanceFit::componentConstPtr> components;
-	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
-		components.push_back(fitModel->getComponent(idxComponent));
-	}
-	writeModelComponents(yamlOutput,
-	                     components,
-	                     fitParameters,
-	                     fitParametersError);
-
-	writeModelFsmd(yamlOutput,
-	               fitModel->getFsmd(),
-	               fitParameters,
-	               fitParametersError);
-
-	yamlOutput << YAML::EndMap;
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const
-{
-	if(_debug) {
-		printDebug << "writing 'anchorwave'." << std::endl;
-	}
-
-	yamlOutput << YAML::BeginMap;
-
-	yamlOutput << YAML::Key << "name";
-	yamlOutput << YAML::Value << _anchorWaveName;
-
-	yamlOutput << YAML::Key << "resonance";
-	yamlOutput << YAML::Value << _anchorComponentName;
-
-	yamlOutput << YAML::EndMap;
 
 	return true;
 }

@@ -37,72 +37,45 @@
 #include "information.h"
 
 
-rpwa::resonanceFit::model::model()
+rpwa::resonanceFit::model::model(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                 const std::vector<rpwa::resonanceFit::componentPtr>& comp,
+                                 const rpwa::resonanceFit::fsmdPtr& fsmd,
+                                 const std::string& anchorWaveName,
+                                 const std::string& anchorComponentName)
 	: _mappingEqualInAllBins(false),
 	  _nrParameters(0),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
+	  _anchorWaveName(anchorWaveName),
+	  _anchorComponentName(anchorComponentName),
 	  _idxAnchorWave(std::numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(std::numeric_limits<size_t>::max())
 {
-}
+	for(size_t idxComponent = 0; idxComponent < comp.size(); ++idxComponent) {
+		_components.push_back(comp[idxComponent]);
 
+		// number of resonance parameters
+		_nrParameters += comp[idxComponent]->getNrParameters();
+		_maxParametersInComponent = std::max(_maxParametersInComponent, comp[idxComponent]->getNrParameters());
 
-bool
-rpwa::resonanceFit::model::init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                const std::string& anchorWaveName,
-                                const std::string& anchorComponentName)
-{
-	if(not initMapping(fitInformation,
-	                   anchorWaveName,
-	                   anchorComponentName)) {
-		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-
-void
-rpwa::resonanceFit::model::add(const rpwa::resonanceFit::componentPtr& comp)
-{
-	_components.push_back(comp);
-
-	// number of resonance parameters
-	_nrParameters += comp->getNrParameters();
-	_maxParametersInComponent = std::max(_maxParametersInComponent, comp->getNrParameters());
-
-	// number of coupling parameters
-	for(size_t idxCoupling = 0; idxCoupling < comp->getNrCouplings(); ++idxCoupling) {
-		const rpwa::resonanceFit::component::channel& channel = comp->getChannelFromCouplingIdx(idxCoupling);
-		_nrParameters += 2 * channel.getBins().size();
-	}
-
-	// number of branching parameters (some branchings are always real and fixed to 1)
-	for(size_t idxBranching = 0; idxBranching < comp->getNrBranchings(); ++idxBranching) {
-		if(not comp->isBranchingFixed(idxBranching)) {
-			_nrParameters += 2;
+		// number of coupling parameters
+		for(size_t idxCoupling = 0; idxCoupling < comp[idxComponent]->getNrCouplings(); ++idxCoupling) {
+			const rpwa::resonanceFit::component::channel& channel = comp[idxComponent]->getChannelFromCouplingIdx(idxCoupling);
+			_nrParameters += 2 * channel.getBins().size();
 		}
-	}
 
-	// maximum number of channels in one component
-	_maxChannelsInComponent = std::max(_maxChannelsInComponent, comp->getNrChannels());
-}
-
-
-void
-rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
-{
-	if(_fsmd) {
-		const size_t maxNrBins = _fsmd->isSameFunctionForAllBins() ? 1 : _fsmd->getNrBins();
-		for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
-			_nrParameters -= _fsmd->getNrParameters(idxBin);
+		// number of branching parameters (some branchings are always real and fixed to 1)
+		for(size_t idxBranching = 0; idxBranching < comp[idxComponent]->getNrBranchings(); ++idxBranching) {
+			if(not comp[idxComponent]->isBranchingFixed(idxBranching)) {
+				_nrParameters += 2;
+			}
 		}
+
+		// maximum number of channels in one component
+		_maxChannelsInComponent = std::max(_maxChannelsInComponent, comp[idxComponent]->getNrChannels());
 	}
 
 	_fsmd = fsmd;
-
 	if(_fsmd) {
 		size_t sumNrParameters = 0;
 		const size_t maxNrBins = _fsmd->isSameFunctionForAllBins() ? 1 : _fsmd->getNrBins();
@@ -111,6 +84,13 @@ rpwa::resonanceFit::model::setFsmd(const rpwa::resonanceFit::fsmdPtr& fsmd)
 		}
 		_maxParametersInComponent = std::max(_maxParametersInComponent, sumNrParameters);
 		_nrParameters += sumNrParameters;
+	}
+
+	if(not initMapping(fitInformation,
+	                   anchorWaveName,
+	                   anchorComponentName)) {
+		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
+		throw;
 	}
 }
 
