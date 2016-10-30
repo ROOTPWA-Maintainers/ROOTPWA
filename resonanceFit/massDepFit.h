@@ -37,21 +37,13 @@
 #define MASSDEPFIT_HH
 
 #include <map>
-
-#include <boost/multi_array.hpp>
-
-#include <TMatrixT.h>
+#include <string>
+#include <vector>
 
 #include "forward.h"
 #include "function.h"
-#include "information.h"
 
-namespace YAML {
-	class Emitter;
-	class Node;
-}
 class TFile;
-class TTree;
 
 namespace rpwa {
 
@@ -61,6 +53,27 @@ namespace rpwa {
 
 		class cache;
 		class parameters;
+
+		void readConfig(const std::string& configFileName,
+		                rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                rpwa::resonanceFit::dataConstPtr& fitData,
+		                rpwa::resonanceFit::modelConstPtr& fitModel,
+		                rpwa::resonanceFit::parameters& fitParameters,
+		                rpwa::resonanceFit::parameters& fitParametersError,
+		                std::map<std::string, double>& fitQuality,
+		                std::vector<std::string>& freeParameters,
+		                const bool useBranchings,
+		                const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+		                const std::string& valTreeName   = "pwa",
+		                const std::string& valBranchName = "fitResult_v2");
+
+		void writeConfig(const std::string& configFileName,
+		                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
+		                 const rpwa::resonanceFit::parameters& fitParameters,
+		                 const rpwa::resonanceFit::parameters& fitParametersError,
+		                 const std::map<std::string, double>& fitQuality,
+		                 const std::vector<std::string>& freeParameters);
 
 		void createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 		                 const rpwa::resonanceFit::dataConstPtr& fitData,
@@ -72,42 +85,6 @@ namespace rpwa {
 		                 const size_t extraBinning);
 
 		void setDebug(const bool debug);
-
-		class massDepFit {
-
-		public:
-
-			massDepFit();
-			~massDepFit() {}
-
-			bool readConfig(const YAML::Node& configRoot,
-			                rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                rpwa::resonanceFit::dataConstPtr& fitData,
-			                rpwa::resonanceFit::modelConstPtr& fitModel,
-			                rpwa::resonanceFit::parameters& fitParameters,
-			                rpwa::resonanceFit::parameters& fitParametersError,
-			                std::map<std::string, double>& fitQuality,
-			                std::vector<std::string>& freeParameters,
-			                const bool useBranchings,
-			                const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
-			                const std::string& valTreeName   = "pwa",
-			                const std::string& valBranchName = "fitResult_v2");
-
-			bool writeConfig(std::ostream& output,
-			                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                 const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                 const rpwa::resonanceFit::parameters& fitParameters,
-			                 const rpwa::resonanceFit::parameters& fitParametersError,
-			                 const std::map<std::string, double>& fitQuality,
-			                 const std::vector<std::string>& freeParameters) const;
-
-			static void setDebug(bool debug);
-
-		private:
-
-			static bool _debug;
-
-		};
 
 	} // end namespace resonanceFit
 
