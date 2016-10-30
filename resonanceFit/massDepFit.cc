@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <complex>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -3600,6 +3601,158 @@ namespace {
 
 
 	void
+	readConfig(const YAML::Node& configRoot,
+	           rpwa::resonanceFit::informationConstPtr& fitInformation,
+	           rpwa::resonanceFit::dataConstPtr& fitData,
+	           rpwa::resonanceFit::modelConstPtr& fitModel,
+	           rpwa::resonanceFit::parameters& fitParameters,
+	           rpwa::resonanceFit::parameters& fitParametersError,
+	           std::map<std::string, double>& fitQuality,
+	           std::vector<std::string>& freeParameters,
+	           const bool useBranchings,
+	           const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+	           const std::string& valTreeName,
+	           const std::string& valBranchName)
+	{
+		// get information of fit quality if a previous fit was stored in the
+		// configuration file
+		fitQuality = readFitQuality(configRoot);
+
+		// get information for which parameters to release in which order
+		freeParameters = readFreeParameters(configRoot);
+
+		// get fit results and waves to use in the resonance fit
+		fitInformation = readInformation(configRoot);
+		if(not fitInformation) {
+			printErr << "error while reading 'input' in configuration file." << std::endl;
+			throw;
+		}
+
+		// extract information from fit results
+		boost::multi_array<std::string, 2> waveNames;
+		std::vector<size_t> nrMassBins;
+		boost::multi_array<double, 2> massBinCenters;
+		boost::multi_array<double, 3> phaseSpaceIntegrals;
+		boost::multi_array<std::complex<double>, 3> inProductionAmplitudes;
+		boost::multi_array<TMatrixT<double>, 2> inProductionAmplitudesCovariance;
+		boost::multi_array<std::complex<double>, 4> inSpinDensityMatrices;
+		boost::multi_array<TMatrixT<double>, 2> inSpinDensityMatricesCovariance;
+		boost::multi_array<std::pair<double, double>, 3> inPlottingIntensities;
+		boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsReal;
+		boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsImag;
+		boost::multi_array<std::pair<double, double>, 4> inPlottingPhases;
+		boost::multi_array<std::pair<double, double>, 3> inSysPlottingIntensities;
+		boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
+		boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
+		boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
+		readInFiles(fitInformation,
+		            waveNames,
+		            nrMassBins,
+		            massBinCenters,
+		            phaseSpaceIntegrals,
+		            inProductionAmplitudes,
+		            inProductionAmplitudesCovariance,
+		            inSpinDensityMatrices,
+		            inSpinDensityMatricesCovariance,
+		            inPlottingIntensities,
+		            inPlottingSpinDensityMatrixElementsReal,
+		            inPlottingSpinDensityMatrixElementsImag,
+		            inPlottingPhases,
+		            inSysPlottingIntensities,
+		            inSysPlottingSpinDensityMatrixElementsReal,
+		            inSysPlottingSpinDensityMatrixElementsImag,
+		            inSysPlottingPhases,
+		            valTreeName,
+		            valBranchName);
+
+		// prepare mass limits
+		boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
+		prepareMassLimits(fitInformation,
+		                  nrMassBins,
+		                  massBinCenters,
+		                  wavePairMassBinLimits);
+
+		// set-up fit model (resonances, background, final-state mass-dependence)
+		fitModel = readModel(configRoot,
+		                     fitInformation,
+		                     fitParameters,
+		                     fitParametersError,
+		                     waveNames,
+		                     nrMassBins,
+		                     massBinCenters,
+		                     phaseSpaceIntegrals,
+		                     useBranchings);
+
+		std::ostringstream output;
+		for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+			output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
+		}
+		printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
+		          << output.str();
+		if(fitModel->getFsmd()) {
+			printInfo << "using final-state mass-dependence." << std::endl;
+		} else {
+			printInfo << "not using final-state mass-dependence." << std::endl;
+		}
+
+		// prepare production amplitudes and corresponding covariance matrices
+		// for the fit
+		prepareProductionAmplitudes(useCovariance,
+		                            fitModel->getAnchorWave(),
+		                            wavePairMassBinLimits,
+		                            inProductionAmplitudes,
+		                            inProductionAmplitudesCovariance);
+		prepareSpinDensityMatrices(useCovariance,
+		                           wavePairMassBinLimits,
+		                           inSpinDensityMatrices,
+		                           inSpinDensityMatricesCovariance);
+
+		// create data object
+		fitData.reset(new rpwa::resonanceFit::data(nrMassBins,
+		                                           massBinCenters,
+		                                           wavePairMassBinLimits,
+		                                           phaseSpaceIntegrals,
+		                                           inProductionAmplitudes,
+		                                           inProductionAmplitudesCovariance,
+		                                           inSpinDensityMatrices,
+		                                           inSpinDensityMatricesCovariance,
+		                                           useCovariance,
+		                                           inPlottingIntensities,
+		                                           inPlottingSpinDensityMatrixElementsReal,
+		                                           inPlottingSpinDensityMatrixElementsImag,
+		                                           inPlottingPhases,
+		                                           inSysPlottingIntensities,
+		                                           inSysPlottingSpinDensityMatrixElementsReal,
+		                                           inSysPlottingSpinDensityMatrixElementsImag,
+		                                           inSysPlottingPhases));
+	}
+
+
+	void
+	writeConfig(YAML::Emitter& yamlOutput,
+	            const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	            const rpwa::resonanceFit::modelConstPtr& fitModel,
+	            const rpwa::resonanceFit::parameters& fitParameters,
+	            const rpwa::resonanceFit::parameters& fitParametersError,
+	            const std::map<std::string, double>& fitQuality,
+	            const std::vector<std::string>& freeParameters)
+	{
+		if(debug) {
+			printDebug << "writing configuration file." << std::endl;
+		}
+
+		yamlOutput << YAML::BeginMap;
+
+		writeFitQuality(yamlOutput, fitQuality);
+		writeFreeParameters(yamlOutput, freeParameters);
+		writeInformation(yamlOutput, fitInformation);
+		writeModel(yamlOutput, fitModel, fitParameters, fitParametersError);
+
+		yamlOutput << YAML::EndMap;
+	}
+
+
+	void
 	createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                const rpwa::resonanceFit::dataConstPtr& fitData,
 	                const rpwa::resonanceFit::modelConstPtr& fitModel,
@@ -4111,6 +4264,68 @@ namespace {
 
 
 void
+rpwa::resonanceFit::readConfig(const std::string& configFileName,
+                               rpwa::resonanceFit::informationConstPtr& fitInformation,
+                               rpwa::resonanceFit::dataConstPtr& fitData,
+                               rpwa::resonanceFit::modelConstPtr& fitModel,
+                               rpwa::resonanceFit::parameters& fitParameters,
+                               rpwa::resonanceFit::parameters& fitParametersError,
+                               std::map<std::string, double>& fitQuality,
+                               std::vector<std::string>& freeParameters,
+                               const bool useBranchings,
+                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+                               const std::string& valTreeName,
+                               const std::string& valBranchName)
+{
+	YAML::Node configRoot;
+	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
+		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
+		throw;
+	}
+
+	::readConfig(configRoot,
+	             fitInformation,
+	             fitData,
+	             fitModel,
+	             fitParameters,
+	             fitParametersError,
+	             fitQuality,
+	             freeParameters,
+	             useBranchings,
+	             useCovariance,
+	             valTreeName,
+	             valBranchName);
+}
+
+
+void
+rpwa::resonanceFit::writeConfig(const std::string& configFileName,
+                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                const rpwa::resonanceFit::modelConstPtr& fitModel,
+                                const rpwa::resonanceFit::parameters& fitParameters,
+                                const rpwa::resonanceFit::parameters& fitParametersError,
+                                const std::map<std::string, double>& fitQuality,
+                                const std::vector<std::string>& freeParameters)
+{
+	std::ofstream configFile(configFileName);
+
+	YAML::Emitter yamlOutput(configFile);
+	::writeConfig(yamlOutput,
+	              fitInformation,
+	              fitModel,
+	              fitParameters,
+	              fitParametersError,
+	              fitQuality,
+	              freeParameters);
+
+	// newline at end-of-file
+	configFile << std::endl;
+
+	configFile.close();
+}
+
+
+void
 rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
                                 const rpwa::resonanceFit::dataConstPtr& fitData,
                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
@@ -4209,180 +4424,4 @@ void
 rpwa::resonanceFit::setDebug(const bool newDebug)
 {
 	debug = newDebug;
-}
-
-
-bool rpwa::resonanceFit::massDepFit::_debug = false;
-
-
-rpwa::resonanceFit::massDepFit::massDepFit()
-{
-}
-
-
-void
-rpwa::resonanceFit::massDepFit::setDebug(bool debug)
-{
-	_debug = debug;
-	rpwa::resonanceFit::setDebug(_debug);
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::readConfig(const YAML::Node& configRoot,
-                                           rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                           rpwa::resonanceFit::dataConstPtr& fitData,
-                                           rpwa::resonanceFit::modelConstPtr& fitModel,
-                                           rpwa::resonanceFit::parameters& fitParameters,
-                                           rpwa::resonanceFit::parameters& fitParametersError,
-                                           std::map<std::string, double>& fitQuality,
-                                           std::vector<std::string>& freeParameters,
-                                           const bool useBranchings,
-                                           const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
-                                           const std::string& valTreeName,
-                                           const std::string& valBranchName)
-{
-	// get information of fit quality if a previous fit was stored in the
-	// configuration file
-	fitQuality = readFitQuality(configRoot);
-
-	// get information for which parameters to release in which order
-	freeParameters = readFreeParameters(configRoot);
-
-	// get fit results and waves to use in the resonance fit
-	fitInformation = readInformation(configRoot);
-	if(not fitInformation) {
-		printErr << "error while reading 'input' in configuration file." << std::endl;
-		throw;
-	}
-
-	// extract information from fit results
-	boost::multi_array<std::string, 2> waveNames;
-	std::vector<size_t> nrMassBins;
-	boost::multi_array<double, 2> massBinCenters;
-	boost::multi_array<double, 3> phaseSpaceIntegrals;
-	boost::multi_array<std::complex<double>, 3> inProductionAmplitudes;
-	boost::multi_array<TMatrixT<double>, 2> inProductionAmplitudesCovariance;
-	boost::multi_array<std::complex<double>, 4> inSpinDensityMatrices;
-	boost::multi_array<TMatrixT<double>, 2> inSpinDensityMatricesCovariance;
-	boost::multi_array<std::pair<double, double>, 3> inPlottingIntensities;
-	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsReal;
-	boost::multi_array<std::pair<double, double>, 4> inPlottingSpinDensityMatrixElementsImag;
-	boost::multi_array<std::pair<double, double>, 4> inPlottingPhases;
-	boost::multi_array<std::pair<double, double>, 3> inSysPlottingIntensities;
-	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
-	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
-	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
-	readInFiles(fitInformation,
-	            waveNames,
-	            nrMassBins,
-	            massBinCenters,
-	            phaseSpaceIntegrals,
-	            inProductionAmplitudes,
-	            inProductionAmplitudesCovariance,
-	            inSpinDensityMatrices,
-	            inSpinDensityMatricesCovariance,
-	            inPlottingIntensities,
-	            inPlottingSpinDensityMatrixElementsReal,
-	            inPlottingSpinDensityMatrixElementsImag,
-	            inPlottingPhases,
-	            inSysPlottingIntensities,
-	            inSysPlottingSpinDensityMatrixElementsReal,
-	            inSysPlottingSpinDensityMatrixElementsImag,
-	            inSysPlottingPhases,
-	            valTreeName,
-	            valBranchName);
-
-	// prepare mass limits
-	boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
-	prepareMassLimits(fitInformation,
-	                  nrMassBins,
-	                  massBinCenters,
-	                  wavePairMassBinLimits);
-
-	// set-up fit model (resonances, background, final-state mass-dependence)
-	fitModel = readModel(configRoot,
-	                     fitInformation,
-	                     fitParameters,
-	                     fitParametersError,
-	                     waveNames,
-	                     nrMassBins,
-	                     massBinCenters,
-	                     phaseSpaceIntegrals,
-	                     useBranchings);
-
-	std::ostringstream output;
-	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
-		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
-	}
-	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
-	          << output.str();
-	if(fitModel->getFsmd()) {
-		printInfo << "using final-state mass-dependence." << std::endl;
-	} else {
-		printInfo << "not using final-state mass-dependence." << std::endl;
-	}
-
-	// prepare production amplitudes and corresponding covariance matrices
-	// for the fit
-	prepareProductionAmplitudes(useCovariance,
-	                            fitModel->getAnchorWave(),
-	                            wavePairMassBinLimits,
-	                            inProductionAmplitudes,
-	                            inProductionAmplitudesCovariance);
-	prepareSpinDensityMatrices(useCovariance,
-	                           wavePairMassBinLimits,
-	                           inSpinDensityMatrices,
-	                           inSpinDensityMatricesCovariance);
-
-	// create data object
-	fitData.reset(new rpwa::resonanceFit::data(nrMassBins,
-	                                           massBinCenters,
-	                                           wavePairMassBinLimits,
-	                                           phaseSpaceIntegrals,
-	                                           inProductionAmplitudes,
-	                                           inProductionAmplitudesCovariance,
-	                                           inSpinDensityMatrices,
-	                                           inSpinDensityMatricesCovariance,
-	                                           useCovariance,
-	                                           inPlottingIntensities,
-	                                           inPlottingSpinDensityMatrixElementsReal,
-	                                           inPlottingSpinDensityMatrixElementsImag,
-	                                           inPlottingPhases,
-	                                           inSysPlottingIntensities,
-	                                           inSysPlottingSpinDensityMatrixElementsReal,
-	                                           inSysPlottingSpinDensityMatrixElementsImag,
-	                                           inSysPlottingPhases));
-
-	return true;
-}
-
-
-bool
-rpwa::resonanceFit::massDepFit::writeConfig(std::ostream& output,
-                                            const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                                            const rpwa::resonanceFit::modelConstPtr& fitModel,
-                                            const rpwa::resonanceFit::parameters& fitParameters,
-                                            const rpwa::resonanceFit::parameters& fitParametersError,
-                                            const std::map<std::string, double>& fitQuality,
-                                            const std::vector<std::string>& freeParameters) const
-{
-	if(_debug) {
-		printDebug << "writing configuration file." << std::endl;
-	}
-
-	YAML::Emitter yamlOutput(output);
-	yamlOutput << YAML::BeginMap;
-
-	writeFitQuality(yamlOutput, fitQuality);
-	writeFreeParameters(yamlOutput, freeParameters);
-	writeInformation(yamlOutput, fitInformation);
-	writeModel(yamlOutput, fitModel, fitParameters, fitParametersError);
-
-	yamlOutput << YAML::EndMap;
-
-	// newline at end-of-file
-	output << std::endl;
-
-	return true;
 }

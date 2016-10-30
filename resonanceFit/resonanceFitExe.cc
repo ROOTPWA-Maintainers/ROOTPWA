@@ -27,13 +27,10 @@
 //-------------------------------------------------------------------------
 
 
-#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <unistd.h>
-
-#include <yaml-cpp/yaml.h>
 
 #include <TFile.h>
 #include <TROOT.h>
@@ -43,11 +40,11 @@
 #include <fileUtils.hpp>
 #include <reportingUtils.hpp>
 #include <reportingUtilsEnvironment.h>
-#include <yamlCppUtils.hpp>
 
 #include "cache.h"
 #include "data.h"
 #include "function.h"
+#include "information.h"
 #include "massDepFit.h"
 #include "minimizerRoot.h"
 #include "model.h"
@@ -117,7 +114,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const std::string progName                 = argv[0];
-	std::string       outFileName              = "resonanceFit.result.root";  // output filename
+	std::string       outRootFileName          = "resonanceFit.result.root";  // output filename
 	unsigned int      maxNumberOfFunctionCalls = 0;
 	std::string       minimizerType[2]         = {"Minuit2", "Migrad"};       // minimizer, minimization algorithm
 	int               minimizerStrategy        = 1;                           // minimizer strategy
@@ -138,7 +135,7 @@ main(int    argc,
 	while ((c = getopt(argc, argv, "o:c:M:m:g:t:PRF:ABC:dqh")) != -1) {
 		switch (c) {
 		case 'o':
-			outFileName = optarg;
+			outRootFileName = optarg;
 			break;
 		case 'c':
 			maxNumberOfFunctionCalls = atoi(optarg);
@@ -214,7 +211,7 @@ main(int    argc,
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << std::endl
 	          << "    path to configuration file ..................... '" << configFileName << "'" << std::endl
-	          << "    path to output file ............................ '" << outFileName << "'" << std::endl
+	          << "    path to output file ............................ '" << outRootFileName << "'" << std::endl
 	          << "    number of calls to fit function ................ "  << maxNumberOfFunctionCalls << std::endl
 	          << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << std::endl
 	          << "    minimizer strategy ............................. "  << minimizerStrategy  << std::endl
@@ -226,14 +223,8 @@ main(int    argc,
 	          << "    debug .......................................... "  << rpwa::yesNo(debug) << std::endl
 	          << "    quiet .......................................... "  << rpwa::yesNo(quiet) << std::endl;
 
-	rpwa::resonanceFit::massDepFit mdepFit;
-	mdepFit.setDebug(debug);
-
-	YAML::Node configRoot;
-	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, debug)) {
-		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
-		return 1;
-	}
+	// pass debug flag on
+	rpwa::resonanceFit::setDebug(debug);
 
 	// read configuration file
 	rpwa::resonanceFit::informationConstPtr fitInformation;
@@ -243,18 +234,19 @@ main(int    argc,
 	rpwa::resonanceFit::parameters fitParametersError;
 	std::map<std::string, double> fitQuality;
 	std::vector<std::string> freeParameters;
-	if(not mdepFit.readConfig(configRoot,
-	                          fitInformation,
-	                          fitData,
-	                          fitModel,
-	                          fitParameters,
-	                          fitParametersError,
-	                          fitQuality,
-	                          freeParameters,
-	                          doBranching,
-	                          doCov,
-	                          valTreeName,
-	                          valBranchName)) {
+	rpwa::resonanceFit::readConfig(configFileName,
+	                               fitInformation,
+	                               fitData,
+	                               fitModel,
+	                               fitParameters,
+	                               fitParametersError,
+	                               fitQuality,
+	                               freeParameters,
+	                               doBranching,
+	                               doCov,
+	                               valTreeName,
+	                               valBranchName);
+	if(not fitInformation or not fitData or not fitModel) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -297,40 +289,34 @@ main(int    argc,
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
 	}
 
-	std::string confFileName(outFileName);
-	if(rpwa::extensionFromPath(confFileName) == "root") {
-		confFileName = rpwa::changeFileExtension(confFileName, "yaml");
+	std::string outConfigFileName(outRootFileName);
+	if(rpwa::extensionFromPath(outConfigFileName) == "root") {
+		outConfigFileName = rpwa::changeFileExtension(outConfigFileName, "yaml");
 	} else {
-		confFileName += ".yaml";
+		outConfigFileName += ".yaml";
 	}
 
 	if(debug) {
-		printDebug << "name of output configuration file: '" << confFileName << "'." << std::endl;
+		printDebug << "name of output configuration file: '" << outConfigFileName << "'." << std::endl;
 	}
-	std::ofstream configFile(confFileName.c_str());
-	if(not mdepFit.writeConfig(configFile,
-	                           fitInformation,
-	                           fitModel,
-	                           fitParameters,
-	                           fitParametersError,
-	                           fitQuality,
-	                           freeParameters)) {
-		printErr << "error while writing result to configuration file." << std::endl;
-		return 1;
-	}
-	configFile.close();
+	rpwa::resonanceFit::writeConfig(outConfigFileName,
+	                                fitInformation,
+	                                fitModel,
+	                                fitParameters,
+	                                fitParametersError,
+	                                fitQuality,
+	                                freeParameters);
 
-	std::string rootFileName(outFileName);
-	if(rpwa::extensionFromPath(rootFileName) != "root") {
-		rootFileName += ".root";
+	if(rpwa::extensionFromPath(outRootFileName) != "root") {
+		outRootFileName += ".root";
 	}
 
 	if(debug) {
-		printDebug << "name of output ROOT file: '" << rootFileName << "'." << std::endl;
+		printDebug << "name of output ROOT file: '" << outRootFileName << "'." << std::endl;
 	}
-	std::unique_ptr<TFile> outFile(TFile::Open(rootFileName.c_str(), "RECREATE"));
+	std::unique_ptr<TFile> outFile(TFile::Open(outRootFileName.c_str(), "RECREATE"));
 	if(not outFile or outFile->IsZombie()) {
-		printErr << "error while creating ROOT file '" << rootFileName << "' for plots of fit result."<< std::endl;
+		printErr << "error while creating ROOT file '" << outRootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
 	rpwa::resonanceFit::createPlots(fitInformation,
