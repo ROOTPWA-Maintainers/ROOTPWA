@@ -56,6 +56,7 @@ set(SOURCES
 	parameter.cc
 	parameters.cc
 	resonanceFit.cc
+	resonanceFitPlot.cc
 	)
 
 

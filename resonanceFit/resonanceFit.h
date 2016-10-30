@@ -84,6 +84,7 @@ namespace rpwa {
 		                 const bool rangePlotting,
 		                 const size_t extraBinning);
 
+		bool debug();
 		void setDebug(const bool debug);
 
 	} // end namespace resonanceFit
