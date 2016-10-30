@@ -49,6 +49,7 @@ namespace rpwa {
 
 			data(const std::vector<size_t>& nrMassBins,
 			     const boost::multi_array<double, 2>& massBinCenters,
+			     const boost::multi_array<std::string, 2>& waveNames,
 			     const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
 			     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -68,11 +69,13 @@ namespace rpwa {
 
 			size_t nrBins() const { return _nrMassBins.size(); }
 			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
-			size_t nrWaves() const { return *(_productionAmplitudes.shape()+2); }
+			size_t nrWaves() const { return *(_waveNames.shape()+1); }
 
 			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
 			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
 			bool hasSameMassBinning() const;
+
+			const boost::multi_array<std::string, 2>& waveNames() const { return _waveNames; }
 
 			const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 
@@ -101,6 +104,8 @@ namespace rpwa {
 
 			std::vector<size_t> _nrMassBins;
 			boost::multi_array<double, 2> _massBinCenters;
+
+			boost::multi_array<std::string, 2> _waveNames;
 
 			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
 
