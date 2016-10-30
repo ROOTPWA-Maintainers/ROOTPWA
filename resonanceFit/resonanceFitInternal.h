@@ -33,28 +33,37 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef MASSDEPFIT_HH
-#define MASSDEPFIT_HH
+#ifndef RESONANCEFIT_RESONANCEFITINTERNAL_HH
+#define RESONANCEFIT_RESONANCEFITINTERNAL_HH
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "forward.h"
-#include "function.h"
-
-class TFile;
+namespace YAML {
+	class Node;
+}
 
 namespace rpwa {
 
-	class fitResult;
-
 	namespace resonanceFit {
 
-		class cache;
-		class parameters;
+		std::map<std::string, double> readFitQuality(const YAML::Node& configRoot);
 
-		void read(const std::string& configFileName,
+		std::vector<std::string> readFreeParameters(const YAML::Node& configRoot);
+
+		rpwa::resonanceFit::informationConstPtr readInformation(const YAML::Node& configRoot);
+
+		rpwa::resonanceFit::modelConstPtr readModel(const YAML::Node& configRoot,
+		                                            const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                                            const rpwa::resonanceFit::dataConstPtr& fitData,
+		                                            rpwa::resonanceFit::parameters& fitParameters,
+		                                            rpwa::resonanceFit::parameters& fitParametersError,
+		                                            const bool useBranchings);
+
+		rpwa::resonanceFit::dataConstPtr readData(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                                          const std::string& anchorWaveName,
+		                                          const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+		                                          const std::string& valTreeName   = "pwa",
+		                                          const std::string& valBranchName = "fitResult_v2");
+
+		void read(const YAML::Node& configRoot,
 		          rpwa::resonanceFit::informationConstPtr& fitInformation,
 		          rpwa::resonanceFit::dataConstPtr& fitData,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
@@ -67,28 +76,8 @@ namespace rpwa {
 		          const std::string& valTreeName   = "pwa",
 		          const std::string& valBranchName = "fitResult_v2");
 
-		void writeConfig(const std::string& configFileName,
-		                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
-		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
-		                 const rpwa::resonanceFit::parameters& fitParameters,
-		                 const rpwa::resonanceFit::parameters& fitParametersError,
-		                 const std::map<std::string, double>& fitQuality,
-		                 const std::vector<std::string>& freeParameters);
-
-		void createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-		                 const rpwa::resonanceFit::dataConstPtr& fitData,
-		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
-		                 const rpwa::resonanceFit::parameters& fitParameters,
-		                 rpwa::resonanceFit::cache& cache,
-		                 TFile* outFile,
-		                 const bool rangePlotting,
-		                 const size_t extraBinning);
-
-		bool debug();
-		void setDebug(const bool debug);
-
 	} // end namespace resonanceFit
 
 } // end namespace rpwa
 
-#endif // MASSDEPFIT_HH
+#endif // RESONANCEFIT_RESONANCEFITINTERNAL_HH
