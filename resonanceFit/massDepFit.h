@@ -83,7 +83,7 @@ namespace rpwa {
 			bool readConfig(const YAML::Node& configRoot,
 			                rpwa::resonanceFit::informationConstPtr& fitInformation,
 			                rpwa::resonanceFit::dataConstPtr& fitData,
-			                const rpwa::resonanceFit::modelPtr& fitModel,
+			                rpwa::resonanceFit::modelConstPtr& fitModel,
 			                rpwa::resonanceFit::parameters& fitParameters,
 			                rpwa::resonanceFit::parameters& fitParametersError,
 			                std::map<std::string, double>& fitQuality,
@@ -93,9 +93,8 @@ namespace rpwa {
 			                const std::string& valTreeName   = "pwa",
 			                const std::string& valBranchName = "fitResult_v2");
 
-			bool init(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			          const rpwa::resonanceFit::dataConstPtr& fitData,
-			          const rpwa::resonanceFit::modelPtr& fitModel,
+			bool init(const rpwa::resonanceFit::dataConstPtr& fitData,
+			          const rpwa::resonanceFit::modelConstPtr& fitModel,
 			          const rpwa::resonanceFit::functionPtr& fitFunction);
 
 			bool writeConfig(std::ostream& output,
@@ -109,27 +108,6 @@ namespace rpwa {
 			static void setDebug(bool debug);
 
 		private:
-
-			bool readConfigModel(const YAML::Node& configModel,
-			                     const rpwa::resonanceFit::informationConstPtr& fitInformation,
-			                     const rpwa::resonanceFit::modelPtr& fitModel,
-			                     rpwa::resonanceFit::parameters& fitParameters,
-			                     rpwa::resonanceFit::parameters& fitParametersError,
-			                     const boost::multi_array<std::string, 2>& waveNames,
-			                     const std::vector<size_t>& nrMassBins,
-			                     const boost::multi_array<double, 2>& massBinCenters,
-			                     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-			                     const bool useBranchings);
-			bool readConfigModelAnchorWave(const YAML::Node& configAnchorWave);
-
-			bool writeConfigModel(YAML::Emitter& yamlOutput,
-			                      const rpwa::resonanceFit::modelConstPtr& fitModel,
-			                      const rpwa::resonanceFit::parameters& fitParameters,
-			                      const rpwa::resonanceFit::parameters& fitParametersError) const;
-			bool writeConfigModelAnchorWave(YAML::Emitter& yamlOutput) const;
-
-			std::string _anchorWaveName;
-			std::string _anchorComponentName;
 
 			static bool _debug;
 

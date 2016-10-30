@@ -231,7 +231,7 @@ main(int    argc,
 
 	rpwa::resonanceFit::informationConstPtr fitInformation;
 	rpwa::resonanceFit::dataConstPtr fitData;
-	rpwa::resonanceFit::modelPtr fitModel(new rpwa::resonanceFit::model);
+	rpwa::resonanceFit::modelConstPtr fitModel;
 	rpwa::resonanceFit::functionPtr fitFunction(new rpwa::resonanceFit::function(doProdAmp, doCov));
 
 	YAML::Node configRoot;
@@ -262,8 +262,7 @@ main(int    argc,
 	}
 
 	// set-up fit model and fit function
-	if(not mdepFit.init(fitInformation,
-	                    fitData,
+	if(not mdepFit.init(fitData,
 	                    fitModel,
 	                    fitFunction)) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
