@@ -3083,6 +3083,7 @@ namespace {
 		// create data object
 		fitData.reset(new rpwa::resonanceFit::data(nrMassBins,
 		                                           massBinCenters,
+		                                           waveNames,
 		                                           wavePairMassBinLimits,
 		                                           phaseSpaceIntegrals,
 		                                           inProductionAmplitudes,

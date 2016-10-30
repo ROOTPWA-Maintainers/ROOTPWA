@@ -36,6 +36,7 @@
 
 rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<double, 2>& massBinCenters,
+                               const boost::multi_array<std::string, 2>& waveNames,
                                const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
                                const boost::multi_array<double, 3>& phaseSpaceIntegrals,
                                const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
@@ -53,6 +54,7 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
                                const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases)
 	: _nrMassBins(nrMassBins),
 	  _massBinCenters(massBinCenters),
+	  _waveNames(waveNames),
 	  _wavePairMassBinLimits(wavePairMassBinLimits),
 	  _phaseSpaceIntegrals(phaseSpaceIntegrals),
 	  _productionAmplitudes(productionAmplitudes),
@@ -81,7 +83,7 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 		throw;
 	}
 
-	const size_t nrWaves = *(_productionAmplitudes.shape()+2);
+	const size_t nrWaves = *(_waveNames.shape()+1);
 	if(nrWaves == 0) {
 		printErr << "number of waves is zero, cannot perform the fit. Aborting..." << std::endl;
 		throw;
@@ -92,6 +94,10 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	checkSize(_massBinCenters,
 	          nrBins, "number of bins is not correct for centers of mass bins.",
 	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+
+	checkSize(_waveNames,
+	          nrBins, "number of bins is not correct for wave names.",
+	          nrWaves, "number of waves is not correct for wave names.");
 
 	checkSize(_wavePairMassBinLimits,
 	          nrBins, "number of bins is not correct for bin ranges of wave pairs.",
