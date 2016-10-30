@@ -67,6 +67,12 @@ namespace rpwa {
 		                const std::string& valTreeName   = "pwa",
 		                const std::string& valBranchName = "fitResult_v2");
 
+		rpwa::resonanceFit::dataConstPtr readData(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                                          const std::string& anchorWaveName,
+		                                          const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+		                                          const std::string& valTreeName   = "pwa",
+		                                          const std::string& valBranchName = "fitResult_v2");
+
 		void writeConfig(const std::string& configFileName,
 		                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
 		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
