@@ -34,40 +34,14 @@
 #include "resonanceFitHelper.h"
 
 
-rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
-                               const boost::multi_array<double, 2>& massBinCenters,
-                               const boost::multi_array<std::string, 2>& waveNames,
-                               const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
-                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
-                               const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
-                               const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
-                               const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
-                               const boost::multi_array<TMatrixT<double>, 2>& spinDensityMatrixElementsCovMatInv,
-                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
-                               const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
-                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
-                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
-                               const boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
-                               const boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
-                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
-                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
-                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases)
+rpwa::resonanceFit::baseData::baseData(const std::vector<size_t>& nrMassBins,
+                                       const boost::multi_array<double, 2>& massBinCenters,
+                                       const boost::multi_array<std::string, 2>& waveNames,
+                                       const boost::multi_array<double, 3>& phaseSpaceIntegrals)
 	: _nrMassBins(nrMassBins),
 	  _massBinCenters(massBinCenters),
 	  _waveNames(waveNames),
-	  _wavePairMassBinLimits(wavePairMassBinLimits),
-	  _phaseSpaceIntegrals(phaseSpaceIntegrals),
-	  _productionAmplitudes(productionAmplitudes),
-	  _spinDensityMatrixElements(spinDensityMatrixElements),
-	  _useCovariance(useCovariance),
-	  _plottingIntensities(plottingIntensities),
-	  _plottingSpinDensityMatrixElementsReal(plottingSpinDensityMatrixElementsReal),
-	  _plottingSpinDensityMatrixElementsImag(plottingSpinDensityMatrixElementsImag),
-	  _plottingPhases(plottingPhases),
-	  _sysPlottingIntensities(sysPlottingIntensities),
-	  _sysPlottingSpinDensityMatrixElementsReal(sysPlottingSpinDensityMatrixElementsReal),
-	  _sysPlottingSpinDensityMatrixElementsImag(sysPlottingSpinDensityMatrixElementsImag),
-	  _sysPlottingPhases(sysPlottingPhases)
+	  _phaseSpaceIntegrals(phaseSpaceIntegrals)
 {
 	// get dimensions from one array and make sure that all other arrays
 	// have the same dimensions
@@ -99,15 +73,76 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	          nrBins, "number of bins is not correct for wave names.",
 	          nrWaves, "number of waves is not correct for wave names.");
 
-	checkSize(_wavePairMassBinLimits,
-	          nrBins, "number of bins is not correct for bin ranges of wave pairs.",
-	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.",
-	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.");
-
 	checkSize(_phaseSpaceIntegrals,
 	          nrBins, "number of bins is not correct for phase-space integrals.",
 	          maxMassBins, "maximal number of mass bins is not correct for phase-space integrals.",
 	          nrWaves, "number of waves is not correct for phase-space integrals.");
+}
+
+
+bool
+rpwa::resonanceFit::baseData::hasSameMassBinning() const
+{
+	for(size_t idxBin = 0; idxBin < _nrMassBins.size(); ++idxBin) {
+		if(_nrMassBins[idxBin] != _nrMassBins[0]) {
+			return false;
+		}
+		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
+			if(_massBinCenters[idxBin][idxMass] != _massBinCenters[0][idxMass]) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+
+rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
+                               const boost::multi_array<double, 2>& massBinCenters,
+                               const boost::multi_array<std::string, 2>& waveNames,
+                               const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
+                               const boost::multi_array<double, 3>& phaseSpaceIntegrals,
+                               const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
+                               const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv,
+                               const boost::multi_array<std::complex<double>, 4>& spinDensityMatrixElements,
+                               const boost::multi_array<TMatrixT<double>, 2>& spinDensityMatrixElementsCovMatInv,
+                               const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
+                               const boost::multi_array<std::pair<double, double>, 3>& plottingIntensities,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsReal,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingSpinDensityMatrixElementsImag,
+                               const boost::multi_array<std::pair<double, double>, 4>& plottingPhases,
+                               const boost::multi_array<std::pair<double, double>, 3>& sysPlottingIntensities,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsReal,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingSpinDensityMatrixElementsImag,
+                               const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases)
+	: baseData(nrMassBins,
+	           massBinCenters,
+	           waveNames,
+	           phaseSpaceIntegrals),
+	  _wavePairMassBinLimits(wavePairMassBinLimits),
+	  _productionAmplitudes(productionAmplitudes),
+	  _spinDensityMatrixElements(spinDensityMatrixElements),
+	  _useCovariance(useCovariance),
+	  _plottingIntensities(plottingIntensities),
+	  _plottingSpinDensityMatrixElementsReal(plottingSpinDensityMatrixElementsReal),
+	  _plottingSpinDensityMatrixElementsImag(plottingSpinDensityMatrixElementsImag),
+	  _plottingPhases(plottingPhases),
+	  _sysPlottingIntensities(sysPlottingIntensities),
+	  _sysPlottingSpinDensityMatrixElementsReal(sysPlottingSpinDensityMatrixElementsReal),
+	  _sysPlottingSpinDensityMatrixElementsImag(sysPlottingSpinDensityMatrixElementsImag),
+	  _sysPlottingPhases(sysPlottingPhases)
+{
+	// get dimensions from base class and make sure that all arrays have
+	// the same dimensions
+	const size_t nrBins = this->nrBins();
+	const size_t maxMassBins = this->maxMassBins();
+	const size_t nrWaves = this->nrWaves();
+
+	checkSize(_wavePairMassBinLimits,
+	          nrBins, "number of bins is not correct for bin ranges of wave pairs.",
+	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.",
+	          nrWaves, "maximal number of mass bins is not correct for bin ranges of wave pairs.");
 
 	checkSize(_productionAmplitudes,
 	          nrBins, "number of bins is not correct for production amplitudes.",
@@ -231,22 +266,4 @@ rpwa::resonanceFit::data::data(const std::vector<size_t>& nrMassBins,
 	          maxMassBins, "maximal number of mass bins is not correct for phases for plotting of systematic errors.",
 	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.",
 	          nrWaves, "number of waves is not correct for phases for plotting of systematic errors.");
-}
-
-
-bool
-rpwa::resonanceFit::data::hasSameMassBinning() const
-{
-	for(size_t idxBin = 0; idxBin < _nrMassBins.size(); ++idxBin) {
-		if(_nrMassBins[idxBin] != _nrMassBins[0]) {
-			return false;
-		}
-		for(size_t idxMass = 0; idxMass < _nrMassBins[idxBin]; ++idxMass) {
-			if(_massBinCenters[idxBin][idxMass] != _massBinCenters[0][idxMass]) {
-				return false;
-			}
-		}
-	}
-
-	return true;
 }

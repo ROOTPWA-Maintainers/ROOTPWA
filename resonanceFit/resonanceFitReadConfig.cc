@@ -689,7 +689,7 @@ namespace {
 	readModelComponentDecayChannels(const YAML::Node& configComponent,
 	                                const std::string& componentName,
 	                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                                const rpwa::resonanceFit::dataConstPtr& fitData)
+	                                const rpwa::resonanceFit::baseDataConstPtr& fitData)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "reading 'decaychannels'." << std::endl;
@@ -779,7 +779,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& /*configComponent*/,
 	                   const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
-	                   const rpwa::resonanceFit::dataConstPtr& fitData,
+	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const std::string& name,
 	                   const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -804,7 +804,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::dynamicWidthBreitWigner>(const YAML::Node& configComponent,
 	                                                                const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
-	                                                                const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                                const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                const size_t id,
 	                                                                const std::string& name,
 	                                                                const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -865,7 +865,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::integralWidthBreitWigner>(const YAML::Node& configComponent,
 	                                                                 const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
-	                                                                 const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                                 const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                 const size_t id,
 	                                                                 const std::string& name,
 	                                                                 const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -930,7 +930,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::exponentialBackground>(const YAML::Node& configComponent,
 	                                                              const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
-	                                                              const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                              const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                              const size_t id,
 	                                                              const std::string& name,
 	                                                              const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -964,7 +964,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackground>(const YAML::Node& configComponent,
 	                                                                  const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                                                                  const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                                  const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                  const size_t id,
 	                                                                  const std::string& name,
 	                                                                  const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -1004,7 +1004,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::exponentialBackgroundIntegral>(const YAML::Node& configComponent,
 	                                                                      const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
-	                                                                      const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                                      const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                      const size_t id,
 	                                                                      const std::string& name,
 	                                                                      const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -1037,7 +1037,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(const YAML::Node& configComponent,
 	                                                                          const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                                                                          const rpwa::resonanceFit::dataConstPtr& fitData,
+	                                                                          const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                          const size_t id,
 	                                                                          const std::string& name,
 	                                                                          const std::vector<rpwa::resonanceFit::parameter>& parameters,
@@ -1076,7 +1076,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
 	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                   const rpwa::resonanceFit::dataConstPtr& fitData,
+	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const bool useBranchings)
 	{
@@ -1121,7 +1121,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
 	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                   const rpwa::resonanceFit::dataConstPtr& fitData,
+	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const bool useBranchings)
 	{
@@ -1207,7 +1207,7 @@ namespace {
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
 	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                   const rpwa::resonanceFit::dataConstPtr& fitData,
+	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   rpwa::resonanceFit::parameters& fitParameters,
 	                   rpwa::resonanceFit::parameters& fitParametersError,
 	                   const size_t id,
@@ -1334,7 +1334,7 @@ namespace {
 	std::vector<rpwa::resonanceFit::componentPtr>
 	readModelComponents(const YAML::Node& configModel,
 	                    const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	                    const rpwa::resonanceFit::dataConstPtr& fitData,
+	                    const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                    rpwa::resonanceFit::parameters& fitParameters,
 	                    rpwa::resonanceFit::parameters& fitParametersError,
 	                    const bool useBranchings)
@@ -1427,7 +1427,7 @@ namespace {
 
 	rpwa::resonanceFit::fsmdPtr
 	readModelFsmd(const YAML::Node& configModel,
-	              const rpwa::resonanceFit::dataConstPtr& fitData,
+	              const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	              rpwa::resonanceFit::parameters& fitParameters,
 	              rpwa::resonanceFit::parameters& fitParametersError,
 	              const size_t id)
@@ -1523,7 +1523,7 @@ namespace {
 rpwa::resonanceFit::modelConstPtr
 rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
                               const rpwa::resonanceFit::informationConstPtr& fitInformation,
-                              const rpwa::resonanceFit::dataConstPtr& fitData,
+                              const rpwa::resonanceFit::baseDataConstPtr& fitData,
                               rpwa::resonanceFit::parameters& fitParameters,
                               rpwa::resonanceFit::parameters& fitParametersError,
                               const bool useBranchings)

@@ -43,7 +43,42 @@ namespace rpwa {
 
 	namespace resonanceFit {
 
-		class data {
+		class baseData {
+
+		public:
+
+			baseData(const std::vector<size_t>& nrMassBins,
+			         const boost::multi_array<double, 2>& massBinCenters,
+			         const boost::multi_array<std::string, 2>& waveNames,
+			         const boost::multi_array<double, 3>& phaseSpaceIntegrals);
+			~baseData() {}
+
+			size_t nrBins() const { return _nrMassBins.size(); }
+			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
+			size_t nrWaves() const { return *(_waveNames.shape()+1); }
+
+			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
+			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
+			bool hasSameMassBinning() const;
+
+			const boost::multi_array<std::string, 2>& waveNames() const { return _waveNames; }
+
+			const boost::multi_array<double, 3>& phaseSpaceIntegrals() const { return _phaseSpaceIntegrals; }
+
+		private:
+
+			std::vector<size_t> _nrMassBins;
+			boost::multi_array<double, 2> _massBinCenters;
+
+			boost::multi_array<std::string, 2> _waveNames;
+
+			// data used in components
+
+			boost::multi_array<double, 3> _phaseSpaceIntegrals;
+
+		};
+
+		class data : public baseData {
 
 		public:
 
@@ -67,19 +102,7 @@ namespace rpwa {
 			     const boost::multi_array<std::pair<double, double>, 4>& sysPlottingPhases);
 			~data() {}
 
-			size_t nrBins() const { return _nrMassBins.size(); }
-			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
-			size_t nrWaves() const { return *(_waveNames.shape()+1); }
-
-			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
-			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
-			bool hasSameMassBinning() const;
-
-			const boost::multi_array<std::string, 2>& waveNames() const { return _waveNames; }
-
 			const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits() const { return _wavePairMassBinLimits; }
-
-			const boost::multi_array<double, 3>& phaseSpaceIntegrals() const { return _phaseSpaceIntegrals; }
 
 			const boost::multi_array<std::complex<double>, 3>& productionAmplitudes() const { return _productionAmplitudes; }
 			const boost::multi_array<TMatrixT<double>, 2>& productionAmplitudesCovMatInv() const { return _productionAmplitudesCovMatInv; }
@@ -102,16 +125,7 @@ namespace rpwa {
 
 		private:
 
-			std::vector<size_t> _nrMassBins;
-			boost::multi_array<double, 2> _massBinCenters;
-
-			boost::multi_array<std::string, 2> _waveNames;
-
 			boost::multi_array<std::pair<size_t, size_t>, 3> _wavePairMassBinLimits;
-
-			// data used in components
-
-			boost::multi_array<double, 3> _phaseSpaceIntegrals;
 
 			// data used for fitting
 
