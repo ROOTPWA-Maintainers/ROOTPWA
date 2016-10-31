@@ -36,6 +36,13 @@
 #ifndef RESONANCEFIT_RESONANCEFITINTERNAL_HH
 #define RESONANCEFIT_RESONANCEFITINTERNAL_HH
 
+#include <map>
+#include <string>
+#include <vector>
+
+#include "forward.h"
+#include "function.h"
+
 namespace YAML {
 	class Node;
 }
@@ -43,6 +50,8 @@ namespace YAML {
 namespace rpwa {
 
 	namespace resonanceFit {
+
+		class parameters;
 
 		std::map<std::string, double> readFitQuality(const YAML::Node& configRoot);
 
@@ -52,7 +61,7 @@ namespace rpwa {
 
 		rpwa::resonanceFit::modelConstPtr readModel(const YAML::Node& configRoot,
 		                                            const rpwa::resonanceFit::informationConstPtr& fitInformation,
-		                                            const rpwa::resonanceFit::dataConstPtr& fitData,
+		                                            const rpwa::resonanceFit::baseDataConstPtr& fitData,
 		                                            rpwa::resonanceFit::parameters& fitParameters,
 		                                            rpwa::resonanceFit::parameters& fitParametersError,
 		                                            const bool useBranchings);
