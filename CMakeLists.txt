@@ -291,6 +291,19 @@ set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
 message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 
 
+# setup numpy
+message(STATUS "")
+message(STATUS ">>> Setting up numpy.")
+find_package(NumPy 1.8 REQUIRED)
+set_package_properties(NumPy
+	PROPERTIES
+	DESCRIPTION "numerical calculations in Python"
+	URL "http://www.numpy.org"
+	PURPOSE "Used for handling of multi-dimensional arrays in Python."
+	TYPE REQUIRED
+	)
+
+
 # setup pylint (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up pylint.")
