@@ -444,12 +444,12 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 
 	for (unsigned int i = 0; i < nmbRepitions; ++i) {
 		// create array of likelihood derivative w.r.t. real and imaginary
-		// parts of the production amplitudes
-		// !NOTE! although stored as and constructed from complex values,
-		// the dL themselves are _not_ well defined complex numbers!
-		array<ampsArrayType::index, 3> derivShape = {{ _rank, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
-		ampsArrayType                  derivatives(derivShape);
-		T                              derivativeFlat = 0;
+                // parts of the production amplitudes
+                // !NOTE! although stored as and constructed from complex values,
+                // the dL themselves are _not_ well defined complex numbers!
+                boost::array<ampsArrayType::index, 3> derivShape = {{ _rank, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
+                ampsArrayType                  derivatives(derivShape);
+                T                              derivativeFlat = 0;
 
 		// compute derivative for first term of log likelihood
 #ifdef USE_CUDA
@@ -507,23 +507,23 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 
 		static complex<T> maxDiff = 0;
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-					complex<T> diff;
-					diff.real() = 1 -   derivativesCuda[iRank][iRefl][iWave].real()
-						/ derivatives[iRank][iRefl][iWave].real();
-					diff.imag() = 1 -   derivativesCuda[iRank][iRefl][iWave].imag()
-						/ derivatives[iRank][iRefl][iWave].imag();
-					bool newMaxDiff = false;
-					if (abs(diff.real()) > maxDiff.real()) {
-						maxDiff.real() = abs(diff.real());
-						newMaxDiff = true;
-					}
-					if (abs(diff.imag()) > maxDiff.imag()) {
-						maxDiff.imag() = abs(diff.imag());
-						newMaxDiff = true;
-					}
-					if (newMaxDiff)
+                        for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+                                for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+                                        complex<T> diff;
+                                        diff.real(1 -   derivativesCuda[iRank][iRefl][iWave].real()
+                                                / derivatives[iRank][iRefl][iWave].real());
+                                        diff.imag(1 -   derivativesCuda[iRank][iRefl][iWave].imag()
+                                                / derivatives[iRank][iRefl][iWave].imag());
+                                        bool newMaxDiff = false;
+                                        if (abs(diff.real()) > maxDiff.real()) {
+                                                maxDiff.real(abs(diff.real()));
+                                                newMaxDiff = true;
+                                        }
+                                        if (abs(diff.imag()) > maxDiff.imag()) {
+                                                maxDiff.imag(abs(diff.imag()));
+                                                newMaxDiff = true;
+                                        }
+                                        if (newMaxDiff)
 						printInfo << "[" << iRank << "][" << iRefl << "][" << iWave << "]: " << maxDiff << "; "
 						          << derivatives    [iRank][iRefl][iWave] << " vs. "
 						          << derivativesCuda[iRank][iRefl][iWave] << endl;
@@ -550,11 +550,11 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 
 
 int
-main(int    argc,
-     char** argv)
+main(int,
+     char**)
 {
-	if (0) {
-		const unsigned int nmbRepitions    = 2;
+        if (0) {
+                const unsigned int nmbRepitions    = 2;
 		const unsigned int nmbEvents       = 100000;
 		const unsigned int nmbWavesRefl[2] = {2, 2};
 		const unsigned int rank            = 1;
@@ -645,24 +645,24 @@ main(int    argc,
 						                       - derivatives[1][iRank][iRefl][iWave];
 					cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
 					     << maxPrecisionDouble(derivatives[0][iRank][iRefl][iWave]) << " - "
-					     << maxPrecisionDouble(derivatives[1][iRank][iRefl][iWave]) << " = "
-					     << maxPrecisionDouble(diffAbs) << endl;
-					if (abs(diffAbs.real()) > maxDiffAbs.real())
-						maxDiffAbs.real() = abs(diffAbs.real());
-					if (abs(diffAbs.imag()) > maxDiffAbs.imag())
-						maxDiffAbs.imag() = abs(diffAbs.imag());
-					complexT diffRel;
-					diffRel.real() = 1 -   derivatives[0][iRank][iRefl][iWave].real()
-						/ derivatives[1][iRank][iRefl][iWave].real();
-					diffRel.imag() = 1 -   derivatives[0][iRank][iRefl][iWave].imag()
-						/ derivatives[1][iRank][iRefl][iWave].imag();
-					if (abs(diffRel.real()) > maxDiffRel.real())
-						maxDiffRel.real() = abs(diffRel.real());
-					if (abs(diffRel.imag()) > maxDiffRel.imag())
-						maxDiffRel.imag() = abs(diffRel.imag());
-				}
+                                             << maxPrecisionDouble(derivatives[1][iRank][iRefl][iWave]) << " = "
+                                             << maxPrecisionDouble(diffAbs) << endl;
+                                        if (abs(diffAbs.real()) > maxDiffAbs.real())
+                                                maxDiffAbs.real(abs(diffAbs.real()));
+                                        if (abs(diffAbs.imag()) > maxDiffAbs.imag())
+                                                maxDiffAbs.imag(abs(diffAbs.imag()));
+                                        complexT diffRel;
+                                        diffRel.real(1 -   derivatives[0][iRank][iRefl][iWave].real()
+                                                / derivatives[1][iRank][iRefl][iWave].real());
+                                        diffRel.imag(1 -   derivatives[0][iRank][iRefl][iWave].imag()
+                                                / derivatives[1][iRank][iRefl][iWave].imag());
+                                        if (abs(diffRel.real()) > maxDiffRel.real())
+                                                maxDiffRel.real(abs(diffRel.real()));
+                                        if (abs(diffRel.imag()) > maxDiffRel.imag())
+                                                maxDiffRel.imag(abs(diffRel.imag()));
+                                }
 
-		printInfo << "finished calculation of log likelihood derivatives:" << endl
+                printInfo << "finished calculation of log likelihood derivatives:" << endl
 		          << "    elapsed time (multi_array) ... " << elapsedTime[0]  << " sec" << endl
 		          << "    elapsed time (CUDA) .......... " << elapsedTime[1]  << " sec" << endl
 		          << "    max. absolute difference ..... " << maxDiffAbs                << endl

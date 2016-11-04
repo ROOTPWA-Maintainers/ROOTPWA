@@ -64,11 +64,10 @@ namespace rpwa {
 		template<typename T>
 		__global__
 		void
-		sumKernel
-		(const T*           d_valArray,  // array with values to sum up
-		 const unsigned int nmbVals,     // total number of values all kernels have to process
-		 T*                 d_sumArray,  // output array of partial sums with one entry for each kernel
-		 const unsigned int nmbSums)     // number of elements in output array
+		sumKernel(const T*           d_valArray,  // array with values to sum up
+		          const unsigned int nmbVals,     // total number of values all kernels have to process
+		          T*                 d_sumArray,  // output array of partial sums with one entry for each kernel
+		          const unsigned int nmbSums)     // number of elements in output array
 		{
 			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
 			if (threadId < nmbSums) {
@@ -85,16 +84,15 @@ namespace rpwa {
 		template<typename complexT>
 		__global__
 		void
-		logLikelihoodKernel
-		(const complexT*                     d_prodAmps,        // 3-dim. array of production amplitudes; [iRank][iRefl][iWave]
-		 const typename complexT::value_type prodAmpFlat2,      // squared production amplitude of flat wave
-		 const complexT*                     d_decayAmps,       // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
-		 const unsigned int                  nmbEvents,         // total number of events all kernels have to process
-		 const unsigned int                  rank,              // rank of spin-density matrix
-		 const unsigned int                  nmbWavesReflNeg,   // number waves with negative reflectivity
-		 const unsigned int                  nmbWavesReflPos,   // number waves with positive reflectivity
-		 const unsigned int                  nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
-		 typename complexT::value_type*      d_logLikelihoods)  // output array of partial log likelihood sums with one entry for each kernel
+		logLikelihoodKernel(const complexT*                     d_prodAmps,        // 3-dim. array of production amplitudes; [iRank][iRefl][iWave]
+		                    const typename complexT::value_type prodAmpFlat2,      // squared production amplitude of flat wave
+		                    const complexT*                     d_decayAmps,       // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
+		                    const unsigned int                  nmbEvents,         // total number of events all kernels have to process
+		                    const unsigned int                  rank,              // rank of spin-density matrix
+		                    const unsigned int                  nmbWavesReflNeg,   // number waves with negative reflectivity
+		                    const unsigned int                  nmbWavesReflPos,   // number waves with positive reflectivity
+		                    const unsigned int                  nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
+		                    typename complexT::value_type*      d_logLikelihoods)  // output array of partial log likelihood sums with one entry for each kernel
 		{
 			typedef typename complexT::value_type T;
 			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
@@ -140,17 +138,16 @@ namespace rpwa {
 		template<typename complexT>
 		__global__
 		void
-		logLikelihoodDerivFirstTermKernel
-		(const complexT*                     d_prodAmps,       // 3-dim. array of production amplitudes; [iRank][iRefl][iWave]
-		 const typename complexT::value_type prodAmpFlat2,     // squared production amplitude of flat wave
-		 const complexT*                     d_decayAmps,      // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
-		 const unsigned int                  nmbEvents,        // total number of events all kernels have to process
-		 const unsigned int                  rank,             // rank of spin-density matrix
-		 const unsigned int                  nmbWavesReflNeg,  // number waves with negative reflectivity
-		 const unsigned int                  nmbWavesReflPos,  // number waves with positive reflectivity
-		 const unsigned int                  nmbWavesMax,      // maximum extent of iWave index for production and decay amplitude arrays
-		 complexT*                           d_derivTerms,     // 3-dim. output array of first derivative terms; [iRank][iRefl][iEvt]
-		 typename complexT::value_type*      d_likelihoods)    // output array of likelihoods for each event
+		logLikelihoodDerivFirstTermKernel(const complexT*                     d_prodAmps,       // 3-dim. array of production amplitudes; [iRank][iRefl][iWave]
+		                                  const typename complexT::value_type prodAmpFlat2,     // squared production amplitude of flat wave
+		                                  const complexT*                     d_decayAmps,      // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
+		                                  const unsigned int                  nmbEvents,        // total number of events all kernels have to process
+		                                  const unsigned int                  rank,             // rank of spin-density matrix
+		                                  const unsigned int                  nmbWavesReflNeg,  // number waves with negative reflectivity
+		                                  const unsigned int                  nmbWavesReflPos,  // number waves with positive reflectivity
+		                                  const unsigned int                  nmbWavesMax,      // maximum extent of iWave index for production and decay amplitude arrays
+		                                  complexT*                           d_derivTerms,     // 3-dim. output array of first derivative terms; [iRank][iRefl][iEvt]
+		                                  typename complexT::value_type*      d_likelihoods)    // output array of likelihoods for each event
 		{
 			typedef typename complexT::value_type T;
 			const unsigned int iEvt = blockIdx.x * blockDim.x + threadIdx.x;
@@ -194,16 +191,15 @@ namespace rpwa {
 		template<typename complexT>
 		__global__
 		void
-		logLikelihoodDerivKernel
-		(const complexT*                      d_decayAmps,       // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
-		 const complexT*                      d_derivTerms,      // precalculated 3-dim. array of first derivative terms; [iRank][iRefl][iEvt]
-		 const typename complexT::value_type* d_likelihoods,     // precalculated array of likelihoods for each event
-		 const unsigned int                   nmbEvents,         // total number of events all kernels have to process
-		 const unsigned int                   rank,              // rank of spin-density matrix
-		 const unsigned int                   nmbWavesReflNeg,   // number waves with negative reflectivity
-		 const unsigned int                   nmbWavesReflPos,   // number waves with positive reflectivity
-		 const unsigned int                   nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
-		 complexT*                            d_derivativeSums)  // output array of partial derivative sums; [iRank][iRefl][iWave][threadId]
+		logLikelihoodDerivKernel(const complexT*                      d_decayAmps,       // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
+		                         const complexT*                      d_derivTerms,      // precalculated 3-dim. array of first derivative terms; [iRank][iRefl][iEvt]
+		                         const typename complexT::value_type* d_likelihoods,     // precalculated array of likelihoods for each event
+		                         const unsigned int                   nmbEvents,         // total number of events all kernels have to process
+		                         const unsigned int                   rank,              // rank of spin-density matrix
+		                         const unsigned int                   nmbWavesReflNeg,   // number waves with negative reflectivity
+		                         const unsigned int                   nmbWavesReflPos,   // number waves with positive reflectivity
+		                         const unsigned int                   nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
+		                         complexT*                            d_derivativeSums)  // output array of partial derivative sums; [iRank][iRefl][iWave][threadId]
 		{
 			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
 			const unsigned int nmbThreads = gridDim.x * blockDim.x;
@@ -225,8 +221,8 @@ namespace rpwa {
 							const unsigned int decayAmpIndices [3] = {iRefl, iWave, iEvt};
 							const unsigned int derivTermIndices[3] = {iRank, iRefl, iEvt};
 							const complexT     derivative          =
-								  d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
-								* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
+								  d_derivTerms    [indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
+								* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices,  decayAmpDim,  3)]);
 							// apply factor from derivative of log
 							compensatedSum(-((typename complexT::value_type)2. / d_likelihoods[iEvt]) * derivative,
 							               &derivativeSum, &derivativeSumCompensation);
@@ -244,11 +240,10 @@ namespace rpwa {
 		template<typename complexT>
 		__global__
 		void
-		logLikelihoodDerivFlatKernel
-		(const typename complexT::value_type  prodAmpFlat,           // (real) production amplitude of flat wave
-		 const typename complexT::value_type* d_likelihoods,         // precalculated array of likelihoods for each event
-		 const unsigned int                   nmbEvents,             // total number of events all kernels have to process
-		 typename complexT::value_type*       d_derivativeFlatSums)  // output array of partial derivative sums with one entry for each kernel
+		logLikelihoodDerivFlatKernel(const typename complexT::value_type  prodAmpFlat,           // (real) production amplitude of flat wave
+		                             const typename complexT::value_type* d_likelihoods,         // precalculated array of likelihoods for each event
+		                             const unsigned int                   nmbEvents,             // total number of events all kernels have to process
+		                             typename complexT::value_type*       d_derivativeFlatSums)  // output array of partial derivative sums with one entry for each kernel
 		{
 			typedef typename complexT::value_type T;
 			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
@@ -269,15 +264,14 @@ namespace rpwa {
 		template<typename T>
 		__global__
 		void
-		sumDerivativesKernel
-		(const T*           d_derivatives,      // array with values to sum up; [iRank][iRefl][iWave][i]
-		 const unsigned int nmbDerivatives,     // total number of values all kernels have to process
-		 const unsigned int rank,               // rank of spin-density matrix
-		 const unsigned int nmbWavesReflNeg,    // number waves with negative reflectivity
-		 const unsigned int nmbWavesReflPos,    // number waves with positive reflectivity
-		 const unsigned int nmbWavesMax,        // maximum extent of iWave index for production and decay amplitude arrays
-		 T*                 d_derivativeSums,   // output array of partial sums with one entry for each kernel
-		 const unsigned int nmbDerivativeSums)  // number of elements in output array; [iRank][iRefl][iWave][threadId]
+		sumDerivativesKernel(const T*           d_derivatives,      // array with values to sum up; [iRank][iRefl][iWave][i]
+		                     const unsigned int nmbDerivatives,     // total number of values all kernels have to process
+		                     const unsigned int rank,               // rank of spin-density matrix
+		                     const unsigned int nmbWavesReflNeg,    // number waves with negative reflectivity
+		                     const unsigned int nmbWavesReflPos,    // number waves with positive reflectivity
+		                     const unsigned int nmbWavesMax,        // maximum extent of iWave index for production and decay amplitude arrays
+		                     T*                 d_derivativeSums,   // output array of partial sums with one entry for each kernel
+		                     const unsigned int nmbDerivativeSums)  // number of elements in output array; [iRank][iRefl][iWave][threadId]
 		{
 			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
 			if (threadId < nmbDerivativeSums) {

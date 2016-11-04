@@ -37,6 +37,7 @@ message_setup_this_dir()
 # set include directories
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${RPWA_CUDA_INCLUDE_DIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
 	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
 	${RPWA_PARTICLEDATA_INCLUDE_DIR}
@@ -77,6 +78,7 @@ make_shared_library(
 	"${SOURCES}"
 	"${Libconfig_LIBS}"
 	"${ROOT_LIBS}"
+	"${RPWA_CUDA_LIB}"
 	"${RPWA_DECAYAMPLITUDE_LIB}"
 	"${RPWA_PARTIALWAVEFIT_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"

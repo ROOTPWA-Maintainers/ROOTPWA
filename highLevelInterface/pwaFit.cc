@@ -16,6 +16,10 @@
 #include <partialWaveFitHelper.h>
 #include <pwaLikelihood.h>
 #include <reportingUtils.hpp>
+#ifdef USE_CUDA
+#include "complex.cuh"
+#include "likelihoodInterface.cuh"
+#endif
 
 
 using namespace std;

@@ -95,10 +95,10 @@ namespace rpwa {
 			                          const unsigned int nmbWavesRefl[2],
 			                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
 
-			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
-			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
-			static unsigned int availableDeviceMem();                                 ///< returns available memory capacity of used CUDA device
-			static const struct cudaDeviceProp* deviceProperties();                   ///< returns pointer to properties of used CUDA device
+			static bool         cudaInitialized   () { return _cudaInitialized; }  ///< returns status of CUDA initialization
+			static unsigned int totalDeviceMem    ();                              ///< returns total memory capacity of used CUDA device
+			static unsigned int availableDeviceMem();                              ///< returns available memory capacity of used CUDA device
+			static const struct cudaDeviceProp* deviceProperties();                ///< returns pointer to properties of used CUDA device
 
 			template<typename kernelT>
 			static std::ostream& printKernelAttributes(std::ostream& out,

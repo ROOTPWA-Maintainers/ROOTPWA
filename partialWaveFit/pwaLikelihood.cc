@@ -54,6 +54,7 @@
 #include "fileUtils.hpp"
 #include "reportingUtils.hpp"
 #ifdef USE_CUDA
+#include "arrayUtils.hpp"
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
 #endif
@@ -1314,10 +1315,29 @@ pwaLikelihood<complexT>::finishInit()
 	}  // _useNormalizedAmps
 
 #ifdef USE_CUDA
-	if (_cudaEnabled)
-		cuda::likelihoodInterface<cuda::complex<value_type> >::init
-			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
-			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
+	if (_cudaEnabled) {
+		// rearrange decay-amplitude array
+		complexT*          decayAmpsArray = 0;
+		const unsigned int maxNmbWaves    = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
+		const unsigned int nmbDim         = 3;
+		const unsigned int dim[nmbDim]    = {2, maxNmbWaves, _nmbEvents};  // [reflectivity][wave index][event index]
+		{
+			const complexT zero = 0;
+			allocatePseudoNdimArray(decayAmpsArray, dim, nmbDim, &zero);
+			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+						const unsigned int indices[3] = {iRefl, iWave, iEvt};
+						const unsigned int offset     = indicesToOffset(indices, dim, nmbDim);
+						decayAmpsArray[offset]        = _decayAmps[iRefl][iEvt][iWave];
+					}
+				}
+			}
+		}
+		// initialize CUDA interface
+		cuda::likelihoodInterface<cuda::complex<value_type> >::init(reinterpret_cast<cuda::complex<value_type>*>(decayAmpsArray),
+			nmbElements(dim, nmbDim),	_nmbEvents, _nmbWavesRefl, false);
+	}
 #endif
 
 	_initFinished = true;

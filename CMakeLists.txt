@@ -296,14 +296,14 @@ message(STATUS "")
 message(STATUS ">>> Setting up pylint.")
 find_package(PYLINT 1.5.5)
 set_package_properties(PYLINT
-	PROPERTIES
-	DESCRIPTION "code analysis for Python"
-	URL "https://www.pylint.org"
-	PURPOSE "Used to assess quality of Python code."
-	TYPE OPTIONAL
-	)
+        PROPERTIES
+        DESCRIPTION "code analysis for Python"
+        URL "https://www.pylint.org"
+        PURPOSE "Used to assess quality of Python code."
+        TYPE OPTIONAL
+        )
 if(NOT PYLINT_FOUND)
-	message(STATUS "Cannot find pylint executable. Quality of python code will no be assessed.")
+        message(STATUS "Cannot find pylint executable. Quality of python code will no be assessed.")
 endif()
 
 
@@ -312,10 +312,10 @@ message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
 set(CUDA_SHADER_MODELS "20")
-find_package(CUDA 5.5)
+find_package(CUDA 8.0)
 set_package_properties(CUDA
-	PROPERTIES
-	DESCRIPTION "nvidia GPGPU framework"
+        PROPERTIES
+        DESCRIPTION "nvidia GPGPU framework"
 	URL "http://developer.nvidia.com/category/zone/cuda-zone"
 	PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
 	TYPE OPTIONAL

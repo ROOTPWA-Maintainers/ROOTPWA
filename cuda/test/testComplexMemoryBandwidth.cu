@@ -481,8 +481,8 @@ void runKernel(const unsigned int nmbBlocks,
 }
 
 
-int main(int    argc,
-         char** argv) 
+int main(int,
+         char**) 
 {
         // get number of CUDA devices in system
         int deviceCount = 0;

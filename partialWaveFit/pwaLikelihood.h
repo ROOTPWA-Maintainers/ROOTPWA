@@ -297,13 +297,13 @@ namespace rpwa {
 		                                                 // reflectivity
 		ampToParMapType           _prodAmpToFuncParMap;  // maps each production amplitude to the indices
 		                                                // of its real and imginary part in the parameter
-		                                                // array; negative indices mean that the parameter
-		                                                // is not existing due to rank restrictions
+                                                                // array; negative indices mean that the parameter
+                                                                // is not existing due to rank restrictions
 
-		decayAmpsArrayType _decayAmps[2];  // precalculated decay amplitudes [event index][reflectivity][wave index]
+                decayAmpsArrayType _decayAmps[2];  // precalculated decay amplitudes [reflectivity][event index][wave index]
 
-		mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
-		mutable std::vector<double> _derivCache;  // cache for derivatives
+                mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
+                mutable std::vector<double> _derivCache;  // cache for derivatives
 
 		// normalization integrals
 		normMatrixArrayType _normMatrix;          // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]

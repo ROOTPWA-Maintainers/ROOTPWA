@@ -34,9 +34,11 @@
 message_setup_this_dir()
 
 
-# -Wall reports warnings in system libraries; so we cannot use -Werror
-set(CMAKE_CXX_FLAGS "-Wall")
+# modify compiler flags for CUDA
+string(REPLACE "-Woverloaded-virtual" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+string(REPLACE "  " " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Wno-deprecated-gpu-targets")
 message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 
@@ -54,12 +56,15 @@ include_directories(
 # source files that are compiled into library
 set(SOURCES
 	likelihoodInterface.cu
-	)
+  )
+
+
+# library name
+lib_name_for_current_dir(THIS_LIB)
 
 
 # compile CUDA library
-set(_THIS_LIB "RootPwaCuda")
-cuda_add_library(${_THIS_LIB} ${SOURCES} SHARED)
+cuda_add_library(${THIS_LIB} ${SOURCES} SHARED)
 
 
 # build tests
