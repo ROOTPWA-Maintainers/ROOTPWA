@@ -180,10 +180,11 @@ likelihoodInterface<complexT>::closeCudaDevice()
 		checkCudaErrors(cudaFree(_d_decayAmps));
 		_d_decayAmps = 0;
 	}
-	checkCudaErrors(cudaThreadExit());
-	if (_cudaInitialized)
+	if (_cudaInitialized) {
 		printInfo << "closing CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
 		          << availableDeviceMem() << " bytes available memory" << endl;
+		checkCudaErrors(cudaDeviceReset());
+	}
 	_cudaInitialized = false;
 	_cudaDeviceId    = -1;
 }
