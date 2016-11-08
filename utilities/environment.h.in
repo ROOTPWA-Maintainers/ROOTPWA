@@ -1,4 +1,4 @@
-
+// variables defined by CMake
 #cmakedefine CMAKE_HOST_SYSTEM_NAME "@CMAKE_HOST_SYSTEM_NAME@"
 #cmakedefine CMAKE_HOST_SYSTEM_PROCESSOR "@CMAKE_HOST_SYSTEM_PROCESSOR@"
 #cmakedefine CMAKE_HOST_SYSTEM_VERSION "@CMAKE_HOST_SYSTEM_VERSION@"
@@ -16,7 +16,7 @@
 #cmakedefine YamlCpp_DIR "@YamlCpp_DIR@"
 #cmakedefine ROOTSYS "@ROOTSYS@"
 #cmakedefine CUDA_VERSION "@CUDA_VERSION@"
-#cmakedefine CUDA_LIB_DIRS "@CUDA_LIB_DIRS@"
+#cmakedefine CUDA_TOOLKIT_ROOT_DIR "@CUDA_TOOLKIT_ROOT_DIR@"
 #cmakedefine BAT_VERSION "@BAT_VERSION@"
 #cmakedefine BAT_ROOT_DIR "@BAT_ROOT_DIR@"
 #cmakedefine NLopt_DIR "@NLopt_DIR@"
@@ -24,7 +24,7 @@
 #cmakedefine PYTHON_INCLUDE_DIRS "@PYTHON_INCLUDE_DIRS@"
 
 
-// check macro variables set by Makefile
+// check macro variables set by CMake and set default value if not defined
 #ifndef CMAKE_HOST_SYSTEM_NAME
 #define CMAKE_HOST_SYSTEM_NAME "undefined"
 #endif
@@ -76,8 +76,8 @@
 #ifndef CUDA_VERSION
 #define CUDA_VERSION "undefined"
 #endif
-#ifndef CUDA_LIB_DIRS
-#define CUDA_LIB_DIRS "undefined"
+#ifndef CUDA_TOOLKIT_ROOT_DIR
+#define CUDA_TOOLKIT_ROOT_DIR "undefined"
 #endif
 #ifndef BAT_VERSION
 #define BAT_VERSION "undefined"

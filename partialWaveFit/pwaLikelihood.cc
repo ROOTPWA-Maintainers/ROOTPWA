@@ -1336,7 +1336,7 @@ pwaLikelihood<complexT>::finishInit()
 		}
 		// initialize CUDA interface
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init(reinterpret_cast<cuda::complex<value_type>*>(decayAmpsArray),
-			nmbElements(dim, nmbDim),	_nmbEvents, _nmbWavesRefl, false);
+			nmbElements(dim, nmbDim), _nmbEvents, _nmbWavesRefl, false);
 	}
 #endif
 

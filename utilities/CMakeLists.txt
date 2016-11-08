@@ -63,7 +63,7 @@ ADD_CUSTOM_TARGET(
 	                 -D YamlCpp_DIR=${YamlCpp_DIR}
 	                 -D ROOTSYS=${ROOTSYS}
 	                 -D CUDA_VERSION=${CUDA_VERSION}
-	                 -D CUDA_LIB_DIRS=${CUDA_LIB_DIRS}
+	                 -D CUDA_TOOLKIT_ROOT_DIR=${CUDA_TOOLKIT_ROOT_DIR}
 	                 -D BAT_VERSION=${BAT_VERSION}
 	                 -D BAT_ROOT_DIR=${BAT_ROOT_DIR}
 	                 -D NLopt_DIR=${NLopt_DIR}

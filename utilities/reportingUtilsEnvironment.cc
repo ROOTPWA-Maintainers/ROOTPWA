@@ -40,7 +40,7 @@ void rpwa::printLibraryInfo()
 	          << "    yaml-cpp version " << YamlCpp_VERSION << " in '" << YamlCpp_DIR << "'" << std::endl
 	          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl;
 #ifdef USE_CUDA
-	std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
+	std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_TOOLKIT_ROOT_DIR << "'" << std::endl;
 #endif
 #ifdef USE_BAT
 	std::cout << "    BAT version " << BAT_VERSION << " in '" << BAT_ROOT_DIR << "'" << std::endl;
