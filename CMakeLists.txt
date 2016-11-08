@@ -329,9 +329,10 @@ else()
 	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
 	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
 
+	# find CUDA sample directory
 	if(NOT DEFINED ENV{CUDA_SAMPLES_ROOT_DIR})
 		# use default path for CUDA samples, if not defined by user
-		set(ENV{CUDA_SAMPLES_ROOT_DIR} "$ENV{HOME}/NVIDIA_CUDA-${CUDA_VERSION}_Samples")
+		set(ENV{CUDA_SAMPLES_ROOT_DIR} "${CUDA_TOOLKIT_ROOT_DIR}/samples")
 	endif()
 	# find include directory
 	find_file(CUDA_SAMPLES_INC_DIR

@@ -91,6 +91,44 @@ function(make_executable EXE_NAME SOURCES)
 endfunction(make_executable)
 
 
+# adds CUDA shared library
+# additional libraries that should be linked to can be given as optional arguments
+function(make_cuda_shared_library LIB_NAME SOURCES)
+	message(STATUS ">>> setting up CUDA shared library '${LIB_NAME}'")
+	if(DEBUG_OUTPUT)
+		message(STATUS "make_cuda_shared_library was called with the following arguments:
+		    LIB_NAME = '${LIB_NAME}'
+		    SOURCES  = '${SOURCES}'
+		    ARGN     = '${ARGN}'")
+	endif()
+	cuda_add_library(${LIB_NAME} ${SOURCES} SHARED)
+	# proccess link libraries in additional arguments
+	foreach(_LIB ${ARGN})
+		target_link_libraries(${LIB_NAME} ${_LIB})
+	endforeach()
+	unset(_LIB)
+endfunction(make_cuda_shared_library)
+
+
+# adds CUDA executable
+# additional libraries that should be linked to can be given as optional arguments
+function(make_cuda_executable EXE_NAME SOURCES)
+	message(STATUS ">>> setting up CUDA executable '${EXE_NAME}'")
+	if(DEBUG_OUTPUT)
+		message(STATUS "make_cuda_executable was called with the following arguments:
+		    EXE_NAME = '${EXE_NAME}'
+		    SOURCES  = '${SOURCES}'
+		    ARGN     = '${ARGN}'")
+	endif()
+	cuda_add_executable(${EXE_NAME} ${SOURCES})
+	# proccess link libraries in additional arguments
+	foreach(_LIB ${ARGN})
+		target_link_libraries(${EXE_NAME} ${_LIB})
+	endforeach()
+	unset(_LIB)
+endfunction(make_cuda_executable)
+
+
 # protects against building project in source directory
 macro(enforce_out_of_source_build)
 	if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})

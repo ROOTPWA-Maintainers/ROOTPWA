@@ -31,28 +31,9 @@
 #//-------------------------------------------------------------------------
 
 
-# adds CUDA executable
-# additional libraries that should be linked to can be given as optional arguments
-function(make_cuda_executable EXE_NAME SOURCES)
-        message(STATUS ">>> setting up CUDA executable '${EXE_NAME}'")
-        if(DEBUG_OUTPUT)
-                message(STATUS "make_cuda_executable was called with the following arguments:
-        EXE_NAME = '${EXE_NAME}'
-        SOURCES  = '${SOURCES}'
-        ARGN     = '${ARGN}'")
-        endif()
-        cuda_add_executable(${EXE_NAME} ${SOURCES})
-        # proccess link libraries in additional arguments
-        foreach(_LIB ${ARGN})
-                target_link_libraries(${EXE_NAME} ${_LIB})
-        endforeach()
-        unset(_LIB)
-endfunction(make_cuda_executable)
-
-
 # set include directories
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	${RPWA_CUDA_INCLUDE_DIR}
 	${RPWA_UTILITIES_INCLUDE_DIR}
 	SYSTEM
@@ -63,9 +44,9 @@ include_directories(
 
 
 # compile HOST executables
-make_executable(testLikelihoodMockup testLikelihoodMockup.cc ${CUDA_CUTIL_LIBRARY} "${RPWA_CUDA_LIB}" "${ROOT_LIBS}")
+make_executable(testLikelihoodMockup testLikelihoodMockup.cc "${RPWA_CUDA_LIB}" "${ROOT_LIBS}")
 
 
 # compile CUDA executables
-make_cuda_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu ${CUDA_CUTIL_LIBRARY})
-make_cuda_executable(benchmarkMemoryBandwidth   benchmarkMemoryBandwidth.cu   ${CUDA_CUTIL_LIBRARY})
+make_cuda_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+make_cuda_executable(benchmarkMemoryBandwidth   benchmarkMemoryBandwidth.cu  )

@@ -64,7 +64,7 @@ lib_name_for_current_dir(THIS_LIB)
 
 
 # compile CUDA library
-cuda_add_library(${THIS_LIB} ${SOURCES} SHARED)
+make_cuda_shared_library(${THIS_LIB} ${SOURCES})
 
 
 # build tests
