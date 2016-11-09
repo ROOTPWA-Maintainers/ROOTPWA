@@ -278,7 +278,7 @@ set_package_properties(PYTHON
 	DESCRIPTION "General-purpose, high-level programming language"
 	URL "http://www.python.org"
 	PURPOSE "Provides scripting interface to ROOTPWA classes"
-	TYPE OPTIONAL
+	TYPE REQUIRED
 	)
 # check that Boost.Python library was found
 if(NOT Boost_PYTHON_FOUND)
