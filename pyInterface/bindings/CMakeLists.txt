@@ -41,12 +41,14 @@ set(NBODYPHASESPACE_SUBDIR nBodyPhaseSpace)
 set(PARTICLEDATA_SUBDIR particleData)
 set(PARTIALWAVEFIT_SUBDIR partialWaveFit)
 set(PYUTILS_SUBDIR pyUtils)
+set(RESONANCEFIT_SUBDIR resonanceFit)
 set(STORAGEFORMATS_SUBDIR storageFormats)
 set(UTILITIES_SUBDIR utilities)
 
 
 # set include directories
 include_directories(
+	${CMAKE_SOURCE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${PYUTILS_SUBDIR}
 	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
@@ -118,6 +120,16 @@ set(SOURCES
 	${PARTICLEDATA_SUBDIR}/particle_py.cc
 	${PARTICLEDATA_SUBDIR}/particleDataTable_py.cc
 	${PARTICLEDATA_SUBDIR}/particleProperties_py.cc
+	${RESONANCEFIT_SUBDIR}/cache_py.cc
+	${RESONANCEFIT_SUBDIR}/components_py.cc
+	${RESONANCEFIT_SUBDIR}/data_py.cc
+	${RESONANCEFIT_SUBDIR}/fsmd_py.cc
+	${RESONANCEFIT_SUBDIR}/function_py.cc
+	${RESONANCEFIT_SUBDIR}/input_py.cc
+	${RESONANCEFIT_SUBDIR}/model_py.cc
+	${RESONANCEFIT_SUBDIR}/parameter_py.cc
+	${RESONANCEFIT_SUBDIR}/parameters_py.cc
+	${RESONANCEFIT_SUBDIR}/resonanceFit_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeFileWriter_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeMetadata_py.cc
 	${STORAGEFORMATS_SUBDIR}/amplitudeTreeLeaf_py.cc
@@ -150,6 +162,7 @@ make_shared_library(
 	"${RPWA_HIGHLEVELINTERFACE_LIB}"
 	"${RPWA_NBODYPHASESPACE_LIB}"
 	"${RPWA_PARTICLEDATA_LIB}"
+	"${RPWA_RESONANCEFIT_LIB}"
 	"${RPWA_STORAGEFORMATS_LIB}"
 	"${RPWA_UTILITIES_LIB}"
 	)

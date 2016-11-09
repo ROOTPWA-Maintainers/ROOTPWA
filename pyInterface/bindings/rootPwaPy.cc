@@ -67,6 +67,18 @@
 #include "particleDataTable_py.h"
 #include "particleProperties_py.h"
 
+// resonanceFit
+#include "resonanceFit/cache_py.h"
+#include "resonanceFit/components_py.h"
+#include "resonanceFit/data_py.h"
+#include "resonanceFit/fsmd_py.h"
+#include "resonanceFit/function_py.h"
+#include "resonanceFit/input_py.h"
+#include "resonanceFit/model_py.h"
+#include "resonanceFit/parameter_py.h"
+#include "resonanceFit/parameters_py.h"
+#include "resonanceFit/resonanceFit_py.h"
+
 // storageFormats
 #include "amplitudeFileWriter_py.h"
 #include "amplitudeMetadata_py.h"
@@ -145,5 +157,15 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 #ifdef USE_NLOPT
 	rpwa::py::exportPwaNloptFit();
 #endif
+	rpwa::py::resonanceFit::exportCache();
+	rpwa::py::resonanceFit::exportComponents();
+	rpwa::py::resonanceFit::exportData();
+	rpwa::py::resonanceFit::exportFsmd();
+	rpwa::py::resonanceFit::exportFunction();
+	rpwa::py::resonanceFit::exportInput();
+	rpwa::py::resonanceFit::exportModel();
+	rpwa::py::resonanceFit::exportParameter();
+	rpwa::py::resonanceFit::exportParameters();
+	rpwa::py::resonanceFit::exportResonanceFit();
 
 }
