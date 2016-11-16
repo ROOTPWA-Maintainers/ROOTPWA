@@ -48,6 +48,52 @@
 namespace {
 
 
+	bool
+	zeroWaveForPlotting(const rpwa::resonanceFit::dataConstPtr& fitData,
+	                    const size_t idxBin,
+	                    const size_t idxMass,
+	                    const size_t idxWave)
+	{
+		bool zeroWave = true;
+		zeroWave &= (fitData->plottingIntensities()[idxBin][idxMass][idxWave].first == 0.);
+		zeroWave &= (fitData->plottingIntensities()[idxBin][idxMass][idxWave].second == 0.);
+
+		for(size_t jdxWave = 0; jdxWave < fitData->nrWaves(); ++jdxWave) {
+			zeroWave &= (fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+			zeroWave &= (fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+			zeroWave &= (fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+		}
+
+		return zeroWave;
+	}
+
+
+	bool
+	zeroWaveForSysPlotting(const rpwa::resonanceFit::dataConstPtr& fitData,
+	                       const size_t idxBin,
+	                       const size_t idxMass,
+	                       const size_t idxWave)
+	{
+		bool zeroWave = true;
+		zeroWave &= (fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first == 0.);
+		zeroWave &= (fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second == 0.);
+
+		for(size_t jdxWave = 0; jdxWave < fitData->nrWaves(); ++jdxWave) {
+			zeroWave &= (fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+			zeroWave &= (fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+			zeroWave &= (fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].first == 0.);
+			zeroWave &= (fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].second == 0.);
+		}
+
+		return zeroWave;
+	}
+
+
 	void
 	createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
 	                const rpwa::resonanceFit::dataConstPtr& fitData,
@@ -118,21 +164,29 @@ namespace {
 
 		// plot data
 		double maxIE = -std::numeric_limits<double>::max();
-		for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
+		for(size_t point = 0, skipData = 0, skipSys = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 			const size_t idxMass = point;
 			const double mass = fitData->massBinCenters()[idxBin][idxMass];
 			const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
-			data->SetPoint(point, mass, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first);
-			data->SetPointError(point, halfBin, fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
-			maxIE = std::max(maxIE, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first+fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
+			if(not zeroWaveForPlotting(fitData, idxBin, idxMass, idxWave)) {
+				data->SetPoint(point - skipData, mass, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first);
+				data->SetPointError(point - skipData, halfBin, fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
+				maxIE = std::max(maxIE, fitData->plottingIntensities()[idxBin][idxMass][idxWave].first+fitData->plottingIntensities()[idxBin][idxMass][idxWave].second);
+			} else {
+				++skipData;
+			}
 
 			if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
-				const double minSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first;
-				const double maxSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second;
-				systematics->SetPoint(point, mass, (maxSI+minSI)/2.);
-				systematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
-				maxIE = std::max(maxIE, maxSI);
+				if(not zeroWaveForSysPlotting(fitData, idxBin, idxMass, idxWave)) {
+					const double minSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first;
+					const double maxSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second;
+					systematics->SetPoint(point - skipSys, mass, (maxSI+minSI)/2.);
+					systematics->SetPointError(point - skipSys, halfBin, (maxSI-minSI)/2.);
+					maxIE = std::max(maxIE, maxSI);
+				} else {
+					++skipSys;
+				}
 			}
 		}
 
@@ -254,19 +308,28 @@ namespace {
 		}
 
 		// plot data
-		for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
+		for(size_t point = 0, skipData = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 			const size_t idxMass = point;
 			const double mass = fitData->massBinCenters()[idxBin][idxMass];
 			const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
+			bool zeroWave = true;
 			double sum = 0.;
 			double error2 = 0.;
 			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-				sum += fitData->plottingIntensities()[idxBin][idxMass][idxWave].first;
-				error2 += std::pow(fitData->plottingIntensities()[idxBin][idxMass][idxWave].second, 2);
+				if(not zeroWaveForPlotting(fitData, idxBin, idxMass, idxWave)) {
+					zeroWave = false;
+					sum += fitData->plottingIntensities()[idxBin][idxMass][idxWave].first;
+					error2 += std::pow(fitData->plottingIntensities()[idxBin][idxMass][idxWave].second, 2);
+				}
 			}
-			data->SetPoint(point, mass, sum);
-			data->SetPointError(point, halfBin, sqrt(error2));
+
+			if(not zeroWave) {
+				data->SetPoint(point - skipData, mass, sum);
+				data->SetPointError(point - skipData, halfBin, sqrt(error2));
+			} else {
+				++skipData;
+			}
 		}
 
 		// plot fit, either over full or limited mass range
@@ -406,35 +469,43 @@ namespace {
 		phase.Add(phaseFit, "L");
 
 		// plot data
-		for(size_t point = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
+		for(size_t point = 0, skipData = 0, skipSys = 0; point <= (fitData->nrMassBins()[idxBin]-1); ++point) {
 			const size_t idxMass = point;
 			const double mass = fitData->massBinCenters()[idxBin][idxMass];
 			const double halfBin = 0.5 * (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1);
 
-			realData->SetPoint(point, mass, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first);
-			realData->SetPointError(point, halfBin, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second);
+			if(not zeroWaveForPlotting(fitData, idxBin, idxMass, idxWave) and not zeroWaveForPlotting(fitData, idxBin, idxMass, jdxWave)) {
+				realData->SetPoint(point - skipData, mass, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first);
+				realData->SetPointError(point - skipData, halfBin, fitData->plottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second);
 
-			imagData->SetPoint(point, mass, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first);
-			imagData->SetPointError(point, halfBin, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second);
+				imagData->SetPoint(point - skipData, mass, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first);
+				imagData->SetPointError(point - skipData, halfBin, fitData->plottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second);
 
-			phaseData->SetPoint(point, mass, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].first);
-			phaseData->SetPointError(point, halfBin, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].second);
+				phaseData->SetPoint(point - skipData, mass, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].first);
+				phaseData->SetPointError(point - skipData, halfBin, fitData->plottingPhases()[idxBin][idxMass][idxWave][jdxWave].second);
+			} else {
+				++skipData;
+			}
 
 			if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
-				const double minSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first;
-				const double maxSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second;
-				realSystematics->SetPoint(point, mass, (maxSR+minSR)/2.);
-				realSystematics->SetPointError(point, halfBin, (maxSR-minSR)/2.);
+				if(not zeroWaveForSysPlotting(fitData, idxBin, idxMass, idxWave) and not zeroWaveForPlotting(fitData, idxBin, idxMass, jdxWave)) {
+					const double minSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first;
+					const double maxSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second;
+					realSystematics->SetPoint(point - skipSys, mass, (maxSR+minSR)/2.);
+					realSystematics->SetPointError(point - skipSys, halfBin, (maxSR-minSR)/2.);
 
-				const double minSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first;
-				const double maxSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second;
-				imagSystematics->SetPoint(point, mass, (maxSI+minSI)/2.);
-				imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
+					const double minSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].first;
+					const double maxSI = fitData->sysPlottingSpinDensityMatrixElementsImag()[idxBin][idxMass][idxWave][jdxWave].second;
+					imagSystematics->SetPoint(point - skipSys, mass, (maxSI+minSI)/2.);
+					imagSystematics->SetPointError(point - skipSys, halfBin, (maxSI-minSI)/2.);
 
-				const double minSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].first;
-				const double maxSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].second;
-				phaseSystematics->SetPoint(point, mass, (maxSP+minSP)/2.);
-				phaseSystematics->SetPointError(point, halfBin, (maxSP-minSP)/2.);
+					const double minSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].first;
+					const double maxSP = fitData->sysPlottingPhases()[idxBin][idxMass][idxWave][jdxWave].second;
+					phaseSystematics->SetPoint(point - skipSys, mass, (maxSP+minSP)/2.);
+					phaseSystematics->SetPointError(point - skipSys, halfBin, (maxSP-minSP)/2.);
+				} else {
+					++skipSys;
+				}
 			}
 		}
 
@@ -481,6 +552,7 @@ namespace {
 		}
 
 		// rectify phase graphs
+		size_t skipData = 0;
 		for(size_t point = 0; point <= (extraBinning*(fitData->nrMassBins()[idxBin]-1)); ++point) {
 			const size_t idxMass = (point%extraBinning == 0) ? (point/extraBinning) : std::numeric_limits<size_t>::max();
 			const double massStep = (fitData->massBinCenters()[idxBin][fitData->nrMassBins()[idxBin]-1] - fitData->massBinCenters()[idxBin][0]) / (fitData->nrMassBins()[idxBin] - 1) / extraBinning;
@@ -491,22 +563,26 @@ namespace {
 			phaseFitAll.GetPoint(point, x, valueFit);
 
 			if(idxMass != std::numeric_limits<size_t>::max()) {
-				int bestOffs = 0;
-				double bestDiff = std::numeric_limits<double>::max();
+				if(not zeroWaveForPlotting(fitData, idxBin, idxMass, idxWave) and not zeroWaveForPlotting(fitData, idxBin, idxMass, jdxWave)) {
+					int bestOffs = 0;
+					double bestDiff = std::numeric_limits<double>::max();
 
-				double data;
-				phaseData->GetPoint(idxMass, x, data);
-				for(int offs = -5; offs < 6; ++offs) {
-					if(std::abs(data + offs*360. - valueFit) < bestDiff) {
-						bestDiff = std::abs(data + offs*360. - valueFit);
-						bestOffs = offs;
+					double data;
+					phaseData->GetPoint(idxMass - skipData, x, data);
+					for(int offs = -5; offs < 6; ++offs) {
+						if(std::abs(data + offs*360. - valueFit) < bestDiff) {
+							bestDiff = std::abs(data + offs*360. - valueFit);
+							bestOffs = offs;
+						}
 					}
-				}
 
-				phaseData->SetPoint(idxMass, x, data + bestOffs*360.);
-				if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
-					phaseSystematics->GetPoint(idxMass, x, data);
-					phaseSystematics->SetPoint(idxMass, x, data + bestOffs*360.);
+					phaseData->SetPoint(idxMass - skipData, x, data + bestOffs*360.);
+					if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+						phaseSystematics->GetPoint(idxMass - skipData, x, data);
+						phaseSystematics->SetPoint(idxMass - skipData, x, data + bestOffs*360.);
+					}
+				} else {
+					++skipData;
 				}
 			}
 
