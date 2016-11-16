@@ -21,6 +21,8 @@
 
 #include <boost/numeric/ublas/lu.hpp>
 
+#include <TBuffer.h>
+
 #include "complexMatrix.h"
 #include "reportingUtils.hpp"
 
