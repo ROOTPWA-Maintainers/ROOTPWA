@@ -62,25 +62,25 @@ namespace {
 		const size_t maxMassBins = *(productionAmplitudes.shape()+1);
 		const size_t nrWaves = *(productionAmplitudes.shape()+2);
 
-		// get range of used mass bins (in any wave) for each bin
-		std::vector<size_t> idxMassMax(nrBins);
-		std::vector<size_t> idxMassMin(nrBins);
 		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			idxMassMin[idxBin] = maxMassBins;
-			idxMassMax[idxBin] = 0;
+			// get range of used mass bins (in any wave) for each bin
+			size_t idxMassMin = maxMassBins;
+			size_t idxMassMax = 0;
 			for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
-				idxMassMin[idxBin] = std::min(idxMassMin[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
-				idxMassMax[idxBin] = std::max(idxMassMax[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
+				idxMassMin = std::min(idxMassMin, wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
+				idxMassMax = std::max(idxMassMax, wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
 			}
-		}
 
-		// get a list of waves that are zero (those have to be excluded
-		// from the inversion of the covariance matrix below) and test
-		// that the anchor wave is non-zero over the complete fit range
-		bool zeroAnchorWave = false;
-		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[nrBins][maxMassBins]);
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
+			for(size_t idxMass = idxMassMin; idxMass <= idxMassMax; ++idxMass) {
+				// get a list of waves that are zero (those have to be excluded
+				// from the inversion of the covariance matrix below) and test
+				// that the anchor wave is non-zero over the complete fit range
+				bool zeroAnchorWave = false;
+				std::vector<size_t> zeroWaves;
+				// test if the anchor wave is real valued
+				bool realAnchorWave = true;
+				// test that any non-anchor wave is not real valued
+				bool realOtherWaves = false;
 				for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
 					bool zeroThisWave = true;
 					zeroThisWave &= (productionAmplitudes[idxBin][idxMass][idxWave].real() == 0.);
@@ -90,12 +90,21 @@ namespace {
 					zeroThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
 					zeroThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave+1) == 0.);
 
+					bool realThisWave = true;
+					realThisWave &= (productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
+					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*idxWave+1) == 0.);
+					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
+					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave+1) == 0.);
+
 					if(zeroThisWave or idxMass < wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
-						zeroWaves[idxBin][idxMass].push_back(idxWave);
+						zeroWaves.push_back(idxWave);
 					}
 
 					if(idxWave == idxAnchorWave) {
 						zeroAnchorWave |= zeroThisWave;
+						realAnchorWave &= realThisWave;
+					} else if(not zeroThisWave) {
+						realOtherWaves |= realThisWave;
 					}
 
 					// check that a wave is not zero in its fit range
@@ -104,66 +113,40 @@ namespace {
 						return false;
 					}
 				}
-			}
-		}
 
-		// error if anchor wave is zero in one mass bin
-		if(zeroAnchorWave) {
-			printErr << "production amplitudes of anchor wave zero in some mass bins (mass limit in mass-independent fit)." << std::endl;
-			return false;
-		}
-
-		// test if the anchor wave is real valued
-		// test that any non-anchor wave is not real valued
-		bool realAnchorWave = true;
-		bool realOtherWaves = false;
-		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
-			bool realThisWave = true;
-			for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-				for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
-					realThisWave &= (productionAmplitudes[idxBin][idxMass][idxWave].imag() == 0.);
-					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave,   2*idxWave+1) == 0.);
-					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave  ) == 0.);
-					realThisWave &= (productionAmplitudesCovariance[idxBin][idxMass](2*idxWave+1, 2*idxWave+1) == 0.);
+				// error if anchor wave is zero in one mass bin
+				if(zeroAnchorWave) {
+					printErr << "production amplitudes of anchor wave zero in some mass bins (mass limit in mass-independent fit)." << std::endl;
+					return false;
 				}
-			}
 
-			if(idxWave == idxAnchorWave) {
-				realAnchorWave &= realThisWave;
-			} else {
-				realOtherWaves |= realThisWave;
-			}
-		}
+				// error if any non-anchor wave is real
+				if(realOtherWaves) {
+					printErr << "production amplitudes cannot be fitted if a non-anchor wave is real valued." << std::endl;
+					return false;
+				}
 
-		// error if any non-anchor wave is real
-		if(realOtherWaves) {
-			printErr << "production amplitudes cannot be fitted if a non-anchor wave is real valued." << std::endl;
-			return false;
-		}
-
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
 				// determine whether the anchor wave should be used in the current bin
 				bool skipAnchor = false;
-				for(std::vector<size_t>::const_iterator it = zeroWaves[idxBin][idxMass].begin(); it != zeroWaves[idxBin][idxMass].end(); ++it) {
+				for(std::vector<size_t>::const_iterator it = zeroWaves.begin(); it != zeroWaves.end(); ++it) {
 					if(*it == idxAnchorWave) {
 						skipAnchor = true;
 					}
 				}
 
 				// import covariance matrix of production amplitudes
-				const size_t matrixSize = 2 * (nrWaves - zeroWaves[idxBin][idxMass].size()) - (skipAnchor ? 0 : 1);
+				const size_t matrixSize = 2 * (nrWaves - zeroWaves.size()) - (skipAnchor ? 0 : 1);
 				TMatrixT<double> reducedCovMat(matrixSize, matrixSize);
 
 				if(realAnchorWave) {
 					for(size_t idxWave = 0, idxSkip = 0; idxWave < nrWaves; ++idxWave) {
-						if(idxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
+						if(idxSkip < zeroWaves.size() and zeroWaves[idxSkip] == idxWave) {
 							++idxSkip;
 							continue;
 						}
 
 						for(size_t jdxWave = 0, jdxSkip = 0; jdxWave < nrWaves; ++jdxWave) {
-							if(jdxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
+							if(jdxSkip < zeroWaves.size() and zeroWaves[jdxSkip] == jdxWave) {
 								++jdxSkip;
 								continue;
 							}
@@ -184,17 +167,20 @@ namespace {
 						}
 					}
 				} else {
+					// rotate production amplitudes and
+					// covariance matrices such that the
+					// anchor wave is real
 					TMatrixT<double> covariance(matrixSize + (skipAnchor ? 0 : 1), matrixSize + (skipAnchor ? 0 : 1));
 					TMatrixT<double> jacobian(matrixSize, matrixSize + (skipAnchor ? 0 : 1));
 
 					for(size_t idxWave = 0, idxSkip = 0; idxWave < nrWaves; ++idxWave) {
-						if(idxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
+						if(idxSkip < zeroWaves.size() and zeroWaves[idxSkip] == idxWave) {
 							++idxSkip;
 							continue;
 						}
 
 						for(size_t jdxWave = 0, jdxSkip = 0; jdxWave < nrWaves; ++jdxWave) {
-							if(jdxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
+							if(jdxSkip < zeroWaves.size() and zeroWaves[jdxSkip] == jdxWave) {
 								++jdxSkip;
 								continue;
 							}
@@ -232,18 +218,24 @@ namespace {
 					TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
 
 					reducedCovMat = jacobian * covariance * jacobianT;
+
+					// modify measured production amplitude such that the anchor wave is always real and positive
+					const std::complex<double> anchorPhase = productionAmplitudes[idxBin][idxMass][idxAnchorWave] / abs(productionAmplitudes[idxBin][idxMass][idxAnchorWave]);
+					for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
+						productionAmplitudes[idxBin][idxMass][idxWave] /= anchorPhase;
+					}
 				}
 
 				// set entries in covariance matrix to zero according to which parts are to be used
 				if(useCovariance != rpwa::resonanceFit::function::useFullCovarianceMatrix) {
 					for(size_t idxWave = 0, idxSkip = 0; idxWave < nrWaves; ++idxWave) {
-						if(idxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
+						if(idxSkip < zeroWaves.size() and zeroWaves[idxSkip] == idxWave) {
 							++idxSkip;
 							continue;
 						}
 
 						for(size_t jdxWave = 0, jdxSkip = 0; jdxWave < nrWaves; ++jdxWave) {
-							if(jdxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
+							if(jdxSkip < zeroWaves.size() and zeroWaves[jdxSkip] == jdxWave) {
 								++jdxSkip;
 								continue;
 							}
@@ -281,13 +273,13 @@ namespace {
 				// import covariance matrix of production amplitudes
 				productionAmplitudesCovariance[idxBin][idxMass].Zero();
 				for(size_t idxWave = 0, idxSkip = 0; idxWave < nrWaves; ++idxWave) {
-					if(idxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][idxSkip] == idxWave) {
+					if(idxSkip < zeroWaves.size() and zeroWaves[idxSkip] == idxWave) {
 						++idxSkip;
 						continue;
 					}
 
 					for(size_t jdxWave = 0, jdxSkip = 0; jdxWave < nrWaves; ++jdxWave) {
-						if(jdxSkip < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jdxSkip] == jdxWave) {
+						if(jdxSkip < zeroWaves.size() and zeroWaves[jdxSkip] == jdxWave) {
 							++jdxSkip;
 							continue;
 						}
@@ -308,15 +300,13 @@ namespace {
 					}
 				}
 			}
-		}
 
-		// modify measured production amplitude such that the anchor wave is always real and positive
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
-				const std::complex<double> anchorPhase = productionAmplitudes[idxBin][idxMass][idxAnchorWave] / abs(productionAmplitudes[idxBin][idxMass][idxAnchorWave]);
-				for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
-					productionAmplitudes[idxBin][idxMass][idxWave] /= anchorPhase;
-				}
+			// remove (set to zero size) the unused covariance matrices
+			for(size_t idxMass = 0; idxMass < idxMassMin; ++idxMass) {
+				productionAmplitudesCovariance[idxBin][idxMass].ResizeTo(0, 0);
+			}
+			for(size_t idxMass = idxMassMax + 1; idxMass < maxMassBins; ++idxMass) {
+				productionAmplitudesCovariance[idxBin][idxMass].ResizeTo(0, 0);
 			}
 		}
 
@@ -335,23 +325,19 @@ namespace {
 		const size_t maxMassBins = *(spinDensityMatrices.shape()+1);
 		const size_t nrWaves = *(spinDensityMatrices.shape()+2);
 
-		// get range of used mass bins (in any wave) for each bin
-		std::vector<size_t> idxMassMax(nrBins);
-		std::vector<size_t> idxMassMin(nrBins);
 		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			idxMassMin[idxBin] = maxMassBins;
-			idxMassMax[idxBin] = 0;
+			// get range of used mass bins (in any wave) for each bin
+			size_t idxMassMin = maxMassBins;
+			size_t idxMassMax = 0;
 			for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
-				idxMassMin[idxBin] = std::min(idxMassMin[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
-				idxMassMax[idxBin] = std::max(idxMassMax[idxBin], wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
+				idxMassMin = std::min(idxMassMin, wavePairMassBinLimits[idxBin][idxWave][idxWave].first);
+				idxMassMax = std::max(idxMassMax, wavePairMassBinLimits[idxBin][idxWave][idxWave].second);
 			}
-		}
 
-		// get a list of waves that are zero (those have to be excluded
-		// from the inversion of the covariance matrix below)
-		boost::multi_array<std::vector<size_t>, 2> zeroWaves(boost::extents[nrBins][maxMassBins]);
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
+			for(size_t idxMass = idxMassMin; idxMass <= idxMassMax; ++idxMass) {
+				// get a list of waves that are zero (those have to be excluded
+				// from the inversion of the covariance matrix below)
+				std::vector<size_t> zeroWaves;
 				for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
 					bool zeroThisWave = true;
 					for(size_t jdxWave = 0; jdxWave < nrWaves; ++jdxWave) {
@@ -366,7 +352,7 @@ namespace {
 					}
 
 					if(zeroThisWave or idxMass < wavePairMassBinLimits[idxBin][idxWave][idxWave].first or idxMass > wavePairMassBinLimits[idxBin][idxWave][idxWave].second) {
-						zeroWaves[idxBin][idxMass].push_back(idxWave);
+						zeroWaves.push_back(idxWave);
 					}
 
 					// check that a wave is not zero in its fit range
@@ -375,25 +361,21 @@ namespace {
 						return false;
 					}
 				}
-			}
-		}
 
-		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
-			for(size_t idxMass = idxMassMin[idxBin]; idxMass <= idxMassMax[idxBin]; ++idxMass) {
 				// import covariance matrix of spin-density matrix elements
-				const size_t reducedMatrixSize((nrWaves - zeroWaves[idxBin][idxMass].size())*(nrWaves - zeroWaves[idxBin][idxMass].size()));
+				const size_t reducedMatrixSize((nrWaves - zeroWaves.size())*(nrWaves - zeroWaves.size()));
 				TMatrixT<double> reducedCovMat(reducedMatrixSize, reducedMatrixSize);
 
 				{
 					// i is for loop over rows
 					size_t redIdx = 0;
 					for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < nrWaves; ++iWave1) {
-						if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
+						if(iSkip1 < zeroWaves.size() and zeroWaves[iSkip1] == iWave1) {
 							++iSkip1;
 							continue;
 						}
 						for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < nrWaves; ++iWave2) {
-							if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
+							if(iSkip2 < zeroWaves.size() and zeroWaves[iSkip2] == iWave2) {
 								++iSkip2;
 								continue;
 							}
@@ -402,12 +384,12 @@ namespace {
 							// j is for loop over columns
 							size_t redJdx = 0;
 							for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < nrWaves; ++jWave1) {
-								if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
+								if(jSkip1 < zeroWaves.size() and zeroWaves[jSkip1] == jWave1) {
 									++jSkip1;
 									continue;
 								}
 								for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < nrWaves; ++jWave2) {
-									if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
+									if(jSkip2 < zeroWaves.size() and zeroWaves[jSkip2] == jWave2) {
 										++jSkip2;
 										continue;
 									}
@@ -467,12 +449,12 @@ namespace {
 				// i is for loop over rows
 				size_t redIdx = 0;
 				for(size_t iWave1 = 0, iSkip1 = 0; iWave1 < nrWaves; ++iWave1) {
-					if(iSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip1] == iWave1) {
+					if(iSkip1 < zeroWaves.size() and zeroWaves[iSkip1] == iWave1) {
 						++iSkip1;
 						continue;
 					}
 					for(size_t iWave2 = iWave1, iSkip2 = iSkip1; iWave2 < nrWaves; ++iWave2) {
-						if(iSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][iSkip2] == iWave2) {
+						if(iSkip2 < zeroWaves.size() and zeroWaves[iSkip2] == iWave2) {
 							++iSkip2;
 							continue;
 						}
@@ -481,12 +463,12 @@ namespace {
 						// j is for loop over columns
 						size_t redJdx = 0;
 						for(size_t jWave1 = 0, jSkip1 = 0; jWave1 < nrWaves; ++jWave1) {
-							if(jSkip1 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip1] == jWave1) {
+							if(jSkip1 < zeroWaves.size() and zeroWaves[jSkip1] == jWave1) {
 								++jSkip1;
 								continue;
 							}
 							for(size_t jWave2 = jWave1, jSkip2 = jSkip1; jWave2 < nrWaves; ++jWave2) {
-								if(jSkip2 < zeroWaves[idxBin][idxMass].size() and zeroWaves[idxBin][idxMass][jSkip2] == jWave2) {
+								if(jSkip2 < zeroWaves.size() and zeroWaves[jSkip2] == jWave2) {
 									++jSkip2;
 									continue;
 								}
@@ -526,6 +508,14 @@ namespace {
 						}
 					}
 				}
+			}
+
+			// remove (set to zero size) the unused covariance matrices
+			for(size_t idxMass = 0; idxMass < idxMassMin; ++idxMass) {
+				spinDensityMatricesCovariance[idxBin][idxMass].ResizeTo(0, 0);
+			}
+			for(size_t idxMass = idxMassMax + 1; idxMass < maxMassBins; ++idxMass) {
+				spinDensityMatricesCovariance[idxBin][idxMass].ResizeTo(0, 0);
 			}
 		}
 
