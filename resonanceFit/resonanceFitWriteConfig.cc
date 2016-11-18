@@ -80,8 +80,10 @@ namespace {
 			printDebug << "writing 'freeparameters'." << std::endl;
 		}
 
-		yamlOutput << YAML::Key << "freeparameters";
-		yamlOutput << YAML::Value << freeParameters;
+		if(freeParameters.size() > 0) {
+			yamlOutput << YAML::Key << "freeparameters";
+			yamlOutput << YAML::Value << freeParameters;
+		}
 	}
 
 

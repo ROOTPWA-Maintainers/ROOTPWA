@@ -106,12 +106,7 @@ rpwa::resonanceFit::readFreeParameters(const YAML::Node& configRoot)
 
 	std::vector<std::string> freeParameters;
 	if(not configFreeParameters) {
-		printWarn << "release order of parameters not specified in configuration file, using default one." << std::endl;
-
-		freeParameters.push_back("coupling branching");
-		freeParameters.push_back("coupling branching mass m0");
-		freeParameters.push_back("*");
-
+		printWarn << "release order of parameters not specified in configuration file." << std::endl;
 		return freeParameters;
 	}
 

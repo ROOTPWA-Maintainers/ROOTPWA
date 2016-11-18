@@ -115,6 +115,15 @@ rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::model
 		((ROOT::Minuit2::Minuit2Minimizer*)_minimizer.get())->SetStorageLevel(0);
 #endif
 	}
+
+	// in case the _freeParameters vector is empty, the default release
+	// order is used
+	if(_freeParameters.size() == 0) {
+		printWarn << "using default release order of parameters." << std::endl;
+		_freeParameters.push_back("coupling branching");
+		_freeParameters.push_back("coupling branching mass m0");
+		_freeParameters.push_back("*");
+	}
 }
 
 
