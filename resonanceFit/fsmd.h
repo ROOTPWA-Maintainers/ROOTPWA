@@ -81,7 +81,7 @@ namespace rpwa {
 			size_t getParameterIndex(const size_t idxBin) const { return _parametersIndex[idxBin]; }
 			size_t importParameters(const double* par,
 			                        rpwa::resonanceFit::parameters& fitParameters,
-			                        rpwa::resonanceFit::cache& cache);
+			                        rpwa::resonanceFit::cache& cache) const;
 
 			const rpwa::resonanceFit::parameter& getParameter(const size_t idxBin, const size_t idxParameter) const { return _parameters[idxBin][idxParameter]; }
 

@@ -305,11 +305,11 @@ rpwa::resonanceFit::component::setChannelAnchor(const std::vector<size_t>& chann
 size_t
 rpwa::resonanceFit::component::importCouplings(const double* par,
                                                rpwa::resonanceFit::parameters& fitParameters,
-                                               rpwa::resonanceFit::cache& cache)
+                                               rpwa::resonanceFit::cache& cache) const
 {
 	size_t counter = 0;
 	for(size_t idxCoupling = 0; idxCoupling < _nrCouplings; ++idxCoupling) {
-		rpwa::resonanceFit::component::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
+		const rpwa::resonanceFit::component::channel& channel = _channels[_channelsFromCoupling[idxCoupling]];
 		const std::vector<size_t>& bins = channel.getBins();
 		for(size_t i = 0; i < bins.size(); ++i) {
 			const size_t idxBin = bins[i];
@@ -343,7 +343,7 @@ rpwa::resonanceFit::component::importCouplings(const double* par,
 size_t
 rpwa::resonanceFit::component::importBranchings(const double* par,
                                                 rpwa::resonanceFit::parameters& fitParameters,
-                                                rpwa::resonanceFit::cache& cache)
+                                                rpwa::resonanceFit::cache& cache) const
 {
 	size_t counter = 0;
 	for(size_t idxBranching = 0; idxBranching < _nrBranchings; ++idxBranching) {
@@ -373,7 +373,7 @@ rpwa::resonanceFit::component::importBranchings(const double* par,
 size_t
 rpwa::resonanceFit::component::importParameters(const double* par,
                                                 rpwa::resonanceFit::parameters& fitParameters,
-                                                rpwa::resonanceFit::cache& cache)
+                                                rpwa::resonanceFit::cache& cache) const
 {
 	bool invalidateCache = false;
 	for(size_t idxParameter = 0; idxParameter < _parameters.size(); ++idxParameter) {

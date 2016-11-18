@@ -213,7 +213,7 @@ rpwa::resonanceFit::fsmd::~fsmd()
 size_t
 rpwa::resonanceFit::fsmd::importParameters(const double* par,
                                            rpwa::resonanceFit::parameters& fitParameters,
-                                           rpwa::resonanceFit::cache& cache)
+                                           rpwa::resonanceFit::cache& cache) const
 {
 	size_t sumNrParameters = 0;
 	const size_t maxNrBins = _sameFunctionForAllBins ? 1 : _nrBins;
