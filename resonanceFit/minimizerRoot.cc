@@ -91,8 +91,7 @@ rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::model
 	  _functionAdaptor(fitFunction),
 	  _freeParameters(freeParameters),
 	  _maxNmbOfIterations(20000),
-	  _maxNmbOfFunctionCalls((maxNmbOfFunctionCalls > 0) ? maxNmbOfFunctionCalls : (5 * _maxNmbOfIterations * fitFunction->getNrParameters())),
-	  _runHesse(true)
+	  _maxNmbOfFunctionCalls((maxNmbOfFunctionCalls > 0) ? maxNmbOfFunctionCalls : (5 * _maxNmbOfIterations * fitFunction->getNrParameters()))
 {
 	// setup minimizer
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
@@ -123,6 +122,7 @@ rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::model
 		_freeParameters.push_back("coupling branching");
 		_freeParameters.push_back("coupling branching mass m0");
 		_freeParameters.push_back("*");
+		_freeParameters.push_back("hesse");
 	}
 }
 
@@ -141,22 +141,39 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 	const size_t nrSteps = _freeParameters.size();
 
 	bool success = true;
-	for(size_t step=0; step<nrSteps; ++step) {
-		// set startvalues
-		if(not initParameters(fitParameters, _freeParameters[step])) {
-			printErr << "error while setting start parameters for step " << step << "." << std::endl;
-			return std::map<std::string, double>();
-		}
-
+	for(size_t step = 0; step < nrSteps; ++step) {
+		// update number of allowed function calls
 		_minimizer->SetMaxFunctionCalls(_maxNmbOfFunctionCalls);
 
-		printInfo << "performing minimization step " << step << ": '" << _freeParameters[step] << "' (" << _minimizer->NFree() << " free parameters)." << std::endl;
-		success &= _minimizer->Minimize();
+		if(_freeParameters[step] == "hesse") {
+			if(step == 0) {
+				printErr << "cannot calculate Hessian matrix without prior minimization." << std::endl;
+				throw;
+			}
 
-		if(not success) {
-			printWarn << "minimization failed." << std::endl;
+			printInfo << "performing minimization step " << step << ": calculating Hessian matrix." << std::endl;
+			success &= _minimizer->Hesse();
+
+			if(not success) {
+				printWarn << "calculation of Hessian matrix failed." << std::endl;
+			} else {
+				printInfo << "calculation of Hessian matrix successful." << std::endl;
+			}
 		} else {
-			printInfo << "minimization successful." << std::endl;
+			// set startvalues
+			if(not initParameters(fitParameters, _freeParameters[step])) {
+				printErr << "error while setting start parameters for step " << step << "." << std::endl;
+				return std::map<std::string, double>();
+			}
+
+			printInfo << "performing minimization step " << step << ": '" << _freeParameters[step] << "' (" << _minimizer->NFree() << " free parameters)." << std::endl;
+			success &= _minimizer->Minimize();
+
+			if(not success) {
+				printWarn << "minimization failed." << std::endl;
+			} else {
+				printInfo << "minimization successful." << std::endl;
+			}
 		}
 
 		// copy current parameters from minimizer
@@ -168,21 +185,6 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 			break;
 		}
 		_maxNmbOfFunctionCalls -= _minimizer->NCalls();
-	}
-
-	if(_runHesse and _maxNmbOfFunctionCalls != 0) {
-		printInfo << "calculating Hessian matrix." << std::endl;
-		success &= _minimizer->Hesse();
-
-		if(not success) {
-			printWarn << "calculation of Hessian matrix failed." << std::endl;
-		} else {
-			printInfo << "calculation of Hessian matrix successful." << std::endl;
-		}
-
-		// copy current parameters from minimizer
-		_fitModel->importParameters(_minimizer->Errors(), fitParametersError, cache);
-		_fitModel->importParameters(_minimizer->X(), fitParameters, cache);
 	}
 
 	printInfo << "minimizer status summary:" << std::endl
@@ -216,7 +218,9 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 	fitQuality["minStatus"] = _minimizer->Status() % 10;
 	printInfo << "minimizer status = " << fitQuality["minStatus"] << std::endl;
 
-	if(_runHesse and _maxNmbOfFunctionCalls != 0) {
+	// if the last step was to calculate the Hessian matrix, and if that
+	// finished, then store the status of this calculation
+	if(_freeParameters.back() == "hesse" and _maxNmbOfFunctionCalls != 0) {
 		fitQuality["hesseStatus"] = _minimizer->Status() / 100;
 		printInfo << "Hesse status = " << fitQuality["hesseStatus"] << std::endl;
 
