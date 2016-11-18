@@ -100,7 +100,7 @@ namespace rpwa {
 
 			rpwa::resonanceFit::minimizerRoot::functionAdaptor _functionAdaptor;
 
-			const std::vector<std::string> _freeParameters;
+			std::vector<std::string> _freeParameters;
 
 			unsigned int _maxNmbOfIterations;
 			unsigned int _maxNmbOfFunctionCalls;
