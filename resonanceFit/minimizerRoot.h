@@ -104,7 +104,6 @@ namespace rpwa {
 
 			unsigned int _maxNmbOfIterations;
 			unsigned int _maxNmbOfFunctionCalls;
-			bool _runHesse;
 
 		};
 
