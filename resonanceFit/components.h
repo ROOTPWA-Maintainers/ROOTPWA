@@ -123,17 +123,17 @@ namespace rpwa {
 			size_t getNrCouplings() const { return _nrCouplings; }
 			size_t importCouplings(const double* par,
 			                       rpwa::resonanceFit::parameters& fitParameters,
-			                       rpwa::resonanceFit::cache& cache);
+			                       rpwa::resonanceFit::cache& cache) const;
 
 			size_t getNrBranchings() const { return _nrBranchings; }
 			size_t importBranchings(const double* par,
 			                        rpwa::resonanceFit::parameters& fitParameters,
-			                        rpwa::resonanceFit::cache& cache);
+			                        rpwa::resonanceFit::cache& cache) const;
 
 			size_t getNrParameters() const { return _parameters.size(); }
 			size_t importParameters(const double* par,
 			                        rpwa::resonanceFit::parameters& fitParameters,
-			                        rpwa::resonanceFit::cache& cache);
+			                        rpwa::resonanceFit::cache& cache) const;
 
 			bool isBranchingFixed(const size_t idxBranching) const { return _branchingsFixed[idxBranching]; }
 
