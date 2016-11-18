@@ -81,7 +81,6 @@ rpwa::resonanceFit::minimizerRoot::functionAdaptor::DoEval(const double* par) co
 
 rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::modelConstPtr& fitModel,
                                                  const rpwa::resonanceFit::functionConstPtr& fitFunction,
-                                                 const std::vector<std::string>& freeParameters,
                                                  const unsigned int maxNmbOfFunctionCalls,
                                                  const std::string minimizerType[],
                                                  const int minimizerStrategy,
@@ -89,7 +88,6 @@ rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::model
                                                  const bool quiet)
 	: _fitModel(fitModel),
 	  _functionAdaptor(fitFunction),
-	  _freeParameters(freeParameters),
 	  _maxNmbOfIterations(20000),
 	  _maxNmbOfFunctionCalls((maxNmbOfFunctionCalls > 0) ? maxNmbOfFunctionCalls : (5 * _maxNmbOfIterations * fitFunction->getNrParameters()))
 {
@@ -114,16 +112,6 @@ rpwa::resonanceFit::minimizerRoot::minimizerRoot(const rpwa::resonanceFit::model
 		((ROOT::Minuit2::Minuit2Minimizer*)_minimizer.get())->SetStorageLevel(0);
 #endif
 	}
-
-	// in case the _freeParameters vector is empty, the default release
-	// order is used
-	if(_freeParameters.size() == 0) {
-		printWarn << "using default release order of parameters." << std::endl;
-		_freeParameters.push_back("coupling branching");
-		_freeParameters.push_back("coupling branching mass m0");
-		_freeParameters.push_back("*");
-		_freeParameters.push_back("hesse");
-	}
 }
 
 
@@ -133,19 +121,31 @@ rpwa::resonanceFit::minimizerRoot::~minimizerRoot()
 
 
 std::map<std::string, double>
-rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitParameters,
+rpwa::resonanceFit::minimizerRoot::minimize(std::vector<std::string>& freeParameters,
+                                            rpwa::resonanceFit::parameters& fitParameters,
                                             rpwa::resonanceFit::parameters& fitParametersError,
                                             rpwa::resonanceFit::cache& cache)
 {
+	// in case the freeParameters vector is empty, the default release
+	// order is used
+	if(freeParameters.size() == 0) {
+		printWarn << "using default release order of parameters." << std::endl;
+		freeParameters.push_back("coupling branching");
+		freeParameters.push_back("coupling branching mass m0");
+		freeParameters.push_back("*");
+		freeParameters.push_back("hesse");
+	}
+
 	// keep list of parameters to free
-	const size_t nrSteps = _freeParameters.size();
+	const size_t nrSteps = freeParameters.size();
+	size_t removedSteps = 0;
 
 	bool success = true;
 	for(size_t step = 0; step < nrSteps; ++step) {
 		// update number of allowed function calls
 		_minimizer->SetMaxFunctionCalls(_maxNmbOfFunctionCalls);
 
-		if(_freeParameters[step] == "hesse") {
+		if(freeParameters[step-removedSteps] == "hesse") {
 			if(step == 0) {
 				printErr << "cannot calculate Hessian matrix without prior minimization." << std::endl;
 				throw;
@@ -161,12 +161,12 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 			}
 		} else {
 			// set startvalues
-			if(not initParameters(fitParameters, _freeParameters[step])) {
+			if(not initParameters(fitParameters, freeParameters[step-removedSteps])) {
 				printErr << "error while setting start parameters for step " << step << "." << std::endl;
 				return std::map<std::string, double>();
 			}
 
-			printInfo << "performing minimization step " << step << ": '" << _freeParameters[step] << "' (" << _minimizer->NFree() << " free parameters)." << std::endl;
+			printInfo << "performing minimization step " << step << ": '" << freeParameters[step-removedSteps] << "' (" << _minimizer->NFree() << " free parameters)." << std::endl;
 			success &= _minimizer->Minimize();
 
 			if(not success) {
@@ -180,6 +180,15 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 		_fitModel->importParameters(_minimizer->Errors(), fitParametersError, cache);
 		_fitModel->importParameters(_minimizer->X(), fitParameters, cache);
 
+		// remove finished release orders
+		// - do not remove if the last finished step was the calculation
+		//   of the Hessian
+		while(step-removedSteps > 0 and freeParameters[step-removedSteps] != "hesse") {
+			freeParameters.erase(freeParameters.begin());
+			++removedSteps;
+		}
+
+		// number of maximal calls was exceeded or reached
 		if(_minimizer->NCalls() >= _maxNmbOfFunctionCalls) {
 			_maxNmbOfFunctionCalls = 0;
 			break;
@@ -220,7 +229,7 @@ rpwa::resonanceFit::minimizerRoot::minimize(rpwa::resonanceFit::parameters& fitP
 
 	// if the last step was to calculate the Hessian matrix, and if that
 	// finished, then store the status of this calculation
-	if(_freeParameters.back() == "hesse" and _maxNmbOfFunctionCalls != 0) {
+	if(freeParameters.back() == "hesse" and _maxNmbOfFunctionCalls != 0) {
 		fitQuality["hesseStatus"] = _minimizer->Status() / 100;
 		printInfo << "Hesse status = " << fitQuality["hesseStatus"] << std::endl;
 

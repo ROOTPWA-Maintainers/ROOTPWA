@@ -273,7 +273,6 @@ main(int    argc,
 	} else {
 		rpwa::resonanceFit::minimizerRoot minimizer(fitModel,
 		                                            fitFunction,
-		                                            freeParameters,
 		                                            maxNumberOfFunctionCalls,
 		                                            minimizerType,
 		                                            minimizerStrategy,
@@ -283,7 +282,7 @@ main(int    argc,
 		TStopwatch stopwatch;
 
 		stopwatch.Start();
-		fitQuality = minimizer.minimize(fitParameters, fitParametersError, cache);
+		fitQuality = minimizer.minimize(freeParameters, fitParameters, fitParametersError, cache);
 		stopwatch.Stop();
 
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
