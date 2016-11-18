@@ -77,7 +77,6 @@ namespace rpwa {
 
 			minimizerRoot(const rpwa::resonanceFit::modelConstPtr& fitModel,
 			              const rpwa::resonanceFit::functionConstPtr& fitFunction,
-			              const std::vector<std::string>& freeParameters,
 			              const unsigned int maxNmbOfFunctionCalls,
 			              const std::string minimizerType[],
 			              const int minimizerStrategy,
@@ -85,7 +84,8 @@ namespace rpwa {
 			              const bool quiet);
 			virtual ~minimizerRoot();
 
-			std::map<std::string, double> minimize(rpwa::resonanceFit::parameters& fitParameters,
+			std::map<std::string, double> minimize(std::vector<std::string>& freeParameters,
+			                                       rpwa::resonanceFit::parameters& fitParameters,
 			                                       rpwa::resonanceFit::parameters& fitParametersError,
 			                                       rpwa::resonanceFit::cache& cache);
 
@@ -99,8 +99,6 @@ namespace rpwa {
 			const rpwa::resonanceFit::modelConstPtr _fitModel;
 
 			rpwa::resonanceFit::minimizerRoot::functionAdaptor _functionAdaptor;
-
-			std::vector<std::string> _freeParameters;
 
 			unsigned int _maxNmbOfIterations;
 			unsigned int _maxNmbOfFunctionCalls;

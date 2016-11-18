@@ -45,7 +45,8 @@ namespace rpwa {
 			minimizer() {}
 			virtual ~minimizer() {}
 
-			virtual std::map<std::string, double> minimize(rpwa::resonanceFit::parameters& fitParameters,
+			virtual std::map<std::string, double> minimize(std::vector<std::string>& freeParameters,
+			                                               rpwa::resonanceFit::parameters& fitParameters,
 			                                               rpwa::resonanceFit::parameters& fitParametersError,
 			                                               rpwa::resonanceFit::cache& cache) = 0;
 
