@@ -42,6 +42,7 @@
 #include <reportingUtilsEnvironment.h>
 
 #include "cache.h"
+#include "components.h"
 #include "data.h"
 #include "function.h"
 #include "information.h"
@@ -249,6 +250,85 @@ main(int    argc,
 	if(not fitInformation or not fitData or not fitModel) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
+	}
+
+	{
+		// print the used waves and components
+		std::ostringstream output;
+		if(fitModel->isMappingEqualInAllBins()) {
+			const size_t idxBin = 0;
+			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+				output << "    wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
+				for(size_t idxComponents = 0; idxComponents < fitModel->getComponentChannel(idxBin, idxWave).size(); idxComponents++) {
+					const size_t idxComponent = fitModel->getComponentChannel(idxBin, idxWave)[idxComponents].first;
+					const rpwa::resonanceFit::componentConstPtr& component = fitModel->getComponent(idxComponent);
+					output << "        component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
+					if(fitModel->getAnchorWave() == idxWave and fitModel->getAnchorComponent() == idxComponent) {
+						output << " (anchor)";
+					}
+					output << std::endl;
+				}
+			}
+			for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+				const rpwa::resonanceFit::componentConstPtr& component = fitModel->getComponent(idxComponent);
+
+				bool printedHeader = false;
+				for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+					const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
+					const std::vector<size_t>& bins = channel.getBins();
+					if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
+						if(not printedHeader) {
+							output << "    component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+							printedHeader = true;
+						}
+
+						output << "        channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor(idxBin) ? " (anchor)" : "") << std::endl;
+					}
+				}
+			}
+		} else {
+			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); idxBin++) {
+				output << "    mapping used in bin " << idxBin << std::endl;
+				for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+					const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+
+					output << "        wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
+					for(size_t idxComponents = 0; idxComponents < fitModel->getComponentChannel(idxBin, idxWave).size(); idxComponents++) {
+						const size_t idxComponent = fitModel->getComponentChannel(idxBin, idxWave)[idxComponents].first;
+						const rpwa::resonanceFit::componentConstPtr& component = fitModel->getComponent(idxComponent);
+						output << "            component " << idxComponents << ": " << idxComponent << " '" << component->getName() << "'";
+						if(fitModel->getAnchorWave() == idxWave and fitModel->getAnchorComponent() == idxComponent) {
+							output << " (anchor)";
+						}
+						output << std::endl;
+					}
+				}
+				for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
+					const rpwa::resonanceFit::componentConstPtr& component = fitModel->getComponent(idxComponent);
+
+					bool printedHeader = false;
+					for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
+						const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
+						const std::vector<size_t>& bins = channel.getBins();
+						if(std::find(bins.begin(), bins.end(), idxBin) != bins.end()) {
+							if(not printedHeader) {
+								output << "        component '" << component->getName() << "' (index " << idxComponent << ") used in" << std::endl;
+								printedHeader = true;
+							}
+
+							output << "            channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor(idxBin) ? " (anchor)" : "") << std::endl;
+						}
+					}
+				}
+			}
+		}
+
+		output << "    the model is " << (fitModel->getFsmd() ? "" : "not ") << "using a final-state mass-dependence." << std::endl;
+		printInfo << fitInformation->nrWaves() << " wave" << ((fitInformation->nrWaves() == 1) ? "" : "s") << " and "
+		          << fitModel->getNrComponents() << " component" << ((fitModel->getNrComponents() == 1) ? "" : "s") << " in fit model:" << std::endl
+		          << output.str();
 	}
 
 	// set-up fit model and fit function

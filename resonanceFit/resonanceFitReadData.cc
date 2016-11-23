@@ -572,9 +572,6 @@ namespace {
 		// sort mass bins
 		std::sort(massBinCenters.data(), massBinCenters.data() + nrMassBins);
 
-		printInfo << "found " << nrMassBins << " mass bins, center of first and last mass bins: "
-		          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
-
 		const double massStep = (massBinCenters[nrMassBins-1] - massBinCenters[0]) / (nrMassBins - 1);
 		for(size_t idxMass = 1; idxMass < nrMassBins; ++idxMass) {
 			if(std::abs(massBinCenters[idxMass]-massBinCenters[idxMass-1] - massStep) > 1000.*std::numeric_limits<double>::epsilon()) {
@@ -976,6 +973,9 @@ namespace {
 		                      inFit,
 		                      nrMassBins,
 		                      massBinCenters);
+
+		printInfo << "reading '" << bin.fileName() << "', found " << nrMassBins << " mass bins, center of first and last mass bins: "
+		          << massBinCenters[0] << " and " << massBinCenters[nrMassBins - 1] << " GeV/c^2." << std::endl;
 
 		std::vector<Long64_t> inMapping;
 		checkFitResultMassBins(inTree,

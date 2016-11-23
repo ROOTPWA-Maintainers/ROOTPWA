@@ -360,13 +360,6 @@ namespace {
 			}
 		}
 
-		std::ostringstream output;
-		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
-			output << "    " << waves[idxWave].waveName() << std::endl;
-		}
-		printInfo << nrWaves << " waves to be used in fit:" << std::endl
-		          << output.str();
-
 		return waves;
 	}
 
