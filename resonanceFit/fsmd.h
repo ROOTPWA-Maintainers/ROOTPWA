@@ -91,12 +91,9 @@ namespace rpwa {
 			                         const double mass,
 			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-			std::ostream& print(std::ostream& out = std::cout) const;
+			std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
-
-			std::ostream& printBin(const size_t idxBin,
-			                       std::ostream& out = std::cout) const;
 
 			const size_t _id;
 
@@ -127,7 +124,7 @@ inline
 std::ostream&
 rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::fsmd& fsmd)
 {
-	return fsmd.print(out);
+	return fsmd.print(out, false);
 }
 
 

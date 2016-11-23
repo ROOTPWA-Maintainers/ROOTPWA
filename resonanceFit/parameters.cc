@@ -85,7 +85,7 @@ rpwa::resonanceFit::parameters::resize(const size_t maxComponents,
 
 
 std::ostream&
-rpwa::resonanceFit::parameters::print(std::ostream& out) const
+rpwa::resonanceFit::parameters::print(std::ostream& out, const bool newLine) const
 {
 	out << "branchings: "
 	    << *(_branchings.shape()) << " components, "
@@ -98,8 +98,11 @@ rpwa::resonanceFit::parameters::print(std::ostream& out) const
 	    << std::endl;
 	out << "parameters: "
 	    << *(_parameters.shape()) << " components, "
-	    << *(_parameters.shape()+1) << " parameters"
-	    << std::endl;
+	    << *(_parameters.shape()+1) << " parameters";
+
+	if(newLine) {
+		out << std::endl;
+	}
 
 	return out;
 }

@@ -1505,7 +1505,7 @@ namespace {
 		}
 
 		if(rpwa::resonanceFit::debug()) {
-			printDebug << *fsmd;
+			printDebug << *fsmd << std::endl;
 		}
 
 		return fsmd;

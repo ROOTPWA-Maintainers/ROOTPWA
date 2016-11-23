@@ -145,7 +145,7 @@ rpwa::resonanceFit::cache::setProdAmp(const size_t idxWave,
 
 
 std::ostream&
-rpwa::resonanceFit::cache::print(std::ostream& out) const
+rpwa::resonanceFit::cache::print(std::ostream& out, const bool newLine) const
 {
 	out << "cache for couplings: "
 	    << *(_couplings.shape()) << " components, "
@@ -161,8 +161,11 @@ rpwa::resonanceFit::cache::print(std::ostream& out) const
 	out << "cache for production amplitudes: "
 	    << *(_prodAmps.shape()) << " waves, "
 	    << *(_prodAmps.shape()+1) << " bins, "
-	    << *(_prodAmps.shape()+2) << " mass bins"
-	    << std::endl;
+	    << *(_prodAmps.shape()+2) << " mass bins";
+
+	if(newLine) {
+		out << std::endl;
+	}
 
 	return out;
 }

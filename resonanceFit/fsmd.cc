@@ -282,7 +282,7 @@ rpwa::resonanceFit::fsmd::val(const rpwa::resonanceFit::parameters& fitParameter
 
 
 std::ostream&
-rpwa::resonanceFit::fsmd::print(std::ostream& out) const
+rpwa::resonanceFit::fsmd::print(std::ostream& out, const bool newLine) const
 {
 	out << "final-state mass-dependence (id " << _id << ")" << std::endl
 	    << "    use equal values for each mass bin in group of bins: ";
@@ -298,39 +298,35 @@ rpwa::resonanceFit::fsmd::print(std::ostream& out) const
 		}
 		out << "}";
 	}
-	out << std::endl;
 
 	const size_t maxNrBins = _sameFunctionForAllBins ? 1 : _nrBins;
-	for(size_t i = 0; i < maxNrBins; ++i) {
-		printBin(i, out);
-	}
-	if(_sameFunctionForAllBins) {
-		out << "this final-state mass-dependence is used for all bins." << std::endl;
-	}
+	for(size_t idxBin = 0; idxBin < maxNrBins; ++idxBin) {
+		out << std::endl
+		    << "final-state mass-dependence for bin " << idxBin << std::endl
+		    << "formula: " << (_functions[idxBin] ? _functions[idxBin]->GetTitle() : "not set");
 
-	return out;
-}
-
-
-std::ostream&
-rpwa::resonanceFit::fsmd::printBin(const size_t idxBin,
-                                   std::ostream& out) const
-{
-	out << "final-state mass-dependence for bin " << idxBin << std::endl;
-	out << "formula: " << (_functions[idxBin] ? _functions[idxBin]->GetTitle() : "not set") << std::endl;
-
-	for(size_t i = 0; i < _nrParameters[idxBin]; ++i) {
-		out << "    [" << i << "] ";
-		if(_parameters[idxBin][i].limitedLower() and _parameters[idxBin][i].limitedUpper()) {
-			out << "limits: " << _parameters[idxBin][i].limitLower() << "-" << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
-		} else if(_parameters[idxBin][i].limitedLower()) {
-			out << "lower limit: " << _parameters[idxBin][i].limitLower() << " GeV/c^2";
-		} else if(_parameters[idxBin][i].limitedUpper()) {
-			out << "upper limit: " << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
-		} else {
-			out << "unlimited";
+		for(size_t i = 0; i < _nrParameters[idxBin]; ++i) {
+			out << std::endl
+			    << "    [" << i << ", '" << _parameters[idxBin][i].name() << "'] ";
+			if(_parameters[idxBin][i].limitedLower() and _parameters[idxBin][i].limitedUpper()) {
+				out << "limits: " << _parameters[idxBin][i].limitLower() << "-" << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
+			} else if(_parameters[idxBin][i].limitedLower()) {
+				out << "lower limit: " << _parameters[idxBin][i].limitLower() << " GeV/c^2";
+			} else if(_parameters[idxBin][i].limitedUpper()) {
+				out << "upper limit: " << _parameters[idxBin][i].limitUpper() << " GeV/c^2";
+			} else {
+				out << "unlimited";
+			}
+			out << (_parameters[idxBin][i].fixed() ? " (FIXED) " : "");
 		}
-		out << (_parameters[idxBin][i].fixed() ? " (FIXED) " : "") << std::endl;
+	}
+
+	if(_sameFunctionForAllBins) {
+		out << std::endl << "this final-state mass-dependence is used for all bins.";
+	}
+
+	if(newLine) {
+		out << std::endl;
 	}
 
 	return out;
