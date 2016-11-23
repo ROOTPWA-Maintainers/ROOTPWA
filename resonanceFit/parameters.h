@@ -63,7 +63,7 @@ namespace rpwa {
 			            const size_t maxParameters,
 			            const size_t maxBins);
 
-			std::ostream& print(std::ostream& out = std::cout) const;
+			std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -86,7 +86,7 @@ inline
 std::ostream&
 rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::parameters& parameters)
 {
-	return parameters.print(out);
+	return parameters.print(out, false);
 }
 
 

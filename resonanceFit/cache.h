@@ -57,7 +57,7 @@ namespace rpwa {
 			void setComponent(const size_t idxComponent, const size_t idxBin, const size_t idxMassBin, const std::complex<double> component);
 			void setProdAmp(const size_t idxWave, const size_t idxBin, const size_t idxMassBin, const std::complex<double> prodAmp);
 
-			std::ostream& print(std::ostream& out = std::cout) const;
+			std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
@@ -78,7 +78,7 @@ inline
 std::ostream&
 rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::cache& cache)
 {
-	return cache.print(out);
+	return cache.print(out, false);
 }
 
 

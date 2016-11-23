@@ -454,11 +454,19 @@ rpwa::resonanceFit::model::phase(const rpwa::resonanceFit::parameters& fitParame
 
 
 std::ostream&
-rpwa::resonanceFit::model::print(std::ostream& out) const
+rpwa::resonanceFit::model::print(std::ostream& out, const bool newLine) const
 {
 	for(unsigned int i=0;i<_components.size();++i){
 		const rpwa::resonanceFit::component& c = *_components[i];
-		c.print(out);
+		c.print(out, newLine or (i != (_components.size()-1)));
 	}
+
+	if(_fsmd) {
+		if(not newLine) {
+			out << std::endl;
+		}
+		_fsmd->print(out, newLine);
+	}
+
 	return out;
 }
