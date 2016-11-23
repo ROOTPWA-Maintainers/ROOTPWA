@@ -292,6 +292,7 @@ set_package_properties(NumPy
 	PURPOSE "Used for handling of multi-dimensional arrays in Python."
 	TYPE REQUIRED
 	)
+add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_8_API_VERSION)
 
 
 # setup pylint (optional)

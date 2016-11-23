@@ -68,6 +68,7 @@ include_directories(
 	SYSTEM
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
+	${NUMPY_INCLUDE_DIR}
 	${PYTHON_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	)

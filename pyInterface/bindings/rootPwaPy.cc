@@ -1,5 +1,9 @@
 #include <boost/python.hpp>
 
+// set up numpy for usage in this module
+#define PY_ARRAY_UNIQUE_SYMBOL RPWA_PyArray_API
+#include <numpy/arrayobject.h>
+
 // pyUtils
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
@@ -70,6 +74,9 @@
 
 
 BOOST_PYTHON_MODULE(libRootPwaPy){
+
+	// set up numpy for usage in this module
+	import_array();
 
 	rpwa::py::exportStlContainers();
 	rpwa::py::exportParticleProperties();
