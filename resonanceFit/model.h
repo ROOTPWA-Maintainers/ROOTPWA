@@ -75,6 +75,7 @@ namespace rpwa {
 
 			size_t getAnchorWave() const { return _idxAnchorWave; }
 			const std::string& getAnchorWaveName() const { return _anchorWaveName; }
+			size_t getAnchorComponent() const { return _idxAnchorComponent; }
 			const std::string& getAnchorComponentName() const { return _anchorComponentName; }
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(const size_t idxBin, const size_t idxWave) const { return _waveComponentChannel[idxBin][idxWave]; }

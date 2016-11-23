@@ -41,10 +41,8 @@
 #include <reportingUtils.hpp>
 #include <yamlCppUtils.hpp>
 
-#include "components.h"
 #include "data.h"
 #include "information.h"
-#include "model.h"
 
 
 namespace {
@@ -137,18 +135,6 @@ rpwa::resonanceFit::read(const YAML::Node& configRoot,
 	                                         fitParameters,
 	                                         fitParametersError,
 	                                         useBranchings);
-
-	std::ostringstream output;
-	for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {
-		output << "    " << fitModel->getComponent(idxComponent)->getName() << std::endl;
-	}
-	printInfo << "fitting " << fitModel->getNrComponents() << " components to the data:" << std::endl
-	          << output.str();
-	if(fitModel->getFsmd()) {
-		printInfo << "using final-state mass-dependence." << std::endl;
-	} else {
-		printInfo << "not using final-state mass-dependence." << std::endl;
-	}
 }
 
 
