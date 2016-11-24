@@ -95,6 +95,17 @@ flatMassDependence::amp(const isobarDecayVertex&)
 }
 
 
+std::string
+flatMassDependence::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	const particlePtr& parent = v.parent();
+	name << "flat[" << spinQn(parent->isospin()) << parityQn(parent->G()) << ","
+	     << spinQn(parent->J()) << parityQn(parent->P()) << parityQn(parent->C()) << "]";
+	return name.str();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
 binnedMassDependence::amp(const isobarDecayVertex& v)
@@ -115,6 +126,18 @@ binnedMassDependence::amp(const isobarDecayVertex& v)
 		                     << ", amp = " << amp << endl;
 
 	return amp;
+}
+
+
+std::string
+binnedMassDependence::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	const particlePtr& parent = v.parent();
+	name << "binned[" << spinQn(parent->isospin()) << parityQn(parent->G()) << ","
+	     << spinQn(parent->J()) << parityQn(parent->P()) << parityQn(parent->C()) << ","
+	     << getMassMin() << "," << getMassMax() << "]";
+	return name.str();
 }
 
 
@@ -157,6 +180,13 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 }
 
 
+std::string
+relativisticBreitWigner::parentForWaveName(const isobarDecayVertex& v) const
+{
+	return v.parent()->name();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
 constWidthBreitWigner::amp(const isobarDecayVertex& v)
@@ -178,6 +208,15 @@ constWidthBreitWigner::amp(const isobarDecayVertex& v)
 		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
 		           << maxPrecisionDouble(bw) << endl;
 	return bw;
+}
+
+
+std::string
+constWidthBreitWigner::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "constWidthBreitWigner[" << v.parent()->name() << "]";
+	return name.str();
 }
 
 
@@ -220,6 +259,15 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 }
 
 
+std::string
+rhoBreitWigner::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "rhoBreitWigner[" << v.parent()->name() << "]";
+	return name.str();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
 f0980BreitWigner::amp(const isobarDecayVertex& v)
@@ -249,6 +297,15 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
 		           << "= " << maxPrecisionDouble(bw) << endl;
 	return bw;
+}
+
+
+std::string
+f0980BreitWigner::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "f0980BreitWigner[" << v.parent()->name() << "]";
+	return name.str();
 }
 
 
@@ -303,6 +360,15 @@ f0980Flatte::amp(const isobarDecayVertex& v)
 		           << " GeV/c^2, g1 = " << maxPrecision(g1) << " GeV/c^2, g2/g1 = " << maxPrecision(g2g1)
 		           << ") = " << maxPrecisionDouble(amp) << endl;
 	return amp;
+}
+
+
+std::string
+f0980Flatte::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "Flatte[" << v.parent()->name() << "]";
+	return name.str();
 }
 
 
@@ -417,6 +483,15 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 }
 
 
+std::string
+piPiSWaveAuMorganPenningtonM::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "AuMorganPenningtonM[" << v.parent()->name() << "]";
+	return name.str();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 	: piPiSWaveAuMorganPenningtonM()
@@ -457,6 +532,15 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 }
 
 
+std::string
+piPiSWaveAuMorganPenningtonVes::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "AuMorganPenningtonVes[" << v.parent()->name() << "]";
+	return name.str();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 	: piPiSWaveAuMorganPenningtonM()
@@ -473,6 +557,15 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 	_a[1](0, 1) = 0;
 	_a[1](1, 0) = 0;
 	_a[1](1, 1) = 0;
+}
+
+
+std::string
+piPiSWaveAuMorganPenningtonKachaev::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "AuMorganPenningtonKachaev[" << v.parent()->name() << "]";
+	return name.str();
 }
 
 
@@ -513,4 +606,13 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 
 	return bw;
 
+}
+
+
+std::string
+rhoPrimeMassDep::parentForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream name;
+	name << "rhoPrime[" << v.parent()->name() << "]";
+	return name.str();
 }
