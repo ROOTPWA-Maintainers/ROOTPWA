@@ -66,6 +66,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const = 0;  ///< returns label for parent of decay used in wave name
+
 		bool operator ==(const massDependence& rhsMassDep) const { return this->isEqualTo(rhsMassDep); }
 		bool operator !=(const massDependence& rhsMassDep) const { return not (*this == rhsMassDep);   }
 
@@ -116,6 +118,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "flat"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -143,6 +147,8 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "binned"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 		double getMassMin() const { return _mMin; }
 		double getMassMax() const { return _mMax; }
@@ -179,6 +185,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -206,6 +214,8 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "constWidthBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 	};
 
@@ -240,6 +250,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "rhoBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -270,6 +282,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "f_0(980)"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -298,6 +312,8 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "f_0(980)Flatte"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 	private:
 		double _piChargedMass;
@@ -333,6 +349,8 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 	protected:
 
@@ -378,6 +396,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -416,6 +436,8 @@ namespace rpwa {
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
 	};
 
 
@@ -444,6 +466,8 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "rhoPrime"; }  ///< returns label used in graph visualization, reporting, and key file
+
+		virtual std::string parentForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 	};
 

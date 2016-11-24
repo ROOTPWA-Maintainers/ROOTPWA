@@ -563,14 +563,10 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 			waveName << currentVertex->daughter1()->name();
 		else {
 			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter1());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter1()->name();
+			if (vertex->massDependence())
+				waveName << vertex->massDependence()->parentForWaveName(*vertex);
+			else
+				waveName << vertex->parent()->name();
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 
@@ -582,14 +578,10 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 			waveName << currentVertex->daughter2()->name();
 		else {
 			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter2());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter2()->name();
+			if (vertex->massDependence())
+				waveName << vertex->massDependence()->parentForWaveName(*vertex);
+			else
+				waveName << vertex->parent()->name();
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 		waveName << "]";
