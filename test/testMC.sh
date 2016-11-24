@@ -111,7 +111,6 @@ exec 2>&1
 printInfo "Copying necessary files to test directory ..."
 
 cp -v "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/generator_noBeamSimulation.conf" "./"
-cp -v "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/wavelist.compass.2008.88waves" "./"
 cp -v "${ROOTPWA}/rootpwa.config" "./"
 cp -v "${ROOTPWA}/test/mcTest/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root.example" "./reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root"
 
@@ -135,16 +134,12 @@ testStep "generation of phase-space data" \
 -o \"./data/phase_space_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PS_EVENTS}.root\""
 
 # generate the keyfiles
-DESTINATION_DIR="${TESTDIR}/keyfiles"
+export DESTINATION_DIR="${TESTDIR}/keyfiles"
 export PARTICLE_DATA_TABLE
-export DESTINATION_DIR
-export WAVESET_FILES="wavelist.compass.2008.88waves"
+export PARTICLE_DECAY_TABLE="${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/ParticleDecays.key"
 export TEMPLATE_KEY_FILES="${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/template.key"
+export WAVESET_FILES="${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/wavelist.compass.2008.88waves"
 testStep "generation of keyfiles" "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/GenerateKeyfiles.sh"
-
-# remove some parameterizations
-rm ${TESTDIR}/keyfiles/*[f0_980_0bw=[*.key
-rm ${TESTDIR}/keyfiles/*[f0_980_0=[*.key
 
 # create first file manager
 testStep "creation of first file manager" "${ROOTPWA}/build/bin/createFileManager"
@@ -188,14 +183,14 @@ testStep "pwaFit without prior" \
 "${ROOTPWA}/build/bin/pwaFit \
 \"./fits/pwaTest_NONLOPT_NOPRIOR.root\" \
 --noAcceptance \
--w wavelist.compass.2008.88waves \
+-w ${DESTINATION_DIR}/wavelist.compass.2008.88waves.f0980fl \
 -s ${SEED_FIT}"
 
 testStep "pwaFit with prior" \
 "${ROOTPWA}/build/bin/pwaFit \
 \"./fits/pwaTest_NONLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
 --noAcceptance \
--w wavelist.compass.2008.88waves \
+-w ${DESTINATION_DIR}/wavelist.compass.2008.88waves.f0980fl \
 -C \
 -P 0.5 \
 -s ${SEED_FIT}"
@@ -206,14 +201,14 @@ then
 	"${ROOTPWA}/build/bin/pwaNloptFit \
 	\"./fits/pwaTest_NLOPT_NOPRIOR.root\" \
 	--noAcceptance \
-	-w wavelist.compass.2008.88waves \
+	-w ${DESTINATION_DIR}/wavelist.compass.2008.88waves.f0980fl \
 	-s ${SEED_FIT}"
 
 	testStep "pwaNloptFit with prior" \
 	"${ROOTPWA}/build/bin/pwaNloptFit \
 	\"./fits/pwaTest_NLOPT_CAUCHY_PRIOR_WIDTH_0.5.root\" \
 	--noAcceptance \
-	-w wavelist.compass.2008.88waves \
+	-w ${DESTINATION_DIR}/wavelist.compass.2008.88waves.f0980fl \
 	-C \
 	-P 0.5 \
 	-s ${SEED_FIT}"
