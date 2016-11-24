@@ -92,13 +92,13 @@ fi
 
 printInfo "Creating directories ..."
 
-mkdir --verbose "${TESTDIR}"
-mkdir --verbose "${TESTDIR}/data"
-mkdir --verbose "${TESTDIR}/weighted_mc_data"
-mkdir --verbose "${TESTDIR}/keyfiles"
-mkdir --verbose "${TESTDIR}/reference_fit"
-mkdir --verbose "${TESTDIR}/fits"
-mkdir --verbose "${TESTDIR}/log"
+mkdir -v "${TESTDIR}"
+mkdir -v "${TESTDIR}/data"
+mkdir -v "${TESTDIR}/weighted_mc_data"
+mkdir -v "${TESTDIR}/keyfiles"
+mkdir -v "${TESTDIR}/reference_fit"
+mkdir -v "${TESTDIR}/fits"
+mkdir -v "${TESTDIR}/log"
 
 echo "    Test directory and subfolders created."
 printInfo "Changing to test directory ${TESTDIR}."
@@ -110,10 +110,10 @@ exec 2>&1
 
 printInfo "Copying necessary files to test directory ..."
 
-cp --verbose "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/generator_noBeamSimulation.conf" "./"
-cp --verbose "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/wavelist.compass.2008.88waves" "./"
-cp --verbose "${ROOTPWA}/rootpwa.config" "./"
-cp --verbose "${ROOTPWA}/test/mcTest/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root.example" "./reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root"
+cp -v "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/generator_noBeamSimulation.conf" "./"
+cp -v "${ROOTPWA}/userAnalysisWorkspace/3pi.--+/keyfiles/wavelist.compass.2008.88waves" "./"
+cp -v "${ROOTPWA}/rootpwa.config" "./"
+cp -v "${ROOTPWA}/test/mcTest/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root.example" "./reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root"
 
 # make sure the integral binning in the config file is set correctly
 sed -i.bak 's/^integralBinning.*$/integralBinning                        = [ { "mass": (1.8, 1.82) } ]/' rootpwa.config
