@@ -93,7 +93,6 @@ namespace rpwa {
 
 			component(const size_t id,
 			          const std::string& name,
-			          const std::string& type,
 			          const std::vector<rpwa::resonanceFit::parameter>& parameters,
 			          const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
 			          const std::vector<size_t>& nrMassBins,
@@ -101,9 +100,10 @@ namespace rpwa {
 			          const bool useBranchings);
 			virtual ~component() {}
 
+			virtual std::string getType() const = 0;
+
 			size_t getId() const { return _id; }
 			const std::string& getName() const { return _name; }
-			const std::string& getType() const { return _type; }
 
 			size_t getNrChannels() const { return _channels.size(); }
 			const std::vector<channel>& getChannels() const { return _channels; }
@@ -162,7 +162,6 @@ namespace rpwa {
 
 			const size_t _id;
 			const std::string _name;
-			const std::string _type;
 
 			std::vector<channel> _channels;
 			std::vector<size_t> _channelsCoupling;
@@ -199,6 +198,8 @@ namespace rpwa {
 			                      const boost::multi_array<double, 2>& massBinCenters,
 			                      const bool useBranchings);
 
+			virtual std::string getType() const { return "fixedWidthBreitWigner"; }
+
 		private:
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
@@ -224,6 +225,8 @@ namespace rpwa {
 			                        const std::vector<int>& relAngularMom,
 			                        const std::vector<double>& mIsobar1,
 			                        const std::vector<double>& mIsobar2);
+
+			virtual std::string getType() const { return "dynamicWidthBreitWigner"; }
 
 			virtual size_t getTotalNrChannels() const { return _ratio.size(); }
 
@@ -264,6 +267,8 @@ namespace rpwa {
 			                         const std::vector<std::vector<double> >& masses,
 			                         const std::vector<std::vector<double> >& values);
 
+			virtual std::string getType() const { return "integralWidthBreitWigner"; }
+
 			virtual size_t getTotalNrChannels() const { return _ratio.size(); }
 
 			const std::vector<double>& branchingRatio() const { return _ratio; }
@@ -297,6 +302,8 @@ namespace rpwa {
 			                   const boost::multi_array<double, 2>& massBinCenters,
 			                   const bool useBranchings);
 
+			virtual std::string getType() const { return "constantBackground"; }
+
 		private:
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
@@ -322,6 +329,8 @@ namespace rpwa {
 			                      const double mIsobar1,
 			                      const double mIsobar2,
 			                      const double exponent);
+
+			virtual std::string getType() const { return "exponentialBackground"; }
 
 			int relAngularMom() const { return _l; }
 			double mIsobar1() const { return _m1; }
@@ -364,6 +373,8 @@ namespace rpwa {
 			                          const double mIsobar2,
 			                          const double exponent);
 
+			virtual std::string getType() const { return "tPrimeDependentBackground"; }
+
 			int relAngularMom() const { return _l; }
 			double mIsobar1() const { return _m1; }
 			double mIsobar2() const { return _m2; }
@@ -405,6 +416,8 @@ namespace rpwa {
 			                              const std::vector<double>& values,
 			                              const double exponent);
 
+			virtual std::string getType() const { return "exponentialBackgroundIntegral"; }
+
 			const std::vector<double>& masses() const { return _masses; }
 			const std::vector<double>& values() const { return _values; }
 			double exponent() const { return _exponent; }
@@ -443,6 +456,8 @@ namespace rpwa {
 			                                  const std::vector<double>& masses,
 			                                  const std::vector<double>& values,
 			                                  const double exponent);
+
+			virtual std::string getType() const { return "tPrimeDependentBackgroundIntegral"; }
 
 			const std::vector<double>& masses() const { return _masses; }
 			const std::vector<double>& values() const { return _values; }

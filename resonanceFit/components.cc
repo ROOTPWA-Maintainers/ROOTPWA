@@ -174,7 +174,6 @@ rpwa::resonanceFit::component::channel::channel(const size_t waveIdx,
 
 rpwa::resonanceFit::component::component(const size_t id,
                                          const std::string& name,
-                                         const std::string& type,
                                          const std::vector<rpwa::resonanceFit::parameter>& parameters,
                                          const std::vector<rpwa::resonanceFit::component::channel>& decayChannels,
                                          const std::vector<size_t>& nrMassBins,
@@ -182,7 +181,6 @@ rpwa::resonanceFit::component::component(const size_t id,
                                          const bool useBranchings)
 	: _id(id),
 	  _name(name),
-	  _type(type),
 	  _channels(decayChannels),
 	  _nrCouplings(0),
 	  _nrBranchings(0),
@@ -498,7 +496,6 @@ rpwa::resonanceFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id
                                                                  const bool useBranchings)
 	: component(id,
 	            name,
-	            "fixedWidthBreitWigner",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -555,7 +552,6 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_
                                                                      const std::vector<double>& mIsobar2)
 	: component(id,
 	            name,
-	            "dynamicWidthBreitWigner",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -679,7 +675,6 @@ rpwa::resonanceFit::integralWidthBreitWigner::integralWidthBreitWigner(const siz
                                                                        const std::vector<std::vector<double> >& values)
 	: component(id,
 	            name,
-	            "integralWidthBreitWigner",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -764,7 +759,6 @@ rpwa::resonanceFit::constantBackground::constantBackground(const size_t id,
                                                            const bool useBranchings)
 	: component(id,
 	            name,
-	            "constantBackground",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -819,7 +813,6 @@ rpwa::resonanceFit::exponentialBackground::exponentialBackground(const size_t id
                                                                  const double exponent)
 	: component(id,
 	            name,
-	            "exponentialBackground",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -926,7 +919,6 @@ rpwa::resonanceFit::tPrimeDependentBackground::tPrimeDependentBackground(const s
                                                                          const double exponent)
 	: component(id,
 	            name,
-	            "tPrimeDependentBackground",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -1034,7 +1026,6 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral
                                                                                  const double exponent)
 	: component(id,
 	            name,
-	            "exponentialBackgroundIntegral",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
@@ -1133,7 +1124,6 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackground
                                                                                          const double exponent)
 	: component(id,
 	            name,
-	            "tPrimeDependentBackgroundIntegral",
 	            parameters,
 	            decayChannels,
 	            nrMassBins,
