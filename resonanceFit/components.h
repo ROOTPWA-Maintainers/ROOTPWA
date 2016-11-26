@@ -106,10 +106,9 @@ namespace rpwa {
 			const std::string& getName() const { return _name; }
 
 			size_t getNrChannels() const { return _channels.size(); }
-			const std::vector<channel>& getChannels() const { return _channels; }
-			const channel& getChannel(const size_t i) const { return _channels[i]; }
-			const channel& getChannelFromBranchingIdx(const size_t i) const { return _channels[_channelsFromBranching[i]]; }
-			const channel& getChannelFromCouplingIdx(const size_t i) const { return _channels[_channelsFromCoupling[i]]; }
+			const channel& getChannel(const size_t idxDecayChannel) const { return _channels[idxDecayChannel]; }
+			const channel& getChannelFromCouplingIdx(const size_t idxCoupling) const { return _channels[_channelsFromCoupling[idxCoupling]]; }
+			const channel& getChannelFromBranchingIdx(const size_t idxBranching) const { return _channels[_channelsFromBranching[idxBranching]]; }
 			void setChannelAnchor(const std::vector<size_t>& channels);
 
 			virtual size_t getTotalNrChannels() const { return _channels.size(); }
@@ -142,7 +141,7 @@ namespace rpwa {
 			std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                         rpwa::resonanceFit::cache& cache,
 			                         const size_t idxBin,
-			                         const double m,
+			                         const double mass,
 			                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
 			std::complex<double> getCouplingPhaseSpace(const rpwa::resonanceFit::parameters& fitParameters,
@@ -158,7 +157,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const = 0;
+			                                 const double mass) const = 0;
 
 			const size_t _id;
 			const std::string _name;
@@ -204,7 +203,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 		};
 
@@ -241,7 +240,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			std::vector<double> _ratio;
 			const std::vector<int> _l;
@@ -279,7 +278,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			std::vector<double> _ratio;
 			const std::vector<std::vector<double> > _masses;
@@ -308,7 +307,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 		};
 
@@ -343,7 +342,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			const int _l;
 			const double _m1;
@@ -386,7 +385,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			const std::vector<double> _tPrimeMeans;
 
@@ -428,7 +427,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			const std::vector<double> _masses;
 			const std::vector<double> _values;
@@ -469,7 +468,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const rpwa::resonanceFit::parameters& fitParameters,
 			                                 const size_t idxBin,
-			                                 const double m) const;
+			                                 const double mass) const;
 
 			const std::vector<double> _tPrimeMeans;
 

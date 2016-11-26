@@ -396,7 +396,7 @@ std::complex<double>
 rpwa::resonanceFit::component::val(const rpwa::resonanceFit::parameters& fitParameters,
                                    rpwa::resonanceFit::cache& cache,
                                    const size_t idxBin,
-                                   const double m,
+                                   const double mass,
                                    const size_t idxMass) const
 {
 	if(idxMass != std::numeric_limits<size_t>::max()) {
@@ -406,7 +406,7 @@ rpwa::resonanceFit::component::val(const rpwa::resonanceFit::parameters& fitPara
 		}
 	}
 
-	const std::complex<double> component = val(fitParameters, idxBin, m);
+	const std::complex<double> component = val(fitParameters, idxBin, mass);
 
 	if(idxMass != std::numeric_limits<size_t>::max()) {
 		if(_binsEqualValues[idxBin].size() == _binsEqualValues.size()) {
@@ -515,12 +515,12 @@ rpwa::resonanceFit::fixedWidthBreitWigner::fixedWidthBreitWigner(const size_t id
 std::complex<double>
 rpwa::resonanceFit::fixedWidthBreitWigner::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                const size_t /*idxBin*/,
-                                               const double m) const
+                                               const double mass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
 
-	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma0*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-mass*mass, -gamma0*m0);
 
 	return component;
 }
@@ -592,7 +592,7 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::dynamicWidthBreitWigner(const size_
 std::complex<double>
 rpwa::resonanceFit::dynamicWidthBreitWigner::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                  const size_t /*idxBin*/,
-                                                 const double m) const
+                                                 const double mass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
@@ -609,9 +609,9 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::val(const rpwa::resonanceFit::param
 			continue;
 		}
 
-		if(m >= _m1[i] + _m2[i]) {
+		if(mass >= _m1[i] + _m2[i]) {
 			// calculate breakup momenta
-			const double q = rpwa::breakupMomentum(m, _m1[i], _m2[i]);
+			const double q = rpwa::breakupMomentum(mass, _m1[i], _m2[i]);
 			const double q0 = rpwa::breakupMomentum(m0, _m1[i], _m2[i]);
 
 			// calculate barrier factors
@@ -621,9 +621,9 @@ rpwa::resonanceFit::dynamicWidthBreitWigner::val(const rpwa::resonanceFit::param
 			gamma += _ratio[i] * q/q0 * f2/f20;
 		}
 	}
-	gamma *= gamma0 * m0/m;
+	gamma *= gamma0 * m0/mass;
 
-	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-mass*mass, -gamma*m0);
 
 	return component;
 }
@@ -716,7 +716,7 @@ rpwa::resonanceFit::integralWidthBreitWigner::integralWidthBreitWigner(const siz
 std::complex<double>
 rpwa::resonanceFit::integralWidthBreitWigner::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                   const size_t /*idxBin*/,
-                                                  const double m) const
+                                                  const double mass) const
 {
 	const double& m0 = fitParameters.getParameter(getId(), 0);
 	const double& gamma0 = fitParameters.getParameter(getId(), 1);
@@ -728,14 +728,14 @@ rpwa::resonanceFit::integralWidthBreitWigner::val(const rpwa::resonanceFit::para
 			continue;
 		}
 
-		const double ps = _interpolator[i]->Eval(m);
+		const double ps = _interpolator[i]->Eval(mass);
 		const double ps0 = _interpolator[i]->Eval(m0);
 
 		gamma += _ratio[i] * ps / ps0;
 	}
 	gamma *= gamma0;
 
-	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-m*m, -gamma*m0);
+	const std::complex<double> component = gamma0*m0 / std::complex<double>(m0*m0-mass*mass, -gamma*m0);
 
 	return component;
 }
@@ -853,13 +853,13 @@ rpwa::resonanceFit::exponentialBackground::exponentialBackground(const size_t id
 std::complex<double>
 rpwa::resonanceFit::exponentialBackground::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                const size_t /*idxBin*/,
-                                               const double m) const
+                                               const double mass) const
 {
 	// calculate breakup momentum
-	if(m < _m1+_m2) {
+	if(mass < _m1+_m2) {
 		return std::complex<double>(1,0);
 	}
-	const double q = rpwa::breakupMomentum(m, _m1, _m2);
+	const double q = rpwa::breakupMomentum(mass, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
 	const double c = std::pow(q*f2 * _norm, _exponent);
 
@@ -959,13 +959,13 @@ rpwa::resonanceFit::tPrimeDependentBackground::tPrimeDependentBackground(const s
 std::complex<double>
 rpwa::resonanceFit::tPrimeDependentBackground::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                    const size_t idxBin,
-                                                   const double m) const
+                                                   const double mass) const
 {
 	// calculate breakup momentum
-	if(m < _m1+_m2) {
-		return std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
+	if(mass < _m1+_m2) {
+		return std::pow(mass - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 	}
-	const double q = rpwa::breakupMomentum(m, _m1, _m2);
+	const double q = rpwa::breakupMomentum(mass, _m1, _m2);
 	const double f2 = rpwa::barrierFactorSquared(2*_l, q);
 	const double c = std::pow(q*f2 * _norm, _exponent);
 
@@ -973,7 +973,7 @@ rpwa::resonanceFit::tPrimeDependentBackground::val(const rpwa::resonanceFit::par
 	const double tPrime = _tPrimeMeans[idxBin];
 	const double tPrimePol = fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime;
 
-	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
+	const double mPre = std::pow(mass - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 
 	const std::complex<double> component = mPre * exp(-tPrimePol*c);
 
@@ -1066,10 +1066,10 @@ rpwa::resonanceFit::exponentialBackgroundIntegral::exponentialBackgroundIntegral
 std::complex<double>
 rpwa::resonanceFit::exponentialBackgroundIntegral::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                        const size_t /*idxBin*/,
-                                                       const double m) const
+                                                       const double mass) const
 {
-	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(m * ps * _norm, _exponent);
+	const double ps = _interpolator->Eval(mass);
+	const double c = std::pow(mass * ps * _norm, _exponent);
 
 	const std::complex<double> component = exp(-fitParameters.getParameter(getId(), 0)*c);
 
@@ -1164,16 +1164,16 @@ rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::tPrimeDependentBackground
 std::complex<double>
 rpwa::resonanceFit::tPrimeDependentBackgroundIntegral::val(const rpwa::resonanceFit::parameters& fitParameters,
                                                            const size_t idxBin,
-                                                           const double m) const
+                                                           const double mass) const
 {
-	const double ps = _interpolator->Eval(m);
-	const double c = std::pow(m * ps * _norm, _exponent);
+	const double ps = _interpolator->Eval(mass);
+	const double c = std::pow(mass * ps * _norm, _exponent);
 
 	// get mean t' value for current bin
 	const double tPrime = _tPrimeMeans[idxBin];
 	const double tPrimePol = fitParameters.getParameter(getId(), 2) + fitParameters.getParameter(getId(), 3)*tPrime + fitParameters.getParameter(getId(), 4)*tPrime*tPrime;
 
-	const double mPre = std::pow(m - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
+	const double mPre = std::pow(mass - fitParameters.getParameter(getId(), 0), fitParameters.getParameter(getId(), 1));
 
 	const std::complex<double> component = mPre * exp(-tPrimePol*c);
 
