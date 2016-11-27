@@ -64,7 +64,8 @@ namespace rpwa {
 				return false;
 			}
 			boost::python::list pyListList = getList();
-			vector.resize(boost::python::len(pyListList));
+			vector.clear();
+			vector.reserve(boost::python::len(pyListList));
 			if(boost::python::len(pyListList) != 0) {
 				for(unsigned int i = 0; i < boost::python::len(pyListList); ++i) {
 					boost::python::extract<T> getListItem(pyListList[i]);
@@ -72,7 +73,7 @@ namespace rpwa {
 						printWarn<<"cannot convert list item "<<i<<"."<<std::endl;
 						return false;
 					}
-					vector[i] = getListItem();
+					vector.emplace_back(getListItem());
 				}
 			}
 			return true;
