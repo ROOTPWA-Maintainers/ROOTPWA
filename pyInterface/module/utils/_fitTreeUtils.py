@@ -111,8 +111,8 @@ def getBestFitResultFromFile(fitResultFileName,
 				printWarn("fit result file '" + fitResultFileName + "' " +
 				          "contains more than one mass bin, return the " +
 				          "fit result with the best likelihood.")
-				if result.logLikelihood() < bestResult.logLikelihood():
-					bestResult = pyRootPwa.core.fitResult(result)
+			if result.logLikelihood() < bestResult.logLikelihood():
+				bestResult = pyRootPwa.core.fitResult(result)
 		else:
 			if abs(massBinCenter - result.massBinCenter()) < abs(massBinCenter - bestResult.massBinCenter()):
 				bestResult = pyRootPwa.core.fitResult(result)
