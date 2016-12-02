@@ -1,5 +1,12 @@
 #include <boost/python.hpp>
 
+#include <RVersion.h>
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 6, 0)
+#include <TThread.h>
+#else
+#include <TROOT.h>
+#endif
+
 // set up numpy for usage in this module
 #define PY_ARRAY_UNIQUE_SYMBOL RPWA_PyArray_API
 #include <numpy/arrayobject.h>
@@ -74,6 +81,17 @@
 
 
 BOOST_PYTHON_MODULE(libRootPwaPy){
+
+	// enable multithreading of Python so we can release the GIL whereever
+	// appropriate
+	PyEval_InitThreads();
+
+	// also enable multithreading of ROOT
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 6, 0)
+	TThread::Initialize();
+#else
+	ROOT::EnableThreadSafety();
+#endif
 
 	// set up numpy for usage in this module
 	import_array();
