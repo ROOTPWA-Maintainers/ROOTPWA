@@ -72,13 +72,25 @@ rpwa::resonanceFit::readFitQuality(const YAML::Node& configRoot)
 	}
 
 	for(YAML::const_iterator it = configFitQuality.begin(); it != configFitQuality.end(); ++it) {
-		if(not checkVariableType(it->first, rpwa::YamlCppUtils::TypeString) or not checkVariableType(it->second, rpwa::YamlCppUtils::TypeFloat)) {
+		if(not checkVariableType(it->first, rpwa::YamlCppUtils::TypeString)) {
 			printErr << "entries in 'fitquality' must be pairs of 'string' and 'double'." << std::endl;
 			throw;
 		}
 
 		const std::string key = it->first.as<std::string>();
-		const double value = it->second.as<double>();
+
+		double value;
+		if(checkVariableType(it->second, rpwa::YamlCppUtils::TypeFloat)) {
+			value = it->second.as<double>();
+		} else if(checkVariableType(it->second, rpwa::YamlCppUtils::TypeString) and it->second.as<std::string>() == "nan") {
+			// some systems cannot convert the string 'nan' to a
+			// floating point number, so this is to be done
+			// manually.
+			value = std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0;
+		} else {
+			printErr << "entries in 'fitquality' must be pairs of 'string' and 'double'." << std::endl;
+			throw;
+		}
 
 		if(fitQuality.count(key) != 0) {
 			printErr << "variable '" << key << "' of 'fitquality' given multiple times." << std::endl;
