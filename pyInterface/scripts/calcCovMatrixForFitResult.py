@@ -83,6 +83,7 @@ if __name__ == "__main__":
 	                                      accIntegralFileName = accIntegralPath,
 	                                      multiBin = multiBin,
 	                                      accEventsOverride = args.accEventsOverride,
+	                                      useNormalizedAmps = result.normNmbEvents() == 1,
 	                                      cauchy = args.cauchyPriors,
 	                                      cauchyWidth = args.cauchyPriorWidth,
 	                                      rank = result.rank(),
