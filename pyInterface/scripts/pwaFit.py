@@ -25,6 +25,7 @@ if __name__ == "__main__":
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
 	parser.add_argument("-A", type=int, metavar="#", dest="accEventsOverride", default=0,
 	                    help="number of input events to normalize acceptance to (default: use number of events from normalization integral file)")
+	parser.add_argument("--do-not-normalize-amplitudes", dest="useNormalizedAmps", action="store_false", help="do not normalize amlitudes (default: normalize amplitudes)")
 	parser.add_argument("--noAcceptance", help="do not take acceptance into account (default: false)", action="store_true")
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
@@ -87,6 +88,7 @@ if __name__ == "__main__":
 	                              cauchyWidth = args.cauchyPriorWidth,
 	                              startValFileName = args.startValFileName,
 	                              accEventsOverride = args.accEventsOverride,
+	                              useNormalizedAmps = args.useNormalizedAmps,
 	                              checkHessian = args.checkHessian,
 	                              saveSpace = args.saveSpace,
 	                              rank = args.rank,

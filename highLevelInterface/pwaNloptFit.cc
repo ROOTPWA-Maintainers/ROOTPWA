@@ -296,7 +296,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	if (not saveSpace) {
 		L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral, true);
 	}
-	const int normNmbEvents = 1;  // number of events to normalize to
+	const int normNmbEvents = (L.normalizedAmpsUsed()) ? 1 : L.nmbEvents();  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
 	     << "    number of fit parameters ............... " << nmbPar                        << endl
