@@ -289,6 +289,7 @@ void rpwa::py::exportPwaLikelihood() {
 			, bp::return_internal_reference<>()
 		)
 		.def("useNormalizedAmps", &rpwa::pwaLikelihood<std::complex<double> >::useNormalizedAmps)
+		.def("normalizedAmpsUsed", &rpwa::pwaLikelihood<std::complex<double> >::normalizedAmpsUsed)
 		.def("setPriorType", &rpwa::pwaLikelihood<std::complex<double> >::setPriorType)
 		.def("priorType", &rpwa::pwaLikelihood<std::complex<double> >::priorType)
 		.def("setCauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::setCauchyWidth)

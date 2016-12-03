@@ -202,13 +202,14 @@ namespace rpwa {
 		//const integral& normInt() const { return _normInt; }
 
 		// modifiers
-		void          enableCuda       (const bool      enableCuda = true);
-		bool          cudaEnabled      () const;
-		void          useNormalizedAmps(const bool      useNorm    = true) { _useNormalizedAmps = useNorm;   }
-		void          setPriorType     (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
-		priorEnum     priorType        () const                            { return _priorType;              }
-		void          setCauchyWidth   (const double    cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
-		double        cauchyWidth      () const                            { return _cauchyWidth;            }
+		void          enableCuda        (const bool      enableCuda = true);
+		bool          cudaEnabled       () const;
+		void          useNormalizedAmps (const bool      useNorm    = true) { _useNormalizedAmps = useNorm;   }
+		bool          normalizedAmpsUsed() const                            { return _useNormalizedAmps;      }
+		void          setPriorType      (const priorEnum priorType  = FLAT) { _priorType         = priorType; }
+		priorEnum     priorType         () const                            { return _priorType;              }
+		void          setCauchyWidth    (const double    cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
+		double        cauchyWidth       () const                            { return _cauchyWidth;            }
 
 		// operations
 		bool init(const std::vector<waveDescThresType>& waveDescThres,
