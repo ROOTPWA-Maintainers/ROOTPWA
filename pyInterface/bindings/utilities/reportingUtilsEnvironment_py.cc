@@ -13,4 +13,6 @@ void rpwa::py::exportReportingUtilsEnvironment() {
 	bp::def("printCompilerInfo", &rpwa::printCompilerInfo);
 	bp::def("printLibraryInfo", &rpwa::printLibraryInfo);
 
+	bp::def("gitHash", &rpwa::gitHash);
+
 }
