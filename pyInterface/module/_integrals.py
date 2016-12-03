@@ -8,6 +8,7 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, weightFileNam
 		pyRootPwa.utils.printWarn("cannot open output file '" + integralFileName + "'. Aborting...")
 		return False
 	integralMetaData = pyRootPwa.core.ampIntegralMatrixMetadata()
+	integralMetaData.setGitHash(pyRootPwa.core.gitHash())
 	integralMetaData.setBinningMap(multiBin.boundaries)
 	integrals = []
 	for eventFileName, ampFileDict in eventAndAmpFileDict.iteritems():

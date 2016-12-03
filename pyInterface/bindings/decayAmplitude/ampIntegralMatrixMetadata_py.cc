@@ -112,6 +112,7 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)
 		.def("recalculateHash", &rpwa::ampIntegralMatrixMetadata::recalculateHash)
+		.def("setGitHash",  &ampIntegralMatrixMetadata::setGitHash)
 
 		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
 
