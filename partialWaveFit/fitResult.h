@@ -246,9 +246,9 @@ namespace rpwa {
 		// * access by wave indices
 
 		/// returns intensity of single wave at index
-		double intensity   (const unsigned int waveIndex) const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
+		double intensity   (const unsigned int waveIndex) const { return spinDensityMatrixElem(waveIndex, waveIndex).real() * normIntegral(waveIndex, waveIndex).real();         }
 		/// returns error of intensity of single wave at index
-		double intensityErr(const unsigned int waveIndex) const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }
+		double intensityErr(const unsigned int waveIndex) const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]) * normIntegral(waveIndex, waveIndex).real(); }
 
 		// accessors to intensities
 		// * access by wave name patterns

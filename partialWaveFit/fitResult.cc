@@ -677,7 +677,7 @@ fitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
 	complex<double> spinDens = 0;
 	for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
 		spinDens += prodAmp(prodAmpIndexPairs[i].first) * conj(prodAmp(prodAmpIndexPairs[i].second));
-	return spinDens;
+	return (double)normNmbEvents() * spinDens;
 }
 
 
@@ -746,7 +746,7 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 	// !!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
 	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;
 	const TMatrixT<double> spinDensCov  = jacobian   * prodAmpCovJT;
-	return spinDensCov;
+	return std::pow((double)normNmbEvents(), 2.0) * spinDensCov;
 }
 
 
@@ -986,5 +986,5 @@ fitResult::intensityErr(const string& waveNamePattern) const
 	const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);  // 2n x  1 matrix
 	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;               // 2n x  1 matrix
 	const TMatrixT<double> intensityCov = jacobian * prodAmpCovJT;              //  1 x  1 matrix
-	return sqrt(intensityCov[0][0]);
+	return (double)normNmbEvents() * sqrt(intensityCov[0][0]);
 }
