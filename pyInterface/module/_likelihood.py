@@ -8,13 +8,14 @@ def initLikelihood(waveDescThres,
                    accIntegralFileName,
                    multiBin,
                    accEventsOverride = 0,
+                   useNormalizedAmps = True,
                    cauchy = False,
                    cauchyWidth = 0.5,
                    rank = 1,
                    verbose = False
                   ):
 	likelihood = pyRootPwa.core.pwaLikelihood()
-	likelihood.useNormalizedAmps(True)
+	likelihood.useNormalizedAmps(useNormalizedAmps)
 	if not verbose:
 		likelihood.setQuiet()
 	if cauchy:
