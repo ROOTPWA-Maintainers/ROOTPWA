@@ -27,8 +27,10 @@ before_install:
     - pip install --user pylint==1.5.5 numpy
     - if [ ${TRAVIS_RPWA_USE_NLOPT} -eq 1 ] ; then sudo apt-get install -y libnlopt-dev ; fi
     # fix Python library
-    - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
-    - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
+    - export TRAVIS_RPWA_PYTHON_LIBPL=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBPL'))"`
+    - export TRAVIS_RPWA_PYTHON_LIBDIR=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"`
+    - sudo rm -f ${TRAVIS_RPWA_PYTHON_LIBPL}/libpython2.7.a
+    - sudo ln -sf ${TRAVIS_RPWA_PYTHON_LIBDIR}/libpython2.7.so ${TRAVIS_RPWA_PYTHON_LIBPL}/libpython2.7.so
 install:
     - ./travisCI/install-cmake.sh
     - export PATH=${PWD}/cmake/bin:${PATH}
