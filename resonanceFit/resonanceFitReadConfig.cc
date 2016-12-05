@@ -1412,7 +1412,7 @@ namespace {
 		}
 
 		const std::string formula = configFsmd["formula"].as<std::string>();
-		function.reset(new TFormula("finalStateMassDependence", formula.c_str()));
+		function.reset(new TFormula("finalStateMassDependence", formula.c_str(), false));
 
 		const size_t nrParameters = function->GetNpar();
 		parameters.resize(boost::extents[nrParameters]);
