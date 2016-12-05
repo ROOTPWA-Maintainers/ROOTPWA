@@ -87,6 +87,11 @@ rpwa::resonanceFit::readFitQuality(const YAML::Node& configRoot)
 			// floating point number, so this is to be done
 			// manually.
 			value = std::numeric_limits<double>::has_quiet_NaN ? std::numeric_limits<double>::quiet_NaN() : 0.0;
+		} else if(checkVariableType(it->second, rpwa::YamlCppUtils::TypeString) and it->second.as<std::string>() == "inf") {
+			// some systems cannot convert the string 'inf' to a
+			// floating point number, so this is to be done
+			// manually.
+			value = std::numeric_limits<double>::has_infinity ? std::numeric_limits<double>::infinity() : 0.0;
 		} else {
 			printErr << "entries in 'fitquality' must be pairs of 'string' and 'double'." << std::endl;
 			throw;
