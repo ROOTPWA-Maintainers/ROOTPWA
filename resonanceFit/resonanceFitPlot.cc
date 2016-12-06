@@ -30,7 +30,6 @@
 #include "resonanceFit.h"
 
 #include <TDirectory.h>
-#include <TFile.h>
 #include <TGraph.h>
 #include <TGraphErrors.h>
 #include <TMath.h>
@@ -641,7 +640,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
                                 const rpwa::resonanceFit::parameters& fitParameters,
                                 rpwa::resonanceFit::cache& cache,
-                                TFile* outFile,
+                                TDirectory* mainDirectory,
                                 const bool rangePlotting,
                                 const size_t extraBinning)
 {
@@ -651,13 +650,13 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 
 	const bool sameMassBinning = fitData->hasSameMassBinning();
 	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-		TDirectory* outDirectory = NULL;
+		TDirectory* subDirectory = NULL;
 		if(fitInformation->nrBins() == 1) {
-			outDirectory = outFile;
+			subDirectory = mainDirectory;
 		} else {
 			std::ostringstream name;
 			name << "bin" << idxBin;
-			outDirectory = outFile->mkdir(name.str().c_str());
+			subDirectory = mainDirectory->mkdir(name.str().c_str());
 		}
 
 		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
@@ -666,7 +665,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 			                fitModel,
 			                fitParameters,
 			                cache,
-			                outDirectory,
+			                subDirectory,
 			                rangePlotting,
 			                extraBinning,
 			                idxWave,
@@ -680,7 +679,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 				                    fitModel,
 				                    fitParameters,
 				                    cache,
-				                    outDirectory,
+				                    subDirectory,
 				                    rangePlotting,
 				                    extraBinning,
 				                    idxWave,
@@ -694,7 +693,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 			                fitModel,
 			                fitParameters,
 			                cache,
-			                outDirectory,
+			                subDirectory,
 			                extraBinning,
 			                idxBin);
 		}
@@ -707,7 +706,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 			                   fitModel,
 			                   fitParameters,
 			                   cache,
-			                   outFile,
+			                   mainDirectory,
 			                   rangePlotting,
 			                   extraBinning,
 			                   idxWave);
@@ -719,7 +718,7 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 		                fitModel,
 		                fitParameters,
 		                cache,
-		                outFile,
+		                mainDirectory,
 		                extraBinning,
 		                0);
 	}

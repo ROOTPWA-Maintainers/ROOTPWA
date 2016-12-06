@@ -43,7 +43,7 @@
 #include "forward.h"
 #include "function.h"
 
-class TFile;
+class TDirectory;
 
 namespace rpwa {
 
@@ -90,7 +90,7 @@ namespace rpwa {
 		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 		                 const rpwa::resonanceFit::parameters& fitParameters,
 		                 rpwa::resonanceFit::cache& cache,
-		                 TFile* outFile,
+		                 TDirectory* mainDirectory,
 		                 const bool rangePlotting,
 		                 const size_t extraBinning);
 
