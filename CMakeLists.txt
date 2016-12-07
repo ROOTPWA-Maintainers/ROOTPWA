@@ -66,7 +66,6 @@ message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 include(CommonMacros)
 include(FeatureSummary)
 include(ProcessorCount)
-include(CheckCXXSourceCompiles)
 
 
 # On Apples the default filename extension of a shared library is ".dylib",
@@ -158,14 +157,6 @@ message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD
 	"for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
-endif()
-
-
-# test whether thread_local is understood
-check_cxx_source_compiles("#include <iostream>
-int main() { thread_local int a = 1; std::cout << a << std::endl; }" COMPILER_PROVIDES_THREAD_LOCAL)
-if(COMPILER_PROVIDES_THREAD_LOCAL)
-	add_definitions(-DCOMPILER_PROVIDES_THREAD_LOCAL)
 endif()
 
 
