@@ -51,6 +51,12 @@ message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
+# require a C++11 compatible compiler
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
 # set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 message(STATUS "")
 message(STATUS ">>> Setting up Cmake modules.")
@@ -60,7 +66,6 @@ message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 include(CommonMacros)
 include(FeatureSummary)
 include(ProcessorCount)
-include(CheckCXXCompilerFlag)
 include(CheckCXXSourceCompiles)
 
 
@@ -125,12 +130,6 @@ endif()
 
 
 # set common compiler flags
-# test whether C++ compiler supports C++11 standard
-check_cxx_compiler_flag("-std=c++11" COMPILER_IS_CXX11_COMPATIBLE)
-if(COMPILER_IS_CXX11_COMPATIBLE)
-	message(STATUS "C++11 compatible compiler found, enable C++11 features.")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
 # consider flags -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Wsuggest-attribute=const
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Woverloaded-virtual -Werror")
 # options switchable via command line
