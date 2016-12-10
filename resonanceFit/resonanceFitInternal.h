@@ -86,6 +86,17 @@ namespace rpwa {
 		          const std::string& valBranchName = "fitResult_v2");
 
 		void read(const YAML::Node& configRoot,
+		          const boost::multi_array<std::string, 2>& waveNames,
+		          const double maxMassBinCenter,
+		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::modelConstPtr& fitModel,
+		          rpwa::resonanceFit::parameters& fitParameters,
+		          rpwa::resonanceFit::parameters& fitParametersError,
+		          std::map<std::string, double>& fitQuality,
+		          std::vector<std::string>& freeParameters,
+		          const bool useBranchings);
+
+		void read(const YAML::Node& configRoot,
 		          const double maxMassBinCenter,
 		          rpwa::resonanceFit::informationConstPtr& fitInformation,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
