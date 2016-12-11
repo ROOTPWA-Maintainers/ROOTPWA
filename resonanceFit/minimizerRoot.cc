@@ -260,8 +260,8 @@ bool
 rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::parameters& fitParameters,
                                                   const std::string& freeParameters) const
 {
-	// tokenize freeParameters string (default separators also include '*')
-	boost::char_separator<char> separators(" ,\t\n");
+	// tokenize freeParameters string (default separators also include '*' and ',')
+	boost::char_separator<char> separators(" \t\n");
 	boost::tokenizer<boost::char_separator<char> > tokenizeFreeParameters(freeParameters, separators);
 
 	// reset minimizer
@@ -282,9 +282,11 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 			const std::vector<size_t>& bins = channel.getBins();
 			for(size_t i = 0; i < bins.size(); ++i) {
 				const size_t idxBin = bins[i];
+				std::ostringstream prefixBin;
+				prefixBin << "coupling__bin"
+				          << idxBin;
 				std::ostringstream prefixName;
-				prefixName << "coupling__bin"
-				           << idxBin
+				prefixName << prefixBin.str()
 				           << "__"
 				           << comp->getName()
 				           << "__";
@@ -296,8 +298,10 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 				}
 
 				bool free = false;
-				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*")!=tokenizeFreeParameters.end()
-				   || find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "coupling")!=tokenizeFreeParameters.end() ) {
+				if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*") != tokenizeFreeParameters.end()
+				   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "coupling") != tokenizeFreeParameters.end()
+				   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), prefixBin.str()) != tokenizeFreeParameters.end()
+				   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), prefixName.str()) != tokenizeFreeParameters.end()) {
 					free = true;
 				}
 				bool fix = not free;
@@ -361,7 +365,8 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 
 			bool free = false;
 			if(find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "*") != tokenizeFreeParameters.end()
-			   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching") != tokenizeFreeParameters.end()) {
+			   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), "branching") != tokenizeFreeParameters.end()
+			   or find(tokenizeFreeParameters.begin(), tokenizeFreeParameters.end(), prefixName.str()) != tokenizeFreeParameters.end()) {
 				free = true;
 			}
 			bool fix = not free;
