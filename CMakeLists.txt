@@ -97,8 +97,8 @@ message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYS
 
 # warn user about outdated or unsupported compiler
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.4)
-    message(WARNING " ??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. GCC version 4.4 or higher is required. Proceed at your own risk.")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+    message(WARNING " ??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. GCC version 4.8 or higher is required. Proceed at your own risk.")
   endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
@@ -106,9 +106,9 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 			"Clang version 3.4 or higher is required. Proceed at your own risk.")
   endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.0)
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
     message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
-			"AppleClang version 6.0 or higher is required. Proceed at your own risk.")
+			"AppleClang version 8.0 or higher is required. Proceed at your own risk.")
   endif()
 else()
   message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
