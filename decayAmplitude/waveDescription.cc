@@ -408,7 +408,8 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	topo = isobarDecayTopologyPtr();  // null pointer
 
 	const Setting& rootKey = _key->getRoot();
-	printInfo << "constructing decay topology from key file" << endl;
+	if (_debug)
+		printDebug << "constructing decay topology from key file" << endl;
 
 	// find wave group
 	const Setting* decayVertKey = findLibConfigGroup(rootKey, "decayVertex");
@@ -465,7 +466,9 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	// isobars are not explicitely defined
 	topo->calcIsobarCharges();
 
-	printSucc << "constructed decay topology from key file" << endl;
+	if (_debug)
+		printDebug << "constructed decay topology from key file" << endl;
+
 	return true;
 }
 

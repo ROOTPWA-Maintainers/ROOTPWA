@@ -1340,6 +1340,11 @@ pwaLikelihood<complexT>::finishInit()
 	}
 #endif
 
+	printSucc << "set up likelihood function for rank-" << _rank << " fit with "
+	          << _nmbWaves << " wave" << ((_nmbWaves != 1) ? "s" : "") << " (excluding 'flat' wave; "
+	          << _nmbWavesRefl[1] << " wave" << ((_nmbWaves != 1) ? "s" : "") << " with positive reflectivity, "
+	          << _nmbWavesRefl[0] << " with negative)." << endl;
+
 	_initFinished = true;
 	return true;
 }
