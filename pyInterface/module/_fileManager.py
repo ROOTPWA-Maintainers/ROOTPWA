@@ -189,6 +189,7 @@ class fileManager(object):
 		retval = collections.OrderedDict()
 		for waveName in self.keyFiles:
 			retval[waveName] = self.getWaveDescription(waveName)
+		pyRootPwa.utils.printSucc("constructed all {0} topologies for the known wave names.".format(len(retval)))
 		return retval
 
 
