@@ -81,7 +81,7 @@ class _printClass(object):
 			if stdoutisatty: string += self._terminalColorStrings['fgMangenta']
 			string += "+++ "
 			string += function + ": debug: "
-			string += self._terminalColorStrings['normal']
+			if stdoutisatty: string += self._terminalColorStrings['normal']
 			string += msg
 		else:
 			printErr("Invalid level string.")
