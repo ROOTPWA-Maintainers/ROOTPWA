@@ -34,6 +34,7 @@
 #include <Math/Minimizer.h>
 #include <Math/Factory.h>
 #include <Minuit2/Minuit2Minimizer.h>
+#include <TMatrixT.h>
 
 #include <reportingUtils.hpp>
 
@@ -124,6 +125,7 @@ std::map<std::string, double>
 rpwa::resonanceFit::minimizerRoot::minimize(std::vector<std::string>& freeParameters,
                                             rpwa::resonanceFit::parameters& fitParameters,
                                             rpwa::resonanceFit::parameters& fitParametersError,
+                                            TMatrixT<double>& covarianceMatrix,
                                             rpwa::resonanceFit::cache& cache)
 {
 	// in case the freeParameters vector is empty, the default release
@@ -180,6 +182,11 @@ rpwa::resonanceFit::minimizerRoot::minimize(std::vector<std::string>& freeParame
 		_fitModel->importParameters(_minimizer->Errors(), fitParametersError, cache);
 		_fitModel->importParameters(_minimizer->X(), fitParameters, cache);
 
+		// import covariance matrix after current step
+		const unsigned int nmbPar = _functionAdaptor.NDim();
+		covarianceMatrix.ResizeTo(nmbPar, nmbPar);
+		_minimizer->GetCovMatrix(covarianceMatrix.GetMatrixArray());
+
 		// remove finished release orders
 		// - do not remove if the last finished step was the calculation
 		//   of the Hessian
@@ -191,6 +198,10 @@ rpwa::resonanceFit::minimizerRoot::minimize(std::vector<std::string>& freeParame
 		// number of maximal calls was exceeded or reached
 		if(_minimizer->NCalls() >= _maxNmbOfFunctionCalls) {
 			_maxNmbOfFunctionCalls = 0;
+
+			// invalidate covariance matrix
+			covarianceMatrix.ResizeTo(0, 0);
+
 			break;
 		}
 		_maxNmbOfFunctionCalls -= _minimizer->NCalls();

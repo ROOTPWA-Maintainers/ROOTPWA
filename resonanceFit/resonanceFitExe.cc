@@ -346,6 +346,7 @@ main(int    argc,
 	                                fitInformation->nrBins(),
 	                                fitData->maxMassBins());
 
+	TMatrixT<double> covarianceMatrix;
 	if(onlyPlotting) {
 		printInfo << "plotting only mode, skipping minimzation." << std::endl;
 
@@ -362,7 +363,7 @@ main(int    argc,
 		TStopwatch stopwatch;
 
 		stopwatch.Start();
-		fitQuality = minimizer.minimize(freeParameters, fitParameters, fitParametersError, cache);
+		fitQuality = minimizer.minimize(freeParameters, fitParameters, fitParametersError, covarianceMatrix, cache);
 		stopwatch.Stop();
 
 		printInfo << "minimization took " << rpwa::maxPrecisionAlign(stopwatch.CpuTime()) << " s" << std::endl;
@@ -406,6 +407,10 @@ main(int    argc,
 	                                outFile.get(),
 	                                rangePlotting,
 	                                extraBinning);
+	if(covarianceMatrix.GetNcols() > 0 and covarianceMatrix.GetNrows() > 0) {
+		outFile->cd();
+		covarianceMatrix.Write("covarianceMatrix");
+	}
 	outFile->Close();
 
 	return 0;
