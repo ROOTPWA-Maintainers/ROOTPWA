@@ -140,10 +140,16 @@ nBodyPhaseSpaceGenerator::pickMasses(const double nBodyMass)  // total energy of
 			{
 				// create vector of sorted random values
 				vector<double> r(nmbOfDaughters() - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
-				for (unsigned int i = 0; i < (nmbOfDaughters() - 2); ++i) {
-					r[i] = randomNumberGenerator::instance()->rndm();
-				}
-				sort(r.begin(), r.end());
+				bool done = false;
+				do {
+					for (unsigned int i = 0; i < (nmbOfDaughters() - 2); ++i) {
+						r[i] = randomNumberGenerator::instance()->rndm();
+					}
+					sort(r.begin(), r.end());
+					// random numbers must be strictly increasing, no number may appear twice
+					// this is a consequence of eq. 9.20 in F. James "Monte Carlo Phase Space", CERN 68-15 (1968)
+					done = (unique(r.begin(), r.end()) == r.end());
+				} while(not done);
 				// set effective masses of (intermediate) two-body decays
 				const double massInterval = nBodyMass - sumOfDaughterMasses(nmbOfDaughters() - 1);  // kinematically allowed mass interval
 				for (unsigned int i = 1; i < (nmbOfDaughters() - 1); ++i) {                         // loop over intermediate 2- to (n - 1)-bodies
