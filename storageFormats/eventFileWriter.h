@@ -7,6 +7,7 @@
 #include "eventMetadata.h"
 #include "hashCalculator.h"
 
+class TClonesArray;
 class TFile;
 class TVector3;
 class TTree;
