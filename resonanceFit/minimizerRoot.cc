@@ -196,6 +196,7 @@ rpwa::resonanceFit::minimizerRoot::minimize(std::vector<std::string>& freeParame
 		}
 
 		// number of maximal calls was exceeded or reached
+		printInfo << "used " << _minimizer->NCalls() << " function calls during last step." << std::endl;
 		if(_minimizer->NCalls() >= _maxNmbOfFunctionCalls) {
 			_maxNmbOfFunctionCalls = 0;
 
