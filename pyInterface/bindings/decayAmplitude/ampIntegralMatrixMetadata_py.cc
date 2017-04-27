@@ -116,5 +116,6 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
 
 		.def("addKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::addKeyFileContent)
+		.def("hasKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::hasKeyFileContent)
 		.def_readonly("integralObjectName", &rpwa::ampIntegralMatrixMetadata::objectNameInFile);
 }

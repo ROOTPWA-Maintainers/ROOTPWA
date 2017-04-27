@@ -30,7 +30,15 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, weightFileNam
 				pyRootPwa.utils.printErr("could not read metadata from amplitude file '" + ampFileName + "'. Aborting...")
 				return False
 			ampMetas.append(ampMeta)
-			integralMetaData.addKeyFileContent(ampMeta.keyfileContent())
+
+			if len(integrals) == 1: # first eventFieldID of the current bin
+				if not integralMetaData.addKeyFileContent(ampMeta.keyfileContent()):
+					return False
+			else:
+				if not integralMetaData.hasKeyFileContent(ampMeta.keyfileContent()):
+					pyRootPwa.utils.printErr("keyfile content of additional eventFiledID missing in first eventFieldID.")
+					return False
+					
 			if not integralMetaData.addAmplitudeHash(ampMeta.contentHash()):
 				# This error is not fatal, since in special cases the same hash can appear twice:
 				# e.g. in freed-isobar analyses with spin zero, the angular dependences are constant
