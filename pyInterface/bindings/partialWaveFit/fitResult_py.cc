@@ -16,7 +16,7 @@ namespace {
 	void fitResult_fill_1(rpwa::fitResult& self,
 	                      const unsigned int                        nmbEvents,
 	                      const unsigned int                        normNmbEvents,
-	                      const double                              massBinCenter,
+	                      const bp::dict&                           binningMap,
 	                      const double                              logLikelihood,
 	                      const int                                 rank,
 	                      const bp::object&                         pyProdAmps,
@@ -60,12 +60,39 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
 			bp::throw_error_already_set();
 		}
-		self.fill(nmbEvents, normNmbEvents, massBinCenter, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
+		std::map<std::string, std::pair<double, double> > cBinningMap;
+		const bp::list keys = binningMap.keys();
+		for (int i = 0; i < bp::len(keys); ++i) {
+			std::string binningVar = bp::extract<std::string>(keys[i]);
+			double lowerBound      = bp::extract<double>(binningMap[binningVar][0]);
+			double upperBound      = bp::extract<double>(binningMap[binningVar][1]);
+			cBinningMap[binningVar] = std::pair<double, double>(lowerBound, upperBound);
+		}
+		self.fill(nmbEvents, normNmbEvents, cBinningMap, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
 		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
 	}
 
 	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result) {
 		self.fill(result);
+	}
+
+	bp::dict fitResult_multibinCenter(const rpwa::fitResult& self) {
+		bp::dict multibinCenterDict;
+		const rpwa::multibinCenterType multibinCenter = self.multibinCenter();
+		for(rpwa::multibinCenterType::const_iterator it = multibinCenter.begin(); it != multibinCenter.end(); ++it){
+			multibinCenterDict[it->first] = it->second;
+		}
+
+		return multibinCenterDict;
+	}
+	bp::dict fitResult_binningMap(const rpwa::fitResult& self) {
+		bp::dict binningMapDict;
+		const rpwa::binningMapType binningMap = self.binningMap();
+		for(rpwa::binningMapType::const_iterator it = binningMap.begin(); it != binningMap.end(); ++it){
+			binningMapDict[it->first] = bp::make_tuple(it->second.first, it->second.second);
+		}
+
+		return binningMapDict;
 	}
 
 	bp::list fitResult_evidenceComponents(const rpwa::fitResult& self) {
@@ -317,6 +344,8 @@ void rpwa::py::exportFitResult() {
 		.def("reset", &rpwa::fitResult::reset)
 		.def("fill", &fitResult_fill_1)
 		.def("fill", &fitResult_fill_2)
+		.def("binningMap", &::fitResult_binningMap)
+		.def("multibinCenter", &::fitResult_multibinCenter)
 		.def("nmbEvents", &rpwa::fitResult::nmbEvents)
 		.def("normNmbEvents", &rpwa::fitResult::normNmbEvents)
 		.def("massBinCenter", &rpwa::fitResult::massBinCenter)

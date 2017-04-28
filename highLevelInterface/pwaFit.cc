@@ -63,8 +63,7 @@ namespace ROOT {
 
 fitResultPtr
 rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
-                  const double                           massBinMin,
-                  const double                           massBinMax,
+                  const binningMapType&                  binningMap,
                   const unsigned int                     seed,
                   const string&                          startValFileName,
                   const bool                             checkHessian,
@@ -97,10 +96,18 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 #endif
 	const bool         quiet                 = not verbose;
 
+	const double massBinMin    = binningMap.at("mass").first;
+	const double massBinMax    = binningMap.at("mass").second;
+
 	// report parameters
 	printInfo << "running pwaFit with the following parameters:" << endl;
-	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl
+	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl;
+	for(const auto& bin: binningMap){
+		if(bin.first == "mass") continue;
+		cout << "    " << bin.first << " bin ["
+		     << bin.second.first << ", " << bin.second.second << "] " << endl;
+	}
+	cout << "    seed for random start values ................... "  << seed                    << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
@@ -402,7 +409,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             massBinCenter,
+	             binningMap,
 	             minimizer->MinValue(),
 	             L.rank(),
 	             prodAmps,

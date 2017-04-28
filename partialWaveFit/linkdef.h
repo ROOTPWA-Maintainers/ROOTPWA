@@ -73,5 +73,18 @@
 }                                                                                                   \
               }";
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::fitResult"                                                               \
+        source="Double_t _massBinCenter"                                                            \
+        version="[-6]"                                                                              \
+        targetClass="rpwa::fitResult"                                                               \
+        target=""                                                                                   \
+        code="{                                                                                     \
+{                                                                                                   \
+    rpwa::binningMapType bm;                                                                        \
+    bm[\"mass\"] = std::pair<double,double>(onfile._massBinCenter, onfile._massBinCenter);          \
+    newObj->setBinningMap(bm);                                                                      \
+}                                                                                                   \
+              }";
 
 #endif
