@@ -187,7 +187,7 @@ main(int    argc,
 		inResultTree->GetEntry(i);
 		const unsigned int             nmbEvents              = inResult->nmbEvents();
 		const unsigned int             normNmbEvents          = inResult->normNmbEvents();
-		const double                   massBinCenter          = inResult->massBinCenter();
+		const binningMapType&          binningMap             = inResult->binningMap();
 		const double                   logLikelihood          = inResult->logLikelihood();
 		const int                      rank                   = inResult->rank();
 
@@ -274,7 +274,7 @@ main(int    argc,
 		outResult->reset();
 		outResult->fill(nmbEvents,
 		                normNmbEvents,
-		                massBinCenter,
+		                binningMap,
 		                logLikelihood,
 		                rank,
 		                prodAmps,

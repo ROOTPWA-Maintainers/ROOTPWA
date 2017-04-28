@@ -8,16 +8,37 @@
 
 namespace bp = boost::python;
 
+namespace {
+
+	rpwa::fitResultPtr pwaFit_pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
+	                                 const bp::dict& pyBinningMap = bp::dict(),
+	                                 const unsigned int seed = 0,
+	                                 const std::string& startValFileName = "",
+	                                 const bool checkHessian = false,
+	                                 const bool saveSpace = false,
+	                                 const bool verbose = false)
+	{
+		std::map<std::string, std::pair<double, double> > binningMap;
+		const bp::list keys = pyBinningMap.keys();
+		for (int i = 0; i < bp::len(keys); ++i) {
+			const std::string binningVar = bp::extract<std::string>(keys[i]);
+			const double lowerBound = bp::extract<double>(pyBinningMap[binningVar][0]);
+			const double upperBound = bp::extract<double>(pyBinningMap[binningVar][1]);
+			binningMap[binningVar] = std::pair<double, double>(lowerBound, upperBound);
+		}
+		return rpwa::hli::pwaFit(L, binningMap, seed, startValFileName, checkHessian, saveSpace, verbose);
+	}
+
+}
 
 void rpwa::py::exportPwaFit()
 {
 
 	bp::def(
 		"pwaFit"
-		, &rpwa::hli::pwaFit
+		, &pwaFit_pwaFit
 		, (bp::arg("likelihood"),
-		   bp::arg("massBinMin") = 0,
-		   bp::arg("massBinMax") = 0,
+		   bp::arg("binningMap") = bp::dict(),
 		   bp::arg("seed") = 0,
 		   bp::arg("startValFileName") = "",
 		   bp::arg("checkHessian") = false,

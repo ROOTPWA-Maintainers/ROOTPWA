@@ -7,8 +7,6 @@ class multiBin(object):
 	def __init__(self, boundaries): # boundaries = { "binningVariable": (lowerBound, upperBound) }
 		if not isinstance(boundaries, dict):
 			raise TypeError("Boundaries is not of type 'dict'.")
-		if not boundaries:
-			raise ValueError("Bin boundaries are empty.")
 		for key in boundaries.keys():
 			if not isinstance(key, str):
 				raise TypeError("Binning variable name is not of type 'str'.")
@@ -21,8 +19,8 @@ class multiBin(object):
 				raise TypeError("Lower bound of bin range is not a number for binning variable '" + key + "'.")
 			if not (isinstance(binRange[1], float) or isinstance(binRange[1], int)):
 				raise TypeError("Upper bound of bin range is not a number for binning variable '" + key + "'.")
-			if binRange[0] >= binRange[1]:
-				raise ValueError("Lower bound of bin range (" + str(binRange[0]) + ") is larger or equal to upper bound of bin range (" + str(binRange[1]) + ").")
+			if binRange[0] > binRange[1]:
+				raise ValueError("Lower bound of bin range (" + str(binRange[0]) + ") is larger than upper bound of bin range (" + str(binRange[1]) + ").")
 			if isinstance(binRange[0], int) or isinstance(binRange[1], int):
 				boundaries[key] = (float(binRange[0]), float(binRange[1]))
 		self.boundaries = boundaries

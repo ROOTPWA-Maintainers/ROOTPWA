@@ -63,8 +63,7 @@ namespace ROOT {
 
 fitResultPtr
 rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
-                  const double                           massBinMin,
-                  const double                           massBinMax,
+                  const binningMapType&                  binningMap,
                   const unsigned int                     seed,
                   const string&                          startValFileName,
                   const bool                             checkHessian,
@@ -99,8 +98,13 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaFit with the following parameters:" << endl;
-	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl
+	for (const auto& bin: binningMap) {
+		char prevFill = std::cout.fill('.');
+		cout << "    " << bin.first << " bin " << std::setw((bin.first.length() < 45) ? (45 - bin.first.length()) : 0) << " ["
+		     << bin.second.first << ", " << bin.second.second << "]" << endl;
+		std::cout.fill(prevFill);
+	}
+	cout << "    seed for random start values ................... "  << seed                    << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
@@ -129,7 +133,6 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 		}
 	}
 
-	const double massBinCenter = (massBinMin + massBinMax) / 2;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 
@@ -172,6 +175,13 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 		printWarn << "start value file name '" << startValFileName << "' is invalid. "
 		          << "using default start values." << endl;
 	else {
+		// TODO not only take the mass into account when searching
+		//      for the fit result to use as start values, but also
+		//      the other binning values
+		const double massBinMin    = binningMap.at("mass").first;
+		const double massBinMax    = binningMap.at("mass").second;
+		const double massBinCenter = (massBinMin + massBinMax) / 2;
+
 		// open root file
 		startValFile = TFile::Open(startValFileName.c_str(), "READ");
 		if (not startValFile or startValFile->IsZombie())
@@ -402,7 +412,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             massBinCenter,
+	             binningMap,
 	             minimizer->MinValue(),
 	             L.rank(),
 	             prodAmps,

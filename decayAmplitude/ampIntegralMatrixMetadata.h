@@ -7,7 +7,6 @@
 #include<map>
 
 namespace rpwa {
-	typedef std::map<std::string, std::pair<double, double> > binningMapType;
 	class ampIntegralMatrixMetadata : public TObject {
 			friend class ampIntegralFileWriter;
 

@@ -11,6 +11,8 @@ class TTree;
 
 
 namespace rpwa {
+	typedef std::map<std::string, std::pair<double, double> > binningMapType;
+	typedef std::map<std::string, double> multibinCenterType;
 
 	class eventMetadata : public TObject {
 		friend class eventFileWriter;

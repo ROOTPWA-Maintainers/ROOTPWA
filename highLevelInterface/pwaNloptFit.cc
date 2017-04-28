@@ -41,8 +41,7 @@ rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data
 
 fitResultPtr
 rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
-                       const double                           massBinMin,
-                       const double                           massBinMax,
+                       const binningMapType&                  binningMap,
                        const unsigned int                     seed,
                        const string&                          startValFileName,
                        const bool                             checkHessian,
@@ -69,8 +68,13 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaNloptFit with the following parameters:" << endl;
-	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl
+	for (const auto& bin: binningMap) {
+		char prevFill = std::cout.fill('.');
+		cout << "    " << bin.first << " bin " << std::setw((bin.first.length() < 45) ? (45 - bin.first.length()) : 0) << " ["
+		     << bin.second.first << ", " << bin.second.second << "]" << endl;
+		std::cout.fill(prevFill);
+	}
+	cout << "    seed for random start values ................... "  << seed                    << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
@@ -98,7 +102,6 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		}
 	}
 
-	const double massBinCenter = (massBinMin + massBinMax) / 2;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 
@@ -311,7 +314,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             massBinCenter,
+	             binningMap,
 	             likeli,
 	             L.rank(),
 	             prodAmps,
