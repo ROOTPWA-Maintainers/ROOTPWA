@@ -38,7 +38,7 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, weightFileNam
 				if not integralMetaData.hasKeyFileContent(ampMeta.keyfileContent()):
 					pyRootPwa.utils.printErr("keyfile content of additional eventFiledID missing in first eventFieldID.")
 					return False
-					
+
 			if not integralMetaData.addAmplitudeHash(ampMeta.contentHash()):
 				# This error is not fatal, since in special cases the same hash can appear twice:
 				# e.g. in freed-isobar analyses with spin zero, the angular dependences are constant
