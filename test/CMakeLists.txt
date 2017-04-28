@@ -40,4 +40,12 @@ add_subdirectory(utilities)
 
 
 # test functionality of 'pyRootPwa' module
-add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/testPyRootPwa.py)
+add_test(
+	NAME testPyRootPwa
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/testPyRootPwa.py
+)
+set_property(
+	TEST testPyRootPwa
+	APPEND
+	PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHON_LIBRARY_OUTPUT_PATH}:$ENV{PYTHONPATH}" "ROOTPWA=${CMAKE_SOURCE_DIR}"
+)

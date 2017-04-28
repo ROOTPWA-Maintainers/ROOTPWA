@@ -160,12 +160,28 @@ add_custom_target(
 # pylint tests
 if(PYLINT_FOUND)
 	# check 'pyRootPwa' module
-	add_test(pyLintPyRootPwa ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa)
+	add_test(
+		NAME pyLintPyRootPwa
+		COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa
+	)
+	set_property(
+		TEST pyLintPyRootPwa
+		APPEND
+		PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHON_LIBRARY_OUTPUT_PATH}:$ENV{PYTHONPATH}"
+	)
 
 	# check scripts
 	foreach(_FILE ${RPWA_PYTHON_SCRIPTS_FILES})
 		get_filename_component(_FILENAME ${_FILE} NAME_WE)
-		add_test(NAME pyLint${_FILENAME} COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${CMAKE_CURRENT_SOURCE_DIR}/scripts/${_FILE})
+		add_test(
+			NAME pyLint${_FILENAME}
+			COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc ${CMAKE_CURRENT_SOURCE_DIR}/scripts/${_FILE}
+		)
+		set_property(
+			TEST pyLint${_FILENAME}
+			APPEND
+			PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHON_LIBRARY_OUTPUT_PATH}:$ENV{PYTHONPATH}"
+		)
 	endforeach()
 	unset(_FILE)
 	unset(_FILENAME)
