@@ -39,16 +39,10 @@ install:
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
     - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${PWD}/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
-before_script:
-    # set some environment variables
-    - export ROOTPWA=${PWD}
-    - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
-    - export PATH=${ROOTPWA}/build/bin:${PATH}
-    - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
 script:
     # exit immediately if an error is encountered
     - set -e
-    - cd ${ROOTPWA}/build
+    - cd build
     - cmake ..
     # run 'make'
     - make
@@ -56,5 +50,11 @@ script:
     # - if 'make test' was not successful, print the log and fail the build
     - make test || (cat Testing/Temporary/LastTest.log && false)
     # - if 'make test' was successful, run 'testMC.sh'
-    - cd $ROOTPWA/test
+    - cd ..
+    # set some environment variables
+    - export ROOTPWA=${PWD}
+    - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
+    - export PATH=${ROOTPWA}/build/bin:${PATH}
+    - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
+    - cd test
     - ./testMC.sh
