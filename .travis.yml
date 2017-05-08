@@ -46,11 +46,15 @@ before_script:
     - export PATH=${ROOTPWA}/build/bin:${PATH}
     - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
 script:
+    # exit immediately if an error is encountered
+    - set -e
     - cd ${ROOTPWA}/build
     - cmake ..
     # run 'make'
-    # - if 'make' was not successful, fail the build
+    - make
     # - if 'make' was successful, run 'make test'
     # - if 'make test' was not successful, print the log and fail the build
+    - make test || (cat Testing/Temporary/LastTest.log && false)
     # - if 'make test' was successful, run 'testMC.sh'
-    - make && (make test || (cat Testing/Temporary/LastTest.log && false)) && (cd ${ROOTPWA}/test && ./testMC.sh)
+    - cd $ROOTPWA/test
+    - ./testMC.sh
