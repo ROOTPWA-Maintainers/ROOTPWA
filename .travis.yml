@@ -1,15 +1,61 @@
+# test with two different settings:
+# - the default is to test with NLOPT and BAT
+# - the second test is done without these two additional packages
+
 # use Ubuntu 14.04
 sudo: required
 dist: trusty
 
-# test with two different settings for the optional packages
 env:
-    # without any optional package
-    - TRAVIS_RPWA_USE_NLOPT=0 TRAVIS_RPWA_USE_BAT=0
-    # with all optional packages
-    - TRAVIS_RPWA_USE_NLOPT=1 TRAVIS_RPWA_USE_BAT=1
+  - TRAVIS_RPWA_USE_BAT=1
 
 language: cpp
+
+# packages required in all cases
+required_packages: &required_packages
+  - git
+  - dpkg-dev
+  - make
+  - g++
+  - gcc
+  - binutils
+  - libx11-dev
+  - libxpm-dev
+  - libxft-dev
+  - libxext-dev
+  - gfortran
+  - libssl-dev
+  - libpcre3-dev
+  - xlibmesa-glu-dev
+  - libglew1.5-dev
+  - libftgl-dev
+  - libmysqlclient-dev
+  - libfftw3-dev
+  - cfitsio-dev
+  - graphviz-dev
+  - libavahi-compat-libdnssd-dev
+  - libldap2-dev
+  - python-dev
+  - libxml2-dev
+  - libkrb5-dev
+  - libgsl0-dev
+  - libqt4-dev
+  - libconfig++-dev
+  - libyaml-cpp-dev
+
+addons:
+    apt:
+        packages:
+          - *required_packages
+          - libnlopt-dev
+
+matrix:
+    include:
+      - env: TRAVIS_RPWA_USE_BAT=0
+        addons:
+            apt:
+                packages:
+                  - *required_packages
 
 # send mails if a build fails
 notifications:
@@ -19,13 +65,7 @@ notifications:
         on_failure: always
 
 before_install:
-    - sudo apt-get update -qq
-    # packages required by ROOT
-    - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
-    # packages required by ROOTPWA
-    - sudo apt-get install -y libconfig++-dev libyaml-cpp-dev
     - pip install --user pylint==1.5.5 numpy
-    - if [ ${TRAVIS_RPWA_USE_NLOPT} -eq 1 ] ; then sudo apt-get install -y libnlopt-dev ; fi
     # fix Python library
     - export TRAVIS_RPWA_PYTHON_LIBPL=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBPL'))"`
     - export TRAVIS_RPWA_PYTHON_LIBDIR=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"`
