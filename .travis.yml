@@ -40,6 +40,7 @@ required_packages: &required_packages
   - libkrb5-dev
   - libgsl0-dev
   - libqt4-dev
+  - libboost-all-dev
   - libconfig++-dev
   - libyaml-cpp-dev
 
@@ -74,8 +75,6 @@ before_install:
 install:
     - ./travisCI/install-cmake.sh
     - export PATH=${PWD}/cmake/bin:${PATH}
-    - ./travisCI/install-boost.sh 1.61.0
-    - export BOOST_ROOT=${PWD}/boost-boost-1.61.0
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
     - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${PWD}/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
