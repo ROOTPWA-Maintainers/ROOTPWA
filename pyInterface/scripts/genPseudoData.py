@@ -6,6 +6,38 @@ import sys
 import pyRootPwa
 import pyRootPwa.core
 
+class Event(object):
+	def __init__(self):
+		self.prodKin = []
+		self.decayKin = []
+		self.weight = 0.0
+		self.additionalVariables = []
+
+
+def deWeightEvents(events, weightNorm):
+	'''
+	Deweight all events
+	'''
+	rand = pyRootPwa.core.randomNumberGenerator.instance
+	deWeightedEvents = []
+	for event in events:
+		rndm = rand.rndm()
+		if rndm < event.weight / weightNorm:
+			deWeightedEvents.append(event)
+	return deWeightedEvents
+
+
+def reDeWeightEvents(events, oldWeightNorm, newWeightNorm):
+	'''
+	Deweight all events again according to the new max weight.
+	'''
+	rand = pyRootPwa.core.randomNumberGenerator.instance
+	deWeightedEvents = []
+	for event in events:
+		rndm = rand.rndm()
+		if rndm < oldWeightNorm / newWeightNorm:
+			deWeightedEvents.append(event)
+	return deWeightedEvents
 
 if __name__ == "__main__":
 
@@ -35,6 +67,10 @@ if __name__ == "__main__":
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
 	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
+	parser.add_argument("--onTheFlyDeweight", action="store_true", dest="onTheFlyDeweight",
+	                    help="Performs on-the-fly deweighting (if set, -n is the number of accepted events)")
+	parser.add_argument("-f", "--weightFactor", type=float, default=1., metavar="#",
+	                    help="weight factor for max-weight if on-the-fly deweighting is used (default = 1)")
 
 	args = parser.parse_args()
 
@@ -70,6 +106,7 @@ if __name__ == "__main__":
 
 	printInfo("Setting random seed to " + str(args.seed))
 	pyRootPwa.core.randomNumberGenerator.instance.setSeed(args.seed)
+	rand = pyRootPwa.core.randomNumberGenerator.instance
 
 	generatorManager = pyRootPwa.core.generatorManager()
 	if args.beamFileName is not None:
@@ -137,10 +174,9 @@ if __name__ == "__main__":
 		progressBar.start()
 		massTPrimeVariables = []
 		attempts = 0
-		decayKin = None
-		prodKin = None
 		first = True
-		weight = 0.
+		maxWeight = 0.0
+		events = []
 
 		eventsGenerated = 0
 		for eventsGenerated in range(args.nEvents):
@@ -179,25 +215,77 @@ if __name__ == "__main__":
 					sys.exit(1)
 				first = False
 
-			prodKin = [ beam.lzVec.Vect() ]
-			decayKin = [ particle.lzVec.Vect() for particle in finalState ]
+			event = Event()
+			event.prodKin = [ beam.lzVec.Vect() ]
+			event.decayKin = [ particle.lzVec.Vect() for particle in finalState ]
 
-			weight = model.getIntensity(prodKin, decayKin)
+			event.weight = model.getIntensity(event.prodKin, event.decayKin)
+			maxWeight = max(event.weight, maxWeight)
 
-			additionalVariables = []
 			if not args.noStoreMassTPrime:
-				additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
-			fileWriter.addEvent(prodKin, decayKin, additionalVariables + [weight])
+				event.additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
+
+			if not args.onTheFlyDeweight:
+				fileWriter.addEvent(event.prodKin, event.decayKin, event.additionalVariables + [event.weight])
+			else:
+				events.append(event)
 
 			progressBar.update(eventsGenerated)
+
+		eventsGenerated += 1
+
+		if args.onTheFlyDeweight:
+			# deweight events of burn-in phase
+			weightNorm = maxWeight * args.weightFactor
+			events = deWeightEvents(events, weightNorm)
+
+			reDeWeights = 0
+
+			printInfo("On-the-fly deweighting:")
+			progressBar = pyRootPwa.utils.progressBar(0, args.nEvents, sys.stdout)
+			progressBar.start()
+			eventsGenerated = len(events)
+			while eventsGenerated < args.nEvents:
+				attempts += generatorManager.event()
+				generator = generatorManager.getGenerator()
+				beam = generator.getGeneratedBeam()
+				finalState = generator.getGeneratedFinalState()
+
+				event = Event()
+				event.prodKin = [ beam.lzVec.Vect() ]
+				event.decayKin = [ particle.lzVec.Vect() for particle in finalState ]
+
+				event.weight = model.getIntensity(event.prodKin, event.decayKin)
+
+				if not args.noStoreMassTPrime:
+					event.additionalVariables = [ generator.getGeneratedXMass(), generator.getGeneratedTPrime() ]
+
+				p = rand.rndm()
+				if p < event.weight / weightNorm:
+					events.append(event)
+
+				if event.weight > maxWeight:
+					reDeWeightEvents(events, maxWeight, event.weight)
+					maxWeight = event.weight
+					weightNorm = maxWeight * args.weightFactor
+					reDeWeights += 1
+
+				eventsGenerated = len(events)
+				progressBar.update(eventsGenerated)
+
+			printInfo("Write events to output file")
+			for event in events:
+				fileWriter.addEvent(event.prodKin, event.decayKin, event.additionalVariables + [event.weight])
+
 	except:
 		raise
 	finally:
 		fileWriter.finalize()
 
-	eventsGenerated += 1
 	printSucc("generated " + str(eventsGenerated) + " events.")
 	printInfo("attempts: " + str(attempts))
+	if args.onTheFlyDeweight:
+		printInfo("redeweights: " + str(reDeWeights))
 	printInfo("efficiency: " + str(100. * (float(eventsGenerated) / float(attempts))) + "%")
 
 	pyRootPwa.utils.printPrintingSummary(pyRootPwa.utils.printingCounter)
