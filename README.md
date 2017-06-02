@@ -165,6 +165,25 @@ The build system tries to find your Python installation automatically. For this 
 In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
+### numpy ###
+
+_numpy_ (<http://www.numpy.org>) is a Python library that is required in ROOTPWA for some operations on ROOT trees. _numpy_ needs to be built against the same Python version as ROOTPWA. It is available from the repositories of most Linux distributions or via _pip_. To install from source use:
+
+1.  Download the source tarball from <http://www.scipy.org/scipylib/download.html> and extract it to a directory of your choice.
+
+2.  Build and install _numpy_.
+
+    `> python setup.py build`
+
+    `> python setup.py install --prefix=/your/folder/to/install/numpy`
+
+3.  Add the installation directory of _numpy_ to the `PYTHONPATH` environment variable:
+
+    `> export PYTHONPATH=/your/folder/to/install/numpy:$PYTHONPATH`
+
+    This should probably be added to your `.profile`.
+
+
 ### NLopt (optional) ###
 
 The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.

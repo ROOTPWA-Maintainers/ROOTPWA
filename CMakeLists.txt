@@ -278,7 +278,7 @@ set_package_properties(PYTHON
 	DESCRIPTION "General-purpose, high-level programming language"
 	URL "http://www.python.org"
 	PURPOSE "Provides scripting interface to ROOTPWA classes"
-	TYPE OPTIONAL
+	TYPE REQUIRED
 	)
 # check that Boost.Python library was found
 if(NOT Boost_PYTHON_FOUND)
@@ -289,6 +289,19 @@ set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
 message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
 set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
 message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+
+
+# setup numpy
+message(STATUS "")
+message(STATUS ">>> Setting up numpy.")
+find_package(NumPy 1.8 REQUIRED)
+set_package_properties(NumPy
+	PROPERTIES
+	DESCRIPTION "numerical calculations in Python"
+	URL "http://www.numpy.org"
+	PURPOSE "Used for handling of multi-dimensional arrays in Python."
+	TYPE REQUIRED
+	)
 
 
 # setup pylint (optional)
