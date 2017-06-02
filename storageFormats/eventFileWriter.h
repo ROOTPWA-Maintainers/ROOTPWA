@@ -21,6 +21,7 @@ namespace rpwa {
 		eventFileWriter();
 		~eventFileWriter();
 
+		eventMetadata&       getEventMetadata()       { return _metadata; }
 		bool initialize(TFile&                               outputFile,                        // output file to write the data to (user keeps ownership!)
 		                const std::string&                   auxString,                         // some arbitrary string to identify this data file
 		                const eventMetadata::eventsTypeEnum& eventsType,                        // type of events

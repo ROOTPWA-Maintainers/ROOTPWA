@@ -107,6 +107,8 @@ namespace {
 void rpwa::py::exportEventFileWriter() {
 
 	bp::class_<rpwa::eventFileWriter, boost::noncopyable>("eventFileWriter")
+		.def("getEventMetadata", &rpwa::eventFileWriter::getEventMetadata,
+		     bp::return_internal_reference<>())
 		.def(
 			"initialize"
 			, &eventFileWriter_initialize

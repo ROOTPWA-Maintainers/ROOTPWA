@@ -21,6 +21,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	printErr  = pyRootPwa.utils.printErr
+	printWarn = pyRootPwa.utils.printWarn
 	printSucc = pyRootPwa.utils.printSucc
 	printInfo = pyRootPwa.utils.printInfo
 
@@ -41,15 +42,21 @@ if __name__ == "__main__":
 		additionalVariables[i] = numpy.array(1, dtype = float)
 		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
 
-	maxWeight = 0.
-	for i in xrange(inputTree.GetEntries()):
-		inputTree.GetEntry(i)
-		if float(additionalVariables[weightIndex]) > maxWeight:
-			maxWeight = float(additionalVariables[weightIndex])
+	if metaData.hasAuxValue("weightNorm"): # stored during generation of pseudoData
+		printWarn("The input event file is already deweighted!")
+
+	if metaData.hasAuxValue("maxWeight"): # stored during generation of pseudoData
+		maxWeight = metaData.auxValue("maxWeight")
+	else: # determine maxWeight yourself
+		maxWeight = 0.
+		for i in xrange(inputTree.GetEntries()):
+			inputTree.GetEntry(i)
+			if float(additionalVariables[weightIndex]) > maxWeight:
+				maxWeight = float(additionalVariables[weightIndex])
 
 	printInfo("maxWeight: " + str(maxWeight))
-	maxWeight *= args.weightFactor
-	printInfo("adjusted maxWeight to " + str(maxWeight))
+	weightNorm = maxWeight * args.weightFactor
+	printInfo("adjusted maxWeight to " + str(weightNorm))
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
@@ -79,13 +86,15 @@ if __name__ == "__main__":
 
 	for eventIndex in xrange(inputTree.GetEntries()):
 		inputTree.GetEntry(eventIndex)
-		normWeight = additionalVariables[weightIndex] / maxWeight
+		normWeight = additionalVariables[weightIndex] / weightNorm
 		cut = pyRootPwa.ROOT.gRandom.Rndm()
 		if normWeight > cut:
 			fileWriter.addEvent(prodKinMomenta, decayKinMomenta,
 			                    [float(variable) for i, variable in enumerate(additionalVariables) if i != weightIndex])
 			acceptedEntries += 1
 		overallEntries += 1
+	fileWriter.getEventMetadata().setAuxValue("maxWeight", maxWeight)
+	fileWriter.getEventMetadata().setAuxValue("weightNorm", weightNorm)
 	fileWriter.finalize()
 	inputFile.Close()
 

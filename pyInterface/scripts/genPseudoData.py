@@ -277,6 +277,9 @@ if __name__ == "__main__":
 			for event in events:
 				fileWriter.addEvent(event.prodKin, event.decayKin, event.additionalVariables + [event.weight])
 
+			fileWriter.getEventMetadata().setAuxValue("weightNorm", weightNorm)
+
+		fileWriter.getEventMetadata().setAuxValue("maxWeight", maxWeight)
 	except:
 		raise
 	finally:
