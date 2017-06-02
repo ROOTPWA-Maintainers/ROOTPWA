@@ -45,16 +45,16 @@
 #define DECAYTOPOLOGY_H
 
 
-#include <vector>
 #include <map>
+#include <vector>
 
 #include "TLorentzRotation.h"
 
+#include "decayGraph.hpp"
+#include "fsVertex.h"
+#include "interactionVertex.h"
 #include "particle.h"
 #include "productionVertex.h"
-#include "interactionVertex.h"
-#include "fsVertex.h"
-#include "decayGraph.hpp"
 
 
 class TClonesArray;
