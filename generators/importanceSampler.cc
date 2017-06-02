@@ -328,7 +328,7 @@ rpwa::importanceSampler::CalculateObservables(const std::vector<double>& paramet
 
 bool
 rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
-                                              const std::string& userString,
+                                              const std::string& auxString,
                                               const bool         storeMassAndTPrime,
                                               const std::string& massVariableName,
                                               const std::string& tPrimeVariableName)
@@ -352,7 +352,7 @@ rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
 	}
 
 	const bool valid = _fileWriter.initialize(*outFile,
-	                                          userString,
+	                                          auxString,
 	                                          rpwa::eventMetadata::REAL,
 	                                          prodKinParticleNames,
 	                                          decayKinParticleNames,

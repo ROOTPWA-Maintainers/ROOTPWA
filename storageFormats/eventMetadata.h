@@ -13,6 +13,7 @@ class TTree;
 namespace rpwa {
 
 	class additionalTreeVariables;
+	class hashCalculator;
 
 	class eventMetadata : public TObject {
 		friend class eventFileWriter;
@@ -28,24 +29,46 @@ namespace rpwa {
 
 		~eventMetadata();
 
+		/***
+		 * Compare the content of both metadata. Auxiliary information (auxString, auxValues) are not compared.
+		 */
 		bool operator==(const eventMetadata& rhs) const;
 		bool operator!=(const eventMetadata& rhs) const { return not (*this == rhs); }
 
-		const std::string& userString() const { return _userString; }
+		const std::string& auxString() const { return _auxString; }
 		const std::string& contentHash() const { return _contentHash; }
 		const eventsTypeEnum& eventsType() const { return _eventsType; }
 		const rpwa::multibinBoundariesType& multibinBoundaries() const { return _multibinBoundaries; }
 		const std::vector<std::string>& productionKinematicsParticleNames() const { return _productionKinematicsParticleNames; }
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
-		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
+		const std::vector<std::string>& additionalTreeVariableNames() const { return _additionalTreeVariableNames; }
+		const std::map<std::string, double>& auxValues() const { return _auxValues; }
+		double auxValue(const std::string& name) const { return _auxValues.at(name); }
+		void setAuxValue(const std::string& name, const double value) { _auxValues[name] = value; }
+		bool hasAuxValue(const std::string& name) const { return _auxValues.find(name) != _auxValues.end(); }
 
+		/***
+		 * Update the given hashor with the default information used to build the hash of the meta data
+		 * \return true if update was successful
+		 */
+		bool updateHashor(hashCalculator& hashor, const bool& printProgress = false) const;
+		/***
+		 * Recalculate the hash for this object. Auxiliary information (auxString, auxValues) are not considered.
+		 */
 		std::string recalculateHash(const bool& printProgress = false) const;
 
 		std::ostream& print(std::ostream& out) const;
 
 		Long64_t Merge(TCollection* list, Option_t* option = "");     // throws an exception
+		/***
+		 * \par mergeAuxValues Also merge the auxiliary values if they are the same
+		 * @return a new eventMetadata, which is the merge of all inputData.
+		 *         By default, auxiliary information (auxString and auxValues) are not merged.
+		 */
 		static eventMetadata* merge(const std::vector<const rpwa::eventMetadata*>& inputData,
-		                            const bool mergeDiffMeta = false,
+		                            const bool mergeBinBoundaries = false,
+		                            const bool mergeAuxString = false,
+		                            const bool mergeAuxValues = false,
 		                            const int& splitlevel = 99,
 		                            const int& buffsize = 256000);                     // actually works
 
@@ -72,23 +95,23 @@ namespace rpwa {
 
 	  private:
 
-		void setUserString(const std::string& userString) { _userString = userString; }
-		void appendToUserString(const std::string& userString,
-		                        const std::string& delimiter = ", ");
+		void setAuxString(const std::string& auxString) { _auxString = auxString; }
+		void appendToAuxString(const std::string& auxString,
+		                       const std::string& delimiter = ", ");
 
 		void setContentHash(const std::string& contentHash) { _contentHash = contentHash; }
 		void setEventsType(const eventsTypeEnum& eventsType) { _eventsType = eventsType; }
-		void setProductionKinematicsParticleNames(const std::vector<std::string>& productionKinematicsParticleNames);
-		void setDecayKinematicsParticleNames(const std::vector<std::string>& decayKinematicsParticleNames);
-		void setAdditionalSavedVariableLables(std::vector<std::string> labels) { _additionalSavedVariableLabels = labels; }
+		void setProductionKinematicsParticleNames(const std::vector<std::string>& productionKinematicsParticleNames) { _productionKinematicsParticleNames = productionKinematicsParticleNames; }
+		void setDecayKinematicsParticleNames(const std::vector<std::string>& decayKinematicsParticleNames) { _decayKinematicsParticleNames = decayKinematicsParticleNames; }
+		void setAdditionalTreeVariableNames(const std::vector<std::string>& labels) { _additionalTreeVariableNames = labels; }
 
 		void setBinningVariableLabels(const std::vector<std::string>& labels);
-		void setBinningVariableRange(const std::string& label, const rpwa::boundaryType& range);
-		void setMultibinBoundaries(const rpwa::multibinBoundariesType& multibinBoundaries);
+		void setBinningVariableRange(const std::string& label, const rpwa::boundaryType& range) { _multibinBoundaries[label] = range; }
+		void setMultibinBoundaries(const rpwa::multibinBoundariesType& multibinBoundaries) { _multibinBoundaries = multibinBoundaries; }
 
 		static std::string getStringForEventsType(const eventsTypeEnum& type);
 
-		std::string _userString;
+		std::string _auxString; // the content of this variable is by default not included in the '==' comparison, hash calculation, or merging
 		std::string _contentHash;
 		eventsTypeEnum _eventsType;
 
@@ -97,11 +120,13 @@ namespace rpwa {
 
 		rpwa::multibinBoundariesType _multibinBoundaries;
 
-		std::vector<std::string> _additionalSavedVariableLabels;
+		std::vector<std::string> _additionalTreeVariableNames;
+
+		std::map<std::string, double> _auxValues; // the content of this variable is by default not included in the '==' comparison, hash calculation, or merging
 
 		mutable TTree* _eventTree; //!
 
-		ClassDef(eventMetadata, 3);
+		ClassDef(eventMetadata, 4);
 
 	}; // class eventMetadata
 

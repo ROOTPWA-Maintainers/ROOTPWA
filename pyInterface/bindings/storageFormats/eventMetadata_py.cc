@@ -29,9 +29,9 @@ namespace {
 		return bp::list(self.decayKinematicsParticleNames());
 	}
 
-	bp::list eventMetadata_additionalSavedVariableLables(const rpwa::eventMetadata& self)
+	bp::list eventMetadata_additionalTreeVariableNames(const rpwa::eventMetadata& self)
 	{
-		return bp::list(self.additionalSavedVariableLables());
+		return bp::list(self.additionalTreeVariableNames());
 	}
 
 	PyObject* eventMetadata_eventTree(rpwa::eventMetadata& self)
@@ -75,8 +75,8 @@ void rpwa::py::exportEventMetadata() {
 			.def(bp::self_ns::str(bp::self))
 
 			.def(
-				"userString"
-				, &rpwa::eventMetadata::userString
+				"auxString"
+				, &rpwa::eventMetadata::auxString
 				, bp::return_value_policy<bp::copy_const_reference>()
 			)
 			.def(
@@ -94,7 +94,10 @@ void rpwa::py::exportEventMetadata() {
 			.def("multibinBoundaries", &eventMetadata_multibinBoundaries)
 			.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
 			.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)
-			.def("additionalSavedVariableLables", &eventMetadata_additionalSavedVariableLables)
+			.def("additionalTreeVariableNames", &eventMetadata_additionalTreeVariableNames)
+			.def("auxValue", &rpwa::eventMetadata::auxValue)
+			.def("setAuxValue", &rpwa::eventMetadata::setAuxValue)
+			.def("hasAuxValue", &rpwa::eventMetadata::hasAuxValue)
 			.def("recalculateHash", &rpwa::eventMetadata::recalculateHash, (bp::arg("printProgress")=false))
 			.def("eventTree", &eventMetadata_eventTree)
 			.def(

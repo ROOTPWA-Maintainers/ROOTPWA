@@ -34,10 +34,10 @@ if __name__ == "__main__":
 		printErr("error reading metaData. Input file is not a RootPWA root file.")
 	inputTree = metaData.eventTree()
 
-	additionalVariableLabels = metaData.additionalSavedVariableLables()
-	additionalVariables = [None] * len(additionalVariableLabels)
-	weightIndex = additionalVariableLabels.index("weight")
-	for i, additionalVariableLabel in enumerate(additionalVariableLabels):
+	additionalVariableNames = metaData.additionalTreeVariableNames()
+	additionalVariables = [None] * len(additionalVariableNames)
+	weightIndex = additionalVariableNames.index("weight")
+	for i, additionalVariableLabel in enumerate(additionalVariableNames):
 		additionalVariables[i] = numpy.array(1, dtype = float)
 		inputTree.SetBranchAddress(additionalVariableLabel, additionalVariables[i])
 
@@ -58,12 +58,12 @@ if __name__ == "__main__":
 
 	fileWriter = pyRootPwa.core.eventFileWriter()
 	if not fileWriter.initialize(outputFile,
-	                             metaData.userString(),
+	                             metaData.auxString(),
 	                             pyRootPwa.core.eventMetadata.REAL,
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
 	                             metaData.multibinBoundaries(),
-	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableLabels)
+	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableNames)
 	                                                           if i != weightIndex ]):
 		printErr("could not initialize fileWriter. Aborting...")
 		inputFile.Close()

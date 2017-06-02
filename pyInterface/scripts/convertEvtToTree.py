@@ -103,7 +103,7 @@ if __name__ == "__main__":
 	                                )
 	parser.add_argument("inputFileName", help="The .evt file to be read")
 	parser.add_argument("outputFileName", help="The .root file to be written")
-	parser.add_argument("-u", "--userstring", help="User string", default="")
+	parser.add_argument("-u", "--auxString", dest="auxString", help="auxiliary string stored in metadata", default="")
 	parser.add_argument("-t", "--type", dest="eventsTypeString", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')", default="other")
 	parser.add_argument("-b", "--binning", action='append',
 	                    help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 	else:
 		printErr("type '" + args.eventsTypeString + "' is invalid as an event data type.")
 	printInfo("set eventsType to '" + str(eventsType) + "'.")
-	printInfo("set userString to '" + args.userstring + "'.")
+	printInfo("set auxString to '" + args.auxString + "'.")
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 		initialProdNames  = event.getProductionKinematicsParticleNames()
 		initialDecayNames = event.getDecayKinematicsParticleNames()
 		success = fileWriter.initialize(outputFile,
-		                                args.userstring,
+		                                args.auxString,
 		                                eventsType,
 		                                initialProdNames,
 		                                initialDecayNames,

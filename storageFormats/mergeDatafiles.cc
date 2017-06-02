@@ -40,8 +40,8 @@ int main(int argc, char** argv)
 	cout << endl;
 
 	const string progName = argv[0];
-	bool mergeDiffMeta = false;
-	bool force         = false;
+	bool mergeBinBoundaries = false;
+	bool force              = false;
 
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// if the following line is missing, there are error messages of the sort
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 	{
 		switch(c) {
 		case 'a':
-			mergeDiffMeta = true;
+			mergeBinBoundaries = true;
 			break;
 		case 'f':
 			force = true;
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	eventMetadata* metadata = eventMetadata::merge(inputData, mergeDiffMeta);
+	eventMetadata* metadata = eventMetadata::merge(inputData, mergeBinBoundaries);
 	if(not metadata) {
 		printErr << "merge failed. Aborting..." << endl;
 		return 1;

@@ -22,7 +22,7 @@ const std::string rpwa::eventMetadata::decayKinematicsMomentaBranchName = "decay
 
 
 rpwa::eventMetadata::eventMetadata()
-	: _userString(""),
+	: _auxString(""),
 	  _contentHash(""),
 	  _eventsType(eventMetadata::OTHER),
 	  _productionKinematicsParticleNames(),
@@ -38,7 +38,7 @@ rpwa::eventMetadata::~eventMetadata() { };
 ostream& rpwa::eventMetadata::print(ostream& out) const
 {
 	out << "eventMetadata: " << endl
-	    << "    userString ...................... '" << _userString << "'"                  << endl
+	    << "    auxString ....................... '" << _auxString << "'"                   << endl
 	    << "    contentHash ..................... '" << _contentHash << "'"                 << endl
 	    << "    eventsType ...................... '" << getStringForEventsType(_eventsType) << "'" << endl
 	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames  << endl
@@ -55,16 +55,23 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 	if(_eventTree) {
 		out << "    number of events in file ........ " << _eventTree->GetEntries() << endl;
 	}
-	out << "    additional branches ............. " << additionalSavedVariableLables() << endl;
+	out << "    additional branches ............. " << additionalTreeVariableNames() << endl;
+	out << "    auxValues";
+	if(_auxValues.empty()) {
+		out << " ....................... " << "<empty>" << endl;
+	} else {
+		out << ": " << endl;
+		for(const auto& auxValue: _auxValues) {
+			out << "        variable '" << auxValue.first << "' value " << auxValue.second << endl;
+		}
+		cout << endl;
+	}
 	return out;
 }
 
 
 bool rpwa::eventMetadata::operator==(const eventMetadata& rhs) const
 {
-	if (_userString != rhs._userString) {
-		return false;
-	}
 	if (_contentHash != rhs._contentHash) {
 		return false;
 	}
@@ -80,35 +87,23 @@ bool rpwa::eventMetadata::operator==(const eventMetadata& rhs) const
 	if (_multibinBoundaries != rhs._multibinBoundaries) {
 		return false;
 	}
-	if (_additionalSavedVariableLabels != rhs._additionalSavedVariableLabels) {
+	if (_additionalTreeVariableNames != rhs._additionalTreeVariableNames) {
 		return false;
 	}
 	return true;
 }
 
 
-void rpwa::eventMetadata::appendToUserString(const string& userString,
-                                             const string& delimiter)
+void rpwa::eventMetadata::appendToAuxString(const string& auxString,
+                                            const string& delimiter)
 {
-	if(_userString == "") {
-		_userString = userString;
+	if(_auxString == "") {
+		_auxString = auxString;
 	} else {
 		stringstream strStr;
-		strStr << _userString << delimiter << userString;
-		_userString = strStr.str();
+		strStr << _auxString << delimiter << auxString;
+		_auxString = strStr.str();
 	}
-}
-
-
-void rpwa::eventMetadata::setProductionKinematicsParticleNames(const vector<string>& productionKinematicsNames)
-{
-	_productionKinematicsParticleNames = productionKinematicsNames;
-}
-
-
-void rpwa::eventMetadata::setDecayKinematicsParticleNames(const vector<string>& decayKinematicsParticleNames)
-{
-	_decayKinematicsParticleNames = decayKinematicsParticleNames;
 }
 
 
@@ -120,41 +115,28 @@ void rpwa::eventMetadata::setBinningVariableLabels(const vector<string>& labels)
 }
 
 
-void rpwa::eventMetadata::setBinningVariableRange(const string& label, const boundaryType& range)
-{
-	_multibinBoundaries[label] = range;
-}
-
-
-void rpwa::eventMetadata::setMultibinBoundaries(const multibinBoundariesType& multibinBoundaries)
-{
-	_multibinBoundaries = multibinBoundaries;
-}
-
-
-string rpwa::eventMetadata::recalculateHash(const bool& printProgress) const
+bool rpwa::eventMetadata::updateHashor(hashCalculator& hashor, const bool& printProgress) const
 {
 	TClonesArray* productionKinematicsMomenta = 0;
 	TClonesArray* decayKinematicsMomenta = 0;
-	hashCalculator hashor;
 	if(not _eventTree) {
 		printWarn << "input tree not found in metadata." << endl;
-		return "";
+		return false;
 	}
 	if(_eventTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0)
 	{
 		printWarn << "could not set address for branch '" << productionKinematicsMomentaBranchName << "'." << endl;
-		return "";
+		return false;
 	}
 	if(_eventTree->SetBranchAddress(decayKinematicsMomentaBranchName.c_str(), &decayKinematicsMomenta)) {
 		printWarn << "could not set address for branch '" << decayKinematicsMomentaBranchName << "'." << endl;
-		return "";
+		return false;
 	}
-	vector<double> additionalVariables(additionalSavedVariableLables().size(), 0.);
+	vector<double> additionalVariables(additionalTreeVariableNames().size(), 0.);
 	for(unsigned int i = 0; i < additionalVariables.size(); ++i) {
-		if(_eventTree->SetBranchAddress(additionalSavedVariableLables()[i].c_str(), &additionalVariables[i]) < 0) {
-			printWarn << "could not set address for branch '" << additionalSavedVariableLables()[i].c_str() << "'." << endl;
-			return "";
+		if(_eventTree->SetBranchAddress(additionalTreeVariableNames()[i].c_str(), &additionalVariables[i]) < 0) {
+			printWarn << "could not set address for branch '" << additionalTreeVariableNames()[i].c_str() << "'." << endl;
+			return false;
 		}
 	}
 	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_eventTree->GetEntries(), cout, "") : 0;
@@ -173,7 +155,17 @@ string rpwa::eventMetadata::recalculateHash(const bool& printProgress) const
 			hashor.Update(additionalVariables[i]);
 		}
 	}
-	return hashor.hash();
+	return true;
+}
+
+
+string rpwa::eventMetadata::recalculateHash(const bool& printProgress) const {
+	hashCalculator hashor;
+	if (updateHashor(hashor, printProgress)) {
+		return hashor.hash();
+	} else {
+		return "";
+	}
 }
 
 
@@ -184,7 +176,9 @@ Long64_t rpwa::eventMetadata::Merge(TCollection* /*list*/, Option_t* /*option*/)
 
 
 eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& inputData,
-                                          const bool mergeDiffMeta,
+                                          const bool mergeBinBoundaries,
+                                          const bool mergeAuxString,
+                                          const bool mergeAuxValues,
                                           const int& splitlevel,
                                           const int& buffsize)
 {
@@ -201,102 +195,79 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 	mergee->_eventTree = new TTree(eventTreeName.c_str(), eventTreeName.c_str());
 	mergee->_eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &productionKinematicsMomenta, buffsize, splitlevel);
 	mergee->_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &decayKinematicsMomenta,   buffsize, splitlevel);
-	vector<double> additionalSavedVariables;
+	vector<double> additionalTreeVariables;
 	bool first = true;
-	multibinBoundariesType mergedmultibinBoundaries;
+	multibinBoundariesType mergedMultibinBoundaries;
 	for(unsigned int inputDataNumber = 0; inputDataNumber < inputData.size(); ++inputDataNumber) {
 		const eventMetadata* metadata = inputData[inputDataNumber];
 		TTree* inputTree = metadata->eventTree();
 		if(not inputTree) {
 			printWarn << "got NULL-pointer to inputTree when merging." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+			goto mergeFailed;
 		}
 		if(first) {
 			first = false;
-			if((mergee->productionKinematicsParticleNames().empty()) and
-			   (mergee->decayKinematicsParticleNames().empty()))
-			{
-				mergee->setProductionKinematicsParticleNames(metadata->productionKinematicsParticleNames());
-				mergee->setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
-			}
-			if(not mergeDiffMeta) {
-				if(mergee->multibinBoundaries().empty()) {
-					mergee->setMultibinBoundaries(metadata->multibinBoundaries());
-				}
+			mergee->setProductionKinematicsParticleNames(metadata->productionKinematicsParticleNames());
+			mergee->setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
+			if(not mergeBinBoundaries) {
+				mergee->setMultibinBoundaries(metadata->multibinBoundaries());
 			} else {
-				mergedmultibinBoundaries = metadata->multibinBoundaries();
+				mergedMultibinBoundaries = metadata->multibinBoundaries();
 			}
-			if(mergee->additionalSavedVariableLables().empty()) {
-				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
-				additionalSavedVariables.resize(mergee->additionalSavedVariableLables().size(), 0.);
-				for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-					stringstream strStr;
-					strStr << mergee->additionalSavedVariableLables()[i] << "/D";
-					mergee->_eventTree->Branch(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i], strStr.str().c_str());
-				}
+			mergee->setAdditionalTreeVariableNames(metadata->additionalTreeVariableNames());
+			additionalTreeVariables.resize(mergee->additionalTreeVariableNames().size(), 0.);
+			for(unsigned int i = 0; i < additionalTreeVariables.size(); ++i) {
+				stringstream strStr;
+				strStr << mergee->additionalTreeVariableNames()[i] << "/D";
+				mergee->_eventTree->Branch(mergee->additionalTreeVariableNames()[i].c_str(), &additionalTreeVariables[i], strStr.str().c_str());
 			}
 		}
-		mergee->appendToUserString(metadata->userString());
+		if (mergeAuxString)
+			mergee->appendToAuxString(metadata->auxString());
 		if(mergee->productionKinematicsParticleNames() != metadata->productionKinematicsParticleNames()) {
 			printWarn << "particle names of production kinematics differ." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+			goto mergeFailed;
 		}
 		if(mergee->decayKinematicsParticleNames() != metadata->decayKinematicsParticleNames()) {
 			printWarn << "particle names of decay kinematics differ." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+			goto mergeFailed;
 		}
-		if (not mergeDiffMeta) {
+		if (not mergeBinBoundaries) {
 			if(mergee->multibinBoundaries() != metadata->multibinBoundaries()) {
 				printWarn << "multibin ranges differ." << endl;
-				delete mergee->_eventTree;
-				delete mergee;
-				return 0;
+				goto mergeFailed;
 			}
 		} else {
-			for(multibinBoundariesType::const_iterator iterator = mergedmultibinBoundaries.begin(); iterator != mergedmultibinBoundaries.end(); iterator++) {
+			for(multibinBoundariesType::const_iterator iterator = mergedMultibinBoundaries.begin(); iterator != mergedMultibinBoundaries.end(); iterator++) {
 				const string& binningVariable = iterator->first;
 				const boundaryType& binningRange = iterator->second;
 				const multibinBoundariesType::const_iterator toAdd = metadata->multibinBoundaries().find(binningVariable);
 				if (toAdd != metadata->multibinBoundaries().end()) { // check if binningVariable exists (uniquely) in other multibinBoundaries
-					if (binningRange.first > toAdd->second.first) {
-						mergedmultibinBoundaries[binningVariable].first = toAdd->second.first;
+					if (toAdd->second.first < binningRange.first) {
+						mergedMultibinBoundaries[binningVariable].first = toAdd->second.first;
 					}
-					if (binningRange.second < toAdd->second.second) {
-						mergedmultibinBoundaries[binningVariable].second = toAdd->second.second;
+					if (toAdd->second.second > binningRange.second) {
+						mergedMultibinBoundaries[binningVariable].second = toAdd->second.second;
 					}
 				} else {
 					printWarn << "files do not use the same binning variables." << endl;
-					delete mergee->_eventTree;
-					delete mergee;
-					return 0;
+					goto mergeFailed;
 				}
 			}
 		}
 		if(inputTree->SetBranchAddress(productionKinematicsMomentaBranchName.c_str(), &productionKinematicsMomenta) < 0) {
 			printWarn << "could not set branch address for branch '" << productionKinematicsMomentaBranchName << "'." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+			goto mergeFailed;
 		}
 		if(inputTree->SetBranchAddress(decayKinematicsMomentaBranchName.c_str(), &decayKinematicsMomenta) < 0) {
 			printWarn << "could not set branch address for branch '" << decayKinematicsMomentaBranchName << "'." << endl;
-			delete mergee->_eventTree;
-			delete mergee;
-			return 0;
+			goto mergeFailed;
 		}
-		for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-			if(inputTree->SetBranchAddress(mergee->additionalSavedVariableLables()[i].c_str(), &additionalSavedVariables[i]) < 0)
+		for(unsigned int i = 0; i < additionalTreeVariables.size(); ++i) {
+			if(inputTree->SetBranchAddress(mergee->additionalTreeVariableNames()[i].c_str(), &additionalTreeVariables[i]) < 0)
 			{
-				printWarn << "could not set address for branch '" << mergee->additionalSavedVariableLables()[i] << "'." << endl;
-				delete mergee->_eventTree;
-				delete mergee;
-				return 0;
+				printWarn << "could not set address for branch '" << mergee->additionalTreeVariableNames()[i] << "'." << endl;
+				goto mergeFailed;
 			}
 		}
 		for(long eventNumber = 0; eventNumber < inputTree->GetEntries(); ++eventNumber) {
@@ -307,17 +278,36 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 			for(int i = 0; i < decayKinematicsMomenta->GetEntries(); ++i) {
 				hashor.Update(*((TVector3*)(*decayKinematicsMomenta)[i]));
 			}
-			for(unsigned int i = 0; i < additionalSavedVariables.size(); ++i) {
-				hashor.Update(additionalSavedVariables[i]);
+			for(unsigned int i = 0; i < additionalTreeVariables.size(); ++i) {
+				hashor.Update(additionalTreeVariables[i]);
 			}
 			mergee->_eventTree->Fill();
 		}
+
+		if (mergeAuxValues) {
+			for (const auto& nameValue : metadata->auxValues()) {
+				if (not mergee->hasAuxValue(nameValue.first)) {
+					mergee->setAuxValue(nameValue.first, nameValue.second);
+				} else { // the auxiliary value exists in multiple files -> only merge if it is the same
+					if (mergee->auxValue(nameValue.first) != nameValue.second) {
+						printWarn << "auxiliary value '" << nameValue.first << "' has different values in the different files." << endl;
+						goto mergeFailed;
+					}
+				}
+			}
+		}
 	}
-	if(mergeDiffMeta) {
-		mergee->setMultibinBoundaries(mergedmultibinBoundaries);
+
+	if(mergeBinBoundaries) {
+		mergee->setMultibinBoundaries(mergedMultibinBoundaries);
 	}
+
 	mergee->setContentHash(hashor.hash());
 	return mergee;
+mergeFailed:
+	delete mergee->_eventTree;
+	delete mergee;
+	return 0;
 }
 
 
@@ -363,7 +353,7 @@ std::string rpwa::eventMetadata::getStringForEventsType(const eventsTypeEnum& ty
 		case ACCEPTED:
 			return "accepted";
 	}
-	return "UNKNOWN";
+	return "unknown";
 }
 
 
@@ -373,7 +363,7 @@ additionalTreeVariables::setBranchAddresses(const eventMetadata& metaData)
 	TTree* tree = metaData.eventTree();
 
 	if (tree != nullptr) {
-		for (const auto& name: metaData.additionalSavedVariableLables()) {
+		for (const auto& name: metaData.additionalTreeVariableNames()) {
 			int err = tree->SetBranchAddress(name.c_str(), &(_additionalTreeVariables[name]));
 			if (err < 0){
 				printErr << "could not set branch address for branch '" << name << "' (error code " << err << ")." << endl;

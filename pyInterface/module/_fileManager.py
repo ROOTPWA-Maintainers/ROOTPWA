@@ -318,7 +318,7 @@ class fileManager(object):
 			inputFile = InputFile(dataFileName,
 			                      eventMeta.multibinBoundaries(),
 			                      fileManager.pyEventsType(eventMeta.eventsType()),
-			                      eventMeta.additionalSavedVariableLables())
+			                      eventMeta.additionalTreeVariableNames())
 			if inputFile.eventsType not in inputFiles:
 				inputFiles[inputFile.eventsType] = []
 			inputFiles[inputFile.eventsType].append(inputFile)

@@ -56,6 +56,20 @@
               }";
 
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::eventMetadata"                                                           \
+        source="std::string _userString; std::vector<std::string>  _additionalSavedVariableLabels"  \
+        version="[-3]"                                                                              \
+        targetClass="rpwa::eventMetadata"                                                           \
+        target="_auxString, _additionalTreeVariableNames"                                           \
+        code="{                                                                                     \
+{                                                                                                   \
+    _auxString = onfile._userString;                                                                \
+    _additionalTreeVariableNames = onfile._additionalSavedVariableLabels;                           \
+}                                                                                                   \
+              }";
+
+
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;

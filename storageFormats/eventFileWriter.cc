@@ -36,12 +36,12 @@ rpwa::eventFileWriter::~eventFileWriter()
 
 
 bool rpwa::eventFileWriter::initialize(TFile&                                     outputFile,
-                                       const string&                              userString,
+                                       const string&                              auxString,
                                        const eventMetadata::eventsTypeEnum&       eventsType,
                                        const vector<string>&                      productionKinematicsParticleNames,
                                        const vector<string>&                      decayKinematicsParticleNames,
                                        const multibinBoundariesType&              multibinBoundaries,
-                                       const vector<string>&                      additionalVariableLabels,
+                                       const vector<string>&                      additionalVariableNames,
                                        const int&                                 splitlevel,
                                        const int&                                 buffsize)
 {
@@ -53,7 +53,7 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	_outputFile->cd();
 
 	// prepare metadata
-	_metadata.setUserString(userString);
+	_metadata.setAuxString(auxString);
 	_metadata.setEventsType(eventsType);
 	_metadata.setProductionKinematicsParticleNames(productionKinematicsParticleNames);
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
@@ -67,12 +67,12 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	_metadata._eventTree = new TTree(eventMetadata::eventTreeName.c_str(), eventMetadata::eventTreeName.c_str());
 	_metadata._eventTree->Branch(eventMetadata::productionKinematicsMomentaBranchName.c_str(), "TClonesArray", &_productionKinematicsMomenta, buffsize, splitlevel);
 	_metadata._eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &_decayKinematicsMomenta,   buffsize, splitlevel);
-	_metadata.setAdditionalSavedVariableLables(additionalVariableLabels);
-	_additionalVariablesToSave = vector<double>(additionalVariableLabels.size(), 0.);
-	for(unsigned int i = 0; i < additionalVariableLabels.size(); ++i) {
+	_metadata.setAdditionalTreeVariableNames(additionalVariableNames);
+	_additionalVariablesToSave = vector<double>(additionalVariableNames.size(), 0.);
+	for(unsigned int i = 0; i < additionalVariableNames.size(); ++i) {
 		stringstream strStr;
-		strStr << additionalVariableLabels[i] << "/D";
-		_metadata._eventTree->Branch(additionalVariableLabels[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
+		strStr << additionalVariableNames[i] << "/D";
+		_metadata._eventTree->Branch(additionalVariableNames[i].c_str(), &_additionalVariablesToSave[i], strStr.str().c_str());
 	}
 
 	_initialized = true;

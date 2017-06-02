@@ -16,7 +16,7 @@ namespace {
 
 	bool eventFileWriter_initialize(rpwa::eventFileWriter& self,
 	                                PyObject* pyOutputFile,
-	                                std::string userString,
+	                                std::string auxString,
 	                                rpwa::eventMetadata::eventsTypeEnum eventsType,
 	                                bp::object pyProductionKinematicsParticleNames,
 	                                bp::object pyDecayKinematicsParticleNames,
@@ -46,7 +46,7 @@ namespace {
 			bp::throw_error_already_set();
 		}
 		return self.initialize(*outputFile,
-		                       userString,
+		                       auxString,
 		                       eventsType,
 		                       productionKinematicsParticleNames,
 		                       decayKinematicsParticleNames,
@@ -111,7 +111,7 @@ void rpwa::py::exportEventFileWriter() {
 			"initialize"
 			, &eventFileWriter_initialize
 			, (bp::arg("outputFile"),
-			   bp::arg("userString"),
+			   bp::arg("auxString"),
 			   bp::arg("eventsType"),
 			   bp::arg("productionKinematicsParticleNames"),
 			   bp::arg("decayKinematicsParticleNames"),

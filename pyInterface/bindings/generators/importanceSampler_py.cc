@@ -15,7 +15,7 @@ namespace {
 	bool
 	importanceSampler_initializeFileWriter(rpwa::importanceSampler& self,
 	                                       PyObject*                outFilePy,
-	                                       const std::string&       userString,
+	                                       const std::string&       auxString,
 	                                       const bool               storeMassAndTPrime,
 	                                       const std::string&       massVariableName,
 	                                       const std::string&       tPrimeVariableName)
@@ -26,7 +26,7 @@ namespace {
 			bp::throw_error_already_set();
 		}
 
-		return self.initializeFileWriter(outputFile, userString, storeMassAndTPrime, massVariableName, tPrimeVariableName);
+		return self.initializeFileWriter(outputFile, auxString, storeMassAndTPrime, massVariableName, tPrimeVariableName);
 	}
 
 
@@ -158,7 +158,7 @@ void rpwa::py::exportImportanceSampler() {
 			"initializeFileWriter"
 			, &::importanceSampler_initializeFileWriter
 			, (bp::arg("outFile"),
-			   bp::arg("userString") = "importanceSampledEvents",
+			   bp::arg("auxString") = "importanceSampledEvents",
 			   bp::arg("storeMassAndTPrime") = true,
 			   bp::arg("massVariableName") = "mass",
 			   bp::arg("tPrimeVariableName") = "tPrime")
