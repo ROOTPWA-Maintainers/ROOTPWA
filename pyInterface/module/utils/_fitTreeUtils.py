@@ -95,6 +95,10 @@ def getBestFitResultFromFile(fitResultFileName,
 	result = pyRootPwa.core.fitResult()
 	result.setBranchAddress(fitResultTree, fitResultBranchName)
 
+	# only print the warning about multiple mass-bin centers in one file
+	# once
+	printedMassBinCenterWarning = False
+
 	bestResult = None
 
 	for i in xrange(fitResultTree.GetEntries()):
@@ -107,12 +111,13 @@ def getBestFitResultFromFile(fitResultFileName,
 		if bestResult is None:
 			bestResult = pyRootPwa.core.fitResult(result)
 		elif massBinCenter is None:
-			if bestResult.massBinCenter() != result.massBinCenter():
+			if bestResult.massBinCenter() != result.massBinCenter() and not printedMassBinCenterWarning:
 				printWarn("fit result file '" + fitResultFileName + "' " +
 				          "contains more than one mass bin, return the " +
 				          "fit result with the best likelihood.")
-				if result.logLikelihood() < bestResult.logLikelihood():
-					bestResult = pyRootPwa.core.fitResult(result)
+				printedMassBinCenterWarning = True
+			if result.logLikelihood() < bestResult.logLikelihood():
+				bestResult = pyRootPwa.core.fitResult(result)
 		else:
 			if abs(massBinCenter - result.massBinCenter()) < abs(massBinCenter - bestResult.massBinCenter()):
 				bestResult = pyRootPwa.core.fitResult(result)
