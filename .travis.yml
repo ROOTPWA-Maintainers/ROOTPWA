@@ -1,15 +1,62 @@
+# test with two different settings:
+# - the default is to test with NLOPT and BAT
+# - the second test is done without these two additional packages
+
 # use Ubuntu 14.04
 sudo: required
 dist: trusty
 
-# test with two different settings for the optional packages
 env:
-    # without any optional package
-    - TRAVIS_RPWA_USE_NLOPT=0 TRAVIS_RPWA_USE_BAT=0
-    # with all optional packages
-    - TRAVIS_RPWA_USE_NLOPT=1 TRAVIS_RPWA_USE_BAT=1
+  - TRAVIS_RPWA_USE_BAT=1
 
 language: cpp
+
+# packages required in all cases
+required_packages: &required_packages
+  - git
+  - dpkg-dev
+  - make
+  - g++
+  - gcc
+  - binutils
+  - libx11-dev
+  - libxpm-dev
+  - libxft-dev
+  - libxext-dev
+  - gfortran
+  - libssl-dev
+  - libpcre3-dev
+  - xlibmesa-glu-dev
+  - libglew1.5-dev
+  - libftgl-dev
+  - libmysqlclient-dev
+  - libfftw3-dev
+  - cfitsio-dev
+  - graphviz-dev
+  - libavahi-compat-libdnssd-dev
+  - libldap2-dev
+  - python-dev
+  - libxml2-dev
+  - libkrb5-dev
+  - libgsl0-dev
+  - libqt4-dev
+  - libboost-all-dev
+  - libconfig++-dev
+  - libyaml-cpp-dev
+
+addons:
+    apt:
+        packages:
+          - *required_packages
+          - libnlopt-dev
+
+matrix:
+    include:
+      - env: TRAVIS_RPWA_USE_BAT=0
+        addons:
+            apt:
+                packages:
+                  - *required_packages
 
 # send mails if a build fails
 notifications:
@@ -19,36 +66,34 @@ notifications:
         on_failure: always
 
 before_install:
-    - sudo apt-get update -qq
-    # packages required by ROOT
-    - sudo apt-get install -y git dpkg-dev make g++ gcc binutils libx11-dev libxpm-dev libxft-dev libxext-dev gfortran libssl-dev libpcre3-dev xlibmesa-glu-dev libglew1.5-dev libftgl-dev libmysqlclient-dev libfftw3-dev cfitsio-dev graphviz-dev libavahi-compat-libdnssd-dev libldap2-dev python-dev libxml2-dev libkrb5-dev libgsl0-dev libqt4-dev
-    # packages required by ROOTPWA
-    - sudo apt-get install -y libconfig++-dev libyaml-cpp-dev
     - pip install --user pylint==1.5.5 numpy
-    - if [ ${TRAVIS_RPWA_USE_NLOPT} -eq 1 ] ; then sudo apt-get install -y libnlopt-dev ; fi
     # fix Python library
-    - sudo rm -f /opt/python/2.7.10/lib/python2.7/config/libpython2.7.a
-    - sudo ln -sf /opt/python/2.7.10/lib/libpython2.7.so /opt/python/2.7.10/lib/python2.7/config/libpython2.7.so
+    - export TRAVIS_RPWA_PYTHON_LIBPL=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBPL'))"`
+    - export TRAVIS_RPWA_PYTHON_LIBDIR=`python -c "from distutils import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"`
+    - sudo rm -f ${TRAVIS_RPWA_PYTHON_LIBPL}/libpython2.7.a
+    - sudo ln -sf ${TRAVIS_RPWA_PYTHON_LIBDIR}/libpython2.7.so ${TRAVIS_RPWA_PYTHON_LIBPL}/libpython2.7.so
 install:
     - ./travisCI/install-cmake.sh
     - export PATH=${PWD}/cmake/bin:${PATH}
-    - ./travisCI/install-boost.sh 1.61.0
-    - export BOOST_ROOT=${PWD}/boost-boost-1.61.0
     - ./travisCI/install-root.sh
     - . ./root/bin/thisroot.sh
     - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${PWD}/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
-before_script:
+script:
+    # exit immediately if an error is encountered
+    - set -e
+    - cd build
+    - cmake ..
+    # run 'make'
+    - make
+    # - if 'make' was successful, run 'make test'
+    # - if 'make test' was not successful, print the log and fail the build
+    - make test || (cat Testing/Temporary/LastTest.log && false)
+    # - if 'make test' was successful, run 'testMC.sh'
+    - cd ..
     # set some environment variables
     - export ROOTPWA=${PWD}
     - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
     - export PATH=${ROOTPWA}/build/bin:${PATH}
     - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
-script:
-    - cd ${ROOTPWA}/build
-    - cmake ..
-    # run 'make'
-    # - if 'make' was not successful, fail the build
-    # - if 'make' was successful, run 'make test'
-    # - if 'make test' was not successful, print the log and fail the build
-    # - if 'make test' was successful, run 'testMC.sh'
-    - make && (make test || (cat Testing/Temporary/LastTest.log && false)) && (cd ${ROOTPWA}/test && ./testMC.sh)
+    - cd test
+    - ./testMC.sh
