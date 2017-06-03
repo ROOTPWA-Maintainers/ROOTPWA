@@ -146,6 +146,10 @@ namespace rpwa {
 
 		};
 
+		// static members concerning the printing of debugging messages
+		static bool _debug;  // if true debug messages are printed
+		static void setQuiet(const bool flag = true);
+
 		pwaLikelihood();
 		~pwaLikelihood();
 
@@ -205,7 +209,6 @@ namespace rpwa {
 		priorEnum     priorType        () const                            { return _priorType;              }
 		void          setCauchyWidth   (const double    cauchyWidth)       { _cauchyWidth = cauchyWidth;     }
 		double        cauchyWidth      () const                            { return _cauchyWidth;            }
-		static void   setQuiet         (const bool      flag       = true) { _debug             = !flag;     }
 
 		// operations
 		bool init(const std::vector<waveDescThresType>& waveDescThres,
@@ -284,7 +287,6 @@ namespace rpwa {
 		bool                _useNormalizedAmps;  // if true normalized amplitudes are used
 		priorEnum           _priorType;          // which prior to apply to parameters
 		double              _cauchyWidth;        // width for the half-Cauchy prior
-		static bool         _debug;              // if true debug messages are printed
 
 		unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
 		double       _totAcc;        // total acceptance in this bin
