@@ -123,6 +123,14 @@ pwaLikelihood<complexT>::fitParameter::parName() const
 
 
 template<typename complexT>
+void
+pwaLikelihood<complexT>::setQuiet(const bool flag)
+{
+	_debug = !flag;
+}
+
+
+template<typename complexT>
 pwaLikelihood<complexT>::pwaLikelihood()
 	: _nmbEvents        (0),
 	  _rank             (1),
