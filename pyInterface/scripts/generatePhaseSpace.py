@@ -95,7 +95,9 @@ if __name__ == "__main__":
 	elif not args.outputFileName.endswith(".root"):
 		printErr("output file name needs to have '.root' extension. Aborting...")
 		sys.exit(1)
-
+	elif not os.path.isfile( args.outputFileName ):
+		printErr("output file not found. Aborting...")
+		sys.exit(1)
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
 	if not outputFile:
 		printErr("could not open output file. Aborting...")
