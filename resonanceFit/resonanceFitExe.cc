@@ -45,7 +45,7 @@
 #include "components.h"
 #include "data.h"
 #include "function.h"
-#include "information.h"
+#include "input.h"
 #include "minimizerRoot.h"
 #include "model.h"
 #include "parameters.h"
@@ -228,7 +228,7 @@ main(int    argc,
 	rpwa::resonanceFit::setDebug(debug);
 
 	// read configuration file
-	rpwa::resonanceFit::informationConstPtr fitInformation;
+	rpwa::resonanceFit::inputConstPtr fitInput;
 	rpwa::resonanceFit::dataConstPtr fitData;
 	rpwa::resonanceFit::modelConstPtr fitModel;
 	rpwa::resonanceFit::parameters fitParameters;
@@ -236,7 +236,7 @@ main(int    argc,
 	std::map<std::string, double> fitQuality;
 	std::vector<std::string> freeParameters;
 	rpwa::resonanceFit::read(configFileName,
-	                         fitInformation,
+	                         fitInput,
 	                         fitData,
 	                         fitModel,
 	                         fitParameters,
@@ -247,7 +247,7 @@ main(int    argc,
 	                         doCov,
 	                         valTreeName,
 	                         valBranchName);
-	if(not fitInformation or not fitData or not fitModel) {
+	if(not fitInput or not fitData or not fitModel) {
 		printErr << "error while reading configuration file '" << configFileName << "'." << std::endl;
 		return 1;
 	}
@@ -257,8 +257,8 @@ main(int    argc,
 		std::ostringstream output;
 		if(fitModel->isMappingEqualInAllBins()) {
 			const size_t idxBin = 0;
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 				output << "    wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
 				for(size_t idxComponents = 0; idxComponents < fitModel->getComponentChannel(idxBin, idxWave).size(); idxComponents++) {
@@ -289,10 +289,10 @@ main(int    argc,
 				}
 			}
 		} else {
-			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); idxBin++) {
+			for(size_t idxBin = 0; idxBin < fitInput->nrBins(); idxBin++) {
 				output << "    mapping used in bin " << idxBin << std::endl;
-				for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-					const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+				for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+					const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 					output << "        wave '" << wave.waveName() << "' (index " << idxWave << ") used in" << std::endl;
 					for(size_t idxComponents = 0; idxComponents < fitModel->getComponentChannel(idxBin, idxWave).size(); idxComponents++) {
@@ -326,7 +326,7 @@ main(int    argc,
 		}
 
 		output << "    the model is " << (fitModel->getFsmd() ? "" : "not ") << "using a final-state mass-dependence." << std::endl;
-		printInfo << fitInformation->nrWaves() << " wave" << ((fitInformation->nrWaves() == 1) ? "" : "s") << " and "
+		printInfo << fitInput->nrWaves() << " wave" << ((fitInput->nrWaves() == 1) ? "" : "s") << " and "
 		          << fitModel->getNrComponents() << " component" << ((fitModel->getNrComponents() == 1) ? "" : "s") << " in fit model:" << std::endl
 		          << output.str();
 	}
@@ -340,10 +340,10 @@ main(int    argc,
 		return 1;
 	}
 
-	rpwa::resonanceFit::cache cache(fitInformation->nrWaves(),
+	rpwa::resonanceFit::cache cache(fitInput->nrWaves(),
 	                                fitModel->getNrComponents()+1,           // nr components + final-state mass-dependence
 	                                fitModel->getMaxChannelsInComponent(),
-	                                fitInformation->nrBins(),
+	                                fitInput->nrBins(),
 	                                fitData->maxMassBins());
 
 	TMatrixT<double> covarianceMatrix;
@@ -380,7 +380,7 @@ main(int    argc,
 		printDebug << "name of output configuration file: '" << outConfigFileName << "'." << std::endl;
 	}
 	rpwa::resonanceFit::writeConfig(outConfigFileName,
-	                                fitInformation,
+	                                fitInput,
 	                                fitModel,
 	                                fitParameters,
 	                                fitParametersError,
@@ -399,7 +399,7 @@ main(int    argc,
 		printErr << "error while creating ROOT file '" << outRootFileName << "' for plots of fit result."<< std::endl;
 		return 1;
 	}
-	rpwa::resonanceFit::createPlots(fitInformation,
+	rpwa::resonanceFit::createPlots(fitInput,
 	                                fitData,
 	                                fitModel,
 	                                fitParameters,

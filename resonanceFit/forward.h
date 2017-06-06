@@ -57,10 +57,14 @@ namespace rpwa {
 		// typedef std::shared_ptr<function> functionPtr;
 		typedef std::shared_ptr<const function> functionConstPtr;
 
-		class information;
-		// 'information' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<information> informationPtr;
-		typedef std::shared_ptr<const information> informationConstPtr;
+		class input;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'input' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<input> inputPtr;
+#endif
+		typedef std::shared_ptr<const input> inputConstPtr;
 
 		class model;
 		// 'model' should not be changed after construction, so this is not needed:

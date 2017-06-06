@@ -40,7 +40,7 @@
 #include <reportingUtils.hpp>
 
 #include "data.h"
-#include "information.h"
+#include "input.h"
 #include "resonanceFitHelper.h"
 
 
@@ -665,7 +665,7 @@ namespace {
 
 
 	void
-	readFitResultWaveNames(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readFitResultWaveNames(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                       TTree* tree,
 	                       rpwa::fitResult* fit,
 	                       boost::multi_array<std::string, 1>& waveNames)
@@ -680,26 +680,26 @@ namespace {
 		}
 
 		// read wave names from first fit result in tree
-		waveNames.resize(boost::extents[fitInformation->nrWaves()]);
+		waveNames.resize(boost::extents[fitInput->nrWaves()]);
 		if(tree->GetEntry(0) == 0) {
 			printErr << "error while reading entry " << 0 << " from tree." << std::endl;
 			throw;
 		}
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			int idx = fit->waveIndex(fitInformation->getWave(idxWave).waveName());
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			int idx = fit->waveIndex(fitInput->getWave(idxWave).waveName());
 			// try alternative wave names
-			for(size_t idxAlt = 0; idxAlt < fitInformation->getWave(idxWave).waveNameAlternatives().size(); ++idxAlt) {
-				const int altIdx = fit->waveIndex(fitInformation->getWave(idxWave).waveNameAlternatives()[idxAlt]);
+			for(size_t idxAlt = 0; idxAlt < fitInput->getWave(idxWave).waveNameAlternatives().size(); ++idxAlt) {
+				const int altIdx = fit->waveIndex(fitInput->getWave(idxWave).waveNameAlternatives()[idxAlt]);
 				if(altIdx != -1) {
 					if(idx != -1) {
-						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << fitInformation->getWave(idxWave).waveName() << "'." << std::endl;
+						printErr << "more than one wave name or alternative wave name is matching wave in fit result for wave '" << fitInput->getWave(idxWave).waveName() << "'." << std::endl;
 						throw;
 					}
 					idx = altIdx;
 				}
 			}
 			if(idx == -1) {
-				printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
+				printErr << "wave '" << fitInput->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
 				throw;
 			}
 			waveNames[idxWave] = fit->waveName(idx);
@@ -708,7 +708,7 @@ namespace {
 
 
 	void
-	readFitResultMatrices(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readFitResultMatrices(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                      TTree* tree,
 	                      rpwa::fitResult* fit,
 	                      const std::vector<Long64_t>& mapping,
@@ -729,7 +729,7 @@ namespace {
 		}
 
 		if(rpwa::resonanceFit::debug()) {
-			printDebug << "reading spin-density matrices for " << fitInformation->nrWaves() << " waves from fit result." << std::endl;
+			printDebug << "reading spin-density matrices for " << fitInput->nrWaves() << " waves from fit result." << std::endl;
 		}
 
 		productionAmplitudes.resize(boost::extents[mapping.size()][waveNames.size()]);
@@ -757,7 +757,7 @@ namespace {
 			for(size_t idxWave = 0; idxWave < waveNames.size(); ++idxWave) {
 				const int idx = fit->waveIndex(waveNames[idxWave]);
 				if(idx == -1) {
-					printErr << "wave '" << fitInformation->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
+					printErr << "wave '" << fitInput->getWave(idxWave).waveName() << "' not in fit result." << std::endl;
 					throw;
 				}
 
@@ -767,7 +767,7 @@ namespace {
 				for(size_t jdxWave = 0; jdxWave < waveNames.size(); ++jdxWave) {
 					const int jdx = fit->waveIndex(waveNames[jdxWave]);
 					if(jdx == -1) {
-						printErr << "wave '" << fitInformation->getWave(jdxWave).waveName() << "' not in fit result." << std::endl;
+						printErr << "wave '" << fitInput->getWave(jdxWave).waveName() << "' not in fit result." << std::endl;
 						throw;
 					}
 
@@ -871,7 +871,7 @@ namespace {
 
 
 	void
-	readFitResultIntegrals(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readFitResultIntegrals(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                       TTree* tree,
 	                       rpwa::fitResult* fit,
 	                       const std::vector<Long64_t>& mapping,
@@ -910,15 +910,15 @@ namespace {
 				for(size_t idxMass = 0; idxMass < mapping.size(); ++idxMass) {
 					output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 				}
-				printDebug << "phase-space integrals for wave '" << fitInformation->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
+				printDebug << "phase-space integrals for wave '" << fitInput->getWave(idxWave).waveName() << "' (" << idxWave << "):" << output.str() << std::endl;
 			}
 		}
 	}
 
 
 	void
-	readInFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
-	           const rpwa::resonanceFit::information::bin& bin,
+	readInFile(const rpwa::resonanceFit::inputConstPtr& fitInput,
+	           const rpwa::resonanceFit::input::bin& bin,
 	           boost::multi_array<std::string, 1>& waveNames,
 	           size_t& nrMassBins,
 	           boost::multi_array<double, 1>& massBinCenters,
@@ -984,12 +984,12 @@ namespace {
 		                       massBinCenters,
 		                       inMapping);
 
-		readFitResultWaveNames(fitInformation,
+		readFitResultWaveNames(fitInput,
 		                       inTree,
 		                       inFit,
 		                       waveNames);
 
-		readFitResultMatrices(fitInformation,
+		readFitResultMatrices(fitInput,
 		                      inTree,
 		                      inFit,
 		                      inMapping,
@@ -1004,7 +1004,7 @@ namespace {
 		                      plottingSpinDensityMatrixElementsImag,
 		                      plottingPhases);
 
-		readFitResultIntegrals(fitInformation,
+		readFitResultIntegrals(fitInput,
 		                       inTree,
 		                       inFit,
 		                       inMapping,
@@ -1014,9 +1014,9 @@ namespace {
 
 
 	void
-	readSystematicsFile(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readSystematicsFile(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                    const size_t idxBin,
-	                    const rpwa::resonanceFit::information::bin& bin,
+	                    const rpwa::resonanceFit::input::bin& bin,
 	                    const size_t idxSystematics,
 	                    const boost::multi_array<std::string, 1>& waveNames,
 	                    const size_t nrMassBins,
@@ -1079,7 +1079,7 @@ namespace {
 		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsReal;
 		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingSpinDensityMatrixElementsImag;
 		boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases;
-		readFitResultMatrices(fitInformation,
+		readFitResultMatrices(fitInput,
 		                      sysTree,
 		                      sysFit,
 		                      sysMapping,
@@ -1095,13 +1095,13 @@ namespace {
 		                      tempSysPlottingPhases);
 
 		for(size_t idxMass = 0; idxMass < nrMassBins; ++idxMass) {
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
 				sysPlottingIntensities[idxMass][idxWave].first = std::min(sysPlottingIntensities[idxMass][idxWave].first,
 				                                                          tempSysPlottingIntensities[idxMass][idxWave].first);
 				sysPlottingIntensities[idxMass][idxWave].second = std::max(sysPlottingIntensities[idxMass][idxWave].second,
 				                                                           tempSysPlottingIntensities[idxMass][idxWave].first);
 
-				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+				for(size_t jdxWave = 0; jdxWave < fitInput->nrWaves(); ++jdxWave) {
 					sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first = std::min(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
 					                                                                                     tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
 					sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second = std::max(sysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].second,
@@ -1132,9 +1132,9 @@ namespace {
 
 
 	void
-	readSystematicsFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readSystematicsFiles(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                     const size_t idxBin,
-	                     const rpwa::resonanceFit::information::bin& bin,
+	                     const rpwa::resonanceFit::input::bin& bin,
 	                     const boost::multi_array<std::string, 1>& waveNames,
 	                     const size_t nrMassBins,
 	                     const boost::multi_array<double, 1>& massBinCenters,
@@ -1151,7 +1151,7 @@ namespace {
 		}
 
 		for(size_t idxSystematics = 0; idxSystematics < bin.sysFileNames().size(); ++idxSystematics) {
-			readSystematicsFile(fitInformation,
+			readSystematicsFile(fitInput,
 			                    idxBin,
 			                    bin,
 			                    idxSystematics,
@@ -1170,7 +1170,7 @@ namespace {
 
 
 	void
-	readInFiles(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	readInFiles(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	            boost::multi_array<std::string, 2>& waveNames,
 	            std::vector<size_t>& nrMassBins,
 	            boost::multi_array<double, 2>& massBinCenters,
@@ -1190,8 +1190,8 @@ namespace {
 	            const std::string& valTreeName = "pwa",
 	            const std::string& valBranchName = "fitResult_v2")
 	{
-		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-			const rpwa::resonanceFit::information::bin& bin = fitInformation->getBin(idxBin);
+		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+			const rpwa::resonanceFit::input::bin& bin = fitInput->getBin(idxBin);
 
 			boost::multi_array<std::string, 1> tempWaveNames;
 			size_t tempNrMassBins;
@@ -1206,7 +1206,7 @@ namespace {
 			boost::multi_array<std::pair<double, double>, 3> tempPlottingSpinDensityMatrixElementsImag;
 			boost::multi_array<std::pair<double, double>, 3> tempPlottingPhases;
 
-			readInFile(fitInformation,
+			readInFile(fitInput,
 			           bin,
 			           tempWaveNames,
 			           tempNrMassBins,
@@ -1244,11 +1244,11 @@ namespace {
 			boost::multi_array<std::pair<double, double>, 3> tempSysPlottingPhases(std::vector<size_t>(tempPlottingPhases.shape(), tempPlottingPhases.shape()+tempPlottingPhases.num_dimensions()));
 
 			for(size_t idxMass = 0; idxMass < nrMassBins[idxBin]; ++idxMass) {
-				for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+				for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
 					tempSysPlottingIntensities[idxMass][idxWave] = std::make_pair(tempPlottingIntensities[idxMass][idxWave].first,
 					                                                              tempPlottingIntensities[idxMass][idxWave].first);
 
-					for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+					for(size_t jdxWave = 0; jdxWave < fitInput->nrWaves(); ++jdxWave) {
 						tempSysPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first,
 						                                                                                         tempPlottingSpinDensityMatrixElementsReal[idxMass][idxWave][jdxWave].first);
 						tempSysPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave] = std::make_pair(tempPlottingSpinDensityMatrixElementsImag[idxMass][idxWave][jdxWave].first,
@@ -1260,7 +1260,7 @@ namespace {
 			}
 
 			if(bin.sysFileNames().size() > 0) {
-				readSystematicsFiles(fitInformation,
+				readSystematicsFiles(fitInput,
 				                     idxBin,
 				                     bin,
 				                     waveNames[idxBin],
@@ -1284,7 +1284,7 @@ namespace {
 
 
 	void
-	prepareMassLimit(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	prepareMassLimit(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                 const size_t nrMassBins,
 	                 const boost::multi_array<double, 1>& massBinCenters,
 	                 boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits)
@@ -1295,9 +1295,9 @@ namespace {
 		}
 
 		// determine which mass bins to use for a single wave
-		std::vector<std::pair<size_t, size_t> > waveMassBinLimits(fitInformation->nrWaves());
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+		std::vector<std::pair<size_t, size_t> > waveMassBinLimits(fitInput->nrWaves());
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 			size_t binFirst = 0;
 			size_t binLast = nrMassBins-1;
@@ -1331,9 +1331,9 @@ namespace {
 		}
 
 		// determine which mass bins to use for each pair of waves
-		wavePairMassBinLimits.resize(boost::extents[fitInformation->nrWaves()][fitInformation->nrWaves()]);
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+		wavePairMassBinLimits.resize(boost::extents[fitInput->nrWaves()][fitInput->nrWaves()]);
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			for(size_t jdxWave = 0; jdxWave < fitInput->nrWaves(); ++jdxWave) {
 				wavePairMassBinLimits[idxWave][jdxWave] = std::make_pair(std::max(waveMassBinLimits[idxWave].first,  waveMassBinLimits[jdxWave].first),
 				                                                         std::min(waveMassBinLimits[idxWave].second, waveMassBinLimits[jdxWave].second));
 			}
@@ -1341,11 +1341,11 @@ namespace {
 
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "waves and mass limits:" << std::endl;
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 				std::ostringstream output;
-				for(size_t jdxWave = 0; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
+				for(size_t jdxWave = 0; jdxWave < fitInput->nrWaves(); ++jdxWave) {
 					output << wavePairMassBinLimits[idxWave][jdxWave].first << "-" << wavePairMassBinLimits[idxWave][jdxWave].second << " ";
 				}
 				printDebug << wave.waveName() << " " << waveMassBinLimits[idxWave].first << "-" << waveMassBinLimits[idxWave].second
@@ -1356,7 +1356,7 @@ namespace {
 
 
 	void
-	prepareMassLimits(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	prepareMassLimits(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                  const std::vector<size_t>& nrMassBins,
 	                  const boost::multi_array<double, 2>& massBinCenters,
 	                  boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits)
@@ -1368,7 +1368,7 @@ namespace {
 		for(size_t idxBin = 0; idxBin < nrMassBins.size(); ++idxBin) {
 			boost::multi_array<std::pair<size_t, size_t>, 2> tempWavePairMassBinLimits;
 
-			prepareMassLimit(fitInformation,
+			prepareMassLimit(fitInput,
 			                 nrMassBins[idxBin],
 			                 massBinCenters[idxBin],
 			                 tempWavePairMassBinLimits);
@@ -1382,7 +1382,7 @@ namespace {
 
 
 rpwa::resonanceFit::dataConstPtr
-rpwa::resonanceFit::readData(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+rpwa::resonanceFit::readData(const rpwa::resonanceFit::inputConstPtr& fitInput,
                              const std::string& anchorWaveName,
                              const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
                              const std::string& valTreeName,
@@ -1405,7 +1405,7 @@ rpwa::resonanceFit::readData(const rpwa::resonanceFit::informationConstPtr& fitI
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsReal;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingSpinDensityMatrixElementsImag;
 	boost::multi_array<std::pair<double, double>, 4> inSysPlottingPhases;
-	readInFiles(fitInformation,
+	readInFiles(fitInput,
 	            waveNames,
 	            nrMassBins,
 	            massBinCenters,
@@ -1427,15 +1427,15 @@ rpwa::resonanceFit::readData(const rpwa::resonanceFit::informationConstPtr& fitI
 
 	// prepare mass limits
 	boost::multi_array<std::pair<size_t, size_t>, 3> wavePairMassBinLimits;
-	prepareMassLimits(fitInformation,
+	prepareMassLimits(fitInput,
 	                  nrMassBins,
 	                  massBinCenters,
 	                  wavePairMassBinLimits);
 
 	// prepare production amplitudes and corresponding covariance matrices
 	// for the fit
-	std::vector<std::string> mainWaveNames(fitInformation->nrWaves());
-	std::transform(fitInformation->waves().begin(), fitInformation->waves().end(), mainWaveNames.begin(), [](const rpwa::resonanceFit::information::wave& wave){ return wave.waveName(); });
+	std::vector<std::string> mainWaveNames(fitInput->nrWaves());
+	std::transform(fitInput->waves().begin(), fitInput->waves().end(), mainWaveNames.begin(), [](const rpwa::resonanceFit::input::wave& wave){ return wave.waveName(); });
 	const size_t idxAnchorWave = std::find(mainWaveNames.begin(), mainWaveNames.end(), anchorWaveName) - mainWaveNames.begin();
 	if(idxAnchorWave >= mainWaveNames.size()) {
 		printErr << "anchor wave '" << anchorWaveName << "' not found in fit." << std::endl;

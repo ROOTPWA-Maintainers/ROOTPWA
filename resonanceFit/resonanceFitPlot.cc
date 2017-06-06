@@ -40,7 +40,7 @@
 #include "components.h"
 #include "data.h"
 #include "fsmd.h"
-#include "information.h"
+#include "input.h"
 #include "model.h"
 
 
@@ -94,7 +94,7 @@ namespace {
 
 
 	void
-	createPlotsWave(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	createPlotsWave(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                const rpwa::resonanceFit::dataConstPtr& fitData,
 	                const rpwa::resonanceFit::modelConstPtr& fitModel,
 	                const rpwa::resonanceFit::parameters& fitParameters,
@@ -105,7 +105,7 @@ namespace {
 	                const size_t idxWave,
 	                const size_t idxBin)
 	{
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+		const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "start creating plots for wave '" << wave.waveName() << "' in bin " << idxBin << "." << std::endl;
 		}
@@ -115,7 +115,7 @@ namespace {
 		graphs.SetTitle(wave.waveName().c_str());
 
 		TGraphErrors* systematics = NULL;
-		if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+		if(fitInput->getBin(idxBin).sysFileNames().size() > 0) {
 			systematics = new TGraphErrors;
 			systematics->SetName((wave.waveName() + "__sys").c_str());
 			systematics->SetTitle((wave.waveName() + "__sys").c_str());
@@ -176,7 +176,7 @@ namespace {
 				++skipData;
 			}
 
-			if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+			if(fitInput->getBin(idxBin).sysFileNames().size() > 0) {
 				if(not zeroWaveForSysPlotting(fitData, idxBin, idxMass, idxWave)) {
 					const double minSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].first;
 					const double maxSI = fitData->sysPlottingIntensities()[idxBin][idxMass][idxWave].second;
@@ -248,7 +248,7 @@ namespace {
 
 
 	void
-	createPlotsWaveSum(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	createPlotsWaveSum(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                   const rpwa::resonanceFit::dataConstPtr& fitData,
 	                   const rpwa::resonanceFit::modelConstPtr& fitModel,
 	                   const rpwa::resonanceFit::parameters& fitParameters,
@@ -258,7 +258,7 @@ namespace {
 	                   const size_t extraBinning,
 	                   const size_t idxWave)
 	{
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+		const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "start creating plots for wave '" << wave.waveName() << "' for sum over all bins." << std::endl;
 		}
@@ -315,7 +315,7 @@ namespace {
 			bool zeroWave = true;
 			double sum = 0.;
 			double error2 = 0.;
-			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
 				if(not zeroWaveForPlotting(fitData, idxBin, idxMass, idxWave)) {
 					zeroWave = false;
 					sum += fitData->plottingIntensities()[idxBin][idxMass][idxWave].first;
@@ -340,7 +340,7 @@ namespace {
 			const double mass = (idxMass != std::numeric_limits<size_t>::max()) ? fitData->massBinCenters()[idxBin][idxMass] : (fitData->massBinCenters()[idxBin][point/extraBinning] + (point%extraBinning) * massStep);
 
 			double sum = 0.;
-			for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+			for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
 				sum += fitModel->intensity(fitParameters, cache, idxWave, idxBin, mass, idxMass);
 			}
 			fit->SetPoint(point-firstPoint, mass, sum);
@@ -350,7 +350,7 @@ namespace {
 				const size_t idxChannel = compChannel[idxComponents].second;
 
 				double sum = 0.;
-				for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+				for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
 					std::complex<double> prodAmp = fitModel->getComponent(idxComponent)->val(fitParameters, cache, idxBin, mass, idxMass);
 					prodAmp *= fitModel->getComponent(idxComponent)->getCouplingPhaseSpace(fitParameters, cache, idxChannel, idxBin, mass, idxMass);
 					if(fitModel->getFsmd()) {
@@ -368,7 +368,7 @@ namespace {
 
 
 	void
-	createPlotsWavePair(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	createPlotsWavePair(const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                    const rpwa::resonanceFit::dataConstPtr& fitData,
 	                    const rpwa::resonanceFit::modelConstPtr& fitModel,
 	                    const rpwa::resonanceFit::parameters& fitParameters,
@@ -380,8 +380,8 @@ namespace {
 	                    const size_t jdxWave,
 	                    const size_t idxBin)
 	{
-		const rpwa::resonanceFit::information::wave& waveI = fitInformation->getWave(idxWave);
-		const rpwa::resonanceFit::information::wave& waveJ = fitInformation->getWave(jdxWave);
+		const rpwa::resonanceFit::input::wave& waveI = fitInput->getWave(idxWave);
+		const rpwa::resonanceFit::input::wave& waveJ = fitInput->getWave(jdxWave);
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "start creating plots for wave pair '" << waveI.waveName() << "' and '" << waveJ.waveName() << "' in bin " << idxBin << "." << std::endl;
 		}
@@ -405,7 +405,7 @@ namespace {
 		TGraphErrors* realSystematics = NULL;
 		TGraphErrors* imagSystematics = NULL;
 		TGraphErrors* phaseSystematics = NULL;
-		if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+		if(fitInput->getBin(idxBin).sysFileNames().size() > 0) {
 			realSystematics = new TGraphErrors;
 			realSystematics->SetName((realName + "__sys").c_str());
 			realSystematics->SetTitle((realName + "__sys").c_str());
@@ -486,7 +486,7 @@ namespace {
 				++skipData;
 			}
 
-			if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+			if(fitInput->getBin(idxBin).sysFileNames().size() > 0) {
 				if(not zeroWaveForSysPlotting(fitData, idxBin, idxMass, idxWave) and not zeroWaveForPlotting(fitData, idxBin, idxMass, jdxWave)) {
 					const double minSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].first;
 					const double maxSR = fitData->sysPlottingSpinDensityMatrixElementsReal()[idxBin][idxMass][idxWave][jdxWave].second;
@@ -576,7 +576,7 @@ namespace {
 					}
 
 					phaseData->SetPoint(idxMass - skipData, x, data + bestOffs*360.);
-					if(fitInformation->getBin(idxBin).sysFileNames().size() > 0) {
+					if(fitInput->getBin(idxBin).sysFileNames().size() > 0) {
 						phaseSystematics->GetPoint(idxMass - skipData, x, data);
 						phaseSystematics->SetPoint(idxMass - skipData, x, data + bestOffs*360.);
 					}
@@ -635,7 +635,7 @@ namespace {
 
 
 void
-rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::inputConstPtr& fitInput,
                                 const rpwa::resonanceFit::dataConstPtr& fitData,
                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
                                 const rpwa::resonanceFit::parameters& fitParameters,
@@ -649,9 +649,9 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 	}
 
 	const bool sameMassBinning = fitData->hasSameMassBinning();
-	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+	for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
 		TDirectory* subDirectory = NULL;
-		if(fitInformation->nrBins() == 1) {
+		if(fitInput->nrBins() == 1) {
 			subDirectory = mainDirectory;
 		} else {
 			std::ostringstream name;
@@ -659,8 +659,8 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 			subDirectory = mainDirectory->mkdir(name.str().c_str());
 		}
 
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			createPlotsWave(fitInformation,
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			createPlotsWave(fitInput,
 			                fitData,
 			                fitModel,
 			                fitParameters,
@@ -672,9 +672,9 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 			                idxBin);
 		}
 
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			for(size_t jdxWave = idxWave+1; jdxWave < fitInformation->nrWaves(); ++jdxWave) {
-				createPlotsWavePair(fitInformation,
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			for(size_t jdxWave = idxWave+1; jdxWave < fitInput->nrWaves(); ++jdxWave) {
+				createPlotsWavePair(fitInput,
 				                    fitData,
 				                    fitModel,
 				                    fitParameters,
@@ -699,9 +699,9 @@ rpwa::resonanceFit::createPlots(const rpwa::resonanceFit::informationConstPtr& f
 		}
 	}
 
-	if(fitInformation->nrBins() != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			createPlotsWaveSum(fitInformation,
+	if(fitInput->nrBins() != 1 and sameMassBinning and fitModel->isMappingEqualInAllBins()) {
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			createPlotsWaveSum(fitInput,
 			                   fitData,
 			                   fitModel,
 			                   fitParameters,
