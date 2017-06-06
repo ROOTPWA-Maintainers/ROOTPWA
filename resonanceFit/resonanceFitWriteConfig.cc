@@ -44,7 +44,7 @@
 #include "components.h"
 #include "forward.h"
 #include "fsmd.h"
-#include "information.h"
+#include "input.h"
 #include "model.h"
 #include "parameters.h"
 
@@ -88,8 +88,8 @@ namespace {
 
 
 	void
-	writeInformationFitResults(YAML::Emitter& yamlOutput,
-	                           const std::vector<rpwa::resonanceFit::information::bin>& bins)
+	writeInputFitResults(YAML::Emitter& yamlOutput,
+	                     const std::vector<rpwa::resonanceFit::input::bin>& bins)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "writing 'fitresults'." << std::endl;
@@ -99,7 +99,7 @@ namespace {
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginSeq;
-		for(std::vector<rpwa::resonanceFit::information::bin>::const_iterator bin = bins.begin(); bin != bins.end(); ++bin) {
+		for(std::vector<rpwa::resonanceFit::input::bin>::const_iterator bin = bins.begin(); bin != bins.end(); ++bin) {
 			yamlOutput << YAML::BeginMap;
 
 			yamlOutput << YAML::Key << "name";
@@ -125,8 +125,8 @@ namespace {
 
 
 	void
-	writeInformationWaves(YAML::Emitter& yamlOutput,
-	                      const std::vector<rpwa::resonanceFit::information::wave>& waves)
+	writeInputWaves(YAML::Emitter& yamlOutput,
+	                const std::vector<rpwa::resonanceFit::input::wave>& waves)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "writing 'waves'." << std::endl;
@@ -136,7 +136,7 @@ namespace {
 		yamlOutput << YAML::Value;
 
 		yamlOutput << YAML::BeginSeq;
-		for(std::vector<rpwa::resonanceFit::information::wave>::const_iterator wave = waves.begin(); wave != waves.end(); ++wave) {
+		for(std::vector<rpwa::resonanceFit::input::wave>::const_iterator wave = waves.begin(); wave != waves.end(); ++wave) {
 			yamlOutput << YAML::BeginMap;
 
 			yamlOutput << YAML::Key << "name";
@@ -167,8 +167,8 @@ namespace {
 
 
 	void
-	writeInformation(YAML::Emitter& yamlOutput,
-	                 const rpwa::resonanceFit::informationConstPtr& fitInformation)
+	writeInput(YAML::Emitter& yamlOutput,
+	           const rpwa::resonanceFit::inputConstPtr& fitInput)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "writing 'input'." << std::endl;
@@ -179,8 +179,8 @@ namespace {
 
 		yamlOutput << YAML::BeginMap;
 
-		writeInformationFitResults(yamlOutput, fitInformation->bins());
-		writeInformationWaves(yamlOutput, fitInformation->waves());
+		writeInputFitResults(yamlOutput, fitInput->bins());
+		writeInputWaves(yamlOutput, fitInput->waves());
 
 		yamlOutput << YAML::EndMap;
 	}
@@ -680,7 +680,7 @@ namespace {
 
 	void
 	writeConfig(YAML::Emitter& yamlOutput,
-	            const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	            const rpwa::resonanceFit::inputConstPtr& fitInput,
 	            const rpwa::resonanceFit::modelConstPtr& fitModel,
 	            const rpwa::resonanceFit::parameters& fitParameters,
 	            const rpwa::resonanceFit::parameters& fitParametersError,
@@ -695,7 +695,7 @@ namespace {
 
 		writeFitQuality(yamlOutput, fitQuality);
 		writeFreeParameters(yamlOutput, freeParameters);
-		writeInformation(yamlOutput, fitInformation);
+		writeInput(yamlOutput, fitInput);
 		writeModel(yamlOutput, fitModel, fitParameters, fitParametersError);
 
 		yamlOutput << YAML::EndMap;
@@ -707,7 +707,7 @@ namespace {
 
 void
 rpwa::resonanceFit::writeConfig(const std::string& configFileName,
-                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                                const rpwa::resonanceFit::inputConstPtr& fitInput,
                                 const rpwa::resonanceFit::modelConstPtr& fitModel,
                                 const rpwa::resonanceFit::parameters& fitParameters,
                                 const rpwa::resonanceFit::parameters& fitParametersError,
@@ -718,7 +718,7 @@ rpwa::resonanceFit::writeConfig(const std::string& configFileName,
 
 	YAML::Emitter yamlOutput(configFile);
 	::writeConfig(yamlOutput,
-	              fitInformation,
+	              fitInput,
 	              fitModel,
 	              fitParameters,
 	              fitParametersError,

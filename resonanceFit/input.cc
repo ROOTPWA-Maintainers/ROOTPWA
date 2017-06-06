@@ -21,19 +21,19 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      implementation of the storage for the general information required
-//      by the resonance fit
+//      implementation of the storage for the general input required by
+//      the resonance fit
 //
 //-------------------------------------------------------------------------
 
 
-#include "information.h"
+#include "input.h"
 
 
-rpwa::resonanceFit::information::bin::bin(const std::string& fileName,
-                                          const double tPrimeMean,
-                                          const double rescaleErrors,
-                                          const std::vector<std::string>& sysFileNames)
+rpwa::resonanceFit::input::bin::bin(const std::string& fileName,
+                                    const double tPrimeMean,
+                                    const double rescaleErrors,
+                                    const std::vector<std::string>& sysFileNames)
 	: _fileName(fileName),
 	  _tPrimeMean(tPrimeMean),
 	  _rescaleErrors(rescaleErrors),
@@ -43,7 +43,7 @@ rpwa::resonanceFit::information::bin::bin(const std::string& fileName,
 
 
 std::ostream&
-rpwa::resonanceFit::information::bin::print(std::ostream& out, const bool newLine) const
+rpwa::resonanceFit::input::bin::print(std::ostream& out, const bool newLine) const
 {
 	out << "fit result at '" << _fileName << "' with mean tPrime = " << _tPrimeMean;
 
@@ -69,9 +69,9 @@ rpwa::resonanceFit::information::bin::print(std::ostream& out, const bool newLin
 }
 
 
-rpwa::resonanceFit::information::wave::wave(const std::string& waveName,
-                                            const std::pair<double, double>& massLimits,
-                                            const std::vector<std::string>& waveNameAlternatives)
+rpwa::resonanceFit::input::wave::wave(const std::string& waveName,
+                                      const std::pair<double, double>& massLimits,
+                                      const std::vector<std::string>& waveNameAlternatives)
 	: _waveName(waveName),
 	  _massLimits(massLimits),
 	  _waveNameAlternatives(waveNameAlternatives)
@@ -80,7 +80,7 @@ rpwa::resonanceFit::information::wave::wave(const std::string& waveName,
 
 
 std::ostream&
-rpwa::resonanceFit::information::wave::print(std::ostream& out, const bool newLine) const
+rpwa::resonanceFit::input::wave::print(std::ostream& out, const bool newLine) const
 {
 	out << "wave '" << _waveName << "'";
 
@@ -110,8 +110,8 @@ rpwa::resonanceFit::information::wave::print(std::ostream& out, const bool newLi
 }
 
 
-rpwa::resonanceFit::information::information(const std::vector<rpwa::resonanceFit::information::bin>& bins,
-                                             const std::vector<rpwa::resonanceFit::information::wave>& waves)
+rpwa::resonanceFit::input::input(const std::vector<rpwa::resonanceFit::input::bin>& bins,
+                                 const std::vector<rpwa::resonanceFit::input::wave>& waves)
 	: _bins(bins),
 	  _waves(waves)
 {
@@ -119,12 +119,12 @@ rpwa::resonanceFit::information::information(const std::vector<rpwa::resonanceFi
 
 
 std::ostream&
-rpwa::resonanceFit::information::print(std::ostream& out, const bool newLine) const
+rpwa::resonanceFit::input::print(std::ostream& out, const bool newLine) const
 {
 	const size_t nrBins = this->nrBins();
 	const size_t nrWaves = this->nrWaves();
 
-	out << "fit information for " << nrBins << " bin" << ((nrBins != 1) ? "s" : "") << " and " << nrWaves << " wave" << ((nrWaves != 1) ? "s" : "") << ":";
+	out << "fit input for " << nrBins << " bin" << ((nrBins != 1) ? "s" : "") << " and " << nrWaves << " wave" << ((nrWaves != 1) ? "s" : "") << ":";
 
 	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
 		out << std::endl;

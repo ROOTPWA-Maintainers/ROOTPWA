@@ -21,15 +21,15 @@
 //-------------------------------------------------------------------------
 //
 // Description:
-//      storage for the general information required by the resonance fit
+//      storage for the general input required by the resonance fit
 //      - fit results to be used
 //      - waves and used mass ranges
 //
 //-------------------------------------------------------------------------
 
 
-#ifndef RESONANCEFIT_INFORMATION_HH
-#define RESONANCEFIT_INFORMATION_HH
+#ifndef RESONANCEFIT_INPUT_HH
+#define RESONANCEFIT_INPUT_HH
 
 #include <iostream>
 #include <string>
@@ -39,7 +39,7 @@ namespace rpwa {
 
 	namespace resonanceFit {
 
-		class information {
+		class input {
 
 		public:
 
@@ -92,30 +92,30 @@ namespace rpwa {
 
 			};
 
-			information(const std::vector<rpwa::resonanceFit::information::bin>& bins,
-			            const std::vector<rpwa::resonanceFit::information::wave>& waves);
-			~information() {}
+			input(const std::vector<rpwa::resonanceFit::input::bin>& bins,
+			      const std::vector<rpwa::resonanceFit::input::wave>& waves);
+			~input() {}
 
 			size_t nrBins() const { return _bins.size(); }
-			const std::vector<rpwa::resonanceFit::information::bin>& bins() const { return _bins; }
-			const rpwa::resonanceFit::information::bin& getBin(const size_t idxBin) const { return _bins[idxBin]; }
+			const std::vector<rpwa::resonanceFit::input::bin>& bins() const { return _bins; }
+			const rpwa::resonanceFit::input::bin& getBin(const size_t idxBin) const { return _bins[idxBin]; }
 
 			size_t nrWaves() const { return _waves.size(); }
-			const std::vector<rpwa::resonanceFit::information::wave>& waves() const { return _waves; }
-			const rpwa::resonanceFit::information::wave& getWave(const size_t idxWave) const { return _waves[idxWave]; }
+			const std::vector<rpwa::resonanceFit::input::wave>& waves() const { return _waves; }
+			const rpwa::resonanceFit::input::wave& getWave(const size_t idxWave) const { return _waves[idxWave]; }
 
 			std::ostream& print(std::ostream& out = std::cout, const bool newLine = true) const;
 
 		private:
 
-			std::vector<rpwa::resonanceFit::information::bin> _bins;
-			std::vector<rpwa::resonanceFit::information::wave> _waves;
+			std::vector<rpwa::resonanceFit::input::bin> _bins;
+			std::vector<rpwa::resonanceFit::input::wave> _waves;
 
 		};
 
-		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information& information);
-		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information::bin& bin);
-		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::information::wave& wave);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::input& input);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::input::bin& bin);
+		std::ostream& operator<< (std::ostream& out, const rpwa::resonanceFit::input::wave& wave);
 
 	} // end namespace resonanceFit
 
@@ -124,15 +124,15 @@ namespace rpwa {
 
 inline
 std::ostream&
-rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::information& information)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::input& input)
 {
-	return information.print(out, false);
+	return input.print(out, false);
 }
 
 
 inline
 std::ostream&
-rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::information::bin& bin)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::input::bin& bin)
 {
 	return bin.print(out, false);
 }
@@ -140,10 +140,10 @@ rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::inf
 
 inline
 std::ostream&
-rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::information::wave& wave)
+rpwa::resonanceFit::operator<< (std::ostream& out, const rpwa::resonanceFit::input::wave& wave)
 {
 	return wave.print(out, false);
 }
 
 
-#endif // RESONANCEFIT_INFORMATION_HH
+#endif // RESONANCEFIT_INPUT_HH

@@ -57,23 +57,23 @@ namespace rpwa {
 
 		std::vector<std::string> readFreeParameters(const YAML::Node& configRoot);
 
-		rpwa::resonanceFit::informationConstPtr readInformation(const YAML::Node& configRoot);
+		rpwa::resonanceFit::inputConstPtr readInput(const YAML::Node& configRoot);
 
 		rpwa::resonanceFit::modelConstPtr readModel(const YAML::Node& configRoot,
-		                                            const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                                            const rpwa::resonanceFit::inputConstPtr& fitInput,
 		                                            const rpwa::resonanceFit::baseDataConstPtr& fitData,
 		                                            rpwa::resonanceFit::parameters& fitParameters,
 		                                            rpwa::resonanceFit::parameters& fitParametersError,
 		                                            const bool useBranchings);
 
-		rpwa::resonanceFit::dataConstPtr readData(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		rpwa::resonanceFit::dataConstPtr readData(const rpwa::resonanceFit::inputConstPtr& fitInput,
 		                                          const std::string& anchorWaveName,
 		                                          const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 		                                          const std::string& valTreeName   = "pwa",
 		                                          const std::string& valBranchName = "fitResult_v2");
 
 		void read(const YAML::Node& configRoot,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::dataConstPtr& fitData,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
@@ -88,7 +88,7 @@ namespace rpwa {
 		void read(const YAML::Node& configRoot,
 		          const boost::multi_array<std::string, 2>& waveNames,
 		          const double maxMassBinCenter,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
 		          rpwa::resonanceFit::parameters& fitParametersError,
@@ -98,7 +98,7 @@ namespace rpwa {
 
 		void read(const YAML::Node& configRoot,
 		          const double maxMassBinCenter,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
 		          rpwa::resonanceFit::parameters& fitParametersError,

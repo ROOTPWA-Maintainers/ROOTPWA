@@ -50,7 +50,7 @@ set(SOURCES
 	data.cc
 	fsmd.cc
 	function.cc
-	information.cc
+	input.cc
 	minimizerRoot.cc
 	model.cc
 	parameter.cc

@@ -52,7 +52,7 @@ namespace rpwa {
 
 		public:
 
-			model(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			model(const rpwa::resonanceFit::inputConstPtr& fitInput,
 			      const std::vector<rpwa::resonanceFit::componentPtr>& comp,
 			      const rpwa::resonanceFit::fsmdPtr& fsmd,
 			      const std::string& anchorWaveName,
@@ -117,7 +117,7 @@ namespace rpwa {
 
 		private:
 
-			bool initMapping(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+			bool initMapping(const rpwa::resonanceFit::inputConstPtr& fitInput,
 			                 const std::string& anchorWaveName,
 			                 const std::string& anchorComponentName);
 

@@ -44,7 +44,7 @@
 #include "components.h"
 #include "data.h"
 #include "fsmd.h"
-#include "information.h"
+#include "input.h"
 #include "model.h"
 #include "parameter.h"
 #include "resonanceFitHelper.h"
@@ -162,8 +162,8 @@ rpwa::resonanceFit::readFreeParameters(const YAML::Node& configRoot)
 namespace {
 
 
-	std::vector<rpwa::resonanceFit::information::bin>
-	readInformationFitResults(const YAML::Node& configInput)
+	std::vector<rpwa::resonanceFit::input::bin>
+	readInputFitResults(const YAML::Node& configInput)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "reading 'fitresults'." << std::endl;
@@ -180,7 +180,7 @@ namespace {
 			throw;
 		}
 
-		std::vector<rpwa::resonanceFit::information::bin> bins;
+		std::vector<rpwa::resonanceFit::input::bin> bins;
 
 		const size_t nrFitResults = configInputFitResults.size();
 		for(size_t idxFitResult = 0; idxFitResult < nrFitResults; ++idxFitResult) {
@@ -242,10 +242,10 @@ namespace {
 				}
 			}
 
-			bins.push_back(rpwa::resonanceFit::information::bin(fileName,
-			                                                    tPrimeMean,
-			                                                    rescaleErrors,
-			                                                    sysFileNames));
+			bins.push_back(rpwa::resonanceFit::input::bin(fileName,
+			                                              tPrimeMean,
+			                                              rescaleErrors,
+			                                              sysFileNames));
 
 			if(rpwa::resonanceFit::debug()) {
 				printDebug << bins.back() << std::endl;
@@ -256,8 +256,8 @@ namespace {
 	}
 
 
-	std::vector<rpwa::resonanceFit::information::wave>
-	readInformationWaves(const YAML::Node& configInput)
+	std::vector<rpwa::resonanceFit::input::wave>
+	readInputWaves(const YAML::Node& configInput)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "reading 'waves'." << std::endl;
@@ -274,7 +274,7 @@ namespace {
 			throw;
 		}
 
-		std::vector<rpwa::resonanceFit::information::wave> waves;
+		std::vector<rpwa::resonanceFit::input::wave> waves;
 
 		const size_t nrWaves = configInputWaves.size();
 		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
@@ -368,9 +368,9 @@ namespace {
 				}
 			}
 
-			waves.push_back(rpwa::resonanceFit::information::wave(waveName,
-			                                                      std::make_pair(massLower, massUpper),
-			                                                      waveNameAlternatives));
+			waves.push_back(rpwa::resonanceFit::input::wave(waveName,
+			                                                std::make_pair(massLower, massUpper),
+			                                                waveNameAlternatives));
 
 			if(rpwa::resonanceFit::debug()) {
 				printDebug << waves.back() << std::endl;
@@ -384,8 +384,8 @@ namespace {
 }
 
 
-rpwa::resonanceFit::informationConstPtr
-rpwa::resonanceFit::readInformation(const YAML::Node& configRoot)
+rpwa::resonanceFit::inputConstPtr
+rpwa::resonanceFit::readInput(const YAML::Node& configRoot)
 {
 	if(rpwa::resonanceFit::debug()) {
 		printDebug << "reading 'input'." << std::endl;
@@ -398,10 +398,10 @@ rpwa::resonanceFit::readInformation(const YAML::Node& configRoot)
 		throw;
 	}
 
-	const std::vector<rpwa::resonanceFit::information::bin> bins = readInformationFitResults(configInput);
-	const std::vector<rpwa::resonanceFit::information::wave> waves = readInformationWaves(configInput);
+	const std::vector<rpwa::resonanceFit::input::bin> bins = readInputFitResults(configInput);
+	const std::vector<rpwa::resonanceFit::input::wave> waves = readInputWaves(configInput);
 
-	return std::make_shared<rpwa::resonanceFit::information>(bins, waves);
+	return std::make_shared<rpwa::resonanceFit::input>(bins, waves);
 }
 
 
@@ -693,7 +693,7 @@ namespace {
 	std::vector<rpwa::resonanceFit::component::channel>
 	readModelComponentDecayChannels(const YAML::Node& configComponent,
 	                                const std::string& componentName,
-	                                const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                                const rpwa::resonanceFit::baseDataConstPtr& fitData)
 	{
 		if(rpwa::resonanceFit::debug()) {
@@ -701,8 +701,8 @@ namespace {
 		}
 
 		std::map<std::string, size_t> waveIndices;
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-			const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+			const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 			waveIndices[wave.waveName()] = idxWave;
 			for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
@@ -711,8 +711,8 @@ namespace {
 		}
 
 		std::map<std::string, std::vector<size_t> > waveBins;
-		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
 				waveBins[fitData->waveNames()[idxBin][idxWave]].push_back(idxBin);
 			}
 		}
@@ -783,7 +783,7 @@ namespace {
 	template<typename T>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& /*configComponent*/,
-	                   const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                   const rpwa::resonanceFit::inputConstPtr& /*fitInput*/,
 	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const std::string& name,
@@ -808,7 +808,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::dynamicWidthBreitWigner>(const YAML::Node& configComponent,
-	                                                                const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                const rpwa::resonanceFit::inputConstPtr& /*fitInput*/,
 	                                                                const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                const size_t id,
 	                                                                const std::string& name,
@@ -869,7 +869,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::integralWidthBreitWigner>(const YAML::Node& configComponent,
-	                                                                 const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                 const rpwa::resonanceFit::inputConstPtr& /*fitInput*/,
 	                                                                 const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                 const size_t id,
 	                                                                 const std::string& name,
@@ -934,7 +934,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::exponentialBackground>(const YAML::Node& configComponent,
-	                                                              const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                              const rpwa::resonanceFit::inputConstPtr& /*fitInput*/,
 	                                                              const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                              const size_t id,
 	                                                              const std::string& name,
@@ -968,7 +968,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackground>(const YAML::Node& configComponent,
-	                                                                  const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                                                  const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                                                                  const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                  const size_t id,
 	                                                                  const std::string& name,
@@ -981,8 +981,8 @@ namespace {
 		}
 
 		std::vector<double> tPrimeMeans;
-		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-			tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
+		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+			tPrimeMeans.push_back(fitInput->getBin(idxBin).tPrimeMean());
 		}
 
 		const int relAngularMom = readModelComponentDecayChannelRelAngularMom(configComponent, 0);
@@ -1008,7 +1008,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::exponentialBackgroundIntegral>(const YAML::Node& configComponent,
-	                                                                      const rpwa::resonanceFit::informationConstPtr& /*fitInformation*/,
+	                                                                      const rpwa::resonanceFit::inputConstPtr& /*fitInput*/,
 	                                                                      const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                      const size_t id,
 	                                                                      const std::string& name,
@@ -1041,7 +1041,7 @@ namespace {
 	template<>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(const YAML::Node& configComponent,
-	                                                                          const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                                                                          const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                                                                          const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                                                                          const size_t id,
 	                                                                          const std::string& name,
@@ -1054,8 +1054,8 @@ namespace {
 		}
 
 		std::vector<double> tPrimeMeans;
-		for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
-			tPrimeMeans.push_back(fitInformation->getBin(idxBin).tPrimeMean());
+		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+			tPrimeMeans.push_back(fitInput->getBin(idxBin).tPrimeMean());
 		}
 
 		std::vector<double> masses;
@@ -1080,7 +1080,7 @@ namespace {
 	template<typename T>
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
-	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const bool useBranchings)
@@ -1109,11 +1109,11 @@ namespace {
 
 		const std::vector<rpwa::resonanceFit::component::channel> decayChannels = readModelComponentDecayChannels(configComponent,
 		                                                                                                          name,
-		                                                                                                          fitInformation,
+		                                                                                                          fitInput,
 		                                                                                                          fitData);
 
 		return readModelComponent<T>(configComponent,
-		                             fitInformation,
+		                             fitInput,
 		                             fitData,
 		                             id,
 		                             name,
@@ -1125,7 +1125,7 @@ namespace {
 
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
-	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   const size_t id,
 	                   const bool useBranchings)
@@ -1150,49 +1150,49 @@ namespace {
 		rpwa::resonanceFit::componentPtr component;
 		if(type == "fixedWidthBreitWigner") {
 			component = readModelComponent<rpwa::resonanceFit::fixedWidthBreitWigner>(configComponent,
-			                                                                          fitInformation,
+			                                                                          fitInput,
 			                                                                          fitData,
 			                                                                          id,
 			                                                                          useBranchings);
 		} else if(type == "dynamicWidthBreitWigner") {
 			component = readModelComponent<rpwa::resonanceFit::dynamicWidthBreitWigner>(configComponent,
-			                                                                            fitInformation,
+			                                                                            fitInput,
 			                                                                            fitData,
 			                                                                            id,
 			                                                                            useBranchings);
 		} else if(type == "integralWidthBreitWigner") {
 			component = readModelComponent<rpwa::resonanceFit::integralWidthBreitWigner>(configComponent,
-			                                                                             fitInformation,
+			                                                                             fitInput,
 			                                                                             fitData,
 			                                                                             id,
 			                                                                             useBranchings);
 		} else if(type == "constantBackground") {
 			component = readModelComponent<rpwa::resonanceFit::constantBackground>(configComponent,
-			                                                                       fitInformation,
+			                                                                       fitInput,
 			                                                                       fitData,
 			                                                                       id,
 			                                                                       useBranchings);
 		} else if(type == "exponentialBackground") {
 			component = readModelComponent<rpwa::resonanceFit::exponentialBackground>(configComponent,
-			                                                                          fitInformation,
+			                                                                          fitInput,
 			                                                                          fitData,
 			                                                                          id,
 			                                                                          useBranchings);
 		} else if(type == "tPrimeDependentBackground") {
 			component = readModelComponent<rpwa::resonanceFit::tPrimeDependentBackground>(configComponent,
-			                                                                              fitInformation,
+			                                                                              fitInput,
 			                                                                              fitData,
 			                                                                              id,
 			                                                                              useBranchings);
 		} else if(type == "exponentialBackgroundIntegral") {
 			component = readModelComponent<rpwa::resonanceFit::exponentialBackgroundIntegral>(configComponent,
-			                                                                                  fitInformation,
+			                                                                                  fitInput,
 			                                                                                  fitData,
 			                                                                                  id,
 			                                                                                  useBranchings);
 		} else if(type == "tPrimeDependentBackgroundIntegral") {
 			component = readModelComponent<rpwa::resonanceFit::tPrimeDependentBackgroundIntegral>(configComponent,
-			                                                                                      fitInformation,
+			                                                                                      fitInput,
 			                                                                                      fitData,
 			                                                                                      id,
 			                                                                                      useBranchings);
@@ -1211,7 +1211,7 @@ namespace {
 
 	rpwa::resonanceFit::componentPtr
 	readModelComponent(const YAML::Node& configComponent,
-	                   const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                   const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                   const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                   rpwa::resonanceFit::parameters& fitParameters,
 	                   rpwa::resonanceFit::parameters& fitParametersError,
@@ -1223,13 +1223,13 @@ namespace {
 		}
 
 		const rpwa::resonanceFit::componentPtr& component = readModelComponent(configComponent,
-		                                                                       fitInformation,
+		                                                                       fitInput,
 		                                                                       fitData,
 		                                                                       id,
 		                                                                       useBranchings);
 
-		fitParameters.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInformation->nrBins());
-		fitParametersError.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInformation->nrBins());
+		fitParameters.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInput->nrBins());
+		fitParametersError.resize(id+1, component->getNrChannels(), component->getNrParameters(), fitInput->nrBins());
 
 		for(size_t idxParameter = 0; idxParameter < component->getNrParameters(); ++idxParameter) {
 			fitParameters.setParameter(id, idxParameter, component->getParameter(idxParameter).startValue());
@@ -1338,7 +1338,7 @@ namespace {
 
 	std::vector<rpwa::resonanceFit::componentPtr>
 	readModelComponents(const YAML::Node& configModel,
-	                    const rpwa::resonanceFit::informationConstPtr& fitInformation,
+	                    const rpwa::resonanceFit::inputConstPtr& fitInput,
 	                    const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	                    rpwa::resonanceFit::parameters& fitParameters,
 	                    rpwa::resonanceFit::parameters& fitParametersError,
@@ -1368,7 +1368,7 @@ namespace {
 			const YAML::Node& configComponent = configComponents[idxComponent];
 
 			const rpwa::resonanceFit::componentPtr& component = readModelComponent(configComponent,
-			                                                                       fitInformation,
+			                                                                       fitInput,
 			                                                                       fitData,
 			                                                                       fitParameters,
 			                                                                       fitParametersError,
@@ -1527,7 +1527,7 @@ namespace {
 
 rpwa::resonanceFit::modelConstPtr
 rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
-                              const rpwa::resonanceFit::informationConstPtr& fitInformation,
+                              const rpwa::resonanceFit::inputConstPtr& fitInput,
                               const rpwa::resonanceFit::baseDataConstPtr& fitData,
                               rpwa::resonanceFit::parameters& fitParameters,
                               rpwa::resonanceFit::parameters& fitParametersError,
@@ -1551,7 +1551,7 @@ rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
 	                 anchorComponentName);
 
 	const std::vector<rpwa::resonanceFit::componentPtr>& components = readModelComponents(configModel,
-	                                                                                      fitInformation,
+	                                                                                      fitInput,
 	                                                                                      fitData,
 	                                                                                      fitParameters,
 	                                                                                      fitParametersError,
@@ -1564,7 +1564,7 @@ rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
 	                                                        fitParametersError,
 	                                                        components.size());
 
-	return std::make_shared<rpwa::resonanceFit::model>(fitInformation,
+	return std::make_shared<rpwa::resonanceFit::model>(fitInput,
 	                                                   components,
 	                                                   fsmd,
 	                                                   anchorWaveName,

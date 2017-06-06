@@ -55,7 +55,7 @@ namespace rpwa {
 		class parameters;
 
 		void read(const std::string& configFileName,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::dataConstPtr& fitData,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
@@ -70,7 +70,7 @@ namespace rpwa {
 		void read(const std::string& configFileName,
 		          const boost::multi_array<std::string, 2>& waveNames,
 		          const double maxMassBinCenter,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
 		          rpwa::resonanceFit::parameters& fitParametersError,
@@ -80,7 +80,7 @@ namespace rpwa {
 
 		void read(const std::string& configFileName,
 		          const double maxMassBinCenter,
-		          rpwa::resonanceFit::informationConstPtr& fitInformation,
+		          rpwa::resonanceFit::inputConstPtr& fitInput,
 		          rpwa::resonanceFit::modelConstPtr& fitModel,
 		          rpwa::resonanceFit::parameters& fitParameters,
 		          rpwa::resonanceFit::parameters& fitParametersError,
@@ -89,14 +89,14 @@ namespace rpwa {
 		          const bool useBranchings);
 
 		void writeConfig(const std::string& configFileName,
-		                 const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		                 const rpwa::resonanceFit::inputConstPtr& fitInput,
 		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 		                 const rpwa::resonanceFit::parameters& fitParameters,
 		                 const rpwa::resonanceFit::parameters& fitParametersError,
 		                 const std::map<std::string, double>& fitQuality,
 		                 const std::vector<std::string>& freeParameters);
 
-		void createPlots(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+		void createPlots(const rpwa::resonanceFit::inputConstPtr& fitInput,
 		                 const rpwa::resonanceFit::dataConstPtr& fitData,
 		                 const rpwa::resonanceFit::modelConstPtr& fitModel,
 		                 const rpwa::resonanceFit::parameters& fitParameters,

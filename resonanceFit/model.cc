@@ -34,10 +34,10 @@
 #include "cache.h"
 #include "components.h"
 #include "fsmd.h"
-#include "information.h"
+#include "input.h"
 
 
-rpwa::resonanceFit::model::model(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+rpwa::resonanceFit::model::model(const rpwa::resonanceFit::inputConstPtr& fitInput,
                                  const std::vector<rpwa::resonanceFit::componentPtr>& comp,
                                  const rpwa::resonanceFit::fsmdPtr& fsmd,
                                  const std::string& anchorWaveName,
@@ -86,7 +86,7 @@ rpwa::resonanceFit::model::model(const rpwa::resonanceFit::informationConstPtr& 
 		_nrParameters += sumNrParameters;
 	}
 
-	if(not initMapping(fitInformation,
+	if(not initMapping(fitInput,
 	                   anchorWaveName,
 	                   anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << std::endl;
@@ -97,7 +97,7 @@ rpwa::resonanceFit::model::model(const rpwa::resonanceFit::informationConstPtr& 
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationConstPtr& fitInformation,
+rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::inputConstPtr& fitInput,
                                        const std::string& anchorWaveName,
                                        const std::string& anchorComponentName)
 {
@@ -109,8 +109,8 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 			const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
 			bool found = false;
-			for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-				const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+				const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 				if(wave.waveName() == channel.getWaveName()) {
 					found = true;
@@ -131,8 +131,8 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 	}
 
 	// check that all defined waves are also used
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+	for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 		bool found(false);
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
@@ -157,10 +157,10 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 		}
 	}
 
-	_idxAnchorChannel.resize(fitInformation->nrBins(), std::numeric_limits<size_t>::max());
-	_waveComponentChannel.resize(boost::extents[fitInformation->nrBins()][fitInformation->nrWaves()]);
-	for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
-		const rpwa::resonanceFit::information::wave& wave = fitInformation->getWave(idxWave);
+	_idxAnchorChannel.resize(fitInput->nrBins(), std::numeric_limits<size_t>::max());
+	_waveComponentChannel.resize(boost::extents[fitInput->nrBins()][fitInput->nrWaves()]);
+	for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
+		const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
 
 		// check which components this waves belongs to and which channel they are
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
@@ -210,7 +210,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 		return false;
 	}
 	const componentPtr& anchorComponent = _components[_idxAnchorComponent];
-	for(size_t idxBin = 0; idxBin < fitInformation->nrBins(); ++idxBin) {
+	for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
 		size_t firstChannel = 0;
 		// loop over channels of component and see if wave is there
 		for(size_t idxChannel = 0; idxChannel < anchorComponent->getNrChannels(); ++idxChannel) {
@@ -228,16 +228,16 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::informationCons
 		}
 	}
 	anchorComponent->setChannelAnchor(_idxAnchorChannel);
-	_nrParameters -= fitInformation->nrBins();
+	_nrParameters -= fitInput->nrBins();
 
 	// can we simplify stuff by assuming all bins have the same mapping?
 	_mappingEqualInAllBins = true;
-	for(size_t idxBin = 1; idxBin < fitInformation->nrBins(); ++idxBin) {
+	for(size_t idxBin = 1; idxBin < fitInput->nrBins(); ++idxBin) {
 		if(_idxAnchorChannel[idxBin] != _idxAnchorChannel[0]) {
 			_mappingEqualInAllBins = false;
 			break;
 		}
-		for(size_t idxWave = 0; idxWave < fitInformation->nrWaves(); ++idxWave) {
+		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
 			if(_waveComponentChannel[idxBin][idxWave] != _waveComponentChannel[0][idxWave]) {
 				_mappingEqualInAllBins = false;
 				break;
