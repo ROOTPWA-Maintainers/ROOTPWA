@@ -38,6 +38,7 @@
 #include <iostream>
 #include <complex>
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
@@ -106,19 +107,46 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	/// Brief trivial flat mass dependence
-	class flatMassDependence : public massDependence {
+	/// Brief intermediate class for mass dependencies
+	// The idea is to have an intermediate class that provides a couple of
+	// static functions that otherwise would have to be added to each class
+	// individually, adding a lot of duplicate code. Mass dependencies
+	// should inherit from this class and provide a
+	// 'static constexpr const char*' member 'cName' indicating the name of
+	// the mass dependence used in keyfiles and so on.
+	template<class T>
+	class massDependenceImpl : public massDependence {
 
 	public:
 
-		flatMassDependence() : massDependence() { }
-		virtual ~flatMassDependence()           { }
+		massDependenceImpl() : massDependence() { }
+		virtual ~massDependenceImpl()           { }
+
+		virtual std::string name() const { return Name(); }  ///< returns label used in graph visualization, reporting, and key file
+
+		static std::string Name() { return T::cName; } ///< returns the name used to trigger the creation of a mass dependence
+
+		template<typename... Args>
+		static boost::shared_ptr<T> Create(Args... args) {
+			return boost::make_shared<T>(args...);
+		}
+	};
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief trivial flat mass dependence
+	class flatMassDependence : public massDependenceImpl<flatMassDependence> {
+
+	public:
+
+		flatMassDependence() : massDependenceImpl<flatMassDependence>() { }
+		virtual ~flatMassDependence()                                   { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-		virtual std::string name() const { return "flat"; }  ///< returns label used in graph visualization, reporting, and key file
-
 		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
+		static constexpr const char* cName = "flat";
 
 	};
 
@@ -137,21 +165,21 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief trivial flat mass dependence over a range
-	class binnedMassDependence : public massDependence {
+	class binnedMassDependence : public massDependenceImpl<binnedMassDependence> {
 
 	public:
 
-		binnedMassDependence(const double mMin, const double mMax) : massDependence(), _mMin(mMin), _mMax(mMax) { }
-		virtual ~binnedMassDependence()                                                                         { }
+		binnedMassDependence(const double mMin, const double mMax) : massDependenceImpl<binnedMassDependence>(), _mMin(mMin), _mMax(mMax) { }
+		virtual ~binnedMassDependence()                                                                                                   { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
-
-		virtual std::string name() const { return "binned"; }  ///< returns label used in graph visualization, reporting, and key file
 
 		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 
 		double getMassMin() const { return _mMin; }
 		double getMassMax() const { return _mMax; }
+
+		static constexpr const char* cName = "binned";
 
 	private:
 		double _mMin;  ///< Lower limit of the isobar mass bin
@@ -174,18 +202,18 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
-	class relativisticBreitWigner : public massDependence {
+	class relativisticBreitWigner : public massDependenceImpl<relativisticBreitWigner> {
 
 	public:
 
-		relativisticBreitWigner() : massDependence() { }
+		relativisticBreitWigner() : massDependenceImpl<relativisticBreitWigner>() { }
 		virtual ~relativisticBreitWigner()           { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
-
 		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
+		static constexpr const char* cName = "relativisticBreitWigner";
 
 	};
 
@@ -204,16 +232,16 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic constant-width s-wave Breit-Wigner
-	class constWidthBreitWigner : public massDependence {
+	class constWidthBreitWigner : public massDependenceImpl<constWidthBreitWigner> {
 
 	public:
 
-		constWidthBreitWigner() : massDependence() { }
-		virtual ~constWidthBreitWigner()           { }
+		constWidthBreitWigner() : massDependenceImpl<constWidthBreitWigner>() { }
+		virtual ~constWidthBreitWigner()                                      { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "constWidthBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "constWidthBreitWigner";
 
 	};
 
@@ -237,16 +265,16 @@ namespace rpwa {
 	/// Gamma = Gamma0 * m0 / m * (q / q0) * (2 * q^2) / (q^2 + q0^2)
 	/// [D. Bisello et al, Phys. Rev. D39 (1989) 701], appendix
 	/// http://dx.doi.org/10.1103/PhysRevD.39.701
-	class rhoBreitWigner : public massDependence {
+	class rhoBreitWigner : public massDependenceImpl<rhoBreitWigner> {
 
 	public:
 
-		rhoBreitWigner() : massDependence() { }
-		virtual ~rhoBreitWigner()           { }
+		rhoBreitWigner() : massDependenceImpl<rhoBreitWigner>() { }
+		virtual ~rhoBreitWigner()                               { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "rhoBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "rhoBreitWigner";
 
 	};
 
@@ -267,16 +295,16 @@ namespace rpwa {
 	/// Brief Breit-Wigner for f_0(980) -> pi pi
 	/// this is used in piPiSWaveAuMorganPenningtonVes for subtraction of f_0(980)
 	/// "Probably this isn't correct S-wave BW form!"
-	class f0980BreitWigner : public massDependence {
+	class f0980BreitWigner : public massDependenceImpl<f0980BreitWigner> {
 
 	public:
 
-		f0980BreitWigner() : massDependence() { }
-		virtual ~f0980BreitWigner()           { }
+		f0980BreitWigner() : massDependenceImpl<f0980BreitWigner>() { }
+		virtual ~f0980BreitWigner()                                 { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "f_0(980)"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "f_0(980)";
 
 	};
 
@@ -296,16 +324,16 @@ namespace rpwa {
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief Flatte for f_0(980) -> pi pi
 	/// [M. Ablikim et al, Phys. Let. B607, 243] BES II
-	class f0980Flatte : public massDependence {
+	class f0980Flatte : public massDependenceImpl<f0980Flatte> {
 
 	public:
 
 		f0980Flatte();
-		virtual ~f0980Flatte()           { }
+		virtual ~f0980Flatte() { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "f_0(980)Flatte"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "f_0(980)Flatte";
 
 	private:
 		double _piChargedMass;
@@ -327,20 +355,21 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	/// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
-	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
-	/// we have introduced a small modification by setting the
-	/// off-diagonal elements of the M-matrix to zero.
-	class piPiSWaveAuMorganPenningtonM : public massDependence {
+	/// Brief Base class for the Au-Morgan-Pennington parameterization of
+	///       pi pi s-wave
+	/// This class is required to at the same time have a common base class for
+	/// all three related mass dependencies and still be able to have access to
+	/// the static functions.
+	/// See class 'piPiSWaveAuMorganPenningtonM' for references.
+	template<class T>
+	class piPiSWaveAuMorganPenningtonImpl : public massDependenceImpl<T> {
 
 	public:
 
-		piPiSWaveAuMorganPenningtonM();
-		virtual ~piPiSWaveAuMorganPenningtonM() { }
+		piPiSWaveAuMorganPenningtonImpl();
+		virtual ~piPiSWaveAuMorganPenningtonImpl() { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
-
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
 
 	protected:
 
@@ -355,6 +384,23 @@ namespace rpwa {
 		double _kaonChargedMass;
 		double _kaonNeutralMass;
 		double _kaonMeanMass;
+
+	};
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
+	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
+	/// we have introduced a small modification by setting the
+	/// off-diagonal elements of the M-matrix to zero.
+	class piPiSWaveAuMorganPenningtonM : public piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonM> {
+
+	public:
+
+		piPiSWaveAuMorganPenningtonM() : piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonM>() { }
+		virtual ~piPiSWaveAuMorganPenningtonM()                                                          { }
+
+		static constexpr const char* cName = "piPiSWaveAuMorganPenningtonM";
 
 	};
 
@@ -375,7 +421,7 @@ namespace rpwa {
 	/// Brief old VES pi pi s-wave parameterization
 	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
 	/// brute force subtraction of the f0(980)
-	class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonM {
+	class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonVes> {
 
 	public:
 
@@ -384,7 +430,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "piPiSWaveAuMorganPenningtonVes";
 
 	};
 
@@ -415,14 +461,14 @@ namespace rpwa {
 	/// it is smooth and nicely tends to zero after approx 1.5 GeV.
 	/// f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
 	/// the largest effect from C411, zeroing of C422 looks insignificant.
-	class piPiSWaveAuMorganPenningtonKachaev : public piPiSWaveAuMorganPenningtonM {
+	class piPiSWaveAuMorganPenningtonKachaev : public piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonKachaev> {
 
 	public:
 
 		piPiSWaveAuMorganPenningtonKachaev();
 		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "piPiSWaveAuMorganPenningtonKachaev";
 
 	};
 
@@ -442,16 +488,16 @@ namespace rpwa {
 	//////////////////////////////////////////////////////////////////////////////
 	/// combined amplitude for rho(1450)/rho(1700)
 	/// [A. Donnachie et al, Z. Phys. C 33 (1987) 407] http://dx.doi.org/10.1007/BF01552547, sec. 4
-	class rhoPrimeMassDep : public massDependence {
+	class rhoPrimeMassDep : public massDependenceImpl<rhoPrimeMassDep> {
 
 	public:
 
-		rhoPrimeMassDep() : massDependence() { }
-		virtual ~rhoPrimeMassDep()           { }
+		rhoPrimeMassDep() : massDependenceImpl<rhoPrimeMassDep>() { }
+		virtual ~rhoPrimeMassDep()                                { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "rhoPrime"; }  ///< returns label used in graph visualization, reporting, and key file
+		static constexpr const char* cName = "rhoPrime";
 
 	};
 
