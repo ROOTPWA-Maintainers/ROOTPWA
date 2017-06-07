@@ -564,7 +564,7 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		else {
 			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
 			if (vertex->massDependence())
-				waveName << vertex->massDependence()->parentForWaveName(*vertex);
+				waveName << vertex->massDependence()->parentLabelForWaveName(*vertex);
 			else
 				waveName << vertex->parent()->name();
 			waveName << waveNameFromTopology(topo, vertex);
@@ -579,7 +579,7 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		else {
 			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
 			if (vertex->massDependence())
-				waveName << vertex->massDependence()->parentForWaveName(*vertex);
+				waveName << vertex->massDependence()->parentLabelForWaveName(*vertex);
 			else
 				waveName << vertex->parent()->name();
 			waveName << waveNameFromTopology(topo, vertex);
