@@ -6,9 +6,6 @@
 sudo: required
 dist: trusty
 
-env:
-  - TRAVIS_RPWA_USE_BAT=1
-
 language: cpp
 
 # packages required in all cases
@@ -44,14 +41,14 @@ required_packages: &required_packages
   - libconfig++-dev
   - libyaml-cpp-dev
 
-addons:
-    apt:
-        packages:
-          - *required_packages
-          - libnlopt-dev
-
 matrix:
     include:
+      - env: TRAVIS_RPWA_USE_BAT=1
+        addons:
+            apt:
+                packages:
+                  - *required_packages
+                  - libnlopt-dev
       - env: TRAVIS_RPWA_USE_BAT=0
         addons:
             apt:
