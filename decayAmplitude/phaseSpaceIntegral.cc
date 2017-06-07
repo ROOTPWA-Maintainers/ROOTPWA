@@ -249,7 +249,7 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 	const decayTopologyPtr origTopology = _vertex->decay();
 
 	const massDependencePtr originalMassDep = _vertex->massDependence();
-	_vertex->setMassDependence(createFlatMassDependence());
+	_vertex->setMassDependence(flatMassDependence::Create());
 
 	const unsigned int nmbFsParticles = _subDecay->nmbFsParticles();
 
