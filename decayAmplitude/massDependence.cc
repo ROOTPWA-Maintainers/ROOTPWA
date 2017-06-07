@@ -293,7 +293,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 ////////////////////////////////////////////////////////////////////////////////
 f0980Flatte::f0980Flatte()
-	: massDependence()
+	: massDependenceImpl<f0980Flatte>()
 {
 	particleDataTable& pdt = particleDataTable::instance();
 	const string partList[] = {"pi+", "pi0", "K+", "K0"};
@@ -346,8 +346,9 @@ f0980Flatte::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
-	: massDependence(),
+template<class T>
+piPiSWaveAuMorganPenningtonImpl<T>::piPiSWaveAuMorganPenningtonImpl()
+	: massDependenceImpl<T>(),
 	  _T       (2, 2),
 	  _a       (2, matrix<complex<double> >(2, 2)),
 	  _c       (5, matrix<complex<double> >(2, 2)),
@@ -400,8 +401,9 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 }
 
 
+template<class T>
 complex<double>
-piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
+piPiSWaveAuMorganPenningtonImpl<T>::amp(const isobarDecayVertex& v)
 {
 	const complex<double> imag(0, 1);
 
@@ -448,8 +450,8 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 	invertMatrix<complex<double> >(M - imag * rho, _T);
 	const complex<double> amp = _T(0, 0);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+	if (this->_debug)
+		printDebug << this->name() << "(m = " << maxPrecision(mass) << " GeV) = "
 		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
@@ -458,7 +460,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
-	: piPiSWaveAuMorganPenningtonM()
+	: piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonVes>()
 {
 	_vesSheet = 1;
 }
@@ -473,7 +475,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 	const double          f0Width = 0.0376;  // [GeV]
 	const complex<double> coupling(-0.3743, 0.3197);
 
-	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+	const complex<double> ampM = piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonVes>::amp(v);
 
 	complex<double> bw = 0;
 	if (M > 2 * _piChargedMass) {
@@ -498,7 +500,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
-	: piPiSWaveAuMorganPenningtonM()
+	: piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonKachaev>()
 {
 	// change parameters according to Kachaev's prescription
 	_c[4](0, 0) = 0; // was 0.1957;
