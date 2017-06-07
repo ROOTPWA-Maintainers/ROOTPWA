@@ -606,8 +606,8 @@ waveSetGenerator::setMassDepsForDecayTopology(const isobarDecayTopologyPtr      
 				if (usedMassDeps.count(*massDepType) != 0)
 					continue;
 				usedMassDeps.insert(*massDepType);
-				if (*massDepType == "relativisticBreitWigner") usedMassDeps.insert("");
-				if (*massDepType == "") usedMassDeps.insert("relativisticBreitWigner");
+				if (*massDepType == relativisticBreitWigner::Name()) usedMassDeps.insert("");
+				if (*massDepType == "") usedMassDeps.insert(relativisticBreitWigner::Name());
 
 				massDependencePtr massDep = createMassDependence(*massDepType);
 				if (not massDep) {
@@ -622,9 +622,9 @@ waveSetGenerator::setMassDepsForDecayTopology(const isobarDecayTopologyPtr      
 			}
 		} else {
 			// if no special mass dependence is requested, just use the default one
-			if (usedMassDeps.count("relativisticBreitWigner") != 0)
+			if (usedMassDeps.count(relativisticBreitWigner::Name()) != 0)
 				continue;
-			usedMassDeps.insert("relativisticBreitWigner");
+			usedMassDeps.insert(relativisticBreitWigner::Name());
 			usedMassDeps.insert("");
 
 			decayTopologyWithMassDeps.push_back(decayTopology);

@@ -846,7 +846,7 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 	if (not massDep) {
 		// mass dependence is not a simple type without additional
 		// arguments
-		if (massDepType == "binned") {
+		if (massDepType == binnedMassDependence::Name()) {
 			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
 			if (not bounds) {
 				printErr << "no bounds given for binned mass dependence." << std::endl;
@@ -1055,10 +1055,10 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
                                    const bool            XDecay)
 {
 	const string massDepName = massDep.name();
-	if (XDecay && massDepName == "flat")
+	if (XDecay && massDepName == flatMassDependence::Name())
 		// default for X
 		return true;
-	else if ((not XDecay) && massDepName == "relativisticBreitWigner")
+	else if ((not XDecay) && massDepName == relativisticBreitWigner::Name())
 		// default mass dependence for isobars
 		return true;
 	else {
@@ -1068,7 +1068,7 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
 		massDepKey.add("name", Setting::TypeString) = massDepName;
 
-		if (massDepName == "binned") {
+		if (massDepName == binnedMassDependence::Name()) {
 			// for this mass dependence additionally the mass bound
 			// have to be stored in the keyfile.
 			const binnedMassDependence& binned = dynamic_cast<const binnedMassDependence&>(massDep);
