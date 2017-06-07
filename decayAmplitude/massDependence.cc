@@ -46,6 +46,56 @@ using namespace rpwa;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+namespace {
+
+
+	// anonymous namespace to encapsulate the templated selection of the
+	// mass dependence
+
+
+	template<typename... Ts>
+	typename std::enable_if<sizeof...(Ts) == 0, rpwa::massDependencePtr>::type createMassDependence(const std::string& /*massDepType*/)
+	{
+		return nullptr;
+	}
+
+
+	template<typename T, typename... Ts>
+	massDependencePtr
+	createMassDependence(const std::string& massDepType)
+	{
+		if (T::Name() == massDepType)
+			return T::Create();
+
+		return ::createMassDependence<Ts...>(massDepType);
+	}
+
+
+}
+
+
+massDependencePtr
+rpwa::createMassDependence(const std::string& massDepType)
+{
+	// default for empty string
+	if (massDepType == "")
+		return relativisticBreitWigner::Create();
+
+	// otherwise try to resolve the name
+	return ::createMassDependence<rpwa::flatMassDependence,
+	                              rpwa::relativisticBreitWigner,
+	                              rpwa::constWidthBreitWigner,
+	                              rpwa::rhoBreitWigner,
+	                              rpwa::f0980BreitWigner,
+	                              rpwa::f0980Flatte,
+	                              rpwa::piPiSWaveAuMorganPenningtonM,
+	                              rpwa::piPiSWaveAuMorganPenningtonVes,
+	                              rpwa::piPiSWaveAuMorganPenningtonKachaev,
+	                              rpwa::rhoPrimeMassDep>(massDepType);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 bool massDependence::_debug = false;
 
 
@@ -63,34 +113,6 @@ massDependence::print(ostream& out) const
 {
 	out << name();
 	return out;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-massDependencePtr
-rpwa::createMassDependence(const std::string& massDepType)
-{
-	massDependencePtr massDep;
-	if (   (massDepType == "relativisticBreitWigner")
-	    or (massDepType == ""))  // default mass dependence
-		massDep = createRelativisticBreitWigner();
-	else if (massDepType == "constWidthBreitWigner")
-		massDep = createConstWidthBreitWigner();
-	else if (massDepType == "flat")
-		massDep = createFlatMassDependence();
-	else if (massDepType == "f_0(980)")
-		massDep = createF0980BreitWigner();
-	else if (massDepType == "f_0(980)Flatte")
-		massDep = createF0980Flatte();
-	else if (massDepType == "piPiSWaveAuMorganPenningtonM")
-		massDep = createPiPiSWaveAuMorganPenningtonM();
-	else if (massDepType == "piPiSWaveAuMorganPenningtonVes")
-		massDep = createPiPiSWaveAuMorganPenningtonVes();
-	else if (massDepType == "piPiSWaveAuMorganPenningtonKachaev")
-		massDep = createPiPiSWaveAuMorganPenningtonKachaev();
-	else if (massDepType == "rhoPrime")
-		massDep = createRhoPrimeMassDep();
-	return massDep;
 }
 
 
