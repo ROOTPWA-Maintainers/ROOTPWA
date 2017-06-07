@@ -867,7 +867,7 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 		}
 		else {
 			printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
-			massDep = createRelativisticBreitWigner();
+			massDep = relativisticBreitWigner::Create();
 		}
 	}
 	return massDep;

@@ -154,15 +154,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<flatMassDependence> flatMassDependencePtr;
 
 
-	inline
-	flatMassDependencePtr
-	createFlatMassDependence()
-	{
-		flatMassDependencePtr massDep(new flatMassDependence());
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief trivial flat mass dependence over a range
 	class binnedMassDependence : public massDependenceImpl<binnedMassDependence> {
@@ -191,15 +182,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<binnedMassDependence> binnedMassDependencePtr;
 
 
-	inline
-	binnedMassDependencePtr
-	createbinnedMassDependence(double mMin, double mMax)
-	{
-		binnedMassDependencePtr massDep(new binnedMassDependence(mMin, mMax));
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
 	class relativisticBreitWigner : public massDependenceImpl<relativisticBreitWigner> {
@@ -221,15 +203,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<relativisticBreitWigner> relativisticBreitWignerPtr;
 
 
-	inline
-	relativisticBreitWignerPtr
-	createRelativisticBreitWigner()
-	{
-		relativisticBreitWignerPtr massDep(new relativisticBreitWigner());
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic constant-width s-wave Breit-Wigner
 	class constWidthBreitWigner : public massDependenceImpl<constWidthBreitWigner> {
@@ -247,15 +220,6 @@ namespace rpwa {
 
 
 	typedef boost::shared_ptr<constWidthBreitWigner> constWidthBreitWignerPtr;
-
-
-	inline
-	constWidthBreitWignerPtr
-	createConstWidthBreitWigner()
-	{
-		constWidthBreitWignerPtr massDep(new constWidthBreitWigner());
-		return massDep;
-	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -282,15 +246,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<rhoBreitWigner> rhoBreitWignerPtr;
 
 
-	inline
-	rhoBreitWignerPtr
-	createRhoBreitWigner()
-	{
-		rhoBreitWignerPtr massDep(new rhoBreitWigner());
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief Breit-Wigner for f_0(980) -> pi pi
 	/// this is used in piPiSWaveAuMorganPenningtonVes for subtraction of f_0(980)
@@ -310,15 +265,6 @@ namespace rpwa {
 
 
 	typedef boost::shared_ptr<f0980BreitWigner> f0980BreitWignerPtr;
-
-
-	inline
-	f0980BreitWignerPtr
-	createF0980BreitWigner()
-	{
-		f0980BreitWignerPtr massDep(new f0980BreitWigner());
-		return massDep;
-	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -343,15 +289,6 @@ namespace rpwa {
 
 
 	typedef boost::shared_ptr<f0980Flatte> f0980FlattePtr;
-
-
-	inline
-	f0980FlattePtr
-	createF0980Flatte()
-	{
-		f0980FlattePtr massDep(new f0980Flatte());
-		return massDep;
-	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -408,15 +345,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonM> piPiSWaveAuMorganPenningtonMPtr;
 
 
-	inline
-	piPiSWaveAuMorganPenningtonMPtr
-	createPiPiSWaveAuMorganPenningtonM()
-	{
-		piPiSWaveAuMorganPenningtonMPtr massDep(new piPiSWaveAuMorganPenningtonM());
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief old VES pi pi s-wave parameterization
 	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
@@ -436,15 +364,6 @@ namespace rpwa {
 
 
 	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonVes> piPiSWaveAuMorganPenningtonVesPtr;
-
-
-	inline
-	piPiSWaveAuMorganPenningtonVesPtr
-	createPiPiSWaveAuMorganPenningtonVes()
-	{
-		piPiSWaveAuMorganPenningtonVesPtr massDep(new piPiSWaveAuMorganPenningtonVes());
-		return massDep;
-	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -476,15 +395,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonKachaev> piPiSWaveAuMorganPenningtonKachaevPtr;
 
 
-	inline
-	piPiSWaveAuMorganPenningtonKachaevPtr
-	createPiPiSWaveAuMorganPenningtonKachaev()
-	{
-		piPiSWaveAuMorganPenningtonKachaevPtr massDep(new piPiSWaveAuMorganPenningtonKachaev());
-		return massDep;
-	}
-
-
 	//////////////////////////////////////////////////////////////////////////////
 	/// combined amplitude for rho(1450)/rho(1700)
 	/// [A. Donnachie et al, Z. Phys. C 33 (1987) 407] http://dx.doi.org/10.1007/BF01552547, sec. 4
@@ -503,15 +413,6 @@ namespace rpwa {
 
 
 	typedef boost::shared_ptr<rhoPrimeMassDep> rhoPrimeMassDepPtr;
-
-
-	inline
-	rhoPrimeMassDepPtr
-	createRhoPrimeMassDep()
-	{
-		rhoPrimeMassDepPtr massDep(new rhoPrimeMassDep());
-		return massDep;
-	}
 
 
 }  // namespace rpwa

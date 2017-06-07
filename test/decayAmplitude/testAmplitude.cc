@@ -152,7 +152,7 @@ main()
 		particlePtr              target   = createParticle("p+");
 		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
 		// define vertices
-		massDependencePtr    massDep = createRelativisticBreitWigner();
+		massDependencePtr    massDep = relativisticBreitWigner::Create();
 		isobarDecayVertexPtr vert0   = createIsobarDecayVertex(X,     pi4, f1,    2, 2);
 		isobarDecayVertexPtr vert1   = createIsobarDecayVertex(f1,    pi2, a1,    2, 2, massDep);
 		isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);

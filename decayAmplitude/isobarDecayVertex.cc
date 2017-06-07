@@ -75,7 +75,7 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
 	interactionVertex::addOutParticle(daughter1);
 	interactionVertex::addOutParticle(daughter2);
 	if (not _massDep) {
-		_massDep = createFlatMassDependence();
+		_massDep = flatMassDependence::Create();
 		if (_debug)
 			printWarn << "null pointer to mass dependence. setting " << *_massDep << endl;
 	}
