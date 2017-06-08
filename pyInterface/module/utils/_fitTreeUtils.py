@@ -37,42 +37,54 @@ def getFitResultFromFile(fitResultFileName,
 	return result
 
 
+def getFitResultsFromFiles(fitResultFileNames,
+                           fitResultTreeName = "pwa",
+                           fitResultBranchName = "fitResult_v2",
+                           stripMatricesFromFurtherAttempts = False,
+                           onlyConvergedResults = False
+                          ):
+	'''
+	Loads all fit results from the fit-result file, grouped by their multibin.
+	@param stripMatricesFromFurtherAttempts: if True, the integral and covariance matrices are striped
+	                                         from each fit result except the best one and the best converged one in each multibin
+	@param onlyConvergedResults: if True, only the converged fit results are loaded and considered for the best fit result
+
+	@return: { <multiBin>: [ <fit-result> ] }
+	         [ <fit-result> ] is ordered by logLikelihood from biggest to smallest
+	'''
+
+	return pyRootPwa.core.getFitResultsFromFilesInMultibins(fitResultFileNames, fitResultTreeName, fitResultBranchName,
+	                                                        False, stripMatricesFromFurtherAttempts, onlyConvergedResults)
+
+
+def getFitResultsFromFile(fitResultFileName,
+                          fitResultTreeName = "pwa",
+                          fitResultBranchName = "fitResult_v2",
+                          stripMatricesFromFurtherAttempts = False,
+                          onlyConvergedResults = False
+                         ):
+	'''
+	Loads all fit results from the fit-result file, grouped by their multibin.
+	@param stripMatricesFromFurtherAttempts: if True, the integral and covariance matrices are striped
+	                                         from each fit result except the best one and the best converged one in each multibin
+	@param onlyConvergedResults: if True, only the converged fit results are loaded and considered for the best fit result
+	@return: { <multiBin>: [ <fit-result> ] }
+	         [ <fit-result> ] is ordered by logLikelihood from biggest to smallest
+	'''
+
+	return getFitResultsFromFiles([fitResultFileName], fitResultTreeName, fitResultBranchName, stripMatricesFromFurtherAttempts, onlyConvergedResults)
+
+
 def getBestFitResultsFromFile(fitResultFileName,
                               fitResultTreeName = "pwa",
                               fitResultBranchName = "fitResult_v2"
                              ):
-	fitResultFile = ROOT.TFile.Open(fitResultFileName, "READ")
-	if not fitResultFile:
-		printErr("Could not open generated fit result file '" + fitResultFileName + "'.")
-		return None
 
-	fitResultTree = fitResultFile.Get(fitResultTreeName)
-	if not fitResultTree:
-		printErr("could not find fit result tree '" + fitResultTreeName +
-		                         "' in file '" + fitResultFileName + "'. Aborting...")
-		return None
-
-	result = pyRootPwa.core.fitResult()
-	result.setBranchAddress(fitResultTree, fitResultBranchName)
-
-	bestResults = { }
-
-	for i in xrange(fitResultTree.GetEntries()):
-		fitResultTree.GetEntry(i)
-
-		# skip fit results that did no converge
-		if not result.converged():
-			continue
-
-		if not result.massBinCenter() in bestResults:
-			bestResults[result.massBinCenter()] = pyRootPwa.core.fitResult(result)
-		else:
-			if result.logLikelihood() < bestResults[result.massBinCenter()].logLikelihood():
-				bestResults[result.massBinCenter()] = pyRootPwa.core.fitResult(result)
-
-	fitResultFile.Close()
-
-	return bestResults
+	bestResultsInMultibin = pyRootPwa.core.getFitResultsFromFilesInMultibins([fitResultFileName], fitResultTreeName, fitResultBranchName, True, False, True)
+	multiBins = set([ b.getSubMultiBin(exclude="mass") for b in bestResultsInMultibin.keys()])
+	if len(multiBins) != 1:
+		printWarn("Fit result file '{0}' contains more than one bin in a variable other than mass: {1}".format(fitResultFileName, list(multiBins)))
+	return {b.getBinCenters()["mass"]: results[0] for b,results in bestResultsInMultibin.iteritems()}
 
 
 def getBestFitResultFromFile(fitResultFileName,

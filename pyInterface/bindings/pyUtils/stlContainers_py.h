@@ -108,6 +108,10 @@ namespace rpwa {
 
 		rpwa::multibinBoundariesType convertMultibinBoundariesFromPy(const boost::python::dict& pyMultibinBoundaries);
 		boost::python::dict convertMultibinBoundariesToPy(const rpwa::multibinBoundariesType& multibinBoundaries);
+		/**
+		 * @return a Python Multibin object with the multibinBoundaries as boundaries
+		 */
+		boost::python::object convertMultibinBoundariesToPyMultibin(const rpwa::multibinBoundariesType& multibinBoundaries);
 	}
 }
 

@@ -1,6 +1,9 @@
 #include "fitResult_py.h"
 
 #include <boost/python.hpp>
+#include <vector>
+#include <list>
+#include <map>
 
 #include <TTree.h>
 
@@ -320,6 +323,41 @@ namespace {
 		return self.Write(name);
 	}
 
+
+	bp::dict
+	fitResult_getFitResultsFromFilesInMutibins(bp::list& fileNamesPy, const std::string& treeName,
+	                                           const std::string& branchName,
+	                                           const bool onlyBestInMultibin, const bool stripMatricesFromFurtherAttempts,
+	                                           const bool onlyConvergedResults) {
+		bp::dict pyFitResultsInMultibins;
+		std::vector<std::string> fileNames;
+		if( rpwa::py::convertBPObjectToVector(fileNamesPy, fileNames)){
+
+			std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult> > fitResultsInMultibins =
+					rpwa::getFitResultsFromFilesInMultibins(fileNames,
+															treeName,
+															branchName,
+															onlyBestInMultibin,
+															stripMatricesFromFurtherAttempts,
+															onlyConvergedResults);
+
+
+			for (auto& elem : fitResultsInMultibins) {
+				const rpwa::multibinBoundariesType& multibinBoundaries = elem.first;
+				std::list<rpwa::fitResult>& results = elem.second;
+				bp::list pyResults;
+				while(not results.empty()){
+					pyResults.append(results.front());
+					results.pop_front();
+				}
+
+				bp::object pyMultiBin = rpwa::py::convertMultibinBoundariesToPyMultibin(multibinBoundaries);
+				pyFitResultsInMultibins[pyMultiBin] = pyResults;
+			}
+		}
+		return pyFitResultsInMultibins;
+	}
+
 }
 
 void rpwa::py::exportFitResult() {
@@ -428,8 +466,11 @@ void rpwa::py::exportFitResult() {
 			   bp::arg("name"),
 			   bp::arg("bufsize")=32000,
 			   bp::arg("splitlevel")=99)
-		);
+		)
+		;
 
 	bp::register_ptr_to_python<rpwa::fitResultPtr>();
+
+	bp::def("getFitResultsFromFilesInMultibins", &fitResult_getFitResultsFromFilesInMutibins);
 
 }

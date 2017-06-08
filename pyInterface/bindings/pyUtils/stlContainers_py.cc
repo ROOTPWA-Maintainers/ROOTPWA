@@ -102,3 +102,12 @@ rpwa::py::convertMultibinBoundariesToPy(const rpwa::multibinBoundariesType& mult
 	}
 	return pyMultibinBoundaries;
 }
+
+boost::python::object
+rpwa::py::convertMultibinBoundariesToPyMultibin(const rpwa::multibinBoundariesType& multibinBoundaries) {
+			static bp::object mod = bp::import("pyRootPwa.utils");
+
+			const bp::dict pyMultibinBoundaries = rpwa::py::convertMultibinBoundariesToPy(multibinBoundaries);
+
+			return mod.attr("multiBin")(pyMultibinBoundaries);
+}
