@@ -47,30 +47,38 @@ namespace rpwa {
 
 		public:
 
-			baseData(const std::vector<size_t>& nrMassBins,
-			         const boost::multi_array<double, 2>& massBinCenters,
+			baseData(const std::vector<size_t>& nrWaves,
 			         const boost::multi_array<std::string, 2>& waveNames,
+			         const std::vector<size_t>& nrMassBins,
+			         const boost::multi_array<double, 2>& massBinCenters,
 			         const boost::multi_array<double, 3>& phaseSpaceIntegrals);
 			~baseData() {}
 
-			size_t nrBins() const { return _nrMassBins.size(); }
-			size_t maxMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
-			size_t nrWaves() const { return *(_waveNames.shape()+1); }
+			size_t nrBins() const { return _nrWaves.size(); }
 
-			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
-			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
-			bool hasSameMassBinning() const;
+			const std::vector<size_t>& nrWaves() const { return _nrWaves; }
+			size_t nrWaves(const size_t idxBin) const { return _nrWaves[idxBin]; }
+			size_t maxNrWaves() const { return *(std::max_element(_nrWaves.begin(), _nrWaves.end())); }
 
 			const boost::multi_array<std::string, 2>& waveNames() const { return _waveNames; }
+
+			const std::vector<size_t>& nrMassBins() const { return _nrMassBins; }
+			size_t nrMassBins(const size_t idxBin) const { return _nrMassBins[idxBin]; }
+			size_t maxNrMassBins() const { return *(std::max_element(_nrMassBins.begin(), _nrMassBins.end())); }
+
+			const boost::multi_array<double, 2>& massBinCenters() const { return _massBinCenters; }
+
+			bool binsHaveEqualStructure() const;
 
 			const boost::multi_array<double, 3>& phaseSpaceIntegrals() const { return _phaseSpaceIntegrals; }
 
 		private:
 
+			std::vector<size_t> _nrWaves;
+			boost::multi_array<std::string, 2> _waveNames;
+
 			std::vector<size_t> _nrMassBins;
 			boost::multi_array<double, 2> _massBinCenters;
-
-			boost::multi_array<std::string, 2> _waveNames;
 
 			// data used in components
 
@@ -82,9 +90,10 @@ namespace rpwa {
 
 		public:
 
-			data(const std::vector<size_t>& nrMassBins,
-			     const boost::multi_array<double, 2>& massBinCenters,
+			data(const std::vector<size_t>& nrWaves,
 			     const boost::multi_array<std::string, 2>& waveNames,
+			     const std::vector<size_t>& nrMassBins,
+			     const boost::multi_array<double, 2>& massBinCenters,
 			     const boost::multi_array<std::pair<size_t, size_t>, 3>& wavePairMassBinLimits,
 			     const boost::multi_array<double, 3>& phaseSpaceIntegrals,
 			     const boost::multi_array<std::complex<double>, 3>& productionAmplitudes,
