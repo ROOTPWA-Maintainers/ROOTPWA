@@ -46,8 +46,8 @@ rpwa::resonanceFit::function::function(const rpwa::resonanceFit::dataConstPtr& f
 	: _fitData(fitData),
 	  _fitModel(fitModel),
 	  _nrBins(fitData->nrBins()),
-	  _maxMassBins(_fitData->maxMassBins()),
-	  _nrWaves(_fitData->nrWaves()),
+	  _maxNrWaves(_fitData->maxNrWaves()),
+	  _maxNrMassBins(_fitData->maxNrMassBins()),
 	  _useProductionAmplitudes(useProductionAmplitudes),
 	  _useCovariance(_fitData->useCovariance())
 {
@@ -59,9 +59,9 @@ rpwa::resonanceFit::function::function(const rpwa::resonanceFit::dataConstPtr& f
 	_idxMassMax.resize(_nrBins);
 	_idxMassMin.resize(_nrBins);
 	for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-		_idxMassMin[idxBin] = _maxMassBins;
+		_idxMassMin[idxBin] = _maxNrMassBins;
 		_idxMassMax[idxBin] = 0;
-		for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+		for(size_t idxWave = 0; idxWave < _fitData->nrWaves(idxBin); ++idxWave) {
 			_idxMassMin[idxBin] = std::min(_idxMassMin[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first);
 			_idxMassMax[idxBin] = std::max(_idxMassMax[idxBin], _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second);
 		}
@@ -107,9 +107,9 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 		// * for the anchor wave it might be real
 		// * remember (Re,Im) => factor 2
 		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
+			for(size_t idxWave = 0; idxWave < _fitData->nrWaves(idxBin); ++idxWave) {
 				nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
-				if(idxWave != _fitModel->getAnchorWave()) {
+				if(idxWave != _fitModel->anchorWaveIndex(idxBin)) {
 					nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first + 1;
 				}
 			}
@@ -122,8 +122,8 @@ rpwa::resonanceFit::function::getNrDataPoints() const
 		// * diagonal elements are only checked once, off-diagonal elements with
 		//   the two different combinations (i,j) and (j,i)
 		for(size_t idxBin = 0; idxBin < _nrBins; ++idxBin) {
-			for(size_t idxWave = 0; idxWave < _nrWaves; ++idxWave) {
-				for(size_t jdxWave = 0; jdxWave < _nrWaves; ++jdxWave) {
+			for(size_t idxWave = 0; idxWave < _fitData->nrWaves(idxBin); ++idxWave) {
+				for(size_t jdxWave = 0; jdxWave < _fitData->nrWaves(idxBin); ++jdxWave) {
 					nrPts += _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].second - _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].first + 1;
 				}
 			}
@@ -151,11 +151,11 @@ rpwa::resonanceFit::function::chiSquare(const double* par) const
 	                                                          _fitModel->getMaxChannelsInComponent(),
 	                                                          _fitModel->getMaxParametersInComponent(),
 	                                                          _nrBins);
-	thread_local rpwa::resonanceFit::cache cache(_nrWaves,
+	thread_local rpwa::resonanceFit::cache cache(_maxNrWaves,
 	                                             _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
 	                                             _fitModel->getMaxChannelsInComponent(),
 	                                             _nrBins,
-	                                             _maxMassBins);
+	                                             _maxNrMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_fitModel->importParameters(par, fitParameters, cache);
@@ -212,11 +212,11 @@ rpwa::resonanceFit::function::logPriorLikelihood(const double* par) const
 	                                             _fitModel->getMaxChannelsInComponent(),
 	                                             _fitModel->getMaxParametersInComponent(),
 	                                             _nrBins);
-	rpwa::resonanceFit::cache cache(_nrWaves,
+	rpwa::resonanceFit::cache cache(_maxNrWaves,
 	                                _fitModel->getNrComponents()+1,          // nr components + final-state mass-dependence
 	                                _fitModel->getMaxChannelsInComponent(),
 	                                _nrBins,
-	                                _maxMassBins);
+	                                _maxNrMassBins);
 
 	// import parameters (couplings, branchings, resonance parameters, ...)
 	_fitModel->importParameters(par, fitParameters, cache);
@@ -265,13 +265,13 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 			const double mass = _fitData->massBinCenters()[idxBin][idxMass];
 
 			// phase of fit in anchor wave
-			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _fitModel->getAnchorWave(), idxBin, mass, idxMass);
+			const std::complex<double> anchorFit = _fitModel->productionAmplitude(fitParameters, cache, _fitModel->anchorWaveIndex(idxBin), idxBin, mass, idxMass);
 			const std::complex<double> anchorFitPhase = anchorFit / abs(anchorFit);
 
-			TVectorT<double> prodAmpDiffVect(2*_nrWaves);
+			TVectorT<double> prodAmpDiffVect(2*_fitData->nrWaves(idxBin));
 
 			// sum over the contributions to chi2
-			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t idxWave = 0; idxWave < _fitData->nrWaves(idxBin); ++idxWave) {
 				// check that this mass bin should be taken into account for this
 				// combination of waves
 				if(idxMass < _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].first or idxMass > _fitData->wavePairMassBinLimits()[idxBin][idxWave][idxWave].second) {
@@ -285,7 +285,7 @@ rpwa::resonanceFit::function::chiSquareProductionAmplitudes(const rpwa::resonanc
 
 				const Int_t row = 2*idxWave;
 				prodAmpDiffVect(row) = prodAmpDiff.real();
-				if(idxWave != _fitModel->getAnchorWave()) {
+				if(idxWave != _fitModel->anchorWaveIndex(idxBin)) {
 					prodAmpDiffVect(row+1) = prodAmpDiff.imag();
 				}
 			} // end loop over idxWave
@@ -311,8 +311,8 @@ rpwa::resonanceFit::function::chiSquareSpinDensityMatrix(const rpwa::resonanceFi
 			const double mass = _fitData->massBinCenters()[idxBin][idxMass];
 
 			// sum over the contributions to chi2 -> rho_ij
-			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-				for(size_t jdxWave=idxWave; jdxWave<_nrWaves; ++jdxWave) {
+			for(size_t idxWave = 0; idxWave < _fitData->nrWaves(idxBin); ++idxWave) {
+				for(size_t jdxWave = idxWave; jdxWave < _fitData->nrWaves(idxBin); ++jdxWave) {
 					// check that this mass bin should be taken into account for this
 					// combination of waves
 					if(idxMass < _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].first or idxMass > _fitData->wavePairMassBinLimits()[idxBin][idxWave][jdxWave].second) {

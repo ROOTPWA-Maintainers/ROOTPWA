@@ -162,137 +162,43 @@ rpwa::resonanceFit::readFreeParameters(const YAML::Node& configRoot)
 namespace {
 
 
-	std::vector<rpwa::resonanceFit::input::bin>
-	readInputFitResults(const YAML::Node& configInput)
-	{
-		if(rpwa::resonanceFit::debug()) {
-			printDebug << "reading 'fitresults'." << std::endl;
-		}
-
-		const YAML::Node& configInputFitResults = configInput["fitresults"];
-
-		if(not configInputFitResults) {
-			printErr << "'fitresults' does not exist in 'input'." << std::endl;
-			throw;
-		}
-		if(not configInputFitResults.IsSequence()) {
-			printErr << "'fitresults' is not a YAML sequence." << std::endl;
-			throw;
-		}
-
-		std::vector<rpwa::resonanceFit::input::bin> bins;
-
-		const size_t nrFitResults = configInputFitResults.size();
-		for(size_t idxFitResult = 0; idxFitResult < nrFitResults; ++idxFitResult) {
-			if(rpwa::resonanceFit::debug()) {
-				printDebug << "reading of entry " << idxFitResult << " in 'fitresults'." << std::endl;
-			}
-
-			const YAML::Node& configInputFitResult = configInputFitResults[idxFitResult];
-
-			std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
-			boost::assign::insert(mandatoryArguments)
-			                     ("name", rpwa::YamlCppUtils::TypeString)
-			                     ("tPrimeMean", rpwa::YamlCppUtils::TypeFloat);
-			if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
-				printErr << "'fitresults' entry at index " << idxFitResult << " does not contain all required variables." << std::endl;
-				throw;
-			}
-
-			const std::string fileName = configInputFitResult["name"].as<std::string>();
-			const double tPrimeMean = configInputFitResult["tPrimeMean"].as<double>();
-
-			double rescaleErrors = 1.0;
-			if(configInputFitResult["rescaleErrors"]) {
-				if(checkVariableType(configInputFitResult["rescaleErrors"], rpwa::YamlCppUtils::TypeFloat)) {
-					rescaleErrors = configInputFitResult["rescaleErrors"].as<double>();
-				} else {
-					printErr << "variable 'rescaleErrors' of 'fitresults' entry at index " << idxFitResult << " is not a floating point number." << std::endl;
-					throw;
-				}
-			}
-
-			if(rpwa::resonanceFit::debug()) {
-				printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << std::endl;
-				printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
-				printDebug << "rescale errors by factor: '" << rescaleErrors << "'." << std::endl;
-			}
-
-			std::vector<std::string> sysFileNames;
-			// get information for plotting of systematic error
-			const YAML::Node& configInputFitResultSystematics = configInputFitResult["systematics"];
-			if(configInputFitResultSystematics) {
-				if(not configInputFitResultSystematics.IsSequence()) {
-					printErr << "'systematics' is not a YAML sequence." << std::endl;
-					throw;
-				}
-
-				const size_t nrSystematics = configInputFitResultSystematics.size();
-				if(rpwa::resonanceFit::debug()) {
-					printDebug << "going to read information for " << nrSystematics << " files containing information for systematic errors." << std::endl;
-				}
-
-				for(size_t idxSystematics = 0; idxSystematics < nrSystematics; ++idxSystematics) {
-					if(not checkVariableType(configInputFitResultSystematics[idxSystematics], rpwa::YamlCppUtils::TypeString)) {
-						printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
-						throw;
-					}
-
-					sysFileNames.push_back(configInputFitResultSystematics[idxSystematics].as<std::string>());
-				}
-			}
-
-			bins.push_back(rpwa::resonanceFit::input::bin(fileName,
-			                                              tPrimeMean,
-			                                              rescaleErrors,
-			                                              sysFileNames));
-
-			if(rpwa::resonanceFit::debug()) {
-				printDebug << bins.back() << std::endl;
-			}
-		}
-
-		return bins;
-	}
-
-
-	std::vector<rpwa::resonanceFit::input::wave>
-	readInputWaves(const YAML::Node& configInput)
+	std::vector<rpwa::resonanceFit::input::bin::wave>
+	readInputBinWaves(const YAML::Node& configInputBin)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "reading 'waves'." << std::endl;
 		}
 
-		const YAML::Node& configInputWaves = configInput["waves"];
+		const YAML::Node& configWaves = configInputBin["waves"];
 
-		if(not configInputWaves) {
-			printErr << "'waves' does not exist in 'input'." << std::endl;
+		if(not configWaves) {
+			printErr << "'waves' does not exist in one entry of 'input'." << std::endl;
 			throw;
 		}
-		if(not configInputWaves.IsSequence()) {
+		if(not configWaves.IsSequence()) {
 			printErr << "'waves' is not a YAML sequence." << std::endl;
 			throw;
 		}
 
-		std::vector<rpwa::resonanceFit::input::wave> waves;
+		std::vector<rpwa::resonanceFit::input::bin::wave> waves;
 
-		const size_t nrWaves = configInputWaves.size();
+		const size_t nrWaves = configWaves.size();
 		for(size_t idxWave = 0; idxWave < nrWaves; ++idxWave) {
 			if(rpwa::resonanceFit::debug()) {
 				printDebug << "reading of entry " << idxWave << " in 'waves'." << std::endl;
 			}
 
-			const YAML::Node& configInputWave = configInputWaves[idxWave];
+			const YAML::Node& configWave = configWaves[idxWave];
 
 			std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
 			boost::assign::insert(mandatoryArguments)
 			                     ("name", rpwa::YamlCppUtils::TypeString);
-			if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
+			if(not checkIfAllVariablesAreThere(configWave, mandatoryArguments)) {
 				printErr << "'waves' entry at index " << idxWave << " does not contain all required variables." << std::endl;
 				throw;
 			}
 
-			const std::string waveName = configInputWave["name"].as<std::string>();
+			const std::string waveName = configWave["name"].as<std::string>();
 
 			// check that wave does not yet exist
 			for(size_t idxCheckWave = 0; idxCheckWave < waves.size(); ++idxCheckWave) {
@@ -300,25 +206,21 @@ namespace {
 					printErr << "wave '" << waveName << "' defined twice." << std::endl;
 					throw;
 				}
-				if(std::find(waves[idxCheckWave].waveNameAlternatives().begin(), waves[idxCheckWave].waveNameAlternatives().end(), waveName) != waves[idxCheckWave].waveNameAlternatives().end()) {
-					printErr << "wave '" << waveName << "' already defined as alternative name of wave '" << waves[idxCheckWave].waveName() << "'." << std::endl;
-					throw;
-				}
 			}
 
 			double massLower = -1.;
-			if(configInputWave["massLower"]) {
-				if(checkVariableType(configInputWave["massLower"], rpwa::YamlCppUtils::TypeFloat)) {
-					massLower = configInputWave["massLower"].as<double>();
+			if(configWave["massLower"]) {
+				if(checkVariableType(configWave["massLower"], rpwa::YamlCppUtils::TypeFloat)) {
+					massLower = configWave["massLower"].as<double>();
 				} else {
 					printErr << "variable 'massLower' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
 					throw;
 				}
 			}
 			double massUpper = -1.;
-			if(configInputWave["massUpper"]) {
-				if(checkVariableType(configInputWave["massUpper"], rpwa::YamlCppUtils::TypeFloat)) {
-					massUpper = configInputWave["massUpper"].as<double>();
+			if(configWave["massUpper"]) {
+				if(checkVariableType(configWave["massUpper"], rpwa::YamlCppUtils::TypeFloat)) {
+					massUpper = configWave["massUpper"].as<double>();
 				} else {
 					printErr << "variable 'massUpper' of 'waves' entry at index " << idxWave << " is not a floating point number." << std::endl;
 					throw;
@@ -330,47 +232,8 @@ namespace {
 				printDebug << "read mass range: '" << massLower << "' to '" << massUpper << "'." << std::endl;
 			}
 
-			std::vector<std::string> waveNameAlternatives;
-			if(configInputWave["alternativeNames"]) {
-				if(checkVariableType(configInputWave["alternativeNames"], rpwa::YamlCppUtils::TypeSequence)) {
-					for(size_t idxAlt = 0; idxAlt < configInputWave["alternativeNames"].size(); ++idxAlt) {
-						if(not checkVariableType(configInputWave["alternativeNames"][idxAlt], rpwa::YamlCppUtils::TypeString)) {
-							printErr << "element " << idxAlt << " of variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a string." << std::endl;
-							throw;
-						}
-						const std::string waveNameAlternative = configInputWave["alternativeNames"][idxAlt].as<std::string>();
-
-						// check that the alternative name does not yet exist
-						if(waveNameAlternative == waveName) {
-							printErr << "alternative name '" << waveNameAlternative << "' is equal to name of wave '" << waveName << "'." << std::endl;
-							throw;
-						}
-						if(std::find(waveNameAlternatives.begin(), waveNameAlternatives.end(), waveNameAlternative) != waveNameAlternatives.end()) {
-							printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' defined twice." << std::endl;
-							throw;
-						}
-						for(size_t idxCheckWave = 0; idxCheckWave < waves.size(); ++idxCheckWave) {
-							if(waves[idxCheckWave].waveName() == waveNameAlternative) {
-								printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' already defined as separate wave." << std::endl;
-								throw;
-							}
-							if(std::find(waves[idxCheckWave].waveNameAlternatives().begin(), waves[idxCheckWave].waveNameAlternatives().end(), waveNameAlternative) != waves[idxCheckWave].waveNameAlternatives().end()) {
-								printErr << "alternative name '" << waveNameAlternative << "' of wave '" << waveName << "' already defined as alternative name of wave '" << waves[idxCheckWave].waveName() << "'." << std::endl;
-								throw;
-							}
-						}
-
-						waveNameAlternatives.push_back(waveNameAlternative);
-					}
-				} else {
-					printErr << "variable 'alternativeNames' of 'waves' entry at index " << idxWave << " is not a sequence." << std::endl;
-					throw;
-				}
-			}
-
-			waves.push_back(rpwa::resonanceFit::input::wave(waveName,
-			                                                std::make_pair(massLower, massUpper),
-			                                                waveNameAlternatives));
+			waves.push_back(rpwa::resonanceFit::input::bin::wave(waveName,
+			                                                     std::make_pair(massLower, massUpper)));
 
 			if(rpwa::resonanceFit::debug()) {
 				printDebug << waves.back() << std::endl;
@@ -397,11 +260,87 @@ rpwa::resonanceFit::readInput(const YAML::Node& configRoot)
 		printErr << "'input' does not exist in configuration file." << std::endl;
 		throw;
 	}
+	if(not configInput.IsSequence()) {
+		printErr << "'input' is not a YAML sequence." << std::endl;
+		throw;
+	}
 
-	const std::vector<rpwa::resonanceFit::input::bin> bins = readInputFitResults(configInput);
-	const std::vector<rpwa::resonanceFit::input::wave> waves = readInputWaves(configInput);
+	std::vector<rpwa::resonanceFit::input::bin> bins;
 
-	return std::make_shared<rpwa::resonanceFit::input>(bins, waves);
+	const size_t nrInputs = configInput.size();
+	for(size_t idxInput = 0; idxInput < nrInputs; ++idxInput) {
+		if(rpwa::resonanceFit::debug()) {
+			printDebug << "reading of entry " << idxInput << " in 'input'." << std::endl;
+		}
+
+		const YAML::Node& configInputBin = configInput[idxInput];
+
+		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("name", rpwa::YamlCppUtils::TypeString)
+		                     ("waves", rpwa::YamlCppUtils::TypeSequence)
+		                     ("tPrimeMean", rpwa::YamlCppUtils::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configInputBin, mandatoryArguments)) {
+			printErr << "'input' entry at index " << idxInput << " does not contain all required variables." << std::endl;
+			throw;
+		}
+
+		const std::string fileName = configInputBin["name"].as<std::string>();
+		const std::vector<rpwa::resonanceFit::input::bin::wave> waves = readInputBinWaves(configInputBin);
+		const double tPrimeMean = configInputBin["tPrimeMean"].as<double>();
+
+		double rescaleErrors = 1.0;
+		if(configInputBin["rescaleErrors"]) {
+			if(checkVariableType(configInputBin["rescaleErrors"], rpwa::YamlCppUtils::TypeFloat)) {
+				rescaleErrors = configInputBin["rescaleErrors"].as<double>();
+			} else {
+				printErr << "variable 'rescaleErrors' of 'input' entry at index " << idxInput << " is not a floating point number." << std::endl;
+				throw;
+			}
+		}
+
+		if(rpwa::resonanceFit::debug()) {
+			printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << std::endl;
+			printDebug << "read mean t' value: '" << tPrimeMean << "'." << std::endl;
+			printDebug << "rescale errors by factor: '" << rescaleErrors << "'." << std::endl;
+		}
+
+		std::vector<std::string> sysFileNames;
+		// get information for plotting of systematic error
+		const YAML::Node& configInputBinSystematics = configInputBin["systematics"];
+		if(configInputBinSystematics) {
+			if(not configInputBinSystematics.IsSequence()) {
+				printErr << "'systematics' is not a YAML sequence." << std::endl;
+				throw;
+			}
+
+			const size_t nrSystematics = configInputBinSystematics.size();
+			if(rpwa::resonanceFit::debug()) {
+				printDebug << "going to read information for " << nrSystematics << " files containing information for systematic errors." << std::endl;
+			}
+
+			for(size_t idxSystematics = 0; idxSystematics < nrSystematics; ++idxSystematics) {
+				if(not checkVariableType(configInputBinSystematics[idxSystematics], rpwa::YamlCppUtils::TypeString)) {
+					printErr << "'systematics' entry at index " << idxSystematics << " is not a string." << std::endl;
+					throw;
+				}
+
+				sysFileNames.push_back(configInputBinSystematics[idxSystematics].as<std::string>());
+			}
+		}
+
+		bins.push_back(rpwa::resonanceFit::input::bin(fileName,
+		                                              waves,
+		                                              tPrimeMean,
+		                                              rescaleErrors,
+		                                              sysFileNames));
+
+		if(rpwa::resonanceFit::debug()) {
+			printDebug << bins.back() << std::endl;
+		}
+	}
+
+	return std::make_shared<rpwa::resonanceFit::input>(bins);
 }
 
 
@@ -410,8 +349,8 @@ namespace {
 
 	void
 	readModelAnchors(const YAML::Node& configModel,
-	                 std::string& anchorWaveName,
-	                 std::string& anchorComponentName)
+	                 std::vector<std::string>& anchorWaveNames,
+	                 std::vector<std::string>& anchorComponentNames)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "reading 'anchorwave'." << std::endl;
@@ -422,22 +361,38 @@ namespace {
 			printErr << "'anchorwave' is not a valid YAML node." << std::endl;
 			throw;
 		}
-		if(not configAnchors.IsMap()) {
-			printErr << "'anchorwave' is not a YAML map." << std::endl;
+		if(not configAnchors.IsSequence()) {
+			printErr << "'anchorwave' is not a YAML sequence." << std::endl;
 			throw;
 		}
 
-		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", rpwa::YamlCppUtils::TypeString)
-		                     ("resonance", rpwa::YamlCppUtils::TypeString);
-		if(not checkIfAllVariablesAreThere(configAnchors, mandatoryArguments)) {
-			printErr << "'anchorwave' does not contain all required variables." << std::endl;
-			throw;
+		const size_t nrBins = configAnchors.size();
+		if(rpwa::resonanceFit::debug()) {
+			printDebug << "reading anchor waves and components for " << nrBins << " bins from configuration file." << std::endl;
 		}
 
-		anchorWaveName = configAnchors["name"].as<std::string>();
-		anchorComponentName = configAnchors["resonance"].as<std::string>();
+		anchorWaveNames.resize(nrBins);
+		anchorComponentNames.resize(nrBins);
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			const YAML::Node& configAnchor = configAnchors[idxBin];
+
+			if(configAnchor.size() != 2) {
+				printErr << "entry " << idxBin << " of 'anchorwave' needs to contain exactly two elements." << std::endl;
+				throw;
+			}
+			if(not checkVariableType(configAnchor[0], rpwa::YamlCppUtils::TypeString) or
+			   not checkVariableType(configAnchor[1], rpwa::YamlCppUtils::TypeString)) {
+				printErr << "elements of entry " << idxBin << " in 'anchorwave' must be 'string'." << std::endl;
+				throw;
+			}
+
+			anchorWaveNames[idxBin] = configAnchor[0].as<std::string>();
+			anchorComponentNames[idxBin] = configAnchor[1].as<std::string>();
+
+			if(rpwa::resonanceFit::debug()) {
+				printDebug << "read anchor wave '" << anchorWaveNames[idxBin] << "' in component '" << anchorComponentNames[idxBin] << " for entry " << idxBin << "." << std::endl;
+			}
+		}
 	}
 
 
@@ -700,20 +655,15 @@ namespace {
 			printDebug << "reading 'decaychannels'." << std::endl;
 		}
 
-		std::map<std::string, size_t> waveIndices;
-		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
-			const rpwa::resonanceFit::input::wave& wave = fitInput->getWave(idxWave);
-
-			waveIndices[wave.waveName()] = idxWave;
-			for(size_t idxAlt = 0; idxAlt < wave.waveNameAlternatives().size(); ++idxAlt) {
-				waveIndices[wave.waveNameAlternatives()[idxAlt]] = idxWave;
-			}
-		}
-
-		std::map<std::string, std::vector<size_t> > waveBins;
+		std::map<std::string, std::vector<size_t> > waveIndices;
 		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
-			for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
-				waveBins[fitData->waveNames()[idxBin][idxWave]].push_back(idxBin);
+			const rpwa::resonanceFit::input::bin& bin = fitInput->getBin(idxBin);
+			for(size_t idxWave = 0; idxWave < bin.nrWaves(); ++idxWave) {
+				if(waveIndices.count(bin.getWave(idxWave).waveName()) == 0) {
+					waveIndices.insert(std::make_pair(bin.getWave(idxWave).waveName(), std::vector<size_t>(fitInput->nrBins(), std::numeric_limits<size_t>::max())));
+				}
+
+				waveIndices[bin.getWave(idxWave).waveName()][idxBin] = idxWave;
 			}
 		}
 
@@ -750,30 +700,20 @@ namespace {
 				}
 			}
 
-			// get index of wave in array for wave names, phase-space integrals, ...
-			const std::map<std::string, size_t>::const_iterator it = waveIndices.find(waveName);
+			// get indices of wave in each bin
+			const std::map<std::string, std::vector<size_t> >::const_iterator it = waveIndices.find(waveName);
 			if(it == waveIndices.end()) {
 				printErr << "wave '" << waveName << "' not in fit, but used as decay channel in component '" << componentName << "'." << std::endl;
 				throw;
 			}
-			const size_t waveIdx = it->second;
-
-			// get list of bins this wave is defined in
-			const std::map<std::string, std::vector<size_t> >::const_iterator it2 = waveBins.find(waveName);
-			if(it2 == waveBins.end()) {
-				printErr << "wave '" << waveName << "' not in fit, but used as decay channel in component '" << componentName << "'." << std::endl;
-				throw;
-			}
-			const std::vector<size_t>& binsForWave = it2->second;
+			const std::vector<size_t>& waveIndices = it->second;
 
 			// get a view for the current wave for all bins and all mass bins
-			boost::multi_array<double, 3>::const_array_view<2>::type view = fitData->phaseSpaceIntegrals()[boost::indices[boost::multi_array<double, 3>::index_range()][boost::multi_array<double, 3>::index_range()][waveIdx]];
-			decayChannels.push_back(rpwa::resonanceFit::component::channel(waveIdx,
-			                                                               waveName,
-			                                                               binsForWave,
+			decayChannels.push_back(rpwa::resonanceFit::component::channel(waveName,
+			                                                               waveIndices,
 			                                                               fitData->nrMassBins(),
 			                                                               fitData->massBinCenters(),
-			                                                               view));
+			                                                               fitData->phaseSpaceIntegrals()));
 		}
 
 		return decayChannels;
@@ -1544,11 +1484,11 @@ rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
 		throw;
 	}
 
-	std::string anchorWaveName;
-	std::string anchorComponentName;
+	std::vector<std::string> anchorWaveNames;
+	std::vector<std::string> anchorComponentNames;
 	readModelAnchors(configModel,
-	                 anchorWaveName,
-	                 anchorComponentName);
+	                 anchorWaveNames,
+	                 anchorComponentNames);
 
 	const std::vector<rpwa::resonanceFit::componentPtr>& components = readModelComponents(configModel,
 	                                                                                      fitInput,
@@ -1567,6 +1507,6 @@ rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
 	return std::make_shared<rpwa::resonanceFit::model>(fitInput,
 	                                                   components,
 	                                                   fsmd,
-	                                                   anchorWaveName,
-	                                                   anchorComponentName);
+	                                                   anchorWaveNames,
+	                                                   anchorComponentNames);
 }

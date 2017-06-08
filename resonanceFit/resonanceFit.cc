@@ -53,7 +53,7 @@ namespace {
 	bool debug = false;
 
 
-	std::string
+	std::vector<std::string>
 	readAnchorWaveName(const YAML::Node& configRoot)
 	{
 		if(debug) {
@@ -75,20 +75,38 @@ namespace {
 			printErr << "'anchorwave' is not a valid YAML node." << std::endl;
 			throw;
 		}
-		if(not configAnchors.IsMap()) {
-			printErr << "'anchorwave' is not a YAML map." << std::endl;
+		if(not configAnchors.IsSequence()) {
+			printErr << "'anchorwave' is not a YAML sequence." << std::endl;
 			throw;
 		}
 
-		std::map<std::string, rpwa::YamlCppUtils::Type> mandatoryArguments;
-		boost::assign::insert(mandatoryArguments)
-		                     ("name", rpwa::YamlCppUtils::TypeString);
-		if(not checkIfAllVariablesAreThere(configAnchors, mandatoryArguments)) {
-			printErr << "'anchorwave' does not contain all required variables." << std::endl;
-			throw;
+		const size_t nrBins = configAnchors.size();
+		if(rpwa::resonanceFit::debug()) {
+			printDebug << "reading anchor waves and components for " << nrBins << " bins from configuration file." << std::endl;
 		}
 
-		return configAnchors["name"].as<std::string>();
+		std::vector<std::string> anchorWaveNames(nrBins);
+		for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+			const YAML::Node& configAnchor = configAnchors[idxBin];
+
+			if(configAnchor.size() != 2) {
+				printErr << "entry " << idxBin << " of 'anchorwave' needs to contain exactly two elements." << std::endl;
+				throw;
+			}
+			if(not checkVariableType(configAnchor[0], rpwa::YamlCppUtils::TypeString) or
+			   not checkVariableType(configAnchor[1], rpwa::YamlCppUtils::TypeString)) {
+				printErr << "elements of entry " << idxBin << " in 'anchorwave' must be 'string'." << std::endl;
+				throw;
+			}
+
+			anchorWaveNames[idxBin] = configAnchor[0].as<std::string>();
+
+			if(rpwa::resonanceFit::debug()) {
+				printDebug << "read anchor wave '" << anchorWaveNames[idxBin] << "' for entry " << idxBin << "." << std::endl;
+			}
+		}
+
+		return anchorWaveNames;
 	}
 
 
@@ -123,74 +141,17 @@ rpwa::resonanceFit::read(const YAML::Node& configRoot,
 		throw;
 	}
 
-	fitData = rpwa::resonanceFit::readData(fitInput,
-	                                       readAnchorWaveName(configRoot),
-	                                       useCovariance,
-	                                       valTreeName,
-	                                       valBranchName);
-
-	// set-up fit model (resonances, background, final-state mass-dependence)
-	fitModel = rpwa::resonanceFit::readModel(configRoot,
-	                                         fitInput,
-	                                         fitData,
-	                                         fitParameters,
-	                                         fitParametersError,
-	                                         useBranchings);
-}
-
-
-void
-rpwa::resonanceFit::read(const YAML::Node& configRoot,
-                         const boost::multi_array<std::string, 2>& waveNames,
-                         const double maxMassBinCenter,
-                         rpwa::resonanceFit::inputConstPtr& fitInput,
-                         rpwa::resonanceFit::modelConstPtr& fitModel,
-                         rpwa::resonanceFit::parameters& fitParameters,
-                         rpwa::resonanceFit::parameters& fitParametersError,
-                         std::map<std::string, double>& fitQuality,
-                         std::vector<std::string>& freeParameters,
-                         const bool useBranchings)
-{
-	// get information of fit quality if a previous fit was stored in the
-	// configuration file
-	fitQuality = rpwa::resonanceFit::readFitQuality(configRoot);
-
-	// get information for which parameters to release in which order
-	freeParameters = rpwa::resonanceFit::readFreeParameters(configRoot);
-
-	// get fit results and waves to use in the resonance fit
-	fitInput = rpwa::resonanceFit::readInput(configRoot);
-	if(not fitInput) {
-		printErr << "error while reading 'input' in configuration file." << std::endl;
+	const std::vector<std::string> anchorWaveNames = readAnchorWaveName(configRoot);
+	if(fitInput->nrBins() != anchorWaveNames.size()) {
+		printErr << "expected to find " << fitInput->nrBins() << " entries in 'anchorwave', found " << anchorWaveNames.size() << " instead." << std::endl;
 		throw;
 	}
 
-	checkSize(waveNames,
-	          fitInput->nrBins(), "number of bins is not correct for wave names.",
-	          fitInput->nrWaves(), "number of waves is not correct for wave names.");
-
-	// create a fake data object containing the information required to
-	// initialize the model, that is:
-	// - massBinCenters
-	// - phaseSpaceIntegrals
-	std::vector<size_t> nrMassBins(fitInput->nrBins());
-	boost::multi_array<double, 2> massBinCenters(boost::extents[fitInput->nrBins()][2]);
-	boost::multi_array<double, 3> phaseSpaceIntegrals(boost::extents[fitInput->nrBins()][2][fitInput->nrWaves()]);
-	for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
-		nrMassBins[idxBin] = 2;
-
-		massBinCenters[idxBin][0] = 0.0;
-		massBinCenters[idxBin][1] = maxMassBinCenter;
-
-		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
-			phaseSpaceIntegrals[idxBin][0][idxWave] = 0.0;
-			phaseSpaceIntegrals[idxBin][1][idxWave] = 1.0;
-		}
-	}
-	const rpwa::resonanceFit::baseDataConstPtr fitData(new baseData(nrMassBins,
-	                                                                massBinCenters,
-	                                                                waveNames,
-	                                                                phaseSpaceIntegrals));
+	fitData = rpwa::resonanceFit::readData(fitInput,
+	                                       anchorWaveNames,
+	                                       useCovariance,
+	                                       valTreeName,
+	                                       valBranchName);
 
 	// set-up fit model (resonances, background, final-state mass-dependence)
 	fitModel = rpwa::resonanceFit::readModel(configRoot,
@@ -234,30 +195,31 @@ rpwa::resonanceFit::read(const YAML::Node& configRoot,
 	//   alternative wave names are given
 	// - massBinCenters
 	// - phaseSpaceIntegrals
+	std::vector<size_t> nrWaves(fitInput->nrBins());
+	boost::multi_array<std::string, 2> waveNames(boost::extents[fitInput->nrBins()][std::max_element(fitInput->bins().begin(), fitInput->bins().end(), [](const rpwa::resonanceFit::input::bin& binMax, const rpwa::resonanceFit::input::bin& bin){ return binMax.nrWaves() < bin.nrWaves(); })->nrWaves()]);
 	std::vector<size_t> nrMassBins(fitInput->nrBins());
 	boost::multi_array<double, 2> massBinCenters(boost::extents[fitInput->nrBins()][2]);
-	boost::multi_array<std::string, 2> waveNames(boost::extents[fitInput->nrBins()][fitInput->nrWaves()]);
-	boost::multi_array<double, 3> phaseSpaceIntegrals(boost::extents[fitInput->nrBins()][2][fitInput->nrWaves()]);
+	boost::multi_array<double, 3> phaseSpaceIntegrals(boost::extents[fitInput->nrBins()][2][std::max_element(fitInput->bins().begin(), fitInput->bins().end(), [](const rpwa::resonanceFit::input::bin& binMax, const rpwa::resonanceFit::input::bin& bin){ return binMax.nrWaves() < bin.nrWaves(); })->nrWaves()]);
 	for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+		const rpwa::resonanceFit::input::bin& fitInputBin = fitInput->getBin(idxBin);
+
+		nrWaves[idxBin] = fitInputBin.nrWaves();
 		nrMassBins[idxBin] = 2;
 
 		massBinCenters[idxBin][0] = 0.0;
 		massBinCenters[idxBin][1] = maxMassBinCenter;
 
-		for(size_t idxWave = 0; idxWave < fitInput->nrWaves(); ++idxWave) {
-			if(fitInput->getWave(idxWave).waveNameAlternatives().size() != 0) {
-				printErr << "reading a configuration file without reading data or specifying the wave names in each bin does only work if no alternative wave names are used. Aborting..." << std::endl;
-				throw;
-			}
-			waveNames[idxBin][idxWave] = fitInput->getWave(idxWave).waveName();
+		for(size_t idxWave = 0; idxWave < fitInputBin.nrWaves(); ++idxWave) {
+			waveNames[idxBin][idxWave] = fitInputBin.getWave(idxWave).waveName();
 
 			phaseSpaceIntegrals[idxBin][0][idxWave] = 0.0;
 			phaseSpaceIntegrals[idxBin][1][idxWave] = 1.0;
 		}
 	}
-	const rpwa::resonanceFit::baseDataConstPtr fitData(new baseData(nrMassBins,
-	                                                                massBinCenters,
+	const rpwa::resonanceFit::baseDataConstPtr fitData(new baseData(nrWaves,
 	                                                                waveNames,
+	                                                                nrMassBins,
+	                                                                massBinCenters,
 	                                                                phaseSpaceIntegrals));
 
 	// set-up fit model (resonances, background, final-state mass-dependence)
@@ -302,37 +264,6 @@ rpwa::resonanceFit::read(const std::string& configFileName,
 	     useCovariance,
 	     valTreeName,
 	     valBranchName);
-}
-
-
-void
-rpwa::resonanceFit::read(const std::string& configFileName,
-                         const boost::multi_array<std::string, 2>& waveNames,
-                         const double maxMassBinCenter,
-                         rpwa::resonanceFit::inputConstPtr& fitInput,
-                         rpwa::resonanceFit::modelConstPtr& fitModel,
-                         rpwa::resonanceFit::parameters& fitParameters,
-                         rpwa::resonanceFit::parameters& fitParametersError,
-                         std::map<std::string, double>& fitQuality,
-                         std::vector<std::string>& freeParameters,
-                         const bool useBranchings)
-{
-	YAML::Node configRoot;
-	if(not rpwa::YamlCppUtils::parseYamlFile(configFileName, configRoot, rpwa::resonanceFit::debug())) {
-		printErr << "could not read configuration file '" << configFileName << "'." << std::endl;
-		throw;
-	}
-
-	read(configRoot,
-	     waveNames,
-	     maxMassBinCenter,
-	     fitInput,
-	     fitModel,
-	     fitParameters,
-	     fitParametersError,
-	     fitQuality,
-	     freeParameters,
-	     useBranchings);
 }
 
 

@@ -67,7 +67,7 @@ namespace rpwa {
 		                                            const bool useBranchings);
 
 		rpwa::resonanceFit::dataConstPtr readData(const rpwa::resonanceFit::inputConstPtr& fitInput,
-		                                          const std::string& anchorWaveName,
+		                                          const std::vector<std::string>& anchorWaveNames,
 		                                          const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 		                                          const std::string& valTreeName   = "pwa",
 		                                          const std::string& valBranchName = "fitResult_v2");
@@ -84,17 +84,6 @@ namespace rpwa {
 		          const rpwa::resonanceFit::function::useCovarianceMatrix useCovariance,
 		          const std::string& valTreeName   = "pwa",
 		          const std::string& valBranchName = "fitResult_v2");
-
-		void read(const YAML::Node& configRoot,
-		          const boost::multi_array<std::string, 2>& waveNames,
-		          const double maxMassBinCenter,
-		          rpwa::resonanceFit::inputConstPtr& fitInput,
-		          rpwa::resonanceFit::modelConstPtr& fitModel,
-		          rpwa::resonanceFit::parameters& fitParameters,
-		          rpwa::resonanceFit::parameters& fitParametersError,
-		          std::map<std::string, double>& fitQuality,
-		          std::vector<std::string>& freeParameters,
-		          const bool useBranchings);
 
 		void read(const YAML::Node& configRoot,
 		          const double maxMassBinCenter,

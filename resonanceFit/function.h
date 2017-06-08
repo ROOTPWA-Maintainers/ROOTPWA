@@ -93,8 +93,8 @@ namespace rpwa {
 			const rpwa::resonanceFit::modelConstPtr _fitModel;
 
 			const size_t _nrBins;
-			const size_t _maxMassBins;
-			const size_t _nrWaves;
+			const size_t _maxNrWaves;
+			const size_t _maxNrMassBins;
 
 			std::vector<size_t> _idxMassMin;
 			std::vector<size_t> _idxMassMax;

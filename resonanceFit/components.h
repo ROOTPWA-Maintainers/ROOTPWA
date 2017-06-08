@@ -58,15 +58,14 @@ namespace rpwa {
 
 			public:
 
-				channel(const size_t waveIdx,
-				        const std::string& waveName,
-				        const std::vector<size_t>& bins,
+				channel(const std::string& waveName,
+				        const std::vector<size_t>& waveIndices,
 				        const std::vector<size_t>& nrMassBins,
 				        const boost::multi_array<double, 2>& massBinCenters,
-				        const boost::multi_array<double, 2>& phaseSpaceIntegrals);
+				        const boost::multi_array<double, 3>& phaseSpaceIntegrals);
 
-				size_t getWaveIdx() const { return _waveIdx; }
 				const std::string& getWaveName() const { return _waveName; }
+				const std::vector<size_t> getWaveIndices() const { return _waveIndices; }
 
 				bool isAnchor(const size_t idxBin) const { return _anchors[idxBin]; }
 				void setAnchor(const size_t idxBin) { _anchors[idxBin] = true; }
@@ -79,14 +78,14 @@ namespace rpwa {
 
 			private:
 
-				const size_t _waveIdx;
 				const std::string _waveName;
+				const std::vector<size_t> _waveIndices;
 
 				std::vector<bool> _anchors;
 
-				const std::vector<size_t> _bins;
+				std::vector<size_t> _bins;
 
-				const boost::multi_array<double, 2> _phaseSpaceIntegrals;
+				boost::multi_array<double, 2> _phaseSpaceIntegrals;
 				std::vector<std::shared_ptr<const ROOT::Math::Interpolator> > _interpolators;
 
 			};
@@ -109,7 +108,7 @@ namespace rpwa {
 			const channel& getChannel(const size_t idxDecayChannel) const { return _channels[idxDecayChannel]; }
 			const channel& getChannelFromCouplingIdx(const size_t idxCoupling) const { return _channels[_channelsFromCoupling[idxCoupling]]; }
 			const channel& getChannelFromBranchingIdx(const size_t idxBranching) const { return _channels[_channelsFromBranching[idxBranching]]; }
-			void setChannelAnchor(const std::vector<size_t>& channels);
+			void setChannelAnchor(const size_t idxBin, const size_t idxDecayChannel);
 
 			virtual size_t getTotalNrChannels() const { return _channels.size(); }
 

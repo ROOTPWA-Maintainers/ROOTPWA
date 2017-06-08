@@ -88,85 +88,6 @@ namespace {
 
 
 	void
-	writeInputFitResults(YAML::Emitter& yamlOutput,
-	                     const std::vector<rpwa::resonanceFit::input::bin>& bins)
-	{
-		if(rpwa::resonanceFit::debug()) {
-			printDebug << "writing 'fitresults'." << std::endl;
-		}
-
-		yamlOutput << YAML::Key << "fitresults";
-		yamlOutput << YAML::Value;
-
-		yamlOutput << YAML::BeginSeq;
-		for(std::vector<rpwa::resonanceFit::input::bin>::const_iterator bin = bins.begin(); bin != bins.end(); ++bin) {
-			yamlOutput << YAML::BeginMap;
-
-			yamlOutput << YAML::Key << "name";
-			yamlOutput << YAML::Value << bin->fileName();
-
-			yamlOutput << YAML::Key << "tPrimeMean";
-			yamlOutput << YAML::Value << bin->tPrimeMean();
-
-			if(bin->rescaleErrors() != 1.) {
-				yamlOutput << YAML::Key << "rescaleErrors";
-				yamlOutput << YAML::Value << bin->rescaleErrors();
-			}
-
-			if(bin->sysFileNames().size() > 0) {
-				yamlOutput << YAML::Key << "systematics";
-				yamlOutput << YAML::Value << bin->sysFileNames();
-			}
-
-			yamlOutput << YAML::EndMap;
-		}
-		yamlOutput << YAML::EndSeq;
-	}
-
-
-	void
-	writeInputWaves(YAML::Emitter& yamlOutput,
-	                const std::vector<rpwa::resonanceFit::input::wave>& waves)
-	{
-		if(rpwa::resonanceFit::debug()) {
-			printDebug << "writing 'waves'." << std::endl;
-		}
-
-		yamlOutput << YAML::Key << "waves";
-		yamlOutput << YAML::Value;
-
-		yamlOutput << YAML::BeginSeq;
-		for(std::vector<rpwa::resonanceFit::input::wave>::const_iterator wave = waves.begin(); wave != waves.end(); ++wave) {
-			yamlOutput << YAML::BeginMap;
-
-			yamlOutput << YAML::Key << "name";
-			yamlOutput << YAML::Value << wave->waveName();
-
-			if(wave->massLimits().first >= 0) {
-				yamlOutput << YAML::Key << "massLower";
-				yamlOutput << YAML::Value << wave->massLimits().first;
-			}
-			if(wave->massLimits().second >= 0) {
-				yamlOutput << YAML::Key << "massUpper";
-				yamlOutput << YAML::Value << wave->massLimits().second;
-			}
-
-			if(wave->waveNameAlternatives().size() > 0) {
-				yamlOutput << YAML::Key << "alternativeNames";
-				yamlOutput << YAML::Value;
-
-				yamlOutput << YAML::Flow;
-				yamlOutput << wave->waveNameAlternatives();
-				yamlOutput << YAML::Block;
-			}
-
-			yamlOutput << YAML::EndMap;
-		}
-		yamlOutput << YAML::EndSeq;
-	}
-
-
-	void
 	writeInput(YAML::Emitter& yamlOutput,
 	           const rpwa::resonanceFit::inputConstPtr& fitInput)
 	{
@@ -177,19 +98,101 @@ namespace {
 		yamlOutput << YAML::Key << "input";
 		yamlOutput << YAML::Value;
 
-		yamlOutput << YAML::BeginMap;
+		yamlOutput << YAML::BeginSeq;
 
-		writeInputFitResults(yamlOutput, fitInput->bins());
-		writeInputWaves(yamlOutput, fitInput->waves());
+		for(size_t idxBin = 0; idxBin < fitInput->nrBins(); ++idxBin) {
+			const rpwa::resonanceFit::input::bin& bin = fitInput->getBin(idxBin);
 
-		yamlOutput << YAML::EndMap;
+			if(rpwa::resonanceFit::debug()) {
+				printDebug << "writing bin " << idxBin << " to 'input'." << std::endl;
+			}
+
+			yamlOutput << YAML::BeginMap;
+
+			yamlOutput << YAML::Key << "name";
+			yamlOutput << YAML::Value << bin.fileName();
+
+			yamlOutput << YAML::Key << "tPrimeMean";
+			yamlOutput << YAML::Value << bin.tPrimeMean();
+
+			if(bin.rescaleErrors() != 1.) {
+				yamlOutput << YAML::Key << "rescaleErrors";
+				yamlOutput << YAML::Value << bin.rescaleErrors();
+			}
+
+			if(bin.sysFileNames().size() > 0) {
+				yamlOutput << YAML::Key << "systematics";
+				yamlOutput << YAML::Value << bin.sysFileNames();
+			}
+
+			// check whether the same waves and ranges have already been written
+			size_t idxAnchor = 0;
+			for( ; idxAnchor < idxBin; ++idxAnchor) {
+				// continue if number of waves does not match
+				if(bin.nrWaves() != fitInput->getBin(idxAnchor).nrWaves())
+					continue;
+
+				// compare the individual waves
+				bool match = true;
+				for(size_t idxWave = 0; idxWave < bin.nrWaves(); ++idxWave) {
+					if(bin.getWave(idxWave).waveName() != fitInput->getBin(idxAnchor).getWave(idxWave).waveName()) {
+						match = false;
+						break;
+					}
+					if(bin.getWave(idxWave).massLimits() != fitInput->getBin(idxAnchor).getWave(idxWave).massLimits()) {
+						match = false;
+						break;
+					}
+				}
+
+				// all wave names and mass ranges match
+				if(match)
+					break;
+			}
+
+			yamlOutput << YAML::Key << "waves";
+			yamlOutput << YAML::Value;
+
+			std::ostringstream anchorName;
+			anchorName << "waveset" << idxAnchor;
+
+			if(idxAnchor == idxBin) {
+				// this combination of waves and mass ranges was not yet encountered
+				yamlOutput << YAML::Anchor(anchorName.str());
+				yamlOutput << YAML::BeginSeq;
+				for(std::vector<rpwa::resonanceFit::input::bin::wave>::const_iterator wave = bin.waves().begin(); wave != bin.waves().end(); ++wave) {
+					yamlOutput << YAML::BeginMap;
+
+					yamlOutput << YAML::Key << "name";
+					yamlOutput << YAML::Value << wave->waveName();
+
+					if(wave->massLimits().first >= 0) {
+						yamlOutput << YAML::Key << "massLower";
+						yamlOutput << YAML::Value << wave->massLimits().first;
+					}
+					if(wave->massLimits().second >= 0) {
+						yamlOutput << YAML::Key << "massUpper";
+						yamlOutput << YAML::Value << wave->massLimits().second;
+					}
+
+					yamlOutput << YAML::EndMap;
+				}
+				yamlOutput << YAML::EndSeq;
+			} else {
+				yamlOutput << YAML::Alias(anchorName.str());
+			}
+
+			yamlOutput << YAML::EndMap;
+		}
+
+		yamlOutput << YAML::EndSeq;
 	}
 
 
 	void
 	writeModelAnchors(YAML::Emitter& yamlOutput,
-	                  const std::string& anchorWaveName,
-	                  const std::string& anchorComponentName)
+	                  const std::vector<std::string>& anchorWaveNames,
+	                  const std::vector<std::string>& anchorComponentNames)
 	{
 		if(rpwa::resonanceFit::debug()) {
 			printDebug << "writing 'anchorwave'." << std::endl;
@@ -198,15 +201,43 @@ namespace {
 		yamlOutput << YAML::Key << "anchorwave";
 		yamlOutput << YAML::Value;
 
-		yamlOutput << YAML::BeginMap;
+		yamlOutput << YAML::BeginSeq;
 
-		yamlOutput << YAML::Key << "name";
-		yamlOutput << YAML::Value << anchorWaveName;
+		for(size_t idxBin = 0; idxBin < anchorWaveNames.size(); ++idxBin) {
+			// check whether the same wave and component names have already been written
+			size_t idxAnchor = 0;
+			for( ; idxAnchor < idxBin; ++idxAnchor) {
+				if(anchorWaveNames[idxBin] != anchorWaveNames[idxAnchor]) {
+					continue;
+				}
+				if(anchorComponentNames[idxBin] != anchorComponentNames[idxAnchor]) {
+					continue;
+				}
 
-		yamlOutput << YAML::Key << "resonance";
-		yamlOutput << YAML::Value << anchorComponentName;
+				// anchor wave and component names match
+				break;
+			}
 
-		yamlOutput << YAML::EndMap;
+			std::ostringstream anchorName;
+			anchorName << "anchor" << idxAnchor;
+
+			if(idxAnchor == idxBin) {
+				yamlOutput << YAML::Anchor(anchorName.str());
+
+				yamlOutput << YAML::Flow;
+				yamlOutput << YAML::BeginSeq;
+
+				yamlOutput << YAML::Value << anchorWaveNames[idxBin];
+				yamlOutput << YAML::Value << anchorComponentNames[idxBin];
+
+				yamlOutput << YAML::EndSeq;
+				yamlOutput << YAML::Block;
+			} else {
+				yamlOutput << YAML::Alias(anchorName.str());
+			}
+		}
+
+		yamlOutput << YAML::EndSeq;
 	}
 
 
@@ -657,8 +688,8 @@ namespace {
 		yamlOutput << YAML::BeginMap;
 
 		writeModelAnchors(yamlOutput,
-		                  fitModel->getAnchorWaveName(),
-		                  fitModel->getAnchorComponentName());
+		                  fitModel->anchorWaveNames(),
+		                  fitModel->anchorComponentNames());
 
 		std::vector<rpwa::resonanceFit::componentConstPtr> components;
 		for(size_t idxComponent = 0; idxComponent < fitModel->getNrComponents(); ++idxComponent) {

@@ -127,16 +127,13 @@ namespace {
 }
 
 
-rpwa::resonanceFit::component::channel::channel(const size_t waveIdx,
-                                                const std::string& waveName,
-                                                const std::vector<size_t>& bins,
+rpwa::resonanceFit::component::channel::channel(const std::string& waveName,
+                                                const std::vector<size_t>& waveIndices,
                                                 const std::vector<size_t>& nrMassBins,
                                                 const boost::multi_array<double, 2>& massBinCenters,
-                                                const boost::multi_array<double, 2>& phaseSpaceIntegrals)
-	: _waveIdx(waveIdx),
-	  _waveName(waveName),
-	  _bins(bins),
-	  _phaseSpaceIntegrals(phaseSpaceIntegrals)
+                                                const boost::multi_array<double, 3>& phaseSpaceIntegrals)
+	: _waveName(waveName),
+	  _waveIndices(waveIndices)
 {
 	// get dimensions from one array and make sure that all other arrays
 	// have the same dimensions
@@ -146,27 +143,52 @@ rpwa::resonanceFit::component::channel::channel(const size_t waveIdx,
 		throw;
 	}
 
-	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
-	if(maxMassBins == 0) {
+	const size_t maxNrMassBins = *std::max_element(nrMassBins.begin(), nrMassBins.end());
+	if(maxNrMassBins == 0) {
 		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
 		throw;
 	}
 
+	const size_t maxNrWaves = *(phaseSpaceIntegrals.shape()+2);
+	if(maxNrWaves == 0) {
+		printErr << "maximal number of waves is zero, cannot perform the fit. Aborting..." << std::endl;
+		throw;
+	}
+
+	checkSize(waveIndices,
+	          nrBins, "number of bins is not correct for wave indices.");
+	checkSize(nrMassBins,
+	          nrBins, "number of bins is not correct for number of mass bins.");
 	checkSize(massBinCenters,
 	          nrBins, "number of bins is not correct for centers of mass bins.",
-	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
-	checkSize(_phaseSpaceIntegrals,
+	          maxNrMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+	checkSize(phaseSpaceIntegrals,
 	          nrBins, "number of bins is not correct for phase-space integrals.",
-	          maxMassBins, "maximal number of mass bins is not correct for phase-space integrals.");
+	          maxNrMassBins, "maximal number of mass bins is not correct for phase-space integrals.",
+	          maxNrWaves, "maximal number of waves is not correct for phase-space integrals.");
 
 	_anchors.resize(nrBins, false),
 
 	_interpolators.resize(nrBins);
-	for(size_t i = 0; i < _bins.size(); ++i) {
-		const size_t idxBin = _bins[i];
+	_phaseSpaceIntegrals.resize(boost::extents[nrBins][maxNrMassBins]);
+	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
+		const size_t idxWave = waveIndices[idxBin];
 
-		boost::multi_array<double, 2>::const_array_view<1>::type viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
-		boost::multi_array<double, 2>::const_array_view<1>::type viewInt = _phaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
+		// skip bins that do not contain the current wave
+		if(idxWave == std::numeric_limits<size_t>::max()) {
+			continue;
+		}
+
+		_bins.push_back(idxBin);
+
+		const boost::multi_array<double, 1>& viewM = massBinCenters[boost::indices[idxBin][boost::multi_array<double, 2>::index_range(0, nrMassBins[idxBin])]];
+		const boost::multi_array<double, 1>& viewInt = phaseSpaceIntegrals[boost::indices[idxBin][boost::multi_array<double, 3>::index_range(0, nrMassBins[idxBin])][idxWave]];
+
+		// copy values at mass bin centers
+		adjustSizeAndSet(_phaseSpaceIntegrals, idxBin, viewInt);
+
+		// set up interpolator for when the requested mass is not a
+		// mass bin center
 		_interpolators[idxBin] = std::make_shared<ROOT::Math::Interpolator>(std::vector<double>(viewM.begin(), viewM.end()), std::vector<double>(viewInt.begin(), viewInt.end()), ROOT::Math::Interpolation::kLINEAR);
 	}
 }
@@ -194,8 +216,8 @@ rpwa::resonanceFit::component::component(const size_t id,
 		throw;
 	}
 
-	const size_t maxMassBins = *(std::max_element(nrMassBins.begin(), nrMassBins.end()));
-	if(maxMassBins == 0) {
+	const size_t maxNrMassBins = *std::max_element(nrMassBins.begin(), nrMassBins.end());
+	if(maxNrMassBins == 0) {
 		printErr << "maximal number of mass bins is zero, cannot perform the fit. Aborting..." << std::endl;
 		throw;
 	}
@@ -204,7 +226,7 @@ rpwa::resonanceFit::component::component(const size_t id,
 	          nrBins, "number of bins is not correct for number of mass bins.");
 	checkSize(massBinCenters,
 	          nrBins, "number of bins is not correct for centers of mass bins.",
-	          maxMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
+	          maxNrMassBins, "maximal number of mass bins is not correct for centers of mass bins.");
 
 	// initialize the bins that can be used for the caching, the function
 	// value might be the same in several bins, but by default each value
@@ -292,11 +314,10 @@ rpwa::resonanceFit::component::component(const size_t id,
 
 
 void
-rpwa::resonanceFit::component::setChannelAnchor(const std::vector<size_t>& channels)
+rpwa::resonanceFit::component::setChannelAnchor(const size_t idxBin,
+                                                const size_t idxDecayChannel)
 {
-	for(size_t idxBin = 0; idxBin < channels.size(); ++idxBin) {
-		_channels[channels[idxBin]].setAnchor(idxBin);
-	}
+	_channels[idxDecayChannel].setAnchor(idxBin);
 }
 
 
@@ -327,7 +348,7 @@ rpwa::resonanceFit::component::importCouplings(const double* par,
 				for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
 					if(_channelsCoupling[idxChannel] == idxCoupling) {
 						cache.setCoupling(getId(), idxChannel, idxBin, std::numeric_limits<size_t>::max(), 0.);
-						cache.setProdAmp(_channels[idxChannel].getWaveIdx(), idxBin, std::numeric_limits<size_t>::max(), 0.);
+						cache.setProdAmp(_channels[idxChannel].getWaveIndices()[idxBin], idxBin, std::numeric_limits<size_t>::max(), 0.);
 					}
 				}
 			}
@@ -358,7 +379,9 @@ rpwa::resonanceFit::component::importBranchings(const double* par,
 			for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
 				if(_channelsBranching[idxChannel] == idxBranching) {
 					cache.setCoupling(getId(), idxChannel, std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
-					cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+					for(std::vector<size_t>::const_iterator idxBin = _channels[idxChannel].getBins().begin(); idxBin != _channels[idxChannel].getBins().end(); ++idxBin) {
+						cache.setProdAmp(_channels[idxChannel].getWaveIndices()[*idxBin], *idxBin, std::numeric_limits<size_t>::max(), 0.);
+					}
 				}
 			}
 		}
@@ -384,7 +407,9 @@ rpwa::resonanceFit::component::importParameters(const double* par,
 	if(invalidateCache) {
 		cache.setComponent(getId(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
 		for(size_t idxChannel = 0; idxChannel < _channels.size(); ++idxChannel) {
-			cache.setProdAmp(_channels[idxChannel].getWaveIdx(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), 0.);
+			for(std::vector<size_t>::const_iterator idxBin = _channels[idxChannel].getBins().begin(); idxBin != _channels[idxChannel].getBins().end(); ++idxBin) {
+				cache.setProdAmp(_channels[idxChannel].getWaveIndices()[*idxBin], *idxBin, std::numeric_limits<size_t>::max(), 0.);
+			}
 		}
 	}
 

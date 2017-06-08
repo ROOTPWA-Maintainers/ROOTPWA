@@ -55,8 +55,8 @@ namespace rpwa {
 			model(const rpwa::resonanceFit::inputConstPtr& fitInput,
 			      const std::vector<rpwa::resonanceFit::componentPtr>& comp,
 			      const rpwa::resonanceFit::fsmdPtr& fsmd,
-			      const std::string& anchorWaveName,
-			      const std::string& anchorComponentName);
+			      const std::vector<std::string>& anchorWaveNames,
+			      const std::vector<std::string>& anchorComponentNames);
 
 			bool isMappingEqualInAllBins() const { return _mappingEqualInAllBins; }
 
@@ -73,10 +73,10 @@ namespace rpwa {
 			size_t getMaxChannelsInComponent() const { return _maxChannelsInComponent; }
 			size_t getMaxParametersInComponent() const { return _maxParametersInComponent; }
 
-			size_t getAnchorWave() const { return _idxAnchorWave; }
-			const std::string& getAnchorWaveName() const { return _anchorWaveName; }
-			size_t getAnchorComponent() const { return _idxAnchorComponent; }
-			const std::string& getAnchorComponentName() const { return _anchorComponentName; }
+			const std::vector<std::string>& anchorWaveNames() const { return _anchorWaveNames; }
+			const std::vector<std::string>& anchorComponentNames() const { return _anchorComponentNames; }
+			size_t anchorWaveIndex(const size_t idxBin) const { return _anchorWaveIndices[idxBin]; }
+			size_t anchorComponentIndex(const size_t idxBin) const { return _anchorComponentIndices[idxBin]; }
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(const size_t idxBin, const size_t idxWave) const { return _waveComponentChannel[idxBin][idxWave]; }
 
@@ -117,9 +117,7 @@ namespace rpwa {
 
 		private:
 
-			bool initMapping(const rpwa::resonanceFit::inputConstPtr& fitInput,
-			                 const std::string& anchorWaveName,
-			                 const std::string& anchorComponentName);
+			bool initMapping(const rpwa::resonanceFit::inputConstPtr& fitInput);
 
 			bool _mappingEqualInAllBins;
 
@@ -131,12 +129,12 @@ namespace rpwa {
 			size_t _maxChannelsInComponent;
 			size_t _maxParametersInComponent;
 
-			std::string _anchorWaveName;
-			std::string _anchorComponentName;
+			const std::vector<std::string> _anchorWaveNames;
+			const std::vector<std::string> _anchorComponentNames;
 
-			size_t _idxAnchorWave;
-			size_t _idxAnchorComponent;
-			std::vector<size_t> _idxAnchorChannel;
+			std::vector<size_t> _anchorWaveIndices;
+			std::vector<size_t> _anchorComponentIndices;
+			std::vector<size_t> _anchorChannelIndices;
 
 			boost::multi_array<std::vector<std::pair<size_t, size_t> >, 2> _waveComponentChannel;
 
