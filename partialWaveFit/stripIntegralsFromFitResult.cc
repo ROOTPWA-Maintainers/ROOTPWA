@@ -135,44 +135,9 @@ main(int    argc,
 
 	for(long i = 0; i < inResultTree->GetEntries(); ++i) {
 		inResultTree->GetEntry(i);
-		const unsigned int             nmbEvents              = inResult->nmbEvents();
-		const unsigned int             normNmbEvents          = inResult->normNmbEvents();
-		const multibinBoundariesType&  multibinBoundaries     = inResult->multibinBoundaries();
-		const double                   logLikelihood          = inResult->logLikelihood();
-		const int                      rank                   = inResult->rank();
-
-		const vector<TComplex>&        prodAmpsTComplex       = inResult->prodAmps();
-		const unsigned int             nmbProdAmps            = prodAmpsTComplex.size();
-		vector<complex<double> >       prodAmps(nmbProdAmps);
-		for(unsigned int i = 0; i < nmbProdAmps; ++i) {
-			prodAmps[i] = complex<double>(prodAmpsTComplex[i].Re(), prodAmpsTComplex[i].Im());
-		}
-
-		const vector<string>&          prodAmpNames           = inResult->prodAmpNames();
-
-		const vector<pair<int, int> >& fitParCovMatrixIndices = inResult->fitParCovIndices();
-
-		const complexMatrix            normIntegral(0, 0);
-		const complexMatrix            accIntegral(0, 0);
-		const vector<double>           phaseSpaceIntegral;
-
-		const bool                     converged              = inResult->converged();
 
 		outResult->reset();
-		outResult->fill(nmbEvents,
-		                normNmbEvents,
-		                multibinBoundaries,
-		                logLikelihood,
-		                rank,
-		                prodAmps,
-		                prodAmpNames,
-		                stripCovarianceMatrix ? TMatrixT<double>(0, 0) : inResult->fitParCovMatrix(),
-		                fitParCovMatrixIndices,
-		                normIntegral,
-		                accIntegral,
-		                phaseSpaceIntegral,
-		                converged,
-		                stripCovarianceMatrix ? false : inResult->hasHessian());
+		outResult->fill(*inResult, not stripCovarianceMatrix, false);
 
 		outResultTree->Fill();
 

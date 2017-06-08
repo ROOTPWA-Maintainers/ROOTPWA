@@ -41,6 +41,7 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+#include <list>
 #include <string>
 #include <complex>
 
@@ -111,12 +112,60 @@ namespace rpwa {
 	public:
 
 		fitResult();
-		fitResult(const fitResult& result);
+
+		/**
+		 * @param fillCovMatrix if false, the covariance matrix from the input result will not be copied to this result
+		 * @param fillIntegralMatrices if false, the integral matrices from the input result will not be copied to this result
+		 */
+		fitResult(const fitResult& result, const bool fillCovMatrix = true, const bool fillIntegralMatrices = true);
+
+		/** Fills this fitResult with the content of the given fitResult and allows to overwrite matrices
+		 *
+		 * Uses all data from the given fitResult.
+		 * The matrices will be overwritten if the pointerarguments are not nullptr.
+		 */
+		fitResult(const fitResult&                          result,
+		          const TMatrixT<double>*                   fitParCovMatrix,         // covariance matrix of fit parameters
+		          const std::vector<std::pair<int, int> >*  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
+		          const rpwa::complexMatrix*                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
+		          const std::vector<double>*                phaseSpaceIntegral);     // normalization integral over full phase space without acceptance
+
 		virtual ~fitResult();
 
 		fitResult* variedProdAmps() const;  ///< create a copy with production amplitudes varied according to covariance matrix
 
 		void reset();
+		void fill(const unsigned int                        nmbEvents,               // number of events in bin
+		          const unsigned int                        normNmbEvents,           // number of events to normalize to
+		          const rpwa::multibinBoundariesType&       multibinBoundaries,      // multibin boundaries
+		          const double                              logLikelihood,           // log(likelihood) at maximum
+		          const int                                 rank,                    // rank of fit
+		          const std::vector<std::complex<double> >& prodAmps,                // production amplitudes
+		          const std::vector<std::string>&           prodAmpNames,            // names of production amplitudes used in fit
+		          const TMatrixT<double>*                   fitParCovMatrix,         // covariance matrix of fit parameters
+		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
+		          const rpwa::complexMatrix*                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
+		          const std::vector<double>*                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
+		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+
+		void fill(const unsigned int                        nmbEvents,               // number of events in bin
+		          const unsigned int                        normNmbEvents,           // number of events to normalize to
+		          const rpwa::multibinBoundariesType&       multibinBoundaries,      // multibin boundaries
+		          const double                              logLikelihood,           // log(likelihood) at maximum
+		          const int                                 rank,                    // rank of fit
+		          const std::vector<TComplex>&              prodAmps,                // production amplitudes
+		          const std::vector<std::string>&           prodAmpNames,            // names of production amplitudes used in fit
+		          const TMatrixT<double>*                   fitParCovMatrix,         // covariance matrix of fit parameters
+		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
+		          const rpwa::complexMatrix*                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
+		          const std::vector<double>*                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
+		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,           // number of events to normalize to
 		          const rpwa::multibinBoundariesType&       multibinBoundaries,      // multibin boundaries
@@ -131,7 +180,25 @@ namespace rpwa {
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
-		void fill(const fitResult& result);
+
+		/** Fills this fitResult with the content of the given fitResult
+		 * @param result input result
+		 * @param fillCovMatrix if false, the covariance matrix from the input result will not be copied to this result
+		 * @param fillIntegralMatrices if false, the integral matrices from the input result will not be copied to this result
+		 */
+		void fill(const fitResult& result, bool fillCovMatrix = true, bool fillIntegralMatrices = true);
+
+		/** Fills this fitResult with the content of the given fitResult and allows to overwrite matrices
+		 *
+		 * Uses all data from the given fitResult.
+		 * The matrices will be overwritten if the pointerarguments are not nullptr.
+		 */
+		void fill(const fitResult&                          result,
+		          const TMatrixT<double>*                   fitParCovMatrix,         // covariance matrix of fit parameters
+		          const std::vector<std::pair<int, int> >*  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
+		          const rpwa::complexMatrix*                normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
+		          const std::vector<double>*                phaseSpaceIntegral);     // normalization integral over full phase space without acceptance
 
 		unsigned int                        nmbEvents         () const { return _nmbEvents;               }  ///< returns number of events in bin
 		unsigned int                        normNmbEvents     () const { return _normNmbEvents;           }  ///< returns number of events to normalize to
@@ -280,7 +347,6 @@ namespace rpwa {
 		const rpwa::complexMatrix&                   acceptedNormIntegralMatrix() const { return _acceptedNormIntegral;   }
 		const std::vector<double>&                   phaseSpaceIntegralVector  () const { return _phaseSpaceIntegral;     }
 		const std::map<Int_t, Int_t>&                normIntIndexMap           () const { return _normIntIndexMap;        }
-
 
 		inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
 		inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
@@ -582,7 +648,22 @@ namespace rpwa {
 		}
 		return prodAmpName.substr(prodAmpName.find('_')+1);
 	}
-
+	/// \brief returns for each kinematic bin a list of fit results loaded from the given files
+	///
+	/// \param fileNames list of filenames from which fit results will be loaded
+	/// \param onlyBestResultInMultibin if true, only the best result per multibin will be stored
+	/// \param stripMatricesFromNotBestResults if true, the covariance and integral matrices will be striped
+	///                                         from all fit results except the best one and the best converged one
+	///                                         in each multibin
+	/// \param onlyConvergedResults considere only converged results (to load and also for the best result)
+	/// \return map with binningMap as key and list of fit results as value
+	std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult>> getFitResultsFromFilesInMultibins(
+	                 const std::vector<std::string>& fileNames,
+	                 const std::string& treeName,
+	                 const std::string& branchName,
+	                 const bool onlyBestResultInMultibin,
+	                 const bool stripMatricesFromNotBestResults,
+	                 const bool onlyConvergedResults);
 
 }  // namespace rpwa
 

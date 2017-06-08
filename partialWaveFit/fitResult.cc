@@ -44,6 +44,8 @@
 #include "TMath.h"
 #include "TMatrixDSym.h"
 #include "TRandom3.h"
+#include "TFile.h"
+#include "TTree.h"
 
 #include "fitResult.h"
 
@@ -89,26 +91,22 @@ fitResult::fitResult()
 { }
 
 
-fitResult::fitResult(const fitResult& result)
-	: TObject(),
-	  _nmbEvents             (result.nmbEvents()),
-	  _normNmbEvents         (result.normNmbEvents()),
-	  _multibinBoundaries    (result.multibinBoundaries()),
-	  _logLikelihood         (result.logLikelihood()),
-	  _rank                  (result.rank()),
-	  _prodAmps              (result.prodAmps()),
-	  _prodAmpNames          (result.prodAmpNames()),
-	  _waveNames             (result.waveNames()),
-	  _covMatrixValid        (result.covMatrixValid()),
-	  _fitParCovMatrix       (result.fitParCovMatrix()),
-	  _fitParCovMatrixIndices(result.fitParCovIndices()),
-	  _normIntegral          (result.normIntegralMatrix()),
-	  _acceptedNormIntegral  (result.acceptedNormIntegralMatrix()),
-	  _normIntIndexMap       (result.normIntIndexMap()),
-	  _phaseSpaceIntegral    (result.phaseSpaceIntegralVector()),
-	  _converged             (result.converged()),
-	  _hasHessian            (result.hasHessian())
-{ }
+fitResult::fitResult(const fitResult& result, const bool fillCovMatrix, const bool fillIntegralMatrices)
+	: TObject()
+{
+	fill(result, fillCovMatrix, fillIntegralMatrices);
+}
+
+fitResult::fitResult(const fitResult&                          result,
+                     const TMatrixT<double>*                   fitParCovMatrix,         // covariance matrix of fit parameters
+                     const std::vector<std::pair<int, int> >*  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
+                     const rpwa::complexMatrix*                normIntegral,            // normalization integral matrix
+                     const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
+                     const std::vector<double>*                phaseSpaceIntegral)     // normalization integral over full phase space without acceptance
+	: TObject()
+{
+	fill(result, fitParCovMatrix, fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral);
+}
 
 
 fitResult::~fitResult()
@@ -189,49 +187,71 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
                 const multibinBoundariesType&   multibinBoundaries,      // multibin boundaries
                 const double                    logLikelihood,           // log(likelihood) at maximum
                 const int                       rank,                    // rank of fit
-                const vector<complex<double> >& prodAmps,                // production amplitudes
+                const vector<TComplex>&         prodAmps,                // production amplitudes
                 const vector<string>&           prodAmpNames,            // names of production amplitudes used in fit
-                const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
+                const TMatrixT<double>*         fitParCovMatrix,         // covariance matrix of fit parameters
                 const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-                const complexMatrix&            normIntegral,            // normalization integral matrix
-                const complexMatrix&            acceptedNormIntegral,    // normalization integral matrix with acceptance
-                const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+                const complexMatrix*            normIntegral,            // normalization integral matrix
+                const complexMatrix*            acceptedNormIntegral,    // normalization integral matrix with acceptance
+                const vector<double>*           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
                 const bool                      converged,
                 const bool                      hasHessian)
 {
-	_converged          = converged;
-	_hasHessian         = hasHessian;
-	_nmbEvents          = nmbEvents;
-	_normNmbEvents      = normNmbEvents;
-	_multibinBoundaries = multibinBoundaries;
-	_logLikelihood      = logLikelihood;
-	_rank               = rank;
-	_prodAmps.resize(prodAmps.size());
-	for (unsigned int i = 0; i < prodAmps.size(); ++i)
-		_prodAmps[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
-	_prodAmpNames  = prodAmpNames;
-	_fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
-	_fitParCovMatrix        = fitParCovMatrix;
+	_converged              = converged;
+	_nmbEvents              = nmbEvents;
+	_normNmbEvents          = normNmbEvents;
+	_multibinBoundaries     = multibinBoundaries;
+	_logLikelihood          = logLikelihood;
+	_rank                   = rank;
+	_prodAmps               = prodAmps;
+	_prodAmpNames           = prodAmpNames;
 	_fitParCovMatrixIndices = fitParCovMatrixIndices;
-	// check whether there really is an error matrix
-	if (not (fitParCovMatrix.GetNrows() == 0) and not (fitParCovMatrix.GetNcols() == 0))
-		_covMatrixValid = true;
-	else
-		_covMatrixValid = false;
-	_normIntegral.resizeTo(normIntegral.nRows(), normIntegral.nCols());
-	_normIntegral         = normIntegral;
-	_acceptedNormIntegral.resizeTo(acceptedNormIntegral.nRows(), acceptedNormIntegral.nCols());
-	_acceptedNormIntegral = acceptedNormIntegral;
-	_phaseSpaceIntegral   = phaseSpaceIntegral;
 
-	// get wave list from production amplitudes and fill map for
-	// production-amplitude indices to indices in normalization integral
+	if (fitParCovMatrix != nullptr) {
+		_fitParCovMatrix.ResizeTo(fitParCovMatrix->GetNrows(), fitParCovMatrix->GetNcols());
+		_fitParCovMatrix = *fitParCovMatrix;
+		_hasHessian         = hasHessian;
+		// check whether there really is an error matrix
+		if (not (fitParCovMatrix->GetNrows() == 0) and not (fitParCovMatrix->GetNcols() == 0))
+			_covMatrixValid = true;
+		else
+			_covMatrixValid = false;
+		if (_covMatrixValid) _hasHessian = true; // there has to be a Hessian if the covariance matrix is valid
+	} else {
+		_fitParCovMatrix.ResizeTo(0, 0);
+		_covMatrixValid = false;
+		_hasHessian     = false; // set to false, does not matter what is given externally
+	}
+
+	if (normIntegral != nullptr) {
+		_normIntegral.resizeTo(normIntegral->nRows(), normIntegral->nCols());
+		_normIntegral = *normIntegral;
+	} else {
+		_normIntegral.resizeTo(0, 0);
+	}
+
+	if (acceptedNormIntegral != nullptr) {
+		_acceptedNormIntegral.resizeTo(acceptedNormIntegral->nRows(), acceptedNormIntegral->nCols());
+		_acceptedNormIntegral = *acceptedNormIntegral;
+	} else {
+		_acceptedNormIntegral.resizeTo(0, 0);
+	}
+
+	if (phaseSpaceIntegral != nullptr) {
+		_phaseSpaceIntegral = *phaseSpaceIntegral;
+	} else {
+		_phaseSpaceIntegral.resize(0);
+	}
+
 	for (unsigned int i = 0; i < _prodAmpNames.size(); ++i) {
 		const string waveName = waveNameForProdAmp(i);
 		const size_t waveIdx  = find(_waveNames.begin(), _waveNames.end(), waveName) - _waveNames.begin();
 		if (waveIdx == _waveNames.size())
 			_waveNames.push_back(waveName);
 		_normIntIndexMap[i] = waveIdx;
+	}
+	if (not (normIntegral != nullptr or acceptedNormIntegral != nullptr)){
+		_normIntIndexMap.clear();
 	}
 
 	// check consistency
@@ -243,103 +263,188 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 		printWarn << "number of wave names (" << _waveNames.size() << ") "
 		          << "larger than number of production amplitude names "
 		          << "(" << _prodAmpNames.size() << ")." << endl;
-	if (_fitParCovMatrix.GetNrows() != _fitParCovMatrix.GetNcols())
-		printWarn << "covariance matrix is not a square matrix "
-		          << "(" << _fitParCovMatrix.GetNrows() << ", " << _fitParCovMatrix.GetNcols() << ")." << endl;
 	if (_prodAmps.size() != _fitParCovMatrixIndices.size())
 		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
-		          << "does not match number of covariance matrix indices "
-		          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (_fitParCovMatrix.GetNrows() == 0) {
-		// covariance matrix does not exist
-		printWarn << "covariance matrix is empty." << endl;
-	} else {
-		// covariance matrix exists
-		for (unsigned int i=0; i<_fitParCovMatrixIndices.size(); ++i) {
-			if (_fitParCovMatrixIndices[i].first < 0)
-				printWarn << "entry in covariance matrix for real part of production "
-				          << "amplitude " << i << " does not exist." << endl;
-			if (_fitParCovMatrixIndices[i].first >= _fitParCovMatrix.GetNrows())
-				printWarn << "real part of production amplitude " << i << " is mapped to "
-				          << "entry in covariance matrix outside covariance matrix size "
-				          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
-			if (_fitParCovMatrixIndices[i].second >= _fitParCovMatrix.GetNrows())
-				printWarn << "imaginary part of production amplitude " << i << " is mapped to "
-				          << "entry in covariance matrix outside covariance matrix size "
-				          << "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+				<< "does not match number of covariance matrix indices "
+				<< "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+	if (fitParCovMatrix != nullptr){
+		if (_fitParCovMatrix.GetNrows() != _fitParCovMatrix.GetNcols())
+			printWarn << "covariance matrix is not a square matrix "
+					<< "(" << _fitParCovMatrix.GetNrows() << ", " << _fitParCovMatrix.GetNcols() << ")." << endl;
+		if (_fitParCovMatrix.GetNrows() == 0) {
+			// covariance matrix does not exist
+			printWarn << "covariance matrix is empty." << endl;
+		} else {
+			// covariance matrix exists
+			for (unsigned int i=0; i<_fitParCovMatrixIndices.size(); ++i) {
+				if (_fitParCovMatrixIndices[i].first < 0)
+					printWarn << "entry in covariance matrix for real part of production "
+							<< "amplitude " << i << " does not exist." << endl;
+				if (_fitParCovMatrixIndices[i].first >= _fitParCovMatrix.GetNrows())
+					printWarn << "real part of production amplitude " << i << " is mapped to "
+							<< "entry in covariance matrix outside covariance matrix size "
+							<< "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+				if (_fitParCovMatrixIndices[i].second >= _fitParCovMatrix.GetNrows())
+					printWarn << "imaginary part of production amplitude " << i << " is mapped to "
+							<< "entry in covariance matrix outside covariance matrix size "
+							<< "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+			}
 		}
 	}
-	if (_normIntegral.nRows() != _normIntegral.nCols())
-		printWarn << "normalization integral is not a square matrix "
-		          << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
-	if (_normIntegral.nRows() == 0) {
-		// normalization integral matrix does not exist
-		printWarn << "normalization integral matrix is empty." << endl;
-	} else {
-		if (_waveNames.size() != _normIntegral.nRows())
-			printWarn << "number of waves (" << _waveNames.size() << ") "
-			          << "does not match size of normalization integral "
-			          << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
+	if (normIntegral != nullptr){
+		if (_normIntegral.nRows() != _normIntegral.nCols())
+			printWarn << "normalization integral is not a square matrix "
+					<< "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
+		if (_normIntegral.nRows() == 0) {
+			// normalization integral matrix does not exist
+			printWarn << "normalization integral matrix is empty." << endl;
+		} else {
+			if (_waveNames.size() != _normIntegral.nRows())
+				printWarn << "number of waves (" << _waveNames.size() << ") "
+						<< "does not match size of normalization integral "
+						<< "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
+		}
 	}
-	if (_acceptedNormIntegral.nRows() != _acceptedNormIntegral.nCols())
-		printWarn << "normalization integral is not a square matrix "
-		          << "(" << _acceptedNormIntegral.nRows() << ", " << _acceptedNormIntegral.nCols() << ")." << endl;
-	if (_acceptedNormIntegral.nRows() == 0) {
-		// acceptance integral matrix does not exist
-		printWarn << "acceptance integral matrix is empty." << endl;
-	} else {
-		if (_waveNames.size() != _acceptedNormIntegral.nRows())
-			printWarn << "number of waves (" << _waveNames.size() << ") "
-			          << "does not match size of acceptance integral "
-			          << "(" << _acceptedNormIntegral.nRows() << ", " << _acceptedNormIntegral.nCols() << ")." << endl;
+	if (acceptedNormIntegral != nullptr){
+		if (_acceptedNormIntegral.nRows() != _acceptedNormIntegral.nCols())
+			printWarn << "normalization integral is not a square matrix "
+					<< "(" << _acceptedNormIntegral.nRows() << ", " << _acceptedNormIntegral.nCols() << ")." << endl;
+		if (_acceptedNormIntegral.nRows() == 0) {
+			// acceptance integral matrix does not exist
+			printWarn << "acceptance integral matrix is empty." << endl;
+		} else {
+			if (_waveNames.size() != _acceptedNormIntegral.nRows())
+				printWarn << "number of waves (" << _waveNames.size() << ") "
+						<< "does not match size of acceptance integral "
+						<< "(" << _acceptedNormIntegral.nRows() << ", " << _acceptedNormIntegral.nCols() << ")." << endl;
+		}
 	}
-	if (_phaseSpaceIntegral.size() == 0) {
-		// phase-space integral does not exist
-		printWarn << "phase-space integral is empty." << endl;
-	} else {
-		if (_waveNames.size() != _phaseSpaceIntegral.size())
-			printWarn << "number of waves (" << _waveNames.size() << ") "
-			          << "does not match size of phase-space integral "
-			          << "(" << _phaseSpaceIntegral.size() << ")." << endl;
+	if (phaseSpaceIntegral != nullptr){
+		if (_phaseSpaceIntegral.size() == 0) {
+			// phase-space integral does not exist
+			printWarn << "phase-space integral is empty." << endl;
+		} else {
+			if (_waveNames.size() != _phaseSpaceIntegral.size())
+				printWarn << "number of waves (" << _waveNames.size() << ") "
+						<< "does not match size of phase-space integral "
+						<< "(" << _phaseSpaceIntegral.size() << ")." << endl;
+		}
 	}
-	if (_prodAmps.size() != _normIntIndexMap.size())
-		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
-		          << "does not match number of mappings from production amplitudes to indices in integrals "
-		          << "(" << _normIntIndexMap.size() << ")." << endl;
-	for (unsigned int i=0; i<_prodAmps.size(); ++i) {
-		if (_normIntIndexMap.count(i) != 1)
-			printWarn << "production amplitude at index " << i << " is not mapped to any index in integrals." << endl;
-		if (_normIntIndexMap[i] < 0 or _normIntIndexMap[i] >= (int)_waveNames.size())
-			printWarn << "production amplitude at index " << i << " is mapped to integrals "
-			             "at index " << _normIntIndexMap[i] <<", which does not exist." << endl;
+	if (normIntegral != nullptr or acceptedNormIntegral != nullptr){
+		if (_prodAmps.size() != _normIntIndexMap.size())
+			printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
+					<< "does not match number of mappings from production amplitudes to indices in integrals "
+					<< "(" << _normIntIndexMap.size() << ")." << endl;
+		for (unsigned int i=0; i<_prodAmps.size(); ++i) {
+			if (_normIntIndexMap.count(i) != 1)
+				printWarn << "production amplitude at index " << i << " is not mapped to any index in integrals." << endl;
+			if (_normIntIndexMap[i] < 0 or _normIntIndexMap[i] >= (int)_waveNames.size())
+				printWarn << "production amplitude at index " << i << " is mapped to integrals "
+							"at index " << _normIntIndexMap[i] <<", which does not exist." << endl;
+		}
 	}
+}
+
+void
+fitResult::fill(const unsigned int              nmbEvents,               // number of events in bin
+                const unsigned int              normNmbEvents,           // number of events to normalize to
+                const multibinBoundariesType&   multibinBoundaries,      // multibin boundaries
+                const double                    logLikelihood,           // log(likelihood) at maximum
+                const int                       rank,                    // rank of fit
+                const vector<complex<double> >& prodAmps,                // production amplitudes
+                const vector<string>&           prodAmpNames,            // names of production amplitudes used in fit
+                const TMatrixT<double>*         fitParCovMatrix,         // covariance matrix of fit parameters
+                const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+                const complexMatrix*            normIntegral,            // normalization integral matrix
+                const complexMatrix*            acceptedNormIntegral,    // normalization integral matrix with acceptance
+                const vector<double>*           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+                const bool                      converged,
+                const bool                      hasHessian)
+{
+	// In principle the production amplitudes could be written directly to _prodAmps and an empty prodAmps vector could be given to fill.
+	// This would remove the additional copy of the prodAmps vector.
+	// However, this leads to a warning in the fill function.
+	vector<TComplex> prodAmpsT;
+	prodAmpsT.resize(prodAmps.size());
+	for (unsigned int i = 0; i < prodAmps.size(); ++i)
+		prodAmpsT[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
+	fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmpsT, prodAmpNames, fitParCovMatrix, fitParCovMatrixIndices, normIntegral,
+	     acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
+}
+
+void
+fitResult::fill(const unsigned int              nmbEvents,               // number of events in bin
+                const unsigned int              normNmbEvents,           // number of events to normalize to
+                const multibinBoundariesType&   multibinBoundaries,      // multibin boundaries
+                const double                    logLikelihood,           // log(likelihood) at maximum
+                const int                       rank,                    // rank of fit
+                const vector<complex<double> >& prodAmps,                // production amplitudes
+                const vector<string>&           prodAmpNames,            // names of production amplitudes used in fit
+                const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
+                const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+                const complexMatrix&            normIntegral,            // normalization integral matrix
+                const complexMatrix&            acceptedNormIntegral,    // normalization integral matrix with acceptance
+                const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+                const bool                      converged,
+                const bool                      hasHessian)
+{
+	fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames,
+	     &fitParCovMatrix, fitParCovMatrixIndices, &normIntegral, &acceptedNormIntegral, &phaseSpaceIntegral,
+	     converged, hasHessian);
 }
 
 
 void
-fitResult::fill(const fitResult& result)
+fitResult::fill(const fitResult& result,
+                const TMatrixT<double>*         fitParCovMatrix,         // covariance matrix of fit parameters
+                const vector<pair<int, int> >*  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+                const complexMatrix*            normIntegral,            // normalization integral matrix
+                const complexMatrix*            acceptedNormIntegral,    // normalization integral matrix with acceptance
+                const vector<double>*           phaseSpaceIntegral)      // normalization integral over full phase space without acceptance
 {
-	_nmbEvents              = result.nmbEvents();
-	_normNmbEvents          = result.normNmbEvents();
-	_multibinBoundaries     = result.multibinBoundaries();
-	_logLikelihood          = result.logLikelihood();
-	_rank                   = result.rank();
-	_prodAmps               = result.prodAmps();
-	_prodAmpNames           = result.prodAmpNames();
-	_waveNames              = result.waveNames();
-	_covMatrixValid         = result.covMatrixValid();
+	if (fitParCovMatrix == nullptr)
+		fitParCovMatrix = (not result.covMatrixValid()) ? nullptr : &result.fitParCovMatrix();
+	if (fitParCovMatrixIndices == nullptr)
+		fitParCovMatrixIndices = &result.fitParCovIndices();
+	if (normIntegral == nullptr)
+		normIntegral = (result.normIntegralMatrix().nRows() == 0 and result.normIntegralMatrix().nCols() == 0) ? nullptr : &result.normIntegralMatrix();
+	if (acceptedNormIntegral == nullptr)
+		acceptedNormIntegral = (result.acceptedNormIntegralMatrix().nRows() == 0 and result.acceptedNormIntegralMatrix().nCols() == 0) ?
+		                       nullptr : &result.acceptedNormIntegralMatrix();
+	if (phaseSpaceIntegral == nullptr)
+		phaseSpaceIntegral = (result.phaseSpaceIntegralVector().size() == 0) ? nullptr : &result.phaseSpaceIntegralVector();
+	fill(result.nmbEvents(), result.normNmbEvents(), result.multibinBoundaries(), result.logLikelihood(),
+	     result.rank(), result.prodAmps(), result.prodAmpNames(),
+	     fitParCovMatrix,
+	     *fitParCovMatrixIndices,
+	     normIntegral,
+	     acceptedNormIntegral,
+	     phaseSpaceIntegral,
+	     result.converged(), result.hasHessian());
+}
 
-	const TMatrixT<double>& fitParCovMatrix = result.fitParCovMatrix();
-	_fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
-	_fitParCovMatrix        = fitParCovMatrix;
 
-	_fitParCovMatrixIndices = result.fitParCovIndices();
-	_normIntegral           = result.normIntegralMatrix();
-	_acceptedNormIntegral   = result.acceptedNormIntegralMatrix();
-	_normIntIndexMap        = result.normIntIndexMap();
-	_phaseSpaceIntegral     = result.phaseSpaceIntegralVector();
-	_converged              = result.converged();
-	_hasHessian             = result.hasHessian();
+void
+fitResult::fill(const fitResult& result, bool fillCovMatrix, bool fillIntegralMatrices)
+{
+	if (fillCovMatrix)
+		fillCovMatrix = result.covMatrixValid();
+	bool fillNormIntMatrix = false;
+	bool fillAccNormIntMatrix = false;
+	bool fillPhaseSpace = false;
+	if (fillIntegralMatrices){
+		fillNormIntMatrix    = result.normIntegralMatrix().nRows() != 0         or result.normIntegralMatrix().nCols() != 0;
+		fillAccNormIntMatrix = result.acceptedNormIntegralMatrix().nRows() != 0 or result.acceptedNormIntegralMatrix().nCols() != 0;
+		fillPhaseSpace       = result.phaseSpaceIntegralVector().size() != 0;
+	}
+	fill(result.nmbEvents(), result.normNmbEvents(), result.multibinBoundaries(), result.logLikelihood(),
+	     result.rank(), result.prodAmps(), result.prodAmpNames(),
+	     (fillCovMatrix)? &result.fitParCovMatrix() : nullptr,
+	     result.fitParCovIndices(),
+	     (fillNormIntMatrix)? &result.normIntegralMatrix() : nullptr,
+	     (fillAccNormIntMatrix)? &result.acceptedNormIntegralMatrix() : nullptr,
+	     (fillPhaseSpace)? &result.phaseSpaceIntegralVector() : nullptr,
+	     result.converged(), result.hasHessian());
 }
 
 
@@ -997,4 +1102,134 @@ fitResult::intensityErr(const string& waveNamePattern) const
 	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;               // 2n x  1 matrix
 	const TMatrixT<double> intensityCov = jacobian * prodAmpCovJT;              //  1 x  1 matrix
 	return (double)normNmbEvents() * sqrt(intensityCov[0][0]);
+}
+
+
+std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult> >
+rpwa::getFitResultsFromFilesInMultibins(
+                                        const std::vector<std::string>& fileNames,
+                                        const std::string& treeName,
+                                        const std::string& branchName,
+                                        const bool onlyBestResultInMultibin,
+                                        const bool stripMatricesFromNotBestResults,
+                                        const bool onlyConvergedResults) {
+	std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult> > fitResultsInMultibins;
+	std::unique_ptr<fitResult> inputFitResult(new fitResult);
+	fitResult* inputFitResultPtr = inputFitResult.get();
+
+	// get trees
+	std::vector<TFile*> files;
+	std::vector<TTree*> trees;
+	for (const auto& fileName : fileNames) {
+		TFile* file = TFile::Open(fileName.c_str());
+		if (file == nullptr or file->IsZombie()) {
+			printErr<< "Cannot open rootfile '" << fileName << "'" << std::endl;
+			return fitResultsInMultibins;
+		}
+		TTree* tree;
+		file->GetObject(treeName.c_str(), tree);
+		if (tree == nullptr) {
+			printErr<< "Cannot find tree '" << treeName << "' in rootfile '" << fileName << "'" << std::endl;
+			return fitResultsInMultibins;
+		}
+		tree->SetBranchAddress(branchName.c_str(), &inputFitResultPtr);
+		trees.push_back(tree);
+		files.push_back(file);
+
+	}
+
+	// find the best result in each multibin and store all others if necessary
+	std::set<rpwa::multibinBoundariesType> allMultibinBoundaries;
+	std::map<rpwa::multibinBoundariesType, double> negLogLikeOfBestResult;
+	std::map<rpwa::multibinBoundariesType, std::pair<size_t, int> > fileTreeEntryOfBestResult;
+	std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult>::iterator > iterOfBestResult;
+	std::map<rpwa::multibinBoundariesType, double> negLogLikeOfBestConvergedResult;
+	std::map<rpwa::multibinBoundariesType, std::pair<size_t, int> > fileTreeEntryOfBestConvergedResult;
+	std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult>::iterator > iterOfBestConvergedResult;
+	for (size_t i = 0; i < trees.size(); ++i) {
+		printInfo << "load fit results from file '" << fileNames[i] << "'" << std::endl;
+
+		TTree* tree = trees[i];
+		for (int j = 0; j < tree->GetEntries(); ++j) {
+			tree->GetEntry(j);
+			if( onlyConvergedResults and not inputFitResult->converged())
+				continue;
+
+			const rpwa::multibinBoundariesType& multibinBoundaries = inputFitResult->multibinBoundaries();
+			allMultibinBoundaries.insert(multibinBoundaries);
+			std::list<rpwa::fitResult>::iterator it;
+
+			if (not onlyBestResultInMultibin) {
+				it = fitResultsInMultibins[multibinBoundaries].insert(fitResultsInMultibins[multibinBoundaries].end(), fitResult());
+				it->fill(*inputFitResult, not stripMatricesFromNotBestResults, not stripMatricesFromNotBestResults);
+
+				if(inputFitResult->converged()){
+					if (negLogLikeOfBestConvergedResult.find(multibinBoundaries) == negLogLikeOfBestConvergedResult.end() or // first result of this bin
+					    inputFitResult->logLikelihood() < negLogLikeOfBestConvergedResult[multibinBoundaries]) { // found new best result
+						negLogLikeOfBestConvergedResult[multibinBoundaries] = inputFitResult->logLikelihood();
+						fileTreeEntryOfBestConvergedResult[multibinBoundaries] = std::make_pair(i, j);
+						iterOfBestConvergedResult[multibinBoundaries] = it;
+					}
+				}
+			}
+			if (negLogLikeOfBestResult.find(multibinBoundaries) == negLogLikeOfBestResult.end() or // first result of this bin
+			    inputFitResult->logLikelihood() < negLogLikeOfBestResult[multibinBoundaries]) { // found new best result
+				negLogLikeOfBestResult[multibinBoundaries] = inputFitResult->logLikelihood();
+				fileTreeEntryOfBestResult[multibinBoundaries] = std::make_pair(i, j);
+				iterOfBestResult[multibinBoundaries] = it;
+			}
+		}
+	}
+
+
+	// finally add the result with the best likelihood, if not yet stored
+	if (onlyBestResultInMultibin) {
+		for (const auto& multibinBoundaries : allMultibinBoundaries) {
+			// load best result
+			trees[fileTreeEntryOfBestResult[multibinBoundaries].first]->GetEntry(fileTreeEntryOfBestResult[multibinBoundaries].second);
+			std::list<fitResult>& fitResults = fitResultsInMultibins[multibinBoundaries];
+			assert(fitResults.size() == 0);
+			fitResults.push_back(*inputFitResult);
+		}
+	} else if (stripMatricesFromNotBestResults) {
+		for (const auto& multibinBoundaries : allMultibinBoundaries) {
+			// load best result
+			trees[fileTreeEntryOfBestResult[multibinBoundaries].first]->GetEntry(fileTreeEntryOfBestResult[multibinBoundaries].second);
+			assert(negLogLikeOfBestResult[multibinBoundaries] == inputFitResult->logLikelihood());
+			assert(iterOfBestResult[multibinBoundaries]->logLikelihood() == inputFitResult->logLikelihood());
+			// remove the best result without matrices and add the full result
+			iterOfBestResult[multibinBoundaries]->fill(*inputFitResult);
+
+			// if the best one is not converged and we want to store all and we want to strip the matrices from all except the best ones (converged and not converged)
+			if( negLogLikeOfBestConvergedResult.find(multibinBoundaries) != negLogLikeOfBestConvergedResult.end()){ // found at least one converged result
+				if (not iterOfBestResult[multibinBoundaries]->converged()){
+					// load best converged result
+					trees[fileTreeEntryOfBestConvergedResult[multibinBoundaries].first]->GetEntry(fileTreeEntryOfBestConvergedResult[multibinBoundaries].second);
+					iterOfBestConvergedResult[multibinBoundaries]->fill(*inputFitResult);
+				} else {
+					assert(negLogLikeOfBestResult[multibinBoundaries] == negLogLikeOfBestConvergedResult[multibinBoundaries]);
+				}
+			}
+		}
+	}
+
+	// sort fit results by neg log-likelihood
+	if (not onlyBestResultInMultibin) {
+		for (auto& elem : fitResultsInMultibins) {
+			const multibinBoundariesType& multibinBoundaries = elem.first;
+			std::list<fitResult>& fitResults = elem.second;
+			// sort preserves the order of equal elements and we set a new best result only if the result < as the old best one,
+			// thus the best result is the first best result. Therefore, in the sorted list of the first result is the one without striped matrices
+			fitResults.sort([] (const rpwa::fitResult& a, const rpwa::fitResult& b) -> bool {return a.logLikelihood() < b.logLikelihood();});
+
+			assert(fitResults.front().logLikelihood() == negLogLikeOfBestResult[multibinBoundaries]);
+		}
+	}
+
+	// close files
+	for (const auto& file : files) {
+		file->Close();
+		delete file;
+	}
+	return fitResultsInMultibins;
 }

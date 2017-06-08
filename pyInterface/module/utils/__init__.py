@@ -5,7 +5,7 @@ from _silencer import silencer
 from _multibinBoundariesFromArgList import multibinBoundariesFromArgList
 from _binning import multiBin
 from _fileUtils import openEventFile
-from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile
+from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile, getFitResultsFromFile, getFitResultsFromFiles
 from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList
 
 import _root
