@@ -1,6 +1,9 @@
 #include "fitResult_py.h"
 
 #include <boost/python.hpp>
+#include <vector>
+#include <list>
+#include <map>
 
 #include <TTree.h>
 
@@ -65,8 +68,73 @@ namespace {
 		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
 	}
 
-	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result) {
-		self.fill(result);
+	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result, const bool fillCovMatrix, const bool fillIntegralMatrices) {
+		self.fill(result, fillCovMatrix, fillIntegralMatrices);
+	}
+
+	void fitResult_fill_3(rpwa::fitResult& self, const rpwa::fitResult& result,
+	                      PyObject* pyFitParCovMatrix,
+	                      const bp::object& pyFitParCovMatrixIndices,
+	                      const bp::object& pyNormIntegral,
+	                      const bp::object& pyAcceptedNormIntegral,
+	                      const bp::object& pyPhaseSpaceIntegral)
+	                      {
+		TMatrixT<double>* fitParCovMatrix = nullptr;
+		if (pyFitParCovMatrix != nullptr) {
+			fitParCovMatrix = rpwa::py::convertFromPy<TMatrixT<double>*>(pyFitParCovMatrix);
+			if (not fitParCovMatrix) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for fitParCovMatrix when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+		}
+
+		std::vector < std::pair<int, int> > fitParCovMatrixIndices;
+		std::vector < std::pair<int, int> > *fitParCovMatrixIndicesPtr = nullptr;
+		if (not pyFitParCovMatrixIndices.is_none()) { // not NONE
+			fitParCovMatrixIndicesPtr = &fitParCovMatrixIndices;
+			bp::extract<std::vector<std::pair<int, int>>> value(pyFitParCovMatrixIndices);
+			if (not value.check()) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for fitParCovMatrixIndices when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+			fitParCovMatrixIndices = value;
+		}
+
+		rpwa::complexMatrix normIntegral;
+		rpwa::complexMatrix* normIntegralPtr = nullptr;
+		if (not pyNormIntegral.is_none()) { // not NONE
+			normIntegralPtr = &normIntegral;
+			bp::extract<rpwa::complexMatrix> value(pyNormIntegral);
+			if (not value.check()) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for normIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+			normIntegral = value;
+		}
+
+		rpwa::complexMatrix acceptedNormIntegral;
+		rpwa::complexMatrix* acceptedNormIntegralPtr = nullptr;
+		if (not pyAcceptedNormIntegral.is_none()) { // not NONE
+			acceptedNormIntegralPtr = &acceptedNormIntegral;
+			bp::extract<rpwa::complexMatrix> value(pyAcceptedNormIntegral);
+			if (not value.check()) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for acceptedNormIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+			acceptedNormIntegral = value;
+		}
+
+		std::vector<double> phaseSpaceIntegral;
+		std::vector<double>* phaseSpaceIntegralPtr = nullptr;
+		if (not pyPhaseSpaceIntegral.is_none()) { // not NONE
+			phaseSpaceIntegralPtr = &phaseSpaceIntegral;
+			if (not rpwa::py::convertBPObjectToVector<double>(pyPhaseSpaceIntegral, phaseSpaceIntegral)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+		}
+
+		self.fill(result, fitParCovMatrix, fitParCovMatrixIndicesPtr, normIntegralPtr, acceptedNormIntegralPtr, phaseSpaceIntegralPtr);
 	}
 
 	bp::dict fitResult_multibinCenter(const rpwa::fitResult& self) {
@@ -320,6 +388,41 @@ namespace {
 		return self.Write(name);
 	}
 
+
+	bp::dict
+	fitResult_getFitResultsFromFilesInMutibins(bp::list& fileNamesPy, const std::string& treeName,
+	                                           const std::string& branchName,
+	                                           const bool onlyBestInMultibin, const bool stripMatricesFromFurtherAttempts,
+	                                           const bool onlyConvergedResults) {
+		bp::dict pyFitResultsInMultibins;
+		std::vector<std::string> fileNames;
+		if( rpwa::py::convertBPObjectToVector(fileNamesPy, fileNames)){
+
+			std::map<rpwa::multibinBoundariesType, std::list<rpwa::fitResult> > fitResultsInMultibins =
+					rpwa::getFitResultsFromFilesInMultibins(fileNames,
+															treeName,
+															branchName,
+															onlyBestInMultibin,
+															stripMatricesFromFurtherAttempts,
+															onlyConvergedResults);
+
+
+			for (auto& elem : fitResultsInMultibins) {
+				const rpwa::multibinBoundariesType& multibinBoundaries = elem.first;
+				std::list<rpwa::fitResult>& results = elem.second;
+				bp::list pyResults;
+				while(not results.empty()){
+					pyResults.append(results.front());
+					results.pop_front();
+				}
+
+				bp::object pyMultiBin = rpwa::py::convertMultibinBoundariesToPyMultibin(multibinBoundaries);
+				pyFitResultsInMultibins[pyMultiBin] = pyResults;
+			}
+		}
+		return pyFitResultsInMultibins;
+	}
+
 }
 
 void rpwa::py::exportFitResult() {
@@ -332,7 +435,8 @@ void rpwa::py::exportFitResult() {
 		.def(bp::self_ns::str(bp::self))
 		.def("reset", &rpwa::fitResult::reset)
 		.def("fill", &fitResult_fill_1)
-		.def("fill", &fitResult_fill_2)
+		.def("fill", &fitResult_fill_2, (bp::arg("fillCovMatrix") = true, bp::arg("fillIntegralMatrices") = true))
+		.def("fill", &fitResult_fill_3)
 		.def("multibinBoundaries", &::fitResult_multibinBoundaries)
 		.def("multibinCenter", &::fitResult_multibinCenter)
 		.def("nmbEvents", &rpwa::fitResult::nmbEvents)
@@ -428,8 +532,11 @@ void rpwa::py::exportFitResult() {
 			   bp::arg("name"),
 			   bp::arg("bufsize")=32000,
 			   bp::arg("splitlevel")=99)
-		);
+		)
+		;
 
 	bp::register_ptr_to_python<rpwa::fitResultPtr>();
+
+	bp::def("getFitResultsFromFilesInMultibins", &fitResult_getFitResultsFromFilesInMutibins);
 
 }
