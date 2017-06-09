@@ -1,4 +1,4 @@
-
+import math
 import ast
 import ConfigParser
 import os
@@ -172,6 +172,12 @@ def _readBinning(binningString):
 	return retval
 
 
+def _roundToNSignificantDigits(value, significantDigits):
+	oomValue = int( math.floor(math.log10(abs(value))) )
+	nDigits = significantDigits - 1 - oomValue
+	return round(value, nDigits)
+
+
 def _binningInputHandlingForCaseTwoAndThree(inputVal):
 	# check the input dictionary for binning cases 2. and 3. (see above)
 	# return a dictionary which conforms to case 2..
@@ -196,8 +202,12 @@ def _binningInputHandlingForCaseTwoAndThree(inputVal):
 				pyRootPwa.utils.printWarn(errMsg)
 				raise ValueError(errMsg)
 			expandedBoundaryList = []
-			for i in xrange(axesPartition[2]+1):
-				expandedBoundaryList.append(float(axesPartition[0]) + (float(axesPartition[1] - axesPartition[0]) / float(axesPartition[2])) * i)
+			xMin = float(axesPartition[0])
+			xMax = float(axesPartition[1])
+			nBins = int(axesPartition[2])
+			for i in xrange(nBins+1):
+				# round to 14 significant digits to get rid of numeric artifacts of the bin borders
+				expandedBoundaryList.append(_roundToNSignificantDigits(xMin + (xMax-xMin)/nBins * i, 14))
 			inputVal[key] = expandedBoundaryList
 	return inputVal
 
