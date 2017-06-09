@@ -207,7 +207,7 @@ def _binningInputHandlingForCaseTwoAndThree(inputVal):
 			nBins = int(axesPartition[2])
 			for i in xrange(nBins+1):
 				# round to 14 significant digits to get rid of numeric artifacts of the bin borders
-				expandedBoundaryList.append(_roundToNSignificantDigits( xMin + (xMax-xMin)/nBins * i, 14))
+				expandedBoundaryList.append(_roundToNSignificantDigits(xMin + (xMax-xMin)/nBins * i, 14))
 			inputVal[key] = expandedBoundaryList
 	return inputVal
 
