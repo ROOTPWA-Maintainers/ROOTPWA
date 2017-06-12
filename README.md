@@ -62,7 +62,7 @@ The minimum required CMake version is 3.0.0. In case your system offers only out
 
 ### Boost ###
 
-Part of the ROOTPWA code and of the external libraries relies on the Boost C++ template library which is available at <http://www.boost.org>. The following installation guide requires Version 1.56.0 or higher; it is recommended to use the latest Boost release. ROOTPWA itself can, however, still be compiled against older version of Boost down to version 1.50.0.
+Part of the ROOTPWA code and of the external libraries relies on the Boost C++ template library which is available at <http://www.boost.org>. ROOTPWA requires Version 1.63.0 or higher; it is recommended to use the latest Boost release.
 
 
 #### Getting Boost ####

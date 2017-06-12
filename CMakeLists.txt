@@ -192,8 +192,8 @@ endif()
 # at the same time the library is required. the third find_package
 # line is needed in case the components are not found, because
 # Boost_FOUND is set to FALSE.
-find_package(Boost 1.50.0 REQUIRED)
-find_package(Boost 1.50.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
+find_package(Boost 1.63.0 REQUIRED)
+find_package(Boost 1.63.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
 foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
 	if(Boost_${_BOOST_COMPONENT}_FOUND)
@@ -203,7 +203,7 @@ foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 endforeach()
 unset(_BOOST_COMPONENT)
 unset(_BOOST_COMPONENTS)
-find_package(Boost 1.50.0 REQUIRED)
+find_package(Boost 1.63.0 REQUIRED)
 set_package_properties(Boost
 	PROPERTIES
 	DESCRIPTION "C++ Template Library"
