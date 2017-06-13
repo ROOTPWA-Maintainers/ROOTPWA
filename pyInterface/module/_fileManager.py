@@ -345,9 +345,8 @@ class fileManager(object):
 					return collections.OrderedDict()
 				waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
 				if waveName in keyFiles.keys():
-					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName +"' from files '" +
-					                         keyFiles[waveName][0] + "' (index " + str(keyFiles[waveName][1]) +
-					                         ") and '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
+					pyRootPwa.utils.printErr("duplicate wave name ('" + waveName + "' from files '" + keyFiles[waveName] +
+					                         "' and '" + keyFileName + "' (index " + str(waveDescriptionID) + ").")
 					return collections.OrderedDict()
 				keyFiles[waveName] = keyFileName
 		retval = collections.OrderedDict()
