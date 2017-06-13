@@ -44,10 +44,30 @@ namespace {
 			return bp::make_tuple(retval.first, retval.second);
 		}
 
+		bp::tuple tPrimeRange__() {
+			if(bp::override tPrimeRange = this->get_override("tPrimeRange")) {
+				const std::pair<double, double>& retval = tPrimeRange();
+				return bp::make_tuple(retval.first, retval.second);
+			} else {
+				const std::pair<double, double>& retval = rpwa::massAndTPrimePicker::tPrimeRange();
+				return bp::make_tuple(retval.first, retval.second);
+			}
+		}
+
+		bp::tuple default_tPrimeRange__() {
+			const std::pair<double, double>& retval = rpwa::massAndTPrimePicker::tPrimeRange();
+			return bp::make_tuple(retval.first, retval.second);
+		}
+
 	};
 
 	bp::tuple massAndTPrimePicker_massRange(const rpwa::massAndTPrimePicker& self) {
 		const std::pair<double, double>& retval = self.massRange();
+		return bp::make_tuple(retval.first, retval.second);
+	}
+
+	bp::tuple massAndTPrimePicker_tPrimeRange(const rpwa::massAndTPrimePicker& self) {
+		const std::pair<double, double>& retval = self.tPrimeRange();
 		return bp::make_tuple(retval.first, retval.second);
 	}
 
@@ -171,6 +191,8 @@ void rpwa::py::exportGeneratorPickerFunctions() {
 		.def("overrideMassRange", &rpwa::massAndTPrimePicker::overrideMassRange)
 		.def("massRange", &massAndTPrimePickerWrapper::massRange__, &massAndTPrimePickerWrapper::default_massRange__)
 		.def("massRange", &massAndTPrimePicker_massRange)
+		.def("tPrimeRange", &massAndTPrimePickerWrapper::tPrimeRange__, &massAndTPrimePickerWrapper::default_tPrimeRange__)
+		.def("tPrimeRange", &massAndTPrimePicker_tPrimeRange)
 		.def("__call__", bp::pure_virtual(&rpwa::massAndTPrimePicker::operator()));
 
 	bp::class_<uniformMassExponentialTPickerWrapper, bp::bases<rpwa::massAndTPrimePicker> >("uniformMassExponentialTPicker")
