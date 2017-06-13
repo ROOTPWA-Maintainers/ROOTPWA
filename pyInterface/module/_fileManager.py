@@ -176,7 +176,7 @@ class fileManager(object):
 		for waveDescriptionID, waveDescription in enumerate(waveDescriptions):
 			(success, amplitude) = waveDescription.constructAmplitude()
 			if not success:
-				pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
+				pyRootPwa.utils.printErr("could not construct decay topology for wave description at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
 				return None
 			constructedWaveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
 			if waveName == constructedWaveName:
@@ -341,7 +341,7 @@ class fileManager(object):
 			for waveDescriptionID, waveDescription in enumerate(waveDescriptions):
 				(success, amplitude) = waveDescription.constructAmplitude()
 				if not success:
-					pyRootPwa.utils.printErr("could not construct decay topology for wave descrption at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
+					pyRootPwa.utils.printErr("could not construct decay topology for wave description at index " + str(waveDescriptionID) + " of key file '" + keyFileName + "'.")
 					return collections.OrderedDict()
 				waveName = waveDescription.waveNameFromTopology(amplitude.decayTopology())
 				if waveName in keyFiles.keys():
