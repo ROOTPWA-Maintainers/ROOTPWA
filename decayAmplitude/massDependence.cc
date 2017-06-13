@@ -493,6 +493,15 @@ piPiSWaveAuMorganPenningtonImpl<T>::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// explicitely instantiate parent class for piPiSWaveAuMorganPenningtonM
+template class rpwa::piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonM>;
+
+
+////////////////////////////////////////////////////////////////////////////////
+// explicitely instantiate parent class for piPiSWaveAuMorganPenningtonVes
+template class rpwa::piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonVes>;
+
+
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 	: piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonVes>()
 {
@@ -533,6 +542,10 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// explicitely instantiate parent class for piPiSWaveAuMorganPenningtonKachaev
+template class rpwa::piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonKachaev>;
+
+
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 	: piPiSWaveAuMorganPenningtonImpl<piPiSWaveAuMorganPenningtonKachaev>()
 {
