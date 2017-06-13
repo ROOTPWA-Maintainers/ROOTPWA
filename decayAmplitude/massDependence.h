@@ -65,7 +65,7 @@ namespace rpwa {
 
 		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
-		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
+		virtual std::string name() const = 0;  ///< returns label used in graph visualization, reporting, and key file
 
 		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
 

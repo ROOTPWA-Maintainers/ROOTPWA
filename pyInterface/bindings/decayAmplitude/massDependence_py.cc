@@ -34,14 +34,7 @@ namespace {
 		}
 
 		std::string name() const {
-			if(bp::override name = this->get_override("name")) {
-				return name();
-			}
-			return rpwa::massDependence::name();
-		}
-
-		std::string default_name() const {
-			return rpwa::massDependence::name();
+			return this->get_override("name")();
 		}
 
 	};
@@ -383,8 +376,7 @@ void rpwa::py::exportMassDependence() {
 			, (::std::complex< double > ( massDependenceWrapper::* )( ::rpwa::isobarDecayVertex const & ) )(&massDependenceWrapper::default___call__)
 		)
 		.def("__call__", &rpwa::massDependence::operator())
-		.def("name", &massDependenceWrapper::name, &massDependenceWrapper::default_name)
-		.def("name", &rpwa::massDependence::name)
+		.def("name", bp::pure_virtual(&rpwa::massDependence::name))
 		.add_static_property("debugMassDependence", &rpwa::massDependence::debug, &rpwa::massDependence::setDebug);
 
 	bp::class_<flatMassDependenceWrapper, bp::bases<rpwa::massDependence> >("flatMassDependence")
