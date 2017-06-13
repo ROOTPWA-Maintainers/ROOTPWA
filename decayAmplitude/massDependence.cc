@@ -81,6 +81,13 @@ rpwa::createMassDependence(const std::string& massDepType)
 	if (massDepType == "")
 		return relativisticBreitWigner::Create();
 
+	// old names for backward compatibility
+	if (massDepType == "f_0(980)") {
+		printWarn << "mass dependence name '" << massDepType << "' is deprecated, "
+		             "please use '" << f0980BreitWigner::Name() << "' instead." << std::endl;
+		return f0980BreitWigner::Create();
+	}
+
 	// otherwise try to resolve the name
 	return ::createMassDependence<rpwa::flatMassDependence,
 	                              rpwa::relativisticBreitWigner,
