@@ -120,9 +120,14 @@ if __name__ == "__main__":
 		finalState = generator.getGeneratedFinalState()
 
 		massTPrimeVariables = []
+		massTPrimeRanges = {}
 		if not args.noStoreMassTPrime:
 			if len(args.massTPrimeVariableNames.split(',')) == 2:
 				massTPrimeVariables = args.massTPrimeVariableNames.split(',')
+				massTPrimeRanges = {
+				                    massTPrimeVariables[0]: generator.getTPrimeAndMassPicker().massRange(),
+				                    massTPrimeVariables[1]: generator.getTPrimeAndMassPicker().tPrimeRange()
+				                   }
 			else:
 				printErr("Option --massTPrimeVariableNames has wrong format '{0}'. Aborting...".format(args.massTPrimeVariableNames))
 				sys.exit(1)
@@ -135,7 +140,7 @@ if __name__ == "__main__":
 		                                pyRootPwa.core.eventMetadata.GENERATED,
 		                                prodKinNames,
 		                                decayKinNames,
-		                                {}, # TODO: FILL THESE
+		                                massTPrimeRanges,
 		                                massTPrimeVariables,
 		                                )
 		if not success:
