@@ -270,16 +270,16 @@ namespace rpwa {
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief Flatte for f_0(980) -> pi pi
 	/// [M. Ablikim et al, Phys. Let. B607, 243] BES II
-	class f0980Flatte : public massDependenceImpl<f0980Flatte> {
+	class f0980FlatteBesII : public massDependenceImpl<f0980FlatteBesII> {
 
 	public:
 
-		f0980Flatte();
-		virtual ~f0980Flatte() { }
+		f0980FlatteBesII();
+		virtual ~f0980FlatteBesII() { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		static constexpr const char* cName = "f_0(980)Flatte";
+		static constexpr const char* cName = "f0980FlatteBesII";
 
 	private:
 		double _piChargedMass;
@@ -288,7 +288,7 @@ namespace rpwa {
 	};
 
 
-	typedef boost::shared_ptr<f0980Flatte> f0980FlattePtr;
+	typedef boost::shared_ptr<f0980FlatteBesII> f0980FlatteBesIIPtr;
 
 
 	//////////////////////////////////////////////////////////////////////////////
