@@ -63,50 +63,83 @@ using namespace rpwa;
 namespace {
 
 
-	typedef boost::shared_ptr<libconfig::Config> configPtr;
+	typedef boost::shared_ptr<Config> configPtr;
 
 
-	const std::string binBorders = "bins";
-	const std::string expandName = "expand";
-	const std::string expandTypeName = "type";
-	const std::string expandNameName = "name";
+	const string binBorders     = "bins";
+	const string degreeName     = "degree";
+	const string mMinName       = "mMin";
+	const string mMaxName       = "mMax";
+	const string realCoeffName  = "realCoefficients";
+	const string imagCoeffName  = "imagCoefficients";
+	const string expandName     = "expand";
+	const string expandTypeName = "type";
+	const string expandNameName = "name";
 
 
-	std::string
-	getExpandType(const libconfig::Setting* setting)
+	string
+	getExpandType(const Setting* setting)
 	{
-		std::string expandType;
+		string expandType;
 		if (not setting->lookupValue(expandTypeName, expandType)) {
-			printErr << "no expand type given." << std::endl;
+			printErr << "no expand type given." << endl;
 			return "";
 		}
 		return expandType;
 	}
 
 
-	std::string
-	getExpandName(const libconfig::Setting* setting)
+	string
+	getExpandName(const Setting* setting)
 	{
-		std::string binningName;
+		string binningName;
 		if (not setting->lookupValue(expandNameName, binningName)) {
-			printErr << "no binning name given." << std::endl;
+			printErr << "no binning name given." << endl;
 			return "";
 		}
 		return binningName;
 	}
 
 
-	std::vector<double>
-	getBinning(const libconfig::Setting* setting)
+	vector<double>
+	getChebyshevCoefficients(const size_t n)
 	{
-		const libconfig::Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
+		vector<double> coefficientsNMinus2(1,1.);
+		if (n == 0) {
+			return coefficientsNMinus2;
+		}
+		vector<double> coefficientsNMinus1(1,0.);
+		coefficientsNMinus1.push_back(1.);
+		if (n == 1) {
+			return coefficientsNMinus1;
+		}
+		vector<double> coefficientsN;
+		for (size_t degree = 2; degree < n+1; ++degree) {
+			coefficientsN = vector<double>(degree+1,0.); // A polynomial of degree n has n+1 coefficients
+			coefficientsN[0] = -coefficientsNMinus2[0];
+			for (size_t i = 1; i < degree-1; ++i) {
+				coefficientsN[i] = 2*coefficientsNMinus1[i-1] - coefficientsNMinus2[i];
+			}
+			coefficientsN[degree-1] = 2*coefficientsNMinus1[degree-2];
+			coefficientsN[degree  ]  = 2*coefficientsNMinus1[degree-1];
+			coefficientsNMinus2 = coefficientsNMinus1;
+			coefficientsNMinus1 = coefficientsN;
+		}
+		return coefficientsN;
+	}
+
+
+	vector<double>
+	getBinning(const Setting* setting)
+	{
+		const Setting* binningSetting = findLibConfigList(*setting, binBorders, true);
 		if (not binningSetting) {
 			printErr << "no binning given to expand '" << expandName << "' "
-			         << "in path '" << setting->getPath() << "'." << std::endl;
-			return std::vector<double>();
+			         << "in path '" << setting->getPath() << "'." << endl;
+			return vector<double>();
 		}
 		const int length = binningSetting->getLength();
-		std::vector<double> binningVector(length);
+		vector<double> binningVector(length);
 		for (int bin=0; bin<length; ++bin) {
 			binningVector[bin] = (*binningSetting)[bin];
 		}
@@ -114,19 +147,19 @@ namespace {
 	}
 
 
-	libconfig::Setting*
-	findExpand(const libconfig::Setting &setting)
+	Setting*
+	findExpand(const Setting &setting)
 	{
-		libconfig::Setting* expand  = findLibConfigGroup(setting, expandName, false);
+		Setting* expand  = findLibConfigGroup(setting, expandName, false);
 		if (expand) {
 			return expand;
 		}
 		const int length = setting.getLength();
 		for (int i=0; i<length; ++i) {
-			libconfig::Setting &actSetting = setting[i];
+			Setting &actSetting = setting[i];
 			const int actLength = actSetting.getLength();
 			if (actLength > 0) {
-				libconfig::Setting* recurse = findExpand(actSetting);
+				Setting* recurse = findExpand(actSetting);
 				if (recurse) {
 					return recurse;
 				}
@@ -136,41 +169,108 @@ namespace {
 	}
 
 
-	std::vector<configPtr>
+	vector<configPtr>
 	expand(const configPtr& config)
 	{
-		std::vector<configPtr> expanded;
+		vector<configPtr> expanded;
 
-		libconfig::Setting& root     = config->getRoot();
-		libconfig::Setting* toExpand = findExpand(root);
+		Setting& root     = config->getRoot();
+		Setting* toExpand = findExpand(root);
 		if (not toExpand) {
 			expanded.push_back(config);
 			return expanded;
 		}
-		libconfig::Setting& parent = toExpand->getParent();
+		Setting& parent = toExpand->getParent();
 
-		const std::string expandType = getExpandType(toExpand);
+		const string expandType = getExpandType(toExpand);
 		if (expandType == "binning") {
-			const std::string         binningName = getExpandName(toExpand);
-			const std::vector<double> binning     = getBinning(toExpand);
+			const string         binningName = getExpandName(toExpand);
+			const vector<double> binning     = getBinning(toExpand);
 
 			parent.remove(expandName);
 
 			for (size_t bin=0; bin<binning.size()-1; ++bin) {
-				parent.add(binningName,libconfig::Setting::TypeList);
-				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin];
-				parent[binningName.c_str()].add(libconfig::Setting::TypeFloat) = binning[bin+1];
+				parent.add(binningName,Setting::TypeList);
+				parent[binningName.c_str()].add(Setting::TypeFloat) = binning[bin];
+				parent[binningName.c_str()].add(Setting::TypeFloat) = binning[bin+1];
 
-				configPtr newConfig(new libconfig::Config);
+				configPtr newConfig(new Config);
 				copyConfig(*config, *newConfig, waveDescription::debug());
 
 				parent.remove(binningName);
 
-				const std::vector<configPtr> newExpanded = expand(newConfig);
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "taylor") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = 0; i < degree+1; ++i) {
+				parent.add(realCoeffName, Setting::TypeList);
+				parent.add(imagCoeffName, Setting::TypeList);
+				for (int j = 0; j < i; ++j) {
+					parent[realCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+					parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				}
+				parent[realCoeffName.c_str()].add(Setting::TypeFloat) = 1.;
+				parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(realCoeffName);
+				parent.remove(imagCoeffName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "fourier") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = -degree; i < degree+1; ++i) {
+				parent.add(degreeName.c_str(), Setting::TypeInt) = i;
+
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(degreeName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
+				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
+			}
+		} else if (expandType == "chebyshev") {
+			int degree = 0;
+			if (not toExpand->lookupValue(degreeName, degree)) {
+				printErr << "no degree given. Aborting..." << endl;
+				throw;
+			}
+			parent.remove(expandName);
+			for (int i = 0; i < degree; ++i) {
+				parent.add(realCoeffName, Setting::TypeList);
+				parent.add(imagCoeffName, Setting::TypeList);
+				vector<double> coefficients = getChebyshevCoefficients(i);
+				for (int j = 0; j < i+1; ++j) {
+					parent[realCoeffName.c_str()].add(Setting::TypeFloat) = coefficients[j];
+					parent[imagCoeffName.c_str()].add(Setting::TypeFloat) = 0.;
+				}
+				configPtr newConfig(new Config);
+				copyConfig(*config, *newConfig, waveDescription::debug());
+
+				parent.remove(realCoeffName);
+				parent.remove(imagCoeffName);
+
+				const vector<configPtr> newExpanded = expand(newConfig);
 				expanded.insert(expanded.end(), newExpanded.begin(), newExpanded.end());
 			}
 		} else {
-			printErr << "expand type '" << expandType << "' unknown." << std::endl;
+			printErr << "expand type '" << expandType << "' unknown." << endl;
 		}
 
 		return expanded;
@@ -371,8 +471,8 @@ waveDescription::parseKeyFileLocalCopy()
 }
 
 
-std::ostream&
-waveDescription::printKeyFileContent(std::ostream& out, const std::string& keyFileContent)
+ostream&
+waveDescription::printKeyFileContent(ostream& out, const string& keyFileContent)
 {
 	if (keyFileContent != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
@@ -507,7 +607,7 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	bool   useReflectivityBasis = true;
 	// find amplitude group
 	const Setting&            rootKey      = _key->getRoot();
-	const libconfig::Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	const Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
 	if (amplitudeKey) {
 		if (amplitudeKey->lookupValue("formalism", formalism) and _debug)
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
@@ -539,6 +639,54 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 }
 
 
+namespace {
+
+
+	string
+	nameForMassDependence(const particlePtr          P,
+	                      const isobarDecayVertexPtr vertex)
+	{
+		ostringstream name;
+		if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
+			binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
+			name << "binned[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if(vertex->massDependence() && vertex->massDependence()->name() == "sawtooth") {
+			sawtoothMassDependencePtr massDep = static_pointer_cast<sawtoothMassDependence>(vertex->massDependence());
+			name << "sawtooth[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "polynomial") {
+			polynomialMassDependencePtr massDep = static_pointer_cast<polynomialMassDependence>(vertex->massDependence());
+			name << "polynomial[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getMassMin() << "," << massDep->getMassMax();
+			const vector<complex<double> >& coefficients = massDep->getCoefficients();
+			for (size_t i = 0; i < coefficients.size(); ++i) {
+				name << ",[" << coefficients[i].real() << "," << coefficients[i].imag() << "]";
+			}
+			name << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "complexExponential") {
+			complexExponentialMassDependencePtr massDep = static_pointer_cast<complexExponentialMassDependence>(vertex->massDependence());
+			name << "complexExponential[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getDegree() << "," << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
+		} else if (vertex->massDependence() && vertex->massDependence()->name() == "arbitraryFunction") {
+			arbitraryFunctionMassDependencePtr massDep = static_pointer_cast<arbitraryFunctionMassDependence>(vertex->massDependence());
+			name << "arbitrary[" << spinQn(P->isospin()) << parityQn(P->G()) << ","
+			     << spinQn(P->J()) << parityQn(P->P()) << parityQn(P->C()) << ","
+			     << massDep->getFunctionName() << "]";
+		} else
+			name << P->name();
+
+		return name.str();
+	}
+
+
+}
+
+
 string
 waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
                                       const isobarDecayVertexPtr& currentVertex)
@@ -562,15 +710,9 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		if (topo.isFsParticle(currentVertex->daughter1()))
 			waveName << currentVertex->daughter1()->name();
 		else {
-			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter1());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter1()->name();
+			particlePtr P = currentVertex->daughter1();
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(P));
+			waveName << nameForMassDependence(P, vertex);
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 
@@ -581,15 +723,9 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		if (topo.isFsParticle(currentVertex->daughter2()))
 			waveName << currentVertex->daughter2()->name();
 		else {
-			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2()));
-			if (vertex->massDependence() && vertex->massDependence()->name() == "binned") {
-				const particle& P = *(currentVertex->daughter2());
-				binnedMassDependencePtr massDep = static_pointer_cast<binnedMassDependence>(vertex->massDependence());
-				waveName << "[" << spinQn(P.isospin()) << parityQn(P.G()) << ","
-				         << spinQn(P.J()) << parityQn(P.P()) << parityQn(P.C()) << ","
-				         << massDep->getMassMin() << "," << massDep->getMassMax() << "]";
-			} else
-				waveName << currentVertex->daughter2()->name();
+			particlePtr P = currentVertex->daughter2();
+			isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(topo.toVertex(P));
+			waveName << nameForMassDependence(P, vertex);
 			waveName << waveNameFromTopology(topo, vertex);
 		}
 		waveName << "]";
@@ -662,7 +798,7 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 
 
 bool
-waveDescription::readKeyFileIntoLocalCopy(const std::string& keyFileName)
+waveDescription::readKeyFileIntoLocalCopy(const string& keyFileName)
 {
 	// read key file content into string
 	ifstream keyFile(keyFileName.c_str());
@@ -871,23 +1007,117 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 	else if (massDepType == "rhoPrime")
 		massDep = createRhoPrimeMassDep();
 	else if (massDepType == "binned") {
-		const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
+		const Setting* bounds = findLibConfigList(*massDepKey, "bounds" , false);
 		if (not bounds) {
-			printErr << "no bounds given for binned mass dependence." << std::endl;
+			printErr << "no bounds given for binned mass dependence." << endl;
 			throw;
 		}
 		const int length = bounds->getLength();
 		if (length != 2) {
-			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << endl;
 			throw;
 		}
 		const double mMin = (*bounds)[0];
 		const double mMax = (*bounds)[1];
 		if (mMin > mMax) {
-			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << endl;
 			throw;
 		}
-		massDep = createbinnedMassDependence(mMin, mMax);
+		massDep = createBinnedMassDependence(mMin, mMax);
+	}
+	else if (massDepType == "sawtooth") {
+		const Setting* bounds = findLibConfigList(*massDepKey, "bounds" , false);
+		if (not bounds) {
+			printErr << "no bounds given for sawtooth mass dependence." << endl;
+			throw;
+		}
+		const int length = bounds->getLength();
+		if (length != 2) {
+			printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << endl;
+			throw;
+		}
+		const double mMin = (*bounds)[0];
+		const double mMax = (*bounds)[1];
+		if (mMin > mMax) {
+			printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << endl;
+			throw;
+		}
+		massDep = createSawtoothMassDependence(mMin, mMax);
+	}
+	else if (massDepType == "polynomial") {
+		double mMin = 0.;
+		bool mMinFound = massDepKey->lookupValue("mMin", mMin);
+		double mMax = 0.;
+		bool mMaxFound = massDepKey->lookupValue("mMax", mMax);
+		if (mMinFound != mMaxFound) {
+			printErr << "something wrong with the setting of the mass boundaries. Aborting..." << endl;
+			throw;
+		}
+		if (not mMinFound) {
+			mMin = -1.; // No mass boundaries were given. So no scaling is set.
+			mMax =  1.; // This is achieved by setting mMin = -1. and mMax = 1.
+		}
+		const Setting* realCoefficients = findLibConfigList(*massDepKey, "realCoefficients" , false);
+		if (not realCoefficients) {
+			printErr << "no real coefficients given for polynomial mass dependence" << endl;
+			throw;
+		}
+		const int length = realCoefficients->getLength();
+		bool hasImagCoefficients = true;
+		const Setting* imagCoefficients = findLibConfigList(*massDepKey, "imagCoefficients" , false);
+		if (not imagCoefficients) {
+			hasImagCoefficients = false;
+		} else {
+			if (length != imagCoefficients->getLength()) {
+				printErr << "different number of real and imag coefficients given." << endl;
+				throw;
+			}
+		}
+		vector<complex<double> > coefficients;
+		for (int i = 0; i < length; ++i) {
+			if (hasImagCoefficients) {
+				coefficients.push_back(complex<double>((*realCoefficients)[i], (*imagCoefficients)[i]));
+			} else {
+				coefficients.push_back(complex<double>((*realCoefficients)[i], 0.));
+			}
+		}
+		massDep = createPolynomialMassDependencePtr(coefficients, mMin, mMax);
+	}
+	else if (massDepType == "complexExponential") {
+		int degree = 0;
+		if (not massDepKey->lookupValue("degree", degree)) {
+			printErr << "no degree specified" << endl;
+			throw;
+		}
+		double mMin = 0.;
+		if (not massDepKey->lookupValue("mMin", mMin)) {
+			printErr << "no mMin specified" << endl;
+			throw;
+
+		}
+		double mMax = 0.;
+		if (not massDepKey->lookupValue("mMax", mMax)) {
+			printErr << "no mMax specified" << endl;
+			throw;
+		}
+		massDep = createComplexExponentialMassDependencePtr(degree, mMin, mMax);
+	}
+	else if (massDepType == "arbitraryFunction") {
+		string functionName = "";
+		if (not massDepKey->lookupValue("functionName", functionName)) {
+			printErr << "no functionName specified" << endl;
+			throw;
+		}
+		string realFunctionString = "";
+		if (not massDepKey->lookupValue("realFunction", realFunctionString)) {
+			printErr << "no realFuntion specified" << endl;
+			throw;
+		}
+		string imagFunctionString = "";
+		if (not massDepKey->lookupValue("imagFunction", imagFunctionString)) {
+			imagFunctionString = "0.";
+		}
+		massDep = createArbitraryFunctionMassDependencePtr(functionName, realFunctionString, imagFunctionString);
 	}
 	else {
 		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
@@ -1092,13 +1322,50 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 		massDepKey.add("name", Setting::TypeString) = massDepName;
 
 		if (massDepName == "binned") {
-			// for this mass dependence additionally the mass bound
+			// for this mass dependence additionally the mass bounds
 			// have to be stored in the keyfile.
 			const binnedMassDependence& binned = dynamic_cast<const binnedMassDependence&>(massDep);
 
 			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
 			bounds.add(Setting::TypeFloat) = binned.getMassMin();
 			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
+		if (massDepName == "sawtooth") {
+			// for this mass dependence additionally the mass bounds
+			// have to be stored in the keyfile.
+			const sawtoothMassDependence& binned = dynamic_cast<const sawtoothMassDependence&>(massDep);
+
+			Setting& bounds = massDepKey.add("bounds", Setting::TypeList);
+			bounds.add(Setting::TypeFloat) = binned.getMassMin();
+			bounds.add(Setting::TypeFloat) = binned.getMassMax();
+		}
+		if (massDepName == "polynomial") {
+			// for this mass dependence additionally the polynomial coefficients have to be stored
+			const polynomialMassDependence& polynomial = dynamic_cast<const polynomialMassDependence&>(massDep);
+			const vector<complex<double> >& coefficients = polynomial.getCoefficients();
+			Setting& realCoefficients = massDepKey.add("realCoefficients", Setting::TypeList);
+			Setting& imagCoefficients = massDepKey.add("imagCoefficients", Setting::TypeList);
+			for (size_t i = 0; i < coefficients.size(); ++i) {
+				realCoefficients.add(Setting::TypeFloat) = coefficients[i].real();
+				imagCoefficients.add(Setting::TypeFloat) = coefficients[i].imag();
+			}
+			massDepKey.add("mMin", Setting::TypeFloat) = polynomial.getMassMin();
+			massDepKey.add("mMax", Setting::TypeFloat) = polynomial.getMassMax();
+		}
+		if (massDepName == "complexExponential") {
+			// for this mass dependence additionally the degree and range have to be stored
+			const complexExponentialMassDependence& exponential = dynamic_cast<const complexExponentialMassDependence&>(massDep);
+			massDepKey.add("degree", Setting::TypeInt) = exponential.getDegree();
+			massDepKey.add("mMin", Setting::TypeFloat) = exponential.getMassMin();
+			massDepKey.add("mMax", Setting::TypeFloat) = exponential.getMassMax();
+		}
+		if (massDepName == "arbitraryFunction") {
+			// For this mass dependence, the function definitions have to be stored
+			const arbitraryFunctionMassDependence& arbitrary = dynamic_cast<const arbitraryFunctionMassDependence&>(massDep);
+			massDepKey.add("functionName", Setting::TypeString) = arbitrary.getFunctionName();
+			massDepKey.add("realFunction", Setting::TypeString) = arbitrary.getRealFunctionString();
+			massDepKey.add("imagFunction", Setting::TypeString) = arbitrary.getImagFunctionString();
+
 		}
 	}
 	return true;

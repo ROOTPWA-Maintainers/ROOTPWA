@@ -77,14 +77,111 @@ binnedMassDependence::amp(const isobarDecayVertex& v)
 
 	const double M = parent->lzVec().M();
 
-	if (_mMin <= M && M < _mMax)
+	if (_mMin <= M and M < _mMax)
 		amp = 1.;
 
 	if (_debug)
-		printDebug << name() << " M = " << parent->lzVec().M()
-		                     << ", _mMin = " << _mMin
-		                     << ", _mMax = " << _mMax
-		                     << ", amp = " << amp << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2) = "
+		           << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+sawtoothMassDependence::amp(const isobarDecayVertex& v)
+{
+	complex<double> amp = 0.;
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	if (_mMin <= M and M < _mMax)
+		amp = 2. * (M - _mMin) / (_mMax - _mMin) - 1.;
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2) = "
+		           << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+polynomialMassDependence::amp(const isobarDecayVertex& v)
+{
+	complex<double> amp = 0.;
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const double x = 2. * (M - _mMin) / (_mMax - _mMin) - 1.;
+
+	double xToN = 1.;
+
+	for (size_t i = 0; i < _coefficients.size(); ++i) {
+		amp += _coefficients[i] * xToN;
+		xToN *= x;
+	}
+
+	if (_debug) {
+		ostringstream out;
+		out << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		    << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2";
+		for (size_t i = 0; i < _coefficients.size(); ++i) {
+			out << ", c" << i << " = " << maxPrecisionDouble(_coefficients[i]) << " (GeV/c^2)^(-" << i << ")";
+		}
+		out << ") = " << maxPrecisionDouble(amp);
+
+		printDebug << out.str() << endl;
+	}
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+complexExponentialMassDependence::amp(const isobarDecayVertex& v)
+{
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const complex<double> amp = polar<double>(1., 2. * M_PI * (M - _mMin)/(_mMax - _mMin) * _degree);
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, mMin = " << maxPrecision(_mMin)
+		           << " GeV/c^2, mMax = " << maxPrecision(_mMax) << " GeV/c^2, degree = " << _degree
+		           << ") = " << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+arbitraryFunctionMassDependence::amp(const isobarDecayVertex& v)
+{
+
+	const particlePtr& parent = v.parent();
+
+	const double M = parent->lzVec().M();
+
+	const complex<double> amp(_realPart.Eval(M), _imagPart.Eval(M));
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, functionName = '" << _functionName
+		           << "', function for real part = '" << _realFunctionString
+		           << "', function for imaginary part = '" << _imagFunctionString
+		           << "') = " << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }
@@ -181,7 +278,7 @@ rhoBreitWigner::amp(const isobarDecayVertex& v)
 	// A = sqrt(M0 * Gamma0 * (m / q0) * F)
 	const double          B  = M0 * M0 - M * M;
 	const double          C  = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
@@ -213,7 +310,7 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 	const double          C  = M0 * Gamma;
 	const double          A  = C * M / q;
 	const double          B  = M0 * M0 - M * M;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
@@ -257,18 +354,18 @@ f0980Flatte::amp(const isobarDecayVertex& v)
 	const double g2g1 = 4.21;
 
 	// break-up momenta
-	const std::complex<double> kPi = breakupMomentumComplex(M, _piChargedMass,   _piChargedMass);
-	const std::complex<double> kK  = breakupMomentumComplex(M, _kaonChargedMass, _kaonChargedMass);
+	const complex<double> kPi = breakupMomentumComplex(M, _piChargedMass,   _piChargedMass);
+	const complex<double> kK  = breakupMomentumComplex(M, _kaonChargedMass, _kaonChargedMass);
 
 	// phase space factors
-	const std::complex<double> rhoPi = 2. * kPi / M;
-	const std::complex<double> rhoK  = 2. * kK  / M;
+	const complex<double> rhoPi = 2. * kPi / M;
+	const complex<double> rhoK  = 2. * kK  / M;
 
-	std::complex<double> denom(M0*M0 - M*M, 0.);
+	complex<double> denom(M0*M0 - M*M, 0.);
 
 	denom -= imag * g1 * (rhoPi + g2g1*rhoK);
 
-	const std::complex<double> amp(1. / denom);
+	const complex<double> amp(1. / denom);
 
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
