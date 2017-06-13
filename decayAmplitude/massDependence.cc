@@ -87,6 +87,11 @@ rpwa::createMassDependence(const std::string& massDepType)
 		             "please use '" << f0980BreitWigner::Name() << "' instead." << std::endl;
 		return f0980BreitWigner::Create();
 	}
+	if (massDepType == "f_0(980)Flatte") {
+		printWarn << "mass dependence name '" << massDepType << "' is deprecated, "
+		             "please use '" << f0980FlatteBesII::Name() << "' instead." << std::endl;
+		return f0980FlatteBesII::Create();
+	}
 
 	// otherwise try to resolve the name
 	return ::createMassDependence<rpwa::flatMassDependence,
@@ -94,7 +99,7 @@ rpwa::createMassDependence(const std::string& massDepType)
 	                              rpwa::constWidthBreitWigner,
 	                              rpwa::rhoBreitWigner,
 	                              rpwa::f0980BreitWigner,
-	                              rpwa::f0980Flatte,
+	                              rpwa::f0980FlatteBesII,
 	                              rpwa::piPiSWaveAuMorganPenningtonM,
 	                              rpwa::piPiSWaveAuMorganPenningtonVes,
 	                              rpwa::piPiSWaveAuMorganPenningtonKachaev,
@@ -321,8 +326,8 @@ f0980BreitWigner::amp(const isobarDecayVertex& v)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-f0980Flatte::f0980Flatte()
-	: massDependenceImpl<f0980Flatte>()
+f0980FlatteBesII::f0980FlatteBesII()
+	: massDependenceImpl<f0980FlatteBesII>()
 {
 	particleDataTable& pdt = particleDataTable::instance();
 	const string partList[] = {"pi+", "pi0", "K+", "K0"};
@@ -338,7 +343,7 @@ f0980Flatte::f0980Flatte()
 
 
 complex<double>
-f0980Flatte::amp(const isobarDecayVertex& v)
+f0980FlatteBesII::amp(const isobarDecayVertex& v)
 {
 	const complex<double> imag(0, 1);
 
