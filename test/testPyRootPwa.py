@@ -560,7 +560,7 @@ def f0980BreitWigTestAmp():
 	assert(math.isnan(amp.real) and math.isnan(amp.imag))
 do_test(f0980BreitWigTestAmp, "Testing f0980BreitWigner.amp()")
 
-def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f_0(980)")
+def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f0980BreitWigner")
 do_test(f0980BreitWigTestName, "Testing f0980BreitWigner.name()")
 
 def SAuMoPenMTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonM()

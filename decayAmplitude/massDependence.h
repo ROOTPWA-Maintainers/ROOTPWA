@@ -259,7 +259,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		static constexpr const char* cName = "f_0(980)";
+		static constexpr const char* cName = "f0980BreitWigner";
 
 	};
 
