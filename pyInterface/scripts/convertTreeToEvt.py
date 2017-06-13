@@ -9,22 +9,22 @@ import pyRootPwa
 import pyRootPwa.core
 
 def writeParticleToFile (outFile, particleName, particleMomentum):
-	if pyRootPwa.core.particleDataTable.isInTable(particleName):
-		partProperties = pyRootPwa.core.particleDataTable.entry(particleName)
-		charge = partProperties.charge
-		energy = math.sqrt(particleMomentum.Px()**2 + particleMomentum.Py()**2 + particleMomentum.Pz()**2 + partProperties.mass2)
-		outFile.write(
-		                    str(pyRootPwa.core.particleDataTable.geantIdFromParticleName(particleName)) + " " +
-		                    str(charge) + " " +
-		                    '%.16e' % particleMomentum.Px() + " " +
-		                    '%.16e' % particleMomentum.Py() + " " +
-		                    '%.16e' % particleMomentum.Pz() + " " +
-		                    '%.16e' % energy + "\n"
-		                   )
-		return True
-	else:
+	if not pyRootPwa.core.particleDataTable.isInTable(particleName):
 		pyRootPwa.utils.printErr("particle '" + particleName + "' not found in particleDataTable.")
 		return False
+
+	partProperties = pyRootPwa.core.particleDataTable.entry(particleName)
+	charge = partProperties.charge
+	energy = math.sqrt(particleMomentum.Px()**2 + particleMomentum.Py()**2 + particleMomentum.Pz()**2 + partProperties.mass2)
+	outFile.write(
+	                    str(pyRootPwa.core.particleDataTable.geantIdFromParticleName(particleName)) + " " +
+	                    str(charge) + " " +
+	                    '%.16e' % particleMomentum.Px() + " " +
+	                    '%.16e' % particleMomentum.Py() + " " +
+	                    '%.16e' % particleMomentum.Pz() + " " +
+	                    '%.16e' % energy + "\n"
+	                   )
+	return True
 
 if __name__ == "__main__":
 

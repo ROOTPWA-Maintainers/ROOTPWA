@@ -130,7 +130,7 @@ if __name__ == "__main__":
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	parser.add_argument("--weight-file", type=str, metavar="weightFile", dest="weightFile", help="weightFile")
 	arguments = parser.parse_args()
-	if len(arguments.massBins) == 0:
+	if not arguments.massBins:
 		arguments.massBins.append("all")
 
 	if arguments.type not in ["data", "acc", "gen"]:

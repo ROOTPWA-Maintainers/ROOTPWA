@@ -53,7 +53,7 @@ if __name__ == "__main__":
 			sys.exit(1)
 		waveList = [allWaveNames[args.keyfileIndex]]
 		pyRootPwa.utils.printInfo("using keyfile index " + str(args.keyfileIndex) + " resulting in the wave name '" + waveList[0] + "'.")
-	if len(waveList) == 0:
+	if not waveList:
 		waveList = fileManager.getWaveNameList()
 
 	eventsTypes = []
