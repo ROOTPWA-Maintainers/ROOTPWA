@@ -30,6 +30,8 @@
 #ifndef RESONANCEFIT_FORWARD_HH
 #define RESONANCEFIT_FORWARD_HH
 
+#include <memory>
+
 namespace rpwa {
 
 	namespace resonanceFit {
