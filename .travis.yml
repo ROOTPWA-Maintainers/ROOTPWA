@@ -6,6 +6,10 @@
 sudo: required
 dist: trusty
 
+cache:
+  directories:
+    - deps
+
 language: cpp
 
 # packages required in all cases
@@ -71,10 +75,10 @@ before_install:
     - sudo ln -sf ${TRAVIS_RPWA_PYTHON_LIBDIR}/libpython2.7.so ${TRAVIS_RPWA_PYTHON_LIBPL}/libpython2.7.so
 install:
     - ./travisCI/install-cmake.sh
-    - export PATH=${PWD}/cmake/bin:${PATH}
+    - export PATH=${TRAVIS_BUILD_DIR}/deps/cmake/bin:${PATH}
     - ./travisCI/install-root.sh
-    - . ./root/bin/thisroot.sh
-    - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${PWD}/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
+    - . ${TRAVIS_BUILD_DIR}/deps/root/bin/thisroot.sh
+    - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
 script:
     # exit immediately if an error is encountered
     - set -e
