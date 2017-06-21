@@ -233,12 +233,25 @@ rpwa::resonanceFit::component::component(const size_t id,
 	// is only cached for the given bin in val()
 	_binsEqualValues = initBinsEqualValuesForSingleBins(nrBins);
 
+	std::vector<std::set<std::string>> waveNames(nrBins, std::set<std::string>());
 	std::map<std::pair<std::string, size_t>, size_t> couplingsQN;
 	for(size_t idxDecayChannel = 0; idxDecayChannel < _channels.size(); ++idxDecayChannel) {
 		const std::string waveName = _channels[idxDecayChannel].getWaveName();
 
 		// get list of bins this wave is defined in
 		const std::vector<size_t>& binsForWave = _channels[idxDecayChannel].getBins();
+
+		// check that each wave only appears once in each bin
+		for(size_t i = 0; i < binsForWave.size(); ++i) {
+			const size_t idxBin = binsForWave[i];
+
+			if(waveNames[idxBin].count(waveName) != 0) {
+				printErr << "wave '" << waveName << "' used for more than one decay channel in component '" << name << "' (bin " << idxBin << "). Aborting..." << std::endl;
+				throw;
+			}
+
+			waveNames[idxBin].insert(waveName);
+		}
 
 		bool readCouplings = true;
 		bool readBranching = false;
