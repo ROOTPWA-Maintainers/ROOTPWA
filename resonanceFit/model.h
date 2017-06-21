@@ -53,7 +53,7 @@ namespace rpwa {
 		public:
 
 			model(const rpwa::resonanceFit::inputConstPtr& fitInput,
-			      const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
+			      const std::vector<rpwa::resonanceFit::componentConstPtr>& components,
 			      const rpwa::resonanceFit::fsmdConstPtr& fsmd,
 			      const std::vector<std::string>& anchorWaveNames,
 			      const std::vector<std::string>& anchorComponentNames);
@@ -122,9 +122,9 @@ namespace rpwa {
 
 			bool _mappingEqualInAllBins;
 
-			std::vector<rpwa::resonanceFit::componentConstPtr> _components;
+			const std::vector<rpwa::resonanceFit::componentConstPtr> _components;
 
-			rpwa::resonanceFit::fsmdConstPtr _fsmd;
+			const rpwa::resonanceFit::fsmdConstPtr _fsmd;
 
 			size_t _nrParameters;
 			size_t _maxChannelsInComponent;

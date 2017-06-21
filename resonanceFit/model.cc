@@ -41,11 +41,13 @@
 
 
 rpwa::resonanceFit::model::model(const rpwa::resonanceFit::inputConstPtr& fitInput,
-                                 const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
+                                 const std::vector<rpwa::resonanceFit::componentConstPtr>& components,
                                  const rpwa::resonanceFit::fsmdConstPtr& fsmd,
                                  const std::vector<std::string>& anchorWaveNames,
                                  const std::vector<std::string>& anchorComponentNames)
 	: _mappingEqualInAllBins(false),
+	  _components(components),
+	  _fsmd(fsmd),
 	  _nrParameters(0),
 	  _maxChannelsInComponent(0),
 	  _maxParametersInComponent(0),
@@ -66,31 +68,30 @@ rpwa::resonanceFit::model::model(const rpwa::resonanceFit::inputConstPtr& fitInp
 	checkSize(_anchorComponentNames,
 	          nrBins, "number of bins is not correct for anchor component names.");
 
-	for(size_t idxComponent = 0; idxComponent < comp.size(); ++idxComponent) {
-		_components.push_back(comp[idxComponent]);
+	for(size_t idxComponent = 0; idxComponent < _components.size(); ++idxComponent) {
+		const componentConstPtr& component = _components[idxComponent];
 
 		// number of resonance parameters
-		_nrParameters += comp[idxComponent]->getNrParameters();
-		_maxParametersInComponent = std::max(_maxParametersInComponent, comp[idxComponent]->getNrParameters());
+		_nrParameters += component->getNrParameters();
+		_maxParametersInComponent = std::max(_maxParametersInComponent, component->getNrParameters());
 
 		// number of coupling parameters
-		for(size_t idxCoupling = 0; idxCoupling < comp[idxComponent]->getNrCouplings(); ++idxCoupling) {
-			const rpwa::resonanceFit::component::channel& channel = comp[idxComponent]->getChannelFromCouplingIdx(idxCoupling);
+		for(size_t idxCoupling = 0; idxCoupling < component->getNrCouplings(); ++idxCoupling) {
+			const rpwa::resonanceFit::component::channel& channel = component->getChannelFromCouplingIdx(idxCoupling);
 			_nrParameters += 2 * channel.getBins().size();
 		}
 
 		// number of branching parameters (some branchings are always real and fixed to 1)
-		for(size_t idxBranching = 0; idxBranching < comp[idxComponent]->getNrBranchings(); ++idxBranching) {
-			if(not comp[idxComponent]->isBranchingFixed(idxBranching)) {
+		for(size_t idxBranching = 0; idxBranching < component->getNrBranchings(); ++idxBranching) {
+			if(not component->isBranchingFixed(idxBranching)) {
 				_nrParameters += 2;
 			}
 		}
 
 		// maximum number of channels in one component
-		_maxChannelsInComponent = std::max(_maxChannelsInComponent, comp[idxComponent]->getNrChannels());
+		_maxChannelsInComponent = std::max(_maxChannelsInComponent, component->getNrChannels());
 	}
 
-	_fsmd = fsmd;
 	if(_fsmd) {
 		size_t sumNrParameters = 0;
 		const size_t maxNrBins = _fsmd->isSameFunctionForAllBins() ? 1 : _fsmd->getNrBins();
