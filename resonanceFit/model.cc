@@ -42,7 +42,7 @@
 
 rpwa::resonanceFit::model::model(const rpwa::resonanceFit::inputConstPtr& fitInput,
                                  const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
-                                 const rpwa::resonanceFit::fsmdPtr& fsmd,
+                                 const rpwa::resonanceFit::fsmdConstPtr& fsmd,
                                  const std::vector<std::string>& anchorWaveNames,
                                  const std::vector<std::string>& anchorComponentNames)
 	: _mappingEqualInAllBins(false),

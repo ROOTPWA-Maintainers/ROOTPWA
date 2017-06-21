@@ -1370,7 +1370,7 @@ namespace {
 	}
 
 
-	rpwa::resonanceFit::fsmdPtr
+	rpwa::resonanceFit::fsmdConstPtr
 	readModelFsmd(const YAML::Node& configModel,
 	              const rpwa::resonanceFit::baseDataConstPtr& fitData,
 	              rpwa::resonanceFit::parameters& fitParameters,
@@ -1384,7 +1384,7 @@ namespace {
 		const YAML::Node& configFsmd = configModel["finalStateMassDependence"];
 		if(not configFsmd) {
 			// final-state mass-dependence might not be specified
-			return rpwa::resonanceFit::fsmdPtr();
+			return rpwa::resonanceFit::fsmdConstPtr();
 		}
 
 		if(not configFsmd.IsMap() and not configFsmd.IsSequence()) {
@@ -1392,7 +1392,7 @@ namespace {
 			throw;
 		}
 
-		rpwa::resonanceFit::fsmdPtr fsmd;
+		rpwa::resonanceFit::fsmdConstPtr fsmd;
 		if(configFsmd.IsMap()) {
 			// a single final-state mass-dependence is given
 			std::shared_ptr<TFormula> function;
@@ -1498,11 +1498,11 @@ rpwa::resonanceFit::readModel(const YAML::Node& configRoot,
 	                                                                                           useBranchings);
 
 	// get information for creating the final-state mass-dependence
-	const rpwa::resonanceFit::fsmdPtr& fsmd = readModelFsmd(configModel,
-	                                                        fitData,
-	                                                        fitParameters,
-	                                                        fitParametersError,
-	                                                        components.size());
+	const rpwa::resonanceFit::fsmdConstPtr& fsmd = readModelFsmd(configModel,
+	                                                             fitData,
+	                                                             fitParameters,
+	                                                             fitParametersError,
+	                                                             components.size());
 
 	return std::make_shared<rpwa::resonanceFit::model>(fitInput,
 	                                                   components,

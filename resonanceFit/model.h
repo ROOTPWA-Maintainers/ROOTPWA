@@ -54,7 +54,7 @@ namespace rpwa {
 
 			model(const rpwa::resonanceFit::inputConstPtr& fitInput,
 			      const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
-			      const rpwa::resonanceFit::fsmdPtr& fsmd,
+			      const rpwa::resonanceFit::fsmdConstPtr& fsmd,
 			      const std::vector<std::string>& anchorWaveNames,
 			      const std::vector<std::string>& anchorComponentNames);
 
@@ -124,7 +124,7 @@ namespace rpwa {
 
 			std::vector<rpwa::resonanceFit::componentConstPtr> _components;
 
-			rpwa::resonanceFit::fsmdPtr _fsmd;
+			rpwa::resonanceFit::fsmdConstPtr _fsmd;
 
 			size_t _nrParameters;
 			size_t _maxChannelsInComponent;
