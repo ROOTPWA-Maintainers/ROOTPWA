@@ -163,6 +163,11 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::inputConstPtr& 
 				for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 					const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
+					// check that current bin is used in this decay channel
+					const std::vector<size_t>& bins = channel.getBins();
+					if(std::find(bins.begin(), bins.end(), idxBin) == bins.end())
+						continue;
+
 					if(channel.getWaveName() == wave.waveName()) {
 						found = true;
 						break;
