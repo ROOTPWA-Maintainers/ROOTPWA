@@ -167,8 +167,6 @@ rpwa::resonanceFit::component::channel::channel(const std::string& waveName,
 	          maxNrMassBins, "maximal number of mass bins is not correct for phase-space integrals.",
 	          maxNrWaves, "maximal number of waves is not correct for phase-space integrals.");
 
-	_anchors.resize(nrBins, false),
-
 	_interpolators.resize(nrBins);
 	_phaseSpaceIntegrals.resize(boost::extents[nrBins][maxNrMassBins]);
 	for(size_t idxBin = 0; idxBin < nrBins; ++idxBin) {
@@ -326,14 +324,6 @@ rpwa::resonanceFit::component::component(const size_t id,
 }
 
 
-void
-rpwa::resonanceFit::component::setChannelAnchor(const size_t idxBin,
-                                                const size_t idxDecayChannel)
-{
-	_channels[idxDecayChannel].setAnchor(idxBin);
-}
-
-
 size_t
 rpwa::resonanceFit::component::importCouplings(const double* par,
                                                rpwa::resonanceFit::parameters& fitParameters,
@@ -345,14 +335,9 @@ rpwa::resonanceFit::component::importCouplings(const double* par,
 		const std::vector<size_t>& bins = channel.getBins();
 		for(size_t i = 0; i < bins.size(); ++i) {
 			const size_t idxBin = bins[i];
-			std::complex<double> coupling;
-			if(channel.isAnchor(idxBin)) {
-				coupling = std::complex<double>(par[counter], 0.);
-				counter += 1;
-			} else {
-				coupling = std::complex<double>(par[counter], par[counter+1]);
-				counter += 2;
-			}
+
+			const std::complex<double> coupling(par[counter], par[counter+1]);
+			counter += 2;
 
 			if(fitParameters.getCoupling(getId(), idxCoupling, idxBin) != coupling) {
 				fitParameters.setCoupling(getId(), idxCoupling, idxBin, coupling);

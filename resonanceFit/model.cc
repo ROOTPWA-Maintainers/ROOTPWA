@@ -41,7 +41,7 @@
 
 
 rpwa::resonanceFit::model::model(const rpwa::resonanceFit::inputConstPtr& fitInput,
-                                 const std::vector<rpwa::resonanceFit::componentPtr>& comp,
+                                 const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
                                  const rpwa::resonanceFit::fsmdPtr& fsmd,
                                  const std::vector<std::string>& anchorWaveNames,
                                  const std::vector<std::string>& anchorComponentNames)
@@ -233,7 +233,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::inputConstPtr& 
 			return false;
 		}
 
-		const componentPtr& anchorComponent = _components[_anchorComponentIndices[idxBin]];
+		const componentConstPtr& anchorComponent = _components[_anchorComponentIndices[idxBin]];
 
 		size_t firstChannel = 0;
 		// loop over channels of component and see if wave is there
@@ -250,10 +250,7 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::inputConstPtr& 
 			printErr << "anchor wave '" << _anchorWaveNames[idxBin] << "' has to be channel number " << firstChannel << " in anchor component '" << _anchorComponentNames[idxBin] << "' in bin " << idxBin << "." << std::endl;
 			return false;
 		}
-
-		anchorComponent->setChannelAnchor(idxBin, _anchorChannelIndices[idxBin]);
 	}
-	_nrParameters -= fitInput->nrBins();
 
 	// can we simplify stuff by assuming all bins have the same mapping?
 	_mappingEqualInAllBins = true;

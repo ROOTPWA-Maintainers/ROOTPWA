@@ -67,9 +67,6 @@ namespace rpwa {
 				const std::string& getWaveName() const { return _waveName; }
 				const std::vector<size_t> getWaveIndices() const { return _waveIndices; }
 
-				bool isAnchor(const size_t idxBin) const { return _anchors[idxBin]; }
-				void setAnchor(const size_t idxBin) { _anchors[idxBin] = true; }
-
 				const std::vector<size_t>& getBins() const { return _bins; }
 
 				double getPhaseSpaceIntegral(const size_t idxBin,
@@ -80,8 +77,6 @@ namespace rpwa {
 
 				const std::string _waveName;
 				const std::vector<size_t> _waveIndices;
-
-				std::vector<bool> _anchors;
 
 				std::vector<size_t> _bins;
 
@@ -108,7 +103,6 @@ namespace rpwa {
 			const channel& getChannel(const size_t idxDecayChannel) const { return _channels[idxDecayChannel]; }
 			const channel& getChannelFromCouplingIdx(const size_t idxCoupling) const { return _channels[_channelsFromCoupling[idxCoupling]]; }
 			const channel& getChannelFromBranchingIdx(const size_t idxBranching) const { return _channels[_channelsFromBranching[idxBranching]]; }
-			void setChannelAnchor(const size_t idxBin, const size_t idxDecayChannel);
 
 			virtual size_t getTotalNrChannels() const { return _channels.size(); }
 

@@ -286,7 +286,7 @@ main(int    argc,
 							printedHeader = true;
 						}
 
-						output << "            channel " << idxChannel << ": " << channel.getWaveName() << (channel.isAnchor(idxBin) ? " (anchor)" : "") << std::endl;
+						output << "            channel " << idxChannel << ": " << channel.getWaveName() << (fitModel->isAnchor(idxBin, channel.getWaveIndices()[idxBin], idxComponent) ? " (anchor)" : "") << std::endl;
 					}
 				}
 			}

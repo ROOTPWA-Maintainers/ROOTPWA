@@ -327,7 +327,13 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 					                             parameter.real());
 					++parcount;
 
-					if(not channel.isAnchor(idxBin)) {
+					if(_fitModel->isAnchor(idxBin, channel.getWaveIndices()[idxBin], idxComponent)) {
+						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to 0.0 (anchor)" << std::endl;
+						_minimizer->SetFixedVariable(parcount,
+						                             prefixName.str() + "__imag",
+						                             0.0);
+						++parcount;
+					} else {
 						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to " << parameter.imag() << std::endl;
 						_minimizer->SetFixedVariable(parcount,
 						                             prefixName.str() + "__imag",
@@ -342,7 +348,13 @@ rpwa::resonanceFit::minimizerRoot::initParameters(const rpwa::resonanceFit::para
 					                        0.1);
 					++parcount;
 
-					if(not channel.isAnchor(idxBin)) {
+					if(_fitModel->isAnchor(idxBin, channel.getWaveIndices()[idxBin], idxComponent)) {
+						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') fixed to 0.0 (anchor)" << std::endl;
+						_minimizer->SetFixedVariable(parcount,
+						                             prefixName.str() + "__imag",
+						                             0.0);
+						++parcount;
+					} else {
 						printInfo << "parameter " << parcount << " ('" << (prefixName.str() + "__imag") << "') set to " << parameter.imag() << std::endl;
 						_minimizer->SetVariable(parcount,
 						                        prefixName.str() + "__imag",

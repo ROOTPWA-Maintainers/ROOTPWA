@@ -42,7 +42,8 @@ namespace rpwa {
 		typedef std::shared_ptr<const baseData> baseDataConstPtr;
 
 		class component;
-		typedef std::shared_ptr<component> componentPtr;
+		// 'component' should not be changed after construction, so this is not needed:
+		// typedef std::shared_ptr<component> componentPtr;
 		typedef std::shared_ptr<const component> componentConstPtr;
 
 		class data;

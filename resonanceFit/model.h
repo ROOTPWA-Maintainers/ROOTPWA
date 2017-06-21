@@ -53,7 +53,7 @@ namespace rpwa {
 		public:
 
 			model(const rpwa::resonanceFit::inputConstPtr& fitInput,
-			      const std::vector<rpwa::resonanceFit::componentPtr>& comp,
+			      const std::vector<rpwa::resonanceFit::componentConstPtr>& comp,
 			      const rpwa::resonanceFit::fsmdPtr& fsmd,
 			      const std::vector<std::string>& anchorWaveNames,
 			      const std::vector<std::string>& anchorComponentNames);
@@ -77,6 +77,7 @@ namespace rpwa {
 			const std::vector<std::string>& anchorComponentNames() const { return _anchorComponentNames; }
 			size_t anchorWaveIndex(const size_t idxBin) const { return _anchorWaveIndices[idxBin]; }
 			size_t anchorComponentIndex(const size_t idxBin) const { return _anchorComponentIndices[idxBin]; }
+			bool isAnchor(const size_t idxBin, const size_t idxWave, const size_t idxComponent) const { return _anchorWaveIndices[idxBin] == idxWave and _anchorComponentIndices[idxBin] == idxComponent; }
 
 			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(const size_t idxBin, const size_t idxWave) const { return _waveComponentChannel[idxBin][idxWave]; }
 
@@ -121,7 +122,7 @@ namespace rpwa {
 
 			bool _mappingEqualInAllBins;
 
-			std::vector<rpwa::resonanceFit::componentPtr> _components;
+			std::vector<rpwa::resonanceFit::componentConstPtr> _components;
 
 			rpwa::resonanceFit::fsmdPtr _fsmd;
 
