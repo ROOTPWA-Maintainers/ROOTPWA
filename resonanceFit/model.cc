@@ -29,6 +29,8 @@
 
 #include "model.h"
 
+#include <set>
+
 #include <reportingUtils.hpp>
 
 #include "cache.h"
@@ -112,8 +114,17 @@ rpwa::resonanceFit::model::initMapping(const rpwa::resonanceFit::inputConstPtr& 
 {
 	// check that all waves used in a decay channel have been defined
 	const size_t nrComponents = _components.size();
+	std::set<std::string> componentNames;
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 		const componentConstPtr& component = _components[idxComponent];
+
+		// check that each component is only defined once
+		if(componentNames.count(component->getName()) != 0) {
+			printErr << "component '" << component->getName() << "' defined more than once." << std::endl;
+			return false;
+		}
+		componentNames.insert(component->getName());
+
 		for(size_t idxChannel = 0; idxChannel < component->getNrChannels(); ++idxChannel) {
 			const rpwa::resonanceFit::component::channel& channel = component->getChannel(idxChannel);
 
