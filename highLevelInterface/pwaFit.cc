@@ -63,7 +63,7 @@ namespace ROOT {
 
 fitResultPtr
 rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
-                  const binningMapType&                  binningMap,
+                  const multibinBoundariesType&          multibinBoundaries,
                   const unsigned int                     seed,
                   const string&                          startValFileName,
                   const bool                             checkHessian,
@@ -98,7 +98,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaFit with the following parameters:" << endl;
-	for (const auto& bin: binningMap) {
+	for (const auto& bin: multibinBoundaries) {
 		char prevFill = std::cout.fill('.');
 		cout << "    " << bin.first << " bin " << std::setw((bin.first.length() < 45) ? (45 - bin.first.length()) : 0) << " ["
 		     << bin.second.first << ", " << bin.second.second << "]" << endl;
@@ -178,8 +178,8 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 		// TODO not only take the mass into account when searching
 		//      for the fit result to use as start values, but also
 		//      the other binning values
-		const double massBinMin    = binningMap.at("mass").first;
-		const double massBinMax    = binningMap.at("mass").second;
+		const double massBinMin    = multibinBoundaries.at("mass").first;
+		const double massBinMax    = multibinBoundaries.at("mass").second;
 		const double massBinCenter = (massBinMin + massBinMax) / 2;
 
 		// open root file
@@ -412,7 +412,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             binningMap,
+	             multibinBoundaries,
 	             minimizer->MinValue(),
 	             L.rank(),
 	             prodAmps,

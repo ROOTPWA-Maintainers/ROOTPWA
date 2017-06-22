@@ -58,13 +58,13 @@ def pwaFit(eventAndAmpFileDict,
 
 	fitResults = [ ]
 	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaFit(likelihood       = likelihood,
-		                                  binningMap       = multiBin.boundaries,
-		                                  seed             = fitSeed,
-		                                  startValFileName = startValFileName,
-		                                  checkHessian     = checkHessian,
-		                                  saveSpace        = saveSpace,
-		                                  verbose          = verbose)
+		fitResult = pyRootPwa.core.pwaFit(likelihood         = likelihood,
+		                                  multibinBoundaries = multiBin.boundaries,
+		                                  seed               = fitSeed,
+		                                  startValFileName   = startValFileName,
+		                                  checkHessian       = checkHessian,
+		                                  saveSpace          = saveSpace,
+		                                  verbose            = verbose)
 		fitResults.append(fitResult)
 	return fitResults
 
@@ -123,12 +123,12 @@ def pwaNloptFit(eventAndAmpFileDict,
 
 	fitResults = [ ]
 	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaNloptFit(likelihood       = likelihood,
-		                                       binningMap       = multiBin.boundaries,
-		                                       seed             = fitSeed,
-		                                       startValFileName = startValFileName,
-		                                       checkHessian     = checkHessian,
-		                                       saveSpace        = saveSpace,
-		                                       verbose          = verbose)
+		fitResult = pyRootPwa.core.pwaNloptFit(likelihood         = likelihood,
+		                                       multibinBoundaries = multiBin.boundaries,
+		                                       seed               = fitSeed,
+		                                       startValFileName   = startValFileName,
+		                                       checkHessian       = checkHessian,
+		                                       saveSpace          = saveSpace,
+		                                       verbose            = verbose)
 		fitResults.append(fitResult)
 	return fitResults

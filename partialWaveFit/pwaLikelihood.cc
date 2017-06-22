@@ -1360,8 +1360,8 @@ pwaLikelihood<complexT>::finishInit()
 
 template<typename complexT>
 bool
-pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, double> >& binningMap,
-                                            const vector<const eventMetadata*>&       evtMetas)
+pwaLikelihood<complexT>::setOnTheFlyBinning(const multibinBoundariesType&       multibinBoundaries,
+                                            const vector<const eventMetadata*>& evtMetas)
 {
 	for (size_t metaIndex = 0; metaIndex < evtMetas.size(); ++metaIndex) {
 		const eventMetadata* evtMeta = evtMetas[metaIndex];
@@ -1376,8 +1376,8 @@ pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, doubl
 		}
 		const string& evtHash = evtMeta->contentHash();
 		map<string, double> binningVariables;
-		typedef map<string, pair<double, double> >::const_iterator it_type;
-		for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+		typedef multibinBoundariesType::const_iterator it_type;
+		for(it_type iterator = multibinBoundaries.begin(); iterator != multibinBoundaries.end(); ++iterator) {
 			const string& additionalVar = iterator->first;
 			binningVariables[additionalVar] = 0.;
 			evtTree->SetBranchAddress(additionalVar.c_str(), &binningVariables[additionalVar]);
@@ -1386,7 +1386,7 @@ pwaLikelihood<complexT>::setOnTheFlyBinning(const map<string, pair<double, doubl
 		for (long eventIndex = 0; eventIndex < evtTree->GetEntriesFast(); ++eventIndex) {
 			evtTree->GetEntry(eventIndex);
 			bool useEvent = true;
-			for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+			for(it_type iterator = multibinBoundaries.begin(); iterator != multibinBoundaries.end(); ++iterator) {
 				const string& additionalVar = iterator->first;
 				const double& lowerBound = iterator->second.first;
 				const double& upperBound = iterator->second.second;

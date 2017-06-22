@@ -40,7 +40,7 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
                                        const eventMetadata::eventsTypeEnum&       eventsType,
                                        const vector<string>&                      productionKinematicsParticleNames,
                                        const vector<string>&                      decayKinematicsParticleNames,
-                                       const map<string, pair<double, double> >&  binningMap,
+                                       const multibinBoundariesType&              multibinBoundaries,
                                        const vector<string>&                      additionalVariableLabels,
                                        const int&                                 splitlevel,
                                        const int&                                 buffsize)
@@ -59,7 +59,7 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
 	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);
 	_nmbDecayKinematicsParticles = decayKinematicsParticleNames.size();
-	_metadata.setBinningMap(binningMap);
+	_metadata.setMultibinBoundaries(multibinBoundaries);
 
 	// prepare event tree
 	_productionKinematicsMomenta = new TClonesArray("TVector3", _nmbProductionKinematicsParticles);

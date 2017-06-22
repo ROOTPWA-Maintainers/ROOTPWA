@@ -42,12 +42,12 @@ ostream& rpwa::ampIntegralMatrixMetadata::print(ostream& out) const {
 	out << "ampIntegralMatrixMetadata:"                                << endl
 	    << "    contentHash ......... '" << _contentHash << "'"        << endl
 	    << "    rootpwa git hash .... '" << _rootpwaGitHash << "'"     << endl
-	    << "    binning map";
-	if(_binningMap.empty()) {
-		out << " ......... " << "<empty>" << endl;
+	    << "    multibin boundaries";
+	if(_multibinBoundaries.empty()) {
+		out << " . " << "<empty>" << endl;
 	} else {
 		out << ": " << endl;
-		for(binningMapType::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
+		for(multibinBoundariesType::const_iterator it = _multibinBoundaries.begin(); it != _multibinBoundaries.end(); ++it) {
 			out << "        variable '" << it->first << "' range " << it->second << endl;
 		}
 	}
@@ -125,8 +125,8 @@ bool rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix(const ampIntegralMatri
 			}
 		}
 	}
-	if (not mergeBinningMap(second.binningMap())) {
-		printErr << "could not merge binning maps." << endl;
+	if (not mergeMultibinBoundaries(second.multibinBoundaries())) {
+		printErr << "could not merge multibin boundaries." << endl;
 		return false;
 	}
 	{
@@ -185,23 +185,23 @@ bool rpwa::ampIntegralMatrixMetadata::addKeyFileContent(const string& content) {
 }
 
 
-bool rpwa::ampIntegralMatrixMetadata::mergeBinningMap(const map<string, pair<double, double> >& binningMap) {
-	if (binningMap.size() != _binningMap.size()) {
+bool rpwa::ampIntegralMatrixMetadata::mergeMultibinBoundaries(const multibinBoundariesType& multibinBoundaries) {
+	if (multibinBoundaries.size() != _multibinBoundaries.size()) {
 		printErr << "numbers of binning variables do not match." << endl;
 		return false;
 	}
-	map<string, pair<double, double> > newMap;
-	typedef map<string, pair<double, double> >::const_iterator it_type;
-	for(it_type iterator = binningMap.begin(); iterator != binningMap.end(); ++iterator) {
+	multibinBoundariesType newMap;
+	typedef multibinBoundariesType::const_iterator it_type;
+	for(it_type iterator = multibinBoundaries.begin(); iterator != multibinBoundaries.end(); ++iterator) {
 		const string binningVariable = iterator->first;
-		if (_binningMap.find(binningVariable) == _binningMap.end()) {
+		if (_multibinBoundaries.find(binningVariable) == _multibinBoundaries.end()) {
 			printErr << "variable '" << binningVariable << "' not in binning map." << endl;
 			return false;
 		}
-		newMap[binningVariable] = pair<double, double>(std::min(iterator->second.first, _binningMap[binningVariable].first),
-		                                               std::max(iterator->second.second, _binningMap[binningVariable].second));
+		newMap[binningVariable] = rpwa::boundaryType(std::min(iterator->second.first, _multibinBoundaries[binningVariable].first),
+		                                             std::max(iterator->second.second, _multibinBoundaries[binningVariable].second));
 	}
-	_binningMap = newMap;
+	_multibinBoundaries = newMap;
 	return true;
 }
 

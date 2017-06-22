@@ -120,7 +120,7 @@ if __name__ == "__main__":
 	newResult = pyRootPwa.core.fitResult()
 	newResult.fill(result.nmbEvents(),
 	               result.normNmbEvents(),
-	               result.binningMap(),
+	               result.multibinBoundaries(),
 	               result.logLikelihood(),
 	               result.rank(),
 	               result.prodAmps(),

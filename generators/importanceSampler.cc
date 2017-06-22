@@ -45,6 +45,7 @@
 
 #include"diffractivePhaseSpace.h"
 #include"importanceSampler.h"
+#include"multibinTypes.h"
 #include"nBodyPhaseSpaceKinematics.h"
 #include"randomNumberGenerator.h"
 
@@ -341,7 +342,7 @@ rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
 		decayKinParticleNames[part] = _finalState.particles[part].name();
 	}
 
-	std::map<std::string, std::pair<double, double> > binning;
+	multibinBoundariesType binning;
 	binning[massVariableName]   = _massAndTPrimePicker->massRange();
 	binning[tPrimeVariableName] = _massAndTPrimePicker->tPrimeRange();
 	std::vector<std::string> additionalVarLabels;

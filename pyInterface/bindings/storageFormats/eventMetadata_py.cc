@@ -13,11 +13,11 @@ namespace bp = boost::python;
 
 namespace {
 
-	bp::dict eventMetadata_binningMap(const rpwa::eventMetadata& self)
+	bp::dict eventMetadata_multibinBoundaries(const rpwa::eventMetadata& self)
 	{
 		bp::dict retval;
-		std::map<std::string, std::pair<double, double> > binningMap = self.binningMap();
-		for(std::map<std::string, std::pair<double, double> >::const_iterator it = binningMap.begin(); it != binningMap.end(); ++it)
+		rpwa::multibinBoundariesType multibinBoundaries = self.multibinBoundaries();
+		for(rpwa::multibinBoundariesType::const_iterator it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it)
 		{
 			bp::tuple val = bp::make_tuple<double, double>(it->second.first, it->second.second);
 			retval[it->first] = val;
@@ -88,7 +88,7 @@ void rpwa::py::exportEventMetadata() {
 		)
 		.def("__eq__", &::eventMetadata___eq__)
 		.def("__eq__", &rpwa::eventMetadata::operator==)
-		.def("binningMap", &eventMetadata_binningMap)
+		.def("multibinBoundaries", &eventMetadata_multibinBoundaries)
 		.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
 		.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)
 		.def("additionalSavedVariableLables", &eventMetadata_additionalSavedVariableLables)

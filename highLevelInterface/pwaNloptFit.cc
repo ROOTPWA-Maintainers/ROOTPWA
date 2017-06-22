@@ -41,7 +41,7 @@ rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data
 
 fitResultPtr
 rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
-                       const binningMapType&                  binningMap,
+                       const multibinBoundariesType&          multibinBoundaries,
                        const unsigned int                     seed,
                        const string&                          startValFileName,
                        const bool                             checkHessian,
@@ -68,7 +68,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaNloptFit with the following parameters:" << endl;
-	for (const auto& bin: binningMap) {
+	for (const auto& bin: multibinBoundaries) {
 		char prevFill = std::cout.fill('.');
 		cout << "    " << bin.first << " bin " << std::setw((bin.first.length() < 45) ? (45 - bin.first.length()) : 0) << " ["
 		     << bin.second.first << ", " << bin.second.second << "]" << endl;
@@ -314,7 +314,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             binningMap,
+	             multibinBoundaries,
 	             likeli,
 	             L.rank(),
 	             prodAmps,

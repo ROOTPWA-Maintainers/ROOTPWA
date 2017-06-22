@@ -297,11 +297,11 @@ ampIntegralMatrix::addEvent(map<string, complex<double> > &amplitudes)
 }
 
 bool
-ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetadata,
-                             const long                                maxNmbEvents,
-                             const string&                             weightFileName,
-                             const eventMetadata*                      eventMeta,
-                             const map<string, pair<double, double> >& otfBin)
+ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata,
+                             const long                              maxNmbEvents,
+                             const string&                           weightFileName,
+                             const eventMetadata*                    eventMeta,
+                             const multibinBoundariesType&           otfBin)
 {
 	if (ampMetadata.empty()) {
 		printWarn << "did not receive any amplitude trees. cannot calculate integral." << endl;
@@ -375,7 +375,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 
 	TTree* eventTree = 0;
 	vector<double> binningVariables(otfBin.size());
-	vector<pair<double, double> > bounds(otfBin.size());
+	vector<boundaryType> bounds(otfBin.size());
 	if(eventMeta) {
 		if(otfBin.empty()) {
 			printErr << "got event metadata but the binning map is emtpy." << endl;
@@ -388,7 +388,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>&   ampMetada
 			return false;
 		}
 		unsigned int otfBinIndex = 0;
-		for(map<string, pair<double, double> >::const_iterator elem = otfBin.begin(); elem != otfBin.end(); ++elem) {
+		for(multibinBoundariesType::const_iterator elem = otfBin.begin(); elem != otfBin.end(); ++elem) {
 			printInfo << "using on-the-fly bin '"
 			          << elem->first << ": ["
 			          << elem->second.first << ", "

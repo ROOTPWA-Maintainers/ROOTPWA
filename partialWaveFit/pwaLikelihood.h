@@ -50,6 +50,7 @@
 
 #include "ampIntegralMatrix.h"
 #include "sumAccumulators.hpp"
+#include "eventMetadata.h"
 
 
 class TString;
@@ -224,8 +225,8 @@ namespace rpwa {
 
 		bool finishInit();
 
-		bool setOnTheFlyBinning(const std::map<std::string, std::pair<double, double> >& binningMap,
-		                        const std::vector<const eventMetadata*>&                 evtMeta);
+		bool setOnTheFlyBinning(const rpwa::multibinBoundariesType&      multibinBoundaries,
+		                        const std::vector<const eventMetadata*>& evtMeta);
 
 		void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
 		                         rpwa::complexMatrix&       accMatrix,

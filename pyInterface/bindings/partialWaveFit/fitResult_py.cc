@@ -16,7 +16,7 @@ namespace {
 	void fitResult_fill_1(rpwa::fitResult& self,
 	                      const unsigned int                        nmbEvents,
 	                      const unsigned int                        normNmbEvents,
-	                      const bp::dict&                           pyBinningMap,
+	                      const bp::dict&                           pyMultibinBoundaries,
 	                      const double                              logLikelihood,
 	                      const int                                 rank,
 	                      const bp::object&                         pyProdAmps,
@@ -60,15 +60,15 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
 			bp::throw_error_already_set();
 		}
-		std::map<std::string, std::pair<double, double> > binningMap;
-		const bp::list keys = pyBinningMap.keys();
+		rpwa::multibinBoundariesType multibinBoundaries;
+		const bp::list keys = pyMultibinBoundaries.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
 			const std::string binningVar = bp::extract<std::string>(keys[i]);
-			const double lowerBound      = bp::extract<double>(pyBinningMap[binningVar][0]);
-			const double upperBound      = bp::extract<double>(pyBinningMap[binningVar][1]);
-			binningMap[binningVar] = std::pair<double, double>(lowerBound, upperBound);
+			const double lowerBound = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
+			const double upperBound = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
+			multibinBoundaries[binningVar] = rpwa::boundaryType(lowerBound, upperBound);
 		}
-		self.fill(nmbEvents, normNmbEvents, binningMap, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
+		self.fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
 		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
 	}
 
@@ -87,15 +87,15 @@ namespace {
 		return pyMultibinCenter;
 	}
 
-	bp::dict fitResult_binningMap(const rpwa::fitResult& self) {
-		const rpwa::binningMapType& binningMap = self.binningMap();
+	bp::dict fitResult_multibinBoundaries(const rpwa::fitResult& self) {
+		const rpwa::multibinBoundariesType& multibinBoundaries = self.multibinBoundaries();
 
-		bp::dict pyBinningMap;
-		for(rpwa::binningMapType::const_iterator it = binningMap.begin(); it != binningMap.end(); ++it){
-			pyBinningMap[it->first] = bp::make_tuple(it->second.first, it->second.second);
+		bp::dict pyMultibinBoundaries;
+		for(rpwa::multibinBoundariesType::const_iterator it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it){
+			pyMultibinBoundaries[it->first] = bp::make_tuple(it->second.first, it->second.second);
 		}
 
-		return pyBinningMap;
+		return pyMultibinBoundaries;
 	}
 
 	bp::list fitResult_evidenceComponents(const rpwa::fitResult& self) {
@@ -347,7 +347,7 @@ void rpwa::py::exportFitResult() {
 		.def("reset", &rpwa::fitResult::reset)
 		.def("fill", &fitResult_fill_1)
 		.def("fill", &fitResult_fill_2)
-		.def("binningMap", &::fitResult_binningMap)
+		.def("multibinBoundaries", &::fitResult_multibinBoundaries)
 		.def("multibinCenter", &::fitResult_multibinCenter)
 		.def("nmbEvents", &rpwa::fitResult::nmbEvents)
 		.def("normNmbEvents", &rpwa::fitResult::normNmbEvents)

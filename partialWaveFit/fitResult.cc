@@ -93,7 +93,7 @@ fitResult::fitResult(const fitResult& result)
 	: TObject(),
 	  _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),
-	  _binningMap            (result.binningMap()),
+	  _multibinBoundaries    (result.multibinBoundaries()),
 	  _logLikelihood         (result.logLikelihood()),
 	  _rank                  (result.rank()),
 	  _prodAmps              (result.prodAmps()),
@@ -165,7 +165,7 @@ fitResult::reset()
 {
 	_nmbEvents     = 0;
 	_normNmbEvents = 0;
-	_binningMap.clear();
+	_multibinBoundaries.clear();
 	_logLikelihood = 0;
 	_rank          = 0;
 	_prodAmps.clear();
@@ -186,7 +186,7 @@ fitResult::reset()
 void
 fitResult::fill(const unsigned int              nmbEvents,               // number of events in bin
                 const unsigned int              normNmbEvents,           // number of events to normalize to
-                const binningMapType&           binningMap,              // binning map
+                const multibinBoundariesType&   multibinBoundaries,      // multibin boundaries
                 const double                    logLikelihood,           // log(likelihood) at maximum
                 const int                       rank,                    // rank of fit
                 const vector<complex<double> >& prodAmps,                // production amplitudes
@@ -199,13 +199,13 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
                 const bool                      converged,
                 const bool                      hasHessian)
 {
-	_converged     = converged;
-	_hasHessian    = hasHessian;
-	_nmbEvents     = nmbEvents;
-	_normNmbEvents = normNmbEvents;
-	_binningMap    = binningMap;
-	_logLikelihood = logLikelihood;
-	_rank          = rank;
+	_converged          = converged;
+	_hasHessian         = hasHessian;
+	_nmbEvents          = nmbEvents;
+	_normNmbEvents      = normNmbEvents;
+	_multibinBoundaries = multibinBoundaries;
+	_logLikelihood      = logLikelihood;
+	_rank               = rank;
 	_prodAmps.resize(prodAmps.size());
 	for (unsigned int i = 0; i < prodAmps.size(); ++i)
 		_prodAmps[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
@@ -321,7 +321,7 @@ fitResult::fill(const fitResult& result)
 {
 	_nmbEvents              = result.nmbEvents();
 	_normNmbEvents          = result.normNmbEvents();
-	_binningMap             = result.binningMap();
+	_multibinBoundaries     = result.multibinBoundaries();
 	_logLikelihood          = result.logLikelihood();
 	_rank                   = result.rank();
 	_prodAmps               = result.prodAmps();
@@ -347,7 +347,7 @@ multibinCenterType
 fitResult::multibinCenter() const
 {
 	multibinCenterType multibinCenter;
-	for (binningMapType::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
+	for (multibinBoundariesType::const_iterator it = _multibinBoundaries.begin(); it != _multibinBoundaries.end(); ++it) {
 		multibinCenter[it->first] = 0.5 * (it->second.first + it->second.second);
 	}
 	return multibinCenter;

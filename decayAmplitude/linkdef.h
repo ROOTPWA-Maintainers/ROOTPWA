@@ -56,10 +56,5 @@
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
 
-#pragma link C++ class std::map<std::string, std::pair<double, double> >+;
-#pragma link C++ class pair<string,pair<double,double> >+;
-
-#pragma link C++ class vector<rpwa::eventMetadata>+;
-
 
 #endif

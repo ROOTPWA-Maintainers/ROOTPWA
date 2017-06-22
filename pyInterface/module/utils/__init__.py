@@ -2,7 +2,7 @@
 from _printingUtils import *
 from _progressBar import progressBar
 from _silencer import silencer
-from _binningMapFromArgList import binningMapFromArgList
+from _multibinBoundariesFromArgList import multibinBoundariesFromArgList
 from _binning import multiBin
 from _fileUtils import openEventFile
 from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile
@@ -15,7 +15,7 @@ ROOT = _root.ROOT
 del _printingUtils
 del _progressBar
 del _silencer
-del _binningMapFromArgList
+del _multibinBoundariesFromArgList
 del _binning
 del _fitTreeUtils
 del _waveDescThresUtils

@@ -48,7 +48,7 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	_likelihood.py
 	core.py
 	utils/__init__.py
-	utils/_binningMapFromArgList.py
+	utils/_multibinBoundariesFromArgList.py
 	utils/_binning.py
 	utils/_fileUtils.py
 	utils/_fitTreeUtils.py

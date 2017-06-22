@@ -9,7 +9,7 @@ namespace rpwa {
 	namespace hli {
 
 		rpwa::fitResultPtr pwaNloptFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
-		                               const binningMapType&                             binningMap = {},
+		                               const rpwa::multibinBoundariesType&               multibinBoundaries = rpwa::multibinBoundariesType(),
 		                               const unsigned int                                seed = 0,
 		                               const std::string&                                startValFileName = "",
 		                               const bool                                        checkHessian = false,
