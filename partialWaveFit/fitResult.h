@@ -59,6 +59,7 @@
 #include "partialWaveFitHelper.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
+#include "eventMetadata.h"
 
 
 namespace rpwa {
@@ -118,7 +119,7 @@ namespace rpwa {
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,           // number of events to normalize to
-		          const double                              massBinCenter,           // center value of mass bin
+		          const multibinBoundariesType&            multibinBoundaries,       // multibin boundaries
 		          const double                              logLikelihood,           // log(likelihood) at maximum
 		          const int                                 rank,                    // rank of fit
 		          const std::vector<std::complex<double> >& prodAmps,                // production amplitudes
@@ -132,18 +133,20 @@ namespace rpwa {
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
 		void fill(const fitResult& result);
 
-		unsigned int        nmbEvents         () const { return _nmbEvents;         }  ///< returns number of events in bin
-		unsigned int        normNmbEvents     () const { return _normNmbEvents;     }  ///< returns number of events to normalize to
-		double              massBinCenter     () const { return _massBinCenter;     }  ///< returns center value of mass bin
-		double              logLikelihood     () const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
-		double              evidence          () const;                                ///< returns the model evidence (OccamFactorMethod)
-		std::vector<double> evidenceComponents() const;                                ///< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
-		unsigned int        rank              () const { return _rank;              }  ///< returns rank of fit
-		bool                covMatrixValid    () const { return _covMatrixValid;    }
-		bool                converged         () const { return _converged;         }  ///< returns whether fit has converged (according to minimizer)
-		bool                hasHessian        () const { return _hasHessian;        }  ///< returns whether Hessian matrix has been calculated successfully
-		unsigned int        nmbWaves          () const { return _waveNames.size();  }  ///< returns number of waves in fit
-		unsigned int        nmbProdAmps       () const { return _prodAmps.size();   }  ///< returns number of production amplitudes
+		unsigned int          nmbEvents         () const { return _nmbEvents;               }  ///< returns number of events in bin
+		unsigned int          normNmbEvents     () const { return _normNmbEvents;           }  ///< returns number of events to normalize to
+		double                massBinCenter     () const { return multibinCenter()["mass"]; }  ///< returns center value of mass bin
+		multibinCenterType    multibinCenter    () const;                                      ///< returns center value of bin in each dimension
+		const multibinBoundariesType& multibinBoundaries  () const { return _multibinBoundaries; } ///< returns binning map
+		double                logLikelihood     () const { return _logLikelihood;           }  ///< returns log(likelihood) at maximum
+		double                evidence          () const;                                      ///< returns the model evidence (OccamFactorMethod)
+		std::vector<double>   evidenceComponents() const;                                      ///< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
+		unsigned int          rank              () const { return _rank;                    }  ///< returns rank of fit
+		bool                  covMatrixValid    () const { return _covMatrixValid;          }
+		bool                  converged         () const { return _converged;               }  ///< returns whether fit has converged (according to minimizer)
+		bool                  hasHessian        () const { return _hasHessian;              }  ///< returns whether Hessian matrix has been calculated successfully
+		unsigned int          nmbWaves          () const { return _waveNames.size();        }  ///< returns number of waves in fit
+		unsigned int          nmbProdAmps       () const { return _prodAmps.size();         }  ///< returns number of production amplitudes
 
 		const std::string& waveName          (const unsigned int waveIndex)    const { return _waveNames[waveIndex];                                }  ///< returns name of wave at index
 		std::string        waveNameEsc       (const unsigned int waveIndex)    const { return escapeRegExpSpecialChar(waveName(waveIndex));         }  ///< returns name of wave at index with special regexp characters escaped
@@ -316,7 +319,7 @@ namespace rpwa {
 		// stored data
 		UInt_t                                _nmbEvents;                 ///< number of events in bin
 		UInt_t                                _normNmbEvents;             ///< number of events to normalize to
-		Double_t                              _massBinCenter;             ///< center value of mass bin
+		multibinBoundariesType                _multibinBoundaries;        ///< boundaries of the binning in multiple dimensions
 		Double_t                              _logLikelihood;             ///< log(likelihood) at maximum
 		Int_t                                 _rank;                      ///< rank of fit
 		std::vector<TComplex>                 _prodAmps;                  ///< production amplitudes
@@ -333,9 +336,14 @@ namespace rpwa {
 		bool                                  _hasHessian;                ///< indicates whether Hessian matrix has been calculated successfully
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
 
+#ifndef __CINT__
+	public:
+#endif
+		void setMultibinBoundaries (const multibinBoundariesType& multibinBoundaries) { _multibinBoundaries = multibinBoundaries; } ///< set multibin range
+
 	public:
 
-		ClassDef(fitResult, 6)
+		ClassDef(fitResult, 7)
 
 	};  // class fitResult
 

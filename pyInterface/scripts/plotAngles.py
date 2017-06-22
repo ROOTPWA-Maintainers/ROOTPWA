@@ -212,10 +212,10 @@ if __name__ == "__main__":
 		rangeName = ""
 		eventFile = ROOT.TFile.Open(arguments.inputFile)
 		evtMeta = pyRootPwa.core.eventMetadata.readEventFile(eventFile)
-		if 'mass' not in evtMeta.binningMap():
-			pyRootPwa.utils.printErr("'mass' is not in the binning map. Aborting...")
+		if 'mass' not in evtMeta.multibinBoundaries():
+			pyRootPwa.utils.printErr("'mass' is not in the multibin boundaries. Aborting...")
 			sys.exit(1)
-		rangeName = str(int(round((evtMeta.binningMap()['mass'][0] + evtMeta.binningMap()['mass'][1])/2.)))
+		rangeName = str(int(round((evtMeta.multibinBoundaries()['mass'][0] + evtMeta.multibinBoundaries()['mass'][1])/2.)))
 		inputFileRanges[rangeName] = [ arguments.inputFile ]
 		eventFile.Close()
 		if not inputFileRanges[rangeName]:

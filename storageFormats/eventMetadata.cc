@@ -27,7 +27,7 @@ rpwa::eventMetadata::eventMetadata()
 	  _eventsType(eventMetadata::OTHER),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
-	  _binningMap(),
+	  _multibinBoundaries(),
 	  _eventTree(0)
 { }
 
@@ -43,12 +43,12 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 	    << "    eventsType ...................... '" << getStringForEventsType(_eventsType) << "'" << endl
 	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames  << endl
 	    << "    final state particle names: ..... "  << _decayKinematicsParticleNames       << endl
-	    << "    binning map";
-	if(_binningMap.empty()) {
+	    << "    multi-bin";
+	if(_multibinBoundaries.empty()) {
 		out << " ..................... " << "<empty>" << endl;
 	} else {
 		out << ": " << endl;
-		for(binningMapType::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
+		for(multibinBoundariesType::const_iterator it = _multibinBoundaries.begin(); it != _multibinBoundaries.end(); ++it) {
 			out << "        variable '" << it->first << "' range " << it->second << endl;
 		}
 	}
@@ -77,7 +77,7 @@ bool rpwa::eventMetadata::operator==(const eventMetadata& rhs) const
 	if (_decayKinematicsParticleNames != rhs._decayKinematicsParticleNames) {
 		return false;
 	}
-	if (_binningMap != rhs._binningMap) {
+	if (_multibinBoundaries != rhs._multibinBoundaries) {
 		return false;
 	}
 	if (_additionalSavedVariableLabels != rhs._additionalSavedVariableLabels) {
@@ -115,20 +115,20 @@ void rpwa::eventMetadata::setDecayKinematicsParticleNames(const vector<string>& 
 void rpwa::eventMetadata::setBinningVariableLabels(const vector<string>& labels)
 {
 	for(unsigned int i = 0; i < labels.size(); ++i) {
-		_binningMap[labels[i]] = rangePairType(0., 0.);
+		_multibinBoundaries[labels[i]] = boundaryType(0., 0.);
 	}
 }
 
 
-void rpwa::eventMetadata::setBinningVariableRange(const string& label, const rangePairType& range)
+void rpwa::eventMetadata::setBinningVariableRange(const string& label, const boundaryType& range)
 {
-	_binningMap[label] = range;
+	_multibinBoundaries[label] = range;
 }
 
 
-void rpwa::eventMetadata::setBinningMap(const binningMapType& binningMap)
+void rpwa::eventMetadata::setMultibinBoundaries(const multibinBoundariesType& multibinBoundaries)
 {
-	_binningMap = binningMap;
+	_multibinBoundaries = multibinBoundaries;
 }
 
 
@@ -203,7 +203,7 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 	mergee->_eventTree->Branch(eventMetadata::decayKinematicsMomentaBranchName.c_str(),   "TClonesArray", &decayKinematicsMomenta,   buffsize, splitlevel);
 	vector<double> additionalSavedVariables;
 	bool first = true;
-	rpwa::eventMetadata::binningMapType mergedBinningMap;
+	multibinBoundariesType mergedmultibinBoundaries;
 	for(unsigned int inputDataNumber = 0; inputDataNumber < inputData.size(); ++inputDataNumber) {
 		const eventMetadata* metadata = inputData[inputDataNumber];
 		TTree* inputTree = metadata->eventTree();
@@ -222,11 +222,11 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 				mergee->setDecayKinematicsParticleNames(metadata->decayKinematicsParticleNames());
 			}
 			if(not mergeDiffMeta) {
-				if(mergee->binningMap().empty()) {
-					mergee->setBinningMap(metadata->binningMap());
+				if(mergee->multibinBoundaries().empty()) {
+					mergee->setMultibinBoundaries(metadata->multibinBoundaries());
 				}
 			} else {
-				mergedBinningMap = metadata->binningMap();
+				mergedmultibinBoundaries = metadata->multibinBoundaries();
 			}
 			if(mergee->additionalSavedVariableLables().empty()) {
 				mergee->setAdditionalSavedVariableLables(metadata->additionalSavedVariableLables());
@@ -252,23 +252,23 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 			return 0;
 		}
 		if (not mergeDiffMeta) {
-			if(mergee->binningMap() != metadata->binningMap()) {
-				printWarn << "binning maps differ." << endl;
+			if(mergee->multibinBoundaries() != metadata->multibinBoundaries()) {
+				printWarn << "multibin ranges differ." << endl;
 				delete mergee->_eventTree;
 				delete mergee;
 				return 0;
 			}
 		} else {
-			for(binningMapType::const_iterator iterator = mergedBinningMap.begin(); iterator != mergedBinningMap.end(); iterator++) {
+			for(multibinBoundariesType::const_iterator iterator = mergedmultibinBoundaries.begin(); iterator != mergedmultibinBoundaries.end(); iterator++) {
 				const string binningVariable = iterator->first;
 				const pair<double, double> binningRange = iterator->second;
-				binningMapType toAdd = metadata->binningMap();
-				if (toAdd.count(binningVariable) == 1) { // check if binningVariable exists (uniquely) in other binningMap
+				multibinBoundariesType toAdd = metadata->multibinBoundaries();
+				if (toAdd.count(binningVariable) == 1) { // check if binningVariable exists (uniquely) in other multibinBoundaries
 					if (binningRange.first > toAdd[binningVariable].first) {
-						mergedBinningMap[binningVariable].first = toAdd[binningVariable].first;
+						mergedmultibinBoundaries[binningVariable].first = toAdd[binningVariable].first;
 					}
 					if (binningRange.second < toAdd[binningVariable].second) {
-						mergedBinningMap[binningVariable].second = toAdd[binningVariable].second;
+						mergedmultibinBoundaries[binningVariable].second = toAdd[binningVariable].second;
 					}
 				} else {
 					printWarn << "files do not use the same binning variables." << endl;
@@ -314,7 +314,7 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 		}
 	}
 	if(mergeDiffMeta) {
-		mergee->setBinningMap(mergedBinningMap);
+		mergee->setMultibinBoundaries(mergedmultibinBoundaries);
 	}
 	mergee->setContentHash(hashor.hash());
 	return mergee;

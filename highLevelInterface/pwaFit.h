@@ -9,8 +9,7 @@ namespace rpwa {
 	namespace hli {
 
 		rpwa::fitResultPtr pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
-		                          const double                                      massBinMin = 0.,
-		                          const double                                      massBinMax = 0.,
+		                          const multibinBoundariesType&                     multibinBoundaries = {},
 		                          const unsigned int                                seed = 0,
 		                          const std::string&                                startValFileName = "",
 		                          const bool                                        checkHessian = false,

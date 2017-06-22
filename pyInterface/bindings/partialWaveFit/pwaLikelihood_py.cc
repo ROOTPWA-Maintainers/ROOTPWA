@@ -211,23 +211,23 @@ namespace {
 
 	bool
 	pwaLikelihood_setOnTheFlyBinning(rpwa::pwaLikelihood<std::complex<double> >& self,
-	                                 bp::dict                                    pyBinningMap,
+	                                 bp::dict                                    pyMultibinBoundaries,
 	                                 bp::list                                    pyEvtMetas)
 	{
-		std::map<std::string, std::pair<double, double> > binningMap;
-		const bp::list keys = pyBinningMap.keys();
+		rpwa::multibinBoundariesType multibinBoundaries;
+		const bp::list keys = pyMultibinBoundaries.keys();
 		for(unsigned int i = 0; i < bp::len(keys); i++){
 			std::string binningVar = bp::extract<std::string>(keys[i]);
-			double lowerBound      = bp::extract<double>(pyBinningMap[binningVar][0]);
-			double upperBound      = bp::extract<double>(pyBinningMap[binningVar][1]);
-			binningMap.insert(std::pair<std::string, std::pair<double, double> >(binningVar, std::pair<double, double>(lowerBound, upperBound)));
+			double lowerBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
+			double upperBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
+			multibinBoundaries.insert(rpwa::multibinBoundariesType::value_type(binningVar, rpwa::boundaryType(lowerBound, upperBound)));
 		}
 		std::vector<const rpwa::eventMetadata*> evtMetas;
 		if (not rpwa::py::convertBPObjectToVector<const rpwa::eventMetadata*>(pyEvtMetas, evtMetas)){
 			PyErr_SetString(PyExc_TypeError, "could not extract event metadatas");
 			bp::throw_error_already_set();
 		}
-		return self.setOnTheFlyBinning(binningMap, evtMetas);
+		return self.setOnTheFlyBinning(multibinBoundaries, evtMetas);
 	}
 
 }

@@ -73,5 +73,18 @@
 }                                                                                                   \
               }";
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::fitResult"                                                               \
+        source="Double_t _massBinCenter"                                                            \
+        version="[-6]"                                                                              \
+        targetClass="rpwa::fitResult"                                                               \
+        target=""                                                                                   \
+        code="{                                                                                     \
+{                                                                                                   \
+    rpwa::multibinBoundariesType bmr;                                                               \
+    bmr[\"mass\"] = rpwa::boundaryType(onfile._massBinCenter, onfile._massBinCenter);               \
+    newObj->setMultibinBoundaries(bmr);                                                             \
+}                                                                                                   \
+              }";
 
 #endif

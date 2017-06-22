@@ -40,9 +40,9 @@ def loadFileManager(path):
 
 class InputFile(object):
 
-	def __init__(self, dataFileName, binningMap, eventsType, additionalVariables):
+	def __init__(self, dataFileName, multibinBoundaries, eventsType, additionalVariables):
 		self.dataFileName = dataFileName
-		self.binningMap = binningMap
+		self.multibinBoundaries = multibinBoundaries
 		self.eventsType = eventsType
 		self.additionalVariables = additionalVariables
 
@@ -50,7 +50,7 @@ class InputFile(object):
 	def __str__(self):
 		retval = ""
 		retval += "'" + self.dataFileName + "': ("
-		retval += str(self.binningMap) + ", "
+		retval += str(self.multibinBoundaries) + ", "
 		retval += str(self.eventsType) + ", "
 		retval += str(self.additionalVariables) + ")"
 		return retval
@@ -103,11 +103,11 @@ class fileManager(object):
 		if not self.binList:
 			for _, inputFiles in self.dataFiles.iteritems():
 				for inputFile in inputFiles:
-					pyRootPwa.utils.printInfo("checking bin '" + str(inputFile.binningMap) + "'.")
+					pyRootPwa.utils.printInfo("checking bin '" + str(inputFile.multibinBoundaries) + "'.")
 					try:
-						latestBin = pyRootPwa.utils.multiBin(inputFile.binningMap)
+						latestBin = pyRootPwa.utils.multiBin(inputFile.multibinBoundaries)
 					except (TypeError, ValueError):
-						pyRootPwa.utils.printErr("no binning given in config file and no binning map" +
+						pyRootPwa.utils.printErr("no binning given in config file and no multibin boundaries" +
 						                         " found in data file '" + str(inputFile.dataFileName) + "'.")
 						return False
 					alreadyPresent = False
@@ -118,7 +118,7 @@ class fileManager(object):
 						elif latestBin.overlap(multiBin, False):
 							pyRootPwa.utils.printWarn("overlap found of bin '" + str(latestBin) + "' and bin '" + str(multiBin) + "'.")
 					if not alreadyPresent:
-						pyRootPwa.utils.printInfo("adding bin '" + str(inputFile.binningMap) + "'.")
+						pyRootPwa.utils.printInfo("adding bin '" + str(inputFile.multibinBoundaries) + "'.")
 						self.binList.append(latestBin)
 		else:
 			for _, inputFiles in self.dataFiles.iteritems():
@@ -222,10 +222,10 @@ class fileManager(object):
 		eventFileIds = []
 		for eventFileId, inputFile in enumerate(self.dataFiles[eventsType]):
 			found = True
-			for variableName in inputFile.binningMap:
+			for variableName in inputFile.multibinBoundaries:
 				if variableName in multiBin.boundaries:
-					if (inputFile.binningMap[variableName][1] < multiBin.boundaries[variableName][0]) or \
-					   (inputFile.binningMap[variableName][0] > multiBin.boundaries[variableName][1]):
+					if (inputFile.multibinBoundaries[variableName][1] < multiBin.boundaries[variableName][0]) or \
+					   (inputFile.multibinBoundaries[variableName][0] > multiBin.boundaries[variableName][1]):
 						found = False
 						break
 			if found:
@@ -316,7 +316,7 @@ class fileManager(object):
 				pyRootPwa.utils.printErr("could not find metadata in event file '" + dataFileName + "'.")
 				return  collections.OrderedDict()
 			inputFile = InputFile(dataFileName,
-			                      eventMeta.binningMap(),
+			                      eventMeta.multibinBoundaries(),
 			                      fileManager.pyEventsType(eventMeta.eventsType()),
 			                      eventMeta.additionalSavedVariableLables())
 			if inputFile.eventsType not in inputFiles:
@@ -379,7 +379,7 @@ class fileManager(object):
 		retStr += "\nDataFiles:\n"
 		for eventsType in self.dataFiles:
 			for dataFile in self.dataFiles[eventsType]:
-				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(dataFile.binningMap) +
+				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(dataFile.multibinBoundaries) +
 				           "] >> " + dataFile.dataFileName + "\n")
 		retStr += "\nAmpFiles:\n"
 		for eventsType in self.dataFiles:

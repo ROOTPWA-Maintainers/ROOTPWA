@@ -24,25 +24,25 @@ namespace {
 		return bp::list(self.getAmplitudeHashes());
 	}
 
-	bp::dict ampIntegralMatrixMetadata_binningMap(const rpwa::ampIntegralMatrixMetadata& self) {
+	bp::dict ampIntegralMatrixMetadata_multibinBoundaries(const rpwa::ampIntegralMatrixMetadata& self) {
 		bp::dict retval;
-		std::map<std::string, std::pair<double, double> > map = self.binningMap();
-		for (std::map<std::string, std::pair<double, double> >::const_iterator iter = map.begin(); iter != map.end(); ++iter) {
+		rpwa::multibinBoundariesType multibinBoundaries = self.multibinBoundaries();
+		for (rpwa::multibinBoundariesType::const_iterator iter = multibinBoundaries.begin(); iter != multibinBoundaries.end(); ++iter) {
 			retval[iter->first] = bp::make_tuple(iter->second.first, iter->second.second);
 		}
 		return retval;
 	}
 
-	void ampIntegralMatrixMetadata_setBinningMap(rpwa::ampIntegralMatrixMetadata& self, bp::dict pyBinningMap) {
-		std::map<std::string, std::pair<double, double> > binningMap;
-		const bp::list keys = pyBinningMap.keys();
+	void ampIntegralMatrixMetadata_setMultibinBoundaries(rpwa::ampIntegralMatrixMetadata& self, bp::dict pyMultibinBoundaries) {
+		rpwa::multibinBoundariesType multibinBoundaries;
+		const bp::list keys = pyMultibinBoundaries.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
 			std::string binningVar = bp::extract<std::string>(keys[i]);
-			double lowerBound      = bp::extract<double>(pyBinningMap[binningVar][0]);
-			double upperBound      = bp::extract<double>(pyBinningMap[binningVar][1]);
-			binningMap[binningVar] = std::pair<double, double>(lowerBound, upperBound);
+			double lowerBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
+			double upperBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
+			multibinBoundaries[binningVar] = rpwa::boundaryType(lowerBound, upperBound);
 		}
-		self.setBinningMap(binningMap);
+		self.setMultibinBoundaries(multibinBoundaries);
 	}
 
 	const rpwa::ampIntegralMatrixMetadata* ampIntegralMatrixeMetadata_readIntegralFile(PyObject* pyInputFile,
@@ -107,14 +107,14 @@ void rpwa::py::exportAmpIntegralMatrixMetadata() {
 		.def("rootpwaGitHash", &rpwa::ampIntegralMatrixMetadata::rootpwaGitHash, bp::return_value_policy<bp::return_by_value>())
 		.def("mergeIntegralMatrix", &rpwa::ampIntegralMatrixMetadata::mergeIntegralMatrix, bp::arg("secondMatrix"))
 
-		.def("binningMap", &ampIntegralMatrixMetadata_binningMap)
+		.def("multibinBoundaries", &ampIntegralMatrixMetadata_multibinBoundaries)
 		.def("addEventMetadata", &ampIntegralMatrixMetadata::addEventMetadata, bp::arg("eventMetadata"))
 		.def("addAmplitudeHash", &ampIntegralMatrixMetadata::addAmplitudeHash, bp::arg("amplitudehash"))
 		.def("setHash",  &ampIntegralMatrixMetadata::setHash)
 		.def("recalculateHash", &rpwa::ampIntegralMatrixMetadata::recalculateHash)
 		.def("setGitHash",  &ampIntegralMatrixMetadata::setGitHash)
 
-		.def("setBinningMap", &::ampIntegralMatrixMetadata_setBinningMap)
+		.def("setMultibinBoundaries", &::ampIntegralMatrixMetadata_setMultibinBoundaries)
 
 		.def("addKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::addKeyFileContent)
 		.def("hasKeyFileContent" , &rpwa::ampIntegralMatrixMetadata::hasKeyFileContent)

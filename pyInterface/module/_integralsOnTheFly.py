@@ -25,7 +25,7 @@ def _getAmplitudes(keyFileNameList, prodNames, decayNames, integralMetaData):
 	return amplitudes, waveNames
 
 
-def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap):
+def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, multibinBoundaries):
 	prodKinMomenta  = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 	eventTree.SetBranchAddress(pyRootPwa.core.eventMetadata.productionKinematicsMomentaBranchName, prodKinMomenta)
@@ -35,7 +35,7 @@ def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap)
 	integralMatrix.setWaveNames(waveNames)
 	ampWaveNameMap   = {}
 	binningVariables = {}
-	for key in binningMap:
+	for key in multibinBoundaries:
 		binningVariables[key] = numpy.array(1, dtype = float)
 		eventTree.SetBranchAddress(key, binningVariables[key])
 	for waveName in waveNames:
@@ -48,8 +48,8 @@ def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap)
 		progressBar.update(evt_i)
 		eventTree.GetEvent(evt_i)
 		skipEvent = False
-		for key in binningMap:
-			if binningVariables[key] < binningMap[key][0] or  binningVariables[key] >= binningMap[key][1]:
+		for key in multibinBoundaries:
+			if binningVariables[key] < multibinBoundaries[key][0] or  binningVariables[key] >= multibinBoundaries[key][1]:
 				skippedEvents += 1
 				skipEvent = True
 				break
@@ -70,7 +70,7 @@ def _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap)
 	return integralMatrix, hashers
 
 
-def calcIntegralsOnTheFly(integralFileName, eventFileName, keyFileNameList, binningMap = None, maxNmbEvents = -1, startEvent = 0):
+def calcIntegralsOnTheFly(integralFileName, eventFileName, keyFileNameList, multibinBoundaries = None, maxNmbEvents = -1, startEvent = 0):
 
 	outFile = pyRootPwa.ROOT.TFile.Open(integralFileName, "CREATE")
 	if not outFile: # Do this up here. Without the output file, nothing else makes sense
@@ -98,15 +98,15 @@ def calcIntegralsOnTheFly(integralFileName, eventFileName, keyFileNameList, binn
 	if not metadataObject.addEventMetadata(eventMeta):
 		pyRootPwa.utils.printErr("could not add event metadata to integral metadata. Aborting...")
 		return False
-	if not binningMap:
-		binningMap = eventMeta.binningMap()
-		if len(binningMap) == 0:
+	if not multibinBoundaries:
+		multibinBoundaries = eventMeta.multibinBoundaries()
+		if len(multibinBoundaries) == 0:
 			pyRootPwa.utils.printWarn("no binning map found.")
-	if "mass" in binningMap:
-		if binningMap["mass"][0] > 200.:
-			binningMap["mass"] = (binningMap["mass"][0]/1000.,binningMap["mass"][1]/1000.)
-	metadataObject.setBinningMap(binningMap)
-	integralMatrix, hashers = _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, binningMap)
+	if "mass" in multibinBoundaries:
+		if multibinBoundaries["mass"][0] > 200.:
+			multibinBoundaries["mass"] = (multibinBoundaries["mass"][0]/1000.,multibinBoundaries["mass"][1]/1000.)
+	metadataObject.setMultibinBoundaries(multibinBoundaries)
+	integralMatrix, hashers = _integrate(amplitudes, eventTree, waveNames, minEvent, maxEvent, multibinBoundaries)
 	if not integralMatrix or not hashers:
 		pyRootPwa.utils.printErr("could not integrate. Aborting...")
 		return False

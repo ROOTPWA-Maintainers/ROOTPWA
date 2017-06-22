@@ -136,8 +136,8 @@ if __name__ == "__main__":
 		printErr("could not open output file '" + args.outputFileName + "'. Aborting...")
 		sys.exit(1)
 
-	binningMap = pyRootPwa.utils.binningMapFromArgList(args.binning)
-	if not binningMap:
+	multibinBoundaries = pyRootPwa.utils.multibinBoundariesFromArgList(args.binning)
+	if not multibinBoundaries:
 		printWarn("received no valid binning map argument")
 
 	with open(args.inputFileName, 'r') as inputFile:
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 		                                eventsType,
 		                                initialProdNames,
 		                                initialDecayNames,
-		                                binningMap,
+		                                multibinBoundaries,
 		                                [])
 
 		while event is not None and success:

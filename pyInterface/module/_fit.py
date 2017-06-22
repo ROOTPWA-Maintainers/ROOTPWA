@@ -42,9 +42,6 @@ def pwaFit(eventAndAmpFileDict,
 		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
 		return [ ]
 
-	lowerBound = multiBin.boundaries['mass'][0]
-	upperBound = multiBin.boundaries['mass'][1]
-
 	if attempts == 1:
 		seeds = [ seed ]
 	elif seed == 0:
@@ -61,14 +58,13 @@ def pwaFit(eventAndAmpFileDict,
 
 	fitResults = [ ]
 	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaFit(likelihood       = likelihood,
-		                                  massBinMin       = lowerBound,
-		                                  massBinMax       = upperBound,
-		                                  seed             = fitSeed,
-		                                  startValFileName = startValFileName,
-		                                  checkHessian     = checkHessian,
-		                                  saveSpace        = saveSpace,
-		                                  verbose          = verbose)
+		fitResult = pyRootPwa.core.pwaFit(likelihood         = likelihood,
+		                                  multibinBoundaries = multiBin.boundaries,
+		                                  seed               = fitSeed,
+		                                  startValFileName   = startValFileName,
+		                                  checkHessian       = checkHessian,
+		                                  saveSpace          = saveSpace,
+		                                  verbose            = verbose)
 		fitResults.append(fitResult)
 	return fitResults
 
@@ -111,9 +107,6 @@ def pwaNloptFit(eventAndAmpFileDict,
 		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
 		return [ ]
 
-	lowerBound = multiBin.boundaries['mass'][0]
-	upperBound = multiBin.boundaries['mass'][1]
-
 	if attempts == 1:
 		seeds = [ seed ]
 	elif seed == 0:
@@ -130,13 +123,12 @@ def pwaNloptFit(eventAndAmpFileDict,
 
 	fitResults = [ ]
 	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaNloptFit(likelihood       = likelihood,
-		                                       massBinMin       = lowerBound,
-		                                       massBinMax       = upperBound,
-		                                       seed             = fitSeed,
-		                                       startValFileName = startValFileName,
-		                                       checkHessian     = checkHessian,
-		                                       saveSpace        = saveSpace,
-		                                       verbose          = verbose)
+		fitResult = pyRootPwa.core.pwaNloptFit(likelihood         = likelihood,
+		                                       multibinBoundaries = multiBin.boundaries,
+		                                       seed               = fitSeed,
+		                                       startValFileName   = startValFileName,
+		                                       checkHessian       = checkHessian,
+		                                       saveSpace          = saveSpace,
+		                                       verbose            = verbose)
 		fitResults.append(fitResult)
 	return fitResults

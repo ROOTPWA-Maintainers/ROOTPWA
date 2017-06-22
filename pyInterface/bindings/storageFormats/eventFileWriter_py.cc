@@ -20,7 +20,7 @@ namespace {
 	                                rpwa::eventMetadata::eventsTypeEnum eventsType,
 	                                bp::object pyProductionKinematicsParticleNames,
 	                                bp::object pyDecayKinematicsParticleNames,
-	                                bp::dict pyBinningMap,
+	                                bp::dict pyMultibinBoundaries,
 	                                bp::object pyAdditionalVariableLabels,
 	                                const int& splitlevel = 99,
 	                                const int& buffsize = 256000)
@@ -38,21 +38,21 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::eventFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
-		std::map<std::string, std::pair<double, double> > binningMap;
+		rpwa::multibinBoundariesType multibinBoundaries;
 		{
-			bp::list keys = pyBinningMap.keys();
+			bp::list keys = pyMultibinBoundaries.keys();
 			for(int i = 0; i < bp::len(keys); ++i) {
 				std::pair<double, double> element;
-				if(not rpwa::py::convertBPObjectToPair<double, double>(pyBinningMap[keys[i]], element)) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid pair for binningMap when executing rpwa::eventFileWriter::initialize()");
+				if(not rpwa::py::convertBPObjectToPair<double, double>(pyMultibinBoundaries[keys[i]], element)) {
+					PyErr_SetString(PyExc_TypeError, "Got invalid pair for multibin boundaries when executing rpwa::eventFileWriter::initialize()");
 					bp::throw_error_already_set();
 				}
 				bp::extract<std::string> getString(keys[i]);
 				if(not getString.check()) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid key for binningMap when executing rpwa::eventFileWriter::initialize()");
+					PyErr_SetString(PyExc_TypeError, "Got invalid key for multibin boundaries when executing rpwa::eventFileWriter::initialize()");
 					bp::throw_error_already_set();
 				}
-				binningMap[getString()] = element;
+				multibinBoundaries[getString()] = element;
 			}
 		}
 		std::vector<std::string> additionalVariableLabels;
@@ -66,7 +66,7 @@ namespace {
 		                       eventsType,
 		                       productionKinematicsParticleNames,
 		                       decayKinematicsParticleNames,
-		                       binningMap,
+		                       multibinBoundaries,
 		                       additionalVariableLabels,
 		                       splitlevel,
 		                       buffsize);
@@ -131,7 +131,7 @@ void rpwa::py::exportEventFileWriter() {
 			   bp::arg("eventsType"),
 			   bp::arg("productionKinematicsParticleNames"),
 			   bp::arg("decayKinematicsParticleNames"),
-			   bp::arg("binningMap"),
+			   bp::arg("multibinBoundaries"),
 			   bp::arg("additionalVariableLabels"),
 			   bp::arg("splitlevel")=99,
 			   bp::arg("buffsize")=256000)
