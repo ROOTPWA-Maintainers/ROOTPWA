@@ -11,15 +11,12 @@ class TTree;
 
 
 namespace rpwa {
-	typedef std::map<std::string, std::pair<double, double> > binningMapType;
+	typedef std::pair<double, double> boundaryType;
+	typedef std::map<std::string, boundaryType > multibinBoundariesType;
 	typedef std::map<std::string, double > multibinCenterType;
 
 	class eventMetadata : public TObject {
 		friend class eventFileWriter;
-
-	  private:
-		typedef std::pair<double, double> rangePairType;
-		typedef std::map<std::string, rangePairType> binningMapType;
 
 	  public:
 
@@ -38,7 +35,7 @@ namespace rpwa {
 		const std::string& userString() const { return _userString; }
 		const std::string& contentHash() const { return _contentHash; }
 		const eventsTypeEnum& eventsType() const { return _eventsType; }
-		const binningMapType& binningMap() const { return _binningMap; }
+		const multibinBoundariesType& multibinBoundaries() const { return _multibinBoundaries; }
 		const std::vector<std::string>& productionKinematicsParticleNames() const { return _productionKinematicsParticleNames; }
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
 		const std::vector<std::string>& additionalSavedVariableLables() const { return _additionalSavedVariableLabels; }
@@ -87,8 +84,8 @@ namespace rpwa {
 		void setAdditionalSavedVariableLables(std::vector<std::string> labels) { _additionalSavedVariableLabels = labels; }
 
 		void setBinningVariableLabels(const std::vector<std::string>& labels);
-		void setBinningVariableRange(const std::string& label, const rangePairType& range);
-		void setBinningMap(const binningMapType& binningMap);
+		void setBinningVariableRange(const std::string& label, const boundaryType& range);
+		void setMultibinBoundaries(const multibinBoundariesType& multibinBoundaries);
 
 		static std::string getStringForEventsType(const eventsTypeEnum& type);
 
@@ -99,7 +96,7 @@ namespace rpwa {
 		std::vector<std::string> _productionKinematicsParticleNames;
 		std::vector<std::string> _decayKinematicsParticleNames;
 
-		binningMapType _binningMap;
+		multibinBoundariesType _multibinBoundaries;
 
 		std::vector<std::string> _additionalSavedVariableLabels;
 

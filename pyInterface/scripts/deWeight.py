@@ -62,7 +62,7 @@ if __name__ == "__main__":
 	                             pyRootPwa.core.eventMetadata.REAL,
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
-	                             metaData.binningMap(),
+	                             metaData.multibinBoundaries(),
 	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableLabels)
 	                                                           if i != weightIndex ]):
 		printErr("could not initialize fileWriter. Aborting...")

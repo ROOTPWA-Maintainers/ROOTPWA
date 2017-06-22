@@ -119,7 +119,7 @@ namespace rpwa {
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,           // number of events to normalize to
-		          const binningMapType&                     binningMap,              // binning map
+		          const multibinBoundariesType&            multibinBoundaries,       // multibin boundaries
 		          const double                              logLikelihood,           // log(likelihood) at maximum
 		          const int                                 rank,                    // rank of fit
 		          const std::vector<std::complex<double> >& prodAmps,                // production amplitudes
@@ -137,7 +137,7 @@ namespace rpwa {
 		unsigned int          normNmbEvents     () const { return _normNmbEvents;           }  ///< returns number of events to normalize to
 		double                massBinCenter     () const { return multibinCenter()["mass"]; }  ///< returns center value of mass bin
 		multibinCenterType    multibinCenter    () const;                                      ///< returns center value of bin in each dimension
-		const binningMapType& binningMap        () const { return _binningMap;              }  ///< returns binning map
+		const multibinBoundariesType& multibinBoundaries  () const { return _multibinBoundaries; } ///< returns binning map
 		double                logLikelihood     () const { return _logLikelihood;           }  ///< returns log(likelihood) at maximum
 		double                evidence          () const;                                      ///< returns the model evidence (OccamFactorMethod)
 		std::vector<double>   evidenceComponents() const;                                      ///< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
@@ -319,7 +319,7 @@ namespace rpwa {
 		// stored data
 		UInt_t                                _nmbEvents;                 ///< number of events in bin
 		UInt_t                                _normNmbEvents;             ///< number of events to normalize to
-		binningMapType                        _binningMap;                ///< boundaries of the binning in multiple dimensions
+		multibinBoundariesType                _multibinBoundaries;        ///< boundaries of the binning in multiple dimensions
 		Double_t                              _logLikelihood;             ///< log(likelihood) at maximum
 		Int_t                                 _rank;                      ///< rank of fit
 		std::vector<TComplex>                 _prodAmps;                  ///< production amplitudes
@@ -339,7 +339,7 @@ namespace rpwa {
 #ifndef __CINT__
 	public:
 #endif
-		void setBinningMap (const binningMapType& binningMap) { _binningMap = binningMap; } ///< set binning map
+		void setMultibinBoundaries (const multibinBoundariesType& multibinBoundaries) { _multibinBoundaries = multibinBoundaries; } ///< set multibin range
 
 	public:
 

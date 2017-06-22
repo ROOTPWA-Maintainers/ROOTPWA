@@ -11,22 +11,22 @@ namespace bp = boost::python;
 namespace {
 
 	rpwa::fitResultPtr pwaFit_pwaFit(const rpwa::pwaLikelihood<std::complex<double> >& L,
-	                                 const bp::dict& binningMap,
+	                                 const bp::dict& multibinBoundaries,
 	                                 const unsigned int seed = 0,
 	                                 const std::string& startValFileName = "",
 	                                 const bool checkHessian = false,
 	                                 const bool saveSpace = false,
 	                                 const bool verbose = false)
 	                                 {
-		std::map<std::string, std::pair<double, double> > cBinningMap;
-		const bp::list keys = binningMap.keys();
+		rpwa::multibinBoundariesType cMultibinBoundaries;
+		const bp::list keys = multibinBoundaries.keys();
 		for (int i = 0; i < bp::len(keys); ++i) {
 			std::string binningVar = bp::extract<std::string>(keys[i]);
-			double lowerBound = bp::extract<double>(binningMap[binningVar][0]);
-			double upperBound = bp::extract<double>(binningMap[binningVar][1]);
-			cBinningMap[binningVar] = std::pair<double, double>(lowerBound, upperBound);
+			double lowerBound = bp::extract<double>(multibinBoundaries[binningVar][0]);
+			double upperBound = bp::extract<double>(multibinBoundaries[binningVar][1]);
+			cMultibinBoundaries[binningVar] = std::pair<double, double>(lowerBound, upperBound);
 		}
-		return rpwa::hli::pwaFit(L, cBinningMap, seed, startValFileName, checkHessian, saveSpace, verbose);
+		return rpwa::hli::pwaFit(L, cMultibinBoundaries, seed, startValFileName, checkHessian, saveSpace, verbose);
 	}
 }
 
@@ -37,7 +37,7 @@ void rpwa::py::exportPwaFit()
 		"pwaFit"
 		, &pwaFit_pwaFit
 		, (bp::arg("likelihood"),
-		   bp::arg("binningMap") = bp::dict(),
+		   bp::arg("multibinBoundaries") = bp::dict(),
 		   bp::arg("seed") = 0,
 		   bp::arg("startValFileName") = "",
 		   bp::arg("checkHessian") = false,

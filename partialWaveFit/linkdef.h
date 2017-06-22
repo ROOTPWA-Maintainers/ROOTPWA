@@ -81,9 +81,9 @@
         target=""                                                                                   \
         code="{                                                                                     \
 {                                                                                                   \
-    rpwa::binningMapType bm;                                                                        \
-    bm[\"mass\"] = std::pair<double,double>(onfile._massBinCenter, onfile._massBinCenter);          \
-    newObj->setBinningMap(bm);                                                                      \
+    rpwa::multibinBoundariesType bmr;                                                               \
+    bmr[\"mass\"] = rpwa::boundaryType(onfile._massBinCenter, onfile._massBinCenter);               \
+    newObj->setMultibinBoundaries(bmr);                                                             \
 }                                                                                                   \
               }";
 

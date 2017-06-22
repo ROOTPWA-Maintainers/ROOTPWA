@@ -19,7 +19,7 @@ namespace rpwa {
 
 			const std::string& contentHash()       const { return _contentHash; }
 			const std::string& rootpwaGitHash()    const { return _rootpwaGitHash; }
-			const std::map<std::string, std::pair<double, double> >& binningMap() const { return _binningMap; }
+			const multibinBoundariesType& multibinBoundaries() const { return _multibinBoundaries; }
 			const std::vector<rpwa::eventMetadata>& evtMetas() const { return _evtMetas; }
 
 			std::string recalculateHash() const;
@@ -41,9 +41,9 @@ namespace rpwa {
 			bool setAmpIntegralMatrix(ampIntegralMatrix* matrix);
 			bool setHash();
 			void setGitHash(const std::string& gitHash) { _rootpwaGitHash = gitHash; }
-			void setBinningMap(const std::map<std::string, std::pair<double, double> >& binningMap) { _binningMap = binningMap; }
+			void setMultibinBoundaries(const multibinBoundariesType& multibinBoundaries) { _multibinBoundaries = multibinBoundaries; }
 			bool addKeyFileContent(const std::string& content);
-			bool mergeBinningMap(const std::map<std::string, std::pair<double, double> >& binnignMapIn);
+			bool mergeMultibinBoundaries(const multibinBoundariesType& multibinBoundariesIn);
 			bool addAmplitudeHash(const std::string& hash);
 			bool addEventMetadata(const rpwa::eventMetadata& evtMeta);
 
@@ -64,7 +64,7 @@ namespace rpwa {
 			std::vector<std::string>             _amplitudeHashes;
 			std::vector<std::string>             _keyFileContents;
 
-			std::map<std::string, std::pair<double, double> > _binningMap;
+			std::map<std::string, std::pair<double, double> > _multibinBoundaries;
 			std::vector<rpwa::eventMetadata> _evtMetas;
 
 			ClassDef(ampIntegralMatrixMetadata, 2);

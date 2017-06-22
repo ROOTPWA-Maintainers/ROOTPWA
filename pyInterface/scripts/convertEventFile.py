@@ -57,8 +57,8 @@ if __name__ == "__main__":
 	for name in inputFile.Get(decayKinPartNamesObjName):
 		finalStateParticleNames.append(str(name))
 
-	binningMap = pyRootPwa.utils.binningMapFromArgList(args.binning)
-	if not binningMap:
+	multibinBoundaries = pyRootPwa.utils.multibinBoundariesFromArgList(args.binning)
+	if not multibinBoundaries:
 		pyRootPwa.utils.printWarn("received no valid binning map argument")
 
 	additionalVars = [] if not args.variable else args.variable
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 	                      eventTypeTranslation[eventsTypeString],
 	                      initialStateParticleNames,
 	                      finalStateParticleNames,
-	                      binningMap,
+	                      multibinBoundaries,
 	                      additionalVars)
 
 	inputTree = inputFile.Get(inTreeName)

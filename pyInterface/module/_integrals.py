@@ -9,7 +9,7 @@ def calcIntegrals(integralFileName, eventAndAmpFileDict, multiBin, weightFileNam
 		return False
 	integralMetaData = pyRootPwa.core.ampIntegralMatrixMetadata()
 	integralMetaData.setGitHash(pyRootPwa.core.gitHash())
-	integralMetaData.setBinningMap(multiBin.boundaries)
+	integralMetaData.setMultibinBoundaries(multiBin.boundaries)
 	integrals = []
 	for eventFileName, ampFileDict in eventAndAmpFileDict.iteritems():
 		integrals.append(pyRootPwa.core.ampIntegralMatrix())
