@@ -41,8 +41,7 @@ rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data
 
 fitResultPtr
 rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
-                       const double                           massBinMin,
-                       const double                           massBinMax,
+                       const binningMapType&                  binningMap,
                        const unsigned int                     seed,
                        const string&                          startValFileName,
                        const bool                             checkHessian,
@@ -50,6 +49,8 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
                        const bool                             verbose)
 {
 
+	const double massBinMin = binningMap.at("mass").first;
+	const double massBinMax = binningMap.at("mass").second;
 #if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -69,8 +70,13 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 
 	// report parameters
 	printInfo << "running pwaNloptFit with the following parameters:" << endl;
-	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl
-	     << "    seed for random start values ................... "  << seed                    << endl
+	cout << "    mass bin [" << massBinMin << ", " << massBinMax << "] GeV/c^2" << endl;
+	for(const auto& bin: binningMap){
+		if(bin.first == "mass") continue;
+		cout << "    " << bin.first << " bin ["
+		     << bin.second.first << ", " << bin.second.second << "] " << endl;
+	}
+	cout << "    seed for random start values ................... "  << seed                    << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl;
 	if (useFixedStartValues)
 		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
@@ -98,7 +104,6 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		}
 	}
 
-	const double massBinCenter = (massBinMin + massBinMax) / 2;
 	const unsigned int nmbPar  = L.NDim();
 	const unsigned int nmbEvts = L.nmbEvents();
 
@@ -311,7 +316,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	fitResult* result = new fitResult();
 	result->fill(L.nmbEvents(),
 	             normNmbEvents,
-	             massBinCenter,
+	             binningMap,
 	             likeli,
 	             L.rank(),
 	             prodAmps,

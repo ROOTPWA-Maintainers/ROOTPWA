@@ -81,7 +81,6 @@ namespace {
 fitResult::fitResult()
 	: _nmbEvents     (0),
 	  _normNmbEvents (0),
-	  _massBinCenter (0),
 	  _logLikelihood (0),
 	  _rank          (0),
 	  _covMatrixValid(false),
@@ -94,7 +93,7 @@ fitResult::fitResult(const fitResult& result)
 	: TObject(),
 	  _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),
-	  _massBinCenter         (result.massBinCenter()),
+	  _binningMap            (result.binningMap()),
 	  _logLikelihood         (result.logLikelihood()),
 	  _rank                  (result.rank()),
 	  _prodAmps              (result.prodAmps()),
@@ -166,7 +165,7 @@ fitResult::reset()
 {
 	_nmbEvents     = 0;
 	_normNmbEvents = 0;
-	_massBinCenter = 0;
+	_binningMap.clear();
 	_logLikelihood = 0;
 	_rank          = 0;
 	_prodAmps.clear();
@@ -187,7 +186,7 @@ fitResult::reset()
 void
 fitResult::fill(const unsigned int              nmbEvents,               // number of events in bin
                 const unsigned int              normNmbEvents,           // number of events to normalize to
-                const double                    massBinCenter,           // center value of mass bin
+                const binningMapType&           binningMap,              // binning map
                 const double                    logLikelihood,           // log(likelihood) at maximum
                 const int                       rank,                    // rank of fit
                 const vector<complex<double> >& prodAmps,                // production amplitudes
@@ -204,7 +203,7 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 	_hasHessian    = hasHessian;
 	_nmbEvents     = nmbEvents;
 	_normNmbEvents = normNmbEvents;
-	_massBinCenter = massBinCenter;
+	_binningMap    = binningMap;
 	_logLikelihood = logLikelihood;
 	_rank          = rank;
 	_prodAmps.resize(prodAmps.size());
@@ -322,7 +321,7 @@ fitResult::fill(const fitResult& result)
 {
 	_nmbEvents              = result.nmbEvents();
 	_normNmbEvents          = result.normNmbEvents();
-	_massBinCenter          = result.massBinCenter();
+	_binningMap             = result.binningMap();
 	_logLikelihood          = result.logLikelihood();
 	_rank                   = result.rank();
 	_prodAmps               = result.prodAmps();
@@ -341,6 +340,17 @@ fitResult::fill(const fitResult& result)
 	_phaseSpaceIntegral     = result.phaseSpaceIntegralVector();
 	_converged              = result.converged();
 	_hasHessian             = result.hasHessian();
+}
+
+
+multibinCenterType
+fitResult::multibinCenter() const
+{
+	multibinCenterType multibinCenter;
+	for (binningMapType::const_iterator it = _binningMap.begin(); it != _binningMap.end(); ++it) {
+		multibinCenter[it->first] = 0.5 * (it->second.first + it->second.second);
+	}
+	return multibinCenter;
 }
 
 
