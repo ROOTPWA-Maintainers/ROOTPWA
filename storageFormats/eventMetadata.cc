@@ -365,3 +365,48 @@ std::string rpwa::eventMetadata::getStringForEventsType(const eventsTypeEnum& ty
 	}
 	return "UNKNOWN";
 }
+
+
+bool
+additionalTreeVariables::setBranchAddresses(const eventMetadata& metaData)
+{
+	TTree* tree = metaData.eventTree();
+
+	if (tree != nullptr) {
+		for (const auto& name: metaData.additionalSavedVariableLables()) {
+			int err = tree->SetBranchAddress(name.c_str(), &(_additionalTreeVariables[name]));
+			if (err < 0){
+				printErr << "could not set branch address for branch '" << name << "' (error code " << err << ")." << endl;
+				_additionalTreeVariables.clear();
+				return false;
+			}
+		}
+	} else {
+		printErr << "no tree in eventMetadata object." << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+additionalTreeVariables::inBoundaries(const multibinBoundariesType& boundaries) const
+{
+	for (const auto& elem: boundaries) {
+		const std::string& name = elem.first;
+		const boundaryType& range = elem.second;
+		const std::map<std::string, double>::const_iterator it = _additionalTreeVariables.find(name);
+		if (it != _additionalTreeVariables.end()) {
+			const double variable = it->second;
+			if (variable < range.first or variable >= range.second) {
+				return false;
+			}
+		} else {
+			printErr << "binning variable '" << name << "' not in additional tree variables." << std::endl;
+			return false;
+		}
+	}
+
+	return true;
+}

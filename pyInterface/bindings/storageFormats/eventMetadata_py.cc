@@ -57,62 +57,82 @@ namespace {
 		}
 		return self == *otherEventMeta;
 	}
+
+	bool additionalTreeVariables_inBoundaries(rpwa::additionalTreeVariables& self, const bp::dict& pyMultibinBoundaries) {
+		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
+		return self.inBoundaries(multibinBoundaries);
+	}
+
 }
+
 
 void rpwa::py::exportEventMetadata() {
 
-	bp::scope theScope = bp::class_<rpwa::eventMetadata, boost::noncopyable>("eventMetadata", bp::no_init)
+	{
 
-		.def(bp::self_ns::str(bp::self))
+		bp::scope theScope = bp::class_<rpwa::eventMetadata, boost::noncopyable>("eventMetadata", bp::no_init)
 
-		.def(
-			"userString"
-			, &rpwa::eventMetadata::userString
-			, bp::return_value_policy<bp::copy_const_reference>()
-		)
-		.def(
-			"contentHash"
-			, &rpwa::eventMetadata::contentHash
-			, bp::return_value_policy<bp::copy_const_reference>()
-		)
-		.def(
-			"eventsType"
-			, &rpwa::eventMetadata::eventsType
-			, bp::return_value_policy<bp::copy_const_reference>()
-		)
-		.def("__eq__", &::eventMetadata___eq__)
-		.def("__eq__", &rpwa::eventMetadata::operator==)
-		.def("multibinBoundaries", &eventMetadata_multibinBoundaries)
-		.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
-		.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)
-		.def("additionalSavedVariableLables", &eventMetadata_additionalSavedVariableLables)
-		.def("recalculateHash", &rpwa::eventMetadata::recalculateHash, (bp::arg("printProgress")=false))
-		.def("eventTree", &eventMetadata_eventTree)
-		.def(
-			"readEventFile"
-			, &eventMetadata_readEventFile
-			, (bp::arg("inputFile"), bp::arg("quiet")=false)
-			, bp::return_value_policy<bp::manage_new_object, bp::with_custodian_and_ward_postcall<0, 1> >()
-		)
-		.staticmethod("readEventFile")
-		.def_readonly("objectNameInFile", &rpwa::eventMetadata::objectNameInFile)
-		.def_readonly("eventTreeName", &rpwa::eventMetadata::eventTreeName)
-		.def_readonly("productionKinematicsMomentaBranchName", &rpwa::eventMetadata::productionKinematicsMomentaBranchName)
-		.def_readonly("decayKinematicsMomentaBranchName", &rpwa::eventMetadata::decayKinematicsMomentaBranchName)
+			.def(bp::self_ns::str(bp::self))
+
+			.def(
+				"userString"
+				, &rpwa::eventMetadata::userString
+				, bp::return_value_policy<bp::copy_const_reference>()
+			)
+			.def(
+				"contentHash"
+				, &rpwa::eventMetadata::contentHash
+				, bp::return_value_policy<bp::copy_const_reference>()
+			)
+			.def(
+				"eventsType"
+				, &rpwa::eventMetadata::eventsType
+				, bp::return_value_policy<bp::copy_const_reference>()
+			)
+			.def("__eq__", &::eventMetadata___eq__)
+			.def("__eq__", &rpwa::eventMetadata::operator==)
+			.def("multibinBoundaries", &eventMetadata_multibinBoundaries)
+			.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
+			.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)
+			.def("additionalSavedVariableLables", &eventMetadata_additionalSavedVariableLables)
+			.def("recalculateHash", &rpwa::eventMetadata::recalculateHash, (bp::arg("printProgress")=false))
+			.def("eventTree", &eventMetadata_eventTree)
+			.def(
+				"readEventFile"
+				, &eventMetadata_readEventFile
+				, (bp::arg("inputFile"), bp::arg("quiet")=false)
+				, bp::return_value_policy<bp::manage_new_object, bp::with_custodian_and_ward_postcall<0, 1> >()
+			)
+			.staticmethod("readEventFile")
+			.def_readonly("objectNameInFile", &rpwa::eventMetadata::objectNameInFile)
+			.def_readonly("eventTreeName", &rpwa::eventMetadata::eventTreeName)
+			.def_readonly("productionKinematicsMomentaBranchName", &rpwa::eventMetadata::productionKinematicsMomentaBranchName)
+			.def_readonly("decayKinematicsMomentaBranchName", &rpwa::eventMetadata::decayKinematicsMomentaBranchName)
+
+			;
+
+
+		bp::enum_<rpwa::eventMetadata::eventsTypeEnum>("eventsTypeEnum")
+			.value("OTHER", rpwa::eventMetadata::OTHER)
+			.value("REAL", rpwa::eventMetadata::REAL)
+			.value("GENERATED", rpwa::eventMetadata::GENERATED)
+			.value("ACCEPTED", rpwa::eventMetadata::ACCEPTED)
+			.export_values();
+
+		theScope.attr("OTHER") = rpwa::eventMetadata::OTHER;
+		theScope.attr("REAL") = rpwa::eventMetadata::REAL;
+		theScope.attr("GENERATED") = rpwa::eventMetadata::GENERATED;
+		theScope.attr("ACCEPTED") = rpwa::eventMetadata::ACCEPTED;
+
+	} // end of class scope for class 'eventMetadata'
+
+
+	bp::class_<rpwa::additionalTreeVariables, boost::noncopyable>("additionalTreeVariables")
+
+		.def("__getitem__", &rpwa::additionalTreeVariables::operator[])
+
+		.def("setBranchAddresses", &rpwa::additionalTreeVariables::setBranchAddresses)
+		.def("inBoundaries", &additionalTreeVariables_inBoundaries)
 
 		;
-
-
-	bp::enum_<rpwa::eventMetadata::eventsTypeEnum>("eventsTypeEnum")
-		.value("OTHER", rpwa::eventMetadata::OTHER)
-		.value("REAL", rpwa::eventMetadata::REAL)
-		.value("GENERATED", rpwa::eventMetadata::GENERATED)
-		.value("ACCEPTED", rpwa::eventMetadata::ACCEPTED)
-		.export_values();
-
-	theScope.attr("OTHER") = rpwa::eventMetadata::OTHER;
-	theScope.attr("REAL") = rpwa::eventMetadata::REAL;
-	theScope.attr("GENERATED") = rpwa::eventMetadata::GENERATED;
-	theScope.attr("ACCEPTED") = rpwa::eventMetadata::ACCEPTED;
-
 }

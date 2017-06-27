@@ -374,8 +374,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	}
 
 	TTree* eventTree = 0;
-	vector<double> binningVariables(otfBin.size());
-	vector<boundaryType> bounds(otfBin.size());
+	additionalTreeVariables variables;
 	if(eventMeta) {
 		if(otfBin.empty()) {
 			printErr << "got event metadata but the binning map is emtpy." << endl;
@@ -387,19 +386,17 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 			         << nmbEvents << " != " << eventTree->GetEntries() << ")." << endl;
 			return false;
 		}
-		unsigned int otfBinIndex = 0;
-		for(multibinBoundariesType::const_iterator elem = otfBin.begin(); elem != otfBin.end(); ++elem) {
+
+		for (const auto& elem: otfBin) {
 			printInfo << "using on-the-fly bin '"
-			          << elem->first << ": ["
-			          << elem->second.first << ", "
-			          << elem->second.second << "]'." << endl;
-			int err = eventTree->SetBranchAddress(elem->first.c_str(), &binningVariables[otfBinIndex]);
-			bounds[otfBinIndex] = elem->second;
-			++otfBinIndex;
-			if(err < 0) {
-				printErr << "could not set branch address for branch '" << elem->first << "' (error code " << err << ")." << endl;
-				return false;
-			}
+			          << elem.first << ": ["
+			          << elem.second.first << ", "
+			          << elem.second.second << "]'." << endl;
+		}
+
+		if (not variables.setBranchAddresses(*eventMeta)) {
+			printErr << "cannot set branch address to additional variables." << endl;
+			return false;
 		}
 	}
 
@@ -417,14 +414,7 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 
 		if(eventTree) {
 			eventTree->GetEntry(iEvent);
-			bool veto = false;
-			for(unsigned int iBinVar = 0; iBinVar < binningVariables.size(); ++iBinVar) {
-				if(binningVariables[iBinVar] < bounds[iBinVar].first or binningVariables[iBinVar] >= bounds[iBinVar].second) {
-					veto = true;
-					break;
-				}
-			}
-			if(veto) {
+			if (not variables.inBoundaries(otfBin)) {
 				continue;
 			}
 		}

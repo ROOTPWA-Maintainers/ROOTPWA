@@ -12,6 +12,8 @@ class TTree;
 
 namespace rpwa {
 
+	class additionalTreeVariables;
+
 	class eventMetadata : public TObject {
 		friend class eventFileWriter;
 
@@ -111,6 +113,44 @@ namespace rpwa {
 	{
 		return metadata.print(out);
 	}
+
+
+	/**
+	 * \brief handler for additional kinematic variables of event data
+	 *
+	 * The class represents a set of kinematic variables used for on-the-fly binning,
+	 * which are stored as additional tree variables together with the event data.
+	 * It provides an interface to connect kinematic variables to tree branches
+	 * and to check whether an event is within a kinematic bin.
+	 */
+	class additionalTreeVariables {
+
+	  public:
+
+		additionalTreeVariables() {}
+		additionalTreeVariables(const additionalTreeVariables&) = delete;
+		additionalTreeVariables& operator= (const additionalTreeVariables&) = delete;
+
+		double operator[](const std::string& label) const { return _additionalTreeVariables.at(label); }
+
+		/**
+		 * reads list of tree variables from provided metaData and connects them to tree branches
+		 * \param metaData eventMetadata object, whose additional tree variables branches will be set to this object
+		 * \return true if the setting of the branch addresses was successful
+		 */
+		bool setBranchAddresses(const eventMetadata& metaData);
+
+		/**
+		 * checks whether the current additional variables are within the boundaries
+		 * x_i in [lower_i, upper_i) for all variables i in the given boundaries
+		 */
+		bool inBoundaries(const multibinBoundariesType& boundaries) const;
+
+	  private:
+
+		std::map<std::string, double> _additionalTreeVariables;
+
+	};
 
 } // namespace rpwa
 
