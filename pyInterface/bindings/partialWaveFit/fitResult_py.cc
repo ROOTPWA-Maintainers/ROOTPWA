@@ -60,14 +60,7 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
 			bp::throw_error_already_set();
 		}
-		rpwa::multibinBoundariesType multibinBoundaries;
-		const bp::list keys = pyMultibinBoundaries.keys();
-		for (int i = 0; i < bp::len(keys); ++i) {
-			const std::string binningVar = bp::extract<std::string>(keys[i]);
-			const double lowerBound = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
-			const double upperBound = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
-			multibinBoundaries[binningVar] = rpwa::boundaryType(lowerBound, upperBound);
-		}
+		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
 		self.fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
 		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
 	}
@@ -88,14 +81,7 @@ namespace {
 	}
 
 	bp::dict fitResult_multibinBoundaries(const rpwa::fitResult& self) {
-		const rpwa::multibinBoundariesType& multibinBoundaries = self.multibinBoundaries();
-
-		bp::dict pyMultibinBoundaries;
-		for(rpwa::multibinBoundariesType::const_iterator it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it){
-			pyMultibinBoundaries[it->first] = bp::make_tuple(it->second.first, it->second.second);
-		}
-
-		return pyMultibinBoundaries;
+		return rpwa::py::convertMultibinBoundariesToPy(self.multibinBoundaries());
 	}
 
 	bp::list fitResult_evidenceComponents(const rpwa::fitResult& self) {

@@ -56,15 +56,7 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for amplitudeMetadata when executing rpwa::ampIntegralMatrix::integrate()");
 			bp::throw_error_already_set();
 		}
-		rpwa::multibinBoundariesType otfBin;
-		if(bp::len(pyOtfBin.keys()) > 0) {
-			bp::list keys = pyOtfBin.keys();
-			for(unsigned int i = 0; i < len(keys); ++i) {
-				otfBin[bp::extract<std::string>(keys[i])] =
-					rpwa::boundaryType(bp::extract<double>(pyOtfBin[pyOtfBin.keys()[i]][0]),
-					                   bp::extract<double>(pyOtfBin[pyOtfBin.keys()[i]][1]));
-			}
-		}
+		const rpwa::multibinBoundariesType otfBin = rpwa::py::convertMultibinBoundariesFromPy(pyOtfBin);
 		return self.integrate(amplitudeMeta, maxNmbEvents, weightFileName, eventMeta, otfBin);
 	}
 

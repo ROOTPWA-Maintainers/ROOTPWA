@@ -214,14 +214,7 @@ namespace {
 	                                 bp::dict                                    pyMultibinBoundaries,
 	                                 bp::list                                    pyEvtMetas)
 	{
-		rpwa::multibinBoundariesType multibinBoundaries;
-		const bp::list keys = pyMultibinBoundaries.keys();
-		for(unsigned int i = 0; i < bp::len(keys); i++){
-			std::string binningVar = bp::extract<std::string>(keys[i]);
-			double lowerBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
-			double upperBound      = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
-			multibinBoundaries.insert(rpwa::multibinBoundariesType::value_type(binningVar, rpwa::boundaryType(lowerBound, upperBound)));
-		}
+		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
 		std::vector<const rpwa::eventMetadata*> evtMetas;
 		if (not rpwa::py::convertBPObjectToVector<const rpwa::eventMetadata*>(pyEvtMetas, evtMetas)){
 			PyErr_SetString(PyExc_TypeError, "could not extract event metadatas");

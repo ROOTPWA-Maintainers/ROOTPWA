@@ -70,3 +70,35 @@ void rpwa::py::exportStlContainers() {
 		.def(bp::vector_indexing_suite<std::vector<rpwa::pwaLikelihood<std::complex<double> >::fitParameter>, true>());
 
 }
+
+
+rpwa::multibinBoundariesType
+rpwa::py::convertMultibinBoundariesFromPy(const boost::python::dict& pyMultibinBoundaries) {
+	rpwa::multibinBoundariesType multibinBoundaries;
+	boost::python::list keys = pyMultibinBoundaries.keys();
+	for (int i = 0; i < boost::python::len(keys); ++i) {
+		rpwa::boundaryType element;
+		if (not rpwa::py::convertBPObjectToPair<double, double>(pyMultibinBoundaries[keys[i]], element)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid pair for multibin boundaries");
+			boost::python::throw_error_already_set();
+		}
+		boost::python::extract<std::string> getString(keys[i]);
+		if (not getString.check()) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid key for multibin boundaries");
+			boost::python::throw_error_already_set();
+		}
+		multibinBoundaries[getString()] = element;
+	}
+	return multibinBoundaries;
+}
+
+
+boost::python::dict
+rpwa::py::convertMultibinBoundariesToPy(const rpwa::multibinBoundariesType& multibinBoundaries) {
+	boost::python::dict pyMultibinBoundaries;
+	for (const auto& variable_boundaries : multibinBoundaries) {
+		const boost::python::str variablePy(variable_boundaries.first);
+		pyMultibinBoundaries[variablePy] = boost::python::make_tuple(variable_boundaries.second.first, variable_boundaries.second.second);
+	}
+	return pyMultibinBoundaries;
+}

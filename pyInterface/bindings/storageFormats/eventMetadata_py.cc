@@ -7,6 +7,7 @@
 
 #include "eventMetadata.h"
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -15,14 +16,7 @@ namespace {
 
 	bp::dict eventMetadata_multibinBoundaries(const rpwa::eventMetadata& self)
 	{
-		bp::dict retval;
-		rpwa::multibinBoundariesType multibinBoundaries = self.multibinBoundaries();
-		for(rpwa::multibinBoundariesType::const_iterator it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it)
-		{
-			bp::tuple val = bp::make_tuple<double, double>(it->second.first, it->second.second);
-			retval[it->first] = val;
-		}
-		return retval;
+		return rpwa::py::convertMultibinBoundariesToPy(self.multibinBoundaries());
 	}
 
 	bp::list eventMetadata_productionKinematicsParticleNames(const rpwa::eventMetadata& self)

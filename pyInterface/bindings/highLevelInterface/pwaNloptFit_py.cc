@@ -18,14 +18,7 @@ namespace{
 	                                           const bool saveSpace = false,
 	                                           const bool verbose = false)
 	{
-		rpwa::multibinBoundariesType multibinBoundaries;
-		const bp::list keys = pyMultibinBoundaries.keys();
-		for (int i = 0; i < bp::len(keys); ++i) {
-			const std::string binningVar = bp::extract<std::string>(keys[i]);
-			const double lowerBound = bp::extract<double>(pyMultibinBoundaries[binningVar][0]);
-			const double upperBound = bp::extract<double>(pyMultibinBoundaries[binningVar][1]);
-			multibinBoundaries[binningVar] = rpwa::boundaryType(lowerBound, upperBound);
-		}
+		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
 		return rpwa::hli::pwaNloptFit(L, multibinBoundaries, seed, startValFileName, checkHessian, saveSpace, verbose);
 	}
 

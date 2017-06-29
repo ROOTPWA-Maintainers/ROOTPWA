@@ -38,23 +38,7 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalStateParticleNames when executing rpwa::eventFileWriter::initialize()");
 			bp::throw_error_already_set();
 		}
-		rpwa::multibinBoundariesType multibinBoundaries;
-		{
-			bp::list keys = pyMultibinBoundaries.keys();
-			for(int i = 0; i < bp::len(keys); ++i) {
-				rpwa::boundaryType element;
-				if(not rpwa::py::convertBPObjectToPair<double, double>(pyMultibinBoundaries[keys[i]], element)) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid pair for multibin boundaries when executing rpwa::eventFileWriter::initialize()");
-					bp::throw_error_already_set();
-				}
-				bp::extract<std::string> getString(keys[i]);
-				if(not getString.check()) {
-					PyErr_SetString(PyExc_TypeError, "Got invalid key for multibin boundaries when executing rpwa::eventFileWriter::initialize()");
-					bp::throw_error_already_set();
-				}
-				multibinBoundaries[getString()] = element;
-			}
-		}
+		rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
 		std::vector<std::string> additionalVariableLabels;
 		if(not rpwa::py::convertBPObjectToVector<std::string>(pyAdditionalVariableLabels, additionalVariableLabels))
 		{

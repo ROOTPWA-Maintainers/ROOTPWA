@@ -9,6 +9,7 @@
 #include <boost/python.hpp>
 
 #include "reportingUtils.hpp"
+#include "multibinTypes.h"
 
 
 namespace rpwa {
@@ -105,8 +106,9 @@ namespace rpwa {
 			return true;
 		}
 
+		rpwa::multibinBoundariesType convertMultibinBoundariesFromPy(const boost::python::dict& pyMultibinBoundaries);
+		boost::python::dict convertMultibinBoundariesToPy(const rpwa::multibinBoundariesType& multibinBoundaries);
 	}
-
 }
 
 #endif
