@@ -99,7 +99,7 @@ namespace rpwa {
 
 		mutable TTree* _eventTree; //!
 
-		ClassDef(eventMetadata, 2);
+		ClassDef(eventMetadata, 3);
 
 	}; // class eventMetadata
 

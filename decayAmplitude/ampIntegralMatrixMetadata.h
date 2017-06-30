@@ -68,7 +68,7 @@ namespace rpwa {
 			rpwa::multibinBoundariesType     _multibinBoundaries;
 			std::vector<rpwa::eventMetadata> _evtMetas;
 
-			ClassDef(ampIntegralMatrixMetadata, 2);
+			ClassDef(ampIntegralMatrixMetadata, 3);
 	};  // class ampIntegralMatrixMetadata
 
 	inline

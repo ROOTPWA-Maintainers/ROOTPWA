@@ -40,7 +40,7 @@
 
 
 #pragma link C++ class rpwa::waveDescription+;
-#pragma link C++ class rpwa::ampIntegralMatrixMetadata+;
+
 // data model evolution rule that triggers parsing of key file string
 // whenever waveDescription is read from file
 // see http://root.cern.ch/root/html/io/DataModelEvolution.html
@@ -49,6 +49,21 @@
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
 	code="{ newObj->parseKeyFileLocalCopy(); }"
+
+
+#pragma link C++ class rpwa::ampIntegralMatrixMetadata+;
+
+#pragma read                                                                                        \
+        sourceClass="rpwa::ampIntegralMatrixMetadata"                                               \
+        source="std::map<std::string, std::pair<double, double>> _binningMap"                       \
+        version="[-2]"                                                                              \
+        targetClass="rpwa::ampIntegralMatrixMetadata"                                               \
+        target="_multibinBoundaries"                                                                \
+        code="{                                                                                     \
+{                                                                                                   \
+    _multibinBoundaries = onfile._binningMap;                                                       \
+}                                                                                                   \
+              }";
 
 
 #pragma link C++ class std::vector<std::complex<double> >+;

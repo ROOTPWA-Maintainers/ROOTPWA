@@ -43,6 +43,19 @@
 #pragma link C++ class rpwa::amplitudeMetadata+;
 
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::eventMetadata"                                                           \
+        source="std::map<std::string, std::pair<double, double>> _binningMap"                       \
+        version="[-2]"                                                                              \
+        targetClass="rpwa::eventMetadata"                                                           \
+        target="_multibinBoundaries"                                                                \
+        code="{                                                                                     \
+{                                                                                                   \
+    _multibinBoundaries = onfile._binningMap;                                                       \
+}                                                                                                   \
+              }";
+
+
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
