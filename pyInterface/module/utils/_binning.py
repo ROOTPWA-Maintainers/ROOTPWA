@@ -26,7 +26,6 @@ class multiBin(object):
 				boundaries[key] = (float(binRange[0]), float(binRange[1]))
 		self.boundaries = boundaries
 
-
 	def __lt__(self, other):
 		keys = sorted(self.boundaries.keys())
 		if keys != sorted(other.boundaries.keys()):
@@ -39,7 +38,6 @@ class multiBin(object):
 			elif selfCenter < otherCenter:
 				return True
 		return False
-
 
 	def __le__(self, other):
 		return self < other or self == other
@@ -117,18 +115,18 @@ class multiBin(object):
 		'''
 		out = []
 		for variable in self.variables():
-			variableStr = "{0}_{1!r}_{2!r}".format(variable, self.boundaries[variable][0], self.boundaries[variable][1])
+			variableStr = "{0}:{1!r}:{2!r}".format(variable, self.boundaries[variable][0], self.boundaries[variable][1])
 			out.append(variableStr)
-		return "__".join(out)
+		return ",".join(out)
 
 	@classmethod
 	def fromUniqueStr(cls, strIn):
 		boundaries = {}
 		if strIn:
-			variables = strIn.split('__')
+			variables = strIn.split(',')
 			for variable in variables:
-				if variable.count('_') == 2:
-					name, lower, upper = variable.split("_")
+				if variable.count(':') == 2:
+					name, lower, upper = variable.split(":")
 					boundaries[name] = (float(lower), float(upper))
 				else:
 					printErr("Cannot get multiBin form string '{0}'".format(strIn))
@@ -145,7 +143,6 @@ class multiBin(object):
 			if not self.overlapInVariable(other, key, strict):
 				return False
 		return True
-
 
 	def overlapInVariable(self, other, key, strict=True):
 		'''
@@ -165,10 +162,8 @@ class multiBin(object):
 			return False
 		return True
 
-
 	def sameBinningVariables(self, other):
 		return sorted(self.boundaries.keys()) == sorted(other.boundaries.keys())
-
 
 	def inBin(self, binningInfo):
 		# binningInfo = { "variableName": value }
