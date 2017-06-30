@@ -115,7 +115,7 @@ class multiBin(object):
 		'''
 		out = []
 		for variable in self.variables():
-			variableStr = "{0}:{1!r}:{2!r}".format(variable, self.boundaries[variable][0], self.boundaries[variable][1])
+			variableStr = "{0}={1!r}={2!r}".format(variable, self.boundaries[variable][0], self.boundaries[variable][1])
 			out.append(variableStr)
 		return ",".join(out)
 
@@ -125,8 +125,8 @@ class multiBin(object):
 		if strIn:
 			variables = strIn.split(',')
 			for variable in variables:
-				if variable.count(':') == 2:
-					name, lower, upper = variable.split(":")
+				if variable.count('=') == 2:
+					name, lower, upper = variable.split("=")
 					boundaries[name] = (float(lower), float(upper))
 				else:
 					printErr("Cannot get multiBin form string '{0}'".format(strIn))
