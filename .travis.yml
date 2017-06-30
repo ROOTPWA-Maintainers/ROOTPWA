@@ -47,18 +47,20 @@ required_packages: &required_packages
 
 matrix:
     include:
-      - env: TRAVIS_RPWA_USE_BAT=1
+      - env: TRAVIS_RPWA_RUN_BUILD=1 TRAVIS_RPWA_USE_BAT=1
         addons:
             apt:
                 packages:
                   - *required_packages
                   - libnlopt-dev
                 update: true
-      - addons:
+      - env: TRAVIS_RPWA_RUN_BUILD=1
+        addons:
             apt:
                 packages:
                   - *required_packages
                 update: true
+      - env: TRAVIS_RPWA_RUN_FORMAT=1
 
 # send mails if a build fails
 notifications:
