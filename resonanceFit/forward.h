@@ -37,38 +37,66 @@ namespace rpwa {
 	namespace resonanceFit {
 
 		class baseData;
-		// 'baseData' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<baseData> baseDataPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'baseData' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<baseData> baseDataPtr;
+#endif
 		typedef std::shared_ptr<const baseData> baseDataConstPtr;
 
 		class component;
-		// 'component' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<component> componentPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'component' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<component> componentPtr;
+#endif
 		typedef std::shared_ptr<const component> componentConstPtr;
 
 		class data;
-		// 'data' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<data> dataPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'data' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<data> dataPtr;
+#endif
 		typedef std::shared_ptr<const data> dataConstPtr;
 
 		class fsmd;
-		// 'fsmd' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<fsmd> fsmdPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'fsmd' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<fsmd> fsmdPtr;
+#endif
 		typedef std::shared_ptr<const fsmd> fsmdConstPtr;
 
 		class function;
-		// 'function' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<function> functionPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'function' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<function> functionPtr;
+#endif
 		typedef std::shared_ptr<const function> functionConstPtr;
 
 		class input;
-		// 'input' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<input> inputPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'input' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<input> inputPtr;
+#endif
 		typedef std::shared_ptr<const input> inputConstPtr;
 
 		class model;
-		// 'model' should not be changed after construction, so this is not needed:
-		// typedef std::shared_ptr<model> modelPtr;
+#ifdef RESONANCEFIT_FORWARD_HH_FROM_PYTHON
+		// 'model' should not be changed after construction, so this
+		// is not needed from C++, however, Python does have no concept
+		// of const-ness
+		typedef std::shared_ptr<model> modelPtr;
+#endif
 		typedef std::shared_ptr<const model> modelConstPtr;
 
 	} // end namespace resonanceFit

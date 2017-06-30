@@ -1,5 +1,16 @@
 #include <boost/python.hpp>
 
+#include <RVersion.h>
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 6, 0)
+#include <TThread.h>
+#else
+#include <TROOT.h>
+#endif
+
+// set up numpy for usage in this module
+#define PY_ARRAY_UNIQUE_SYMBOL RPWA_PyArray_API
+#include <numpy/arrayobject.h>
+
 // pyUtils
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
@@ -56,6 +67,18 @@
 #include "particleDataTable_py.h"
 #include "particleProperties_py.h"
 
+// resonanceFit
+#include "resonanceFit/cache_py.h"
+#include "resonanceFit/components_py.h"
+#include "resonanceFit/data_py.h"
+#include "resonanceFit/fsmd_py.h"
+#include "resonanceFit/function_py.h"
+#include "resonanceFit/input_py.h"
+#include "resonanceFit/model_py.h"
+#include "resonanceFit/parameter_py.h"
+#include "resonanceFit/parameters_py.h"
+#include "resonanceFit/resonanceFit_py.h"
+
 // storageFormats
 #include "amplitudeFileWriter_py.h"
 #include "amplitudeMetadata_py.h"
@@ -70,6 +93,20 @@
 
 
 BOOST_PYTHON_MODULE(libRootPwaPy){
+
+	// enable multithreading of Python so we can release the GIL whereever
+	// appropriate
+	PyEval_InitThreads();
+
+	// also enable multithreading of ROOT
+#if ROOT_VERSION_CODE < ROOT_VERSION(6, 6, 0)
+	TThread::Initialize();
+#else
+	ROOT::EnableThreadSafety();
+#endif
+
+	// set up numpy for usage in this module
+	import_array();
 
 	rpwa::py::exportStlContainers();
 	rpwa::py::exportParticleProperties();
@@ -120,5 +157,15 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 #ifdef USE_NLOPT
 	rpwa::py::exportPwaNloptFit();
 #endif
+	rpwa::py::resonanceFit::exportCache();
+	rpwa::py::resonanceFit::exportComponents();
+	rpwa::py::resonanceFit::exportData();
+	rpwa::py::resonanceFit::exportFsmd();
+	rpwa::py::resonanceFit::exportFunction();
+	rpwa::py::resonanceFit::exportInput();
+	rpwa::py::resonanceFit::exportModel();
+	rpwa::py::resonanceFit::exportParameter();
+	rpwa::py::resonanceFit::exportParameters();
+	rpwa::py::resonanceFit::exportResonanceFit();
 
 }
