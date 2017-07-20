@@ -471,3 +471,61 @@ ostream& polynomialMassAndTPrimeSlopePicker::print(ostream& out) const {
 	out << "    t' slopes polynomial ... " << _tPrimeSlopePolynomial.GetExpFormula() <<endl;
 	return out;
 }
+
+
+bool
+rpwa::uniformMassAndTPicker::init(const libconfig::Setting& setting)
+{
+	map<string, libconfig::Setting::Type> mandatoryArguments;
+	insert(mandatoryArguments)
+	      ("tPrimeMin", libconfig::Setting::TypeFloat)
+	      ("tPrimeMax", libconfig::Setting::TypeFloat);
+	if (not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
+		printErr << "found invalid settings for the t' range for 'uniformMassAndTPicker'." << endl;
+		return false;
+	}
+	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
+		printErr<< "could not initialize t' or mass range settings in 'uniformMassAndTPicker'." << endl;
+		return false;
+	}
+	_initialized = true;
+	return true;
+}
+
+
+bool
+rpwa::uniformMassAndTPicker::operator()(double& invariantMass, double& tPrime)
+{
+	if (not _initialized) {
+		printErr<< "trying to use an uninitialized massAndTPrimePicker." << endl;
+		return false;
+	}
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
+	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
+	if (not pickTPrimeForMass(invariantMass, tPrime)) {
+		printErr << "error while generating t'." << std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+rpwa::uniformMassAndTPicker::pickTPrimeForMass(const double /*invariantMass*/, double& tPrime)
+{
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
+	tPrime = randomNumbers->Uniform(_tPrimeRange.first, _tPrimeRange.second);
+	return true;
+}
+
+
+std::ostream&
+rpwa::uniformMassAndTPicker::print(std::ostream& out) const
+{
+	out << "'uniformMassAndT' weighter parameters:" << endl;
+	out << "    minimum Mass ... " << _massRange.first << endl;
+	out << "    maximum Mass ... " << _massRange.second << endl;
+	out << "    minimum t' ..... " << _tPrimeRange.first << endl;
+	out << "    maximum t' ..... " << _tPrimeRange.second << endl;
+	return out;
+}

@@ -273,6 +273,8 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			_pickerFunction = massAndTPrimePickerPtr(new uniformMassExponentialTPicker());
 		} else if(functionName == "polynomialMassAndTPrime") {
 			_pickerFunction = massAndTPrimePickerPtr(new polynomialMassAndTPrimeSlopePicker());
+		} else if(functionName == "uniformMassAndT") {
+			_pickerFunction = massAndTPrimePickerPtr(new uniformMassAndTPicker());
 		} else {
 			printErr << "'function' name '" << functionName << "' unknown." << endl;
 			return false;
