@@ -87,6 +87,7 @@ namespace rpwa {
 
 	};
 
+
 	// Class to pick a m and t' slope. First the mass is picked from a polynomial,
 	// then the t' slope is determined in dependence of the mass (also a polynomial).
 	class polynomialMassAndTPrimeSlopePicker : public massAndTPrimePicker {
@@ -109,6 +110,25 @@ namespace rpwa {
 		TF1 _massPolynomial;
 		TF1 _tPrimeSlopePolynomial;
 
+	};
+
+
+	/**
+	 * Class to pick a m and t' uniformly in a given range
+	 */
+	class uniformMassAndTPicker : public massAndTPrimePicker {
+
+	  public:
+
+		uniformMassAndTPicker() { };
+		virtual ~uniformMassAndTPicker() { };
+
+		virtual bool init(const libconfig::Setting& setting);
+
+		virtual bool operator() (double& invariantMass, double& tPrime);
+		virtual bool pickTPrimeForMass(const double invariantMass, double& tPrime);
+
+		virtual std::ostream& print(std::ostream& out) const;
 	};
 
 }
