@@ -120,7 +120,7 @@ diffractivePhaseSpace::calculateXSystemLab(const TLorentzVector& beamLorentzVect
                                            const double          tPrime)
 {
 
-	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
+	TRandom3* const random = randomNumberGenerator::instance()->getGenerator();
 
 	// calculate t from t' in center-of-mass system of collision
 	const double sqrtS        = sqrt(s);
@@ -143,7 +143,8 @@ diffractivePhaseSpace::calculateXSystemLab(const TLorentzVector& beamLorentzVect
 	const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * targetMass);  // breakup energy
 	const double xEnergyLab       = beamEnergy + reggeonEnergyLab;
 	const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
-	const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab);
+	// special treatment of t' = 0 necessary to avoid numerical problems: xCosThetaLab = 1.0 + eps -> xSinThetaLab = NAN
+	const double xCosThetaLab     = (tPrime == 0.0) ? 1.0 : ((t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab));
 	const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
 	const double xPtLab           = xMomLab * xSinThetaLab;
 	const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
