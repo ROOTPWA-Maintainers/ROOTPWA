@@ -25,13 +25,42 @@ double
 rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data)
 {
 	const pwaLikelihood<complex<double> >* L = (const pwaLikelihood<complex<double> >*)func_data;
-	if (n != L->nmbPars()) {
+	if(n != L->nmbPars() - L->nmbParsFixed()) {
 		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
+		printErr << "Likelihood needs "  << L->nmbPars() << " parameters including " << L->nmbParsFixed() << " fixed parameters. Got " << n << " parameters" << endl;
 		throw;
+	}
+	if (L->nmbParsFixed() != 0) {
+		static double* xIncludingFixed = new double[L->nmbPars()];
+		unsigned int iNlopt = 0;
+		for (unsigned int iRootPWA = 0; iRootPWA < L->nmbPars(); ++iRootPWA) {
+			if (L->parameter(iRootPWA).fixed()) {
+				xIncludingFixed[iRootPWA] = 0.0;
+			} else {
+				xIncludingFixed[iRootPWA] = x[iNlopt];
+				++iNlopt;
+			}
+		}
+		x = xIncludingFixed;
 	}
 	double likeli;
 	if (gradient) {
+		static double* gradientIncludingFixed = new double[L->nmbPars()];
+		double* gradientNlopt = gradient;
+		if (L->nmbParsFixed() != 0) {
+			gradient = gradientIncludingFixed;
+		}
 		L->FdF(x, likeli, gradient);
+		if (L->nmbParsFixed() != 0) {
+			unsigned int iNlopt = 0;
+			for (unsigned int iRootPWA = 0; iRootPWA < L->nmbPars(); ++iRootPWA) {
+				if (not L->parameter(iRootPWA).fixed()) {
+					gradientNlopt[iNlopt] = gradientIncludingFixed[iRootPWA];
+					++iNlopt;
+				}
+			}
+		}
+
 	} else {
 		likeli = L->DoEval(x);
 	}
@@ -102,12 +131,13 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		}
 	}
 
-	const unsigned int nmbPar  = L.NDim();
-	const unsigned int nmbEvts = L.nmbEvents();
+	const unsigned int nmbPar       = L.NDim();
+	const unsigned int nmbParsFixed = L.nmbParsFixed();
+	const unsigned int nmbEvts      = L.nmbEvents();
 
 	// ---------------------------------------------------------------------------
 	// setup minimizer
-	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar);
+	nlopt::opt optimizer(nlopt::LD_LBFGS, nmbPar - nmbParsFixed);
 	optimizer.set_min_objective(&rpwaNloptFunc, &const_cast<pwaLikelihood<complex<double> >&>(L));
 
 	optimizer.set_xtol_rel(minimizerTolerance);
@@ -136,7 +166,8 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	printInfo << "setting start values for " << nmbPar << " parameters" << endl
 	          << "    parameter naming scheme is: V[rank index]_[wave name]" << endl;
 	unsigned int maxParNameLength = 0;       // maximum length of parameter names
-	vector<double>params(nmbPar);
+	vector<double> params;
+	params.reserve(nmbPar - nmbParsFixed);
 	{
 		for (unsigned int i = 0; i < nmbPar; ++i) {
 			const string parName = L.parameter(i).parName();
@@ -163,10 +194,10 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 			if (not L.parameter(i).fixed()) {
 				cout << "    setting parameter [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-				params[i] = startVal;
+				params.push_back(startVal);
 			} else {
-				printErr << "thresholds are not implemented for fits with NLopt. Aborting..." << endl;
-				throw;
+				cout << "    fixing parameter  [" << setw(3) << i << "] "
+				     << setw(maxParNameLength) << parName << " = 0" << endl;
 			}
 		}
 	}
@@ -187,6 +218,21 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 			converged = true;
 		}
 		timer.Stop();
+
+		// add fixed parameters to params
+		{
+			vector<double> paramsIncludingFixed(nmbPar);
+			unsigned int iNlopt = 0;
+			for(unsigned int iRootPWA = 0; iRootPWA < nmbPar; ++iRootPWA){
+				if(L.parameter(iRootPWA).fixed()){
+					paramsIncludingFixed[iRootPWA] = 0.0;
+				} else {
+					paramsIncludingFixed[iRootPWA] = params[iNlopt];
+					++iNlopt;
+				}
+			}
+			params = paramsIncludingFixed;
+		}
 
 		correctParams = L.CorrectParamSigns(params.data());
 		const double newLikelihood = L.DoEval(correctParams.data());
