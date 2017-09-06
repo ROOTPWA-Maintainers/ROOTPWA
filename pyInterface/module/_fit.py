@@ -85,7 +85,8 @@ def pwaNloptFit(eventAndAmpFileDict,
                 saveSpace=False,
                 rank=1,
                 verbose=False,
-                attempts=1
+                attempts=1,
+                keepOnlyBestHesseIntegral = False
                ):
 
 	waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
@@ -122,6 +123,10 @@ def pwaNloptFit(eventAndAmpFileDict,
 			seeds.append(randVal)
 
 	fitResults = [ ]
+	iBest = -1
+	iBestValide = -1
+	negLogLikeBest = 10
+	negLogLikeBestValide = 10
 	for fitSeed in seeds:
 		fitResult = pyRootPwa.core.pwaNloptFit(likelihood         = likelihood,
 		                                       multibinBoundaries = multiBin.boundaries,
@@ -131,4 +136,25 @@ def pwaNloptFit(eventAndAmpFileDict,
 		                                       saveSpace          = saveSpace,
 		                                       verbose            = verbose)
 		fitResults.append(fitResult)
+		if keepOnlyBestHesseIntegral:
+			iFitResult = len(fitResults)-1
+			if fitResult.logLikelihood() < negLogLikeBest:
+				negLogLikeBest = fitResult.logLikelihood()
+				if iBest > -1 and iBest != iBestValide:
+					fitResults[iBest].stripCovMatrix()
+					fitResults[iBest].stripIntegralMatrices()
+				iBest = iFitResult
+
+			if fitResult.converged() and fitResult.covMatrixValid():
+				if fitResult.logLikelihood() < negLogLikeBestValide:
+					negLogLikeBestValide = fitResult.logLikelihood()
+					if iBestValide > -1:
+						fitResults[iBestValide].stripCovMatrix()
+						fitResults[iBestValide].stripIntegralMatrices()
+					iBestValide = iFitResult
+
+			if iFitResult != iBest and iFitResult != iBestValide:
+				fitResult.stripCovMatrix()
+				fitResult.stripIntegralMatrices()
+
 	return fitResults
