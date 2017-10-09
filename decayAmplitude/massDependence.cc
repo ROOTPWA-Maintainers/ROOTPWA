@@ -34,11 +34,12 @@
 #include "massDependence.h"
 
 #include <type_traits>
+#include <regex>
 
 #include <boost/numeric/ublas/io.hpp>
 
-#include "isobarDecayVertex.h"
 #include "libConfigUtils.hpp"
+#include "isobarDecayVertex.h"
 #include "particleDataTable.h"
 #include "phaseSpaceIntegral.h"
 #include "physUtils.hpp"
@@ -67,10 +68,6 @@ namespace {
 	template<typename T>
 	typename std::enable_if<not std::is_default_constructible<T>::value, rpwa::massDependencePtr>::type createMassDependence(const libconfig::Setting* settings)
 	{
-		if (settings == nullptr) {
-			printErr << "mass dependence '" << T::Name() << "' requires additional settings, but none are specified. Aborting..." << std::endl;
-			throw;
-		}
 		return T::Create(settings);
 	}
 
@@ -93,6 +90,21 @@ namespace {
 	}
 
 
+	/**
+	 * Check if the configuration with the given name exists in the settings.
+	 * If it does not exist or cannot be converted to type `T`, print a warning and throw an exception.
+	 * @param massDependenceName Name of the mass dependence implementation
+	 * @param setting Setting to look up
+	 * @param name Name of the variable in the setting
+	 * @param valueOut Output variable, the value will be written to
+	 */
+	template<typename T>
+	static void lookupParameter(const string& massDependenceName, const libconfig::Setting* setting, const std::string& parameter, T& valueOut) {
+		if (not setting->lookupValue(parameter, valueOut)) {
+			printErr<< "cannot find '" << parameter << "' value in configuration for mass dependence '" << massDependenceName << "'. Aborting..." << std::endl;
+			throw;
+		}
+	}
 }
 
 
@@ -126,13 +138,14 @@ rpwa::createMassDependence(const std::string& massDepType, const libconfig::Sett
 	                              rpwa::piPiSWaveAuMorganPenningtonM,
 	                              rpwa::piPiSWaveAuMorganPenningtonVes,
 	                              rpwa::piPiSWaveAuMorganPenningtonKachaev,
-	                              rpwa::rhoPrimeMassDep>(massDepType, settings);
+	                              rpwa::rhoPrimeMassDep,
+	                              rpwa::KPiSGLASS,
+	                              rpwa::KPiSPalanoPennington>(massDepType, settings);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 bool massDependence::_debug = false;
-
 
 std::string
 massDependence::parentLabelForWaveName(const isobarDecayVertex& v) const
@@ -176,6 +189,11 @@ flatMassDependence::parentLabelForWaveName(const isobarDecayVertex& v) const
 boost::shared_ptr<binnedMassDependence>
 binnedMassDependence::Create(const libconfig::Setting* settings)
 {
+	if (settings == nullptr) {
+		printErr << "no settings given for binned mass dependence." << std::endl;
+		throw;
+	}
+
 	const libconfig::Setting* bounds = rpwa::findLibConfigList(*settings, "bounds" , false);
 	if (not bounds) {
 		printErr << "no bounds given for binned mass dependence." << std::endl;
@@ -416,7 +434,7 @@ f0980FlatteBesII::amp(const isobarDecayVertex& v)
 
 	denom -= imag * g1 * (rhoPi + g2g1*rhoK);
 
-	const std::complex<double> amp(1. / denom);
+	const std::complex<double> amp = 1./denom;
 
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
@@ -608,6 +626,202 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 	_a[1](0, 1) = 0;
 	_a[1](1, 0) = 0;
 	_a[1](1, 1) = 0;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+KPiSGLASS::KPiSGLASS(const double a, const double r, const double M0, const double G0, const double phiF, const double phiR, const double phiRsin,
+                     const double F, const double R, const double MMax, const std::string& tag)
+:
+		massDependenceImpl<KPiSGLASS>(),
+		_a(a),
+		_r(r),
+		_M0(M0),
+		_G0(G0),
+		_phiF(phiF),
+		_phiR(phiR),
+		_phiRsin(phiRsin),
+		_F(F),
+		_R(R),
+		_MMax(MMax),
+		_tag(tag),
+		_piChargedMass(0.0),
+		_kaonChargedMass(0.0)
+{
+	particleDataTable& pdt = particleDataTable::instance();
+	for (const auto& partName : { "pi+", "K+" }) {
+		if (not pdt.isInTable(partName)) {
+			printErr<< "cannot find particle " << partName << " in particle data table. " << "Aborting..." << endl;
+			throw;
+		}
+	}
+	_piChargedMass = pdt.entry("pi+")->mass();
+	_kaonChargedMass = pdt.entry("K+")->mass();
+}
+
+boost::shared_ptr<KPiSGLASS>
+KPiSGLASS::Create(const libconfig::Setting* massDepKey)
+{
+	if (massDepKey != nullptr) {
+		double a, r, M0, G0, phiF, phiR, phiRsin, F, R, MMax;
+		string tag;
+		lookupParameter(Name(), massDepKey, "a", a);
+		lookupParameter(Name(), massDepKey, "r", r);
+		lookupParameter(Name(), massDepKey, "M0", M0);
+		lookupParameter(Name(), massDepKey, "G0", G0);
+		lookupParameter(Name(), massDepKey, "phiF", phiF);
+		lookupParameter(Name(), massDepKey, "phiR", phiR);
+		lookupParameter(Name(), massDepKey, "phiRsin", phiRsin);
+		lookupParameter(Name(), massDepKey, "F", F);
+		lookupParameter(Name(), massDepKey, "R", R);
+		lookupParameter(Name(), massDepKey, "MMax", MMax);
+		lookupParameter(Name(), massDepKey, "tag", tag);
+
+		std::string forbiddenChars("[\\>\\<\\]\\[\\=]");
+		if (std::regex_search(tag, std::regex(forbiddenChars))){
+			printErr<< "The following characters are forbidden in tags: '" << forbiddenChars << "'. Aborting..." << endl;
+			throw;
+		}
+
+		return KPiSGLASS::Create(a, r, M0, G0, phiF, phiR, phiRsin, F, R, MMax, tag);
+	} else {
+		printErr<< "no configuration given for mass dependence '" << Name() << "'. Aborting..." << endl;
+		throw;
+	}
+}
+
+std::string
+KPiSGLASS::parentLabelForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream label;
+	label << name() << "<" << _tag << ">[" << v.parent()->name() << "]";
+	return label.str();
+}
+
+complex<double>
+KPiSGLASS::amp(const isobarDecayVertex& v)
+{
+	// get mass
+	const double M = v.parent()->lzVec().M();                 // parent mass
+
+	complex<double> amp = 0.0;
+
+	if (M > _kaonChargedMass + _piChargedMass and M < _MMax) {
+		const double q = breakupMomentum(M, _kaonChargedMass, _piChargedMass);
+		const double q0 = breakupMomentum(_M0, _kaonChargedMass, _piChargedMass);
+
+		const double G = _G0 * _M0 / M * q / q0;
+		const double deltaR = atan(_M0 * G / (_M0 * _M0 - M * M));
+
+		const double deltaF = atan(2.0 * _a * q / (2.0 + _a * _r * q * q));
+
+		amp = _F * sin(deltaF + _phiF) * exp(complex<double>(0.0, deltaF + _phiF))
+		        + _R * sin(deltaR + _phiRsin) * exp(complex<double>(0.0, deltaR + _phiR)) * exp(complex<double>(0.0, 2 * (deltaF + _phiF)));
+		amp *= 0.5*M / q; // divide by Kpi phase-space
+	}
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
+		           << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+KPiSPalanoPennington::KPiSPalanoPennington(const double MMax)
+:
+		massDependenceImpl<KPiSPalanoPennington>(),
+		_MMax(MMax),
+		_piChargedMass(0.0),
+		_kaonChargedMass(0.0),
+		_etaMass(0.0)
+{
+	particleDataTable& pdt = particleDataTable::instance();
+	const string partList[] = { "pi+", "K+", "eta0" };
+	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
+		if (not pdt.isInTable(partList[i])) {
+			printErr<< "cannot find particle " << partList[i] << " in particle data table. " << "Aborting..." << endl;
+			throw;
+		}
+	_piChargedMass = pdt.entry("pi+")->mass();
+	_kaonChargedMass = pdt.entry("K+")->mass();
+	_etaMass = pdt.entry("eta0")->mass();
+}
+
+boost::shared_ptr<KPiSPalanoPennington>
+KPiSPalanoPennington::Create(const libconfig::Setting* massDepKey)
+{
+
+	// if not given, take up to 2.4 GeV
+	double MMax = 2.4;
+	if (massDepKey != nullptr) {
+		massDepKey->lookupValue("MMax", MMax);
+	}
+
+	return KPiSPalanoPennington::Create(MMax);
+}
+
+std::string
+KPiSPalanoPennington::parentLabelForWaveName(const isobarDecayVertex& v) const
+{
+	std::ostringstream label;
+	label << name() << "<MMax_" << _MMax << "GeV>[" << v.parent()->name() << "]";
+	return label.str();
+}
+
+complex<double>
+KPiSPalanoPennington::amp(const isobarDecayVertex& v)
+                          {
+	// parameters from table I in the paper or from the text
+	const complex<double> j(0.0, 1.0);
+	const double sTop = 5.832;               // Fitting range in paper
+	const double sBot = 0.36;                // Fitting range in paper
+	const double sa = 1.7991;                // 1st K-matrix pole
+	const double sb = 8.3627;                // 2nd K-matrix pole
+	const double ga[2] = { 0.3139, -0.00775 }; // Couplings 1st K-matrix pole
+	const double gb[2] = { 1.1804, -0.22335 }; // Couplings 2nd K-matrix pole
+	// Coefficients of polynomial term in K-matrix
+	const double C[2][2][4] = { { { -0.1553, 0.0909, 0.8618, 0.0629 }, { 0.0738, 0.3866, 1.2195, 0.8390 } },
+	        { { 0.0738, 0.3866, 1.2195, 0.8390 }, { -0.0036, 0.2590, 1.6950, 2.2300 } } };
+	const double sKpi = _kaonChargedMass * _kaonChargedMass + _piChargedMass * _piChargedMass;
+	const double sA = 0.87753 * sKpi;          // Adler zero
+
+	// get mass
+	const double M = v.parent()->lzVec().M();                 // parent mass
+
+	complex<double> amp = 0.0;
+
+	if (M > _kaonChargedMass + _piChargedMass and M < _MMax) {
+		const double s = M * M;
+
+		const complex<double> qKpi = breakupMomentumComplex(M, _kaonChargedMass, _piChargedMass);
+		const complex<double> qKeta = breakupMomentumComplex(M, _kaonChargedMass, _etaMass);
+		const complex<double> rhoKpi = 2 * qKpi / M;
+		const complex<double> rhoKeta = 2 * qKeta / M;
+
+		const double x = (2 * s - (sTop + sBot)) / (sTop - sBot);
+
+		const complex<double> K_11 = (s - sA) / sKpi
+		        * (ga[0] * ga[0] / (sa - s) + gb[0] * gb[0] / (sb - s) + C[0][0][0] + C[0][0][1] * x + C[0][0][2] * x * x + C[0][0][3] * x * x * x);
+		const complex<double> K_12 = (s - sA) / sKpi
+		        * (ga[0] * ga[1] / (sa - s) + gb[0] * gb[1] / (sb - s) + C[0][1][0] + C[0][1][1] * x + C[0][1][2] * x * x + C[0][1][3] * x * x * x);
+		const complex<double> K_22 = (s - sA) / sKpi
+		        * (ga[1] * ga[1] / (sa - s) + gb[1] * gb[1] / (sb - s) + C[1][1][0] + C[1][1][1] * x + C[1][1][2] * x * x + C[1][1][3] * x * x * x);
+
+		const complex<double> detK = K_11 * K_22 - K_12 * K_12;
+		const complex<double> delta = 1.0 - j * rhoKpi * K_11 - j * rhoKeta * K_22 - rhoKpi * rhoKeta * detK;
+		const complex<double> T_11 = (K_11 - j * rhoKeta * detK) / delta;
+
+		amp = T_11;
+
+	}
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
+		           << "GeV/c) = " << maxPrecisionDouble(amp) << endl;
+
+	return amp;
+
 }
 
 

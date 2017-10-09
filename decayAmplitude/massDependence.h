@@ -95,7 +95,6 @@ namespace rpwa {
 
 
 	/// create a mass dependence object as specified by 'massDepType'
-	// only marks for mass dependencies not requiring additional arguments,
 	// if the mass dependence cannot be created return a NULL pointer
 	massDependencePtr createMassDependence(const std::string& massDepType, const libconfig::Setting* setting = nullptr);
 
@@ -421,6 +420,79 @@ namespace rpwa {
 	typedef boost::shared_ptr<rhoPrimeMassDep> rhoPrimeMassDepPtr;
 
 
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Generalized LASS (GLASS) parameterization for [Kpi]_S wave
+	/// Taken from The European Physical Journal C 2014 vol: 74 (11) pp: 3026
+	/// Equations 13.2.13 to 13.2.15 and 13.2.4
+	class KPiSGLASS: public massDependenceImpl<KPiSGLASS> {
+
+	public:
+
+		KPiSGLASS(const double a, const double r, const double M0, const double G0, const double phiF, const double phiR, const double phiRsin, const double F,
+		          const double R, const double MMax, const std::string& tag);
+		~KPiSGLASS()                        { }
+
+		using massDependenceImpl<KPiSGLASS>::Create;
+		static boost::shared_ptr<KPiSGLASS> Create(const libconfig::Setting* settings);
+
+		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		static constexpr const char* cName = "KPiSGLASS";
+
+	private:
+		double _a;          // scattering length
+		double _r;          // effective interaction length
+		double _M0;         // mass of K*0(1430)
+		double _G0;         // width of K*0(1430)
+		double _phiF;       // phase offset of non-resonant term
+		double _phiR;       // phase offset in exponent of resonant term
+		double _phiRsin;    // phase offset in sin of resonant term
+		double _F;          // magnitude of non-resonant term
+		double _R;          // magnitude of resonant term
+		double _MMax;       // maximal mass of this amplitude, returns 0 above this mass
+		std::string _tag;
+		double _piChargedMass;
+		double _kaonChargedMass;
+	};
+
+
+	typedef boost::shared_ptr<KPiSGLASS> KPiSGLASSPtr;
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief K-matrix parameterization for [Kpi]_S wave from Palano, Pennington
+	/// Taken from arXiv:1701.04881v1 (an updated version (v2) is no longer available)
+	/// Equations 2 to 6
+	/// Fixed two bugs in the formulas of the original paper
+	///   - Equation 3: - rho_a detK   ->  - i rho_a detK
+	///   - Equation 4: (s - s_alpha)  ->  (s_alpha - s)
+	class KPiSPalanoPennington: public massDependenceImpl<KPiSPalanoPennington> {
+
+	public:
+
+		KPiSPalanoPennington(const double MMax);
+		~KPiSPalanoPennington(){ }
+
+		using massDependenceImpl<KPiSPalanoPennington>::Create;
+		static boost::shared_ptr<KPiSPalanoPennington> Create(const libconfig::Setting* settings);
+
+		virtual std::string parentLabelForWaveName(const isobarDecayVertex& v) const;  ///< returns label for parent of decay used in wave name
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		static constexpr const char* cName = "KPiSPalanoPennington";
+
+	private:
+		double _MMax;       // maximal mass of this amplitude, returns 0 above this mass
+		double _piChargedMass;
+		double _kaonChargedMass;
+		double _etaMass;
+	};
+
+
+	typedef boost::shared_ptr<KPiSPalanoPennington> KPiSPalanoPenningtonPtr;
 }  // namespace rpwa
 
 
