@@ -75,6 +75,44 @@ namespace {
 
 	};
 
+
+	struct binnedMassDependenceWrapper: public rpwa::binnedMassDependence,
+	                                          bp::wrapper<rpwa::binnedMassDependence>
+	{
+
+		binnedMassDependenceWrapper(const double mMin, const double mMax)
+			: rpwa::binnedMassDependence(mMin, mMax),
+			  bp::wrapper<rpwa::binnedMassDependence>() { }
+
+		binnedMassDependenceWrapper(const rpwa::binnedMassDependence& dep)
+			: rpwa::binnedMassDependence(dep),
+			  bp::wrapper<rpwa::binnedMassDependence>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::binnedMassDependence::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::binnedMassDependence::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::binnedMassDependence::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::binnedMassDependence::name();
+		}
+
+	};
+
+
 	struct relativisticBreitWignerWrapper : public rpwa::relativisticBreitWigner,
 	                                               bp::wrapper<rpwa::relativisticBreitWigner>
 	{
@@ -363,6 +401,78 @@ namespace {
 
 	};
 
+
+	struct KPiSGLASSWrapper : public rpwa::KPiSGLASS,
+	                                bp::wrapper<rpwa::KPiSGLASS>
+	{
+		KPiSGLASSWrapper(const double a, const double r, const double M0, const double G0, const double phiF, const double phiR, const double phiRsin,
+		                 const double F, const double R, const double MMax, const std::string& tag)
+			: rpwa::KPiSGLASS(a, r, M0, G0, phiF, phiR, phiRsin, F, R, MMax, tag),
+			  bp::wrapper<rpwa::KPiSGLASS>() { }
+
+		KPiSGLASSWrapper(const rpwa::KPiSGLASS& dep)
+			: rpwa::KPiSGLASS(dep),
+			  bp::wrapper<rpwa::KPiSGLASS>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::KPiSGLASS::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::KPiSGLASS::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::KPiSGLASS::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::KPiSGLASS::name();
+		}
+
+	};
+
+	struct KPiSPalanoPenningtonWrapper : public rpwa::KPiSPalanoPennington,
+	                                bp::wrapper<rpwa::KPiSPalanoPennington>
+	{
+
+		KPiSPalanoPenningtonWrapper(const double MMax)
+			: rpwa::KPiSPalanoPennington(MMax),
+			  bp::wrapper<rpwa::KPiSPalanoPennington>() { }
+
+		KPiSPalanoPenningtonWrapper(const rpwa::KPiSPalanoPennington& dep)
+			: rpwa::KPiSPalanoPennington(dep),
+			  bp::wrapper<rpwa::KPiSPalanoPennington>() { }
+
+		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
+			if(bp::override amp = this->get_override("amp")) {
+				return amp(v);
+			}
+			return rpwa::KPiSPalanoPennington::amp(v);
+		}
+
+		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
+			return rpwa::KPiSPalanoPennington::amp(v);
+		}
+
+		std::string name() const {
+			if(bp::override name = this->get_override("name")) {
+				return name();
+			}
+			return rpwa::KPiSPalanoPennington::name();
+		}
+
+		std::string default_name() const {
+			return rpwa::KPiSPalanoPennington::name();
+		}
+
+	};
 }
 
 void rpwa::py::exportMassDependence() {
@@ -385,6 +495,13 @@ void rpwa::py::exportMassDependence() {
 		.def("amp", &rpwa::flatMassDependence::amp)
 		.def("name", &flatMassDependenceWrapper::name, &flatMassDependenceWrapper::default_name)
 		.def("name", &rpwa::flatMassDependence::name);
+
+	bp::class_<binnedMassDependenceWrapper, bp::bases<rpwa::massDependence> >("binnedMassDependence", bp::init<const double,const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &binnedMassDependenceWrapper::amp, &binnedMassDependenceWrapper::default_amp)
+		.def("amp", &rpwa::binnedMassDependence::amp)
+		.def("name", &binnedMassDependenceWrapper::name, &binnedMassDependenceWrapper::default_name)
+		.def("name", &rpwa::binnedMassDependence::name);
 
 	bp::class_<relativisticBreitWignerWrapper, bp::bases<rpwa::massDependence> >("relativisticBreitWigner")
 		.def(bp::self_ns::str(bp::self))
@@ -442,8 +559,26 @@ void rpwa::py::exportMassDependence() {
 		.def("name", &rhoPrimeMassDepWrapper::name, &rhoPrimeMassDepWrapper::default_name)
 		.def("name", &rpwa::rhoPrimeMassDep::name);
 
+	bp::class_<KPiSGLASSWrapper, bp::bases<rpwa::massDependence> >("KPiSGLASS", bp::init<const double,const double,const double,
+	                                                                                     const double,const double,const double,
+	                                                                                     const double,const double,const double
+	                                                                                     ,const double,const std::string&>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &KPiSGLASSWrapper::amp, &KPiSGLASSWrapper::default_amp)
+		.def("amp", &rpwa::KPiSGLASS::amp)
+		.def("name", &KPiSGLASSWrapper::name, &KPiSGLASSWrapper::default_name)
+		.def("name", &rpwa::KPiSGLASS::name);
+
+	bp::class_<KPiSPalanoPenningtonWrapper, bp::bases<rpwa::massDependence> >("KPiSPalanoPennington", bp::init<const double>())
+		.def(bp::self_ns::str(bp::self))
+		.def("amp", &KPiSPalanoPenningtonWrapper::amp, &KPiSPalanoPenningtonWrapper::default_amp)
+		.def("amp", &rpwa::KPiSPalanoPennington::amp)
+		.def("name", &KPiSPalanoPenningtonWrapper::name, &KPiSPalanoPenningtonWrapper::default_name)
+		.def("name", &rpwa::KPiSPalanoPennington::name);
+
 	bp::register_ptr_to_python<rpwa::massDependencePtr>();
 	bp::register_ptr_to_python<rpwa::flatMassDependencePtr>();
+	bp::register_ptr_to_python<rpwa::binnedMassDependencePtr>();
 	bp::register_ptr_to_python<rpwa::relativisticBreitWignerPtr>();
 	bp::register_ptr_to_python<rpwa::constWidthBreitWignerPtr>();
 	bp::register_ptr_to_python<rpwa::rhoBreitWignerPtr>();
@@ -452,5 +587,7 @@ void rpwa::py::exportMassDependence() {
 	bp::register_ptr_to_python<rpwa::piPiSWaveAuMorganPenningtonVesPtr>();
 	bp::register_ptr_to_python<rpwa::piPiSWaveAuMorganPenningtonKachaevPtr>();
 	bp::register_ptr_to_python<rpwa::rhoPrimeMassDepPtr>();
+	bp::register_ptr_to_python<rpwa::KPiSGLASSPtr>();
+	bp::register_ptr_to_python<rpwa::KPiSPalanoPenningtonPtr>();
 
 }
