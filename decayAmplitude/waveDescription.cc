@@ -842,33 +842,10 @@ waveDescription::mapMassDependenceType(const Setting* massDepKey)
 		massDepKey->lookupValue("name", massDepType);
 	}
 
-	massDependencePtr massDep = createMassDependence(massDepType);
+	massDependencePtr massDep = createMassDependence(massDepType, massDepKey);
 	if (not massDep) {
-		// mass dependence is not a simple type without additional
-		// arguments
-		if (massDepType == binnedMassDependence::Name()) {
-			const libconfig::Setting* bounds = rpwa::findLibConfigList(*massDepKey, "bounds" , false);
-			if (not bounds) {
-				printErr << "no bounds given for binned mass dependence." << std::endl;
-				throw;
-			}
-			const int length = bounds->getLength();
-			if (length != 2) {
-				printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
-				throw;
-			}
-			const double mMin = (*bounds)[0];
-			const double mMax = (*bounds)[1];
-			if (mMin > mMax) {
-				printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
-				throw;
-			}
-			massDep = binnedMassDependence::Create(mMin, mMax);
-		}
-		else {
-			printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
-			massDep = relativisticBreitWigner::Create();
-		}
+		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
+		massDep = relativisticBreitWigner::Create();
 	}
 	return massDep;
 }

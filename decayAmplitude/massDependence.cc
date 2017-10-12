@@ -31,13 +31,17 @@
 //-------------------------------------------------------------------------
 
 
+#include "massDependence.h"
+
+#include <type_traits>
+
 #include <boost/numeric/ublas/io.hpp>
 
-#include "physUtils.hpp"
 #include "isobarDecayVertex.h"
+#include "libConfigUtils.hpp"
 #include "particleDataTable.h"
 #include "phaseSpaceIntegral.h"
-#include "massDependence.h"
+#include "physUtils.hpp"
 
 
 using namespace std;
@@ -53,8 +57,26 @@ namespace {
 	// mass dependence
 
 
+	template<typename T>
+	typename std::enable_if<std::is_default_constructible<T>::value, rpwa::massDependencePtr>::type createMassDependence(const libconfig::Setting* /*settings*/)
+	{
+		return T::Create();
+	}
+
+
+	template<typename T>
+	typename std::enable_if<not std::is_default_constructible<T>::value, rpwa::massDependencePtr>::type createMassDependence(const libconfig::Setting* settings)
+	{
+		if (settings == nullptr) {
+			printErr << "mass dependence '" << T::Name() << "' requires additional settings, but none are specified. Aborting..." << std::endl;
+			throw;
+		}
+		return T::Create(settings);
+	}
+
+
 	template<typename... Ts>
-	typename std::enable_if<sizeof...(Ts) == 0, rpwa::massDependencePtr>::type createMassDependence(const std::string& /*massDepType*/)
+	typename std::enable_if<sizeof...(Ts) == 0, rpwa::massDependencePtr>::type createMassDependence(const std::string& /*massDepType*/, const libconfig::Setting* /*settings*/)
 	{
 		return nullptr;
 	}
@@ -62,12 +84,12 @@ namespace {
 
 	template<typename T, typename... Ts>
 	massDependencePtr
-	createMassDependence(const std::string& massDepType)
+	createMassDependence(const std::string& massDepType, const libconfig::Setting* settings)
 	{
 		if (T::Name() == massDepType)
-			return T::Create();
+			return ::createMassDependence<T>(settings);
 
-		return ::createMassDependence<Ts...>(massDepType);
+		return ::createMassDependence<Ts...>(massDepType, settings);
 	}
 
 
@@ -75,7 +97,7 @@ namespace {
 
 
 massDependencePtr
-rpwa::createMassDependence(const std::string& massDepType)
+rpwa::createMassDependence(const std::string& massDepType, const libconfig::Setting* settings)
 {
 	// default for empty string
 	if (massDepType == "")
@@ -95,6 +117,7 @@ rpwa::createMassDependence(const std::string& massDepType)
 
 	// otherwise try to resolve the name
 	return ::createMassDependence<rpwa::flatMassDependence,
+	                              rpwa::binnedMassDependence,
 	                              rpwa::relativisticBreitWigner,
 	                              rpwa::constWidthBreitWigner,
 	                              rpwa::rhoBreitWigner,
@@ -103,7 +126,7 @@ rpwa::createMassDependence(const std::string& massDepType)
 	                              rpwa::piPiSWaveAuMorganPenningtonM,
 	                              rpwa::piPiSWaveAuMorganPenningtonVes,
 	                              rpwa::piPiSWaveAuMorganPenningtonKachaev,
-	                              rpwa::rhoPrimeMassDep>(massDepType);
+	                              rpwa::rhoPrimeMassDep>(massDepType, settings);
 }
 
 
@@ -150,6 +173,30 @@ flatMassDependence::parentLabelForWaveName(const isobarDecayVertex& v) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
+boost::shared_ptr<binnedMassDependence>
+binnedMassDependence::Create(const libconfig::Setting* settings)
+{
+	const libconfig::Setting* bounds = rpwa::findLibConfigList(*settings, "bounds" , false);
+	if (not bounds) {
+		printErr << "no bounds given for binned mass dependence." << std::endl;
+		throw;
+	}
+	const int length = bounds->getLength();
+	if (length != 2) {
+		printErr << "bounds do not have the required length (expected: 2, found: " << length << ")." << std::endl;
+		throw;
+	}
+	const double mMin = (*bounds)[0];
+	const double mMax = (*bounds)[1];
+	if (mMin > mMax) {
+		printErr << "bounds are not ordered: mMin(" << mMin << ") > mMax(" << mMax << ")." << std::endl;
+		throw;
+	}
+
+	return binnedMassDependence::Create(mMin, mMax);
+}
+
+
 complex<double>
 binnedMassDependence::amp(const isobarDecayVertex& v)
 {
