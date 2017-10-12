@@ -43,6 +43,9 @@
 #include <boost/numeric/ublas/matrix.hpp>
 
 
+namespace libconfig {
+	class Setting;
+}
 namespace ublas = boost::numeric::ublas;
 
 
@@ -94,7 +97,7 @@ namespace rpwa {
 	/// create a mass dependence object as specified by 'massDepType'
 	// only marks for mass dependencies not requiring additional arguments,
 	// if the mass dependence cannot be created return a NULL pointer
-	massDependencePtr createMassDependence(const std::string& massDepType);
+	massDependencePtr createMassDependence(const std::string& massDepType, const libconfig::Setting* setting = nullptr);
 
 
 	inline
@@ -169,6 +172,9 @@ namespace rpwa {
 
 		double getMassMin() const { return _mMin; }
 		double getMassMax() const { return _mMax; }
+
+		using massDependenceImpl<binnedMassDependence>::Create;
+		static boost::shared_ptr<binnedMassDependence> Create(const libconfig::Setting* settings);
 
 		static constexpr const char* cName = "binned";
 
