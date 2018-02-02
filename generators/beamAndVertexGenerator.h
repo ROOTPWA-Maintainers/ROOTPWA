@@ -11,6 +11,7 @@
 
 #include <TVector3.h>
 #include <TLorentzVector.h>
+#include <TMatrixDSym.h>
 
 class TFile;
 class TTree;
@@ -26,7 +27,7 @@ namespace rpwa {
 	typedef boost::shared_ptr<beamAndVertexGenerator> beamAndVertexGeneratorPtr;
 
 	class beamAndVertexGenerator {
-
+		enum simulationMode {simpleSimulation, simulationFromMomenta, simulationFromInclinations};
 	  public:
 
 		beamAndVertexGenerator();
@@ -61,19 +62,40 @@ namespace rpwa {
 		bool _readBeamfileSequentially;
 		long _currentBeamfileEntry;
 
+		virtual bool loadBeamFileWithMomenta();
+		virtual bool loadBeamFileWithInclinations();
+		virtual bool eventSimple(const rpwa::Target& target, const rpwa::Beam& beam);
+		virtual bool eventFromMomenta(const rpwa::Target& target, const rpwa::Beam& beam);
+		virtual bool eventFromInclinations(const rpwa::Target& target, const rpwa::Beam& beam);
+		/**
+		 * Load next event from beam file into the member variables of this object
+		 * @return true if loading was successful
+		 */
+		virtual bool loadNextEventFromBeamfile();
+
 	  private:
 
-		bool _simpleSimulation;
+		simulationMode _simulationMode;
 
 		TFile* _rootFile;
 		TTree* _beamTree;
 
-		// pairs with [value, sigma]
-		std::pair<double, double> _vertexX;
-		std::pair<double, double> _vertexY;
-		std::pair<double, double> _beamMomentumX;
-		std::pair<double, double> _beamMomentumY;
-		std::pair<double, double> _beamMomentumZ;
+		double _vertexX;
+		double _vertexY;
+		double _vertexZ;
+		double _beamMomentumX;
+		double _beamMomentumY;
+		double _beamMomentumZ;
+		double _beamdXdZ;
+		double _beamdYdZ;
+		double _beamMomentum;
+		double _vertexXSigma;
+		double _vertexYSigma;
+		double _beamMomentumXSigma;
+		double _beamMomentumYSigma;
+		double _beamMomentumZSigma;
+		double _beamMomentumSigma;
+		TMatrixDSym* _vertexCovarianceMatrix;
 
 		bool _sigmasPresent;
 		double _sigmaScalingFactor;
