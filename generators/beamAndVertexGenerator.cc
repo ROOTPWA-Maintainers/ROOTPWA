@@ -1,6 +1,8 @@
 
 #include <TFile.h>
 #include <TTree.h>
+#include <TVectorD.h>
+#include <TMatrixDSymEigen.h>
 
 #include "generator.h"
 #include "generatorParameters.hpp"
@@ -8,6 +10,9 @@
 #include "reportingUtils.hpp"
 #include "beamAndVertexGenerator.h"
 
+namespace {
+	TVectorD multivariantGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor);
+}
 
 using namespace std;
 using namespace rpwa;
@@ -19,14 +24,25 @@ beamAndVertexGenerator::beamAndVertexGenerator()
 	  _beam(TLorentzVector(0., 0., 0., 0.)),
 	  _readBeamfileSequentially(false),
 	  _currentBeamfileEntry(0),
-	  _simpleSimulation(true),
+	  _simulationMode(simpleSimulation),
 	  _rootFile(NULL),
 	  _beamTree(NULL),
-	  _vertexX(pair<double, double>(0., 0.)),
-	  _vertexY(pair<double, double>(0., 0.)),
-	  _beamMomentumX(pair<double, double>(0., 0.)),
-	  _beamMomentumY(pair<double, double>(0., 0.)),
-	  _beamMomentumZ(pair<double, double>(0., 0.)),
+	  _vertexX(0.0),
+	  _vertexY(0.0),
+	  _vertexZ(0.0),
+	  _beamMomentumX(0.0),
+	  _beamMomentumY(0.0),
+	  _beamMomentumZ(0.0),
+	  _beamdXdZ(0.0),
+	  _beamdYdZ(0.0),
+	  _beamMomentum(0.0),
+	  _vertexXSigma(0.0),
+	  _vertexYSigma(0.0),
+	  _beamMomentumXSigma(0.0),
+	  _beamMomentumYSigma(0.0),
+	  _beamMomentumZSigma(0.0),
+	  _beamMomentumSigma(0.0),
+	  _vertexCovarianceMatrix(nullptr),
 	  _sigmasPresent(false),
 	  _sigmaScalingFactor(1.) { }
 
@@ -47,6 +63,22 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 		         << "' when initializing beam simulation." << endl;
 		return false;
 	}
+	TBranch* beamMomentumX = _beamTree->FindBranch("beam_momentum_x");
+	TBranch* beamdXdZ = _beamTree->FindBranch("beam_dXdZ");
+	if (beamMomentumX != nullptr) {
+		return loadBeamFileWithMomenta();
+	} else if (beamdXdZ != nullptr) {
+		return loadBeamFileWithInclinations();
+	} else {
+		printErr << "The beam file tree '" << _beamTree->GetName()
+		         << "' contains neither momentum branches nor inclination branches." << endl;
+	}
+	return false;
+}
+
+bool beamAndVertexGenerator::loadBeamFileWithMomenta()
+{
+
 	TBranch* vertexXPosition = _beamTree->FindBranch("vertex_x_position");
 	TBranch* vertexYPosition = _beamTree->FindBranch("vertex_y_position");
 	TBranch* beamMomentumX = _beamTree->FindBranch("beam_momentum_x");
@@ -55,7 +87,7 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 	if(not (vertexXPosition and vertexYPosition and
 	        beamMomentumX and beamMomentumY and beamMomentumZ))
 	{
-		printErr << "One of the required branches is missing in tree '" << beamTreeName
+		printErr << "One of the required branches is missing in tree '" << _beamTree->GetName()
 		         << "' in root file '" << _beamFileName << ". Required are "
 		         << " 'vertex_x_position', 'vertex_y_position', 'beam_momentum_x'"
 		         << ", 'beam_momentum_y' 'and beam_momentum_z'." << endl;
@@ -66,11 +98,11 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 		_beamTree = NULL;
 		return false;
 	}
-	_beamTree->SetBranchAddress("vertex_x_position", &_vertexX.first);
-	_beamTree->SetBranchAddress("vertex_y_position", &_vertexY.first);
-	_beamTree->SetBranchAddress("beam_momentum_x", &_beamMomentumX.first);
-	_beamTree->SetBranchAddress("beam_momentum_y", &_beamMomentumY.first);
-	_beamTree->SetBranchAddress("beam_momentum_z", &_beamMomentumZ.first);
+	_beamTree->SetBranchAddress("vertex_x_position", &_vertexX);
+	_beamTree->SetBranchAddress("vertex_y_position", &_vertexY);
+	_beamTree->SetBranchAddress("beam_momentum_x", &_beamMomentumX);
+	_beamTree->SetBranchAddress("beam_momentum_y", &_beamMomentumY);
+	_beamTree->SetBranchAddress("beam_momentum_z", &_beamMomentumZ);
 	TBranch* vertexXPositionSigma = _beamTree->FindBranch("vertex_x_position_sigma");
 	TBranch* vertexYPositionSigma = _beamTree->FindBranch("vertex_y_position_sigma");
 	TBranch* beamMomentumXSigma =  _beamTree->FindBranch("beam_momentum_x_sigma");
@@ -79,7 +111,7 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 	if(not (vertexXPositionSigma and vertexYPositionSigma and
 	        beamMomentumXSigma and beamMomentumYSigma and beamMomentumZSigma))
 	{
-		printWarn << "One of the optional branches is missing in tree '" << beamTreeName
+		printWarn << "One of the optional branches is missing in tree '" << _beamTree->GetName()
 		          << "' in root file '" << _beamFileName << ". Required are"
 		          << " 'vertex_x_position_sigma', 'vertex_y_position_sigma', 'beam_momentum_x_sigma'"
 		          << ", 'beam_momentum_y_sigma' 'and beam_momentum_z_sigma'. The input events"
@@ -87,13 +119,50 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 		_sigmasPresent = false;
 	} else {
 		_sigmasPresent = true;
-		_beamTree->SetBranchAddress("vertex_x_position_sigma", &_vertexX.second);
-		_beamTree->SetBranchAddress("vertex_y_position_sigma", &_vertexY.second);
-		_beamTree->SetBranchAddress("beam_momentum_x_sigma", &_beamMomentumX.second);
-		_beamTree->SetBranchAddress("beam_momentum_y_sigma", &_beamMomentumY.second);
-		_beamTree->SetBranchAddress("beam_momentum_z_sigma", &_beamMomentumZ.second);
+		_beamTree->SetBranchAddress("vertex_x_position_sigma", &_vertexXSigma);
+		_beamTree->SetBranchAddress("vertex_y_position_sigma", &_vertexYSigma);
+		_beamTree->SetBranchAddress("beam_momentum_x_sigma", &_beamMomentumXSigma);
+		_beamTree->SetBranchAddress("beam_momentum_y_sigma", &_beamMomentumYSigma);
+		_beamTree->SetBranchAddress("beam_momentum_z_sigma", &_beamMomentumZSigma);
 	}
-	_simpleSimulation = false;
+	_simulationMode = simulationFromMomenta;
+	return check();
+}
+
+bool beamAndVertexGenerator::loadBeamFileWithInclinations()
+{
+	TBranch* vertexXPosition = _beamTree->FindBranch("vertex_x_position");
+	TBranch* vertexYPosition = _beamTree->FindBranch("vertex_y_position");
+	TBranch* vertexZPosition = _beamTree->FindBranch("vertex_z_position");
+	TBranch* beamdXdZ = _beamTree->FindBranch("beam_dXdZ");
+	TBranch* beamdYdZ = _beamTree->FindBranch("beam_dYdZ");
+	TBranch* beamMomentum = _beamTree->FindBranch("beam_momentum");
+	TBranch* vertexCov = _beamTree->FindBranch("vertex_XYdXdY_cov");
+	TBranch* beamMomentumSigma = _beamTree->FindBranch("beam_momentum_sigma");
+	if(not (vertexXPosition and vertexYPosition and vertexZPosition and
+	        beamdXdZ and beamdYdZ and beamMomentum and vertexCov and beamMomentumSigma))
+	{
+		printErr << "One of the required branches is missing in tree '" << _beamTree->GetName()
+		         << "' in root file '" << _beamFileName << ". Required are "
+		         << " 'vertex_x_position', 'vertex_y_position', 'vertex_z_position', 'beam_dYdZ'"
+		         << ", 'beam_dYdZ', 'beam_momentum' 'and vertex_XYdXdY_cov'." << endl;
+		_rootFile->Close();
+		delete _rootFile;
+		_rootFile = NULL;
+		delete _beamTree;
+		_beamTree = NULL;
+		return false;
+	}
+	_vertexCovarianceMatrix = nullptr;
+	_beamTree->SetBranchAddress("vertex_x_position", &_vertexX);
+	_beamTree->SetBranchAddress("vertex_y_position", &_vertexY);
+	_beamTree->SetBranchAddress("vertex_z_position", &_vertexZ);
+	_beamTree->SetBranchAddress("beam_dXdZ", &_beamdXdZ);
+	_beamTree->SetBranchAddress("beam_dYdZ", &_beamdYdZ);
+	_beamTree->SetBranchAddress("beam_momentum", &_beamMomentum);
+	_beamTree->SetBranchAddress("vertex_XYdXdY_cov", &_vertexCovarianceMatrix);
+	_beamTree->SetBranchAddress("beam_momentum_sigma", &_beamMomentumSigma);
+	_simulationMode = simulationFromInclinations;
 	return check();
 }
 
@@ -118,71 +187,127 @@ void beamAndVertexGenerator::randomizeBeamfileStartingPosition() {
 
 
 bool beamAndVertexGenerator::check() const {
-	if(_beamTree or _simpleSimulation) {
+	if(_beamTree or _simulationMode == simpleSimulation) {
 		return true;
 	} else {
 		return false;
 	}
 }
 
-
 bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
+	switch(_simulationMode){
+		case simpleSimulation:
+			return eventSimple(target, beam);
+			break;
+		case simulationFromMomenta:
+			return eventFromMomenta(target, beam);
+			break;
+		case simulationFromInclinations:
+			return eventFromInclinations(target, beam);
+			break;
+		default:
+			printErr << "Unknown simulation mode" << endl;
+			return false;
+			break;
+	}
+}
+bool beamAndVertexGenerator::eventSimple(const Target& target, const Beam& beam) {
 	double z = getVertexZ(target);
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	if(_simpleSimulation) {
-		double x;
-		double y;
-		double radius = std::sqrt(randomGen->Uniform(0, target.radius * target.radius));
-		randomGen->Circle(x, y, radius);
-		_vertex.SetXYZ(target.position.X() + x,
-		               target.position.Y() + y,
-		               z);
-		// throw magnituide of beam momentum
-		const double pBeam = randomGen->Gaus(beam.momentum, beam.momentumSigma);
-		// throw beam inclination
-		const double dxdz = randomGen->Gaus(beam.DxDz, beam.DxDzSigma);
-		const double dydz = randomGen->Gaus(beam.DyDz, beam.DyDzSigma);
-		// construct tilted beam momentum Lorentz vector
-		const double pz        = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
-		const double px        = dxdz * pz;
-		const double py        = dydz * pz;
-		const double EBeam     = sqrt(pBeam * pBeam + beam.particle.mass2());
-		_beam.SetXYZT(px, py, pz, EBeam);
+	double x;
+	double y;
+	double radius = std::sqrt(randomGen->Uniform(0, target.radius * target.radius));
+	randomGen->Circle(x, y, radius);
+	_vertex.SetXYZ(target.position.X() + x,
+					target.position.Y() + y,
+					z);
+	// throw magnituide of beam momentum
+	const double pBeam = randomGen->Gaus(beam.momentum, beam.momentumSigma);
+	// throw beam inclination
+	const double dxdz = randomGen->Gaus(beam.DxDz, beam.DxDzSigma);
+	const double dydz = randomGen->Gaus(beam.DyDz, beam.DyDzSigma);
+	// construct tilted beam momentum Lorentz vector
+	const double pz        = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
+	const double px        = dxdz * pz;
+	const double py        = dydz * pz;
+	const double EBeam     = sqrt(pBeam * pBeam + beam.particle.mass2());
+	_beam.SetXYZT(px, py, pz, EBeam);
+	return true;
+}
+
+bool beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& beam) {
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	double z = getVertexZ(target);
+	if(not loadNextEventFromBeamfile()) return false;
+
+	double dx = _beamMomentumX / _beamMomentumZ;
+	double dy = _beamMomentumY / _beamMomentumZ;
+	double projectedVertexX = _vertexX + dx * z;
+	double projectedVertexY = _vertexY + dy * z;
+	if(_sigmasPresent and _sigmaScalingFactor != 0.) {
+		_vertex.SetXYZ(randomGen->Gaus(projectedVertexX, _sigmaScalingFactor * _vertexXSigma),
+						randomGen->Gaus(projectedVertexY, _sigmaScalingFactor * _vertexYSigma),
+						z);
+		_beam.SetXYZM(randomGen->Gaus(_beamMomentumX, _sigmaScalingFactor * _beamMomentumXSigma),
+						randomGen->Gaus(_beamMomentumY, _sigmaScalingFactor * _beamMomentumYSigma),
+						randomGen->Gaus(_beamMomentumZ, _sigmaScalingFactor * _beamMomentumZSigma),
+						beam.particle.mass());
 	} else {
-		long nEntries = _beamTree->GetEntries();
-		if(not _readBeamfileSequentially) {
-			_currentBeamfileEntry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
-			_beamTree->GetEntry(_currentBeamfileEntry);
-		} else {
-			if(_currentBeamfileEntry >= nEntries) {
-				printInfo << "reached end of beamfile, looping back to first event." << endl;
-				_currentBeamfileEntry = 0;
-			}
-			_beamTree->GetEntry(_currentBeamfileEntry++);
-		}
-		double dx = _beamMomentumX.first / _beamMomentumZ.first;
-		double dy = _beamMomentumY.first / _beamMomentumZ.first;
-		double projectedVertexX = _vertexX.first + dx * z;
-		double projectedVertexY = _vertexY.first + dy * z;
-		if(_sigmasPresent and _sigmaScalingFactor != 0.) {
-			_vertex.SetXYZ(randomGen->Gaus(projectedVertexX, _sigmaScalingFactor * _vertexX.second),
-			               randomGen->Gaus(projectedVertexY, _sigmaScalingFactor * _vertexY.second),
-			               z);
-			_beam.SetXYZM(randomGen->Gaus(_beamMomentumX.first, _sigmaScalingFactor * _beamMomentumX.second),
-			              randomGen->Gaus(_beamMomentumY.first, _sigmaScalingFactor * _beamMomentumY.second),
-			              randomGen->Gaus(_beamMomentumZ.first, _sigmaScalingFactor * _beamMomentumZ.second),
-						  beam.particle.mass());
-		} else {
-			_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
-			_beam.SetXYZM(_beamMomentumX.first,
-			              _beamMomentumY.first,
-			              _beamMomentumZ.first,
-			              beam.particle.mass());
-		}
+		_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
+		_beam.SetXYZM(_beamMomentumX,
+						_beamMomentumY,
+						_beamMomentumZ,
+						beam.particle.mass());
 	}
 	return true;
 }
 
+bool beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& beam) {
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	double z = getVertexZ(target);
+	if(not loadNextEventFromBeamfile()) return false;
+
+	TVectorD mean(4);
+	mean[0] = _vertexX;
+	mean[1] = _vertexY;
+	mean[2] = _beamdXdZ;
+	mean[3] = _beamdYdZ;
+
+	TVectorD sample = multivariantGauss(mean, *_vertexCovarianceMatrix, _sigmaScalingFactor);
+	const double x = sample[0];
+	const double y = sample[1];
+	const double dx = sample[2];
+	const double dy = sample[3];
+	const double norm = sqrt(dx*dx + dy*dy + 1);
+
+
+	const double projectedVertexX = x + dx * (z-_vertexZ);
+	const double projectedVertexY = y + dy * (z-_vertexZ);
+	const double beamMomentum = randomGen->Gaus(_beamMomentum, _sigmaScalingFactor*_beamMomentumSigma);
+		_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
+		_beam.SetXYZM(  beamMomentum * dx / norm,
+						beamMomentum * dy / norm,
+						beamMomentum * 1  / norm,
+						beam.particle.mass());
+	return true;
+}
+
+bool beamAndVertexGenerator::loadNextEventFromBeamfile(){
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	long nEntries = _beamTree->GetEntries();
+
+	if(not _readBeamfileSequentially) {
+		_currentBeamfileEntry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
+		_beamTree->GetEntry(_currentBeamfileEntry);
+	} else {
+		if(_currentBeamfileEntry >= nEntries) {
+			printInfo << "reached end of beamfile, looping back to first event." << endl;
+			_currentBeamfileEntry = 0;
+		}
+		_beamTree->GetEntry(_currentBeamfileEntry++);
+	}
+	return true;
+}
 
 double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
@@ -200,7 +325,7 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 
 	out << "Beam package information:" << endl;
 	out << "    Using beam file ................ ";
-	if(_simpleSimulation) {
+	if(_simulationMode == simpleSimulation) {
 		out << "No" << endl;
 	} else {
 		out << "Yes" << endl;
@@ -218,6 +343,12 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 	} else {
 		out << "No" << endl;
 	}
+	out << "    Simulation mode ................ ";
+	if(_simulationMode == simulationFromMomenta) {
+		out << "Using momenta" << endl;
+	} else {
+		out << "Using beam inclination" << endl;
+	}
 	out << "    Sigmas found ................... ";
 	if(_sigmasPresent) {
 		out << "Yes" << endl;
@@ -234,4 +365,28 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 	}
 	return out;
 
+}
+
+namespace{
+TVectorD multivariantGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor)
+{
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	const int ndim = mean.GetNrows();
+	if ( ndim != cov.GetNrows() or ndim != cov.GetNcols()){
+		printErr << "Covariance matrix or mean vector have wrong format" << endl;
+		throw "Covariance matrix or mean vector have wrong format";
+	}
+
+	TMatrixDSymEigen eigenDecomposition(cov);
+	const TVectorD& eigenvalues = eigenDecomposition.GetEigenValues();
+	const TMatrixD& eigenvectorMatrix = eigenDecomposition.GetEigenVectors();
+
+	TVectorD sample(ndim);
+	for(int i=0; i<ndim; ++i){
+		sample[i] = randomGen->Gaus(0,sigmaScalingFactor*sqrt(eigenvalues[i]));
+	}
+	sample = eigenvectorMatrix * sample;
+	sample = sample + mean;
+	return sample;
+}
 }
