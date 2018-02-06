@@ -100,7 +100,7 @@ def calcIntegralsOnTheFly(integralFileName, eventFileName, keyFileNameList, mult
 		return False
 	if not multibinBoundaries:
 		multibinBoundaries = eventMeta.multibinBoundaries()
-		if len(multibinBoundaries) == 0:
+		if not multibinBoundaries:
 			pyRootPwa.utils.printWarn("no binning map found.")
 	if "mass" in multibinBoundaries:
 		if multibinBoundaries["mass"][0] > 200.:

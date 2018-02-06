@@ -16,9 +16,9 @@ class multiBin(object):
 				raise TypeError("Binning range is not of type 'tuple' for binning variable '" + key + "'.")
 			if len(binRange) != 2:
 				raise ValueError("Binning range does not have two entries for binning variable '" + key + "'.")
-			if not (isinstance(binRange[0], float) or isinstance(binRange[0], int)):
+			if not isinstance(binRange[0], (float,int)):
 				raise TypeError("Lower bound of bin range is not a number for binning variable '" + key + "'.")
-			if not (isinstance(binRange[1], float) or isinstance(binRange[1], int)):
+			if not isinstance(binRange[1], (float,int)):
 				raise TypeError("Upper bound of bin range is not a number for binning variable '" + key + "'.")
 			if binRange[0] > binRange[1]:
 				raise ValueError("Lower bound of bin range (" + str(binRange[0]) + ") is larger than upper bound of bin range (" + str(binRange[1]) + ").")
@@ -153,8 +153,7 @@ class multiBin(object):
 				right, left = left, right
 			if strict:
 				return left < right
-			else:
-				return left <= right
+			return left <= right
 
 		if comparator(self.boundaries[key][1], other.boundaries[key][0], "<"):
 			return False

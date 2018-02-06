@@ -15,9 +15,9 @@ def saveFileManager(fileManagerObject, path):
 			pyRootPwa.utils.printErr("error saving file manager.")
 			return False
 		return True
-	else:
-		pyRootPwa.utils.printErr("cannot open file manager file '" + path + "'. File already exists.")
-		return False
+
+	pyRootPwa.utils.printErr("cannot open file manager file '" + path + "'. File already exists.")
+	return False
 
 
 def loadFileManager(path):
@@ -409,5 +409,4 @@ class fileManager(object):
 			return EventsType.GENERATED
 		elif eventsType == pyRootPwa.core.eventMetadata.ACCEPTED:
 			return EventsType.ACCEPTED
-		else:
-			return -1
+		return -1

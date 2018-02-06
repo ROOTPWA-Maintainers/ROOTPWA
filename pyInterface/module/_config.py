@@ -187,12 +187,12 @@ def _binningInputHandlingForCaseTwoAndThree(inputVal):
 			pyRootPwa.utils.printWarn(errMsg)
 			raise TypeError(errMsg)
 		axesPartition = inputVal[key]
-		if not (isinstance(axesPartition, list) or isinstance(axesPartition, tuple)):
+		if not isinstance(axesPartition, (list,tuple)):
 			errMsg = "axes partition for variable '" + key + "' is not of type 'tuple' or 'list'."
 			pyRootPwa.utils.printWarn(errMsg)
 			raise TypeError(errMsg)
 		for i in axesPartition:
-			if not (isinstance(i, float) or isinstance(i, int)):
+			if not isinstance(i, (float,int)):
 				errMsg = "axes parition for variable '" + key + "' is not a number."
 				pyRootPwa.utils.printWarn(errMsg)
 				raise TypeError(errMsg)
