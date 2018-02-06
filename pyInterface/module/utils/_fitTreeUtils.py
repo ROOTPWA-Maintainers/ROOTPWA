@@ -1,7 +1,6 @@
-from _printingUtils import printErr, printWarn
-
 import pyRootPwa.core
 
+from _printingUtils import printErr, printWarn
 import _root
 ROOT = _root.ROOT
 
