@@ -297,7 +297,7 @@ set_package_properties(NumPy
 # setup pylint (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up pylint.")
-find_package(PYLINT 1.5.5)
+find_package(PYLINT 1.7.1)
 set_package_properties(PYLINT
 	PROPERTIES
 	DESCRIPTION "code analysis for Python"
