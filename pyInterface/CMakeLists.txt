@@ -162,7 +162,7 @@ if(PYLINT_FOUND)
 	# check 'pyRootPwa' module
 	add_test(
 		NAME pyLintPyRootPwa
-		COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa
+		COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc module
 	)
 	set_property(
 		TEST pyLintPyRootPwa
