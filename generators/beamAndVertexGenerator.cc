@@ -44,7 +44,8 @@ beamAndVertexGenerator::beamAndVertexGenerator()
 	  _beamMomentumSigma(0.0),
 	  _vertexCovarianceMatrix(nullptr),
 	  _sigmasPresent(false),
-	  _sigmaScalingFactor(1.) { }
+	  _sigmaScalingFactor(1.),
+	  _takeZpositionFromData(false){ }
 
 
 bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
@@ -81,6 +82,7 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 
 	TBranch* vertexXPosition = _beamTree->FindBranch("vertex_x_position");
 	TBranch* vertexYPosition = _beamTree->FindBranch("vertex_y_position");
+	TBranch* vertexZPosition = _beamTree->FindBranch("vertex_z_position");
 	TBranch* beamMomentumX = _beamTree->FindBranch("beam_momentum_x");
 	TBranch* beamMomentumY = _beamTree->FindBranch("beam_momentum_y");
 	TBranch* beamMomentumZ = _beamTree->FindBranch("beam_momentum_z");
@@ -100,6 +102,11 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 	}
 	_beamTree->SetBranchAddress("vertex_x_position", &_vertexX);
 	_beamTree->SetBranchAddress("vertex_y_position", &_vertexY);
+	if(vertexZPosition){
+		_beamTree->SetBranchAddress("vertex_z_position", &_vertexZ);
+	} else {
+		_vertexZ = 0.0; // per default the beam parameters are given at Z=0
+	}
 	_beamTree->SetBranchAddress("beam_momentum_x", &_beamMomentumX);
 	_beamTree->SetBranchAddress("beam_momentum_y", &_beamMomentumY);
 	_beamTree->SetBranchAddress("beam_momentum_z", &_beamMomentumZ);
@@ -237,13 +244,14 @@ bool beamAndVertexGenerator::eventSimple(const Target& target, const Beam& beam)
 
 bool beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& beam) {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	double z = getVertexZ(target);
 	if(not loadNextEventFromBeamfile()) return false;
 
-	double dx = _beamMomentumX / _beamMomentumZ;
-	double dy = _beamMomentumY / _beamMomentumZ;
-	double projectedVertexX = _vertexX + dx * z;
-	double projectedVertexY = _vertexY + dy * z;
+	const double z = getVertexZ(target); // has to be done AFTER loading the next event
+
+	const double dx = _beamMomentumX / _beamMomentumZ;
+	const double dy = _beamMomentumY / _beamMomentumZ;
+	const double projectedVertexX = _vertexX + dx * (z-_vertexZ);
+	const double projectedVertexY = _vertexY + dy * (z-_vertexZ);
 	if(_sigmasPresent and _sigmaScalingFactor != 0.) {
 		_vertex.SetXYZ(randomGen->Gaus(projectedVertexX, _sigmaScalingFactor * _vertexXSigma),
 						randomGen->Gaus(projectedVertexY, _sigmaScalingFactor * _vertexYSigma),
@@ -264,8 +272,9 @@ bool beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& 
 
 bool beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& beam) {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	double z = getVertexZ(target);
 	if(not loadNextEventFromBeamfile()) return false;
+
+	const double z = getVertexZ(target); // has to be done AFTER loading the next event
 
 	TVectorD mean(4);
 	mean[0] = _vertexX;
@@ -292,6 +301,7 @@ bool beamAndVertexGenerator::eventFromInclinations(const Target& target, const B
 	return true;
 }
 
+
 bool beamAndVertexGenerator::loadNextEventFromBeamfile(){
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	long nEntries = _beamTree->GetEntries();
@@ -310,13 +320,28 @@ bool beamAndVertexGenerator::loadNextEventFromBeamfile(){
 }
 
 double beamAndVertexGenerator::getVertexZ(const Target& target) const {
-	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	double z;
-	do {
-		z = randomGen->Exp(target.interactionLength);
-	} while(z > target.length);
-	z = (target.position.Z() - target.length * 0.5) + z;
-	return z;
+	if (not _takeZpositionFromData){
+		TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+		double z;
+		do {
+			z = randomGen->Exp(target.interactionLength);
+		} while(z > target.length);
+		z = (target.position.Z() - target.length * 0.5) + z;
+		return z;
+	} else {
+		return _vertexZ; // assumes that the next event is loaded from the tree before this function is called
+	}
+}
+
+
+void
+beamAndVertexGenerator::setTakeZpositionFromData(const bool takeZpositionFromData)
+{
+	if(takeZpositionFromData and _beamFileName.size()==0){
+		printErr << "Cannot take Z-positions for vertices from data if no beam file is given!" << endl;
+		throw;
+	}
+	_takeZpositionFromData = takeZpositionFromData;
 }
 
 
@@ -356,6 +381,12 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 		out << "No" << endl;
 	}
 	out << "    Sigma scaling factor ........... " << _sigmaScalingFactor << endl;
+	out << "    Z-positions from beam file ..... ";
+	if(_takeZpositionFromData) {
+		out << "Yes" << endl;
+	} else {
+		out << "No" << endl;
+	}
 	out << "    Read beam file sequentially .... ";
 	if(_readBeamfileSequentially) {
 		out << "Yes" << endl;

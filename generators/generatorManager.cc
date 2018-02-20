@@ -207,11 +207,21 @@ bool generatorManager::readReactionFile(const string& fileName) {
 					}
 				}
 			}
+
+			bool takeZpositionFromData = false;
+			if(configBeamSimulation->exists("takeZpositionFromData")) {
+				if(not configBeamSimulation->lookupValue("takeZpositionFromData", takeZpositionFromData)) {
+					printErr << "Could not read 'takeZpositionFromData' in 'beamSimulation' section." << endl;
+					return false;
+				}
+			}
+
 			_beamAndVertexGenerator->setSigmaScalingFactor(sigmaScalingFactor);
 			if(not _beamAndVertexGenerator->loadBeamFile(_beamFileName)) {
 				printErr << "could not initialize beam and vertex generator." << endl;
 				return false;
 			}
+			_beamAndVertexGenerator->setTakeZpositionFromData(takeZpositionFromData);
 			printSucc << "initialized beam package." << endl;
 		} else {
 			printInfo << "beam package disabled." << endl;

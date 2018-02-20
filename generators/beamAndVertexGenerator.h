@@ -48,6 +48,12 @@ namespace rpwa {
 
 		void setSigmaScalingFactor(const double& scalingFactor) { _sigmaScalingFactor = scalingFactor; }
 
+		/**
+		 * Take the z position for the beam events from data
+		 * instead of drawing them randomly according to the target definition
+		 */
+		void setTakeZpositionFromData(const bool takeZpositionFromData = true);
+
 		std::ostream& print(std::ostream& out) const;
 
 	  protected:
@@ -99,6 +105,7 @@ namespace rpwa {
 
 		bool _sigmasPresent;
 		double _sigmaScalingFactor;
+		bool _takeZpositionFromData;
 
 	};
 
