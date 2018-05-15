@@ -10,7 +10,7 @@ if [ -d root-${ROOT_VERSION} ] ; then
 else
 	echo "No ROOT installation found, installing a fresh one."
 
-	wget https://root.cern.ch/download/root_v6.06.06.Linux-ubuntu14-x86_64-gcc4.8.tar.gz -O root.tar.gz
+	wget https://root.cern.ch/download/root_v${ROOT_VERSION}.Linux-ubuntu14-x86_64-gcc4.8.tar.gz -O root.tar.gz
 
         mkdir root-${ROOT_VERSION}
 	tar -xzf root.tar.gz -C root-${ROOT_VERSION} --strip-components=1
