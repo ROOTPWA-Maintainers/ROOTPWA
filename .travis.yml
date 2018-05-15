@@ -76,21 +76,4 @@ install:
     - if [ ${TRAVIS_RPWA_USE_BAT:-0} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
     - ./travisCI/clean.sh
 script:
-    # exit immediately if an error is encountered
-    - set -e
-    - cd build
-    - cmake ..
-    # run 'make'
-    - make
-    # - if 'make' was successful, run 'make test'
-    # - if 'make test' was not successful, print the log and fail the build
-    - make test || (cat Testing/Temporary/LastTest.log && false)
-    # - if 'make test' was successful, run 'testMC.sh'
-    - cd ..
-    # set some environment variables
-    - export ROOTPWA=${PWD}
-    - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
-    - export PATH=${ROOTPWA}/build/bin:${PATH}
-    - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
-    - cd test
-    - ./testMC.sh
+    - ./travisCI/run.sh
