@@ -74,6 +74,7 @@ install:
     - ./travisCI/install-root.sh
     - . ${TRAVIS_BUILD_DIR}/deps/root/bin/thisroot.sh
     - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
+    - ./travisCI/clean.sh
 script:
     # exit immediately if an error is encountered
     - set -e
