@@ -6,6 +6,7 @@
 dist: trusty
 
 cache:
+  ccache: true
   directories:
     - deps
 
