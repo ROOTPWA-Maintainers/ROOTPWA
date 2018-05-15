@@ -53,11 +53,13 @@ matrix:
                 packages:
                   - *required_packages
                   - libnlopt-dev
+                update: true
       - env: TRAVIS_RPWA_USE_BAT=0
         addons:
             apt:
                 packages:
                   - *required_packages
+                update: true
 
 # send mails if a build fails
 notifications:
