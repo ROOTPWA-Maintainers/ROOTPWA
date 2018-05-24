@@ -36,3 +36,11 @@ void rpwa::hashCalculator::Update(const TVector3& vector) {
 	Update(vector.Y());
 	Update(vector.Z());
 }
+
+
+void rpwa::hashCalculator::Update(const string& value) {
+	if(_debug) {
+		printDebug << "updating with string '" << value << "'." << endl;
+	}
+	TMD5::Update(reinterpret_cast<const UChar_t*>(value.data()), value.size());
+}
