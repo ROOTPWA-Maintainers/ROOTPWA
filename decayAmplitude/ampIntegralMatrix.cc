@@ -353,10 +353,6 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	if (not allWavesHaveDesc())
 		_waveDescriptions.clear();
 
-	// resize integral matrix
-	//_integrals.clear();
-	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
-
 	// open importance sampling weight file
 	//!!! this should be provided as a friend tree for the amplitudes
 	ifstream weightFile;
@@ -472,6 +468,9 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 			}
 	}  // event loop
 	_nmbEvents = eventCounter;
+
+	// resize integral matrix
+	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
 
 	// copy values from accumulators and (if necessary) renormalize to
 	// integral of importance sampling weights
