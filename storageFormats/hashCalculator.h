@@ -22,6 +22,8 @@ namespace rpwa {
 		void Update(const std::complex<double>& value);
 		void Update(const TVector3& vector);
 
+		void Update(const std::string& value);
+
 		std::string hash() {
 			TMD5::Final();
 			return TMD5::AsString();
