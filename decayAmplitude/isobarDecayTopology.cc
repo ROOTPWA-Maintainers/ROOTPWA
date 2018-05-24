@@ -632,8 +632,6 @@ isobarDecayTopology::getIsospinSymmetrization()
 			continue;
 		}
 
-		double clebsch = getIsospinClebschGordanProduct();
-
 		// Survived all the criteria, saving to be returned
 		symTermMap symTerm(getIsospinClebschGordanProduct(), map);
 		symAmplitudes.push_back(symTerm);
@@ -647,7 +645,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 			for(unsigned int j = 0; j < map.size(); ++j) {
 				cout << fsParts.at(j)->name();
 			}
-			cout << "), clebsch-gordan=" << clebsch << endl;
+			cout << "), clebsch-gordan=" << getIsospinClebschGordanProduct() << endl;
 		}
 
 		// Resetting isospins for the next permutation
