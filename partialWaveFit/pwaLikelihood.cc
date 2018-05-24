@@ -1394,6 +1394,11 @@ bool
 pwaLikelihood<complexT>::setOnTheFlyBinning(const multibinBoundariesType&       multibinBoundaries,
                                             const vector<const eventMetadata*>& evtMetas)
 {
+	if(not multibinBoundaries.empty()) {
+		for(multibinBoundariesType::const_iterator it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it) {
+			printInfo << "use bin in '" << it->first << "' with range " << it->second << endl;
+		}
+	}
 	for (size_t metaIndex = 0; metaIndex < evtMetas.size(); ++metaIndex) {
 		const eventMetadata* evtMeta = evtMetas[metaIndex];
 		if (not evtMeta) {
