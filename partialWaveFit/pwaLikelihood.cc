@@ -1301,7 +1301,8 @@ pwaLikelihood<complexT>::finishInit()
 		// set diagonal elements of normalization matrix
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-				_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
+				if (_normMatrix[iRefl][iWave][iRefl][iWave] != (value_type)0)
+					_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
 		if (_debug) {
 			printDebug << "normalized integral matrices" << endl;
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
