@@ -193,7 +193,8 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 			startValFile->GetObject(valTreeName.c_str(), tree);
 			if (not tree)
 				printWarn << "cannot find start value tree '"<< valTreeName << "' in file "
-				          << "'" << startValFileName << "'" << endl;
+				          << "'" << startValFileName << "'."
+				          << "using default start values." << endl;
 			else {
 				startFitResult = new fitResult();
 				tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
