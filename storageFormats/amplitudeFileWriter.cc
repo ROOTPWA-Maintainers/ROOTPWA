@@ -48,9 +48,13 @@ bool rpwa::amplitudeFileWriter::initialize(TFile&                             ou
 	vector<eventMetadata> eventMetaObjects;
 	for(unsigned int i = 0; i < eventMeta.size(); ++i) {
 		eventMetaObjects.push_back(*(eventMeta[i]));
+		_hashCalculator.Update(eventMeta[i]->contentHash());
 	}
 	_metadata.setEventMetadata(eventMetaObjects);
+
 	_metadata.setKeyfileContent(keyfileContent);
+	_hashCalculator.Update(keyfileContent);
+
 	_metadata.setRootpwaGitHash(gitHash());
 	_metadata.setObjectBaseName(objectBaseName);
 
