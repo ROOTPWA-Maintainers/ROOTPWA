@@ -1238,6 +1238,15 @@ pwaLikelihood<complexT>::addAmplitude(const vector<const amplitudeMetadata*>& am
 	// get normalization
 	const complexT normInt = _normMatrix[refl][waveIndex][refl][waveIndex];
 
+	// keep track whether the production amplitudes corresponding to the current
+	// wave/(decay) amplitude file need to be fixed to zero: zero decay
+	// amplitudes might appear for a number of reasons (binned amplitudes, ...),
+	// if an amplitude is zero for all events, and also the elements of the
+	// normalization matrix with acceptance corresponding to this wave are zero,
+	// the corresponding parameters have no impact on the quantities calculated
+	// during the fit, spoiling the errors of (at least) Minuit
+	bool fix = (_accMatrix[refl][waveIndex][refl][waveIndex] == (value_type)0.);
+
 	// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 	// this index scheme ensures a more linear memory access pattern in the likelihood function
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
@@ -1249,7 +1258,28 @@ pwaLikelihood<complexT>::addAmplitude(const vector<const amplitudeMetadata*>& am
 			if (normInt != (value_type)0.)
 				amps[iEvt] /= sqrt(normInt.real());  // rescale decay amplitude
 		}
+
+		if(amps[iEvt] != (value_type)0.)
+			fix = false;
+
 		_decayAmps[refl][iEvt][waveIndex] = amps[iEvt];
+	}
+
+	if (fix) {
+		bool printed = false;
+		for (fitParameter& par : _parameters) {
+			if (par.waveName() != waveName)
+				continue;
+
+			if (not par.fixed()) {
+				if (not printed) {
+					printWarn << "all amplitudes of wave '" << waveName << "' are zero, fix its production amplitudes to zero." << std::endl;
+					printed = true;
+				}
+
+				par.fix(true);
+			}
+		}
 	}
 
 	_waveAmpAdded[refl][waveIndex] = true; // note that this amplitude has been added to the likelihood
