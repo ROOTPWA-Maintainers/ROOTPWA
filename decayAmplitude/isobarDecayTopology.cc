@@ -652,7 +652,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	} // End of the loop over the permutations
 
 	for(unsigned int i = 0; i < symAmplitudes.size(); ++i) {
-		symAmplitudes[i].factor = signum(symAmplitudes[i].factor.real()) / sqrt(symAmplitudes.size());
+		symAmplitudes[i].factor /= sqrt(symAmplitudes.size());
 	}
 
 	return symAmplitudes;
