@@ -45,7 +45,10 @@ beamAndVertexGenerator::beamAndVertexGenerator()
 	  _vertexCovarianceMatrix(nullptr),
 	  _sigmasPresent(false),
 	  _sigmaScalingFactor(1.),
-	  _takeZpositionFromData(false){ }
+	  _takeZpositionFromData(false),
+	  _momentumResolution(0.0),
+	  _momentumPDFSigma(0.0),
+	  _momentumPDFMean(0.0){ }
 
 
 bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
@@ -132,7 +135,11 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 		_beamTree->SetBranchAddress("beam_momentum_y_sigma", &_beamMomentumYSigma);
 		_beamTree->SetBranchAddress("beam_momentum_z_sigma", &_beamMomentumZSigma);
 	}
-	_simulationMode = simulationFromMomenta;
+	if(_momentumPDFMean == 0.0){ // no momentum resolution correction
+		_simulationMode = simulationFromMomenta;
+	} else {
+		_simulationMode = simulationFromMomentaCorrectMomentumResolution;
+	}
 	return check();
 }
 
@@ -194,11 +201,18 @@ void beamAndVertexGenerator::randomizeBeamfileStartingPosition() {
 
 
 bool beamAndVertexGenerator::check() const {
-	if(_beamTree or _simulationMode == simpleSimulation) {
-		return true;
-	} else {
-		return false;
+	if( not (_beamTree or _simulationMode == simpleSimulation))  return false;
+	if (_momentumPDFMean != 0.0){// do momentum resolution correction
+		if (_simulationMode != simulationFromMomentaCorrectMomentumResolution){
+			printErr << "Wrong simulation mode for for correcting the resolution in the beam momentum" << endl;
+			return false;
+		}
+		if (_momentumPDFSigma == 0.0 or _momentumResolution == 0.0){
+			printErr << "momentumResolution, momentumPDFSigma, and momentumPDFMean must be defined to use resolution correction" << endl;
+			return false;
+		}
 	}
+	return true;
 }
 
 bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
@@ -208,6 +222,9 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 			break;
 		case simulationFromMomenta:
 			return eventFromMomenta(target, beam);
+			break;
+		case simulationFromMomentaCorrectMomentumResolution:
+			return eventFromMomentaCorrectMomentumResolution(target, beam);
 			break;
 		case simulationFromInclinations:
 			return eventFromInclinations(target, beam);
@@ -242,7 +259,8 @@ bool beamAndVertexGenerator::eventSimple(const Target& target, const Beam& beam)
 	return true;
 }
 
-bool beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& beam) {
+bool
+beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& beam) {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	if(not loadNextEventFromBeamfile()) return false;
 
@@ -270,7 +288,37 @@ bool beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& 
 	return true;
 }
 
-bool beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& beam) {
+
+bool
+beamAndVertexGenerator::eventFromMomentaCorrectMomentumResolution(const Target& target, const Beam& beam) {
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	if(not loadNextEventFromBeamfile()) return false;
+
+	const double z = getVertexZ(target); // has to be done AFTER loading the next event
+
+	const double dx = _beamMomentumX / _beamMomentumZ;
+	const double dy = _beamMomentumY / _beamMomentumZ;
+	const double projectedVertexX = _vertexX + dx * (z-_vertexZ);
+	const double projectedVertexY = _vertexY + dy * (z-_vertexZ);
+
+	_beamMomentum = sqrt(_beamMomentumX*_beamMomentumX + _beamMomentumY*_beamMomentumY + _beamMomentumZ*_beamMomentumZ);
+	const double truthMomentumPDFSigma = sqrt(1.0/(1.0/_momentumResolution/_momentumResolution+ 1.0/_momentumPDFSigma/_momentumPDFSigma));
+	const double truthMomentumPDFMean = truthMomentumPDFSigma*truthMomentumPDFSigma*( 1./_momentumResolution/_momentumResolution*_beamMomentum
+																					+ 1./_momentumPDFSigma/_momentumPDFSigma*_momentumPDFMean );
+	const double truthMomentum = randomGen->Gaus(truthMomentumPDFMean, truthMomentumPDFSigma);
+
+	_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
+	const double norm = sqrt(dx*dx + dy*dy + 1);
+	_beam.SetXYZM(truthMomentum * dx / norm,
+	              truthMomentum * dy / norm,
+	              truthMomentum * 1 / norm,
+	              beam.particle.mass());
+	return true;
+}
+
+
+bool
+beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& beam) {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	if(not loadNextEventFromBeamfile()) return false;
 
@@ -281,7 +329,6 @@ bool beamAndVertexGenerator::eventFromInclinations(const Target& target, const B
 	mean[1] = _vertexY;
 	mean[2] = _beamdXdZ;
 	mean[3] = _beamdYdZ;
-
 	TVectorD sample = multivariantGauss(mean, *_vertexCovarianceMatrix, _sigmaScalingFactor);
 	const double x = sample[0];
 	const double y = sample[1];
@@ -344,6 +391,13 @@ beamAndVertexGenerator::setTakeZpositionFromData(const bool takeZpositionFromDat
 	_takeZpositionFromData = takeZpositionFromData;
 }
 
+void
+beamAndVertexGenerator::setMomentumResolutionCorrection(const double resolution, const double momentumPDFsigma, const double momentumPDFmean){
+	_momentumResolution = resolution;
+	_momentumPDFSigma = momentumPDFsigma;
+	_momentumPDFMean = momentumPDFmean;
+}
+
 
 ostream& beamAndVertexGenerator::print(ostream& out) const
 {
@@ -371,7 +425,12 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 	out << "    Simulation mode ................ ";
 	if(_simulationMode == simulationFromMomenta) {
 		out << "Using momenta" << endl;
-	} else {
+	} else if (_simulationMode == simulationFromMomentaCorrectMomentumResolution) {
+		out << "Using momenta" << endl;
+		out << "    Correction for beam resolution . (res= ";
+		out << _momentumResolution << ", PDFsigma= " << _momentumPDFSigma;
+		out << ", PDFmean= " << _momentumPDFMean << ")" << endl;
+	}else {
 		out << "Using beam inclination" << endl;
 	}
 	out << "    Sigmas found ................... ";
