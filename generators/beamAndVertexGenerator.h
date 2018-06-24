@@ -27,7 +27,7 @@ namespace rpwa {
 	typedef boost::shared_ptr<beamAndVertexGenerator> beamAndVertexGeneratorPtr;
 
 	class beamAndVertexGenerator {
-		enum simulationMode {simpleSimulation, simulationFromMomenta, simulationFromInclinations};
+		enum simulationMode {simpleSimulation, simulationFromMomenta, simulationFromInclinations, simulationFromMomentaCorrectMomentumResolution};
 	  public:
 
 		beamAndVertexGenerator();
@@ -54,6 +54,11 @@ namespace rpwa {
 		 */
 		void setTakeZpositionFromData(const bool takeZpositionFromData = true);
 
+		/**
+		 * Set the options to correct the beam momentum for the resolution
+		 */
+		void setMomentumResolutionCorrection(const double resolution, const double momentumPDFsigma, const double momentumPDFmean);
+
 		std::ostream& print(std::ostream& out) const;
 
 	  protected:
@@ -72,6 +77,7 @@ namespace rpwa {
 		virtual bool loadBeamFileWithInclinations();
 		virtual bool eventSimple(const rpwa::Target& target, const rpwa::Beam& beam);
 		virtual bool eventFromMomenta(const rpwa::Target& target, const rpwa::Beam& beam);
+		virtual bool eventFromMomentaCorrectMomentumResolution(const rpwa::Target& target, const rpwa::Beam& beam);
 		virtual bool eventFromInclinations(const rpwa::Target& target, const rpwa::Beam& beam);
 		/**
 		 * Load next event from beam file into the member variables of this object
@@ -106,6 +112,9 @@ namespace rpwa {
 		bool _sigmasPresent;
 		double _sigmaScalingFactor;
 		bool _takeZpositionFromData;
+		double _momentumResolution;
+		double _momentumPDFSigma;
+		double _momentumPDFMean;
 
 	};
 
