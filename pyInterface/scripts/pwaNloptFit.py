@@ -30,7 +30,7 @@ if __name__ == "__main__":
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
 	parser.add_argument("--keepMatricesOnlyOfBest",
-	                    help="save space by saving integral and covariance matrices only for the best result and the best converged result with valid hesse matrices (default: false)",
+	                    help="save space by saving integral and covariance matrices only for the best result and the best converged result (default: false)",
 	                    action="store_true")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	args = parser.parse_args()
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 	                                   rank = args.rank,
 	                                   verbose = args.verbose,
 	                                   attempts = args.nAttempts,
-	                                   keepOnlyBestHesseIntegral = args.keepMatricesOnlyOfBest
+	                                   keepMatricesOnlyOfBest = args.keepMatricesOnlyOfBest
 	                                  )
 	if not fitResults:
 		printErr("didn't get valid fit result(s). Aborting...")

@@ -202,7 +202,8 @@ then
 	\"./fits/pwaTest_NLOPT_NOPRIOR.root\" \
 	--noAcceptance \
 	-w ${DESTINATION_DIR}/wavelist.compass.2008.88waves.f0980fl \
-	-s ${SEED_FIT}"
+	-s ${SEED_FIT} \
+	--keepMatricesOnlyOfBest"
 
 	testStep "pwaNloptFit with prior" \
 	"${ROOTPWA}/build/bin/pwaNloptFit \

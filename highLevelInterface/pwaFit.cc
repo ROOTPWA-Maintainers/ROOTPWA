@@ -417,11 +417,11 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	             L.rank(),
 	             prodAmps,
 	             prodAmpNames,
-	             fitParCovMatrix,
+	             (saveSpace)? nullptr: &fitParCovMatrix,
 	             fitParCovMatrixIndices,
-	             normIntegral,
-	             accIntegral,
-	             phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+	             (saveSpace)? nullptr: &normIntegral,
+	             (saveSpace)? nullptr: &accIntegral,
+	             (saveSpace)? nullptr: &phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 	             converged,
 	             hasHessian);
 

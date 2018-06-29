@@ -92,46 +92,8 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
 		sys.exit(1)
 
-	pars = []
-	for parameter in likelihood.parameters():
-		pars.append(result.fitParameter(parameter.parName()))
+	newResult = pyRootPwa.addCovarianceMatrix(result, likelihood, args.verbose)
 
-	# analytically calculate Hessian
-	hessian = likelihood.Hessian(pars)
-	# calculate and check eigenvalues
-	eigenVectors = likelihood.HessianEigenVectors(hessian)
-	if args.verbose:
-		pyRootPwa.utils.printInfo("eigenvalues of (analytic) Hessian:")
-	for i in xrange(len(eigenVectors)):
-		if args.verbose:
-			pyRootPwa.utils.printInfo("    {: .15e}".format(eigenVectors[i][1]))
-		if eigenVectors[i][1] <= 0:
-			pyRootPwa.utils.printWarn("eigenvalue {:d} of Hessian is not positive ({: .15e}).".format(i, eigenVectors[i][1]))
-
-	covMatrix = likelihood.CovarianceMatrix(hessian)
-	if args.verbose:
-		pyRootPwa.utils.printInfo("(analytic) covariance matrix:")
-		covMatrix.Print()
-
-	oldCovMatrix = result.fitParCovMatrix()
-	if oldCovMatrix.GetNcols() > 0 and oldCovMatrix.GetNrows() > 0:
-		pyRootPwa.utils.printWarn("fit result from input already has a covariance matrix. it will be overwritten.")
-
-	newResult = pyRootPwa.core.fitResult()
-	newResult.fill(result.nmbEvents(),
-	               result.normNmbEvents(),
-	               result.multibinBoundaries(),
-	               result.logLikelihood(),
-	               result.rank(),
-	               result.prodAmps(),
-	               result.prodAmpNames(),
-	               covMatrix,
-	               result.fitParCovIndices(),
-	               result.normIntegralMatrix(),
-	               result.acceptedNormIntegralMatrix(),
-	               result.phaseSpaceIntegralVector(),
-	               result.converged(),
-	               True)
 	valTreeName   = "pwa"
 	valBranchName = "fitResult_v2"
 	outputFile = pyRootPwa.ROOT.TFile.Open(args.outputFileName, "NEW")
