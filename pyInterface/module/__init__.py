@@ -6,6 +6,7 @@ from _fileManager import saveFileManager
 from _fileManager import loadFileManager
 from _fit import pwaFit
 from _fit import pwaNloptFit
+from _fit import addCovarianceMatrix
 from _integrals import calcIntegrals
 from _integralsOnTheFly import calcIntegralsOnTheFly
 from _likelihood import initLikelihood

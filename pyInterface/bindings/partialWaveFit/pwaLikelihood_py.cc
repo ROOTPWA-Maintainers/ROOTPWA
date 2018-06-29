@@ -5,6 +5,7 @@
 #include "amplitudeMetadata.h"
 #include "boostContainers_py.hpp"
 #include "pwaLikelihood.h"
+#include "complexMatrix.h"
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
@@ -223,6 +224,19 @@ namespace {
 		return self.setOnTheFlyBinning(multibinBoundaries, evtMetas);
 	}
 
+	bp::tuple
+	pwaLikelihood_integralMatrices(rpwa::pwaLikelihood<std::complex<double> >& self,
+	                               const bool                                  withFlat)
+	{
+		rpwa::complexMatrix normIntegral(0, 0);                 // normalization integral over full phase space without acceptance
+		rpwa::complexMatrix accIntegral (0, 0);                 // normalization integral over full phase space with acceptance
+		std::vector<double> phaseSpaceIntegral;
+		self.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral, withFlat);
+		bp::list pyPhaseSpaceIntegral;
+		for(const auto& e: phaseSpaceIntegral) pyPhaseSpaceIntegral.append(e);
+		return bp::make_tuple(normIntegral, accIntegral, pyPhaseSpaceIntegral);
+	}
+
 }
 
 
@@ -287,6 +301,7 @@ void rpwa::py::exportPwaLikelihood() {
 		.def("priorType", &rpwa::pwaLikelihood<std::complex<double> >::priorType)
 		.def("setCauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::setCauchyWidth)
 		.def("cauchyWidth", &rpwa::pwaLikelihood<std::complex<double> >::cauchyWidth)
+		.def("integralMatrices", &pwaLikelihood_integralMatrices, (bp::arg("withFlat") = false))
 		.def(
 			"setQuiet"
 			, &rpwa::pwaLikelihood<std::complex<double> >::setQuiet
