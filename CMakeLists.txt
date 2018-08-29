@@ -33,7 +33,7 @@
 
 # check if cmake has the required version
 message(STATUS ">>> This is CMake version ${CMAKE_VERSION}.")
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 cmake_policy(VERSION 3.1)
 
 
@@ -169,11 +169,25 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 
 
+# setup Python
+message(STATUS "")
+message(STATUS ">>> Setting up Python.")
+find_package(PYTHON 2.6 REQUIRED)
+set_package_properties(PYTHON
+	PROPERTIES
+	DESCRIPTION "General-purpose, high-level programming language"
+	URL "http://www.python.org"
+	PURPOSE "Provides scripting interface to ROOTPWA classes"
+	TYPE REQUIRED
+	)
+set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
+message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+
+
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 message(STATUS "")
 message(STATUS ">>> Setting up Boost library.")
-set(_BOOST_COMPONENTS "mpi" "serialization" "python" "timer" "system")
 # set(Boost_DEBUG 1)
 set(Boost_USE_STATIC_LIBS    OFF)
 set(Boost_USE_MULTITHREADED  ON)
@@ -187,37 +201,7 @@ if(     ("$ENV{BOOST_ROOT}"       STREQUAL "")
 else()
 	set(Boost_NO_SYSTEM_PATHS ON)
 endif()
-# this is a somewhat ugly hack
-# the problem is that components cannot be defined as optional while
-# at the same time the library is required. the third find_package
-# line is needed in case the components are not found, because
-# Boost_FOUND is set to FALSE.
-find_package(Boost 1.63.0 REQUIRED)
-find_package(Boost 1.63.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
-foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
-	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
-	if(Boost_${_BOOST_COMPONENT}_FOUND)
-		message(STATUS "    Found Boost component ${_BOOST_COMPONENT} at "
-			"'${Boost_${_BOOST_COMPONENT}_LIBRARY}'.")
-	endif()
-endforeach()
-unset(_BOOST_COMPONENT)
-unset(_BOOST_COMPONENTS)
-find_package(Boost 1.63.0 REQUIRED)
-set_package_properties(Boost
-	PROPERTIES
-	DESCRIPTION "C++ Template Library"
-	URL "http://www.boost.org/"
-	TYPE REQUIRED
-	)
-if(Boost_FOUND)
-	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
-else()
-	message(FATAL_ERROR " !!! Could not find Boost installation. "
-		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please consult README.md.")
-endif()
+find_package(Boost 1.50.0 REQUIRED COMPONENTS "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" OPTIONAL_COMPONENTS "mpi" "serialization" "system" "timer")
 
 
 # setup libconfig
@@ -257,28 +241,6 @@ set_package_properties(ROOT
 	URL "http://root.cern.ch/"
 	TYPE REQUIRED
 	)
-
-
-# setup Python
-message(STATUS "")
-message(STATUS ">>> Setting up Python.")
-find_package(PYTHON 2.6 REQUIRED)
-set_package_properties(PYTHON
-	PROPERTIES
-	DESCRIPTION "General-purpose, high-level programming language"
-	URL "http://www.python.org"
-	PURPOSE "Provides scripting interface to ROOTPWA classes"
-	TYPE REQUIRED
-	)
-# check that Boost.Python library was found
-if(NOT Boost_PYTHON_FOUND)
-	message(FATAL_ERROR " !!! Cannot find Boost.Python library in "
-		"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.Python.")
-endif()
-set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
-message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
-set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 
 
 # setup numpy
