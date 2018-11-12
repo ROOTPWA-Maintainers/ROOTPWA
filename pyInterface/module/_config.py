@@ -17,7 +17,6 @@ class rootPwaConfig(object):
 	keyDirectory                           = ""
 	ampDirectory                           = ""
 	intDirectory                           = ""
-	limitFilesPerDir                       = -1
 
 	integralBinning                        = []
 
@@ -71,9 +70,7 @@ class rootPwaConfig(object):
 			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
 
 			if self.config.has_option('general', 'limitFilesPerDir'):
-				self.limitFilesPerDir                   = int(self.config.get('general', 'limitFilesPerDir'))
-			else:
-				self.limitFilesPerDir                   = -1
+				pyRootPwa.utils.printWarn("'limitFilesPerDir' options is no longer supported! Ignoring it.")
 
 			self.integralBinning = _readBinning(self.config.get("general", "integralBinning"))
 			if not self.integralBinning:
