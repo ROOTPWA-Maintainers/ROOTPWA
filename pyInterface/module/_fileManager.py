@@ -73,7 +73,6 @@ class fileManager(object):
 		self.keyDirectory       = ""
 		self.amplitudeDirectory = ""
 		self.integralDirectory  = ""
-		self.limitFilesInDir = -1
 
 		self.dataFiles       = collections.OrderedDict()
 		self.keyFiles        = collections.OrderedDict()
@@ -133,14 +132,13 @@ class fileManager(object):
 			pyRootPwa.utils.printErr("error loading keyfiles.")
 			return False
 
-		if int(configObject.limitFilesPerDir) <= 0:
-			self.limitFilesInDir = -1
-			pyRootPwa.utils.printInfo("limit for files per directory set to infinite")
-		else:
-			self.limitFilesInDir = int(configObject.limitFilesPerDir)
-			pyRootPwa.utils.printInfo("limit for files per directory set to " + str(self.limitFilesInDir))
-		self.amplitudeFiles = self._getAmplitudeFilePaths()
-		pyRootPwa.utils.printInfo("number of amplitude files: " + str(len(self.amplitudeFiles)))
+		amplitudeFiles = self._getAmplitudeFilePaths(self.dataFiles.keys(), self.getWaveNameList())
+		# make sure directories exist (create if necessary) and check if they are empty
+		if not os.path.exists(self.amplitudeDirectory):
+			os.makedirs(self.amplitudeDirectory)
+		if not os.listdir(self.amplitudeDirectory) == []:
+			pyRootPwa.utils.printWarn("directory '" + self.amplitudeDirectory + "' is not empty.")
+		pyRootPwa.utils.printInfo("number of amplitude files: " + str(len(amplitudeFiles)))
 		self.integralFiles = self._getIntegralFilePaths()
 		pyRootPwa.utils.printInfo("number of integral files: " + str(len(self.integralFiles)))
 		return True
@@ -157,8 +155,9 @@ class fileManager(object):
 			return []
 		waveNameIndex = self.keyFiles.keys().index(waveName)
 		eventFiles = self.dataFiles[eventsType]
+		amplitudeFiles = self._getAmplitudeFilePaths([eventsType], [waveName])
 		for eventFileId, eventFile in enumerate(eventFiles):
-			amplitudeFile = self.amplitudeFiles[ (eventsType, eventFileId, waveNameIndex) ]
+			amplitudeFile = amplitudeFiles[ (eventsType, eventFileId, waveNameIndex) ]
 			retval.append( (eventFile.dataFileName, amplitudeFile) )
 		return retval
 
@@ -201,11 +200,12 @@ class fileManager(object):
 			pyRootPwa.utils.printWarn("no matching event files found in bin '" + str(multiBin) + "' and events type '" + str(eventsType) + "'.")
 			return collections.OrderedDict()
 		retval = collections.OrderedDict()
+		amplitudeFiles = self._getAmplitudeFilePaths([eventsType], self.getWaveNameList(), {eventsType: eventFileIds})
 		for eventFileId in eventFileIds:
 			eventFileName = self.dataFiles[eventsType][eventFileId].dataFileName
 			retval[eventFileName] = collections.OrderedDict()
-			for waveName_i, waveName in enumerate(self.keyFiles.keys()):
-				retval[eventFileName][waveName] = self.amplitudeFiles[(eventsType, eventFileId, waveName_i)]
+			for waveName_i, waveName in enumerate(self.getWaveNameList()):
+				retval[eventFileName][waveName] = amplitudeFiles[(eventsType, eventFileId, waveName_i)]
 		return retval
 
 
@@ -236,6 +236,9 @@ class fileManager(object):
 	def getWaveNameList(self):
 		return self.keyFiles.keys()
 
+	def getWaveIndex(self, waveName):
+		return self.getWaveNameList().index(waveName)
+
 
 	def areEventFilesSynced(self):
 		return set(self._getEventFilePaths()) == set(glob.glob(self.dataDirectory + "/*.root"))
@@ -256,41 +259,30 @@ class fileManager(object):
 		return nmbEventFiles * len(self.keyFiles)
 
 
-	def _getAmplitudeFilePaths(self):
+	def _getAmplitudeFilePaths(self, eventsTypes, waveNames, eventFieldIDs = None):
+		'''
+		Build ordered dictionary of AmplitudeFilePaths for the given eventsTypes and the given waves
+		@param eventFieldIDs: Dictionary of {<eventsType>: [<eventFieldID>]. If None, all event-field IDs of the given eventsTypes.
+		'''
 		amplitudeFiles = collections.OrderedDict()
 		if not self.dataFiles:
 			pyRootPwa.utils.printWarn("cannot create amplitude file path collection without data files.")
 			return collections.OrderedDict()
-		needSubdirs = self.limitFilesInDir != -1 and self._nmbAmplitudeFiles() > self.limitFilesInDir
-		fileCount = 0
-		dirSet = []
-		for eventsType in self.dataFiles:
-			for inputFile_i, _ in enumerate(self.dataFiles[eventsType]):
-				for waveName_i, waveName in enumerate(self.keyFiles.keys()):
-					amplitudeFileName = waveName + "_eventFileId-" + str(inputFile_i) + "_" + str(eventsType) + ".root"
-					if needSubdirs:
-						subDir = fileCount/self.limitFilesInDir
-						fullDir = self.amplitudeDirectory + "/" + str(subDir)
-						if not fullDir in dirSet:
-							dirSet.append(fullDir)
-						amplitudeFileName = fullDir + "/" + amplitudeFileName
-						fileCount += 1
-					else:
-						amplitudeFileName = self.amplitudeDirectory + "/" + amplitudeFileName
-					amplitudeFiles[(eventsType, inputFile_i, waveName_i)] = amplitudeFileName
-
-		# make sure directories exist (create if neccessary) and check if they are empty
-		if needSubdirs:
-			for subDir in dirSet:
-				if not os.path.isdir(subDir):
-					os.mkdir(subDir)
-					pyRootPwa.utils.printInfo("created folder for amplitude files: '" + subDir + "'.")
-				else:
-					if not os.listdir(subDir) == []:
-						pyRootPwa.utils.printWarn("directory '" + subDir + "' is not empty.")
-		else:
-			if not os.listdir(self.amplitudeDirectory) == []:
-				pyRootPwa.utils.printWarn("directory '" + self.amplitudeDirectory + "' is not empty.")
+		waves = [(self.getWaveIndex(w), w) for w in waveNames]
+		for eventsType in eventsTypes:
+			if eventFieldIDs is None:
+				inputFileIndices = range(len(self.dataFiles[eventsType]))
+			else:
+				if eventsType not in eventFieldIDs:
+					pyRootPwa.utils.printErr("Events type '{0}' not in dictionary of event-field IDs!".format(eventsType))
+					raise Exception()
+				inputFileIndices = eventFieldIDs[eventsType]
+			for inputFile_i in inputFileIndices:
+				for waveName_i, waveName in waves:
+					amplitudeFileName = "{waveName}_eventFileId-{eventsId}_{eventsType}.root".format(waveName=waveName,
+					                                                                                 eventsId=str(inputFile_i),
+					                                                                                 eventsType=str(eventsType))
+					amplitudeFiles[(eventsType, inputFile_i, waveName_i)] = os.path.join(self.amplitudeDirectory, amplitudeFileName)
 
 		return amplitudeFiles
 
@@ -391,10 +383,6 @@ class fileManager(object):
 			for binID, _ in enumerate(self.binList):
 				retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "] >> " + self.integralFiles[(binID, eventsType)] + "\n"
 		return retStr
-
-
-	def isFilePerDirLimitReached(self):
-		return len(self.binList) * len(self.keyFiles) * len(self.dataFiles) > self.limitFilesInDir and not self.limitFilesInDir == -1
 
 
 	@staticmethod
