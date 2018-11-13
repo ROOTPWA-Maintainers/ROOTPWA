@@ -171,6 +171,8 @@ void complexMatrix::readMatrix()
 				_matrix(i, j) = _data[dataIndex++];
 			}
 		}
+	} else {
+		_matrix.resize(0, 0);
 	}
 	delete [] _data;
 	_data = 0;
