@@ -192,10 +192,11 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 
 			// check if parameter needs to be fixed
 			if (not L.parameter(i).fixed()) {
-				cout << "    setting parameter [" << setw(3) << i << "] "
-				     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
+				if (not quiet)
+					cout << "    setting parameter [" << setw(3) << i << "] "
+					     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
 				params.push_back(startVal);
-			} else {
+			} else if (not quiet){
 				cout << "    fixing parameter  [" << setw(3) << i << "] "
 				     << setw(maxParNameLength) << parName << " = 0" << endl;
 			}
@@ -314,17 +315,19 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 
 	// ---------------------------------------------------------------------------
 	// print results
-	printInfo << "minimization result:" << endl;
-	for (unsigned int i = 0; i < nmbPar; ++i) {
-		cout << "    parameter [" << setw(3) << i << "] "
-		     << setw(maxParNameLength) << L.parameter(i).parName() << " = "
-		     << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
-		if (not saveSpace) {
-			cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
-		} else {
-			cout << setw(12) << "[not available]";
+	if (not quiet) {
+		printInfo << "minimization result:" << endl;
+		for (unsigned int i = 0; i < nmbPar; ++i) {
+			cout << "    parameter [" << setw(3) << i << "] "
+			     << setw(maxParNameLength) << L.parameter(i).parName() << " = "
+			     << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
+			if(not saveSpace) {
+				cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
+			} else {
+				cout << setw(12) << "[not available]";
+			}
+			cout << endl;
 		}
-		cout << endl;
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
