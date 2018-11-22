@@ -57,6 +57,12 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	utils/_root.py
 	utils/_silencer.py
 	utils/_waveDescThresUtils.py
+	pyPartialWaveFit/__init__.py
+	pyPartialWaveFit/_likelihood.py
+	pyPartialWaveFit/_parameterMapping.py
+	pyPartialWaveFit/_model.py
+	pyPartialWaveFit/_fitter.py
+	pyPartialWaveFit/_startParameterGenerator.py
 )
 
 set(RPWA_PYTHON_PACKAGE_BYTECODES)

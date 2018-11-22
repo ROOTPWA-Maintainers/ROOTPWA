@@ -115,3 +115,77 @@ Int_t rpwa::amplitudeMetadata::Write(const char* name, Int_t option, Int_t bufsi
 	}
 	return retval + TObject::Write(name, option, bufsize);
 }
+
+vector<vector<complex<double>>>
+rpwa::loadAmplitudes(const vector<const amplitudeMetadata*>& ampMetadata,
+                     const eventMetadata* eventMeta,
+                     const multibinBoundariesType& otfBin,
+                     long unsigned maxNmbEvents) {
+	additionalTreeVariables variables;
+	if(otfBin.empty()) {
+		printErr << "got event metadata but the binning map is emtpy." << endl;
+		throw;
+	}
+	TTree* eventTree = eventMeta->eventTree();
+	const unsigned long totNmbEvents = eventTree->GetEntries();
+	if (totNmbEvents == 0) {
+		printWarn << "event trees contain no amplitudes values." << endl;
+		throw;
+	}
+	maxNmbEvents = (maxNmbEvents==0)? totNmbEvents: min(maxNmbEvents, totNmbEvents);
+
+	if (not variables.setBranchAddresses(*eventMeta)) {
+		printErr << "cannot set branch address to additional variables." << endl;
+		throw;
+	}
+
+	// build list of event indices within ghe current multibin
+	vector<long> eventIndicesInMultibin;
+	for(unsigned long iEvent = 0; iEvent < totNmbEvents; ++iEvent){
+		eventTree->GetEntry(iEvent);
+		if (variables.inBoundaries(otfBin)) eventIndicesInMultibin.push_back(iEvent);
+		if (eventIndicesInMultibin.size() >= maxNmbEvents) break;
+	}
+	printInfo << "load " << eventIndicesInMultibin.size() << " events of " << totNmbEvents << " events!" << endl;
+
+
+	if (ampMetadata.empty()) {
+		printErr << "did not receive any amplitude trees. cannot calculate integral." << endl;
+		throw;
+	}
+
+	for (size_t i = 1; i < ampMetadata.size(); i++) {
+		if (totNmbEvents != static_cast<unsigned long>(ampMetadata[i]->amplitudeTree()->GetEntries())) {
+			printErr << "amplitude trees do not all have the same entry count as the event tree." << endl;
+			throw;
+		}
+	}
+
+	vector<vector<complex<double>>> amps;
+	amps.reserve(ampMetadata.size());
+	for(size_t waveIndex = 0; waveIndex < ampMetadata.size(); waveIndex++) {
+		amplitudeTreeLeaf* ampTreeLeaf = nullptr;
+		const amplitudeMetadata* ampMeta = ampMetadata[waveIndex];
+		ampMeta->amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
+		// set autoflush, cache, and max. basket size
+		// A cache size of 10 MB was far too small and puts lots of load to the storage server
+		const int cacheSize = static_cast<int>(100*1024*1024/ampMetadata.size());
+		ampMeta->amplitudeTree()->SetAutoFlush(-cacheSize);
+		ampMeta->amplitudeTree()->OptimizeBaskets(cacheSize);
+		ampMeta->amplitudeTree()->SetCacheSize(cacheSize);
+
+		vector<complex<double>> ampsOfWave;
+		ampsOfWave.reserve(eventIndicesInMultibin.size());
+		for(const auto iEvent: eventIndicesInMultibin){
+			ampMeta->amplitudeTree()->GetEntry(iEvent);
+
+				if (ampTreeLeaf->nmbIncohSubAmps() != 1){
+					printErr << "Cannot handle more than one subamplitude at the moment!" << endl;
+					throw;
+				}
+				ampsOfWave.push_back(ampTreeLeaf->amp());
+		}
+		amps.push_back(ampsOfWave);
+	}
+	return amps;
+}

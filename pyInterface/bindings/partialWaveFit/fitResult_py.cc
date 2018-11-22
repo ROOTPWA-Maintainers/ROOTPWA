@@ -26,8 +26,8 @@ namespace {
 	                      const bp::object&                         pyProdAmpNames,
 	                      PyObject*                                 pyFitParCovMatrix,
 	                      const bp::object&                         pyFitParCovMatrixIndices,
-	                      const rpwa::complexMatrix&                normIntegral,
-	                      const rpwa::complexMatrix&                acceptedNormIntegral,
+	                      const bp::object&                         pyNormIntegral,
+	                      const bp::object&                         pyAcceptedNormIntegral,
 	                      const bp::object&                         pyPhaseSpaceIntegral,
 	                      const bool                                converged,
 	                      const bool                                hasHessian)
@@ -42,10 +42,13 @@ namespace {
 			PyErr_SetString(PyExc_TypeError, "Got invalid input for prodAmpNames when executing rpwa::fitResult::fill()");
 			bp::throw_error_already_set();
 		}
-		TMatrixT<double>* fitParCovMatrix = rpwa::py::convertFromPy<TMatrixT<double>* >(pyFitParCovMatrix);
-		if(not fitParCovMatrix) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for fitParCovMatrix when executing rpwa::fitResult::fill()");
-			bp::throw_error_already_set();
+		TMatrixT<double>* fitParCovMatrix = nullptr;
+		if (pyFitParCovMatrix != Py_None){
+			fitParCovMatrix = rpwa::py::convertFromPy<TMatrixT<double>* >(pyFitParCovMatrix);
+			if(not fitParCovMatrix) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for fitParCovMatrix when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
 		}
 		bp::list pyListFitParCovMatrixIndices = bp::extract<bp::list>(pyFitParCovMatrixIndices);
 		std::vector<std::pair<int, int> > fitParCovMatrixIndices(bp::len(pyListFitParCovMatrixIndices));
@@ -59,13 +62,33 @@ namespace {
 			}
 		}
 		std::vector<double> phaseSpaceIntegral;
-		if(not rpwa::py::convertBPObjectToVector<double>(pyPhaseSpaceIntegral, phaseSpaceIntegral)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
-			bp::throw_error_already_set();
+		std::vector<double>* phaseSpaceIntegralPtr = nullptr;
+		if (not pyPhaseSpaceIntegral.is_none()){
+			if(not rpwa::py::convertBPObjectToVector<double>(pyPhaseSpaceIntegral, phaseSpaceIntegral)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for phaseSpaceIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+			phaseSpaceIntegralPtr = &phaseSpaceIntegral;
+		}
+		rpwa::complexMatrix* normIntegral = nullptr;
+		if (not pyNormIntegral.is_none()){
+			normIntegral = bp::extract<rpwa::complexMatrix*>(pyNormIntegral);
+			if (normIntegral == nullptr){
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for normIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
+		}
+		rpwa::complexMatrix* acceptedNormIntegral = nullptr;
+		if (not pyAcceptedNormIntegral.is_none()){
+			acceptedNormIntegral = bp::extract<rpwa::complexMatrix*>(pyAcceptedNormIntegral);
+			if (acceptedNormIntegral == nullptr){
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for acceptedNormIntegral when executing rpwa::fitResult::fill()");
+				bp::throw_error_already_set();
+			}
 		}
 		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
-		self.fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames, *fitParCovMatrix,
-		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
+		self.fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames, fitParCovMatrix,
+		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegralPtr, converged, hasHessian);
 	}
 
 	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result, const bool fillCovMatrix, const bool fillIntegralMatrices) {
