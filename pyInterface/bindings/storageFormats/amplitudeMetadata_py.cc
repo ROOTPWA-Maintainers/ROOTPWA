@@ -98,6 +98,9 @@ namespace {
 
 
 void rpwa::py::exportAmplitudeMetadata() {
+#if BOOST_VERSION < 106500
+	boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
+#endif
 
 	bp::class_<rpwa::amplitudeMetadata, boost::noncopyable>("amplitudeMetadata", bp::no_init)
 		.def(bp::self_ns::str(bp::self))
