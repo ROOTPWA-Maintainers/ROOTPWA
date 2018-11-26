@@ -38,15 +38,23 @@ class Model(object):
 class ModelRpwa(Model):
 	def __init__(self, clsLikelihood, clsParameterMapping):
 		Model.__init__(self, clsLikelihood, clsParameterMapping)
-		self.rank = None
+		self.rankPosRefl = None
+		self.rankNegRefl = None
+		self.waveNames = None
+		self.waveNamesPosRefl = None
+		self.waveNamesNegRefl = None
+		self.waveNamesFixed = None
+		self.integralsPosRefl = None # tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals)
+		self.integralsNegRefl = None # tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals)
 		self.multibin = None
 
-	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rank):
+	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl):
 		'''
 		@param fileManagerOrConfigfile: Can be a fileManager object or a path to the config file
 		@param multiBin: Can be a multibin or the integer bin-id
 		@param waveListFileName: Path to the wavelist file
-		@param rank: Rank
+		@param rankPosRefl: Rank of positive reflectivity waves
+		@param rankNegRefl: Rank of negative reflectivity waves
 		'''
 
 		if isinstance(fileManagerOrConfigfile, str):
@@ -71,7 +79,8 @@ class ModelRpwa(Model):
 		                        multiBin = multiBin,
 		                        waveListFileName = waveListFileName,
 		                        waveDescriptions = fileManager.getWaveDescriptions(),
-		                        rank = rank)
+		                        rankPosRefl = rankPosRefl,
+		                        rankNegRefl = rankNegRefl)
 
 
 
@@ -80,30 +89,61 @@ class ModelRpwa(Model):
 	                       normIntegralFileName, accIntegralFileName,
 	                       multiBin,
 	                       waveListFileName, waveDescriptions,
-	                       rank):
+	                       rankPosRefl,
+	                       rankNegRefl):
 
-		self.rank = rank
+		self.rankPosRefl = rankPosRefl
+		self.rankNegRefl = rankNegRefl
 		self.multibin = multiBin
 
 		waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
 
 		self.waveNames = [waveName for waveName, _, _ in waveDescThres]
 
-		normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, self.waveNames)
+		# group waves by reflectivity
+		self.waveNamesPosRefl = []
+		self.waveNamesNegRefl = []
+		for waveName, waveDescription, _ in waveDescThres:
+			status, topology = waveDescription.constructDecayTopology()
+			if status:
+				refl = topology.XParticle().reflectivity
+				if refl > 0:
+					self.waveNamesPosRefl.append(waveName)
+				elif refl < 0:
+					self.waveNamesNegRefl.append(waveName)
+				else:
+					pyRootPwa.utils.printErr("Reflectivity cannot be '{0}' for wave '{1}'!".format(refl, waveName))
+					raise Exception()
+			else:
+				pyRootPwa.utils.printErr("Cannot build decay topology for wave '{0}'".format(waveName))
+				raise Exception()
 
-		decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, self.waveNames, multiBin, normIntegralsFull)
+		massBinCenter = multiBin.getBinCenters()['mass']
+		self.waveNamesFixed = [waveName for waveName, _, massThreshold in waveDescThres if massThreshold != 0 and massThreshold >= massBinCenter]
 
 		# here we have to distinguish negatives from positives
 		normIntegralMatrices = []
 		accIntegralMatrices = []
 		normIntegrals = []
 		decayAmps = []
-		for iRank in xrange(rank):
-			self.wavesInSectors.append(self.waveNames[iRank:])
-			decayAmps.append(decayAmpsFull[iRank:])
-			normIntegralMatrices.append(normIntegralMatrixFull[iRank:,iRank:])
-			accIntegralMatrices.append( accIntegralMatrixFull[iRank:,iRank:])
-			normIntegrals.append(       normIntegralsFull[iRank:])
+
+		for tag, waveNames, rank in zip(['pos', 'neg'], [self.waveNamesPosRefl, self.waveNamesNegRefl], [self.rankPosRefl, self.rankNegRefl]):
+			if not waveNames:
+				continue
+			normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, waveNames)
+			decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, normIntegralsFull)
+			if tag == 'pos':
+				self.integralsPosRefl = (normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull)
+			if tag == 'neg':
+				self.integralsNegRefl = (normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull)
+
+			for iRank in xrange(rank):
+				self.wavesInSectors.append(waveNames[iRank:])
+				decayAmps.append(decayAmpsFull[iRank:])
+				normIntegralMatrices.append(normIntegralMatrixFull[iRank:,iRank:])
+				accIntegralMatrices.append( accIntegralMatrixFull[iRank:,iRank:])
+				normIntegrals.append(       normIntegralsFull[iRank:])
+
 		# add flat wave
 		self.wavesInSectors.append(["flat"])
 		decayAmps.append(np.ones((1,decayAmpsFull.shape[1]), dtype=np.complex128))
@@ -116,9 +156,11 @@ class ModelRpwa(Model):
 
 
 		# buildParameterMapping
-		self.parameterMapping = self.clsParameterMapping(self)
+		self.parameterMapping = self.clsParameterMapping(self, self.waveNamesFixed)
 
 		self.likelihood = self.clsLikelihood(decayAmps, accIntegralMatrices, normIntegralMatrices,normIntegrals, self.parameterMapping)
+
+		return True
 
 
 	def amplitudeNames(self):
@@ -133,16 +175,28 @@ class ModelRpwa(Model):
 		return amplitudeNames
 
 	def getNormSubmatrices(self):
-		# TODO: Add negatives here
-		return [self.likelihood.normMatrices[0], self.likelihood.normMatrices[-1]]
+		matrices = []
+		if self.integralsPosRefl:
+			matrices += [self.integralsPosRefl[0]]
+		if self.integralsNegRefl:
+			matrices += [self.integralsNegRefl[0]]
+		return matrices + [self.likelihood.normMatrices[-1]]
 
 	def getAccSubmatrices(self):
-		# TODO: Add negatives here
-		return [self.likelihood.accMatrices[0], self.likelihood.accMatrices[-1]]
+		matrices = []
+		if self.integralsPosRefl:
+			matrices += [self.integralsPosRefl[1]]
+		if self.integralsNegRefl:
+			matrices += [self.integralsNegRefl[1]]
+		return matrices + [self.likelihood.accMatrices[-1]]
 
 	def getNormIntegrals(self):
-		# TODO: Add negatives here
-		return [self.likelihood.normIntegrals[0], self.likelihood.normIntegrals[-1]]
+		matrices = []
+		if self.integralsPosRefl:
+			matrices += [self.integralsPosRefl[2]]
+		if self.integralsNegRefl:
+			matrices += [self.integralsNegRefl[2]]
+		return matrices + [self.likelihood.normIntegrals[-1]]
 
 
 def loadMatrices(normIntegralFileName, accIntegralFileName, waveNames):

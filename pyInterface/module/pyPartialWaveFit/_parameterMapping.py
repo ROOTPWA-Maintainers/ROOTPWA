@@ -64,34 +64,37 @@ class ParameterMapping(object):
 
 class ParameterMappingRpwa(ParameterMapping):
 	'''
-	classdocs
+	The fitter parameters are mapped onto the likelihood parameters in the following wave
+	In the fitter parameters (paraFitter):
+		The fitter parameters are real-valued.
+		The first fitter parameters are the real- and imaginary parts of the transition amplitudes
+			- first ordered by incoherent sector
+			- second ordered by wave (first real, second imaginary part)
+			- the anchor wave has only one parameter, its real part
+		The last parameters are the real valued additional parameters of the likelihood
+	In the likelihood parameters (paraLlhd):
+		paraLlhd is one list of complex-valued parameters.
+		The imaginary parts of the anchor waves are fixed to 0
+		The additional parameters are real-valued, but in paraLlhd, they are complex-valued of an imaginary part of zero
 	'''
 
-	def __init__(self, model):
+	def __init__(self, model, zeroWaves = None):
 		'''
-		The fitter parameters are mapped onto the likelihood parameters in the following wave
-		In the fitter parameters (paraFitter):
-			The fitter parameters are real-valued.
-			The first fitter parameters are the real- and imaginary parts of the transition amplitudes
-				- first ordered by incoherent sector
-				- second ordered by wave (first real, second imaginary part)
-				- the anchor wave has only one parameter, its real part
-			The last parameters are the real valued additional parameters of the likelihood
-		In the likelihood parameters (paraLlhd):
-			paraLlhd is one list of complex-valued parameters.
-			The imaginary parts of the anchor waves are fixed to 0
-			The additional parameters are real-valued, but in paraLlhd, they are complex-valued of an imaginary part of zero
+		@param zeroWaves: List of waves whose amplitude should be fixed to zero. Fixing of the reference wave is ignored.
 		'''
 		ParameterMapping.__init__(self, model)
 
 		self.wavesInSectors = model.wavesInSectors
 		self.nmbWavesInSectors = [ len(wavesInSector) for wavesInSector in self.wavesInSectors ]
 		self.nmbSectors = len(self.nmbWavesInSectors)
-		self.nmbAmplitudeParameters = np.sum([ 2*n-1 for n in self.nmbWavesInSectors])
+
+		if zeroWaves is None:
+			zeroWaves = []
 
 		negLlhdFunction = model.clsLikelihood.negLlhd
 		argsNegLlhdFunction = inspect.getargspec(negLlhdFunction).args
 		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -2 # the first one is self, the second one are the transition amplitudes
+		self.nmbAmplitudeParameters = np.sum([ 2*n-1 for n in self.nmbWavesInSectors]) - 2*len(zeroWaves)
 		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbAdditionalParameters
 
 
@@ -107,7 +110,6 @@ class ParameterMappingRpwa(ParameterMapping):
 
 		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbAdditionalParameters
 
-
 		# build index mapping between paraLlhd and paraFitter
 		self.indicesRealFitterPara = [] # mapping paraLlhd index -> real value fitter parameter index
 		self.indicesImagFitterPara = [] # mapping paraLlhd index -> imag value fitter parameter index
@@ -115,23 +117,30 @@ class ParameterMappingRpwa(ParameterMapping):
 			self.indicesRealFitterPara.append(2*0+self.paraFitterStartSectors[iSector])
 			self.indicesImagFitterPara.append(None)
 			for iWave in xrange(1, nWavesInSector):
-				# -1 because the first have has only the real part
-				self.indicesRealFitterPara.append(2*iWave-1+0+self.paraFitterStartSectors[iSector])
-				self.indicesImagFitterPara.append(2*iWave-1+1+self.paraFitterStartSectors[iSector])
+				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
+					# -1 because the first have has only the real part
+					self.indicesRealFitterPara.append(2*iWave-1+0+self.paraFitterStartSectors[iSector])
+					self.indicesImagFitterPara.append(2*iWave-1+1+self.paraFitterStartSectors[iSector])
+				else:
+					self.indicesRealFitterPara.append(None)
+					self.indicesImagFitterPara.append(None)
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
 			self.indicesRealFitterPara.append(iAdditionalParameter + self.nmbAmplitudeParameters)
 			self.indicesImagFitterPara.append(None)
-		# build list of indices of imaginary parts which are not None, i.e. which are real parameters
-		self.indicesImagFitterParaNonNone = [i for i in self.indicesImagFitterPara if i is not None]
-		self.indicesLlhdParaNonNoneImag = [j for j,i in enumerate(self.indicesImagFitterPara) if i is not None]
+		# build list of indices which are not None, i.e. which are real parameters
+		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None])
+		self.indicesLlhdParaNonNoneReal   = np.array([j for j,i in enumerate(self.indicesRealFitterPara) if i is not None])
+		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None])
+		self.indicesLlhdParaNonNoneImag   = np.array([j for j,i in enumerate(self.indicesImagFitterPara) if i is not None])
 
 		# build parameter names
 		self.paraNamesFitter = []
 		for iSector, wavesInSector in enumerate(self.wavesInSectors):
 			self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wavesInSector[0]))
 			for wave in wavesInSector[1:]:
-				self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
-				self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
+				if wave not in zeroWaves:
+					self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
+					self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
 			self.paraNamesFitter.append(argsNegLlhdFunction[iAdditionalParameter+2])
 
@@ -147,14 +156,16 @@ class ParameterMappingRpwa(ParameterMapping):
 		'''
 		@return: The paraLlhd form the paraFitter
 		'''
+		paraLlhdReal = np.zeros(self.nmbLlhdParameters)
+		paraLlhdReal[self.indicesLlhdParaNonNoneReal] = paraFitter[self.indicesRealFitterParaNonNone]
 		paraLlhdImag = np.zeros(self.nmbLlhdParameters)
 		paraLlhdImag[self.indicesLlhdParaNonNoneImag] = paraFitter[self.indicesImagFitterParaNonNone]
-		paraLlhd = paraFitter[self.indicesRealFitterPara] + 1j*paraLlhdImag
+		paraLlhd = paraLlhdReal + 1j*paraLlhdImag
 		return paraLlhd
 
 	def paraLlhd2Fitter(self, paraLlhd):
 		paraFitter = np.empty(self.nmbParameters)
-		paraFitter[self.indicesRealFitterPara] = np.real(paraLlhd)
+		paraFitter[self.indicesRealFitterParaNonNone] = np.real(paraLlhd[self.indicesLlhdParaNonNoneReal])
 		paraFitter[self.indicesImagFitterParaNonNone] = np.imag(paraLlhd[self.indicesLlhdParaNonNoneImag])
 		return paraFitter
 
@@ -177,7 +188,7 @@ class ParameterMappingRpwa(ParameterMapping):
 		@param gradLlhd: real-valued array of derivatives in the fitter parameter space
 		'''
 		# complex conj: autograd requires this for complex valued parameters (complex valued parameters, but real optimization ;) )
-		gradFitter[self.indicesRealFitterPara] = np.real(gradLlhd)
+		gradFitter[self.indicesRealFitterParaNonNone] =  np.real(gradLlhd[self.indicesLlhdParaNonNoneReal])
 		gradFitter[self.indicesImagFitterParaNonNone] = -np.imag(gradLlhd[self.indicesLlhdParaNonNoneImag])
 
 
@@ -187,15 +198,19 @@ class ParameterMappingRpwa(ParameterMapping):
 		@param hessianFitter: nmbParameters x nmbParameters real-valued matrix
 		'''
 		indices = []
-		for i,indexImag in enumerate(self.indicesImagFitterPara):
-			indices.append(2*i)
-			if indexImag is not None: # only take those imaginary parts that belong to a actual parameter
-				indices.append(2*i+1)
+		for iFitterPara in xrange(self.nmbParameters):
+			if iFitterPara in self.indicesRealFitterParaNonNone:
+				indices.append(self.indicesRealFitterPara.index(iFitterPara)*2)
+			elif iFitterPara in self.indicesImagFitterParaNonNone:
+				indices.append(self.indicesImagFitterPara.index(iFitterPara)*2+1)
+			else:
+				raise Exception("Cannot find fitter parameter index in index mapping :(")
 		hessianFitter[:,:] = hessianLlhd[:,indices][indices]
 
 
 	def paraFitter2AmpsForRpwaFitresult(self, paraFitter):
 		return self.paraFitter2Llhd(paraFitter)[:self.nmbLlhdParameters - self.nmbAdditionalParameters]
+
 
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
 		indices = []

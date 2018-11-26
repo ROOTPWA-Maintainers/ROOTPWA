@@ -111,6 +111,12 @@ class Fitter(object):
 		accIntegralMatrix = buildIntegralMatrixFromSubmatrices(self.model.getAccSubmatrices())
 		normIntegrals = list(np.hstack(self.model.getNormIntegrals()))
 
+		if self.model.waveNamesPosRefl and self.model.waveNamesNegRefl and self.model.rankPosRefl != self.model.rankNegRefl:
+			pyRootPwa.utils.printWarn("Cannot store different ranks for positve and negative reflectivity in fit result. Using rank of positive reflectivity sector")
+		if self.model.waveNamesPosRefl:
+			rank = self.model.rankPosRefl
+		else:
+			rank = self.model.rankNegRefl
 
 		for result in results:
 
@@ -135,7 +141,7 @@ class Fitter(object):
 			               1,
 			               self.model.multibin.boundaries,
 			               result['negLlhd'],
-			               self.model.rank,
+			               rank,
 			               list(self.model.parameterMapping.paraFitter2AmpsForRpwaFitresult(result['parameters'])),
 			               self.model.amplitudeNames(),
 			               fitparcovMatrix,
