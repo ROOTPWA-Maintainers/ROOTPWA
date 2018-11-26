@@ -499,6 +499,42 @@ else()
 endif()
 add_feature_info(NLopt USE_NLOPT "NLopt is a library for nonlinear optimization.")
 
+# setup PyNLopt
+message(STATUS "")
+message(STATUS ">>> Setting up NLopt Python interface.")
+find_package(PyNLopt REQUIRED)
+set_package_properties(PyNLopt
+	PROPERTIES
+	DESCRIPTION "Pyhton interface for NLopt library."
+	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
+	TYPE OPTIONAL
+	)
+if(NOT PYNLOPT_FOUND)
+	set(USE_PyNLOPT OFF)
+	message(STATUS "Cannot find Python interface for NLopt installation. pyPartialWaveFit will not be generated.")
+else()
+	set(USE_PyNLOPT ON)
+endif()
+add_feature_info(PyNLopt USE_PyNLOPT "Python interface for NLopt library.")
+
+# setup Autograd
+message(STATUS "")
+message(STATUS ">>> Setting up autograd.")
+find_package(Autograd REQUIRED)
+set_package_properties(Autograd
+	PROPERTIES
+	DESCRIPTION "Library for automatically differentiate native Python."
+	URL "https://github.com/HIPS/autograd"
+	TYPE OPTIONAL
+	)
+if(NOT AUTOGRAD_FOUND)
+	set(USE_AUTOGRAD OFF)
+	message(STATUS "Cannot find Python interface for NLopt installation. pyPartialWaveFit will not be generated.")
+else()
+	set(USE_AUTOGRAD ON)
+endif()
+add_feature_info(Autograd USE_PyNLOPT "Python interface for NLopt library.")
+
 
 # make git hash accessible via predefined macro GIT_HASH
 message(STATUS "")

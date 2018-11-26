@@ -57,13 +57,18 @@ set(RPWA_PYTHON_PACKAGE_FILES
 	utils/_root.py
 	utils/_silencer.py
 	utils/_waveDescThresUtils.py
-	pyPartialWaveFit/__init__.py
-	pyPartialWaveFit/_likelihood.py
-	pyPartialWaveFit/_parameterMapping.py
-	pyPartialWaveFit/_model.py
-	pyPartialWaveFit/_fitter.py
-	pyPartialWaveFit/_startParameterGenerator.py
 )
+if (USE_PyNLOPT AND USE_AUTOGRAD)
+	set(RPWA_PYTHON_PACKAGE_FILES
+		${RPWA_PYTHON_PACKAGE_FILES}
+		pyPartialWaveFit/__init__.py
+		pyPartialWaveFit/_likelihood.py
+		pyPartialWaveFit/_parameterMapping.py
+		pyPartialWaveFit/_model.py
+		pyPartialWaveFit/_fitter.py
+		pyPartialWaveFit/_startParameterGenerator.py
+	)
+endif()
 
 set(RPWA_PYTHON_PACKAGE_BYTECODES)
 set(RPWA_PYTHON_PACKAGE_DIRS)
