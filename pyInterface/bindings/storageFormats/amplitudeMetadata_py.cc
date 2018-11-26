@@ -11,7 +11,7 @@
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
-#if BOOST_VERSION < 106500
+#if BOOST_VERSION < 106300
 #include <boost/python/numeric.hpp>
 #else
 #include <boost/python/numpy.hpp>
@@ -23,7 +23,7 @@ namespace bp = boost::python;
 
 namespace {
 
-#if BOOST_VERSION < 106500
+#if BOOST_VERSION < 106300
 	typedef boost::python::numeric::array nparray;
 #else
 	typedef boost::python::numpy::ndarray nparray;
@@ -72,7 +72,7 @@ namespace {
 		}
 		const rpwa::multibinBoundariesType otfBin = rpwa::py::convertMultibinBoundariesFromPy(pyOtfBin);
 		std::vector<std::vector<std::complex<double>>> amps = rpwa::loadAmplitudes(amplitudeMeta, eventMeta, otfBin, maxNmbEvents);
-#if BOOST_VERSION < 106500
+#if BOOST_VERSION < 106300
 		bp::list data;
 		for (size_t i = 0; i < amps.size(); ++i) {
 			bp::list row;
@@ -98,7 +98,7 @@ namespace {
 
 
 void rpwa::py::exportAmplitudeMetadata() {
-#if BOOST_VERSION < 106500
+#if BOOST_VERSION < 106300
 	boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
 #endif
 
