@@ -71,7 +71,16 @@ class ModelRpwa(Model):
 			fileManager = fileManager
 
 		if isinstance(multiBin, int):
+			if multiBin < 0:
+				pyRootPwa.utils.printErr("bin < 0 (" + str(multiBin) + "). Aborting...")
+				raise Exception()
+			elif multiBin >= len(fileManager.binList):
+				pyRootPwa.utils.printErr("bin out of range (" + str(multiBin) + ">=" + str(len(fileManager.binList)) + "). Aborting...")
+				raise Exception()
 			multiBin = fileManager.binList[multiBin]
+		if not multiBin in fileManager.binList:
+			pyRootPwa.utils.printErr("Cannot find multibin (" + str(multiBin) + ") in binlist! Aborting...")
+			raise Exception()
 
 		self.initModelWithFiles(eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL),
 		                        normIntegralFileName = fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED),

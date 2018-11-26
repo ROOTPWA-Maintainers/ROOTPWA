@@ -4,7 +4,7 @@ import _likelihood
 from _likelihood import Likelihood
 from _parameterMapping import ParameterMappingRpwa
 from _model import ModelRpwa
-from _fitter import NloptFitter
+from _fitter import NLoptFitter
 from _startParameterGenerator import StartParameterGeneratorRpwaEllipsoid, StartParameterGeneratorRpwaUniform
 
 # pylint: disable=E0602

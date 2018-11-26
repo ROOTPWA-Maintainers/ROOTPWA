@@ -163,7 +163,7 @@ class Fitter(object):
 			pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
 			        + "in file '" + outputFileName + "'")
 
-class NloptFitter(Fitter):
+class NLoptFitter(Fitter):
 
 	def __init__(self, model, checkLevel=1, storageLevel=1, startValueGenerator=None,
 				algorithm = nlopt.LD_LBFGS,

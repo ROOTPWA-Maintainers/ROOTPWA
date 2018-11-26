@@ -21,11 +21,11 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      cmake module for finding nlopt libraries and include files
+#//      cmake module for finding autograd library
 #//
 #//      following variables are defined:
-#//      AUTOGRAD_FOUND              - nlopt found
-#//      AUTOGRAD_VERSION            - version of nlopt
+#//      AUTOGRAD_FOUND              - autograd found
+#//      AUTOGRAD_VERSION            - version of autograd
 #//
 #//      Example usage:
 #//          find_package(NumPy 1.8 Optional)
@@ -41,9 +41,8 @@
 set(AUTOGRAD_FOUND FALSE)
 unset(AUTOGRAD_FOUND)
 unset(AUTOGRAD_VERSION)
-unset(AUTOGRAD_INCLUDE_DIR)
 
-# do not attempt to find nlopt if Python was not found
+# do not attempt to find autograd if Python was not found
 if(PYTHON_EXECUTABLE)
 	# get version
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import autograd; print '1.2'"
@@ -56,7 +55,6 @@ if(PYTHON_EXECUTABLE)
 		# version extracted successfully
 		set(AUTOGRAD_FOUND TRUE)
 		set(AUTOGRAD_VERSION "${_AUTOGRAD_VERSION_RAW}")
-		set(AUTOGRAD_INCLUDE_DIR "${PYTHON_INCLUDE_DIRS}")
 
 	endif()
 	unset(_AUTOGRAD_IMPORT_SUCCESS)
@@ -67,6 +65,6 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(AUTOGRAD
-                                  REQUIRED_VARS AUTOGRAD_INCLUDE_DIR AUTOGRAD_VERSION
+                                  REQUIRED_VARS AUTOGRAD_VERSION
                                   VERSION_VAR AUTOGRAD_VERSION
                                  )

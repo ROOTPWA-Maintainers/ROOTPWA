@@ -529,11 +529,11 @@ set_package_properties(Autograd
 	)
 if(NOT AUTOGRAD_FOUND)
 	set(USE_AUTOGRAD OFF)
-	message(STATUS "Cannot find Python interface for NLopt installation. pyPartialWaveFit will not be generated.")
+	message(STATUS "Cannot find autograd Python modul. pyPartialWaveFit will not be generated.")
 else()
 	set(USE_AUTOGRAD ON)
 endif()
-add_feature_info(Autograd USE_PyNLOPT "Python interface for NLopt library.")
+add_feature_info(Autograd USE_PyNLOPT "autograd Pyhton module.")
 
 
 # make git hash accessible via predefined macro GIT_HASH

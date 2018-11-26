@@ -41,11 +41,10 @@
 set(PYNLOPT_FOUND FALSE)
 unset(PYNLOPT_FOUND)
 unset(PYNLOPT_VERSION)
-unset(PYNLOPT_INCLUDE_DIR)
 
 # do not attempt to find nlopt if Python was not found
 if(PYTHON_EXECUTABLE)
-	if(NLopt_INCLUDE_DIR)
+	if(NLopt_FOUND)
 		# get version
 		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import nlopt; print nlopt.__version__"
 						RESULT_VARIABLE _PYNLOPT_IMPORT_SUCCESS
@@ -57,7 +56,6 @@ if(PYTHON_EXECUTABLE)
 			# version extracted successfully
 			set(PYNLOPT_FOUND TRUE)
 			set(PYNLOPT_VERSION "${_PYNLOPT_VERSION_RAW}")
-			set(PYNLOPT_INCLUDE_DIR "${NLopt_INCLUDE_DIR}")
 
 		endif()
 		unset(_PYNLOPT_IMPORT_SUCCESS)
@@ -71,6 +69,6 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PYNLOPT
-                                  REQUIRED_VARS PYNLOPT_INCLUDE_DIR PYNLOPT_VERSION
+                                  REQUIRED_VARS PYNLOPT_VERSION
                                   VERSION_VAR PYNLOPT_VERSION
                                  )
