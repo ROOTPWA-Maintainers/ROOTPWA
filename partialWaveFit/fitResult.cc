@@ -277,9 +277,6 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 		} else {
 			// covariance matrix exists
 			for (unsigned int i=0; i<_fitParCovMatrixIndices.size(); ++i) {
-				if (_fitParCovMatrixIndices[i].first < 0)
-					printWarn << "entry in covariance matrix for real part of production "
-							<< "amplitude " << i << " does not exist." << endl;
 				if (_fitParCovMatrixIndices[i].first >= _fitParCovMatrix.GetNrows())
 					printWarn << "real part of production amplitude " << i << " is mapped to "
 							<< "entry in covariance matrix outside covariance matrix size "
