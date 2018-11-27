@@ -155,7 +155,7 @@ class ModelRpwa(Model):
 
 		# add flat wave
 		self.wavesInSectors.append(["flat"])
-		decayAmps.append(np.ones((1,decayAmpsFull.shape[1]), dtype=np.complex128))
+		decayAmps.append(np.ones((1,1), dtype=np.complex128))
 		normIntegralMatrices.append(np.ones((1,1), dtype=np.complex128))
 		accIntegralMatrices.append(np.full((1,1), totAcc, dtype=np.complex128))
 		normIntegrals.append(      np.ones((1), dtype=np.float64))

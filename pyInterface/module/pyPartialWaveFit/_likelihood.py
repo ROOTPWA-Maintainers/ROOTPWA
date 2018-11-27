@@ -30,7 +30,7 @@ class Likelihood(object):
 		self.nmbEvents = decayAmplitudes[0].shape[1]
 		self.nmbWavesInSectors = []
 		for i, amplitudes in enumerate(decayAmplitudes):
-			if self.nmbEvents != amplitudes.shape[1]:
+			if self.nmbEvents != amplitudes.shape[1] and amplitudes.shape[1] != 1:
 				raise Exception('Events not matching')
 
 			if amplitudes.shape[0] !=  accMatrices[i].shape[0] or amplitudes.shape[0] !=  normMatrices[i].shape[0] \
@@ -61,7 +61,8 @@ class Likelihood(object):
 
 		for i in xrange(self.nmbSectors):
 			nBar = nBar + np.real(np.dot( np.dot( self.accMatrices[i],np.conj(transitionAmps[i]) ), transitionAmps[i]))
-			dataTerm = dataTerm + np.abs(np.dot(transitionAmps[i],self.decayAmplitudes[i]))**2
+			sumOfAmps = np.dot(transitionAmps[i],self.decayAmplitudes[i])
+			dataTerm = dataTerm + np.real(sumOfAmps * np.conj(sumOfAmps))
 
 		# likelihood calculation
 		return -np.sum( np.log( dataTerm ) ) + nBar
