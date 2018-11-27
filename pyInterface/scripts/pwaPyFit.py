@@ -2,8 +2,10 @@
 
 import argparse
 import sys
+import os
 
 import pyRootPwa
+import pyRootPwa.pyPartialWaveFit
 
 
 def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
@@ -28,6 +30,9 @@ def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
 # 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
 	args = parser.parse_args()
 
+	# disable multithreading by default
+	os.environ['OPENBLAS_NUM_THREADS'] = 1
+
 	model = clsModel(clsLikelihood, clsParameterMapping)
 
 	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank)
@@ -42,7 +47,7 @@ def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
 	                model,
 	                checkLevel,
 	                storageLevel,
-	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorRpwaUniform(args.seed)
+	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorRpwaUniform(model, args.seed)
 	               )
 
 	fitResults = fitter.fit(args.nAttempts)

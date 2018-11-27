@@ -49,6 +49,8 @@ class Likelihood(object):
 		self._valueAndGrad = autograd.value_and_grad(self._negLlhd)
 		self._grad = autograd.grad(self._negLlhd)
 		self._hessian = autograd.jacobian(self._gradientForHessian)
+		self.countFdF = 0 # number of calls to f with gradient
+		self.countF = 0 # number of calls to f without gradient
 
 
 	def negLlhd(self, transitionAmps):
@@ -72,9 +74,11 @@ class Likelihood(object):
 	def f(self, paraFitter, gradFitter):
 		paraLlhd = self.parameterMapping.paraFitter2Llhd(paraFitter)
 		if gradFitter.size > 0:
+			self.countFdF += 1
 			negLL, gradLlhd = self._valueAndGrad(paraLlhd)
 			self.parameterMapping.gradLlhd2Fitter(gradLlhd, gradFitter)
 		else:
+			self.countF += 1
 			negLL = self._negLlhd(paraLlhd)
 		return negLL
 

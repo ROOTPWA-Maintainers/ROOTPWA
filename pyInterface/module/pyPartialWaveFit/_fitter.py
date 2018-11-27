@@ -42,11 +42,11 @@ class Fitter(object):
 			results.append(self.optimize(startParameters))
 			tDuration = timeit.default_timer() - tStart
 
-			pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds. And "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
 			if results[iAttempt]['success']:
-				pyRootPwa.utils.printSucc("Minimization successfull!")
+				pyRootPwa.utils.printSucc("Minimization successful (-log(L) = {0:.2f})! ".format(results[iAttempt]["negLlhd"]) + self.getStatus(results[iAttempt]['status']))
 			else:
-				pyRootPwa.utils.printWarn("Minimization NOT successfull!")
+				pyRootPwa.utils.printWarn("Minimization NOT successfull! " + self.getStatus(results[iAttempt]['status']))
+			pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds. And "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
 
 		iBestAttempt         = np.argmin([r['negLlhd'] for r in results])
 		iBestConvegedAttempt = np.argmin([r['negLlhd'] if r['success'] else 1e300 for r in results])
@@ -81,6 +81,12 @@ class Fitter(object):
 	def optimize(self, startParameters):
 		'''
 		@return: result dictionary. Keys are 'parameters', 'startParameters', 'negLlhd', 'success', 'status', 'nmbEvals', 'hessian', 'hessianValid'
+		'''
+		raise NotImplementedError("This method must be implemented in the derived classes")
+
+	def getStatus(self, statuscode):
+		'''
+		Get fit status information based on the status code of the fitter
 		'''
 		raise NotImplementedError("This method must be implemented in the derived classes")
 
@@ -167,10 +173,10 @@ class NLoptFitter(Fitter):
 
 	def __init__(self, model, checkLevel=1, storageLevel=1, startValueGenerator=None,
 				algorithm = nlopt.LD_LBFGS,
-				xtolRel = 1e-6,
-				ftolAbs = 1e-8,
-				maxeval = -1,
-				vectorStorage = 100):
+				xtolRel = 1e-4,
+				ftolAbs = 1e-6,
+				maxeval = 50000,
+				vectorStorage = None):
 		'''
 		@param xtolRel: Relative tolerance in the parameter space to stop the minimization
 		@param ftolAbs: Absolute tolerance of the log-likelihood to assume to stop the minimization
@@ -180,10 +186,11 @@ class NLoptFitter(Fitter):
 		Fitter.__init__(self, model, checkLevel=checkLevel, storageLevel=storageLevel, startParameterGenerator=startValueGenerator)
 
 		self.opt = nlopt.opt(algorithm, model.parameterMapping.nmbParameters)
+		self.opt.set_maxeval(maxeval)
 		self.opt.set_xtol_rel(xtolRel)
 		self.opt.set_ftol_abs(ftolAbs)
-		self.opt.set_maxeval(maxeval)
-		self.opt.set_vector_storage(vectorStorage)
+		if vectorStorage is not None:
+			self.opt.set_vector_storage(vectorStorage)
 		self.opt.set_min_objective(self.model.likelihood.f)
 
 
@@ -204,6 +211,34 @@ class NLoptFitter(Fitter):
 		else:
 			result['nmbEvals'] = None
 		return result
+
+
+	def getStatus(self, statuscode):
+		if statuscode == 1:
+			return ":)"
+		elif statuscode == 2:
+			return "Stop-value reached."
+		elif statuscode == 3:
+			return "Relative/absolute function tolerance reached."
+		elif statuscode == 4:
+			return "Relative/absolute parameter tolerance reached."
+		elif statuscode == 5:
+			return "Maximal number of evaluations reached."
+		elif statuscode == 6:
+			return "Maximal evaluation time reached."
+		elif statuscode == -1:
+			return "Generic failure."
+		elif statuscode == -2:
+			return "Invalid arguments."
+		elif statuscode == -3:
+			return "Ran out of memory."
+		elif statuscode == -4:
+			return "Roundoff errors limited progress."
+		elif statuscode == -5:
+			return "Forced termination."
+		else:
+			raise ValueError("Status code '{0}' not implemented!".format(statuscode))
+
 
 
 def buildIntegralMatrixFromSubmatrices(submatrices):
