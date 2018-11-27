@@ -103,29 +103,29 @@ class ParameterMappingRpwa(ParameterMapping):
 		for i, nWavesInSector in enumerate(self.nmbWavesInSectors):
 			self.paraLlhdStartSectors.append(nWavesInSector + self.paraLlhdStartSectors[i])
 
-		# build indices of paraFitter where a new sector starts
-		self.paraFitterStartSectors = [0]
-		for i, nWavesInSector in enumerate(self.nmbWavesInSectors):
-			self.paraFitterStartSectors.append(2*nWavesInSector-1 + self.paraFitterStartSectors[i])
-
 		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbAdditionalParameters
 
 		# build index mapping between paraLlhd and paraFitter
+		iFitterPara = 0
 		self.indicesRealFitterPara = [] # mapping paraLlhd index -> real value fitter parameter index
 		self.indicesImagFitterPara = [] # mapping paraLlhd index -> imag value fitter parameter index
 		for iSector, nWavesInSector in enumerate(self.nmbWavesInSectors):
-			self.indicesRealFitterPara.append(2*0+self.paraFitterStartSectors[iSector])
+			self.indicesRealFitterPara.append(iFitterPara)
+			iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
 			for iWave in xrange(1, nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
 					# -1 because the first have has only the real part
-					self.indicesRealFitterPara.append(2*iWave-1+0+self.paraFitterStartSectors[iSector])
-					self.indicesImagFitterPara.append(2*iWave-1+1+self.paraFitterStartSectors[iSector])
+					self.indicesRealFitterPara.append(iFitterPara)
+					iFitterPara += 1
+					self.indicesImagFitterPara.append(iFitterPara)
+					iFitterPara += 1
 				else:
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
-			self.indicesRealFitterPara.append(iAdditionalParameter + self.nmbAmplitudeParameters)
+			self.indicesRealFitterPara.append(iFitterPara)
+			iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
 		# build list of indices which are not None, i.e. which are real parameters
 		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None])
@@ -215,5 +215,6 @@ class ParameterMappingRpwa(ParameterMapping):
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
 		indices = []
 		for i in xrange(self.nmbLlhdParameters - self.nmbAdditionalParameters):
-			indices.append((self.indicesRealFitterPara[i], self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
+			indices.append((self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1,
+			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices
