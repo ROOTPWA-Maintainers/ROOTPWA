@@ -68,7 +68,7 @@ class ModelRpwa(Model):
 				pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
 				raise Exception()
 		else:
-			fileManager = fileManager
+			fileManager = fileManagerOrConfigfile
 
 		if isinstance(multiBin, int):
 			if multiBin < 0:
