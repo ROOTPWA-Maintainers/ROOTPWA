@@ -136,22 +136,26 @@ class ModelRpwa(Model):
 		normIntegrals = []
 		decayAmps = []
 
+		normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, self.waveNames)
+
 		for tag, waveNames, rank in zip(['pos', 'neg'], [self.waveNamesPosRefl, self.waveNamesNegRefl], [self.rankPosRefl, self.rankNegRefl]):
 			if not waveNames:
 				continue
-			normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, waveNames)
-			decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, normIntegralsFull)
+			integrals = (buildSubMatrix(normIntegralMatrixFull, self.waveNames, waveNames),
+			            buildSubMatrix(accIntegralMatrixFull,   self.waveNames, waveNames),
+			            buildSubList(  normIntegralsFull,       self.waveNames, waveNames))
+			decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
 			if tag == 'pos':
-				self.integralsPosRefl = (normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull)
+				self.integralsPosRefl = integrals
 			if tag == 'neg':
-				self.integralsNegRefl = (normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull)
+				self.integralsNegRefl = integrals
 
 			for iRank in xrange(rank):
 				self.wavesInSectors.append(waveNames[iRank:])
 				decayAmps.append(decayAmpsFull[iRank:])
-				normIntegralMatrices.append(normIntegralMatrixFull[iRank:,iRank:])
-				accIntegralMatrices.append( accIntegralMatrixFull[iRank:,iRank:])
-				normIntegrals.append(       normIntegralsFull[iRank:])
+				normIntegralMatrices.append(integrals[0][iRank:,iRank:])
+				accIntegralMatrices.append( integrals[1][iRank:,iRank:])
+				normIntegrals.append(       integrals[2][iRank:])
 
 		# add flat wave
 		self.wavesInSectors.append(["flat"])
@@ -250,6 +254,14 @@ def loadMatrices(normIntegralFileName, accIntegralFileName, waveNames):
 	accIntegralMatrix = totAcc*accIntegralMatrix/np.outer(np.sqrt(normIntegrals), np.sqrt(normIntegrals))
 
 	return normIntegralMatrix, accIntegralMatrix, normIntegrals, totAcc
+
+def buildSubMatrix(fullMatrix, waveNamesAll, waveNames):
+	indices = [waveNamesAll.index(w) for w in waveNames]
+	return np.copy(fullMatrix[:,indices][indices,:])
+
+def buildSubList(fullList, waveNamesAll, waveNames):
+	indices = [waveNamesAll.index(w) for w in waveNames]
+	return np.copy(fullList[indices])
 
 
 def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals = None):
