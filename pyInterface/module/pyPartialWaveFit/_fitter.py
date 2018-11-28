@@ -31,9 +31,17 @@ class Fitter(object):
 		self.startParameterGenerator = startParameterGenerator
 
 
-	def fit(self, nmbAttempts = 1):
+	def fit(self, nmbAttempts = 1, verbosity = 1):
+		'''
+		@param verbosity: -1: Nothing, 0: Only summary 1: Progress bar, 2: Information from each attempt
+		'''
 
 		results = []
+
+		progress = None
+		if verbosity == 1:
+			progress = pyRootPwa.utils.progressBar(maximum=nmbAttempts)
+			progress.start()
 
 		for iAttempt in xrange(nmbAttempts):
 			startParameters = self.startParameterGenerator()
@@ -42,11 +50,15 @@ class Fitter(object):
 			results.append(self.optimize(startParameters))
 			tDuration = timeit.default_timer() - tStart
 
-			if results[iAttempt]['success']:
-				pyRootPwa.utils.printSucc("Minimization successful (-log(L) = {0:.2f})! ".format(results[iAttempt]["negLlhd"]) + self.getStatus(results[iAttempt]['status']))
-			else:
-				pyRootPwa.utils.printWarn("Minimization NOT successfull! " + self.getStatus(results[iAttempt]['status']))
-			pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds. And "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
+			if verbosity > 1:
+				if results[iAttempt]['success']:
+					pyRootPwa.utils.printSucc("Minimization successful (-log(L) = {0:.2f})! ".format(results[iAttempt]["negLlhd"]) + self.getStatus(results[iAttempt]['status']))
+				else:
+					pyRootPwa.utils.printWarn("Minimization NOT successfull! " + self.getStatus(results[iAttempt]['status']))
+				pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds. And "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
+
+			if progress:
+				progress.update(iAttempt)
 
 		iBestAttempt         = np.argmin([r['negLlhd'] for r in results])
 		iBestConvegedAttempt = np.argmin([r['negLlhd'] if r['success'] else 1e300 for r in results])
@@ -59,17 +71,32 @@ class Fitter(object):
 		else:
 			attemptsToCeck = []
 		for iAttempt in attemptsToCeck:
-			hessian = self.checkHessian(results[iAttempt])
+			hessian = self.checkHessian(results[iAttempt], verbosity)
 			if self.storageLevel > 2 or (self.storageLevel == 1 and (iAttempt == iBestAttempt or iAttempt == iBestConvegedAttempt)):
 				results[iAttempt]['hessian'] = hessian
 
+		if verbosity >= 0:
+			nmbSuccess = len([r for r in results if r["success"]])
+			pyRootPwa.utils.printInfo("Finished {0} fit attempts.".format(nmbAttempts))
+			if nmbSuccess > 0:
+				pyRootPwa.utils.printSucc("{0} fit attempts successful.".format(nmbSuccess))
+			if nmbAttempts - nmbSuccess > 0:
+				pyRootPwa.utils.printWarn("{0} fit attempts not successful.".format(nmbAttempts - nmbSuccess))
+			nmbValidHessian = len([r for r in results if r["hessianValid"] is True])
+			nmbInvalidHessian = len([r for r in results if r["hessianValid"] is False])
+			if nmbValidHessian > 0:
+				pyRootPwa.utils.printSucc("{0} fit attempts with valid Hessian matrix.".format(nmbValidHessian))
+			if nmbInvalidHessian > 0:
+				pyRootPwa.utils.printWarn("{0} fit attempts with invalid Hessian matrix.".format(nmbInvalidHessian))
+
 		return results
 
-	def checkHessian(self, result):
+	def checkHessian(self, result, verbosity):
 		tStart = timeit.default_timer()
 		hessian = self.model.likelihood.hessianMatrixFitter(result['parameters'])
 		tDuration = timeit.default_timer() - tStart
-		pyRootPwa.utils.printInfo("Calculation of Hessian took "+str(tDuration)+" seconds.")
+		if verbosity > 1:
+			pyRootPwa.utils.printInfo("Calculation of Hessian took "+str(tDuration)+" seconds.")
 
 		eigenvalues, _ = np.linalg.eig(hessian)
 		result['hessianValid'] = True
