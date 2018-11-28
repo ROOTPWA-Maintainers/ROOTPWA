@@ -155,7 +155,7 @@ class Fitter(object):
 			               normIntegralMatrixResult,
 			               accIntegralMatrixResult,
 			               normIntegralsResult,
-			               result['hessianValid'],
+			               result['success'],
 			               hasHessian
 				)
 			tree.Fill()

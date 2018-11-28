@@ -95,14 +95,14 @@ class Likelihood(object):
 		in order to put this into the jacobian for the hessian calculation
 		'''
 		gradient = self._grad(paraLlhd)
-		return np.ravel(np.column_stack((np.real(gradient), -np.imag(gradient))))
+		return np.ravel(np.column_stack((np.real(gradient), - np.imag(gradient))))
 
 	def hessian(self, paraLlhd):
 		'''
 		@return: Hessian matrix of the complex-valued likelihood parameters
 		         2*nmbLlhdParameter x 2*nmbLlhdParameters matrix of re_i, imag_i as components
 		'''
-		hessianMatrix = self._hessian(paraLlhd).view(np.float64)
+		hessianMatrix = np.conj(self._hessian(paraLlhd)).view(np.float64)
 		return hessianMatrix
 
 	def hessianMatrixFitter(self, paraFitter):
