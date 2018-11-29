@@ -1,10 +1,14 @@
 '''
 @author: F. Kaspar, S. Wallner
 '''
-# pylint: disable=E1120,E1101
+# pylint: disable=E1120,E1101,W0221
+
+import sys
+import inspect
 
 import autograd
 import autograd.numpy as np
+import pyRootPwa
 
 class Likelihood(object):
 	'''
@@ -51,6 +55,10 @@ class Likelihood(object):
 		self._hessian = autograd.jacobian(self._gradientForHessian)
 		self.countFdF = 0 # number of calls to f with gradient
 		self.countF = 0 # number of calls to f without gradient
+
+
+	def setParameters(self):
+		pass # no parameters for this likelihood class
 
 
 	def negLlhd(self, transitionAmps):
@@ -114,3 +122,39 @@ class Likelihood(object):
 		hessianMatrixFitterParameter = np.empty((self.parameterMapping.nmbParameters, self.parameterMapping.nmbParameters))
 		self.parameterMapping.hessianLlhd2Fitter(hessianMatrix, hessianMatrixFitterParameter)
 		return hessianMatrixFitterParameter
+
+
+def getLikelihoodClassNames():
+	likelihoods = []
+	thisModule = sys.modules[__name__]
+	for name, _ in inspect.getmembers(thisModule, inspect.isclass):
+		if name.startswith('Likelihood'):
+			likelihoods.append(name)
+	return likelihoods
+
+
+
+class LikelihoodCauchy(Likelihood):
+	'''
+	Likelihood with cauchy regularization term
+	'''
+	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
+		Likelihood.__init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping)
+		self.width = 0.5
+		self.sectors = range(len(decayAmplitudes))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
+
+
+	def setParameters(self, width, sectors= None):
+		self.width = width
+		if sectors is not None:
+			if True in [ i < 0 or i >= self.nmbSectors for i in sectors]:
+				pyRootPwa.utils.printErr("One of the sectors for the Cauchy regularization is out of range")
+				raise Exception()
+			self.sectors = sectors
+
+	def negLlhd(self, transitionAmps):
+		negLlhd = Likelihood.negLlhd(self, transitionAmps)
+		for i in self.sectors:
+			absT = np.abs(transitionAmps[i])
+			negLlhd = negLlhd - np.sum(np.log(1.0/(1.0+absT**2/self.width**2)))
+		return negLlhd

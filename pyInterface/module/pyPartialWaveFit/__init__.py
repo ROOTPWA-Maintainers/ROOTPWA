@@ -1,7 +1,7 @@
 import _likelihood
 
 
-from _likelihood import Likelihood
+from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy
 from _parameterMapping import ParameterMappingRpwa
 from _model import ModelRpwa
 from _fitter import NLoptFitter

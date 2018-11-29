@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# pylint: disable=C0413
+# pylint: disable=C0413,W0122
 import os
 # disable multithreading by default
 os.environ['OPENBLAS_NUM_THREADS'] = "1"
@@ -10,7 +10,7 @@ import pyRootPwa
 import pyRootPwa.pyPartialWaveFit
 
 
-def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
+def main():
 	parser = argparse.ArgumentParser(
 	                                 description="pwa pyPartialWaveFit fit executable"
 	                                )
@@ -27,19 +27,29 @@ def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
 	parser.add_argument("--saveAll", action="store_true",
 	                    help="saving integral and covariance matrices of all fit attempts, not only of the best and best converged one (default: false)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
-# 	parser.add_argument("--noAcceptance", help="do not take acceptance into account (default: false)", action="store_true")
-# 	parser.add_argument("-C", "--cauchyPriors", help="use half-Cauchy priors (default: false)", action="store_true")
-# 	parser.add_argument("-P", "--cauchyPriorWidth", type=float, metavar ="WIDTH", default=0.5, help="width of half-Cauchy prior (default: 0.5)")
+	parser.add_argument("-L", "--likelihood", metavar="classname", default=None,
+	                    help="Name of the likelihood class to use. Classes are: " + ", ".join(pyRootPwa.pyPartialWaveFit.getLikelihoodClassNames()))
+	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
 	args = parser.parse_args()
 
+	clsModel = pyRootPwa.pyPartialWaveFit.ModelRpwa
+	clsLikelihood = pyRootPwa.pyPartialWaveFit.Likelihood
+	clsParameterMapping = pyRootPwa.pyPartialWaveFit.ParameterMappingRpwa
+	clsFitter = pyRootPwa.pyPartialWaveFit.NLoptFitter
+
+	if args.likelihood is not None:
+		exec("clsLikelihood = pyRootPwa.pyPartialWaveFit.{l}".format(l=args.likelihood))
 
 	model = clsModel(clsLikelihood, clsParameterMapping)
-
 	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank)
+
+	if args.likelihoodParameters is not None:
+		exec("model.likelihood.setParameters({p})".format(p=args.likelihoodParameters))
 
 	checkLevel = 0 if args.saveSpace else 1
 	if args.checkHessian:
 		checkLevel = 2
+
 	storageLevel = 0 if args.saveSpace else 1
 	if args.saveAll:
 		storageLevel = 2
@@ -61,7 +71,4 @@ def main(clsModel, clsLikelihood, clsParameterMapping, clsFitter):
 
 
 if __name__ == "__main__":
-	main(pyRootPwa.pyPartialWaveFit.ModelRpwa,
-	     pyRootPwa.pyPartialWaveFit.Likelihood,
-	     pyRootPwa.pyPartialWaveFit.ParameterMappingRpwa,
-	     pyRootPwa.pyPartialWaveFit.NLoptFitter)
+	main()
