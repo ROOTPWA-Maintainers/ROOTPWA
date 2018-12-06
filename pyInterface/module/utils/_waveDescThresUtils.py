@@ -1,4 +1,6 @@
 
+import os
+import yaml
 from _printingUtils import printInfo, printWarn
 
 def getWaveDescThresFromFitResult(fitResult, waveDescriptions):
@@ -48,3 +50,31 @@ def getWaveDescThresFromWaveList(waveListFileName, waveDescriptions):
 			lineNmb += 1
 		printInfo("read " + str(lineNmb) + " lines from wave list file " + "'" + waveListFileName + "'")
 	return waveDescThres
+
+
+def getWaveDescriptionActiveFromWavelist(waveListFileName, waveDescriptions, multibin):
+	'''
+	@return [(wavename, wavedescription, isActive)] for all waves.
+	isActive means the wave is active in the given multibin:
+		- if the range is given, the wave is only active if the bin center lies within the range of the wave
+		- if a threshold is given, the wave is only active if the mass bin center >= threshold
+	'''
+	waveDescriptionActive = []
+	if os.path.splitext(waveListFileName)[1] == '.yaml':
+		with open(waveListFileName, 'r') as wavelistFile:
+			wavelist = yaml.load(wavelistFile)
+			for waveData in wavelist:
+				isActive = True
+				if 'ranges' in waveData:
+					isActive = False
+					for waveRange in waveData['ranges']:
+						if waveRange.inBin(multibin.getBinCenters()):
+							isActive = True
+							break
+				if 'threshold' in waveData and multibin.getBinCenters()['mass'] < waveData['threshold']:
+					isActive = False
+				waveDescriptionActive.append((waveData['name'], waveDescriptions[waveData['name']], isActive))
+	else:
+		waveDescriptionThreshold = getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
+		waveDescriptionActive = [(w, d, multibin.getBinCenters()['mass'] >= t) for w,d,t in waveDescriptionThreshold]
+	return waveDescriptionActive

@@ -105,14 +105,14 @@ class ModelRpwa(Model):
 		self.rankNegRefl = rankNegRefl
 		self.multibin = multiBin
 
-		waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
+		waveDescriptionActive = pyRootPwa.utils.getWaveDescriptionActiveFromWavelist(waveListFileName, waveDescriptions, multiBin)
 
-		self.waveNames = [waveName for waveName, _, _ in waveDescThres]
+		self.waveNames = [waveName for waveName, _, _ in waveDescriptionActive]
 
 		# group waves by reflectivity
 		self.waveNamesPosRefl = []
 		self.waveNamesNegRefl = []
-		for waveName, waveDescription, _ in waveDescThres:
+		for waveName, waveDescription, _ in waveDescriptionActive:
 			status, topology = waveDescription.constructDecayTopology()
 			if status:
 				refl = topology.XParticle().reflectivity
@@ -127,8 +127,7 @@ class ModelRpwa(Model):
 				pyRootPwa.utils.printErr("Cannot build decay topology for wave '{0}'".format(waveName))
 				raise Exception()
 
-		massBinCenter = multiBin.getBinCenters()['mass']
-		self.waveNamesFixed = [waveName for waveName, _, massThreshold in waveDescThres if massThreshold != 0 and massThreshold >= massBinCenter]
+		self.waveNamesFixed = [waveName for waveName, _, isActive in waveDescriptionActive if not isActive ]
 
 		# here we have to distinguish negatives from positives
 		normIntegralMatrices = []
