@@ -128,10 +128,10 @@ class ParameterMappingRpwa(ParameterMapping):
 			iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
 		# build list of indices which are not None, i.e. which are real parameters
-		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None])
-		self.indicesLlhdParaNonNoneReal   = np.array([j for j,i in enumerate(self.indicesRealFitterPara) if i is not None])
-		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None])
-		self.indicesLlhdParaNonNoneImag   = np.array([j for j,i in enumerate(self.indicesImagFitterPara) if i is not None])
+		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None], dtype=np.int64)
+		self.indicesLlhdParaNonNoneReal   = np.array([j for j,i in enumerate(self.indicesRealFitterPara) if i is not None], dtype=np.int64)
+		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None], dtype=np.int64)
+		self.indicesLlhdParaNonNoneImag   = np.array([j for j,i in enumerate(self.indicesImagFitterPara) if i is not None], dtype=np.int64)
 
 		# build parameter names
 		self.paraNamesFitter = []
