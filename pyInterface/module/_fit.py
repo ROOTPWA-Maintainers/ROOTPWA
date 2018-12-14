@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 import pyRootPwa.core
 import pyRootPwa.utils
@@ -20,53 +21,28 @@ def pwaFit(eventAndAmpFileDict,
            saveSpace=False,
            rank=1,
            verbose=False,
-           attempts=1
+           attempts=1,
+           keepMatricesOnlyOfBest= False
           ):
-
-	waveDescThres = pyRootPwa.utils.getWaveDescThresFromWaveList(waveListFileName, waveDescriptions)
-	massBinCenter = (multiBin.boundaries['mass'][1] + multiBin.boundaries['mass'][0]) / 2. # YOU CAN DO BETTER
-
-	likelihood = pyRootPwa.initLikelihood(waveDescThres = waveDescThres,
-	                                      massBinCenter = massBinCenter,
-	                                      eventAndAmpFileDict = eventAndAmpFileDict,
-	                                      normIntegralFileName = normIntegralFileName,
-	                                      accIntegralFileName = accIntegralFileName,
-	                                      multiBin = multiBin,
-	                                      accEventsOverride = accEventsOverride,
-	                                      useNormalizedAmps = useNormalizedAmps,
-	                                      cauchy = cauchy,
-	                                      cauchyWidth = cauchyWidth,
-	                                      rank = rank,
-	                                      verbose = verbose)
-	if not likelihood:
-		pyRootPwa.utils.printErr("error while initializing likelihood. Aborting...")
-		return [ ]
-
-	if attempts == 1:
-		seeds = [ seed ]
-	elif seed == 0:
-		seeds = [ 0 for _ in xrange(attempts) ]
-	else:
-		random.seed(seed)
-		seeds = [ ]
-		for _ in xrange(attempts):
-			while True:
-				randVal = random.randint(1000, 2**32-1)
-				if randVal not in seeds:
-					break
-			seeds.append(randVal)
-
-	fitResults = [ ]
-	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaFit(likelihood         = likelihood,
-		                                  multibinBoundaries = multiBin.boundaries,
-		                                  seed               = fitSeed,
-		                                  startValFileName   = startValFileName,
-		                                  checkHessian       = checkHessian,
-		                                  saveSpace          = saveSpace,
-		                                  verbose            = verbose)
-		fitResults.append(fitResult)
-	return fitResults
+	return _pwaFit(fitFunction            = pyRootPwa.core.pwaFit,
+	               eventAndAmpFileDict    = eventAndAmpFileDict,
+	               normIntegralFileName   = normIntegralFileName,
+	               accIntegralFileName    = accIntegralFileName,
+	               multiBin               = multiBin,
+	               waveListFileName       = waveListFileName,
+	               waveDescriptions       = waveDescriptions,
+	               seed                   = seed,
+	               cauchy                 = cauchy,
+	               cauchyWidth            = cauchyWidth,
+	               startValFileName       = startValFileName,
+	               accEventsOverride      = accEventsOverride,
+	               useNormalizedAmps      = useNormalizedAmps,
+	               checkHessian           = checkHessian,
+	               saveSpace              = saveSpace,
+	               rank                   = rank,
+	               verbose                = verbose,
+	               attempts               = attempts,
+	               keepMatricesOnlyOfBest = keepMatricesOnlyOfBest)
 
 
 def pwaNloptFit(eventAndAmpFileDict,
@@ -88,6 +64,47 @@ def pwaNloptFit(eventAndAmpFileDict,
                 attempts=1,
                 keepMatricesOnlyOfBest= False
                ):
+	return _pwaFit(fitFunction            = pyRootPwa.core.pwaNloptFit,
+	               eventAndAmpFileDict    = eventAndAmpFileDict,
+	               normIntegralFileName   = normIntegralFileName,
+	               accIntegralFileName    = accIntegralFileName,
+	               multiBin               = multiBin,
+	               waveListFileName       = waveListFileName,
+	               waveDescriptions       = waveDescriptions,
+	               seed                   = seed,
+	               cauchy                 = cauchy,
+	               cauchyWidth            = cauchyWidth,
+	               startValFileName       = startValFileName,
+	               accEventsOverride      = accEventsOverride,
+	               useNormalizedAmps      = useNormalizedAmps,
+	               checkHessian           = checkHessian,
+	               saveSpace              = saveSpace,
+	               rank                   = rank,
+	               verbose                = verbose,
+	               attempts               = attempts,
+	               keepMatricesOnlyOfBest = keepMatricesOnlyOfBest)
+
+
+def _pwaFit(fitFunction,
+            eventAndAmpFileDict,
+            normIntegralFileName,
+            accIntegralFileName,
+            multiBin,
+            waveListFileName,
+            waveDescriptions,
+            seed=0,
+            cauchy=False,
+            cauchyWidth=0.5,
+            startValFileName="",
+            accEventsOverride=0,
+            useNormalizedAmps=True,
+            checkHessian=False,
+            saveSpace=False,
+            rank=1,
+            verbose=False,
+            attempts=1,
+            keepMatricesOnlyOfBest= False
+            ):
 
 	if keepMatricesOnlyOfBest:
 		saveSpace = True
@@ -128,16 +145,16 @@ def pwaNloptFit(eventAndAmpFileDict,
 	fitResults = [ ]
 	iBest = -1
 	iBestValid = -1
-	negLogLikeBest = 1e300
-	negLogLikeBestValid = 1e300
+	negLogLikeBest = np.inf
+	negLogLikeBestValid = np.inf
 	for fitSeed in seeds:
-		fitResult = pyRootPwa.core.pwaNloptFit(likelihood         = likelihood,
-		                                       multibinBoundaries = multiBin.boundaries,
-		                                       seed               = fitSeed,
-		                                       startValFileName   = startValFileName,
-		                                       checkHessian       = checkHessian,
-		                                       saveSpace          = saveSpace,
-		                                       verbose            = verbose)
+		fitResult = fitFunction(likelihood         = likelihood,
+		                        multibinBoundaries = multiBin.boundaries,
+		                        seed               = fitSeed,
+		                        startValFileName   = startValFileName,
+		                        checkHessian       = checkHessian,
+		                        saveSpace          = saveSpace,
+		                        verbose            = verbose)
 		fitResults.append(fitResult)
 		iFitResult = len(fitResults)-1
 		if fitResult.logLikelihood() < negLogLikeBest:
