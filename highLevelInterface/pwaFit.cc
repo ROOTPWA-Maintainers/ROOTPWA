@@ -326,7 +326,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 		cout << "used " << flush;
 		timer.Print();
 		printInfo << *minimizer;
-		if (runHesse && not saveSpace) {
+		if (runHesse and not saveSpace) {
 			printInfo << "calculating Hessian matrix" << endl;
 			timer.Start();
 			hasHessian = minimizer->Hesse();
@@ -363,7 +363,7 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 			cout << correctParams[i] << " (fixed)";
 		else {
 			cout << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
-			if(runHesse && not saveSpace) {
+			if(runHesse and not saveSpace) {
 				cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
 			} else {
 				cout << setw(12) << "[not available]";
@@ -417,11 +417,11 @@ rpwa::hli::pwaFit(const pwaLikelihood<complex<double> >& L,
 	             L.rank(),
 	             prodAmps,
 	             prodAmpNames,
-	             (saveSpace)? nullptr: &fitParCovMatrix,
+	             (saveSpace) ? nullptr : &fitParCovMatrix,
 	             fitParCovMatrixIndices,
-	             (saveSpace)? nullptr: &normIntegral,
-	             (saveSpace)? nullptr: &accIntegral,
-	             (saveSpace)? nullptr: &phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+	             (saveSpace) ? nullptr : &normIntegral,
+	             (saveSpace) ? nullptr : &accIntegral,
+	             (saveSpace) ? nullptr : &phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 	             converged,
 	             hasHessian);
 
