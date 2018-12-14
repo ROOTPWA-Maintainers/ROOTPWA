@@ -25,12 +25,12 @@ double
 rpwaNloptFunc(unsigned int n, const double* x, double* gradient, void* func_data)
 {
 	const pwaLikelihood<complex<double> >* L = (const pwaLikelihood<complex<double> >*)func_data;
-	if(n != L->nmbPars()) {
+	if (n != L->nmbPars()) {
 		printErr << "parameter mismatch between NLopt and pwaLikelihood. Aborting..." << endl;
 		throw;
 	}
 	double likeli;
-	if(gradient) {
+	if (gradient) {
 		L->FdF(x, likeli, gradient);
 	} else {
 		likeli = L->DoEval(x);
@@ -91,7 +91,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		cout << L << endl;
 
 		printInfo << "using prior: ";
-		switch(L.priorType()) {
+		switch (L.priorType()) {
 			case pwaLikelihood<complex<double> >::FLAT:
 				cout << "flat" << endl;
 				break;
@@ -154,7 +154,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 			double startVal;
 			{
 				startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
-				if(random.Rndm() > 0.5) {
+				if (random.Rndm() > 0.5) {
 					startVal *= -1.;
 				}
 			}
@@ -183,21 +183,21 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		TStopwatch timer;
 		timer.Start();
 		nlopt::result result = optimizer.optimize(params, likeli);
-		if(result > 0) {
+		if (result > 0) {
 			converged = true;
 		}
 		timer.Stop();
 
 		correctParams = L.CorrectParamSigns(params.data());
 		const double newLikelihood = L.DoEval(correctParams.data());
-		if(likeli != newLikelihood) {
+		if (likeli != newLikelihood) {
 			printErr << "Flipping signs according to sign conventions changed the likelihood (from " << maxPrecisionAlign(likeli) << " to " << maxPrecisionAlign(newLikelihood) << ")." << endl;
 			throw;
 		} else {
 			printInfo << "Likelihood unchanged at " << maxPrecisionAlign(newLikelihood) << " by flipping signs according to conventions." << endl;
 		}
 
-		if (checkHessian || not saveSpace) {
+		if (checkHessian or not saveSpace) {
 			// analytically calculate Hessian
 			TMatrixT<double> hessian = L.Hessian(correctParams.data());
 			// calculate and check Hessian eigenvalues
@@ -229,7 +229,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		timer.Print();
 		printInfo << "optimizer status:" << endl;
 		cout << "    ";
-		switch(result) {
+		switch (result) {
 			case nlopt::SUCCESS:
 				cout << "success!" << endl;
 				break;
@@ -273,7 +273,7 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 		cout << "    parameter [" << setw(3) << i << "] "
 		     << setw(maxParNameLength) << L.parameter(i).parName() << " = "
 		     << setw(12) << maxPrecisionAlign(correctParams[i]) << " +- ";
-		if(not saveSpace) {
+		if (not saveSpace) {
 			cout << setw(12) << maxPrecisionAlign(sqrt(fitParCovMatrix(i, i)));
 		} else {
 			cout << setw(12) << "[not available]";
@@ -319,11 +319,11 @@ rpwa::hli::pwaNloptFit(const pwaLikelihood<complex<double> >& L,
 	             L.rank(),
 	             prodAmps,
 	             prodAmpNames,
-	             (saveSpace)? nullptr: &fitParCovMatrix,
+	             (saveSpace) ? nullptr : &fitParCovMatrix,
 	             fitParCovMatrixIndices,
-	             (saveSpace)? nullptr: &normIntegral,
-	             (saveSpace)? nullptr: &accIntegral,
-	             (saveSpace)? nullptr: &phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
+	             (saveSpace) ? nullptr : &normIntegral,
+	             (saveSpace) ? nullptr : &accIntegral,
+	             (saveSpace) ? nullptr : &phaseSpaceIntegral,  // contains the sqrt of the integral matrix diagonal elements!!!
 	             converged,
 	             hasHessian);
 	return fitResultPtr(result);
