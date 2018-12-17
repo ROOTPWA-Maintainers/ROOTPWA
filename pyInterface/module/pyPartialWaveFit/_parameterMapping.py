@@ -78,8 +78,9 @@ class ParameterMappingRpwa(ParameterMapping):
 		The additional parameters are real-valued, but in paraLlhd, they are complex-valued of an imaginary part of zero
 	'''
 
-	def __init__(self, model, zeroWaves = None):
+	def __init__(self, model, realWaves = None, zeroWaves = None):
 		'''
+		@param realWaves: List lists of waves whose amplitude should be fixed to real, i.e. the imaginary part is fixed to zero. One list for each incoherent sector.
 		@param zeroWaves: List of waves whose amplitude should be fixed to zero. Fixing of the reference wave is ignored.
 		'''
 		ParameterMapping.__init__(self, model)
@@ -88,13 +89,19 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.nmbWavesInSectors = [ len(wavesInSector) for wavesInSector in self.wavesInSectors ]
 		self.nmbSectors = len(self.nmbWavesInSectors)
 
+		if realWaves is None:
+			realWaves = [ [] ] * self.nmbSectors
+
+		if len(realWaves) != self.nmbSectors:
+			raise ValueError("List of real-valued wave does not have n sectors.")
+
 		if zeroWaves is None:
 			zeroWaves = []
 
 		negLlhdFunction = model.clsLikelihood.negLlhd
 		argsNegLlhdFunction = inspect.getargspec(negLlhdFunction).args
 		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -2 # the first one is self, the second one are the transition amplitudes
-		self.nmbAmplitudeParameters = np.sum([ 2*n-1 for n in self.nmbWavesInSectors]) - 2*len(zeroWaves)
+		self.nmbAmplitudeParameters = np.sum([ 2*n-len(realWaves[i]) for i,n in enumerate(self.nmbWavesInSectors)]) - 2*len(zeroWaves)
 		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbAdditionalParameters
 
 
@@ -110,16 +117,15 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.indicesRealFitterPara = [] # mapping paraLlhd index -> real value fitter parameter index
 		self.indicesImagFitterPara = [] # mapping paraLlhd index -> imag value fitter parameter index
 		for iSector, nWavesInSector in enumerate(self.nmbWavesInSectors):
-			self.indicesRealFitterPara.append(iFitterPara)
-			iFitterPara += 1
-			self.indicesImagFitterPara.append(None)
-			for iWave in xrange(1, nWavesInSector):
+			for iWave in xrange( nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
-					# -1 because the first have has only the real part
 					self.indicesRealFitterPara.append(iFitterPara)
 					iFitterPara += 1
-					self.indicesImagFitterPara.append(iFitterPara)
-					iFitterPara += 1
+					if self.wavesInSectors[iSector][iWave] not in realWaves[iSector]:
+						self.indicesImagFitterPara.append(iFitterPara)
+						iFitterPara += 1
+					else:
+						self.indicesImagFitterPara.append(None)
 				else:
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
@@ -133,14 +139,16 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None], dtype=np.int64)
 		self.indicesLlhdParaNonNoneImag   = np.array([j for j,i in enumerate(self.indicesImagFitterPara) if i is not None], dtype=np.int64)
 
+		assert iFitterPara == self.nmbParameters
+
 		# build parameter names
 		self.paraNamesFitter = []
 		for iSector, wavesInSector in enumerate(self.wavesInSectors):
-			self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wavesInSector[0]))
-			for wave in wavesInSector[1:]:
+			for wave in wavesInSector:
 				if wave not in zeroWaves:
 					self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
-					self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
+					if wave not in realWaves[iSector]:
+						self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
 			self.paraNamesFitter.append(argsNegLlhdFunction[iAdditionalParameter+2])
 
