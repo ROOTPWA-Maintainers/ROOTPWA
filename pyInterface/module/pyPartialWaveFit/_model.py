@@ -314,30 +314,8 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 	pyRootPwa.utils.printInfo("\t" + str(multibin))
 	amps = []
 	for eventFileName, amplitudeFilenames in eventAndAmpFileDict.iteritems():
-		eventFile, eventMeta = pyRootPwa.utils.openEventFile(eventFileName)
-		if not eventFile or not eventMeta:
-			pyRootPwa.utils.printErr("could not open event file '" + eventFileName + "'. Aborting...")
-			raise Exception()
-
-		ampMetas = []
-		ampFiles = []
-		for waveName in waveNames:
-			ampFileName = amplitudeFilenames[waveName]
-			ampFile = ROOT.TFile.Open(ampFileName, "READ")
-			if not ampFile:
-				pyRootPwa.utils.printErr("could not open amplitude file '" + ampFileName + "'.")
-				raise Exception()
-			meta = pyRootPwa.core.amplitudeMetadata.readAmplitudeFile(ampFile, waveName)
-			if not meta:
-				pyRootPwa.utils.printErr("could not get metadata for waveName '" + waveName + "'.")
-				raise Exception()
-			ampMetas.append(meta)
-			ampFiles.append(ampFile)
-
-		ampsInEventfile = pyRootPwa.core.loadAmplitudes(ampMetas, eventMeta, multibin.boundaries)
+		ampsInEventfile = pyRootPwa.core.loadAmplitudes([amplitudeFilenames[w] for w in waveNames], waveNames, eventFileName, multibin.boundaries)
 		amps.append(ampsInEventfile)
-		for ampFile in ampFiles:
-			ampFile.Close()
 	amps = np.hstack(amps)
 
 	if normIntegrals is not None:

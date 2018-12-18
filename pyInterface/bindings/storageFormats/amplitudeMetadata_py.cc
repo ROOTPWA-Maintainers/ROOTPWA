@@ -60,18 +60,24 @@ namespace {
 
 	nparray
 	amplitudeMetadata_loadAmplitudes(
-	                                 const bp::object& pyAmplitudeMetadata,
-	                                 const rpwa::eventMetadata* eventMeta,
+	                                 bp::list& pyAmplitudesFilenames,
+	                                 bp::list& pyWaveNames,
+	                                 const std::string& eventFilename,
 	                                 const bp::dict& pyOtfBin,
 	                                 const long maxNmbEvents)
 	                                 {
-		std::vector<const rpwa::amplitudeMetadata*> amplitudeMeta;
-		if (not rpwa::py::convertBPObjectToVector<const rpwa::amplitudeMetadata*>(pyAmplitudeMetadata, amplitudeMeta)) {
-			PyErr_SetString(PyExc_TypeError, "Got invalid input for amplitudeMetadata when executing rpwa::ampIntegralMatrix::integrate()");
+		const rpwa::multibinBoundariesType otfBin = rpwa::py::convertMultibinBoundariesFromPy(pyOtfBin);
+		std::vector<std::string> amplitudeFilenames;
+		if (not rpwa::py::convertBPObjectToVector<std::string>(pyAmplitudesFilenames, amplitudeFilenames)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for amplitudeFilenames when executing rpwa::amplitudeMetadata::loadAmplitudes()");
 			bp::throw_error_already_set();
 		}
-		const rpwa::multibinBoundariesType otfBin = rpwa::py::convertMultibinBoundariesFromPy(pyOtfBin);
-		std::vector<std::vector<std::complex<double>>> amps = rpwa::loadAmplitudes(amplitudeMeta, eventMeta, otfBin, maxNmbEvents);
+		std::vector<std::string> waveNames;
+		if (not rpwa::py::convertBPObjectToVector<std::string>(pyWaveNames, waveNames)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for waveNames when executing rpwa::amplitudeMetadata::loadAmplitudes()");
+			bp::throw_error_already_set();
+		}
+		std::vector<std::vector<std::complex<double>>> amps = rpwa::loadAmplitudes(amplitudeFilenames, waveNames, eventFilename, otfBin, maxNmbEvents);
 #if BOOST_VERSION < 106300
 		bp::list data;
 		for (size_t i = 0; i < amps.size(); ++i) {
@@ -144,7 +150,8 @@ void rpwa::py::exportAmplitudeMetadata() {
 	       "loadAmplitudes",
 	       &amplitudeMetadata_loadAmplitudes,
 	      (bp::arg("amplitudeMetadata"),
-	       bp::arg("eventMeta")=bp::object(),
+	       bp::arg("waveNames"),
+	       bp::arg("eventMeta"),
 	       bp::arg("otfBin")=bp::dict(),
 	       bp::arg("maxNmbEvents")=0));
 

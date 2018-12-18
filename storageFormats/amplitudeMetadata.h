@@ -85,10 +85,11 @@ namespace rpwa {
 	}
 
 std::vector<std::vector<std::complex<double>>>
-loadAmplitudes(const std::vector<const amplitudeMetadata*>&  ampMetadata,
-               const eventMetadata*                          eventMeta,
-               const multibinBoundariesType&                 otfBin,
-               unsigned long                                 maxNmbEvents = 0);
+loadAmplitudes(const std::vector<std::string>& ampFilenames,
+               const std::vector<std::string>& waveNames,
+               const std::string&              eventFilename,
+               const multibinBoundariesType&   otfBin,
+               unsigned long                   maxNmbEvents = 0);
 
 } // namespace rpwa
 
