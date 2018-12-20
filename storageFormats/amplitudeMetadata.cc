@@ -174,9 +174,9 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 	}
 	vector<vector<complex<double>>> amps;
 	amps.reserve(ampFilenames.size());
+	TFile* ampFile = nullptr;
 	for(size_t waveIndex = 0; waveIndex < ampFilenames.size(); waveIndex++) {
-		amplitudeTreeLeaf* ampTreeLeaf = nullptr;
-		TFile* ampFile = TFile::Open(ampFilenames[waveIndex].c_str());
+		if (ampFile == nullptr) ampFile = TFile::Open(ampFilenames[waveIndex].c_str());
 		if (ampFile == nullptr or not ampFile->IsOpen()){
 			printErr << "Cannot open amplitude file '" << ampFilenames[waveIndex] << "'." << endl;
 			throw;
@@ -188,7 +188,9 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 			throw;
 		}
 
+		amplitudeTreeLeaf* ampTreeLeaf = nullptr;
 		ampMeta->amplitudeTree()->SetBranchAddress(amplitudeMetadata::amplitudeLeafName.c_str(), &ampTreeLeaf);
+
 		vector<complex<double>> ampsOfWave;
 		ampsOfWave.reserve(eventIndicesInMultibin.size());
 		for(const auto iEvent: eventIndicesInMultibin){
@@ -201,7 +203,10 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 				ampsOfWave.push_back(ampTreeLeaf->amp());
 		}
 		amps.push_back(ampsOfWave);
-		ampFile->Close();
+		if (waveIndex == ampFilenames.size()-1 or ampFilenames[waveIndex] != ampFilenames[waveIndex+1]) {
+			ampFile->Close();
+			ampFile = nullptr;
+		} // else keep the file opened as the next wave is in the same amplitude file.
 	}
 	return amps;
 }
