@@ -1,6 +1,7 @@
 import collections
 import glob
 import os
+import itertools
 import cPickle as pickle
 
 import pyRootPwa.utils
@@ -74,10 +75,11 @@ class fileManager(object):
 		self.amplitudeDirectory = ""
 		self.integralDirectory  = ""
 
-		self.dataFiles       = collections.OrderedDict()
-		self.keyFiles        = collections.OrderedDict()
-		self.amplitudeFiles  = collections.OrderedDict()
-		self.integralFiles   = collections.OrderedDict()
+		self.dataFiles              = collections.OrderedDict()
+		self.keyFiles               = collections.OrderedDict()
+		self._specialAmplitudeFiles = collections.OrderedDict()
+		self._mergedAmplitudes      = collections.defaultdict(dict) # {<events-type>: {<tag>: [<wave-name> ...]}}
+		self.integralFiles          = collections.OrderedDict()
 		self.binList = []
 
 
@@ -259,30 +261,51 @@ class fileManager(object):
 		return nmbEventFiles * len(self.keyFiles)
 
 
-	def _getAmplitudeFilePaths(self, eventsTypes, waveNames, eventFieldIDs = None):
+	def _getAmplitudeFilePaths(self, eventsTypes, waveNames, eventFileIds = None):
 		'''
 		Build ordered dictionary of AmplitudeFilePaths for the given eventsTypes and the given waves
-		@param eventFieldIDs: Dictionary of {<eventsType>: [<eventFieldID>]. If None, all event-field IDs of the given eventsTypes.
+		@param eventFileIds: Dictionary of {<eventsType>: [<eventFieldID>]. If None, all event-field IDs of the given eventsTypes.
 		'''
 		amplitudeFiles = collections.OrderedDict()
 		if not self.dataFiles:
 			pyRootPwa.utils.printWarn("cannot create amplitude file path collection without data files.")
 			return collections.OrderedDict()
 		waves = [(self.getWaveIndex(w), w) for w in waveNames]
+
 		for eventsType in eventsTypes:
-			if eventFieldIDs is None:
+			if eventFileIds is None:
 				inputFileIndices = range(len(self.dataFiles[eventsType]))
 			else:
-				if eventsType not in eventFieldIDs:
+				if eventsType not in eventFileIds:
 					pyRootPwa.utils.printErr("Events type '{0}' not in dictionary of event-field IDs!".format(eventsType))
 					raise Exception()
-				inputFileIndices = eventFieldIDs[eventsType]
+				inputFileIndices = eventFileIds[eventsType]
+
+			if eventsType in self._mergedAmplitudes:
+				wavesWithMergedAmplitudes = list(itertools.chain(*self._mergedAmplitudes[eventsType].values()))
+			else:
+				wavesWithMergedAmplitudes = []
+
 			for inputFile_i in inputFileIndices:
 				for waveName_i, waveName in waves:
-					amplitudeFileName = "{waveName}_eventFileId-{eventsId}_{eventsType}.root".format(waveName=waveName,
-					                                                                                 eventsId=str(inputFile_i),
-					                                                                                 eventsType=str(eventsType))
-					amplitudeFiles[(eventsType, inputFile_i, waveName_i)] = os.path.join(self.amplitudeDirectory, amplitudeFileName)
+					key = (eventsType, inputFile_i, waveName_i)
+					if key not in self._specialAmplitudeFiles:
+						if waveName not in wavesWithMergedAmplitudes:
+							amplitudeFileName = "{waveName}_eventFileId-{eventsId}_{eventsType}.root".format(waveName=waveName,
+							                                                                                 eventsId=str(inputFile_i),
+							                                                                                 eventsType=str(eventsType))
+						else:
+							tags = [tag for tag, waveNames in self._mergedAmplitudes[eventsType].iteritems() if waveName in waveNames]
+							if len(tags) != 1:
+								pyRootPwa.utils.printErr("Cannot find unique merge tag for wave '{0}'. Aborting...".format(waveName))
+								raise Exception()
+							amplitudeFileName = "{tag}_eventFileId-{eventsId}_{eventsType}.root".format(tag=tags[0],
+							                                                                            eventsId=str(inputFile_i),
+							                                                                            eventsType=str(eventsType))
+						amplitudeFilePath = os.path.join(self.amplitudeDirectory, amplitudeFileName)
+					else:
+						amplitudeFilePath = self._specialAmplitudeFiles[key]
+					amplitudeFiles[key] = amplitudeFilePath
 
 		return amplitudeFiles
 
@@ -375,9 +398,10 @@ class fileManager(object):
 		retStr += "\nAmpFiles:\n"
 		for eventsType in self.dataFiles:
 			for eventFileId, _ in enumerate(self.dataFiles[eventsType]):
+				amplitudeFiles = self._getAmplitudeFilePaths([eventsType], self.getWaveNameList(), {eventsType: [eventFileId]})
 				for waveName_i, waveName in enumerate(self.keyFiles.keys()):
 					retStr += ("eventsType [" + str(eventsType) + "], eventFileId [" + str(eventFileId) +
-					           "], waveName [" + waveName + "] >> " + self.amplitudeFiles[(eventsType, eventFileId, waveName_i)] + "\n")
+					           "], waveName [" + waveName + "] >> " + amplitudeFiles[(eventsType, eventFileId, waveName_i)] + "\n")
 		retStr += "\nIntFiles:\n"
 		for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
 			for binID, _ in enumerate(self.binList):
