@@ -232,9 +232,9 @@ def findReferenceWave(referenceWavesDefinitions, refl, rank):
 		status, topology = ref['description'].constructDecayTopology()
 		if status:
 			refRefl = topology.XParticle().reflectivity
-			if refl > 0:
+			if refRefl > 0:
 				refRefl = 'pos'
-			elif refl < 0:
+			elif refRefl < 0:
 				refRefl = 'neg'
 			else:
 				pyRootPwa.utils.printErr("Reflectivity cannot be '{0}' for wave '{1}'!".format(refRefl, ref['name']))
