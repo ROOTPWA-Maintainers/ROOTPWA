@@ -27,7 +27,6 @@ namespace rpwa {
 	typedef boost::shared_ptr<beamAndVertexGenerator> beamAndVertexGeneratorPtr;
 
 	class beamAndVertexGenerator {
-		enum simulationMode {simpleSimulation, simulationFromMomenta, simulationFromInclinations, simulationFromMomentaCorrectMomentumResolution};
 	  public:
 
 		beamAndVertexGenerator();
@@ -73,7 +72,15 @@ namespace rpwa {
 		bool _readBeamfileSequentially;
 		long _currentBeamfileEntry;
 
+		/**
+		 * Load beam file with momentum given as x,y,z coordinates
+		 * @return true if loading was successful
+		 */
 		virtual bool loadBeamFileWithMomenta();
+		/**
+		 * Load beam file with momentum given as magnitude and x,y inclination
+		 * @return true if loading was successful
+		 */
 		virtual bool loadBeamFileWithInclinations();
 		virtual bool eventSimple(const rpwa::Target& target, const rpwa::Beam& beam);
 		virtual bool eventFromMomenta(const rpwa::Target& target, const rpwa::Beam& beam);
@@ -87,34 +94,41 @@ namespace rpwa {
 
 	  private:
 
+		enum simulationMode {simpleSimulation, simulationFromMomenta, simulationFromInclinations, simulationFromMomentaCorrectMomentumResolution};
+
 		simulationMode _simulationMode;
 
 		TFile* _rootFile;
 		TTree* _beamTree;
 
-		double _vertexX;
-		double _vertexY;
-		double _vertexZ;
-		double _beamMomentumX;
-		double _beamMomentumY;
-		double _beamMomentumZ;
-		double _beamdXdZ;
-		double _beamdYdZ;
-		double _beamMomentum;
-		double _vertexXSigma;
-		double _vertexYSigma;
-		double _beamMomentumXSigma;
-		double _beamMomentumYSigma;
-		double _beamMomentumZSigma;
-		double _beamMomentumSigma;
-		TMatrixDSym* _vertexCovarianceMatrix;
+		// input data from beam file
+		double _vertexX;                      // vertex x-position
+		double _vertexY;                      // vertex y-position
+		double _vertexZ;                      // vertex z-position
+		// beam momentum as x,y,z coordinates
+		double _beamMomentumX;                // beam-particle momentum in x-direction
+		double _beamMomentumY;                // beam-particle momentum in y-direction
+		double _beamMomentumZ;                // beam-particle momentum in z-direction
+		// beam momentum as magnitude and x,y inclination
+		double _beamdXdZ;                     // beam inclination in x-direction
+		double _beamdYdZ;                     // beam inclination in y-direction
+		double _beamMomentum;                 // absolute beam momentum
+		// Gaussian uncertainties independent for each variable for momenta from momenta
+		double _vertexXSigma;                 // uncertainty in vertex x-position
+		double _vertexYSigma;                 // uncertainty in vertex y-position
+		double _beamMomentumXSigma;           // uncertainty in beam-particle momentum in x-direction
+		double _beamMomentumYSigma;           // uncertainty in beam-particle momentum in y-direction
+		double _beamMomentumZSigma;           // uncertainty in beam-particle momentum in z-direction
+		// correlated uncertainties for momenta from inclinations
+		double _beamMomentumSigma;            // uncertainty in beam-particle momentum
+		TMatrixDSym* _vertexCovarianceMatrix; // full covariance matrix of vertex parameters (x,y,z,dXdZ, dYdZ)
 
-		bool _sigmasPresent;
-		double _sigmaScalingFactor;
-		bool _takeZpositionFromData;
-		double _momentumResolution;
-		double _momentumPDFSigma;
-		double _momentumPDFMean;
+		bool _sigmasPresent;         // uncertainty is present in the beam file
+		double _sigmaScalingFactor;  // scaling factor for all uncertainties
+		bool _takeZpositionFromData; // take the z-position of the vertex from the beam file instad of generating one
+		double _momentumResolution;  // assumption about momentum resolution for momentum resolution correction of the beam file
+		double _momentumPDFSigma;    // assumption about std.-deviation of momentum distribution for momentum resolution correction of the beam file
+		double _momentumPDFMean;     // assumption about mean of momentum distribution for momentum resolution correction of the beam file
 
 	};
 

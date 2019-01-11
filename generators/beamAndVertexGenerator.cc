@@ -11,7 +11,7 @@
 #include "beamAndVertexGenerator.h"
 
 namespace {
-	TVectorD multivariantGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor);
+	TVectorD multivariateGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor=1.0);
 }
 
 using namespace std;
@@ -83,9 +83,9 @@ bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
 bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 {
 
+	// set required branches
 	TBranch* vertexXPosition = _beamTree->FindBranch("vertex_x_position");
 	TBranch* vertexYPosition = _beamTree->FindBranch("vertex_y_position");
-	TBranch* vertexZPosition = _beamTree->FindBranch("vertex_z_position");
 	TBranch* beamMomentumX = _beamTree->FindBranch("beam_momentum_x");
 	TBranch* beamMomentumY = _beamTree->FindBranch("beam_momentum_y");
 	TBranch* beamMomentumZ = _beamTree->FindBranch("beam_momentum_z");
@@ -105,14 +105,19 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 	}
 	_beamTree->SetBranchAddress("vertex_x_position", &_vertexX);
 	_beamTree->SetBranchAddress("vertex_y_position", &_vertexY);
+	_beamTree->SetBranchAddress("beam_momentum_x", &_beamMomentumX);
+	_beamTree->SetBranchAddress("beam_momentum_y", &_beamMomentumY);
+	_beamTree->SetBranchAddress("beam_momentum_z", &_beamMomentumZ);
+
+	// set optional branch with vertex z-position
+	TBranch* vertexZPosition = _beamTree->FindBranch("vertex_z_position");
 	if(vertexZPosition){
 		_beamTree->SetBranchAddress("vertex_z_position", &_vertexZ);
 	} else {
 		_vertexZ = 0.0; // per default the beam parameters are given at Z=0
 	}
-	_beamTree->SetBranchAddress("beam_momentum_x", &_beamMomentumX);
-	_beamTree->SetBranchAddress("beam_momentum_y", &_beamMomentumY);
-	_beamTree->SetBranchAddress("beam_momentum_z", &_beamMomentumZ);
+
+	// set optional branches for Gaussian smearing
 	TBranch* vertexXPositionSigma = _beamTree->FindBranch("vertex_x_position_sigma");
 	TBranch* vertexYPositionSigma = _beamTree->FindBranch("vertex_y_position_sigma");
 	TBranch* beamMomentumXSigma =  _beamTree->FindBranch("beam_momentum_x_sigma");
@@ -121,11 +126,11 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 	if(not (vertexXPositionSigma and vertexYPositionSigma and
 	        beamMomentumXSigma and beamMomentumYSigma and beamMomentumZSigma))
 	{
-		printWarn << "One of the optional branches is missing in tree '" << _beamTree->GetName()
-		          << "' in root file '" << _beamFileName << ". Required are"
+		printWarn << "One of the optional branches for smearing the generated events with Gaussian uncertainties is missing in tree '"
+		          << _beamTree->GetName() << "' in root file '" << _beamFileName << ". Required branches for smearing are"
 		          << " 'vertex_x_position_sigma', 'vertex_y_position_sigma', 'beam_momentum_x_sigma'"
 		          << ", 'beam_momentum_y_sigma' 'and beam_momentum_z_sigma'. The input events"
-		          << " will be used as-is." << endl;
+		          << " will be used without smearing." << endl;
 		_sigmasPresent = false;
 	} else {
 		_sigmasPresent = true;
@@ -135,11 +140,13 @@ bool beamAndVertexGenerator::loadBeamFileWithMomenta()
 		_beamTree->SetBranchAddress("beam_momentum_y_sigma", &_beamMomentumYSigma);
 		_beamTree->SetBranchAddress("beam_momentum_z_sigma", &_beamMomentumZSigma);
 	}
+
 	if(_momentumPDFMean == 0.0){ // no momentum resolution correction
 		_simulationMode = simulationFromMomenta;
 	} else {
 		_simulationMode = simulationFromMomentaCorrectMomentumResolution;
 	}
+
 	return check();
 }
 
@@ -162,9 +169,9 @@ bool beamAndVertexGenerator::loadBeamFileWithInclinations()
 		         << ", 'beam_dYdZ', 'beam_momentum' 'and vertex_XYdXdY_cov'." << endl;
 		_rootFile->Close();
 		delete _rootFile;
-		_rootFile = NULL;
+		_rootFile = nullptr;
 		delete _beamTree;
-		_beamTree = NULL;
+		_beamTree = nullptr;
 		return false;
 	}
 	_vertexCovarianceMatrix = nullptr;
@@ -177,6 +184,7 @@ bool beamAndVertexGenerator::loadBeamFileWithInclinations()
 	_beamTree->SetBranchAddress("vertex_XYdXdY_cov", &_vertexCovarianceMatrix);
 	_beamTree->SetBranchAddress("beam_momentum_sigma", &_beamMomentumSigma);
 	_simulationMode = simulationFromInclinations;
+	_sigmasPresent = true;
 	return check();
 }
 
@@ -215,6 +223,7 @@ bool beamAndVertexGenerator::check() const {
 	return true;
 }
 
+
 bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 	switch(_simulationMode){
 		case simpleSimulation:
@@ -235,6 +244,8 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 			break;
 	}
 }
+
+
 bool beamAndVertexGenerator::eventSimple(const Target& target, const Beam& beam) {
 	double z = getVertexZ(target);
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
@@ -264,12 +275,13 @@ beamAndVertexGenerator::eventFromMomenta(const Target& target, const Beam& beam)
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	if(not loadNextEventFromBeamfile()) return false;
 
+	// either use z-position from data or draw random z-position according to the target definition
 	const double z = getVertexZ(target); // has to be done AFTER loading the next event
 
-	const double dx = _beamMomentumX / _beamMomentumZ;
-	const double dy = _beamMomentumY / _beamMomentumZ;
-	const double projectedVertexX = _vertexX + dx * (z-_vertexZ);
-	const double projectedVertexY = _vertexY + dy * (z-_vertexZ);
+	const double dxdz = _beamMomentumX / _beamMomentumZ;
+	const double dydz = _beamMomentumY / _beamMomentumZ;
+	const double projectedVertexX = _vertexX + dxdz * (z-_vertexZ);
+	const double projectedVertexY = _vertexY + dydz * (z-_vertexZ);
 	if(_sigmasPresent and _sigmaScalingFactor != 0.) {
 		_vertex.SetXYZ(randomGen->Gaus(projectedVertexX, _sigmaScalingFactor * _vertexXSigma),
 						randomGen->Gaus(projectedVertexY, _sigmaScalingFactor * _vertexYSigma),
@@ -294,23 +306,24 @@ beamAndVertexGenerator::eventFromMomentaCorrectMomentumResolution(const Target& 
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	if(not loadNextEventFromBeamfile()) return false;
 
+	// either use z-position from data or draw random z-position according to the target definition
 	const double z = getVertexZ(target); // has to be done AFTER loading the next event
 
-	const double dx = _beamMomentumX / _beamMomentumZ;
-	const double dy = _beamMomentumY / _beamMomentumZ;
-	const double projectedVertexX = _vertexX + dx * (z-_vertexZ);
-	const double projectedVertexY = _vertexY + dy * (z-_vertexZ);
+	const double dxdz = _beamMomentumX / _beamMomentumZ;
+	const double dydz = _beamMomentumY / _beamMomentumZ;
+	const double projectedVertexX = _vertexX + dxdz * (z-_vertexZ);
+	const double projectedVertexY = _vertexY + dydz * (z-_vertexZ);
 
 	_beamMomentum = sqrt(_beamMomentumX*_beamMomentumX + _beamMomentumY*_beamMomentumY + _beamMomentumZ*_beamMomentumZ);
-	const double truthMomentumPDFSigma = sqrt(1.0/(1.0/_momentumResolution/_momentumResolution+ 1.0/_momentumPDFSigma/_momentumPDFSigma));
-	const double truthMomentumPDFMean = truthMomentumPDFSigma*truthMomentumPDFSigma*( 1./_momentumResolution/_momentumResolution*_beamMomentum
-																					+ 1./_momentumPDFSigma/_momentumPDFSigma*_momentumPDFMean );
+	const double truthMomentumPDFSigma = 1.0/sqrt(1.0/_momentumResolution/_momentumResolution+ 1.0/_momentumPDFSigma/_momentumPDFSigma);
+	const double truthMomentumPDFMean = truthMomentumPDFSigma * truthMomentumPDFSigma * (_beamMomentum / (_momentumResolution * _momentumResolution)
+	                                                                                     + _momentumPDFMean / (_momentumPDFSigma * _momentumPDFSigma));
 	const double truthMomentum = randomGen->Gaus(truthMomentumPDFMean, truthMomentumPDFSigma);
 
 	_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
-	const double norm = sqrt(dx*dx + dy*dy + 1);
-	_beam.SetXYZM(truthMomentum * dx / norm,
-	              truthMomentum * dy / norm,
+	const double norm = sqrt(dxdz*dxdz + dydz*dydz + 1);
+	_beam.SetXYZM(truthMomentum * dxdz / norm,
+	              truthMomentum * dydz / norm,
 	              truthMomentum * 1 / norm,
 	              beam.particle.mass());
 	return true;
@@ -322,27 +335,29 @@ beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& 
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	if(not loadNextEventFromBeamfile()) return false;
 
+	// either use z-position from data or draw random z-position according to the target definition
 	const double z = getVertexZ(target); // has to be done AFTER loading the next event
+
+	const bool smearing = _sigmasPresent and _sigmaScalingFactor != 0.0;
 
 	TVectorD mean(4);
 	mean[0] = _vertexX;
 	mean[1] = _vertexY;
 	mean[2] = _beamdXdZ;
 	mean[3] = _beamdYdZ;
-	TVectorD sample = multivariantGauss(mean, *_vertexCovarianceMatrix, _sigmaScalingFactor);
+	const TVectorD sample = (smearing)? multivariateGauss(mean, *_vertexCovarianceMatrix, _sigmaScalingFactor) : mean;
 	const double x = sample[0];
 	const double y = sample[1];
-	const double dx = sample[2];
-	const double dy = sample[3];
-	const double norm = sqrt(dx*dx + dy*dy + 1);
+	const double dxdz = sample[2];
+	const double dydz = sample[3];
+	const double norm = sqrt(dxdz*dxdz + dydz*dydz + 1);
 
-
-	const double projectedVertexX = x + dx * (z-_vertexZ);
-	const double projectedVertexY = y + dy * (z-_vertexZ);
-	const double beamMomentum = randomGen->Gaus(_beamMomentum, _sigmaScalingFactor*_beamMomentumSigma);
+	const double projectedVertexX = x + dxdz * (z-_vertexZ);
+	const double projectedVertexY = y + dydz * (z-_vertexZ);
+	const double beamMomentum = (smearing)? randomGen->Gaus(_beamMomentum, _sigmaScalingFactor*_beamMomentumSigma) : _beamMomentum;
 		_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
-		_beam.SetXYZM(  beamMomentum * dx / norm,
-						beamMomentum * dy / norm,
+		_beam.SetXYZM(  beamMomentum * dxdz / norm,
+						beamMomentum * dydz / norm,
 						beamMomentum * 1  / norm,
 						beam.particle.mass());
 	return true;
@@ -350,24 +365,27 @@ beamAndVertexGenerator::eventFromInclinations(const Target& target, const Beam& 
 
 
 bool beamAndVertexGenerator::loadNextEventFromBeamfile(){
-	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	long nEntries = _beamTree->GetEntries();
+	const long nEntries = _beamTree->GetEntries();
 
-	if(not _readBeamfileSequentially) {
-		_currentBeamfileEntry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
-		_beamTree->GetEntry(_currentBeamfileEntry);
-	} else {
+	if(_readBeamfileSequentially) {
 		if(_currentBeamfileEntry >= nEntries) {
 			printInfo << "reached end of beamfile, looping back to first event." << endl;
 			_currentBeamfileEntry = 0;
 		}
 		_beamTree->GetEntry(_currentBeamfileEntry++);
+	} else {
+		TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+		_currentBeamfileEntry = (long)randomGen->Uniform(0,nEntries); // because Uniform(a, b) is in ]a, b]
+		randomGen->Integer(15);
+		_beamTree->GetEntry(_currentBeamfileEntry);
 	}
 	return true;
 }
 
 double beamAndVertexGenerator::getVertexZ(const Target& target) const {
-	if (not _takeZpositionFromData){
+	if (_takeZpositionFromData){
+		return _vertexZ; // assumes that the next event is loaded from the tree before this function is called
+	} else {
 		TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 		double z;
 		do {
@@ -375,8 +393,6 @@ double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 		} while(z > target.length);
 		z = (target.position.Z() - target.length * 0.5) + z;
 		return z;
-	} else {
-		return _vertexZ; // assumes that the next event is loaded from the tree before this function is called
 	}
 }
 
@@ -404,11 +420,7 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 
 	out << "Beam package information:" << endl;
 	out << "    Using beam file ................ ";
-	if(_simulationMode == simpleSimulation) {
-		out << "No" << endl;
-	} else {
-		out << "Yes" << endl;
-	}
+	out << yesNo(_simulationMode == simpleSimulation) << endl;
 	out << "    Beam file path ................. " << _beamFileName << endl;
 	out << "    Beam file loaded ............... ";
 	if(_rootFile) {
@@ -427,9 +439,9 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 		out << "Using momenta" << endl;
 	} else if (_simulationMode == simulationFromMomentaCorrectMomentumResolution) {
 		out << "Using momenta" << endl;
-		out << "    Correction for beam resolution . (res= ";
+		out << "    Correction for beam resolution: res= ";
 		out << _momentumResolution << ", PDFsigma= " << _momentumPDFSigma;
-		out << ", PDFmean= " << _momentumPDFMean << ")" << endl;
+		out << ", PDFmean= " << _momentumPDFMean << endl;
 	}else {
 		out << "Using beam inclination" << endl;
 	}
@@ -458,7 +470,7 @@ ostream& beamAndVertexGenerator::print(ostream& out) const
 }
 
 namespace{
-TVectorD multivariantGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor)
+TVectorD multivariateGauss(const TVectorD& mean, const TMatrixDSym& cov, const double sigmaScalingFactor)
 {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	const int ndim = mean.GetNrows();
