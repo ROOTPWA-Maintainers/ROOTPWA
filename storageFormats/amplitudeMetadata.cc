@@ -122,6 +122,9 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
                      const string& eventFilename,
                      const multibinBoundariesType& otfBin,
                      long unsigned maxNmbEvents) {
+	vector<vector<complex<double>>> amps;
+	amps.resize(ampFilenames.size());
+
 	TFile* eventFile = TFile::Open(eventFilename.c_str());
 	if (eventFile == nullptr or not eventFile->IsOpen()){
 		printErr << "Cannot open event file '" << eventFilename << "'." << endl;
@@ -142,8 +145,8 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 	TTree* eventTree = eventMeta->eventTree();
 	const unsigned long totNmbEvents = eventTree->GetEntries();
 	if (totNmbEvents == 0) {
-		printWarn << "event trees contain no amplitudes values." << endl;
-		throw;
+		printWarn << "event trees in '" << eventFilename << "'contain no amplitudes values." << endl;
+		return amps;
 	}
 	maxNmbEvents = (maxNmbEvents==0)? totNmbEvents: min(maxNmbEvents, totNmbEvents);
 
@@ -172,8 +175,6 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 		printErr << "Length of amplitude files (" << ampFilenames.size() << ") is different form number of wave names (" << waveNames.size() << ")." << endl;
 		throw;
 	}
-	vector<vector<complex<double>>> amps;
-	amps.reserve(ampFilenames.size());
 	TFile* ampFile = nullptr;
 	for(size_t waveIndex = 0; waveIndex < ampFilenames.size(); waveIndex++) {
 		if (ampFile == nullptr) ampFile = TFile::Open(ampFilenames[waveIndex].c_str());
@@ -202,7 +203,7 @@ rpwa::loadAmplitudes(const vector<string>& ampFilenames,
 				}
 				ampsOfWave.push_back(ampTreeLeaf->amp());
 		}
-		amps.push_back(ampsOfWave);
+		amps[waveIndex] = ampsOfWave;
 		if (waveIndex == ampFilenames.size()-1 or ampFilenames[waveIndex] != ampFilenames[waveIndex+1]) {
 			ampFile->Close();
 			ampFile = nullptr;

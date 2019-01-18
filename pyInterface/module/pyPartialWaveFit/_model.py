@@ -145,6 +145,9 @@ class ModelRpwa(Model):
 			            buildSubMatrix(accIntegralMatrixFull, self.waveNames, waveNames),
 			            buildSubList(normIntegralsFull, self.waveNames, waveNames))
 			decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
+			if decayAmpsFull.shape[1] == 0:
+				pyRootPwa.utils.printErr("No events to fit in multibin: {0}".format(multiBin))
+				raise Exception()
 			if tag == 'pos':
 				self.integralsPosRefl = integrals
 			if tag == 'neg':
