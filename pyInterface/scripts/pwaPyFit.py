@@ -5,6 +5,7 @@ import os
 os.environ['OPENBLAS_NUM_THREADS'] = "1"
 import argparse
 import sys
+import imp
 
 import pyRootPwa
 import pyRootPwa.pyPartialWaveFit
@@ -30,6 +31,7 @@ def main():
 	parser.add_argument("-L", "--likelihood", metavar="classname", default=None,
 	                    help="Name of the likelihood class to use. Classes are: " + ", ".join(pyRootPwa.pyPartialWaveFit.getLikelihoodClassNames()))
 	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
+	parser.add_argument("--likelihoodModule", metavar="path-to-likelihood-model", default=None, help="Implement the likelihood class not from ROOTPWA but from the given module-file")
 	args = parser.parse_args()
 
 	clsModel = pyRootPwa.pyPartialWaveFit.ModelRpwa
@@ -37,8 +39,20 @@ def main():
 	clsParameterMapping = pyRootPwa.pyPartialWaveFit.ParameterMappingRpwa
 	clsFitter = pyRootPwa.pyPartialWaveFit.NLoptFitter
 
+	likelihoodModule = pyRootPwa.pyPartialWaveFit
+	if args.likelihoodModule is not None:
+		if args.likelihood is None:
+			pyRootPwa.utils.printErr("Cannot use --'likelihoodModule' without '--likelihood'")
+			sys.exit(1)
+		if not os.path.exists(args.likelihoodModule):
+			pyRootPwa.utils.printErr("Cannot find likelihood module '{0}'".format(args.likelihoodModule))
+			sys.exit(1)
+		likelihoodModule = imp.load_source('likelihoodModule', args.likelihoodModule)
+
 	if args.likelihood is not None:
-		exec("clsLikelihood = pyRootPwa.pyPartialWaveFit.{l}".format(l=args.likelihood))
+		exec("clsLikelihood = likelihoodModule.{l}".format(l=args.likelihood))
+
+	pyRootPwa.utils.printInfo("Using likelihood '{0}' from module '{1}'.".format(clsLikelihood.__name__, likelihoodModule.__file__))
 
 	model = clsModel(clsLikelihood, clsParameterMapping)
 	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank)
