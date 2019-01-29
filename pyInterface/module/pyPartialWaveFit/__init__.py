@@ -2,8 +2,8 @@ import _likelihood
 
 
 from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy
-from _parameterMapping import ParameterMappingRpwa
-from _model import ModelRpwa
+from _parameterMapping import ParameterMapping, ParameterMappingRpwa
+from _model import Model, ModelRpwa
 from _fitter import NLoptFitter
 from _startParameterGenerator import StartParameterGeneratorRpwaEllipsoid, StartParameterGeneratorRpwaUniform
 
