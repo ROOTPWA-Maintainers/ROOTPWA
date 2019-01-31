@@ -11,7 +11,7 @@ then
 else
 	echo "    No ROOT installation found, installing a fresh one."
 
-	# download tarball
+	# download binary tarball
 	wget https://root.cern.ch/download/root_v${ROOT_VERSION}.Linux-ubuntu14-x86_64-gcc4.8.tar.gz -O root.tar.gz
 
 	# extract tarball

@@ -48,6 +48,8 @@ required_packages: &required_packages
 # configure custom dependencies
 env:
     global:
+      - CMAKE_VERSION=3.11.0
+      # CMake version that comes with Travis' trusty image is only 3.9.2
       - ROOT_VERSION=6.06.06
       - BAT_REVISION=bede80e
       # BAT revision has been checked 08. Aug 2016

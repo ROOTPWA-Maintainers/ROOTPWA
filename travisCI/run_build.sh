@@ -11,10 +11,12 @@ cmake ${TRAVIS_BUILD_DIR}
 # run 'make'
 make
 
+echo ">>> Running 'make test'"
 # - if 'make' was successful, run 'make test'
 # - if 'make test' was not successful, print the log and fail the build
 make test || (cat Testing/Temporary/LastTest.log && false)
 
+echo ">>> Running 'testMC.sh'"
 # - if 'make test' was successful, run 'testMC.sh'
 cd ${TRAVIS_BUILD_DIR}
 # set some environment variables
