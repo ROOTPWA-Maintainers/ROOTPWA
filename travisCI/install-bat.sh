@@ -1,14 +1,15 @@
 #!/bin/bash
 set -exv
 
-BAT_REVISION=bede80e
+echo ">>> Using BAT revision ${BAT_REVISION}"
 
 cd ${TRAVIS_BUILD_DIR}/deps/
 
-if [ -d bat-${BAT_REVISION} ] ; then
-	echo "BAT installation found in 'bat-${BAT_REVISION}', using that."
+if [ -d bat-${BAT_REVISION} ]
+then
+	echo "    Existing BAT installation found in 'bat-${BAT_REVISION}', using that."
 else
-	echo "No BAT installation found, installing a fresh one."
+	echo "    No BAT installation found, installing a fresh one."
 
 	# clone the BAT git repository
 	git clone https://github.com/bat/bat.git bat-${BAT_REVISION}
@@ -16,7 +17,6 @@ else
 	cd bat-${BAT_REVISION}
 
 	# checkout one particular version we know to be working
-	# this version has been checked 08.08.2016
 	git checkout ${BAT_REVISION}
 
 	# create configure and build scripts
@@ -31,4 +31,5 @@ else
 
 	cd ${TRAVIS_BUILD_DIR}/deps/
 fi
+
 ln -sfn bat-${BAT_REVISION} bat

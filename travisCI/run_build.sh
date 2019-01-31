@@ -1,6 +1,8 @@
 #!/bin/bash
 set -exv
 
+echo ">>> Building ROOTPWA"
+
 cd ${TRAVIS_BUILD_DIR}/build
 
 # configure the build process
