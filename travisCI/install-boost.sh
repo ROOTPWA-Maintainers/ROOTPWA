@@ -1,20 +1,15 @@
 #!/bin/bash
 set -exv
 
-# fallback to version 1.63.0 in case no version is given as an argument
-BOOST_VERSION="1.63.0"
-if [ $# -gt 0 ]
+echo ">>> Using BOOST version ${BOOST_VERSION}"
+
+cd "${TRAVIS_BUILD_DIR}"/deps/
+
+if [ -d boost-${BOOST_VERSION} ]
 then
-	BOOST_VERSION=$1
-fi
-echo "Using BOOST version ${BOOST_VERSION}"
-
-cd ${TRAVIS_BUILD_DIR}/deps/
-
-if [ -d boost-${BOOST_VERSION} ] ; then
-	echo "BOOST installation found in 'boost-${BOOST_VERSION}', using that."
+	echo "    Existing BOOST installation found in 'boost-${BOOST_VERSION}', using that."
 else
-	echo "No BOOST installation found, installing a fresh one."
+	echo "    No BOOST installation found, installing a fresh one."
 
 	LIBS="accumulators algorithm align any array assert assign atomic bimap bind chrono concept_check config container conversion core date_time detail dynamic_bitset exception foreach function function_types functional fusion graph graph_parallel integer intrusive io iterator lexical_cast math move mpi mpl multi_array multi_index optional parameter predef preprocessor property_map proto python range ratio rational regex serialization smart_ptr spirit static_assert system test thread throw_exception timer tokenizer tti tuple type_index type_traits typeof unordered utility xpressive"
 	TOOLS="build inspect"
@@ -43,6 +38,14 @@ else
 	tar -xzf ublas.tar.gz -C boost-${BOOST_VERSION}/libs/numeric/ublas/ --strip-components=1
 
 	# compile and install BOOST
-	BOOST_ROOT=boost-${BOOST_VERSION} ${TRAVIS_BUILD_DIR}/compileBoostLibraries.sh
+	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh
+
+	# cleanup
+	rm -rf boost.tar.gz
+	for i in ${LIBS} ${TOOLS} ${EXTRA}
+	do
+		rm -rf ${i}.tar.gz
+	done
 fi
+
 ln -sfn boost-${BOOST_VERSION} boost

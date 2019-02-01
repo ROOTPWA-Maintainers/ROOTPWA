@@ -21,9 +21,9 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      cmake module for finding PYTHON installation
+#//      cmake module for finding Python 2.x installation
 #//      replaces the official FindPYTHON that comes with Cmake which for several reasons is unusable
-#//      requires executable of Python interpreter to be in PATH
+#//      requires executable of Python interpreter 'python' to be in PATH
 #//
 #//      following variables are defined:
 #//      PYTHONINTERP_FOUND        - Was the Python executable found
@@ -83,6 +83,13 @@ if(PYTHONINTERP_FOUND)
 		OUTPUT_VARIABLE PYTHON_VERSION_PATCH
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	set(PYTHON_VERSION_STRING "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
+
+	# protect against Python 3
+	if(NOT PYTHON_VERSION_MAJOR EQUAL "2")
+		set(PYTHONINTERP_FOUND FALSE)
+		set(PYTHONLIBS_FOUND   FALSE)
+		set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python 2 interpreter required. Found only version ${PYTHON_VERSION_STRING}.")
+	endif()
 
 	# compare version
 	if(PYTHON_FIND_VERSION_EXACT)

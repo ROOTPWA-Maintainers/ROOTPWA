@@ -40,8 +40,6 @@ cmake_policy(VERSION 3.1)
 # set verbosity
 set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
                                # the same effect can be achieved by calling 'make VERBOSE=1'
-
-
 option(DEBUG_OUTPUT "en/disable debug output" OFF)
 
 
@@ -85,35 +83,36 @@ enforce_out_of_source_build()
 message(STATUS "")
 message(STATUS ">>> Setting up system environment.")
 if(NOT UNIX)
-	message(FATAL_ERROR " !!! This is an unsupported system.")
+	message(FATAL_ERROR "!!! This is an unsupported system.")
 endif()
 ProcessorCount(NMB_CPU_CORES)
 message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
-	"${NMB_CPU_CORES} CPU core(s).")
+  "'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
+  "${NMB_CPU_CORES} CPU core(s).")
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
-	"architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
+  "architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
 
 
 # warn user about outdated or unsupported compiler
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
-    message(WARNING " ??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. GCC version 4.8 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+		message(WARNING "??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "GCC version 4.8 or higher is required. Proceed at your own risk.")
+	endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
-    message(WARNING " ??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
-			"Clang version 3.4 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
+		message(WARNING "??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "Clang version 3.4 or higher is required. Proceed at your own risk.")
+	endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-    message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
-			"AppleClang version 8.0 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+		message(WARNING "??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "AppleClang version 8.0 or higher is required. Proceed at your own risk.")
+	endif()
 else()
-  message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
-		"is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. "
-		"Proceed at your own risk.")
+	message(WARNING "??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
+	  "is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. "
+	  "Proceed at your own risk.")
 endif()
 
 
@@ -126,7 +125,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type was specified. Setting build type to 'RELWITHDEBINFO'.")
 	set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 endif()
-
 
 # set common compiler flags
 # consider flags -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Wsuggest-attribute=const
@@ -152,9 +150,9 @@ endforeach()
 unset(_LANG)
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'.")
 message(STATUS "Using additional CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}.")
+  "for build type ${CMAKE_BUILD_TYPE}.")
 message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}.")
+  "for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
 endif()
@@ -172,7 +170,7 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 # setup Python
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
-find_package(PYTHON 2.6 REQUIRED)
+find_package(PYTHON 2.7 REQUIRED)
 set_package_properties(PYTHON
 	PROPERTIES
 	DESCRIPTION "General-purpose, high-level programming language"
@@ -193,15 +191,15 @@ set(Boost_USE_STATIC_LIBS    OFF)
 set(Boost_USE_MULTITHREADED  ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 if(     ("$ENV{BOOST_ROOT}"       STREQUAL "")
-		AND ("$ENV{BOOSTROOT}"        STREQUAL "")
-		AND ("$ENV{Boost_DIR}"        STREQUAL "")
-		AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
-		AND ("$ENV{BOOST_LIBRARYDIR}" STREQUAL ""))
+    AND ("$ENV{BOOSTROOT}"        STREQUAL "")
+    AND ("$ENV{Boost_DIR}"        STREQUAL "")
+    AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
+    AND ("$ENV{BOOST_LIBRARYDIR}" STREQUAL ""))
 	set(Boost_NO_SYSTEM_PATHS OFF)
 else()
 	set(Boost_NO_SYSTEM_PATHS ON)
 endif()
-find_package(Boost 1.50.0 REQUIRED COMPONENTS "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" OPTIONAL_COMPONENTS "mpi" "serialization" "system" "timer")
+find_package(Boost 1.67.0 REQUIRED COMPONENTS "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" OPTIONAL_COMPONENTS "mpi" "serialization" "system" "timer")
 
 
 # setup libconfig
@@ -233,8 +231,7 @@ set_package_properties(YamlCpp
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer" "PyROOT")
-find_package(ROOT 5.34.04 REQUIRED ${_ROOT_COMPONENTS})
+find_package(ROOT 6.08.00 REQUIRED "Minuit2" "MathMore" "TreePlayer" "PyROOT")
 set_package_properties(ROOT
 	PROPERTIES
 	DESCRIPTION "C++ HEP analysis framework"
@@ -306,8 +303,9 @@ else()
 		NO_DEFAULT_PATH)
 	if(NOT CUDA_SAMPLES_INC_DIR)
 		set(USE_CUDA OFF)
-		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
-			"Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
+		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory "
+		  "in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. Check that environment variable $CUDA_SAMPLES_ROOT_DIR "
+		  "is set correctly. No CUDA components will be generated.")
 	else()
 		set(USE_CUDA ON)
 		message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
@@ -364,7 +362,7 @@ else()
 		if(NOT Boost_${_BOOST_MPI_COMPONENT}_FOUND)
 			set(USE_MPI OFF)
 			message(STATUS "Cannot find Boost.MPI library '${_BOOST_MPI_COMPONENT}' in "
-				"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.MPI.")
+			  "'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.MPI.")
 		else()
 			list(APPEND Boost_MPI_LIBS ${Boost_${_BOOST_MPI_COMPONENT}_LIBRARY})
 		endif()
@@ -376,7 +374,7 @@ else()
 		add_definitions(-DUSE_MPI)
 	else()
 		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly. "
-			"Please consult README.md on how to build Boost.MPI. No MPI components will be generated.")
+		  "Please consult README.md on how to build Boost.MPI. No MPI components will be generated.")
 	endif()
 endif()
 add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
@@ -447,7 +445,7 @@ if(GIT_FOUND)
 	if(NOT _GIT_LOG_RETURN)
 		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
-		message(Warning " ??? Running 'git' did not succeed. Repository hash unknown.")
+		message(Warning "??? Running 'git' did not succeed. Repository hash unknown.")
 	endif()
 endif()
 
@@ -464,7 +462,7 @@ set_package_properties(Doxygen
 	TYPE RECOMMENDED
 	)
 if(NOT DOXYGEN_FOUND)
-	message(WARNING " ??? Cannot find Doxygen. Documentation cannot be generated.")
+	message(WARNING "??? Cannot find Doxygen. Documentation cannot be generated.")
 else()
 	set(DOXYGEN_TARGET  "doxygen")
 	set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
@@ -506,19 +504,19 @@ enable_testing()
 message(STATUS "")
 message(STATUS ">>> Defining include and library paths.")
 set(_SRC_DIRS
-	cuda
-	decayAmplitude
-	fortran
-	generators
-	highLevelInterface
-	nBodyPhaseSpace
-	partialWaveFit
-	particleData
-	pyInterface
-	relativisticAmpCorrections
-	resonanceFit
-	storageFormats
-	utilities
+	"cuda"
+	"decayAmplitude"
+	"fortran"
+	"generators"
+	"highLevelInterface"
+	"nBodyPhaseSpace"
+	"partialWaveFit"
+	"particleData"
+	"pyInterface"
+	"relativisticAmpCorrections"
+	"resonanceFit"
+	"storageFormats"
+	"utilities"
 	)
 # loop over all source directories
 foreach(_SRC_DIR ${_SRC_DIRS})
@@ -528,7 +526,7 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 		set(${_VAR_NAME}_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/${_SRC_DIR}")
 		set(${_VAR_NAME}_LIB "${_LIB_NAME}")
 		message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
-			"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
+		  "setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
 		unset(_LIB_NAME)
 	endif()
 	unset(_VAR_NAME)

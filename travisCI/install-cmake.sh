@@ -5,7 +5,7 @@ echo ">>> Using CMake version ${CMAKE_VERSION}"
 
 CMAKE_VERSION_SHORT=$(echo "${CMAKE_VERSION}" | cut -d "." -f 1-2 -)
 
-cd ${TRAVIS_BUILD_DIR}/deps/
+cd "${TRAVIS_BUILD_DIR}"/deps/
 
 if [ -d cmake-${CMAKE_VERSION} ]
 then

@@ -8,7 +8,7 @@ ROOTPWA is a toolkit for partial-wave analysis of multi-particle final states pr
 
 Please note that ROOTPWA is still in development and currently in a transition phase from an old deprecated code basis using a mixture of C++, bash, and ROOT scripts to a new system that is based on C++ and Python. The new system is intended to be faster, more versatile, more flexible, and easier to maintain. The transition will also encompass the migration of the main I/O data formats towards efficient and self-describing ROOT data structures. We will try to minimize incompatibilities and disruptions of workflows that will inevitably occur along the way.
 
-ROOTPWA is distributed under the [GPLv3](http://www.gnu.org/licenses/gpl.html). For details please see the LICENSE file contained in this package. ROOTPWA is hosted at GitHub and can be found at
+ROOTPWA is distributed under the [GPLv3](https://www.gnu.org/licenses/gpl.html). For details please see the LICENSE file contained in this package. ROOTPWA is hosted at GitHub and can be found at
 
 <https://github.com/ROOTPWA-Maintainers/ROOTPWA>
 
@@ -23,23 +23,23 @@ Below you will find instructions on how to install the external libraries needed
 
 ## Prerequisites ##
 
-ROOTPWA will usually run without problems on most (not too old) Linux and MacOS X systems. Regular tests are performed on the latest Ubuntu distribution and MacOS version as well as on the Scientific Linux CERN (SLC) distribution installed on the [_lxplus_](http://plus.web.cern.ch/plus/) interactive login service provided by CERN. Before you can build ROOTPWA you need to install the following software packages.
+ROOTPWA will usually run without problems on most (not too old) Linux and MacOS X systems. Regular tests are performed on the latest Ubuntu distribution and MacOS version as well as on the Scientific Linux CERN (SLC) distribution installed on the [_lxplus_](https://plus.web.cern.ch/plus/) interactive login service provided by CERN. Before you can build ROOTPWA you need to install the following software packages.
 
 
 ### CMake ###
 
-CMake is a cross-platform, open-source build system available from <http://cmake.org>. In addition to the [reference documentation](http://www.cmake.org/cmake/help/documentation.html) available at the project web page further information about CMake can be found at
+CMake is a cross-platform, open-source build system available from <https://cmake.org>. In addition to the [reference documentation](https://www.cmake.org/cmake/help/documentation.html) available at the project web page further information about CMake can be found at
 
-*   <http://www.cmake.org/cmake/help/cmake_tutorial.html>
-*   <http://www.cmake.org/cmake/help/runningcmake.html>
-*   <http://www.cmake.org/cmake/help/syntax.html>
-*   <http://www.cmake.org/Wiki/CMake>
-*   <http://rachid.koucha.free.fr/tech_corner/cmake_manual.html>
-*   <http://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started>
+*   <https://www.cmake.org/cmake/help/cmake_tutorial.html>
+*   <https://www.cmake.org/cmake/help/runningcmake.html>
+*   <https://www.cmake.org/cmake/help/syntax.html>
+*   <https://www.cmake.org/Wiki/CMake>
+*   <https://rachid.koucha.free.fr/tech_corner/cmake_manual.html>
+*   <https://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started>
 
-The minimum required CMake version is 3.0.0. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can either quite easily compile and install CMake yourself:
+The minimum required CMake version is 3.11.0. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can either quite easily compile and install CMake yourself:
 
-1.  Download the latest CMake release from <http://www.cmake.org/cmake/resources/software.html>
+1.  Download the latest CMake release from <https://www.cmake.org/cmake/resources/software.html>
 
 2.  Prepare the installation
 
@@ -55,19 +55,19 @@ The minimum required CMake version is 3.0.0. In case your system offers only out
 
 ...or use the binary distribution package:
 
-1.  Download the latest CMake binary (`.tar.gz`) from <http://www.cmake.org/cmake/resources/software.html> and unpack it to your preferred binary directory (e.g. `~/bin/`).
+1.  Download the latest CMake binary (`.tar.gz`) from <https://www.cmake.org/cmake/resources/software.html> and unpack it to your preferred binary directory (e.g. `~/bin/`).
 
 2.  Make sure the binary directory is in your path or create an alias for `cmake`.
 
 
 ### Boost ###
 
-Part of the ROOTPWA code and of the external libraries relies on the Boost C++ template library which is available at <http://www.boost.org>. ROOTPWA requires Version 1.63.0 or higher; it is recommended to use the latest Boost release.
+Part of the ROOTPWA code and of the external libraries relies on the Boost C++ template library which is available at <https://www.boost.org>. ROOTPWA requires Version 1.67.0 or higher. Although it is recommended to use the latest Boost release, CMake always lags somewhat behind in supporting new Boost releases (see `_Boost_KNOWN_VERSIONS` in `FindBoost.cmake`).
 
 
 #### Getting Boost ####
 
-If you have administrator privileges, just install the respective Boost packages for your platform and you are set. In case you only have normal user privileges there are two ways of installing Boost: The most convenient way is to download the tarball of the desired Boost version from the Boost website and extract it to a place of your choice. However, one can also clone the Boost git repository by running
+If you have administrator privileges, just install the respective Boost packages for your platform and you are set. In case you only have normal user privileges there are two ways of installing Boost: The most convenient way is to download the tarball of the desired Boost version from the Boost website at <https://www.boost.org/users/download/> and extract it to a place of your choice. However, one can also clone the Boost git repository by running
 
     > git clone --recursive https://github.com/boostorg/boost.git
     > cd boost
@@ -76,10 +76,12 @@ This has the advantage that switching to different (usually updated) Boost versi
 
     > git tag
 
-The Boost git repository is split into multiple submodules. Therefore, after choosing the tag (here e.g. `boost-1.58.0`), the checkout has to be performed for the main directory _and_ for each submodule. This can be done by running the following commands (be sure to be in the main Boost directory)
+The Boost git repository is split into multiple submodules (this is also referred to as "Modular Boost"). Therefore, after choosing the tag (here e.g. `boost-1.67.0`), the checkout has to be performed for the main directory _and_ for each submodule. This can be done by running the following commands (be sure to be in the main Boost directory)
 
-    > git checkout boost-1.58.0
-    > git submodule foreach 'git checkout --force boost-1.58.0 || true'
+    > git checkout boost-1.67.0
+    > git submodule foreach 'git checkout --force boost-1.67.0 || true'
+
+See <https://github.com/boostorg/boost/wiki/Getting-Started%3A-Overview> and <https://svn.boost.org/trac10/wiki/StartModMaint> for more information.
 
 
 #### Compiling Boost Library ####
@@ -104,6 +106,11 @@ To list the versions of the submodules run
     > git submodule foreach 'git describe --tags'
 
 Note, that for some submodules the version might be lower than the one of the main module. This just means that these submodules were not changed in the newer Boost release(s).
+
+Remove all untracked files and directories created by last compilation
+
+    > git clean -ffdx
+    > git submodule foreach 'git clean -ffdx || true'
 
 A full update of the Boost git repository is performed by running (be sure to be in the main Boost directory)
 
@@ -133,16 +140,16 @@ Like ROOTPWA also yaml-cpp relies on Boost. By default the yaml-cpp build system
 
 ### ROOT ###
 
-ROOT is an open-source data-analysis framework for high-energy and nuclear physics and is available from <http://root.cern.ch>. Version 5.26 or higher is required and it must have been built with the configure options
+ROOT is an open-source data-analysis framework for high-energy and nuclear physics and is available from <https://root.cern.ch>. Version 6.08.00 or higher is required and it must have been built with the configure options
 
     `./configure --enable-mathmore --enable-minuit2`
 
-If `root-config --features` does _not_ list `mathmore` _and_ `minuit2` you need to re-configure and re-compile ROOT with these options. See <http://root.cern.ch/drupal/content/installing-root-source> for more information in how to compile ROOT from source.
+If `root-config --features` does _not_ list `mathmore` _and_ `minuit2` you need to re-configure and re-compile ROOT with these options. See <https://root.cern.ch/drupal/content/installing-root-source> for more information in how to compile ROOT from source.
 
 
 ### libconfig ###
 
-We use the _libconfig_ config file parser written by Mark A. Lindner available from <http://www.hyperrealm.com/libconfig/>. Version 1.4 or higher is required. At least for Debian and Ubuntu recent libconfig packages are available, for SLC6 only outdated packages are provided. In case you do not have administrator privileges you can compile libconfig from source which is straightforward. The easiest way is to install the library into the same directory as the source
+We use the _libconfig_ config file parser written by Mark A. Lindner available from <https://www.hyperrealm.com/libconfig/>. Version 1.4 or higher is required. At least for Debian and Ubuntu recent libconfig packages are available, for SLC6 only outdated packages are provided. In case you do not have administrator privileges you can compile libconfig from source which is straightforward. The easiest way is to install the library into the same directory as the source
 
     > ./configure --prefix=/your/folder/to/install/libconfig
     > make && make install
@@ -154,7 +161,7 @@ In order to make scripting more powerful and flexible, most of the ROOTPWA class
 
 The build system tries to find your Python installation automatically. For this to work you need to have the `python` executable in your path. ROOTPWA requires Python 2.7. Python 3 is currently not supported. In case you do not have the possibility to install the Python 2.7 packages for your operating system, you may install Python from source as outlined below:
 
-1.  Download the source tarball from <http://www.python.org> and extract it to a directory of your choice.
+1.  Download the source tarball from <https://www.python.org> and extract it to a directory of your choice.
 
 2.  Compile Python.
 
@@ -165,19 +172,19 @@ The build system tries to find your Python installation automatically. For this 
 In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
 
-### numpy ###
+### NumPy ###
 
-_numpy_ (<http://www.numpy.org>) is a Python library that is required in ROOTPWA for some operations on ROOT trees. _numpy_ needs to be built against the same Python version as ROOTPWA. It is available from the repositories of most Linux distributions or via _pip_. To install from source use:
+_NumPy_ (<https://www.numpy.org>) is a Python library that is required in ROOTPWA for some operations on ROOT trees. Version 1.8 or higher of_NumPy_ is required and it needs to be built against the same Python version as ROOTPWA. It is available from the repositories of most Linux distributions or via _pip_. To install from source use:
 
-1.  Download the source tarball from <http://www.scipy.org/scipylib/download.html> and extract it to a directory of your choice.
+1.  Download the source tarball from <https://www.scipy.org/scipylib/download.html> and extract it to a directory of your choice.
 
-2.  Build and install _numpy_.
+2.  Build and install _NumPy_.
 
     `> python setup.py build`
 
     `> python setup.py install --prefix=/your/folder/to/install/numpy`
 
-3.  Add the installation directory of _numpy_ to the `PYTHONPATH` environment variable:
+3.  Add the installation directory of _NumPy_ to the `PYTHONPATH` environment variable:
 
     `> export PYTHONPATH=/your/folder/to/install/numpy:$PYTHONPATH`
 
@@ -186,9 +193,9 @@ _numpy_ (<http://www.numpy.org>) is a Python library that is required in ROOTPWA
 
 ### NLopt (optional) ###
 
-The _NLopt_ library (<http://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
+The _NLopt_ library (<https://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
 
-1.  Download the source tarball from <http://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice. You can decide in the next step whether the source directory should also contain the final library (the simplest case) or whether you want to install into another directory.
+1.  Download the source tarball from <https://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice. You can decide in the next step whether the source directory should also contain the final library (the simplest case) or whether you want to install into another directory.
 
 2.  Configure, compile and install _NLopt_.
 
@@ -226,17 +233,17 @@ An efficient way to create Monte Carlo events according to a given model can be 
 
 ### CUDA (optional) ###
 
-If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 5.5 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
+If you have access to a CUDA capable nvidia graphics card (shader model 2.0 or higher), you may want to install the CUDA framework (version 8.0 or higher). The build system tries to find your CUDA installation and, if successful, enables the CUDA features automatically. Make sure that your CUDA environment is setup correctly by adding something like
 
-    `export PATH=/usr/local/cuda-5.5/bin:${PATH}`
-    `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:${LD_LIBRARY_PATH}`
-    (for 32-bit systems: `export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib:${LD_LIBRARY_PATH}`)
+    `export PATH=/usr/local/cuda-8.0/bin:${PATH}`
+    `export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib64:${LD_LIBRARY_PATH}`
+    (for 32-bit systems: `export LD_LIBRARY_PATH=/usr/local/cuda-8.0/lib:${LD_LIBRARY_PATH}`)
 
 to your `.bashrc`. You have to copy the CUDA samples to a directory of your choice by running
 
-    `cuda-install-samples-5.5.sh <dir>`
+    `cuda-install-samples-8.0.sh <dir>`
 
-Point the environment variable `CUDA_SAMPLES_ROOT_DIR` to the location of the directory with the CUDA samples. If this variable is not set, the build system assumes that the directory is located in `${HOME}/NVIDIA_CUDA-5.5_Samples`.
+Point the environment variable `CUDA_SAMPLES_ROOT_DIR` to the location of the directory with the CUDA samples. If this variable is not set, the build system assumes that the directory is located in `${HOME}/NVIDIA_CUDA-8.0_Samples`.
 
 
 ### MPI (optional, experimental) ###
@@ -403,7 +410,7 @@ The development of ROOTPWA is organized via [Trello](https://trello.com/b/MdWlJZ
 
 If you would like to contribute to ROOTPWA, the first step is to fork the ROOTPWA repository. To do this, you need to have a GitHub account. While logged in, go to the [ROOTPWA repository](https://github.com/ROOTPWA-Maintainers/ROOTPWA) and click "Fork" on the top right. This will give you your own copy of the ROOTPWA git repository on GitHub, which you can use to implement your contribution. As soon as you judge your work ready for integration, issue a pull request by clicking "New Pull Request" in your copy of the repository. Be sure that your pull request has the green checkmark "Able to merge". The ROOTPWA developers will then consider your changes for implementation and if necessary request changes.
 
-In case you are new to git and need information on how to work with it, we recommend the [git book](http://git-scm.com/book), which gives a thorough and comprehensible introduction to git.
+In case you are new to git and need information on how to work with it, we recommend the [git book](https://git-scm.com/book), which gives a thorough and comprehensible introduction to git.
 
 Some information which might be of importance:
 

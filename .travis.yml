@@ -47,10 +47,12 @@ required_packages: &required_packages
 # configure custom dependencies
 env:
     global:
-      - CMAKE_VERSION=3.11.0
+      - CMAKE_VERSION="3.11.0"
       # CMake version that comes with Travis' trusty image is only 3.9.2
-      - ROOT_VERSION=6.06.06
-      - BAT_REVISION=bede80e
+      - BOOST_VERSION="1.67.0"
+      # apt package 'libboost-all-dev' in Travis' trusty image has only 1.54.0
+      - ROOT_VERSION="6.08.00"
+      - BAT_REVISION="bede80e"
       # BAT revision has been checked 08. Aug 2016
 
 matrix:
@@ -86,7 +88,7 @@ install:
     - ./travisCI/install-boost.sh
     - export BOOST_ROOT=${TRAVIS_BUILD_DIR}/deps/boost
     - ./travisCI/install-root.sh
-    - . ${TRAVIS_BUILD_DIR}/deps/root/bin/thisroot.sh
+    - . "${TRAVIS_BUILD_DIR}"/deps/root/bin/thisroot.sh
     - if [ ${TRAVIS_RPWA_USE_BAT:-0} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
     - ./travisCI/clean.sh
 script:

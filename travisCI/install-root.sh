@@ -3,7 +3,7 @@ set -exv
 
 echo ">>> Using ROOT version ${ROOT_VERSION}"
 
-cd ${TRAVIS_BUILD_DIR}/deps/
+cd "${TRAVIS_BUILD_DIR}"/deps/
 
 if [ -d root-${ROOT_VERSION} ]
 then

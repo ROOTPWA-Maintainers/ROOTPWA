@@ -3,7 +3,7 @@ set -exv
 
 echo ">>> Using BAT revision ${BAT_REVISION}"
 
-cd ${TRAVIS_BUILD_DIR}/deps/
+cd "${TRAVIS_BUILD_DIR}"/deps/
 
 if [ -d bat-${BAT_REVISION} ]
 then
@@ -29,7 +29,7 @@ else
 	make
 	make install
 
-	cd ${TRAVIS_BUILD_DIR}/deps/
+	cd "${TRAVIS_BUILD_DIR}"/deps/
 fi
 
 ln -sfn bat-${BAT_REVISION} bat

@@ -41,10 +41,11 @@ set(NLopt_FOUND        FALSE)
 set(NLopt_ERROR_REASON "")
 set(NLopt_DEFINITIONS  "")
 set(NLopt_LIBS)
-
-
 set(NLopt_DIR $ENV{NLOPT})
+
+
 if(NOT NLopt_DIR)
+	# search in system directories if environment variable NLOPT is not set
 
 	set(NLopt_FOUND TRUE)
 
@@ -73,22 +74,29 @@ if(NOT NLopt_DIR)
 		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} NLopt not found in system directories (and environment variable NLOPT is not set).")
 	endif()
 
-
-
 else()
+	# search in directory defined by environment variable NLOPT
 
 	set(NLopt_FOUND TRUE)
 
 	set(NLopt_INCLUDE_DIR "${NLopt_DIR}/include")
 	if(NOT EXISTS "${NLopt_INCLUDE_DIR}")
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Directory '${NLopt_INCLUDE_DIR}' does not exist.")
+		# also check directory of CMake build introduced in 2.5.0
+		set(NLopt_INCLUDE_DIR "${NLopt_DIR}/build/src/api")
+		if(NOT EXISTS "${NLopt_INCLUDE_DIR}")
+			set(NLopt_FOUND FALSE)
+			set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Neither directory '${NLopt_DIR}/include' nor '${NLopt_DIR}/build/src/api' exists.")
+		endif()
 	endif()
 
 	set(NLopt_LIBRARY_DIR "${NLopt_DIR}/lib")
 	if(NOT EXISTS "${NLopt_LIBRARY_DIR}")
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Directory '${NLopt_LIBRARY_DIR}' does not exist.")
+		# also check directory of CMake build introduced in 2.5.0
+		set(NLopt_LIBRARY_DIR "${NLopt_DIR}/build")
+		if(NOT EXISTS "${NLopt_LIBRARY_DIR}")
+			set(NLopt_FOUND FALSE)
+			set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Neither directory '${NLopt_DIR}/lib' nor '${NLopt_DIR}/build' exists.")
+		endif()
 	endif()
 
 	set(_NLopt_LIB_NAMES "nlopt_cxx")
