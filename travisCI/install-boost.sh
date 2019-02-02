@@ -11,7 +11,7 @@ then
 else
 	echo "    No BOOST installation found, installing a fresh one."
 
-	LIBS="accumulators algorithm align any array assert assign atomic bimap bind chrono concept_check config container conversion core date_time detail dynamic_bitset exception foreach function function_types functional fusion graph graph_parallel integer intrusive io iterator lexical_cast math move mpi mpl multi_array multi_index optional parameter predef preprocessor property_map proto python range ratio rational regex serialization smart_ptr spirit static_assert system test thread throw_exception timer tokenizer tti tuple type_index type_traits typeof unordered utility xpressive"
+	LIBS="accumulators algorithm align any array assert assign atomic bimap bind chrono concept_check config container container_hash conversion core date_time detail dynamic_bitset exception foreach function function_types functional fusion graph graph_parallel integer intrusive io iterator lexical_cast math move mpi mpl multi_array multi_index optional parameter predef preprocessor property_map proto python range ratio rational regex serialization smart_ptr spirit static_assert system test thread throw_exception timer tokenizer tti tuple type_index type_traits typeof unordered utility xpressive"
 	TOOLS="build inspect"
 	EXTRA="interval numeric_conversion ublas"
 
@@ -38,7 +38,7 @@ else
 	tar -xzf ublas.tar.gz -C boost-${BOOST_VERSION}/libs/numeric/ublas/ --strip-components=1
 
 	# compile and install BOOST
-	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh
+	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh 1 FALSE
 
 	# cleanup
 	rm -rf boost.tar.gz
