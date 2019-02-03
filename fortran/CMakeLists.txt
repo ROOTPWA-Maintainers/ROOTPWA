@@ -47,30 +47,38 @@
 message_setup_this_dir()
 
 
-# enable Fortran support
-enable_language(Fortran)
+include(CheckLanguage)
+check_language(Fortran)
+if(NOT CMAKE_Fortran_COMPILER)
+  message(STATUS "No Fortran compiler found. Disabling Fortran code.")
+else()
+
+	# enable Fortran support
+	enable_language(Fortran)
 
 
-# add compiler options
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-automatic -ffixed-line-length-none")
-set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g")
-set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
-set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELEASE} -g")
-message(STATUS "Using Fortran compiler '${CMAKE_Fortran_COMPILER}'")
-message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
-message(STATUS "Using additional Fortran compiler flags '${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}.")
+	# add compiler options
+	set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fno-automatic -ffixed-line-length-none")
+	set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g")
+	set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
+	set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELEASE} -g")
+	message(STATUS "Using Fortran compiler '${CMAKE_Fortran_COMPILER}'")
+	message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
+	message(STATUS "Using additional Fortran compiler flags '${CMAKE_Fortran_FLAGS_${CMAKE_BUILD_TYPE}}' "
+		"for build type ${CMAKE_BUILD_TYPE}.")
 
 
-# source files that are compiled into library
-set(SOURCES
-	bw_example.f  # example file; not used in any other place
-	)
+	# source files that are compiled into library
+	set(SOURCES
+		bw_example.f  # example file; not used in any other place
+		)
 
 
-# library
-lib_name_for_current_dir(THIS_LIB)
-make_shared_library(
-	"${THIS_LIB}"
-	"${SOURCES}"
-	)
+	# library
+	lib_name_for_current_dir(THIS_LIB)
+	make_shared_library(
+		"${THIS_LIB}"
+		"${SOURCES}"
+		)
+
+endif()

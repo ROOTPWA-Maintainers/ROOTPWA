@@ -34,7 +34,7 @@
 # check if cmake has the required version
 message(STATUS ">>> This is CMake version ${CMAKE_VERSION}.")
 cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
-cmake_policy(VERSION 3.1)
+cmake_policy(VERSION 3.11)
 
 
 # set verbosity
@@ -155,6 +155,27 @@ message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD
   "for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
+endif()
+
+
+# enable ccache if not already enabled by symlink masquerading and if no other
+# CMake compiler launchers are already defined
+# calling 'cmake -DDISABLE_CCACHE=ON ..' will disable ccache in any case
+# see https://crascit.com/2016/04/09/using-ccache-with-cmake/
+#     https://stackoverflow.com/a/37828605
+#     https://stackoverflow.com/a/34317588
+option(DISABLE_CCACHE "If set to ON, ccache will not be used" OFF)
+message(STATUS "")
+message(STATUS ">>> Checking for ccache.")
+find_program(CCACHE_EXECUTABLE ccache)
+mark_as_advanced(CCACHE_EXECUTABLE)
+if(CCACHE_EXECUTABLE AND NOT DISABLE_CCACHE)
+  foreach(LANG C CXX)
+    if(NOT DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER AND NOT CMAKE_${LANG}_COMPILER MATCHES ".*/ccache$")
+      message(STATUS "Enabling ccache for ${LANG}")
+      set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+    endif()
+  endforeach()
 endif()
 
 
