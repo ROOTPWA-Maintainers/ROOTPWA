@@ -387,7 +387,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up BAT.")
 option(USE_BAT "En/Disables usage of BAT" OFF)
-find_package(BAT 1.0)
+find_package(BAT 1.0.0)
 set_package_properties(BAT
 	PROPERTIES
 	DESCRIPTION "Bayesian Analysis Toolkit"

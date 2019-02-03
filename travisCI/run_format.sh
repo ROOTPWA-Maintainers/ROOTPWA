@@ -1,7 +1,7 @@
 #!/bin/bash
 set -exv
 
-cd ${TRAVIS_BUILD_DIR}
+cd "${TRAVIS_BUILD_DIR}"
 
 BASE_COMMIT=$(git rev-parse ${TRAVIS_BRANCH})
 echo ">>> Running clang-format against branch ${TRAVIS_BRANCH} with hash ${BASE_COMMIT}"

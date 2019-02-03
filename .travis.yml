@@ -53,8 +53,7 @@ env:
       - YAML_VERSION="0.6.0"
       # apt package 'libyaml-cpp-dev' in Travis' trusty image has only 0.5
       - ROOT_VERSION="6.08.00"
-      - BAT_REVISION="bede80e"
-      # BAT revision has been checked 08. Aug 2016
+      - BAT_VERSION="1.0.0"
 
 matrix:
     include:

@@ -166,7 +166,7 @@ The build system tries to find your Python installation automatically. For this 
 
     `> ./configure --enable-shared && make && make install && make test`
 
-    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `` --prefix=`pwd -P` ``). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
+    Depending on whether you have administrator rights or not you might want to set the prefix accordingly (e.g. `--prefix=$(pwd -P)`). In this case you also have to make sure to add the Python `bin` and `lib` directories to your `PATH` and `LD_LIBRARY_PATH` environment variables, respectively.
 
 In addition you need to compile the `Boost.Python` library (e.g. by running the supplied `compileBoostLibraries.sh` script; see "Compiling Boost Library" above). Make also sure that the ROOT installation you are using was compiled with Python support (running `root-config --features` should list `python`) against the _same_ Python version you are using (`ldd ${ROOTSYS}/lib/libPyROOT.so | grep -i python` shows you the Python library version against which ROOT was linked). Make also sure that your `PYTHONPATH` environment variable includes `${ROOTSYS}/lib`.
 
@@ -200,34 +200,32 @@ The _NLopt_ library (<https://ab-initio.mit.edu/wiki/index.php/NLopt>) provides 
 
     `> ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared && make && make install`
 
-    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. If you want NLopt to be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
+    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. If you want NLopt to be installed into the source directory, you can use `--prefix=$(pwd -P)`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
 
 3.  Set the environment variable `NLOPT` to either the directory containing the installation or to the directory containing the result of the compilation.
 
-    ``> export NLOPT=`pwd -P` ``
+    `> export NLOPT=$(pwd -P)`
 
     Consider to add the appropriate line to your `.profile`.
 
 
 ### BAT (optional) ###
 
-An efficient way to create Monte Carlo events according to a given model can be used if the _Bayesian Analysis Toolkit_ (<https://github.com/bat/bat>) is available. The ROOTPWA build system is able to automatically detect BAT if it is either installed in system paths or if the `BATINSTALLDIR` environment variable is set.
+An efficient way to create Monte Carlo events according to a given model can be used if the _Bayesian Analysis Toolkit_ (<https://github.com/bat/bat>) is available. The ROOTPWA build system is able to automatically detect BAT if it is either installed in system paths or if the `BATINSTALLDIR` environment variable is set. The minimum required BAT versiom is 1.0.0, which has to be obtained from the git repository:
 
-1.  At the time of writing this documentation there is no tagged release of BAT working in our usecase. The current `git` `HEAD` should be used instead.
+    > git clone https://github.com/bat/bat.git
+	> cd bat
+    > git co v1.0.0
+	> ./autogen.sh && ./configure --prefix=/your/folder/to/install/bat
+	> make && make install
 
-    `> git clone https://github.com/bat/bat.git`
+BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should be installed into the source directory, you can use `--prefix=$(pwd -P)`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
 
-2.  Change to the directory that was created during the clone to configure and compile BAT.
+Set the environment variable `BATINSTALLDIR` to either the directory containing the installation or to the build directory.
 
-    `> ./autogen.sh && ./configure --prefix=/your/folder/to/install/bat && make && make install`
+    `> export BATINSTALLDIR=$(pwd -P)`
 
-    BAT can be compiled with support for OpenMP. If it is supported by your system, add the `--enable-parallel` option to the `configure` arguments. If BAT should be installed into the source directory, you can use `--prefix=$PWD`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
-
-3.  Set the environment variable `BATINSTALLDIR` to either the directory containing the installation or to the build directory.
-
-    ``> export BATINSTALLDIR=`pwd -P` ``
-
-    Consider to add an appropriate line to your `.profile`.
+Consider to add an appropriate line to your `.profile`.
 
 
 ### CUDA (optional) ###
