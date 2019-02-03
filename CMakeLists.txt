@@ -407,7 +407,7 @@ add_feature_info(Bayesian_Analysis_Toolkit USE_BAT "Allow usage of the Bayesian 
 # setup nlopt (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
-find_package(NLopt)
+find_package(NLopt 2.4.1)
 set_package_properties(NLopt
 	PROPERTIES
 	DESCRIPTION "Library for nonlinear optimization"

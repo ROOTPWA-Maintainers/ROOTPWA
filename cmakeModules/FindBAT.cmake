@@ -7,13 +7,12 @@
 #//      searched in the path.
 #//
 #//      following variables are defined:
-#//      BAT_VERSION        - BAT version
-#//      BAT_ROOT_DIR       - BAT installation directory
-#//      BAT_INCLUDE_DIR    - BAT header directory
-#//      BAT_LIBRARIES      - BAT libraries
-#//      BAT_CXX_FLAGS      - extra compiler flags when using BAT
-#//      BAT_LINKER_FLAGS   - extra linker flags required to link against
-#//                           BAT
+#//      BAT_VERSION      - BAT version
+#//      BAT_ROOT_DIR     - BAT installation directory
+#//      BAT_INCLUDE_DIR  - BAT header directory
+#//      BAT_LIBRARIES    - BAT libraries
+#//      BAT_CXX_FLAGS    - extra compiler flags when using BAT
+#//      BAT_LINKER_FLAGS - extra linker flags required to link against BAT
 #//
 #//      Example usage:
 #//          find_package(BAT 0.9.3 REQUIRED)
@@ -24,23 +23,24 @@
 
 set(BAT_FOUND        FALSE)
 set(BAT_ERROR_REASON "")
-set(BAT_VERSION      )
-set(BAT_ROOT_DIR     "")
-set(BAT_INCLUDE_DIR  "")
-set(BAT_LIBRARIES    )
-set(BAT_CXX_FLAGS    "")
-set(BAT_LINKER_FLAGS "")
+
+set(BAT_VERSION)
+set(BAT_ROOT_DIR)
+set(BAT_INCLUDE_DIR)
+set(BAT_LIBRARIES)
+set(BAT_CXX_FLAGS)
+set(BAT_LINKER_FLAGS)
 
 
+# try to get the environment variable pointing to the BAT installation
+# directory
 set(BAT_ROOT_DIR $ENV{BATINSTALLDIR})
-
-# if the environment variable BATINSTALLDIR is empty, see whether there is
-# 'bat-config' somewhere in the path
+# if the environment variable BATINSTALLDIR is empty, look whether 'bat-config'
+# is somewhere in the path
 if(NOT BAT_ROOT_DIR)
 
 	find_program(_BAT_CONFIG_EXECUTABLE
 		bat-config)
-
 	if(_BAT_CONFIG_EXECUTABLE)
 		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --prefix
 			OUTPUT_VARIABLE BAT_ROOT_DIR
@@ -49,7 +49,12 @@ if(NOT BAT_ROOT_DIR)
 
 endif()
 
-if(BAT_ROOT_DIR)
+
+if(NOT BAT_ROOT_DIR)
+	set(BAT_FOUND FALSE)
+	set(BAT_ERROR_REASON "${BAT_ERROR_REASON} cannot find BAT directory. "
+		"Either environment variable BAT_ROOT_DIR is not set correctly or bat-config is not in path.")
+else()
 
 	set(BAT_FOUND TRUE)
 
@@ -182,15 +187,6 @@ string(STRIP "${BAT_CXX_FLAGS}" BAT_CXX_FLAGS)
 string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
 
 
-# make variables changeable
-mark_as_advanced(
-	BAT_INCLUDE_DIR
-	BAT_LIBRARIES
-	BAT_CXX_FLAGS
-	BAT_LINKER_FLAGS
-	)
-
-
 # report result
 if(BAT_FOUND)
 	message(STATUS "Found BAT version ${BAT_VERSION} in '${BAT_ROOT_DIR}'.")
@@ -207,3 +203,14 @@ else()
 		endif()
 	endif()
 endif()
+
+
+# make variables changeable
+mark_as_advanced(
+	BAT_VERSION
+	BAT_ROOT_DIR
+	BAT_INCLUDE_DIR
+	BAT_LIBRARIES
+	BAT_CXX_FLAGS
+	BAT_LINKER_FLAGS
+	)

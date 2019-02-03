@@ -192,21 +192,30 @@ _NumPy_ (<https://www.numpy.org>) is a Python library that is required in ROOTPW
 
 ### NLopt (optional) ###
 
-The _NLopt_ library (<https://ab-initio.mit.edu/wiki/index.php/NLopt>) provides a faster minimizer compared to the default Minuit2. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined.
+The _NLopt_ library (<https://nlopt.readthedocs.io/en/latest/>) provides a faster minimizer compared to the default Minuit2 Migrad. The ROOTPWA build system is able to automatically detect and use the library if it is either installed in a system directory or if the `NLOPT` environment variable is defined. The minimum required version is 2.4.1. Download the source tarball from <https://nlopt.readthedocs.io/en/latest/> and extract it to a directory of your choice or clone the git repository, i.e.
 
-1.  Download the source tarball from <https://ab-initio.mit.edu/wiki/index.php/NLopt> and extract it to a directory of your choice. You can decide in the next step whether the source directory should also contain the final library (the simplest case) or whether you want to install into another directory.
+    > git clone https://github.com/stevengj/nlopt.git
+	> cd nlopt
 
-2.  Configure, compile and install _NLopt_.
+The build procedure differs depending on the version of _NLopt_. For versions 2.4.x, use the follwing procedure
 
-    `> ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared && make && make install`
+    > git co nlopt-2.4.1
+	> sh autogen.sh && ./configure --prefix=/your/folder/to/install/nlopt --with-cxx --enable-shared --without-guile --without-matlab --without-octave
+	> make && make install
 
-    If you miss any of the flags for `configure` remove the build direcory and start from scratch. It is typically not possible to affect the result of the build by a second call to `configure`. If you want NLopt to be installed into the source directory, you can use `--prefix=$(pwd -P)`. `make install` still needs to be executed in this case to create the `lib` and `include` directories required by ROOTPWA.
+Versions 2.5+ use a CMake build:
 
-3.  Set the environment variable `NLOPT` to either the directory containing the installation or to the directory containing the result of the compilation.
+    > git co v2.5.0
+	> mkdir build
+	> cd build
+	> cmake -DNLOPT_CXX=ON -DBUILD_SHARED_LIBS=ON -DNLOPT_GUILE=OFF -DNLOPT_MATLAB=OFF -DNLOPT_OCTAVE=OFF ..
+	> make
 
-    `> export NLOPT=$(pwd -P)`
+If you have not installed _NLopt_ into folders that are in the configured system search paths, you need to set the environment variable `NLOPT` to point to your _NLopt_ directory
 
-    Consider to add the appropriate line to your `.profile`.
+    `> export NLOPT=<your/NLopt/directory>`
+
+Consider to add the appropriate line to your `.profile`.
 
 
 ### BAT (optional) ###
