@@ -20,7 +20,7 @@ do
 	EXCLUDE_PATTERN="${EXCLUDE_PATTERN}|${EXCLUDES[i]}"
 done
 shopt -s extglob
-rm -rvf "!(${EXCLUDE_PATTERN})"
+rm -rvf !(${EXCLUDE_PATTERN})
 
 echo ">>> After cleaning"
 ls -la .

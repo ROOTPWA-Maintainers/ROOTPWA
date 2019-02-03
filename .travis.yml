@@ -51,7 +51,7 @@ env:
       - BOOST_VERSION="1.67.0"
       # apt package 'libboost-all-dev' in Travis' trusty image has only 1.54.0
       - YAML_VERSION="0.6.0"
-      # apt package 'libyaml-cpp-dev' in Travis' trusty image has only 0.5
+      # apt package 'libyaml-cpp-dev' in Travis' trusty image has only 0.5.1
       - ROOT_VERSION="6.08.00"
       - BAT_VERSION="1.0.0"
 
