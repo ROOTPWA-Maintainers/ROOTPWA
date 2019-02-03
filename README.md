@@ -125,17 +125,16 @@ After this you choose the Boost version as described above. It is _not_ recommen
 
 ### yaml-cpp ###
 
-As YAML parser we use _yaml-cpp_ written by Jesse Beder available from <https://github.com/jbeder/yaml-cpp>. Version 0.5 or higher is required.
+As YAML parser we use _yaml-cpp_ written by Jesse Beder available from <https://github.com/jbeder/yaml-cpp>. Version 0.6.0 or higher is required.
 
 In case you do not have administrator privileges, the easiest way to install yaml-cpp from source is:
 
     > git clone https://github.com/jbeder/yaml-cpp.git
     > cd yaml-cpp
+    > git co yaml-cpp-0.6.0
     > mkdir build; cd build
     > cmake -DBUILD_SHARED_LIBS=ON ..
     > make
-
-Like ROOTPWA also yaml-cpp relies on Boost. By default the yaml-cpp build system prefers the system-installed Boost version, if present. In case you run into problems when compiling ROOTPWA that point to yaml-cpp and Boost, consider running `cmake` with the `-DBoost_NO_SYSTEM_PATHS=ON` flag in order to force CMake to use the Boost libraries pointed to by the `BOOST_ROOT` environment variable (see also "Compiling Boost Library" above).
 
 
 ### ROOT ###

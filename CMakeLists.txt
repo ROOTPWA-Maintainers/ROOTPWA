@@ -33,7 +33,7 @@
 
 # check if cmake has the required version
 message(STATUS ">>> This is CMake version ${CMAKE_VERSION}.")
-cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
 cmake_policy(VERSION 3.1)
 
 
@@ -219,7 +219,7 @@ set_package_properties(Libconfig
 # environment variable $YAML_CPP is expected to point to yaml-cpp location
 message(STATUS "")
 message(STATUS ">>> Setting up yaml-cpp library.")
-find_package(YamlCpp 0.5 REQUIRED)
+find_package(YamlCpp 0.6.0 REQUIRED)
 set_package_properties(YamlCpp
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
