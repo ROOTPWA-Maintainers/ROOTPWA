@@ -169,13 +169,38 @@ message(STATUS "")
 message(STATUS ">>> Checking for ccache.")
 find_program(CCACHE_EXECUTABLE ccache)
 mark_as_advanced(CCACHE_EXECUTABLE)
-if(CCACHE_EXECUTABLE AND NOT DISABLE_CCACHE)
-  foreach(LANG C CXX)
-    if(NOT DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER AND NOT CMAKE_${LANG}_COMPILER MATCHES ".*/ccache$")
-      message(STATUS "Enabling ccache for ${LANG}")
-      set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
-    endif()
-  endforeach()
+if(NOT CCACHE_EXECUTABLE)
+	message(STATUS "Cannot find ccache in system paths.")
+endif()
+if(CCACHE_EXECUTABLE)
+	execute_process(COMMAND ${CCACHE_EXECUTABLE} --version
+		OUTPUT_VARIABLE _CCACHE_VERSION_INFO
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	string(REGEX REPLACE "\n" ";" _CCACHE_VERSION_INFO "${_CCACHE_VERSION_INFO}")
+	list(GET _CCACHE_VERSION_INFO 0 _CCACHE_VERSION_INFO)
+	message(STATUS "Found ${_CCACHE_VERSION_INFO}.")
+	unset(_CCACHE_VERSION_INFO)
+	if(DISABLE_CCACHE)
+		message(STATUS "ccache disabled via DISABLE_CCACHE.")
+	else()
+		foreach(LANG C CXX)
+			# expand path to actual compiler executable
+			execute_process(COMMAND readlink -f $(which "${CMAKE_${_LANG}_COMPILER}")
+				OUTPUT_VARIABLE _COMPILER_PATH
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+			if(DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER)
+				message(STATUS "The launcher '${CMAKE_${LANG}_COMPILER_LAUNCHER}' is already defined. Leave it unchanged.")
+			elseif(CMAKE_${LANG}_COMPILER MATCHES ".*/ccache.*" OR _COMPILER_PATH MATCHES ".*/ccache.*")
+				# checking for "ccache" anywhere in the compiler path might be too strong
+				# more restrictive would be ".*/ccache$", which requires "ccache" at the end
+				message(STATUS "ccache seems to be already in use for ${LANG}.")
+			else()
+				message(STATUS "Enabling ccache for ${LANG}")
+				set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+			endif()
+			unset(_COMPILER_PATH)
+		endforeach()
+	endif()
 endif()
 
 
@@ -232,6 +257,7 @@ set_package_properties(Libconfig
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "http://www.hyperrealm.com/libconfig/"
+	PURPOSE "Used for defining partial-wave decay amplitudes"
 	TYPE REQUIRED
 	)
 
@@ -245,6 +271,7 @@ set_package_properties(YamlCpp
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "https://github.com/jbeder/yaml-cpp"
+	PURPOSE "Used for defining analysis environments"
 	TYPE REQUIRED
 	)
 
@@ -257,6 +284,7 @@ set_package_properties(ROOT
 	PROPERTIES
 	DESCRIPTION "C++ HEP analysis framework"
 	URL "http://root.cern.ch/"
+	PURPOSE "Used for data storage and retrieval"
 	TYPE REQUIRED
 	)
 
@@ -414,6 +442,7 @@ set_package_properties(BAT
 	DESCRIPTION "Bayesian Analysis Toolkit"
 	URL "http://mpp.mpg.de/bat/"
 	PURPOSE "Used in the mass-dependent fitter"
+	TYPE OPTIONAL
 	)
 if(NOT BAT_FOUND)
 	set(USE_BAT OFF)
@@ -433,7 +462,8 @@ set_package_properties(NLopt
 	PROPERTIES
 	DESCRIPTION "Library for nonlinear optimization"
 	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
-	TYPE OPTIONAL
+	PURPOSE "Used as a faster alternative to Minuit Migrad in PWA fit"
+	TYPE RECOMMENDED
 	)
 if(NOT NLopt_FOUND)
 	set(USE_NLOPT OFF)
