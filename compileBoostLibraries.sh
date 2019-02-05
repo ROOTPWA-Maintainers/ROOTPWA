@@ -5,6 +5,8 @@
 NMB_JOBS=${1:-1}
 # if second argument is given and not "TRUE", all output is written to stdout instead of log file
 WRITE_LOG_FILE=${2:-"TRUE"}
+# define libraries to compile
+BOOST_LIBS="--with-mpi --with-python --with-serialization --with-system --with-timer"
 
 
 # check for environment variable that specifies where to find Boost
@@ -76,10 +78,10 @@ echo "        ... bootstrapping"
 ./bootstrap.sh --prefix="$(pwd -P)" >&3 2>&1
 checkFail "bootstrap failed"${ERR_MSG_SUFFIX}
 echo "        ... linking headers"  # needed for Modular Boost repositories
-./b2 -j ${NMB_JOBS} headers >&3 2>&1
+./b2 -j ${NMB_JOBS} ${BOOST_LIBS} headers >&3 2>&1
 checkFail "linking headers failed"${ERR_MSG_SUFFIX}
 echo "        ... building libraries; running ${NMB_JOBS} jobs in parallel"
-./b2 -j ${NMB_JOBS} -a >&3 2>&1
+./b2 -j ${NMB_JOBS} -a ${BOOST_LIBS} >&3 2>&1
 checkFail "building libraries failed"${ERR_MSG_SUFFIX}
 # close file descriptor 3
 exec 3>&-

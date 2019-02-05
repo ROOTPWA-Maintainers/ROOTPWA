@@ -23,7 +23,7 @@ else
 	mkdir build
 	cd build
 	cmake -DBUILD_SHARED_LIBS=ON ..
-	make
+	make --jobs=${NMB_JOBS}
 
 	cd "${TRAVIS_BUILD_DIR}"/deps/
 fi

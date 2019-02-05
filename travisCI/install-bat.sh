@@ -26,7 +26,7 @@ else
 	./configure --prefix=$(pwd -P) --enable-parallel
 
 	# compile and install
-	make
+	make --jobs=${NMB_JOBS}
 	make install
 
 	cd "${TRAVIS_BUILD_DIR}"/deps/

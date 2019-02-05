@@ -38,7 +38,7 @@ else
 	tar -xzf ublas.tar.gz -C boost-${BOOST_VERSION}/libs/numeric/ublas/ --strip-components=1
 
 	# compile and install BOOST
-	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh 1 FALSE
+	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh ${NMB_JOBS} FALSE
 
 	# cleanup
 	rm -rf boost.tar.gz

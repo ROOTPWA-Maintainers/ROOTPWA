@@ -46,6 +46,12 @@ required_packages: &required_packages
 # configure custom dependencies
 env:
     global:
+      - NMB_JOBS=3
+      # number of compilation jobs to run in parallel
+      # at the moment, it seems there is no reliable way to find out the number of cores in the VM
+      # see e.g. https://github.com/travis-ci/travis-ci/issues/4696
+      # according to https://docs.travis-ci.com/user/reference/overview/#virtualisation-environment-vs-operating-system
+      # all Travis VMs have 2 cores
       - CMAKE_VERSION="3.11.0"
       # CMake version that comes with Travis' trusty image is only 3.9.2
       - BOOST_VERSION="1.67.0"
@@ -80,6 +86,7 @@ notifications:
         on_failure: always
 
 before_install:
+    - ./travisCI/print-system-info.sh
     - pyenv global system
     - pip install --user pylint==1.7.1 numpy
 install:

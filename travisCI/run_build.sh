@@ -9,7 +9,7 @@ cd "${TRAVIS_BUILD_DIR}"/build
 cmake "${TRAVIS_BUILD_DIR}"
 
 # run 'make'
-make
+make --jobs=${NMB_JOBS}
 
 echo ">>> Running 'make test'"
 # - if 'make' was successful, run 'make test'
