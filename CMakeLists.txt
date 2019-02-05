@@ -156,6 +156,12 @@ message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
 endif()
+message(STATUS "Includes defined via environment variables:")
+message(STATUS "    CPATH (corresponds to -I...): '$ENV{CPATH}'")
+foreach(_LANG "C" "CPLUS")
+	message(STATUS "    ${_LANG}_INCLUDE_PATH (corresponds to -isystem ...): '$ENV{${_LANG}_INCLUDE_PATH}'")
+endforeach()
+unset(_LANG)
 
 
 # enable ccache if not already enabled by symlink masquerading and if no other
@@ -183,21 +189,22 @@ if(CCACHE_EXECUTABLE)
 	if(DISABLE_CCACHE)
 		message(STATUS "ccache disabled via DISABLE_CCACHE.")
 	else()
-		foreach(LANG C CXX)
+		foreach(_LANG "C" "CXX")
 			# expand path to actual compiler executable
 			execute_process(COMMAND readlink -f $(which "${CMAKE_${_LANG}_COMPILER}")
 				OUTPUT_VARIABLE _COMPILER_PATH
 				OUTPUT_STRIP_TRAILING_WHITESPACE)
-			if(DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER)
-				message(STATUS "The launcher '${CMAKE_${LANG}_COMPILER_LAUNCHER}' is already defined. Leave it unchanged.")
-			elseif(CMAKE_${LANG}_COMPILER MATCHES ".*/ccache.*" OR _COMPILER_PATH MATCHES ".*/ccache.*")
+			if(DEFINED CMAKE_${_LANG}_COMPILER_LAUNCHER)
+				message(STATUS "The launcher '${CMAKE_${_LANG}_COMPILER_LAUNCHER}' is already defined. Leave it unchanged.")
+			elseif(CMAKE_${_LANG}_COMPILER MATCHES ".*/ccache.*" OR _COMPILER_PATH MATCHES ".*/ccache.*")
 				# checking for "ccache" anywhere in the compiler path might be too strong
 				# more restrictive would be ".*/ccache$", which requires "ccache" at the end
-				message(STATUS "ccache seems to be already in use for ${LANG}.")
+				message(STATUS "ccache seems to be already in use for ${_LANG}.")
 			else()
-				message(STATUS "Enabling ccache for ${LANG}")
-				set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+				message(STATUS "Enabling ccache for ${_LANG}")
+				set(CMAKE_${_LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
 			endif()
+			unset(_LANG)
 			unset(_COMPILER_PATH)
 		endforeach()
 	endif()
@@ -304,6 +311,7 @@ set_package_properties(NumPy
 	PURPOSE "Used for handling of multi-dimensional arrays in Python."
 	TYPE REQUIRED
 	)
+add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_8_API_VERSION)
 
 
 # setup pylint (optional)
