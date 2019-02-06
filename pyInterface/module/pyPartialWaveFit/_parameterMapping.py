@@ -226,3 +226,77 @@ class ParameterMappingRpwa(ParameterMapping):
 			indices.append((self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1,
 			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices
+
+class ParameterMappingConnected(ParameterMapping):
+    def __init__(self, model):
+        
+        ParameterMapping.__init__(self, model)
+        
+        self.parameterMappings = [m.parameterMapping for m in self.model.likelihood.models]
+        
+        self.nmbModels = len(self.parameterMappings)
+        
+        self.nmbParameters = np.sum([pm.nmbParameters for pm in self.parameterMappings])
+        
+        self.nmbLlhdParameters = np.sum([pm.nmbLlhdParameters for pm in self.parameterMappings])
+        
+                
+    def paraFitter2Llhd(self, paraFitter):
+
+        parasLlhd = np.empty(self.nmbLlhdParameters,dtype=np.complex128)
+        
+        offset = 0
+        offset_fitter = 0
+        for i,pm in enumerate(self.parameterMappings):
+            parasLlhd[offset:offset+pm.nmbLlhdParameters] = pm.paraFitter2Llhd(paraFitter[offset_fitter:offset_fitter+pm.nmbParameters]) #pm.paraFitter2Llhd(paras[i])
+            offset += pm.nmbLlhdParameters
+            offset_fitter += pm.nmbParameters
+            
+        return parasLlhd
+
+    def paraLlhd2Fitter(self, paraLlhd):
+        
+        parasFitter = np.empty(self.nmbParameters)
+
+        offset = 0
+        offset_llhd = 0
+        for i,pm in enumerate(self.parameterMappings):
+            parasFitter[offset:offset+pm.nmbParameters] = pm.paraLlhd2Fitter(paraLlhd[offset_llhd:offset_llhd+pm.nmbLlhdParameters]) #pm.paraLlhd2Fitter(paras[i])
+            offset += pm.nmbParameters
+            offset_llhd += pm.nmbLlhdParameters           
+        return parasFitter
+        
+
+    def paraLlhd2negLlhd(self, paraLlhd):
+        '''
+        @return: Parameter list for the likelihood function
+        '''
+        raise NotImplementedError("Needs to be implemented in specialized class!")
+
+    def paraNegLlhd2Llhd(self, paraNegLlhd):
+        '''
+        @return: The paraLlhd form the negative log-likelihood function parameters
+        '''
+        raise NotImplementedError("Needs to be implemented in specialized class!")
+
+    def gradLlhd2Fitter(self, gradLlhd, gradFitter):
+        offset = 0
+        offset_llhd = 0
+        for i,pm in enumerate(self.parameterMappings):
+            pm.gradLlhd2Fitter(gradLlhd[offset_llhd:offset_llhd+pm.nmbLlhdParameters],gradFitter[offset:offset+pm.nmbParameters])
+            offset += pm.nmbParameters
+            offset_llhd += pm.nmbLlhdParameters                       
+
+    def hessianLlhd2Fitter(self, hessianLlhd, hessianFitter):
+        indices = []
+        offset = 0
+        for i,pm in enumerate(self.parameterMappings):
+            for iFitterPara in xrange(pm.nmbParameters):
+                if iFitterPara in pm.indicesRealFitterParaNonNone:
+                    indices.append(offset+pm.indicesRealFitterPara.index(iFitterPara)*2)
+                elif iFitterPara in pm.indicesImagFitterParaNonNone:
+                    indices.append(offset+pm.indicesImagFitterPara.index(iFitterPara)*2+1)
+                else:
+                    raise Exception("Cannot find fitter parameter index in index mapping :(")
+            offset += pm.nmbParameters
+        hessianFitter[:,:] = hessianLlhd[:,indices][indices]

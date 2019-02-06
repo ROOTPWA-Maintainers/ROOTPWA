@@ -169,3 +169,118 @@ class LikelihoodCauchy(Likelihood):
 			absT = np.abs(transitionAmps[i])
 			negLlhd = negLlhd - np.sum(np.log(1.0/(1.0+absT**2/self.width[i]**2)))
 		return negLlhd
+
+
+class LikelihoodConnected(Likelihood):
+    
+    def __init__(self,models):
+
+        self.models = models
+        
+        self.countFdF = 0 # number of calls to f with gradient
+        self.countF = 0 # number of calls to f without gradient
+        
+        #this is a bad hack :( 
+        self.nmbEvents = np.sum([m.likelihood.nmbEvents for m in self.models])
+        self.nmbParameters = np.sum([m.parameterMapping.nmbParameters for m in self.models])
+
+        self.parameterMapping = None
+
+	self.strength = 0.08
+        
+        self._connectionValueAndGrad = autograd.value_and_grad(self._connection)
+        self._connectionGrad = autograd.grad(self._connection)
+        self._connectionHessian = autograd.jacobian(self._gradientForConnectionHessian)
+
+        
+    # make this customizable
+    def _connection(self, paraLlhd):
+                
+        paras = np.reshape(paraLlhd,(len(self.models),-1))
+               
+        return np.sum(self.strength * (np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
+        #return self.strength * np.log(1. + np.sum( np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
+        #return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
+
+    def setParameters(self, strength=0.08):
+
+	self.strength = strength
+    
+    def _gradientForConnectionHessian(self, paraLlhd):
+        '''
+        Split complex-valued gradient by real and imaginary parts
+        in order to put this into the jacobian for the hessian calculation
+        '''
+        gradient = self._connectionGrad(paraLlhd)
+        return np.ravel(np.column_stack((np.real(gradient), - np.imag(gradient))))  
+    
+    def connectionHessian(self, paraLlhd):
+        '''
+        @return: Hessian matrix of the complex-valued likelihood parameters
+                 2*nmbLlhdParameter x 2*nmbLlhdParameters matrix of re_i, imag_i as components
+        '''
+        hessianMatrix = np.conj(self._connectionHessian(paraLlhd)).view(np.float64)
+        return hessianMatrix    
+    
+    def connectionHessianMatrixFitter(self, paraFitter):
+        '''
+        @return: Hessian matrix of the real-valued fitter parameters
+                 nmbParameter x nmbParameter matrix
+        '''
+        hessianMatrix = self.connectionHessian(self.parameterMapping.paraFitter2Llhd(paraFitter))
+        hessianMatrixFitterParameter = np.empty((self.parameterMapping.nmbParameters, self.parameterMapping.nmbParameters))
+        self.parameterMapping.hessianLlhd2Fitter(hessianMatrix, hessianMatrixFitterParameter)
+        return hessianMatrixFitterParameter    
+
+        
+    def f(self,paraFitter,gradFitter):
+
+        negLL = 0
+        offset = 0
+                
+        paraLlhd = self.parameterMapping.paraFitter2Llhd(paraFitter)
+
+        if gradFitter.size > 0:
+
+            self.countFdF += 1
+
+            for i,m in enumerate(self.models):
+                paras = paraFitter[offset:offset+m.parameterMapping.nmbParameters]
+                negLL += m.likelihood.f(paras,gradFitter[offset:offset+m.parameterMapping.nmbParameters])
+                offset += m.parameterMapping.nmbParameters
+
+      
+            negPrior, gradL = self._connectionValueAndGrad(paraLlhd)
+            negLL += negPrior
+            gradFitterPrior = np.zeros(len(gradFitter),dtype=np.float64)
+            self.parameterMapping.gradLlhd2Fitter(gradL, gradFitterPrior)
+            
+            gradFitter += gradFitterPrior
+
+
+        else:
+
+            self.countF += 1
+
+            for i,m in enumerate(self.models):
+                paras = paraFitter[offset:offset+m.parameterMapping.nmbParameters]
+                negLL += m.likelihood.f(paras,gradFitter)
+                offset += m.parameterMapping.nmbParameters
+
+            negLL += self._connection(paraLlhd)
+            
+
+        return negLL
+
+    def hessianMatrixFitter(self,paraFitter):
+        
+        hessianMatrixFitterParameter = np.zeros((self.nmbParameters, self.nmbParameters))
+        offset = 0
+        for m in self.models:
+            paras = paraFitter[offset:offset+m.parameterMapping.nmbParameters]
+            hessianMatrixFitterParameter[offset:offset+m.parameterMapping.nmbParameters,offset:offset+m.parameterMapping.nmbParameters] = m.likelihood.hessianMatrixFitter(paras)
+            offset += m.parameterMapping.nmbParameters   
+            
+        
+        hessianMatrixFitterParameter += self.connectionHessianMatrixFitter(paraFitter)
+        return hessianMatrixFitterParameter
