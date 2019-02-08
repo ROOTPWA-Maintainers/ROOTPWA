@@ -239,17 +239,35 @@ class ParameterMappingConnected(ParameterMapping):
 		self.nmbParameters = np.sum([pm.nmbParameters for pm in self.parameterMappings])
 		self.nmbLlhdParameters = np.sum([pm.nmbLlhdParameters for pm in self.parameterMappings])
 
+		self.offsetsLlhdForBins = [0]
+		self.offsetsFitterForBins = [0]
+		for parameterMapping in self.parameterMappings:
+			self.offsetsLlhdForBins.append(self.offsetsLlhdForBins[-1] + parameterMapping.nmbLlhdParameters)
+			self.offsetsFitterForBins.append(self.offsetsFitterForBins[-1] + parameterMapping.nmbParameters)
+		self.offsetsLlhdForBins = np.array(self.offsetsLlhdForBins, dtype=np.int64)
+		self.offsetsFitterForBins = np.array(self.offsetsFitterForBins, dtype=np.int64)
+
+	def paraFitterOfBin(self, paraFitter, iBin):
+		'''
+		@param paraFitter: Array of all fitter parameters
+		@return fitter parameters of it i'th bin
+		'''
+		return paraFitter[self.offsetsFitterForBins[iBin]:self.offsetsFitterForBins[iBin+1]]
+
+
+	def paraLlhdOfBin(self, paraLlhd, iBin):
+		'''
+		@param paraLlhd: Array of all Llhd parameters
+		@return Llhd parameters of it i'th bin
+		'''
+		return paraLlhd[self.offsetsLlhdForBins[iBin]:self.offsetsLlhdForBins[iBin+1]]
 
 	def paraFitter2Llhd(self, paraFitter):
 
 		parasLlhd = np.empty(self.nmbLlhdParameters, dtype=np.complex128)
-		offset = 0
-		offsetFitter = 0
-		for parameterMapping in self.parameterMappings:
-			parasLlhd[offset:offset + parameterMapping.nmbLlhdParameters] = parameterMapping.paraFitter2Llhd(paraFitter[offsetFitter:offsetFitter
-			                                                              + parameterMapping.nmbParameters])
-			offset += parameterMapping.nmbLlhdParameters
-			offsetFitter += parameterMapping.nmbParameters
+		for i,parameterMapping in enumerate(self.parameterMappings):
+			parasLlhd[self.offsetsLlhdForBins[i]:self.offsetsLlhdForBins[i+1]] = \
+			  parameterMapping.paraFitter2Llhd(paraFitter[self.offsetsFitterForBins[i]:self.offsetsFitterForBins[i+1]])
 
 		return parasLlhd
 
@@ -258,13 +276,9 @@ class ParameterMappingConnected(ParameterMapping):
 
 		parasFitter = np.empty(self.nmbParameters)
 
-		offset = 0
-		offsetLlhd = 0
-		for parameterMapping in self.parameterMappings:
-			parasFitter[offset:offset + parameterMapping.nmbParameters] = parameterMapping.paraLlhd2Fitter(paraLlhd[offsetLlhd:offsetLlhd
-			                                                            + parameterMapping.nmbLlhdParameters])
-			offset += parameterMapping.nmbParameters
-			offsetLlhd += parameterMapping.nmbLlhdParameters
+		for i,parameterMapping in enumerate(self.parameterMappings):
+			parasFitter[self.offsetsFitterForBins[i]:self.offsetsFitterForBins[i+1]]\
+			  = parameterMapping.paraLlhd2Fitter(paraLlhd[self.offsetsLlhdForBins[i]:self.offsetsLlhdForBins[i+1]])
 		return parasFitter
 
 
@@ -283,24 +297,18 @@ class ParameterMappingConnected(ParameterMapping):
 
 
 	def gradLlhd2Fitter(self, gradLlhd, gradFitter):
-		offset = 0
-		offsetLlhd = 0
-		for parameterMapping in self.parameterMappings:
-			parameterMapping.gradLlhd2Fitter(gradLlhd[offsetLlhd:offsetLlhd + parameterMapping.nmbLlhdParameters], gradFitter[offset:offset + parameterMapping.nmbParameters])
-			offset += parameterMapping.nmbParameters
-			offsetLlhd += parameterMapping.nmbLlhdParameters
+		for i, parameterMapping in enumerate(self.parameterMappings):
+			parameterMapping.gradLlhd2Fitter(gradLlhd[self.offsetsLlhdForBins[i]:self.offsetsLlhdForBins[i+1]], gradFitter[self.offsetsFitterForBins[i]:self.offsetsFitterForBins[i+1]])
 
 
 	def hessianLlhd2Fitter(self, hessianLlhd, hessianFitter):
 		indices = []
-		offset = 0
-		for parameterMapping in self.parameterMappings:
+		for iParaMapping, parameterMapping in enumerate(self.parameterMappings):
 			for iFitterPara in xrange(parameterMapping.nmbParameters):
 				if iFitterPara in parameterMapping.indicesRealFitterParaNonNone:
-					indices.append(offset + parameterMapping.indicesRealFitterPara.index(iFitterPara) * 2)
+					indices.append(self.offsetsFitterForBins[iParaMapping] + parameterMapping.indicesRealFitterPara.index(iFitterPara) * 2)
 				elif iFitterPara in parameterMapping.indicesImagFitterParaNonNone:
-					indices.append(offset + parameterMapping.indicesImagFitterPara.index(iFitterPara) * 2 + 1)
+					indices.append(self.offsetsFitterForBins[iParaMapping] + parameterMapping.indicesImagFitterPara.index(iFitterPara) * 2 + 1)
 				else:
 					raise Exception("Cannot find fitter parameter index in index mapping :(")
-			offset += parameterMapping.nmbParameters
 		hessianFitter[:, :] = hessianLlhd[:, indices][indices]

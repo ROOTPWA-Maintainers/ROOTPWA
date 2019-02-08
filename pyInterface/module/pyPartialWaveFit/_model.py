@@ -340,18 +340,19 @@ class ModelConnected(Model):
 		@param clsParameterMappingInBin: Parameter-mapping class for the parameter mappint in the individual bins
 		'''
 		Model.__init__(self, clsLikelihoodInBin, clsParameterMappingInBin)
+		self.models = None # list of cells in the individual bins
 
 
 	def initModelInBins(self, rpwaconfig, binIDs, waveListFileName, rankPosRefl, rankNegRefl):
 
-		likelihoods = []
+		self.models = []
 		for binID in binIDs:
 			print "Reading in bin: " + str(binID)
 			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
 			model.initModelInBin(rpwaconfig, binID, waveListFileName, rankPosRefl, rankNegRefl)
-			likelihoods.append(model.likelihood)
+			self.models.append(model)
 
-		self.likelihood = LikelihoodConnected(likelihoods)
+		self.likelihood = LikelihoodConnected([model.likelihood for model in self.models])
 		self.parameterMapping = ParameterMappingConnected(self)
 		self.likelihood.parameterMapping = self.parameterMapping
 

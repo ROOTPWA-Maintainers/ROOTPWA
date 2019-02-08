@@ -115,7 +115,7 @@ class StartParameterGeneratorUniform(StartParameterGenerator):
 
 	def __init__(self, model, seed=None):
 		StartParameterGenerator.__init__(self, model, seed=seed)
-		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(m, seed=int(self.generator.rand() * 999999)) for m in self.model.likelihood.models]
+		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(model, seed=int(self.generator.rand() * 999999)) for model in self.model.models]
 
 
 	def __call__(self):

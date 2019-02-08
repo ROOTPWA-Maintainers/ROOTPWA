@@ -239,16 +239,14 @@ class LikelihoodConnected(object):
 	def f(self, paraFitter, gradFitter):
 
 		negLL = 0
-		offset = 0
 
 		paraLlhd = self.parameterMapping.paraFitter2Llhd(paraFitter)
 
 		if gradFitter.size > 0:
 			self.countFdF += 1
-			for likelihood in self.likelihoods:
-				paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
-				negLL += likelihood.f(paras, gradFitter[offset:offset + likelihood.parameterMapping.nmbParameters])
-				offset += likelihood.parameterMapping.nmbParameters
+			for iLikelihood, likelihood in enumerate(self.likelihoods):
+				paras = self.parameterMapping.paraFitterOfBin(paraFitter, iLikelihood)
+				negLL += likelihood.f(paras, gradFitter[self.parameterMapping.offsetsFitterForBins[iLikelihood]:self.parameterMapping.offsetsFitterForBins[iLikelihood+1]])
 
 			negPrior, gradL = self._connectionValueAndGrad(paraLlhd)
 			negLL += negPrior
@@ -260,10 +258,9 @@ class LikelihoodConnected(object):
 		else:
 			self.countF += 1
 
-			for likelihood in self.likelihoods:
-				paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
+			for iLikelihood, likelihood in enumerate(self.likelihoods):
+				paras = self.parameterMapping.paraFitterOfBin(paraFitter, iLikelihood)
 				negLL += likelihood.f(paras, gradFitter)
-				offset += likelihood.parameterMapping.nmbParameters
 
 			negLL += self._connection(paraLlhd)
 
@@ -273,12 +270,11 @@ class LikelihoodConnected(object):
 	def hessianMatrixFitter(self, paraFitter):
 
 		hessianMatrixFitterParameter = np.zeros((self.nmbParameters, self.nmbParameters))
-		offset = 0
-		for likelihood in self.likelihoods:
-			paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
-			hessianMatrixFitterParameter[offset:offset + likelihood.parameterMapping.nmbParameters,
-			                             offset:offset + likelihood.parameterMapping.nmbParameters] = likelihood.hessianMatrixFitter(paras)
-			offset += likelihood.parameterMapping.nmbParameters
+		for iLikelihood, likelihood in enumerate(self.likelihoods):
+			paras = self.parameterMapping.paraFitterOfBin(paraFitter, iLikelihood)
+			hessianMatrixFitterParameter[self.parameterMapping.offsetsFitterForBins[iLikelihood]:self.parameterMapping.offsetsFitterForBins[iLikelihood+1],
+			                             self.parameterMapping.offsetsFitterForBins[iLikelihood]:self.parameterMapping.offsetsFitterForBins[iLikelihood+1]]\
+			  = likelihood.hessianMatrixFitter(paras)
 
 		hessianMatrixFitterParameter += self.connectionHessianMatrixFitter(paraFitter)
 		return hessianMatrixFitterParameter
