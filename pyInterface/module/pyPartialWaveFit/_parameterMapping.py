@@ -234,7 +234,7 @@ class ParameterMappingConnected(ParameterMapping):
 	def __init__(self, model):
 		ParameterMapping.__init__(self, model)
 
-		self.parameterMappings = [m.parameterMapping for m in self.model.likelihood.models]
+		self.parameterMappings = [likelihood.parameterMapping for likelihood in self.model.likelihood.likelihoods]
 		self.nmbModels = len(self.parameterMappings)
 		self.nmbParameters = np.sum([pm.nmbParameters for pm in self.parameterMappings])
 		self.nmbLlhdParameters = np.sum([pm.nmbLlhdParameters for pm in self.parameterMappings])

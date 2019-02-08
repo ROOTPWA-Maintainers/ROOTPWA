@@ -174,16 +174,16 @@ class LikelihoodCauchy(Likelihood):
 class LikelihoodConnected(object):
 
 
-	def __init__(self, models):
+	def __init__(self, likelihoods):
 
-		self.models = models
+		self.likelihoods = likelihoods
 
 		self.countFdF = 0  # number of calls to f with gradient
 		self.countF = 0  # number of calls to f without gradient
 
 		# this is a bad hack :(
-		self.nmbEvents = np.sum([m.likelihood.nmbEvents for m in self.models])
-		self.nmbParameters = np.sum([m.parameterMapping.nmbParameters for m in self.models])
+		self.nmbEvents = np.sum([likelihood.nmbEvents for likelihood in self.likelihoods])
+		self.nmbParameters = np.sum([likelihood.parameterMapping.nmbParameters for likelihood in self.likelihoods])
 
 		self.parameterMapping = None
 
@@ -196,7 +196,7 @@ class LikelihoodConnected(object):
 
 	# make this customizable
 	def _connection(self, paraLlhd):
-		paras = np.reshape(paraLlhd, (len(self.models), -1))
+		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))
 		return np.sum(self.strength * (np.abs(paras[1:-1] - paras[:-2]) ** 2 + np.abs(paras[1:-1] - paras[2:]) ** 2))
 		# return self.strength * np.log(1. + np.sum( np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
 		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
@@ -245,10 +245,10 @@ class LikelihoodConnected(object):
 
 		if gradFitter.size > 0:
 			self.countFdF += 1
-			for model in self.models:
-				paras = paraFitter[offset:offset + model.parameterMapping.nmbParameters]
-				negLL += model.likelihood.f(paras, gradFitter[offset:offset + model.parameterMapping.nmbParameters])
-				offset += model.parameterMapping.nmbParameters
+			for likelihood in self.likelihoods:
+				paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
+				negLL += likelihood.f(paras, gradFitter[offset:offset + likelihood.parameterMapping.nmbParameters])
+				offset += likelihood.parameterMapping.nmbParameters
 
 			negPrior, gradL = self._connectionValueAndGrad(paraLlhd)
 			negLL += negPrior
@@ -260,10 +260,10 @@ class LikelihoodConnected(object):
 		else:
 			self.countF += 1
 
-			for model in self.models:
-				paras = paraFitter[offset:offset + model.parameterMapping.nmbParameters]
-				negLL += model.likelihood.f(paras, gradFitter)
-				offset += model.parameterMapping.nmbParameters
+			for likelihood in self.likelihoods:
+				paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
+				negLL += likelihood.f(paras, gradFitter)
+				offset += likelihood.parameterMapping.nmbParameters
 
 			negLL += self._connection(paraLlhd)
 
@@ -274,11 +274,11 @@ class LikelihoodConnected(object):
 
 		hessianMatrixFitterParameter = np.zeros((self.nmbParameters, self.nmbParameters))
 		offset = 0
-		for model in self.models:
-			paras = paraFitter[offset:offset + model.parameterMapping.nmbParameters]
-			hessianMatrixFitterParameter[offset:offset + model.parameterMapping.nmbParameters,
-			                             offset:offset + model.parameterMapping.nmbParameters] = model.likelihood.hessianMatrixFitter(paras)
-			offset += model.parameterMapping.nmbParameters
+		for likelihood in self.likelihoods:
+			paras = paraFitter[offset:offset + likelihood.parameterMapping.nmbParameters]
+			hessianMatrixFitterParameter[offset:offset + likelihood.parameterMapping.nmbParameters,
+			                             offset:offset + likelihood.parameterMapping.nmbParameters] = likelihood.hessianMatrixFitter(paras)
+			offset += likelihood.parameterMapping.nmbParameters
 
 		hessianMatrixFitterParameter += self.connectionHessianMatrixFitter(paraFitter)
 		return hessianMatrixFitterParameter

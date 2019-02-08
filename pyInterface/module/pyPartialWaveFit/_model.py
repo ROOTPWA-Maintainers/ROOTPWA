@@ -334,20 +334,24 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 class ModelConnected(Model):
 
 
-	def __init__(self, clsLikelihood, clsParameterMapping):
-		Model.__init__(self, clsLikelihood, clsParameterMapping)
+	def __init__(self, clsLikelihoodInBin, clsParameterMappingInBin):
+		'''
+		@param clsLikelihoodInBin: Likelihood class for the likelihood of the individual bins
+		@param clsParameterMappingInBin: Parameter-mapping class for the parameter mappint in the individual bins
+		'''
+		Model.__init__(self, clsLikelihoodInBin, clsParameterMappingInBin)
 
 
-	def initModelInBins(self, binIDs, rpwaconfig, waveListFileName, rankPosRefl, rankNegRefl):
+	def initModelInBins(self, rpwaconfig, binIDs, waveListFileName, rankPosRefl, rankNegRefl):
 
-		models = []
+		likelihoods = []
 		for binID in binIDs:
 			print "Reading in bin: " + str(binID)
 			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
 			model.initModelInBin(rpwaconfig, binID, waveListFileName, rankPosRefl, rankNegRefl)
-			models.append(model)
+			likelihoods.append(model.likelihood)
 
-		self.likelihood = LikelihoodConnected(models)
+		self.likelihood = LikelihoodConnected(likelihoods)
 		self.parameterMapping = ParameterMappingConnected(self)
 		self.likelihood.parameterMapping = self.parameterMapping
 
