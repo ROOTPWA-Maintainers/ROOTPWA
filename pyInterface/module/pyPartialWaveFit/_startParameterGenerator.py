@@ -111,16 +111,18 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 # this is gonna be tricky to realize!!!
 # maybe sampling in fourier-space works better
 class StartParameterGeneratorUniform(StartParameterGenerator):
-    def __init__(self, model, seed=None):
-       StartParameterGenerator.__init__(self, model, seed=seed)
-       self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(m,seed=int(self.generator.rand()*999999)) for m in self.model.likelihood.models]   
-        
-    def __call__(self):
-        pars = []
 
-        # there is probably a better way to do this ...
-        for spg in self.startParameterGenerators:
-            pars += spg().tolist()
 
-        return np.array(pars)
+	def __init__(self, model, seed=None):
+		StartParameterGenerator.__init__(self, model, seed=seed)
+		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(m, seed=int(self.generator.rand() * 999999)) for m in self.model.likelihood.models]
 
+
+	def __call__(self):
+		pars = []
+
+		# there is probably a better way to do this ...
+		for spg in self.startParameterGenerators:
+			pars += spg().tolist()
+
+		return np.array(pars)

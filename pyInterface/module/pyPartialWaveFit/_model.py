@@ -4,9 +4,10 @@
 
 import numpy as np
 import pyRootPwa
-ROOT = pyRootPwa.ROOT
+
 from _likelihood import LikelihoodConnected
 from _parameterMapping import ParameterMappingConnected
+
 
 
 class Model(object):
@@ -329,24 +330,27 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 
 	return amps
 
+
 class ModelConnected(Model):
 
-    def __init__(self,clsLikelihood,clsParameterMapping):
-        Model.__init__(self,clsLikelihood,clsParameterMapping)
+
+	def __init__(self, clsLikelihood, clsParameterMapping):
+		Model.__init__(self, clsLikelihood, clsParameterMapping)
 
 
-    def initModelInBins(self,binIDs,rpwaconfig, waveListFileName, rankPosRefl, rankNegRefl):
+	def initModelInBins(self, binIDs, rpwaconfig, waveListFileName, rankPosRefl, rankNegRefl):
 
-	models = []  
-	for binID in binIDs:
-		print "Reading in bin: "+str(binID)
-		model = ModelRpwa(self.clsLikelihood,self.clsParameterMapping)
-		model.initModelInBin(rpwaconfig,binID,waveListFileName,rankPosRefl,rankNegRefl)
-		models.append(model)
+		models = []
+		for binID in binIDs:
+			print "Reading in bin: " + str(binID)
+			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
+			model.initModelInBin(rpwaconfig, binID, waveListFileName, rankPosRefl, rankNegRefl)
+			models.append(model)
 
-	self.likelihood = LikelihoodConnected(models)
-	self.parameterMapping = ParameterMappingConnected(self)
-	self.likelihood.parameterMapping = self.parameterMapping
-	
+		self.likelihood = LikelihoodConnected(models)
+		self.parameterMapping = ParameterMappingConnected(self)
+		self.likelihood.parameterMapping = self.parameterMapping
 
 
+	def amplitudeNames(self):
+		raise Exception("Must be implemented")
