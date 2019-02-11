@@ -202,8 +202,15 @@ class LikelihoodConnected(object):
 		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
 
 
-	def setParameters(self, strength=0.08):
+	def setParameters(self, strength=0.08, **kwargs):
+		'''
+		@param strength: Strength parameter of the connection term
+		All other keyword arguments are passed to the individual likelihoods
+		'''
 		self.strength = strength
+		if kwargs:
+			for likelihood in self.likelihoods:
+				likelihood.setParameters(**kwargs)
 
 
 	def _gradientForConnectionHessian(self, paraLlhd):

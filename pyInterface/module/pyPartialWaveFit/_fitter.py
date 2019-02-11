@@ -118,83 +118,84 @@ class Fitter(object):
 		raise NotImplementedError("This method must be implemented in the derived classes")
 
 
-	def writeResultsRpwa(self, results, outputFileName, valTreeName = "pwa", valBranchName = "fitResult_v2"):
+def writeResultsRpwa(model, results, outputFileName, valTreeName = "pwa", valBranchName = "fitResult_v2"):
 
-		if os.path.exists(outputFileName) or os.path.exists(outputFileName+'.root'):
-			pyRootPwa.utils.printErr("Output file already exists! Aborting ...")
+	if os.path.exists(outputFileName) or os.path.exists(outputFileName+'.root'):
+		pyRootPwa.utils.printErr("Output file already exists! Aborting ...")
+		sys.exit(1)
+	outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "UPDATE")
+	if (not outputFile) or outputFile.IsZombie():
+		pyRootPwa.utils.printErr("cannot open output file '" + outputFileName + "'. Aborting...")
+		sys.exit(1)
+	fitResult = pyRootPwa.core.fitResult()
+	tree = outputFile.Get(valTreeName)
+	if not tree:
+		pyRootPwa.utils.printInfo("file '" + outputFileName + "' is empty. "
+				+ "creating new tree '" + valTreeName + "' for PWA result.")
+		tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
+		if not fitResult.branch(tree, valBranchName):
+			pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + outputFileName + "'.")
 			sys.exit(1)
-		outputFile = pyRootPwa.ROOT.TFile.Open(outputFileName, "UPDATE")
-		if (not outputFile) or outputFile.IsZombie():
-			pyRootPwa.utils.printErr("cannot open output file '" + outputFileName + "'. Aborting...")
-			sys.exit(1)
-		fitResult = pyRootPwa.core.fitResult()
-		tree = outputFile.Get(valTreeName)
-		if not tree:
-			pyRootPwa.utils.printInfo("file '" + outputFileName + "' is empty. "
-			        + "creating new tree '" + valTreeName + "' for PWA result.")
-			tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
-			if not fitResult.branch(tree, valBranchName):
-				pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + outputFileName + "'.")
-				sys.exit(1)
+	else:
+		fitResult.setBranchAddress(tree, valBranchName)
+
+
+	normIntegralMatrix = buildIntegralMatrixFromSubmatrices(model.getNormSubmatrices())
+	accIntegralMatrix = buildIntegralMatrixFromSubmatrices(model.getAccSubmatrices())
+	normIntegrals = list(np.hstack(model.getNormIntegrals()))
+
+	if model.waveNamesPosRefl and model.waveNamesNegRefl and model.rankPosRefl != model.rankNegRefl:
+		pyRootPwa.utils.printWarn("Cannot store different ranks for positve and negative reflectivity in fit result. Using rank of positive reflectivity sector")
+	if model.waveNamesPosRefl:
+		rank = model.rankPosRefl
+	else:
+		rank = model.rankNegRefl
+
+	for result in results:
+
+		if result['hessian'] is not None:
+			cov = np.linalg.inv(result['hessian'])
+			fitparcovMatrix = pyRootPwa.ROOT.TMatrixD(cov.shape[0], cov.shape[0])
+			for i in xrange(cov.shape[0]):
+				for j in xrange(cov.shape[1]):
+					fitparcovMatrix[i][j] = cov[i][j]
+			hasHessian = True
+			normIntegralMatrixResult = normIntegralMatrix
+			accIntegralMatrixResult  = accIntegralMatrix
+			normIntegralsResult = normIntegrals
 		else:
-			fitResult.setBranchAddress(tree, valBranchName)
+			fitparcovMatrix  = None
+			hasHessian   = False
+			normIntegralMatrixResult = None
+			accIntegralMatrixResult  = None
+			normIntegralsResult = None
+		fitResult.fill(
+						model.likelihood.nmbEvents,
+						1,
+						model.multibin.boundaries,
+						result['negLlhd'],
+						rank,
+						list(model.parameterMapping.paraFitter2AmpsForRpwaFitresult(result['parameters'])),
+						model.amplitudeNames(),
+						fitparcovMatrix,
+						model.parameterMapping.paraFitterCovMatrixIndicesForRpwaFitresult(),
+						normIntegralMatrixResult,
+						accIntegralMatrixResult,
+						normIntegralsResult,
+						result['success'],
+						hasHessian
+			)
+		tree.Fill()
+	nmbBytes = tree.Write()
+	outputFile.Close()
+	if nmbBytes == 0:
+		pyRootPwa.utils.printErr("problems writing fit result to TKey 'fitResult' "
+				+ "in file '" + outputFileName + "'")
+		sys.exit(1)
+	else:
+		pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
+				+ "in file '" + outputFileName + "'")
 
-
-		normIntegralMatrix = buildIntegralMatrixFromSubmatrices(self.model.getNormSubmatrices())
-		accIntegralMatrix = buildIntegralMatrixFromSubmatrices(self.model.getAccSubmatrices())
-		normIntegrals = list(np.hstack(self.model.getNormIntegrals()))
-
-		if self.model.waveNamesPosRefl and self.model.waveNamesNegRefl and self.model.rankPosRefl != self.model.rankNegRefl:
-			pyRootPwa.utils.printWarn("Cannot store different ranks for positve and negative reflectivity in fit result. Using rank of positive reflectivity sector")
-		if self.model.waveNamesPosRefl:
-			rank = self.model.rankPosRefl
-		else:
-			rank = self.model.rankNegRefl
-
-		for result in results:
-
-			if result['hessian'] is not None:
-				cov = np.linalg.inv(result['hessian'])
-				fitparcovMatrix = pyRootPwa.ROOT.TMatrixD(cov.shape[0], cov.shape[0])
-				for i in xrange(cov.shape[0]):
-					for j in xrange(cov.shape[1]):
-						fitparcovMatrix[i][j] = cov[i][j]
-				hasHessian = True
-				normIntegralMatrixResult = normIntegralMatrix
-				accIntegralMatrixResult  = accIntegralMatrix
-				normIntegralsResult = normIntegrals
-			else:
-				fitparcovMatrix  = None
-				hasHessian   = False
-				normIntegralMatrixResult = None
-				accIntegralMatrixResult  = None
-				normIntegralsResult = None
-			fitResult.fill(
-			               self.model.likelihood.nmbEvents,
-			               1,
-			               self.model.multibin.boundaries,
-			               result['negLlhd'],
-			               rank,
-			               list(self.model.parameterMapping.paraFitter2AmpsForRpwaFitresult(result['parameters'])),
-			               self.model.amplitudeNames(),
-			               fitparcovMatrix,
-			               self.model.parameterMapping.paraFitterCovMatrixIndicesForRpwaFitresult(),
-			               normIntegralMatrixResult,
-			               accIntegralMatrixResult,
-			               normIntegralsResult,
-			               result['success'],
-			               hasHessian
-				)
-			tree.Fill()
-		nmbBytes = tree.Write()
-		outputFile.Close()
-		if nmbBytes == 0:
-			pyRootPwa.utils.printErr("problems writing fit result to TKey 'fitResult' "
-			       + "in file '" + outputFileName + "'")
-			sys.exit(1)
-		else:
-			pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
-			        + "in file '" + outputFileName + "'")
 
 class NLoptFitter(Fitter):
 

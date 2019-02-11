@@ -343,13 +343,26 @@ class ModelConnected(Model):
 		self.models = None # list of cells in the individual bins
 
 
-	def initModelInBins(self, rpwaconfig, binIDs, waveListFileName, rankPosRefl, rankNegRefl):
+	def initModelInBins(self, fileManagerOrConfigfile, binIDs, waveListFileName, rankPosRefl, rankNegRefl):
+
+		if isinstance(fileManagerOrConfigfile, str):
+			config = pyRootPwa.rootPwaConfig()
+			if not config.initialize(fileManagerOrConfigfile):
+				pyRootPwa.utils.printErr("loading config file '" + fileManagerOrConfigfile + "' failed. Aborting...")
+				raise Exception()
+			pyRootPwa.core.particleDataTable.readFile(config.pdgFileName)
+			fileManager = pyRootPwa.loadFileManager(config.fileManagerPath)
+			if not fileManager:
+				pyRootPwa.utils.printErr("loading the file manager failed. Aborting...")
+				raise Exception()
+		else:
+			fileManager = fileManagerOrConfigfile
 
 		self.models = []
 		for binID in binIDs:
 			print "Reading in bin: " + str(binID)
 			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
-			model.initModelInBin(rpwaconfig, binID, waveListFileName, rankPosRefl, rankNegRefl)
+			model.initModelInBin(fileManager, binID, waveListFileName, rankPosRefl, rankNegRefl)
 			self.models.append(model)
 
 		self.likelihood = LikelihoodConnected([model.likelihood for model in self.models])
