@@ -79,7 +79,7 @@ def main():
 		pyRootPwa.utils.printErr("didn't get valid fit result(s). Aborting...")
 		sys.exit(1)
 
-	pyRootPwa.pyPartialWaveFit.writeResultsRpwa(fitter.model, fitResults, args.outputFileName)
+	pyRootPwa.pyPartialWaveFit.writeResultsRpwa(fitter.model, fitResults, args.outputFileName, storageLevel)
 
 	sys.exit(0)
 

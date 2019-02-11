@@ -72,7 +72,7 @@ class Fitter(object):
 			attemptsToCeck = []
 		for iAttempt in attemptsToCeck:
 			hessian = self.checkHessian(results[iAttempt], verbosity)
-			if self.storageLevel > 2 or (self.storageLevel == 1 and (iAttempt == iBestAttempt or iAttempt == iBestConvegedAttempt)):
+			if self.storageLevel >= 2 or (self.storageLevel == 1 and (iAttempt == iBestAttempt or iAttempt == iBestConvegedAttempt)):
 				results[iAttempt]['hessian'] = hessian
 
 		if verbosity >= 0:
@@ -118,7 +118,10 @@ class Fitter(object):
 		raise NotImplementedError("This method must be implemented in the derived classes")
 
 
-def writeResultsRpwa(model, results, outputFileName, valTreeName = "pwa", valBranchName = "fitResult_v2"):
+def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valTreeName = "pwa", valBranchName = "fitResult_v2"):
+	'''
+	@param integralsStorageLevel: 0=do not store integrals, 1=store integrals of best and best converged result, 2=store integrals for all results
+	'''
 
 	if os.path.exists(outputFileName) or os.path.exists(outputFileName+'.root'):
 		pyRootPwa.utils.printErr("Output file already exists! Aborting ...")
@@ -151,7 +154,10 @@ def writeResultsRpwa(model, results, outputFileName, valTreeName = "pwa", valBra
 	else:
 		rank = model.rankNegRefl
 
-	for result in results:
+	iBestAttempt         = np.argmin([r['negLlhd'] for r in results])
+	iBestConvegedAttempt = np.argmin([r['negLlhd'] if r['success'] else 1e300 for r in results])
+
+	for iResult, result in enumerate(results):
 
 		if result['hessian'] is not None:
 			cov = np.linalg.inv(result['hessian'])
@@ -160,15 +166,19 @@ def writeResultsRpwa(model, results, outputFileName, valTreeName = "pwa", valBra
 				for j in xrange(cov.shape[1]):
 					fitparcovMatrix[i][j] = cov[i][j]
 			hasHessian = True
+		else:
+			fitparcovMatrix  = None
+			hasHessian   = False
+
+		if integralsStorageLevel >= 2 or (integralsStorageLevel == 1 and (iResult == iBestAttempt or iResult == iBestConvegedAttempt)):
 			normIntegralMatrixResult = normIntegralMatrix
 			accIntegralMatrixResult  = accIntegralMatrix
 			normIntegralsResult = normIntegrals
 		else:
-			fitparcovMatrix  = None
-			hasHessian   = False
 			normIntegralMatrixResult = None
 			accIntegralMatrixResult  = None
 			normIntegralsResult = None
+
 		fitResult.fill(
 						model.likelihood.nmbEvents,
 						1,

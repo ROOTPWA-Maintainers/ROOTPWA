@@ -60,6 +60,7 @@ def main():
 	parser.add_argument("-r", type=int, metavar="#", dest="rank", default=1, help="rank of spin density matrix (default: 1)")
 	parser.add_argument("-H", "--checkHessian", help="check analytical Hessian eigenvalues (default: false)", action="store_true")
 	parser.add_argument("-z", "--saveSpace", help="save space by not saving integral and covariance matrices (default: false)", action="store_true")
+	parser.add_argument("--saveIntegrals", help="save integrals even if 'saveSpace' is defined -> do not calculate hessian but store integrals (default: false)", action="store_true")
 	parser.add_argument("--saveAll", action="store_true",
 	                    help="saving integral and covariance matrices of all fit attempts, not only of the best and best converged one (default: false)")
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
@@ -121,7 +122,10 @@ def main():
 		result = dict(result)
 		result['parameters'] = model.parameterMapping.paraFitterOfBin(result['parameters'], jCentralBin)
 		fitResultsCentralBin.append(result)
-	pyRootPwa.pyPartialWaveFit.writeResultsRpwa(fitter.model.models[jCentralBin], fitResultsCentralBin, args.outputFileName)
+
+	if args.saveIntegrals and storageLevel < 1:
+		storageLevel = 1
+	pyRootPwa.pyPartialWaveFit.writeResultsRpwa(fitter.model.models[jCentralBin], fitResultsCentralBin, args.outputFileName, storageLevel)
 
 	sys.exit(0)
 
