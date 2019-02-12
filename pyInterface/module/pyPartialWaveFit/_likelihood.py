@@ -203,12 +203,23 @@ class LikelihoodConnected(object):
 		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
 
 
-	def setParameters(self, strength=0.08, **kwargs):
+	def setParameters(self, strength=0.08, scaleStrengthByEvents=False, **kwargs):
 		'''
 		@param strength: Strength parameter of the connection term
 		All other keyword arguments are passed to the individual likelihoods
 		'''
 		self.strength = strength
+		if scaleStrengthByEvents:
+			if not isinstance(strength, float):
+				raise Exception()
+			strengths = np.empty((len(self.likelihoods),np.sum(self.likelihoods[0].nmbWavesInSectors)))
+			for iLikelihood, likelihood in enumerate(self.likelihoods):
+				nmbEventAccCorr = likelihood.nmbEvents/np.abs(likelihood.accMatrices[-1][0,0])
+				strengths[iLikelihood,:] = strength/nmbEventAccCorr
+			self.strength =0.5*(strengths[1:,:]+strengths[0:-1,:])
+		else:
+			self.strength = strength
+
 		if kwargs:
 			for likelihood in self.likelihoods:
 				likelihood.setParameters(**kwargs)
