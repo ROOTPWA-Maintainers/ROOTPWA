@@ -197,7 +197,8 @@ class LikelihoodConnected(object):
 	# make this customizable
 	def _connection(self, paraLlhd):
 		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))
-		return np.sum(self.strength * (np.abs(paras[1:-1] - paras[:-2]) ** 2 + np.abs(paras[1:-1] - paras[2:]) ** 2))
+		return np.sum(self.strength * (np.abs(paras[1:] - paras[:-1]) ** 2))
+# 		return np.sum(self.strength * (np.abs(paras[1:-1] - paras[:-2]) ** 2 + np.abs(paras[1:-1] - paras[2:]) ** 2))
 		# return self.strength * np.log(1. + np.sum( np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
 		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
 
