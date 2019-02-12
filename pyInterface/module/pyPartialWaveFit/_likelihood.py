@@ -140,21 +140,32 @@ class LikelihoodCauchy(Likelihood):
 	'''
 	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
 		Likelihood.__init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping)
-		self.width = 0.5
 		self.sectors = range(len(decayAmplitudes))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
+		self.width = [0.5]*len(self.decayAmplitudes)
 
 
-	def setParameters(self, width, sectors= None):
-		self.width = width
+	def setParameters(self, width, correctAcceptance=False, sectors= None):
+		if isinstance(width, float):
+			if not correctAcceptance:
+				self.width = [width] * len(self.decayAmplitudes)
+			else:
+				self.width = [width / np.sqrt(np.abs(accMatrix.diagonal())) for accMatrix in self.accMatrices]
+		else:
+			self.width = width
+			if correctAcceptance:
+				pyRootPwa.utils.printErr("'widthTimesAcceptance' can only be used with scalar width!")
+				raise Exception()
+
 		if sectors is not None:
 			if True in [ i < 0 or i >= self.nmbSectors for i in sectors]:
 				pyRootPwa.utils.printErr("One of the sectors for the Cauchy regularization is out of range")
 				raise Exception()
 			self.sectors = sectors
 
+
 	def negLlhd(self, transitionAmps):
 		negLlhd = Likelihood.negLlhd(self, transitionAmps)
 		for i in self.sectors:
 			absT = np.abs(transitionAmps[i])
-			negLlhd = negLlhd - np.sum(np.log(1.0/(1.0+absT**2/self.width**2)))
+			negLlhd = negLlhd - np.sum(np.log(1.0/(1.0+absT**2/self.width[i]**2)))
 		return negLlhd
