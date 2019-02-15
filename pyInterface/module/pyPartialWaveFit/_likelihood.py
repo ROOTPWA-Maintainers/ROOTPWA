@@ -174,9 +174,12 @@ class LikelihoodCauchy(Likelihood):
 class LikelihoodConnected(object):
 
 
-	def __init__(self, likelihoods):
+	def __init__(self, likelihoods, binWidths):
 
 		self.likelihoods = likelihoods
+		self.binWidthsNormalization = np.empty((len(likelihoods), likelihoods[0].parameterMapping.nmbLlhdParameters))
+		for i in range(self.binWidthsNormalization.shape[0]):
+			self.binWidthsNormalization[i,:] = np.sqrt(1.0/binWidths[i]*0.02)
 
 		self.countFdF = 0  # number of calls to f with gradient
 		self.countF = 0  # number of calls to f without gradient
@@ -197,7 +200,9 @@ class LikelihoodConnected(object):
 	# make this customizable
 	def _connection(self, paraLlhd):
 		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))
-		return np.sum(self.strength * (np.abs(paras[1:] - paras[:-1]) ** 2))
+		# normalize to 20 MeV bins
+		parasNormed = paras*self.binWidthsNormalization
+		return np.sum(self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2))
 # 		return np.sum(self.strength * (np.abs(paras[1:-1] - paras[:-2]) ** 2 + np.abs(paras[1:-1] - paras[2:]) ** 2))
 		# return self.strength * np.log(1. + np.sum( np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
 		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )

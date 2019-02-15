@@ -193,6 +193,9 @@ class multiBin(object):
 	def getBinCenters(self):
 		return {k: 0.5*(v[0]+v[1]) for k,v in self.boundaries.iteritems()}
 
+	def getBinWidths(self):
+		return {k: (v[1]-v[0]) for k,v in self.boundaries.iteritems()}
+
 
 def _testMultiBin():
 	bins = []

@@ -365,7 +365,8 @@ class ModelConnected(Model):
 			model.initModelInBin(fileManager, binID, waveListFileName, rankPosRefl, rankNegRefl)
 			self.models.append(model)
 
-		self.likelihood = LikelihoodConnected([model.likelihood for model in self.models])
+		binWidths = np.array([model.multibin.getBinWidths()['mass'] for model in self.models])
+		self.likelihood = LikelihoodConnected([model.likelihood for model in self.models], binWidths)
 		self.parameterMapping = ParameterMappingConnected(self)
 		self.likelihood.parameterMapping = self.parameterMapping
 
