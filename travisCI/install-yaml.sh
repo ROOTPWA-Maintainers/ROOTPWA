@@ -28,4 +28,5 @@ else
 	cd "${TRAVIS_BUILD_DIR}"/deps/
 fi
 
+rm yaml
 ln -sfn yaml-${YAML_VERSION} yaml

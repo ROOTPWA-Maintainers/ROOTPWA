@@ -20,4 +20,5 @@ else
 	rm -rf root.tar.gz
 fi
 
+rm root
 ln -sfn root-${ROOT_VERSION} root

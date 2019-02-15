@@ -48,4 +48,5 @@ else
 	done
 fi
 
+rm boost
 ln -sfn boost-${BOOST_VERSION} boost

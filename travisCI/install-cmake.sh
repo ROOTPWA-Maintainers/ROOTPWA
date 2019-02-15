@@ -22,4 +22,5 @@ else
 	rm -rf cmake.tar.gz
 fi
 
+rm cmake
 ln -sfn cmake-${CMAKE_VERSION} cmake
