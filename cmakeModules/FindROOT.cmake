@@ -92,7 +92,7 @@ set(ROOT_LIBRARY_DIR       NOTFOUND)
 set(ROOT_LIBRARIES         NOTFOUND)
 set(ROOT_AUX_LIBRARIES     NOTFOUND)
 set(ROOTCINT_EXECUTABLE    NOTFOUND)
-set(ROOT_LIBS              NOTFOUND)
+set(ROOT_LIBS              "")
 
 
 find_program(ROOT_CONFIG_EXECUTABLE root-config)
