@@ -182,10 +182,12 @@ if(CCACHE_EXECUTABLE)
 	execute_process(COMMAND ${CCACHE_EXECUTABLE} --version
 		OUTPUT_VARIABLE _CCACHE_VERSION_RAW
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-	parse_version_from_multline_string(${_CCACHE_VERSION_RAW} "ccache[ \t]+version[ \t]+" CCACHE_VERSION)
+	parse_version_from_multline_string("${_CCACHE_VERSION_RAW}" "ccache[ \t]+version[ \t]+" CCACHE_VERSION)
 	message(STATUS "Found ccache version ${CCACHE_VERSION}.")
 	unset(_CCACHE_VERSION_RAW)
-	if(CCACHE_VERSION VERSION_LESS ${CCACHE_FIND_VERSION})
+	if(NOT CCACHE_VERSION)
+		message(STATUS "Cannot determine ccache version. Not using ccache.")
+	elseif(CCACHE_VERSION VERSION_LESS ${CCACHE_FIND_VERSION})
 		message(STATUS "ccache version ${CCACHE_VERSION} is lower than requested version ${CCACHE_FIND_VERSION}. "
 		  "Not using ccache.")
 	elseif(DISABLE_CCACHE)

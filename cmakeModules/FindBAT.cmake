@@ -124,7 +124,7 @@ else()
 		set(BAT_FOUND FALSE)
 		set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT configuration '${_BAT_CONFIG_HEADER_FILE_NAME}' does not exist.")
 	else()
-		parse_version_from_configh_file(${_BAT_CONFIG_HEADER_FILE_NAME} BAT_VERSION)
+		parse_version_from_configh_file("${_BAT_CONFIG_HEADER_FILE_NAME}" BAT_VERSION)
 
 		# check whether BAT needs OpenMP
 		file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_OPENMP

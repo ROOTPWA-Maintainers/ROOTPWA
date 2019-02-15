@@ -58,7 +58,7 @@ if(PYLINT_EXECUTABLE)
 	execute_process(COMMAND ${PYLINT_EXECUTABLE} --version
 		OUTPUT_VARIABLE _PYLINT_VERSION_RAW
 		ERROR_QUIET)
-	parse_version_from_multline_string(${_PYLINT_VERSION_RAW} "pylint[ \t]+" PYLINT_VERSION)
+	parse_version_from_multline_string("${_PYLINT_VERSION_RAW}" "pylint[ \t]+" PYLINT_VERSION)
 endif()
 
 

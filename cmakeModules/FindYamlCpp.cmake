@@ -127,7 +127,7 @@ else()
 endif()
 unset(_YamlCpp_PKG_CONFIG_FILE_NAME)
 if(_YamlCpp_PC_FILE)
-	parse_version_from_pkg_config_file(${_YamlCpp_PC_FILE} YamlCpp_VERSION)
+	parse_version_from_pkg_config_file("${_YamlCpp_PC_FILE}" YamlCpp_VERSION)
 endif()
 unset(_YamlCpp_PC_FILE)
 
