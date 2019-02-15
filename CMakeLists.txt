@@ -171,23 +171,25 @@ unset(_LANG)
 #     https://stackoverflow.com/a/37828605
 #     https://stackoverflow.com/a/34317588
 option(DISABLE_CCACHE "If set to ON, ccache will not be used" OFF)
+set(CCACHE_FIND_VERSION "3.1.9")
 message(STATUS "")
 message(STATUS ">>> Checking for ccache.")
 find_program(CCACHE_EXECUTABLE ccache)
-mark_as_advanced(CCACHE_EXECUTABLE)
 if(NOT CCACHE_EXECUTABLE)
 	message(STATUS "Cannot find ccache in system paths.")
 endif()
 if(CCACHE_EXECUTABLE)
 	execute_process(COMMAND ${CCACHE_EXECUTABLE} --version
-		OUTPUT_VARIABLE _CCACHE_VERSION_INFO
+		OUTPUT_VARIABLE _CCACHE_VERSION_RAW
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-	string(REGEX REPLACE "\n" ";" _CCACHE_VERSION_INFO "${_CCACHE_VERSION_INFO}")
-	list(GET _CCACHE_VERSION_INFO 0 _CCACHE_VERSION_INFO)
-	message(STATUS "Found ${_CCACHE_VERSION_INFO}.")
-	unset(_CCACHE_VERSION_INFO)
-	if(DISABLE_CCACHE)
-		message(STATUS "ccache disabled via DISABLE_CCACHE.")
+	parse_version_from_multline_string(${_CCACHE_VERSION_RAW} "ccache[ \t]+version[ \t]+" CCACHE_VERSION)
+	message(STATUS "Found ccache version ${CCACHE_VERSION}.")
+	unset(_CCACHE_VERSION_RAW)
+	if(CCACHE_VERSION VERSION_LESS ${CCACHE_FIND_VERSION})
+		message(STATUS "ccache version ${CCACHE_VERSION} is lower than requested version ${CCACHE_FIND_VERSION}. "
+		  "Not using ccache.")
+	elseif(DISABLE_CCACHE)
+		message(STATUS "ccache is disabled via DISABLE_CCACHE.")
 	else()
 		foreach(_LANG "C" "CXX")
 			# expand path to actual compiler executable
@@ -201,7 +203,7 @@ if(CCACHE_EXECUTABLE)
 				# more restrictive would be ".*/ccache$", which requires "ccache" at the end
 				message(STATUS "ccache seems to be already in use for ${_LANG}.")
 			else()
-				message(STATUS "Enabling ccache for ${_LANG}")
+				message(STATUS "Enabling ccache for ${_LANG}.")
 				set(CMAKE_${_LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
 			endif()
 			unset(_LANG)
@@ -268,7 +270,7 @@ set_package_properties(Libconfig
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "http://www.hyperrealm.com/libconfig/"
-	PURPOSE "Used for defining partial-wave decay amplitudes"
+	PURPOSE "Used for defining partial-wave decay amplitudes via 'key' files"
 	TYPE REQUIRED
 	)
 
@@ -282,7 +284,7 @@ set_package_properties(YamlCpp
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "https://github.com/jbeder/yaml-cpp"
-	PURPOSE "Used for defining analysis environments"
+	PURPOSE "Used for defining analysis parameters"
 	TYPE REQUIRED
 	)
 
