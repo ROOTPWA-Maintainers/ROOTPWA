@@ -21,15 +21,15 @@
 #//-------------------------------------------------------------------------
 
 
-set(BAT_FOUND        FALSE)
+set(BAT_FOUND        TRUE)
 set(BAT_ERROR_REASON "")
 
-set(BAT_VERSION)
-set(BAT_ROOT_DIR)
-set(BAT_INCLUDE_DIR)
-set(BAT_LIBRARIES)
-set(BAT_CXX_FLAGS)
-set(BAT_LINKER_FLAGS)
+set(BAT_VERSION      NOTFOUND)
+set(BAT_ROOT_DIR     NOTFOUND)
+set(BAT_INCLUDE_DIR  NOTFOUND)
+set(BAT_LIBRARIES    NOTFOUND)
+set(BAT_CXX_FLAGS    "")
+set(BAT_LINKER_FLAGS "")
 
 
 # try to get the environment variable pointing to the BAT installation
@@ -38,32 +38,22 @@ set(BAT_ROOT_DIR $ENV{BATINSTALLDIR})
 # if the environment variable BATINSTALLDIR is empty, look whether 'bat-config'
 # is somewhere in the path
 if(NOT BAT_ROOT_DIR)
-
-	find_program(_BAT_CONFIG_EXECUTABLE
-		bat-config)
+	find_program(_BAT_CONFIG_EXECUTABLE bat-config)
 	if(_BAT_CONFIG_EXECUTABLE)
 		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --prefix
 			OUTPUT_VARIABLE BAT_ROOT_DIR
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 	endif()
-
+endif()
+if(NOT BAT_ROOT_DIR)
+	set(BAT_FOUND FALSE)
+	set(BAT_ERROR_REASON "${BAT_ERROR_REASON} cannot find BAT directory. Either environment variable BAT_ROOT_DIR is not set correctly or bat-config is not in path.")
 endif()
 
 
-if(NOT BAT_ROOT_DIR)
-	set(BAT_FOUND FALSE)
-	set(BAT_ERROR_REASON "${BAT_ERROR_REASON} cannot find BAT directory. "
-		"Either environment variable BAT_ROOT_DIR is not set correctly or bat-config is not in path.")
-else()
+if(BAT_ROOT_DIR)
 
-	set(BAT_FOUND TRUE)
-
-	set(BAT_INCLUDE_DIR "${BAT_ROOT_DIR}/include")
-	if(NOT EXISTS "${BAT_INCLUDE_DIR}")
-		set(BAT_FOUND FALSE)
-		set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Directory '${BAT_INCLUDE_DIR}' does not exist.")
-	endif()
-
+	# find the library
 	set(_BAT_LIBRARY_DIR "${BAT_ROOT_DIR}/lib")
 	if(NOT EXISTS "${_BAT_LIBRARY_DIR}")
 		set(BAT_FOUND FALSE)
@@ -82,130 +72,102 @@ else()
 	endif()
 	unset(_BAT_LIBRARY_DIR)
 
-	# if 'bat-config' was already found above this will not change
-	# anything, if it was not yet searched then only look in BAT_ROOT_DIR
-	find_program(_BAT_CONFIG_EXECUTABLE
-		bat-config
+	# find the include directory
+	set(BAT_INCLUDE_DIR "${BAT_ROOT_DIR}/include")
+	if(NOT EXISTS "${BAT_INCLUDE_DIR}")
+		set(BAT_FOUND FALSE)
+		set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Directory '${BAT_INCLUDE_DIR}' does not exist.")
+	endif()
+
+	# find bat-config executable
+	# if it was already found above, this will not change anything, if
+	# it was not found only look in BAT_ROOT_DIR
+	find_program(_BAT_CONFIG_EXECUTABLE bat-config
 		PATHS ${BAT_ROOT_DIR}/bin
 		NO_DEFAULT_PATH)
 
-	# prefer to extract the version from 'bat-config'
-	if(_BAT_CONFIG_EXECUTABLE)
-
-		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --version
-			OUTPUT_VARIABLE BAT_VERSION
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --cflags
-			OUTPUT_VARIABLE _BAT_CFLAGS
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		string(FIND ${_BAT_CFLAGS} "-fopenmp" _BAT_OPENMP)
-		if(NOT _BAT_OPENMP EQUAL -1)
-			set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
-		endif()
-		unset(_BAT_CFLAGS)
-		unset(_BAT_OPENMP)
-
-		execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --libs
-			OUTPUT_VARIABLE _BAT_LDFLAGS
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		string(FIND ${_BAT_LDFLAGS} "-fopenmp" _BAT_OPENMP)
-		if(NOT _BAT_OPENMP EQUAL -1)
-			set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
-		endif()
-		unset(_BAT_LDFLAGS)
-		unset(_BAT_OPENMP)
-
-	else()
-
-		set(_BAT_CONFIG_HEADER_FILE_NAME "${BAT_ROOT_DIR}/config.h")
-		if(NOT EXISTS "${_BAT_CONFIG_HEADER_FILE_NAME}")
-			set(BAT_FOUND FALSE)
-			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT configuration '${_BAT_CONFIG_HEADER_FILE_NAME}' does not exist.")
-		else()
-			# parse version string
-			file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_VERSION
-				REGEX " VERSION ")
-			# there are two versions of the version string around,
-			# the first (and more recent) contains four parts of
-			# numbers divided by dots
-			string(REGEX REPLACE
-				"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)\""
-				"\\1" BAT_VERSION "${_BAT_VERSION}")
-			if(BAT_VERSION STREQUAL _BAT_VERSION)
-				# otherwise try to extract the version from only
-				# three parts
-				string(REGEX REPLACE
-					"#define VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\""
-					"\\1" BAT_VERSION "${_BAT_VERSION}")
-			endif()
-			if(BAT_VERSION STREQUAL _BAT_VERSION)
-				set(BAT_FOUND FALSE)
-				set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract BAT version from version string '${_BAT_VERSION}'.")
-			endif()
-			unset(_BAT_VERSION)
-
-			# build with OpenMP support
-			file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_OPENMP
-				REGEX " THREAD_PARALLELIZATION ")
-			string(REGEX REPLACE
-				"#define THREAD_PARALLELIZATION ([01])"
-				"\\1" _BAT_OPENMP_STATUS "${_BAT_OPENMP}")
-			if(_BAT_OPENMP_STATUS STREQUAL _BAT_OPENMP)
-				set(BAT_FOUND FALSE)
-				set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract whether BAT was build with threading support from string '${_BAT_OPENMP}'.")
-			endif()
-			if(_BAT_OPENMP_STATUS)
-				set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
-				set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
-			endif()
-			unset(_BAT_OPENMP)
-			unset(_BAT_OPENMP_STATUS)
-		endif()
-		unset(_BAT_CONFIG_HEADER_FILE_NAME)
-
-	endif()
-
-	# compare version
-	if(BAT_FIND_VERSION_EXACT)
-		if(NOT BAT_VERSION VERSION_EQUAL BAT_FIND_VERSION)
-			set(BAT_FOUND FALSE)
-			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT version ${BAT_VERSION} does not match requested version ${BAT_FIND_VERSION}.")
-		endif()
-	else()
-		if(BAT_VERSION VERSION_LESS BAT_FIND_VERSION)
-			set(BAT_FOUND FALSE)
-			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT version ${BAT_VERSION} is lower than requested version ${BAT_FIND_VERSION}.")
-		endif()
-	endif()
-
 endif()
 
+
+if(_BAT_CONFIG_EXECUTABLE)
+	# prefer to extract version and OpenMP info from 'bat-config'
+
+	# get version
+	execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --version
+		OUTPUT_VARIABLE BAT_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+	# check whether BAT needs OpenMP
+	execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --cflags
+		OUTPUT_VARIABLE _BAT_CFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	string(FIND ${_BAT_CFLAGS} "-fopenmp" _BAT_OPENMP)
+	if(NOT _BAT_OPENMP EQUAL -1)
+		set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
+	endif()
+	unset(_BAT_CFLAGS)
+	execute_process(COMMAND ${_BAT_CONFIG_EXECUTABLE} --libs
+		OUTPUT_VARIABLE _BAT_LDFLAGS
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	string(FIND ${_BAT_LDFLAGS} "-fopenmp" _BAT_OPENMP)
+	if(NOT _BAT_OPENMP EQUAL -1)
+		set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
+	endif()
+	unset(_BAT_LDFLAGS)
+	unset(_BAT_OPENMP)
+
+else()
+# extract version and OpenMP info from config.h
+
+	set(_BAT_CONFIG_HEADER_FILE_NAME "${BAT_ROOT_DIR}/config.h")
+	if(NOT EXISTS "${_BAT_CONFIG_HEADER_FILE_NAME}")
+		set(BAT_FOUND FALSE)
+		set(BAT_ERROR_REASON "${BAT_ERROR_REASON} BAT configuration '${_BAT_CONFIG_HEADER_FILE_NAME}' does not exist.")
+	else()
+		parse_version_from_configh_file(${_BAT_CONFIG_HEADER_FILE_NAME} BAT_VERSION)
+
+		# check whether BAT needs OpenMP
+		file(STRINGS ${_BAT_CONFIG_HEADER_FILE_NAME} _BAT_OPENMP
+			REGEX " THREAD_PARALLELIZATION ")
+		string(REGEX REPLACE
+			"#define THREAD_PARALLELIZATION ([01])"
+			"\\1" _BAT_OPENMP_FLAG "${_BAT_OPENMP}")
+		if(_BAT_OPENMP_FLAG STREQUAL _BAT_OPENMP)
+			set(BAT_FOUND FALSE)
+			set(BAT_ERROR_REASON "${BAT_ERROR_REASON} Could not extract whether BAT was build with OpenMP support from string '${_BAT_OPENMP}'.")
+		endif()
+		if(_BAT_OPENMP_FLAG)
+			set(BAT_CXX_FLAGS "${BAT_CXX_FLAGS} -fopenmp")
+			set(BAT_LINKER_FLAGS "${BAT_LINKER_FLAGS} -fopenmp")
+		endif()
+		unset(_BAT_OPENMP)
+		unset(_BAT_OPENMP_FLAG)
+	endif()
+	unset(_BAT_CONFIG_HEADER_FILE_NAME)
+
+endif()
 
 # remove leading and trailing whitespaces
 string(STRIP "${BAT_CXX_FLAGS}" BAT_CXX_FLAGS)
 string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
 
 
-# report result
-if(BAT_FOUND)
-	message(STATUS "Found BAT version ${BAT_VERSION} in '${BAT_ROOT_DIR}'.")
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(BAT
+	FOUND_VAR BAT_FOUND
+	REQUIRED_VARS BAT_ROOT_DIR BAT_VERSION BAT_INCLUDE_DIR BAT_LIBRARIES
+	VERSION_VAR BAT_VERSION
+	FAIL_MESSAGE "Unable to find requested BAT installation:${BAT_ERROR_REASON}")
+# additional reporting
+if(BAT_FOUND AND NOT BAT_FIND_QUIETLY)
 	message(STATUS "Using BAT include directory '${BAT_INCLUDE_DIR}'.")
 	message(STATUS "Using BAT libraries '${BAT_LIBRARIES}'.")
 	message(STATUS "Using extra CXX_FLAGS for BAT '${BAT_CXX_FLAGS}'.")
 	message(STATUS "Using extra LINKER_FLAGS for BAT '${BAT_LINKER_FLAGS}'.")
-else()
-	if(BAT_FIND_REQUIRED)
-		message(FATAL_ERROR "Unable to find requested BAT installation:${BAT_ERROR_REASON}")
-	else()
-		if(NOT BAT_FIND_QUIETLY)
-			message(STATUS "BAT version ${BAT_FIND_VERSION}+ was not found:${BAT_ERROR_REASON}")
-		endif()
-	endif()
 endif()
 
 
-# make variables changeable
+# hide variables from normal GUI
 mark_as_advanced(
 	BAT_VERSION
 	BAT_ROOT_DIR
@@ -214,3 +176,13 @@ mark_as_advanced(
 	BAT_CXX_FLAGS
 	BAT_LINKER_FLAGS
 	)
+
+
+if(NOT BAT_FOUND)
+	unset(BAT_VERSION)
+	unset(BAT_ROOT_DIR)
+	unset(BAT_INCLUDE_DIR)
+	unset(BAT_LIBRARIES)
+	unset(BAT_CXX_FLAGS)
+	unset(BAT_LINKER_FLAGS)
+endif()

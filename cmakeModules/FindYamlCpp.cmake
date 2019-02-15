@@ -42,11 +42,11 @@
 set(YamlCpp_FOUND        TRUE)
 set(YamlCpp_ERROR_REASON "")
 
-set(YamlCpp_VERSION)
-set(YamlCpp_DIR)
-set(YamlCpp_INCLUDE_DIR)
-Set(YamlCpp_LIBRARY_DIR)
-set(YamlCpp_LIBS)
+set(YamlCpp_VERSION     NOTFOUND)
+set(YamlCpp_DIR         NOTFOUND)
+set(YamlCpp_INCLUDE_DIR NOTFOUND)
+Set(YamlCpp_LIBRARY_DIR NOTFOUND)
+set(YamlCpp_LIBS        NOTFOUND)
 
 
 # try to get the environment variable pointing to the yaml-cpp installation
@@ -62,13 +62,11 @@ if(YamlCpp_DIR)
 		NAMES ${_YamlCpp_LIBRARY_NAME}
 		PATHS ${YamlCpp_DIR}/lib
 		      ${YamlCpp_DIR}/build
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_library(YamlCpp_LIBS
-		NAMES ${_YamlCpp_LIBRARY_NAME}
-		)
+		NAMES ${_YamlCpp_LIBRARY_NAME})
 endif()
 if(YamlCpp_LIBS)
 	get_filename_component(YamlCpp_LIBRARY_DIR ${YamlCpp_LIBS} DIRECTORY)
@@ -92,13 +90,11 @@ if(YamlCpp_DIR)
 	find_path(YamlCpp_INCLUDE_DIR
 		NAMES ${_YamlCpp_HEADER_FILE_NAME}
 		PATHS ${YamlCpp_DIR}/include
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_path(YamlCpp_INCLUDE_DIR
-		NAMES ${_YamlCpp_HEADER_FILE_NAME}
-		)
+		NAMES ${_YamlCpp_HEADER_FILE_NAME})
 endif()
 if(NOT YamlCpp_INCLUDE_DIR)
 	set(YamlCpp_FOUND FALSE)
@@ -121,16 +117,13 @@ if(YamlCpp_DIR)
 		NAMES ${_YamlCpp_PKG_CONFIG_FILE_NAME}
 		PATHS ${YamlCpp_DIR}/lib/pkgconfig
 		      ${YamlCpp_DIR}/build
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_file(_YamlCpp_PC_FILE
 		NAMES ${_YamlCpp_PKG_CONFIG_FILE_NAME}
 		PATHS ${YamlCpp_LIBRARY_DIR}/pkgconfig
-		      ${YamlCpp_LIBRARY_DIR}
-		#NO_DEFAULT_PATH
-		)
+		      ${YamlCpp_LIBRARY_DIR})
 endif()
 unset(_YamlCpp_PKG_CONFIG_FILE_NAME)
 if(_YamlCpp_PC_FILE)
@@ -139,57 +132,20 @@ endif()
 unset(_YamlCpp_PC_FILE)
 
 
-# check the version
-if(NOT YamlCpp_VERSION)
-	if(YamlCpp_FIND_VERSION_EXACT)
-		set(YamlCpp_FOUND FALSE)
-		set(YamlCpp_ERROR_REASON "${YamlCpp_ERROR_REASON} Exact version of yaml-cpp required, "
-			"but the version could not be extracted.")
-	else()
-		set(YamlCpp_VERSION "unknown")
-		message(WARNING "Could not extract version for yaml-cpp, let's hope it still works.")
-	endif()
-else()
-	if(YamlCpp_FIND_VERSION_EXACT)
-		if(NOT YamlCpp_VERSION VERSION_EQUAL YamlCpp_FIND_VERSION)
-			set(YamlCpp_FOUND FALSE)
-			set(YamlCpp_ERROR_REASON "${YamlCpp_ERROR_REASON} yaml-cpp version ${YamlCpp_VERSION} does not match requested version ${YamlCpp_FIND_VERSION}.")
-		endif()
-	else()
-		if(YamlCpp_VERSION VERSION_LESS YamlCpp_FIND_VERSION)
-			set(YamlCpp_FOUND FALSE)
-			set(YamlCpp_ERROR_REASON "${YamlCpp_ERROR_REASON} yaml-cpp version ${YamlCpp_VERSION} is lower than requested version ${YamlCpp_FIND_VERSION}.")
-		endif()
-	endif()
-endif()
-
-
-# report result
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(YamlCpp
+	FOUND_VAR YamlCpp_FOUND
+	REQUIRED_VARS YamlCpp_DIR YamlCpp_VERSION YamlCpp_INCLUDE_DIR YamlCpp_LIBRARY_DIR YamlCpp_LIBS
+	VERSION_VAR YamlCpp_VERSION
+	FAIL_MESSAGE "Unable to find requested YamlCpp installation:${YamlCpp_ERROR_REASON}")
+# additional reporting
 if(YamlCpp_FOUND)
-	message(STATUS "Found yaml-cpp version ${YamlCpp_VERSION} in '${YamlCpp_DIR}'.")
 	message(STATUS "Using yaml-cpp include directory '${YamlCpp_INCLUDE_DIR}'.")
 	message(STATUS "Using yaml-cpp library '${YamlCpp_LIBS}'.")
-else()
-	unset(YamlCpp_DIR)
-	unset(YamlCpp_INCLUDE_DIR)
-	unset(YamlCpp_LIBS)
-	unset(YamlCpp_VERSION)
-
-	if(YamlCpp_FIND_REQUIRED)
-		message(FATAL_ERROR "Unable to find requested yaml-cpp installation:${YamlCpp_ERROR_REASON}")
-	else()
-		if(NOT YamlCpp_FIND_QUIETLY)
-			if(YamlCpp_FIND_VERSION_EXACT)
-				message(STATUS "yaml-cpp version ${YamlCpp_FIND_VERSION} was not found:${YamlCpp_ERROR_REASON}")
-			else()
-				message(STATUS "yaml-cpp version ${YamlCpp_FIND_VERSION} or later was not found:${YamlCpp_ERROR_REASON}")
-			endif()
-		endif()
-	endif()
 endif()
 
 
-# make variables changeable
+# hide variables from normal GUI
 mark_as_advanced(
 	YamlCpp_VERSION
 	YamlCpp_DIR
@@ -197,3 +153,12 @@ mark_as_advanced(
 	YamlCpp_LIBRARY_DIR
 	YamlCpp_LIBS
 	)
+
+
+if(NOT YamlCpp_Found)
+	unset(YamlCpp_VERSION)
+	unset(YamlCpp_DIR)
+	unset(YamlCpp_INCLUDE_DIR)
+	unset(YamlCpp_LIBRARY_DIR)
+	unset(YamlCpp_LIBS)
+endif()

@@ -44,14 +44,14 @@
 set(Libconfig_FOUND        TRUE)
 set(Libconfig_ERROR_REASON "")
 
-set(Libconfig_VERSION)
-set(Libconfig_MAJOR_VERSION)
-set(Libconfig_MINOR_VERSION)
-set(Libconfig_SUBMINOR_VERSION)
-set(Libconfig_DIR)
-set(Libconfig_INCLUDE_DIR)
-set(Libconfig_LIBRARY_DIR)
-set(Libconfig_LIBS)
+set(Libconfig_VERSION          NOTFOUND)
+set(Libconfig_MAJOR_VERSION    NOTFOUND)
+set(Libconfig_MINOR_VERSION    NOTFOUND)
+set(Libconfig_SUBMINOR_VERSION NOTFOUND)
+set(Libconfig_DIR              NOTFOUND)
+set(Libconfig_INCLUDE_DIR      NOTFOUND)
+set(Libconfig_LIBRARY_DIR      NOTFOUND)
+set(Libconfig_LIBS             NOTFOUND)
 
 
 # try to get the environment variable pointing to the Libconfig installation
@@ -66,24 +66,20 @@ if(Libconfig_DIR)
 	find_library(Libconfig_LIBS
 		NAMES ${_Libconfig_LIBRARY_NAMES}
 		PATHS ${Libconfig_DIR}/lib
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_library(Libconfig_LIBS
-		NAMES ${_Libconfig_LIBRARY_NAMES}
-		)
+		NAMES ${_Libconfig_LIBRARY_NAMES})
 endif()
 if(Libconfig_LIBS)
 	get_filename_component(Libconfig_LIBRARY_DIR ${Libconfig_LIBS} DIRECTORY)
 else()
 	set(Libconfig_FOUND FALSE)
 	if(Libconfig_DIR)
-		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig library '${_Libconfig_LIBRARY_NAMES}' "
-			"in directory '${Libconfig_DIR}/lib'.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig library '${_Libconfig_LIBRARY_NAMES}' in directory '${Libconfig_DIR}/lib'.")
 	else()
-		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig library '${_Libconfig_LIBRARY_NAMES}' "
-			"in any standard library directory.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig library '${_Libconfig_LIBRARY_NAMES}' in any standard library directory.")
 	endif()
 endif()
 unset(_Libconfig_LIBRARY_NAMES)
@@ -96,105 +92,76 @@ if(Libconfig_DIR)
 	find_path(Libconfig_INCLUDE_DIR
 		NAMES ${_Libconfig_HEADER_FILE_NAME}
 		PATHS ${Libconfig_DIR}/include
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_path(Libconfig_INCLUDE_DIR
-		NAMES ${_Libconfig_HEADER_FILE_NAME}
-		)
+		NAMES ${_Libconfig_HEADER_FILE_NAME})
 endif()
 if(NOT Libconfig_INCLUDE_DIR)
 	set(Libconfig_FOUND FALSE)
 	if(Libconfig_DIR)
-		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig include file '${_Libconfig_HEADER_FILE_NAME}' "
-			"in directory '${Libconfig_DIR}/include'.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig include file '${_Libconfig_HEADER_FILE_NAME}' in directory '${Libconfig_DIR}/include'.")
 	else()
-		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig include file '${_Libconfig_HEADER_FILE_NAME}' "
-			"in any standard include directory.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Did not find Libconfig include file '${_Libconfig_HEADER_FILE_NAME}' in any standard include directory.")
 	endif()
 endif()
 
 
-# try to get the version from the header file
+# get version from header file
 if(Libconfig_DIR)
 	# search only in Libconfig_DIR
 	find_file(_Libconfig_HEADER_FILE
 		NAMES ${_Libconfig_HEADER_FILE_NAME}
 		PATHS ${Libconfig_DIR}/include
-		NO_DEFAULT_PATH
-		)
+		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_file(_Libconfig_HEADER_FILE
-		NAMES ${_Libconfig_HEADER_FILE_NAME}
-		)
+		NAMES ${_Libconfig_HEADER_FILE_NAME})
 endif()
 if(_Libconfig_HEADER_FILE)
-
 	# parse version string
-	file(STRINGS ${_Libconfig_HEADER_FILE} _Libconfig_VERSIONS
+	file(STRINGS ${_Libconfig_HEADER_FILE} _Libconfig_VERSION_LINES
 		REGEX "LIBCONFIGXX_VER_(MAJOR|MINOR|REVISION)")
-	list(LENGTH _Libconfig_VERSIONS _NMB_Libconfig_VERSIONS)
-	if(NOT _NMB_Libconfig_VERSIONS EQUAL 3)
+	list(LENGTH _Libconfig_VERSION_LINES _NMB_Libconfig_VERSION_LINES)
+	if(NOT _NMB_Libconfig_VERSION_LINES EQUAL 3)
 		set(Libconfig_FOUND FALSE)
-		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot determine Libconfig version from file '${_Libconfig_HEADER_FILE}'.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot determine Libconfig version: file '${_Libconfig_HEADER_FILE}' contains ${_NMB_Libconfig_VERSION_LINES} instead of 3 version lines.")
 	else()
 		string(REGEX REPLACE
 			"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_MAJOR[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
-			"\\1"	Libconfig_MAJOR_VERSION "${_Libconfig_VERSIONS}")
+			"\\1"	Libconfig_MAJOR_VERSION "${_Libconfig_VERSION_LINES}")
 		string(REGEX REPLACE
 			"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_MINOR[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
-			"\\1" Libconfig_MINOR_VERSION "${_Libconfig_VERSIONS}")
+			"\\1" Libconfig_MINOR_VERSION "${_Libconfig_VERSION_LINES}")
 		string(REGEX REPLACE
 			"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_REVISION[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
-			"\\1"	Libconfig_SUBMINOR_VERSION "${_Libconfig_VERSIONS}")
+			"\\1"	Libconfig_SUBMINOR_VERSION "${_Libconfig_VERSION_LINES}")
 	endif()
 	set(Libconfig_VERSION
 		"${Libconfig_MAJOR_VERSION}.${Libconfig_MINOR_VERSION}.${Libconfig_SUBMINOR_VERSION}")
-	unset(_Libconfig_VERSIONS)
-	unset(_NMB_Libconfig_VERSIONS)
+	unset(_Libconfig_VERSION_LINES)
+	unset(_NMB_Libconfig_VERSION_LINES)
 endif()
 unset(_Libconfig_HEADER_FILE)
 unset(_Libconfig_HEADER_FILE_NAME)
 
 
-# check the version
-if(NOT Libconfig_VERSION)
-	set(Libconfig_FOUND FALSE)
-	set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Could not extract version for Libconfig.")
-else()
-	if(Libconfig_FIND_VERSION_EXACT)
-		if(NOT Libconfig_VERSION VERSION_EQUAL Libconfig_FIND_VERSION)
-			set(Libconfig_FOUND FALSE)
-			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} does not match requested version ${Libconfig_FIND_VERSION}.")
-		endif()
-	else()
-		if(Libconfig_VERSION VERSION_LESS Libconfig_FIND_VERSION)
-			set(Libconfig_FOUND FALSE)
-			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} is lower than requested version ${Libconfig_FIND_VERSION}.")
-		endif()
-	endif()
-endif()
-
-
-# report result
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Libconfig
+	FOUND_VAR Libconfig_FOUND
+	REQUIRED_VARS Libconfig_DIR Libconfig_VERSION Libconfig_INCLUDE_DIR Libconfig_LIBRARY_DIR Libconfig_LIBS
+	VERSION_VAR Libconfig_VERSION
+	FAIL_MESSAGE "Unable to find requested Libconfig installation:${Libconfig_ERROR_REASON}")
+# additional reporting
 if(Libconfig_FOUND)
-	message(STATUS "Found Libconfig version ${Libconfig_VERSION} in '${Libconfig_DIR}'.")
 	message(STATUS "Using Libconfig include directory '${Libconfig_INCLUDE_DIR}'.")
 	message(STATUS "Using Libconfig library '${Libconfig_LIBS}'.")
-else()
-	if(Libconfig_FIND_REQUIRED)
-		message(FATAL_ERROR "Unable to find requested Libconfig installation:${Libconfig_ERROR_REASON}")
-	else()
-		if(NOT Libconfig_FIND_QUIETLY)
-			message(STATUS "Libconfig version ${Libconfig_FIND_VERSION}+ was not found:${Libconfig_ERROR_REASON}")
-		endif()
-	endif()
 endif()
 
 
-# make variables changeable
+# hide variables from normal GUI
 mark_as_advanced(
 	Libconfig_VERSION
 	Libconfig_MAJOR_VERSION
@@ -205,3 +172,15 @@ mark_as_advanced(
 	Libconfig_LIBRARY_DIR
 	Libconfig_LIBS
 	)
+
+
+if(NOT Libconfig_FOUND)
+	unset(Libconfig_VERSION)
+	unset(Libconfig_MAJOR_VERSION)
+	unset(Libconfig_MINOR_VERSION)
+	unset(Libconfig_SUBMINOR_VERSION)
+	unset(Libconfig_DIR)
+	unset(Libconfig_INCLUDE_DIR)
+	unset(Libconfig_LIBRARY_DIR)
+	unset(Libconfig_LIBS)
+endif()
