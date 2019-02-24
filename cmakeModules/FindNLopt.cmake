@@ -58,8 +58,8 @@ if(NLopt_DIR)
 	# search only in NLopt_DIR
 	find_library(NLopt_LIBS
 		NAMES ${_NLopt_LIBRARY_NAMES}
-		PATHS ${NLopt_DIR}/lib
-		      ${NLopt_DIR}/build
+		PATHS "${NLopt_DIR}/lib"
+		      "${NLopt_DIR}/build"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -85,8 +85,8 @@ if(NLopt_DIR)
 	# search only in NLopt_DIR
 	find_path(NLopt_INCLUDE_DIR
 		NAMES ${_NLopt_HEADER_FILE_NAME}
-		PATHS ${NLopt_DIR}/include
-		      ${NLopt_DIR}/build/src/api
+		PATHS "${NLopt_DIR}/include"
+		      "${NLopt_DIR}/build/src/api"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -110,33 +110,34 @@ if(NLopt_DIR)
 	# search only in NLopt_DIR
 	find_file(_NLopt_PC_FILE
 		NAMES ${_NLopt_PKG_CONFIG_FILE_NAME}
-		PATHS ${NLopt_DIR}/lib/pkgconfig
-		      ${NLopt_DIR}/build
+		PATHS "${NLopt_DIR}/lib/pkgconfig"
+		      "${NLopt_DIR}/build"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_file(_NLopt_PC_FILE
 		NAMES ${_NLopt_PKG_CONFIG_FILE_NAME}
-		PATHS ${NLopt_LIBRARY_DIR}/pkgconfig
-		      ${NLopt_LIBRARY_DIR})
+		PATHS "${NLopt_LIBRARY_DIR}/pkgconfig"
+		      "${NLopt_LIBRARY_DIR}")
 endif()
 if(_NLopt_PC_FILE)
 	parse_version_from_pkg_config_file("${_NLopt_PC_FILE}" NLopt_VERSION)
 endif()
-	unset(_NLopt_PKG_CONFIG_FILE_NAME)
+unset(_NLopt_PKG_CONFIG_FILE_NAME)
 unset(_NLopt_PC_FILE)
 
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NLopt
 	FOUND_VAR NLopt_FOUND
-	REQUIRED_VARS NLopt_DIR NLopt_VERSION NLopt_INCLUDE_DIR NLopt_LIBRARY_DIR NLopt_LIBS
-	VERSION_VAR NLopt_VERSION
-	FAIL_MESSAGE "Unable to find requested NLopt installation:${NLopt_ERROR_REASON}")
+	REQUIRED_VARS NLopt_VERSION NLopt_INCLUDE_DIR NLopt_LIBRARY_DIR NLopt_LIBS
+	VERSION_VAR NLopt_VERSION)
 # additional reporting
 if(NLopt_FOUND)
 	message(STATUS "Using NLopt include directory '${NLopt_INCLUDE_DIR}'.")
 	message(STATUS "Using NLopt library '${NLopt_LIBS}'.")
+else()
+	message(STATUS "Unable to find requested NLopt installation:${NLopt_ERROR_REASON}")
 endif()
 
 

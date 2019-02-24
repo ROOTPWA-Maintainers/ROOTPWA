@@ -60,8 +60,8 @@ if(YamlCpp_DIR)
 	# search only in YamlCpp_DIR
 	find_library(YamlCpp_LIBS
 		NAMES ${_YamlCpp_LIBRARY_NAME}
-		PATHS ${YamlCpp_DIR}/lib
-		      ${YamlCpp_DIR}/build
+		PATHS "${YamlCpp_DIR}/lib"
+		      "${YamlCpp_DIR}/build"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -89,7 +89,7 @@ if(YamlCpp_DIR)
 	# search only in YamlCpp_DIR
 	find_path(YamlCpp_INCLUDE_DIR
 		NAMES ${_YamlCpp_HEADER_FILE_NAME}
-		PATHS ${YamlCpp_DIR}/include
+		PATHS "${YamlCpp_DIR}/include"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -115,15 +115,15 @@ if(YamlCpp_DIR)
 	# search only in YamlCpp_DIR
 	find_file(_YamlCpp_PC_FILE
 		NAMES ${_YamlCpp_PKG_CONFIG_FILE_NAME}
-		PATHS ${YamlCpp_DIR}/lib/pkgconfig
-		      ${YamlCpp_DIR}/build
+		PATHS "${YamlCpp_DIR}/lib/pkgconfig"
+		      "${YamlCpp_DIR}/build"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
 	find_file(_YamlCpp_PC_FILE
 		NAMES ${_YamlCpp_PKG_CONFIG_FILE_NAME}
-		PATHS ${YamlCpp_LIBRARY_DIR}/pkgconfig
-		      ${YamlCpp_LIBRARY_DIR})
+		PATHS "${YamlCpp_LIBRARY_DIR}/pkgconfig"
+		      "${YamlCpp_LIBRARY_DIR}")
 endif()
 unset(_YamlCpp_PKG_CONFIG_FILE_NAME)
 if(_YamlCpp_PC_FILE)
@@ -135,13 +135,14 @@ unset(_YamlCpp_PC_FILE)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(YamlCpp
 	FOUND_VAR YamlCpp_FOUND
-	REQUIRED_VARS YamlCpp_DIR YamlCpp_VERSION YamlCpp_INCLUDE_DIR YamlCpp_LIBRARY_DIR YamlCpp_LIBS
-	VERSION_VAR YamlCpp_VERSION
-	FAIL_MESSAGE "Unable to find requested YamlCpp installation:${YamlCpp_ERROR_REASON}")
+	REQUIRED_VARS YamlCpp_VERSION YamlCpp_INCLUDE_DIR YamlCpp_LIBRARY_DIR YamlCpp_LIBS
+	VERSION_VAR YamlCpp_VERSION)
 # additional reporting
 if(YamlCpp_FOUND)
 	message(STATUS "Using yaml-cpp include directory '${YamlCpp_INCLUDE_DIR}'.")
 	message(STATUS "Using yaml-cpp library '${YamlCpp_LIBS}'.")
+else()
+	message(STATUS "Unable to find requested YamlCpp installation:${YamlCpp_ERROR_REASON}")
 endif()
 
 

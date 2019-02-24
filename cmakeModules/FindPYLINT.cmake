@@ -66,8 +66,11 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PYLINT
 	FOUND_VAR PYLINT_FOUND
 	REQUIRED_VARS PYLINT_EXECUTABLE PYLINT_VERSION
-	VERSION_VAR PYLINT_VERSION
-	FAIL_MESSAGE "Unable to find requested pylint installation:${PYLINT_ERROR_REASON}")
+	VERSION_VAR PYLINT_VERSION)
+# additional reporting
+if(NOT PYLINT_FOUND)
+	message(STATUS "Unable to find requested pylint installation:${PYLINT_ERROR_REASON}")
+endif()
 
 
 # hide variables from normal GUI

@@ -62,7 +62,7 @@ if(BAT_ROOT_DIR)
 		set(_BAT_LIBRARY_NAME "BAT")
 		find_library(BAT_LIBRARIES
 			NAMES ${_BAT_LIBRARY_NAME}
-			PATHS ${_BAT_LIBRARY_DIR}
+			PATHS "${_BAT_LIBRARY_DIR}"
 			NO_DEFAULT_PATH)
 		if(NOT BAT_LIBRARIES)
 			set(BAT_FOUND FALSE)
@@ -83,7 +83,7 @@ if(BAT_ROOT_DIR)
 	# if it was already found above, this will not change anything, if
 	# it was not found only look in BAT_ROOT_DIR
 	find_program(_BAT_CONFIG_EXECUTABLE bat-config
-		PATHS ${BAT_ROOT_DIR}/bin
+		PATHS "${BAT_ROOT_DIR}/bin"
 		NO_DEFAULT_PATH)
 
 endif()
@@ -156,14 +156,15 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BAT
 	FOUND_VAR BAT_FOUND
 	REQUIRED_VARS BAT_ROOT_DIR BAT_VERSION BAT_INCLUDE_DIR BAT_LIBRARIES
-	VERSION_VAR BAT_VERSION
-	FAIL_MESSAGE "Unable to find requested BAT installation:${BAT_ERROR_REASON}")
+	VERSION_VAR BAT_VERSION)
 # additional reporting
 if(BAT_FOUND AND NOT BAT_FIND_QUIETLY)
 	message(STATUS "Using BAT include directory '${BAT_INCLUDE_DIR}'.")
 	message(STATUS "Using BAT libraries '${BAT_LIBRARIES}'.")
 	message(STATUS "Using extra CXX_FLAGS for BAT '${BAT_CXX_FLAGS}'.")
 	message(STATUS "Using extra LINKER_FLAGS for BAT '${BAT_LINKER_FLAGS}'.")
+elseif(NOT BAT_FOUND)
+	message(STATUS "Unable to find requested BAT installation:${BAT_ERROR_REASON}")
 endif()
 
 

@@ -65,7 +65,7 @@ if(Libconfig_DIR)
 	# search only in Libconfig_DIR
 	find_library(Libconfig_LIBS
 		NAMES ${_Libconfig_LIBRARY_NAMES}
-		PATHS ${Libconfig_DIR}/lib
+		PATHS "${Libconfig_DIR}/lib"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -91,7 +91,7 @@ if(Libconfig_DIR)
 	# search only in Libconfig_DIR
 	find_path(Libconfig_INCLUDE_DIR
 		NAMES ${_Libconfig_HEADER_FILE_NAME}
-		PATHS ${Libconfig_DIR}/include
+		PATHS "${Libconfig_DIR}/include"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -113,7 +113,7 @@ if(Libconfig_DIR)
 	# search only in Libconfig_DIR
 	find_file(_Libconfig_HEADER_FILE
 		NAMES ${_Libconfig_HEADER_FILE_NAME}
-		PATHS ${Libconfig_DIR}/include
+		PATHS "${Libconfig_DIR}/include"
 		NO_DEFAULT_PATH)
 else()
 	# search system-wide
@@ -151,13 +151,14 @@ unset(_Libconfig_HEADER_FILE_NAME)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Libconfig
 	FOUND_VAR Libconfig_FOUND
-	REQUIRED_VARS Libconfig_DIR Libconfig_VERSION Libconfig_INCLUDE_DIR Libconfig_LIBRARY_DIR Libconfig_LIBS
-	VERSION_VAR Libconfig_VERSION
-	FAIL_MESSAGE "Unable to find requested Libconfig installation:${Libconfig_ERROR_REASON}")
+	REQUIRED_VARS Libconfig_VERSION Libconfig_INCLUDE_DIR Libconfig_LIBRARY_DIR Libconfig_LIBS
+	VERSION_VAR Libconfig_VERSION)
 # additional reporting
 if(Libconfig_FOUND)
 	message(STATUS "Using Libconfig include directory '${Libconfig_INCLUDE_DIR}'.")
 	message(STATUS "Using Libconfig library '${Libconfig_LIBS}'.")
+else()
+	message(STATUS "Unable to find requested Libconfig installation:${Libconfig_ERROR_REASON}")
 endif()
 
 

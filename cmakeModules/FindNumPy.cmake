@@ -78,7 +78,7 @@ if(PYTHON_EXECUTABLE)
 		set(_NumPy_INCLUDE_FILE_NAME "numpy/numpyconfig.h")
 		find_file(_NumPy_INCLUDE_FILE
 			NAMES ${_NumPy_INCLUDE_FILE_NAME}
-			PATHS ${_NumPy_INCLUDE_DIR_RAW}
+			PATHS "${_NumPy_INCLUDE_DIR_RAW}"
 			NO_DEFAULT_PATH)
 		if(_NumPy_INCLUDE_FILE)
 			set(NumPy_INCLUDE_DIR "${_NumPy_INCLUDE_DIR_RAW}")
@@ -100,8 +100,11 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NumPy
 	FOUND_VAR NumPy_FOUND
 	REQUIRED_VARS NumPy_INCLUDE_DIR NumPy_VERSION
-	VERSION_VAR NumPy_VERSION
-	FAIL_MESSAGE "Unable to find requested NumPy installation:${NumPy_ERROR_REASON}")
+	VERSION_VAR NumPy_VERSION)
+# additional reporting
+if(NOT NumPy_FOUND)
+	message(STATUS "Unable to find requested NumPy installation:${NumPy_ERROR_REASON}")
+endif()
 
 
 # hide variables from normal GUI
