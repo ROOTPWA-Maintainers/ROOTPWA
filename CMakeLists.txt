@@ -49,8 +49,15 @@ message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
-# require a C++11 compatible compiler
-set(CMAKE_CXX_STANDARD 11)
+# require C++11 compatible compiler by default
+# but allow user to choose higher C++ standard
+set(USE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compilation. Supported values are 11, 14, and 17.")
+set_property(CACHE USE_CXX_STANDARD PROPERTY STRINGS 11 14 17)  # valid values for drop-down combo box in cmake GUI
+set(SUPPORTED_CXX_STANDARDS 11 14 17)
+if(NOT USE_CXX_STANDARD IN_LIST SUPPORTED_CXX_STANDARDS)
+  message(FATAL_ERROR "USE_CXX_STANDARD is set to '${USE_CXX_STANDARD}' but must be set to one of '${SUPPORTED_CXX_STANDARDS}'.")
+endif()
+set(CMAKE_CXX_STANDARD ${USE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -195,7 +202,7 @@ if(CCACHE_EXECUTABLE)
 	else()
 		foreach(_LANG "C" "CXX")
 			# expand path to actual compiler executable
-			execute_process(COMMAND readlink -f $(which "${CMAKE_${_LANG}_COMPILER}")
+			execute_process(COMMAND readlink -f "$(which \"${CMAKE_${_LANG}_COMPILER}\")"
 				OUTPUT_VARIABLE _COMPILER_PATH
 				OUTPUT_STRIP_TRAILING_WHITESPACE)
 			if(DEFINED CMAKE_${_LANG}_COMPILER_LAUNCHER)
@@ -473,6 +480,7 @@ add_feature_info(Bayesian_Analysis_Toolkit USE_BAT "Allow usage of the Bayesian 
 # setup nlopt (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
+option(USE_NLOPT "En/Disables usage of NLopt" OFF)
 find_package(NLopt 2.4.1)
 set_package_properties(NLopt
 	PROPERTIES
