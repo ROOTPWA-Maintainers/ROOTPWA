@@ -21,8 +21,7 @@
 //-----------------------------------------------------------
 //
 // Description:
-//      fitting program for rootpwa
-//      minimizes pwaLikelihood function
+//      compares normalization integrals from two fit result files
 //
 //
 // Author List:
@@ -35,13 +34,13 @@
 #include <iostream>
 
 #include <TFile.h>
-#include <TROOT.h>
 #include <TTree.h>
 
 #include "ampIntegralMatrix.h"
 #include "fileUtils.hpp"
 #include "fitResult.h"
 #include "reportingUtilsEnvironment.h"
+
 
 using namespace std;
 using namespace rpwa;
@@ -75,20 +74,13 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
-#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
-	// force loading predefined std::complex dictionary
-	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
-	gROOT->ProcessLine("#include <complex>");
-#endif
-
-	const string treeName = "pwa";
+	const string treeName   = "pwa";
 	const string branchName = "fitResult_v2";
 
-	const string progName            = argv[0];
-	string inputFileNameLeft = "";
+	const string progName     = argv[0];
+	string inputFileNameLeft  = "";
 	string inputFileNameRight = "";
 	extern char* optarg;
-	// extern int optind;
 	int c;
 	while ((c = getopt(argc, argv, "l:r:h")) != -1)
 		switch (c) {
@@ -104,27 +96,27 @@ main(int    argc,
 		}
 
 	TFile* inputFileLeft = TFile::Open(inputFileNameLeft.c_str(), "READ");
-	if(not inputFileLeft || inputFileLeft->IsZombie()) {
+	if (not inputFileLeft or inputFileLeft->IsZombie()) {
 		printErr << "could not open input file '" << inputFileNameLeft << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TFile* inputFileRight = TFile::Open(inputFileNameRight.c_str(), "READ");
-	if(not inputFileRight || inputFileRight->IsZombie()) {
+	if (not inputFileRight or inputFileRight->IsZombie()) {
 		printErr << "could not open input file '" << inputFileNameRight << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TTree* inResultTreeLeft = 0;
 	inputFileLeft->GetObject(treeName.c_str(), inResultTreeLeft);
-	if(not inResultTreeLeft) {
+	if (not inResultTreeLeft) {
 		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileLeft << "'. Aborting..." << endl;
 		return 1;
 	}
 
 	TTree* inResultTreeRight = 0;
 	inputFileRight->GetObject(treeName.c_str(), inResultTreeRight);
-	if(not inResultTreeRight) {
+	if (not inResultTreeRight) {
 		printErr << "could not find input tree with name '" << treeName << "' in input file '" << inputFileRight << "'. Aborting..." << endl;
 		return 1;
 	}
@@ -135,20 +127,20 @@ main(int    argc,
 	fitResult* inResultRight = 0;
 	inResultTreeRight->SetBranchAddress(branchName.c_str(), &inResultRight);
 
-	if(inResultTreeLeft->GetEntries() != inResultTreeRight->GetEntries()) {
+	if (inResultTreeLeft->GetEntries() != inResultTreeRight->GetEntries()) {
 		printErr << "not the same number of entries in input TTrees. Aborting..." << endl;
 		return 1;
 	}
 
-	if(inResultTreeLeft->GetEntries() > 1) {
-		printWarn << "more than one fit result in input TTrees, hoping that they are ordered correctly..." << endl;
+	if (inResultTreeLeft->GetEntries() > 1) {
+		printWarn << "more than one fit result in input TTrees, assuming that they are ordered correctly..." << endl;
 	}
 
-	for(long i = 0; i < inResultTreeLeft->GetEntries(); ++i) {
+	for (long i = 0; i < inResultTreeLeft->GetEntries(); ++i) {
 		inResultTreeLeft->GetEntry(i);
 		inResultTreeRight->GetEntry(i);
 		printInfo << "comparing phase space integral matrix..." << endl << endl;
-		if(inResultLeft->normIntegralMatrix().equalToPrecision(inResultRight->normIntegralMatrix(), 0., true)) {
+		if (inResultLeft->normIntegralMatrix().equalToPrecision(inResultRight->normIntegralMatrix(), 0., true)) {
 			printSucc << "identical." << endl << endl;
 		} else {
 			printErr << "difference found." << endl << endl;
@@ -160,19 +152,19 @@ main(int    argc,
 			printErr << "difference found." << endl << endl;
 		}
 		printInfo << "comparing phaseSpaceIntegral vector..." << endl << endl;
-		const vector<double>& phaseSpaceIntegralLeft = inResultLeft->phaseSpaceIntegralVector();
+		const vector<double>& phaseSpaceIntegralLeft  = inResultLeft->phaseSpaceIntegralVector();
 		const vector<double>& phaseSpaceIntegralRight = inResultRight->phaseSpaceIntegralVector();
-		if(phaseSpaceIntegralLeft.size() != phaseSpaceIntegralRight.size()) {
+		if (phaseSpaceIntegralLeft.size() != phaseSpaceIntegralRight.size()) {
 			printErr << "size mismatch." << endl << endl;
 		} else {
 			bool success = true;
-			for(unsigned int j = 0; j < phaseSpaceIntegralLeft.size(); ++j) {
-				if(phaseSpaceIntegralLeft[j] != phaseSpaceIntegralRight[j]) {
+			for (size_t j = 0; j < phaseSpaceIntegralLeft.size(); ++j) {
+				if (phaseSpaceIntegralLeft[j] != phaseSpaceIntegralRight[j]) {
 					printErr << "difference found in element " << j << " (" << phaseSpaceIntegralLeft[j] << " != " << phaseSpaceIntegralRight[j] << ")." << endl;
 					success = false;
 				}
 			}
-			if(success) {
+			if (success) {
 				printSucc << "identical." << endl;
 			}
 		}

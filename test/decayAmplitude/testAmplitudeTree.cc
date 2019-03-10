@@ -33,14 +33,13 @@
 
 #include <boost/assign/list_of.hpp>
 
-#include "TROOT.h"
 #include "TFile.h"
-#include "TTree.h"
 #include "TRandom3.h"
+#include "TTree.h"
 
+#include "amplitudeTreeLeaf.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
-#include "amplitudeTreeLeaf.h"
 
 
 using namespace std;
@@ -54,15 +53,9 @@ main()
 	printCompilerInfo();
 	printGitHash();
 
-	const unsigned int nmbEvents       = 1000000;
-	const unsigned int nmbIncohSubAmps = 3;
+	const size_t nmbEvents       = 1000000;
+	const size_t nmbIncohSubAmps = 3;
 	gRandom->SetSeed(123456789);
-
-#if ROOT_VERSION_CODE < ROOT_VERSION(6, 0, 0)
-	// force loading predefined std::complex dictionary
-	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
-	gROOT->ProcessLine("#include <complex>");
-#endif
 
 	if (1) {
 		TFile*               outFile      = TFile::Open("testAmplitudeTree.root", "RECREATE");
@@ -71,10 +64,10 @@ main()
 		TTree*               tree         = new TTree("test", "test");
 
 		tree->Branch("amp", &ampLeaf);
-		for (unsigned int i = 0; i < nmbEvents; ++i) {
+		for (size_t i = 0; i < nmbEvents; ++i) {
 			ampLeaf->clear();
 			ampLeaf->defineIncohSubAmps(subAmpLabels);
-			for (unsigned int j = 0; j < nmbIncohSubAmps; ++j)
+			for (size_t j = 0; j < nmbIncohSubAmps; ++j)
 				// ampLeaf->setIncohSubAmp(complex<double>(i, -(double)j), j);
 				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);
 			tree->Fill();
@@ -84,7 +77,7 @@ main()
 		cout << endl;
 		tree->Write();
 		outFile->Close();
-		for (unsigned int i = 0; i < subAmpLabels.size(); ++i)
+		for (size_t i = 0; i < subAmpLabels.size(); ++i)
 			cout << subAmpLabels[i] << ": ["  << ampLeaf->incohSubAmpIndex(subAmpLabels[i]) << "]" << endl;
 		cout << endl;
 	}
@@ -95,7 +88,7 @@ main()
 		inFile->GetObject("test", tree);
 		amplitudeTreeLeaf* ampLeaf = 0;
 		tree->SetBranchAddress("amp", &ampLeaf);
-		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
+		for (long i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
 			if (i < 5)
 				cout << "read event " << i << ": " << *ampLeaf;
