@@ -8,19 +8,20 @@
 #cmakedefine CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR_@"
 #cmakedefine CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 #cmakedefine GIT_HASH @GIT_HASH@
-#cmakedefine Boost_LIBRARY_VERSION "@Boost_LIBRARY_VERSION@"
+#cmakedefine Boost_VERSION "@Boost_VERSION@"
 #cmakedefine Boost_INCLUDE_DIRS "@Boost_INCLUDE_DIRS@"
 #cmakedefine Libconfig_VERSION "@Libconfig_VERSION@"
-#cmakedefine Libconfig_DIR "@Libconfig_DIR@"
+#cmakedefine Libconfig_LIBS "@Libconfig_LIBS@"
 #cmakedefine YamlCpp_VERSION "@YamlCpp_VERSION@"
-#cmakedefine YamlCpp_DIR "@YamlCpp_DIR@"
+#cmakedefine YamlCpp_LIBS "@YamlCpp_LIBS@"
 #cmakedefine ROOTSYS "@ROOTSYS@"
 #cmakedefine CUDA_VERSION "@CUDA_VERSION@"
 #cmakedefine CUDA_TOOLKIT_ROOT_DIR "@CUDA_TOOLKIT_ROOT_DIR@"
 #cmakedefine BAT_VERSION "@BAT_VERSION@"
-#cmakedefine BAT_ROOT_DIR "@BAT_ROOT_DIR@"
-#cmakedefine NLopt_DIR "@NLopt_DIR@"
-#cmakedefine PYTHONLIBS_VERSION_STRING "@PYTHONLIBS_VERSION_STRING@"
+#cmakedefine BAT_LIBRARIES "@BAT_LIBRARIES@"
+#cmakedefine NLopt_VERSION "@NLopt_VERSION@"
+#cmakedefine NLopt_LIBS "@NLopt_LIBS@"
+#cmakedefine PYTHONLIBS_VERSION "@PYTHONLIBS_VERSION@"
 #cmakedefine PYTHON_INCLUDE_DIRS "@PYTHON_INCLUDE_DIRS@"
 
 
@@ -52,8 +53,8 @@
 #ifndef GIT_HASH
 #define GIT_HASH "undefined"
 #endif
-#ifndef Boost_LIBRARY_VERSION
-#define Boost_LIBRARY_VERSION "undefined"
+#ifndef Boost_VERSION
+#define Boost_VERSION "undefined"
 #endif
 #ifndef Boost_INCLUDE_DIRS
 #define Boost_INCLUDE_DIRS "undefined"
@@ -61,14 +62,14 @@
 #ifndef Libconfig_VERSION
 #define Libconfig_VERSION "undefined"
 #endif
-#ifndef Libconfig_DIR
-#define Libconfig_DIR "undefined"
+#ifndef Libconfig_LIBS
+#define Libconfig_LIBS "undefined"
 #endif
 #ifndef YamlCpp_VERSION
 #define YamlCpp_VERSION "undefined"
 #endif
-#ifndef YamlCpp_DIR
-#define YamlCpp_DIR "undefined"
+#ifndef YamlCpp_LIBS
+#define YamlCpp_LIBS "undefined"
 #endif
 #ifndef ROOTSYS
 #define ROOTSYS "undefined"
@@ -82,14 +83,17 @@
 #ifndef BAT_VERSION
 #define BAT_VERSION "undefined"
 #endif
-#ifndef BAT_ROOT_DIR
-#define BAT_ROOT_DIR "undefined"
+#ifndef BAT_LIBRARIES
+#define BAT_LIBRARIES "undefined"
 #endif
-#ifndef NLopt_DIR
-#define NLopt_DIR "undefined"
+#ifndef NLopt_VERSION
+#define NLopt_VERSION "undefined"
 #endif
-#ifndef PYTHONLIBS_VERSION_STRING
-#define PYTHONLIBS_VERSION_STRING "undefined"
+#ifndef NLopt_LIBS
+#define NLopt_LIBS "undefined"
+#endif
+#ifndef PYTHONLIBS_VERSION
+#define PYTHONLIBS_VERSION "undefined"
 #endif
 #ifndef PYTHON_INCLUDE_DIRS
 #define PYTHON_INCLUDE_DIRS "undefined"

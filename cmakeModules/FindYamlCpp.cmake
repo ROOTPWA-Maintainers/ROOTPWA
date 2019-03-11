@@ -156,7 +156,7 @@ mark_as_advanced(
 	)
 
 
-if(NOT YamlCpp_Found)
+if(NOT YamlCpp_FOUND)
 	unset(YamlCpp_VERSION)
 	unset(YamlCpp_DIR)
 	unset(YamlCpp_INCLUDE_DIR)
