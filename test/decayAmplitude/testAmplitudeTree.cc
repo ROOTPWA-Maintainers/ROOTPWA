@@ -88,7 +88,7 @@ main()
 		inFile->GetObject("test", tree);
 		amplitudeTreeLeaf* ampLeaf = 0;
 		tree->SetBranchAddress("amp", &ampLeaf);
-		for (long i = 0; i < tree->GetEntriesFast(); ++i) {
+		for (Long64_t i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
 			if (i < 5)
 				cout << "read event " << i << ": " << *ampLeaf;
