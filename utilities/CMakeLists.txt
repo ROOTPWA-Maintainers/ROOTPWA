@@ -55,19 +55,20 @@ ADD_CUSTOM_TARGET(
 	                 -D USER=${USER}
 	                 -D CMAKE_SOURCE_DIR_=${CMAKE_SOURCE_DIR}
 	                 -D CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-	                 -D Boost_LIBRARY_VERSION=${Boost_LIBRARY_VERSION}
+	                 -D Boost_VERSION=${Boost_VERSION}
 	                 -D Boost_INCLUDE_DIRS=${Boost_INCLUDE_DIRS}
 	                 -D Libconfig_VERSION=${Libconfig_VERSION}
-	                 -D Libconfig_DIR=${Libconfig_DIR}
+	                 -D Libconfig_LIBS=${Libconfig_LIBS}
 	                 -D YamlCpp_VERSION=${YamlCpp_VERSION}
-	                 -D YamlCpp_DIR=${YamlCpp_DIR}
+	                 -D YamlCpp_LIBS=${YamlCpp_LIBS}
 	                 -D ROOTSYS=${ROOTSYS}
 	                 -D CUDA_VERSION=${CUDA_VERSION}
 	                 -D CUDA_TOOLKIT_ROOT_DIR=${CUDA_TOOLKIT_ROOT_DIR}
 	                 -D BAT_VERSION=${BAT_VERSION}
-	                 -D BAT_ROOT_DIR=${BAT_ROOT_DIR}
-	                 -D NLopt_DIR=${NLopt_DIR}
-	                 -D PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}
+	                 -D BAT_LIBRARIES=${BAT_LIBRARIES}
+	                 -D NLopt_VERSION=${NLopt_VERSION}
+	                 -D NLopt_LIBS=${NLopt_LIBS}
+	                 -D PYTHONLIBS_VERSION=${PYTHONLIBS_VERSION}
 	                 -D PYTHON_INCLUDE_DIRS=${PYTHON_INCLUDE_DIRS}
 	                 -P ${CMAKE_CURRENT_SOURCE_DIR}/environment.cmake
 )

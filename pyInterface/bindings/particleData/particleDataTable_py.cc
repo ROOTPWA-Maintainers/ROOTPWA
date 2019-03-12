@@ -86,7 +86,7 @@ void rpwa::py::exportParticleDataTable()
 		.def(
 			"entry"
 			, &rpwa::particleDataTable::entry
-			, (bp::arg("partName"), bp::arg("warnIfNotExistent")=(bool const)(true))
+			, (bp::arg("partName"), bp::arg("warnIfNotExistent") = true)
 			, bp::return_internal_reference<>()
 		)
 		.staticmethod( "entry" )
@@ -99,12 +99,12 @@ void rpwa::py::exportParticleDataTable()
 			, &particleDataTable_entriesMatching
 			, (bp::arg("prototype"),
 			   bp::arg("sel"),
-			   bp::arg("minMass")=0.,
-			   bp::arg("minMassWidthFactor")=0.,
-			   bp::arg("whiteList")=bp::list(),
-			   bp::arg("blackList")=bp::list(),
-			   bp::arg("decayProducts")=bp::list(),
-			   bp::arg("forceDecayCheck")=true)
+			   bp::arg("minMass") = 0.,
+			   bp::arg("minMassWidthFactor") = 0.,
+			   bp::arg("whiteList") = bp::list(),
+			   bp::arg("blackList") = bp::list(),
+			   bp::arg("decayProducts") = bp::list(),
+			   bp::arg("forceDecayCheck") = true)
 		)
 		.staticmethod("entriesMatching")
 
@@ -116,7 +116,7 @@ void rpwa::py::exportParticleDataTable()
 		.def(
 			"readFile"
 			, &rpwa::particleDataTable::readFile
-			, (bp::arg("fileName")="./particleDataTable.txt")
+			, (bp::arg("fileName") = "./particleDataTable.txt")
 		)
 		.staticmethod("readFile")
 		.def("read", &particleDataTable_read)

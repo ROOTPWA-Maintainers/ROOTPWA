@@ -21,12 +21,12 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      cmake module for finding numpy libraries and include files
+#//      cmake module for finding NumPy libraries and include files
 #//
 #//      following variables are defined:
-#//      NUMPY_FOUND              - numpy found
-#//      NUMPY_INCLUDE_DIR        - include directory for numpy
-#//      NUMPY_VERSION            - version of numpy
+#//      NumPy_FOUND       - indicates whether NumPy was found
+#//      NumPy_VERSION     - version of NumPy
+#//      NumPy_INCLUDE_DIR - include directory for NumPy
 #//
 #//      Example usage:
 #//          find_package(NumPy 1.8 Optional)
@@ -39,54 +39,82 @@
 #//-------------------------------------------------------------------------
 
 
-unset(NUMPY_FOUND)
-unset(NUMPY_INCLUDE_DIR)
-unset(NUMPY_VERSION)
+set(NumPy_FOUND        TRUE)
+set(NumPy_ERROR_REASON "")
 
-# do not attempt to find numpy if Python was not found
+set(NumPy_VERSION     NOTFOUND)
+set(NumPy_INCLUDE_DIR NOTFOUND)
+
+
+# check for Python
+if(NOT PYTHON_FOUND)
+	set(NumPy_FOUND FALSE)
+	set(NumPy_ERROR_REASON "${NumPy_ERROR_REASON} Did not find Python. Python needs to be set up prior to NumPy.")
+endif()
+if(NOT PYTHON_EXECUTABLE)
+	set(NumPy_FOUND FALSE)
+	set(NumPy_ERROR_REASON "${NumPy_ERROR_REASON} Did not find executable of Python interpreter. Python needs to be set up prior to NumPy.")
+endif()
+
+
 if(PYTHON_EXECUTABLE)
 	# get version
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print numpy.__version__"
-	                RESULT_VARIABLE _NUMPY_IMPORT_SUCCESS
-	                OUTPUT_VARIABLE _NUMPY_VERSION_RAW
-	                OUTPUT_STRIP_TRAILING_WHITESPACE
-	                ERROR_QUIET
-	               )
-	if(_NUMPY_IMPORT_SUCCESS EQUAL 0)
+		 RESULT_VARIABLE _NumPy_IMPORT_SUCCESS
+		 OUTPUT_VARIABLE _NumPy_VERSION_RAW
+		 OUTPUT_STRIP_TRAILING_WHITESPACE
+		 ERROR_QUIET)
+	if(_NumPy_IMPORT_SUCCESS EQUAL 0)
 		# version extracted successfully
-		set(NUMPY_VERSION "${_NUMPY_VERSION_RAW}")
+		set(NumPy_VERSION "${_NumPy_VERSION_RAW}")
 
 		# get include path
 		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print numpy.get_include()"
-		                OUTPUT_VARIABLE _NUMPY_INCLUDE_DIR_RAW
-		                OUTPUT_STRIP_TRAILING_WHITESPACE
-		                ERROR_QUIET
-		               )
+			 OUTPUT_VARIABLE _NumPy_INCLUDE_DIR_RAW
+			 OUTPUT_STRIP_TRAILING_WHITESPACE
+			 ERROR_QUIET)
 
 		# check that this directory really contains the include files
-		set(_NUMPY_INCLUDE_FILE_NAME "numpy/numpyconfig.h")
-		find_file(_NUMPY_INCLUDE_FILE
-		          NAMES ${_NUMPY_INCLUDE_FILE_NAME}
-		          PATHS ${_NUMPY_INCLUDE_DIR_RAW}
-		          NO_DEFAULT_PATH)
-		if(_NUMPY_INCLUDE_FILE)
-			set(NUMPY_INCLUDE_DIR "${_NUMPY_INCLUDE_DIR_RAW}")
+		set(_NumPy_INCLUDE_FILE_NAME "numpy/numpyconfig.h")
+		find_file(_NumPy_INCLUDE_FILE
+			NAMES ${_NumPy_INCLUDE_FILE_NAME}
+			PATHS "${_NumPy_INCLUDE_DIR_RAW}"
+			NO_DEFAULT_PATH)
+		if(_NumPy_INCLUDE_FILE)
+			set(NumPy_INCLUDE_DIR "${_NumPy_INCLUDE_DIR_RAW}")
 		else()
-			message(WARNING "The numpy module was found, but the include directory '${_NUMPY_INCLUDE_DIR_RAW}' does not contain the required file '${_NUMPY_INCLUDE_FILE_NAME}'.")
+			set(NumPy_FOUND FALSE)
+			set(NumPy_ERROR_REASON "${NumPy_ERROR_REASON} The NumPy module was found, but the include directory '${_NumPy_INCLUDE_DIR_RAW}' does not contain the required file '${_NumPy_INCLUDE_FILE_NAME}'.")
 		endif()
 
-		unset(_NUMPY_INCLUDE_DIR_RAW)
-		unset(_NUMPY_INCLUDE_FILE)
-		unset(_NUMPY_INCLUDE_FILE_NAME)
+		unset(_NumPy_INCLUDE_DIR_RAW)
+		unset(_NumPy_INCLUDE_FILE_NAME)
+		unset(_NumPy_INCLUDE_FILE)
 	endif()
-	unset(_NUMPY_IMPORT_SUCCESS)
-	unset(_NUMPY_VERSION_RAW)
-else()
-	message(WARNING "Python needs to be set up prior to numpy.")
+	unset(_NumPy_IMPORT_SUCCESS)
+	unset(_NumPy_VERSION_RAW)
 endif()
 
+
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(NUMPY
-                                  REQUIRED_VARS NUMPY_INCLUDE_DIR NUMPY_VERSION
-                                  VERSION_VAR NUMPY_VERSION
-                                 )
+find_package_handle_standard_args(NumPy
+	FOUND_VAR NumPy_FOUND
+	REQUIRED_VARS NumPy_INCLUDE_DIR NumPy_VERSION
+	VERSION_VAR NumPy_VERSION)
+# additional reporting
+if(NOT NumPy_FOUND)
+	message(STATUS "Unable to find requested NumPy installation:${NumPy_ERROR_REASON}")
+endif()
+
+
+# hide variables from normal GUI
+mark_as_advanced(
+	NumPy_VERSION
+	NumPy_INCLUDE_DIR
+	)
+
+
+if(NOT NumPy_FOUND)
+	unset(NumPy_VERSION)
+	unset(NumPy_INCLUDE_DIR)
+endif()

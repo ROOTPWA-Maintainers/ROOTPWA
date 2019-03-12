@@ -29,7 +29,7 @@ namespace {
 			return rpwa::massDependence::operator()(v);
 		}
 
-		std::complex<double> default___call__(rpwa::isobarDecayVertex& v) {
+		std::complex<double> default___call__(const rpwa::isobarDecayVertex& v) {
 			return rpwa::massDependence::operator()(v);
 		}
 
@@ -38,6 +38,7 @@ namespace {
 		}
 
 	};
+
 
 	struct flatMassDependenceWrapper : public rpwa::flatMassDependence,
 	                                          bp::wrapper<rpwa::flatMassDependence>
@@ -149,6 +150,7 @@ namespace {
 
 	};
 
+
 	struct constWidthBreitWignerWrapper : public rpwa::constWidthBreitWigner,
 		                                               bp::wrapper<rpwa::constWidthBreitWigner>
 	{
@@ -184,6 +186,7 @@ namespace {
 		}
 
 	};
+
 
 	struct rhoBreitWignerWrapper : public rpwa::rhoBreitWigner,
 		                                  bp::wrapper<rpwa::rhoBreitWigner>
@@ -221,6 +224,7 @@ namespace {
 
 	};
 
+
 	struct f0980BreitWignerWrapper : public rpwa::f0980BreitWigner,
 		                                  bp::wrapper<rpwa::f0980BreitWigner>
 	{
@@ -256,6 +260,7 @@ namespace {
 		}
 
 	};
+
 
 	struct piPiSWaveAuMorganPenningtonMWrapper : public rpwa::piPiSWaveAuMorganPenningtonM,
 	                                                    bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>
@@ -293,6 +298,7 @@ namespace {
 
 	};
 
+
 	struct piPiSWaveAuMorganPenningtonVesWrapper : public rpwa::piPiSWaveAuMorganPenningtonVes,
 	                                                      bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>
 	{
@@ -329,6 +335,7 @@ namespace {
 
 	};
 
+
 	struct piPiSWaveAuMorganPenningtonKachaevWrapper : public rpwa::piPiSWaveAuMorganPenningtonKachaev,
 	                                                          bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>
 	{
@@ -364,6 +371,7 @@ namespace {
 		}
 
 	};
+
 
 	struct rhoPrimeMassDepWrapper : public rpwa::rhoPrimeMassDep,
 	                                bp::wrapper<rpwa::rhoPrimeMassDep>
@@ -474,6 +482,7 @@ namespace {
 
 	};
 }
+
 
 void rpwa::py::exportMassDependence() {
 

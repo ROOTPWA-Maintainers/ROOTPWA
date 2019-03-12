@@ -33,15 +33,13 @@
 
 # check if cmake has the required version
 message(STATUS ">>> This is CMake version ${CMAKE_VERSION}.")
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-cmake_policy(VERSION 3.1)
+cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
+cmake_policy(VERSION 3.11)
 
 
 # set verbosity
 set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
                                # the same effect can be achieved by calling 'make VERBOSE=1'
-
-
 option(DEBUG_OUTPUT "en/disable debug output" OFF)
 
 
@@ -51,8 +49,15 @@ message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
-# require a C++11 compatible compiler
-set(CMAKE_CXX_STANDARD 11)
+# require C++11 compatible compiler by default
+# but allow user to choose higher C++ standard
+set(USE_CXX_STANDARD 11 CACHE STRING "C++ standard used for compilation. Supported values are 11, 14, and 17.")
+set_property(CACHE USE_CXX_STANDARD PROPERTY STRINGS 11 14 17)  # valid values for drop-down combo box in cmake GUI
+set(SUPPORTED_CXX_STANDARDS 11 14 17)
+if(NOT USE_CXX_STANDARD IN_LIST SUPPORTED_CXX_STANDARDS)
+  message(FATAL_ERROR "USE_CXX_STANDARD is set to '${USE_CXX_STANDARD}' but must be set to one of '${SUPPORTED_CXX_STANDARDS}'.")
+endif()
+set(CMAKE_CXX_STANDARD ${USE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -85,35 +90,36 @@ enforce_out_of_source_build()
 message(STATUS "")
 message(STATUS ">>> Setting up system environment.")
 if(NOT UNIX)
-	message(FATAL_ERROR " !!! This is an unsupported system.")
+	message(FATAL_ERROR "!!! This is an unsupported system.")
 endif()
 ProcessorCount(NMB_CPU_CORES)
 message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
-	"${NMB_CPU_CORES} CPU core(s).")
+  "'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
+  "${NMB_CPU_CORES} CPU core(s).")
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
-	"architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
+  "architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
 
 
 # warn user about outdated or unsupported compiler
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
-    message(WARNING " ??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. GCC version 4.8 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+		message(WARNING "??? Your GCC version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "GCC version 4.8 or higher is required. Proceed at your own risk.")
+	endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
-    message(WARNING " ??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
-			"Clang version 3.4 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.4)
+		message(WARNING "??? Your Clang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "Clang version 3.4 or higher is required. Proceed at your own risk.")
+	endif()
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-    message(WARNING " ??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
-			"AppleClang version 8.0 or higher is required. Proceed at your own risk.")
-  endif()
+	if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+		message(WARNING "??? Your AppleClang version ${CMAKE_CXX_COMPILER_VERSION} is too low. "
+		  "AppleClang version 8.0 or higher is required. Proceed at your own risk.")
+	endif()
 else()
-  message(WARNING " ??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
-		"is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. "
-		"Proceed at your own risk.")
+	message(WARNING "??? '${CMAKE_CXX_COMPILER_ID} V${CMAKE_CXX_COMPILER_VERSION}' "
+	  "is an unsupported compiler. Compilation has only been tested with GCC, Clang and AppleClang. "
+	  "Proceed at your own risk.")
 endif()
 
 
@@ -126,7 +132,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type was specified. Setting build type to 'RELWITHDEBINFO'.")
 	set(CMAKE_BUILD_TYPE RELWITHDEBINFO)
 endif()
-
 
 # set common compiler flags
 # consider flags -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Wsuggest-attribute=const
@@ -152,11 +157,68 @@ endforeach()
 unset(_LANG)
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'.")
 message(STATUS "Using additional CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}.")
+  "for build type ${CMAKE_BUILD_TYPE}.")
 message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}.")
+  "for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
+endif()
+message(STATUS "Includes defined via environment variables:")
+message(STATUS "    CPATH (corresponds to -I...): '$ENV{CPATH}'")
+foreach(_LANG "C" "CPLUS")
+	message(STATUS "    ${_LANG}_INCLUDE_PATH (corresponds to -isystem ...): '$ENV{${_LANG}_INCLUDE_PATH}'")
+endforeach()
+unset(_LANG)
+
+
+# enable ccache if not already enabled by symlink masquerading and if no other
+# CMake compiler launchers are already defined
+# calling 'cmake -DDISABLE_CCACHE=ON ..' will disable ccache in any case
+# see https://crascit.com/2016/04/09/using-ccache-with-cmake/
+#     https://stackoverflow.com/a/37828605
+#     https://stackoverflow.com/a/34317588
+option(DISABLE_CCACHE "If set to ON, ccache will not be used" OFF)
+set(CCACHE_FIND_VERSION "3.1.9")
+message(STATUS "")
+message(STATUS ">>> Checking for ccache.")
+find_program(CCACHE_EXECUTABLE ccache)
+if(NOT CCACHE_EXECUTABLE)
+	message(STATUS "Cannot find ccache in system paths.")
+endif()
+if(CCACHE_EXECUTABLE)
+	execute_process(COMMAND ${CCACHE_EXECUTABLE} --version
+		OUTPUT_VARIABLE _CCACHE_VERSION_RAW
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	parse_version_from_multline_string("${_CCACHE_VERSION_RAW}" "ccache[ \t]+version[ \t]+" CCACHE_VERSION)
+	message(STATUS "Found ccache version ${CCACHE_VERSION}.")
+	unset(_CCACHE_VERSION_RAW)
+	if(NOT CCACHE_VERSION)
+		message(STATUS "Cannot determine ccache version. Not using ccache.")
+	elseif(CCACHE_VERSION VERSION_LESS ${CCACHE_FIND_VERSION})
+		message(STATUS "ccache version ${CCACHE_VERSION} is lower than requested version ${CCACHE_FIND_VERSION}. "
+		  "Not using ccache.")
+	elseif(DISABLE_CCACHE)
+		message(STATUS "ccache is disabled via DISABLE_CCACHE.")
+	else()
+		foreach(_LANG "C" "CXX")
+			# expand path to actual compiler executable
+			execute_process(COMMAND readlink -f "$(which \"${CMAKE_${_LANG}_COMPILER}\")"
+				OUTPUT_VARIABLE _COMPILER_PATH
+				OUTPUT_STRIP_TRAILING_WHITESPACE)
+			if(DEFINED CMAKE_${_LANG}_COMPILER_LAUNCHER)
+				message(STATUS "The launcher '${CMAKE_${_LANG}_COMPILER_LAUNCHER}' is already defined. Leave it unchanged.")
+			elseif(CMAKE_${_LANG}_COMPILER MATCHES ".*/ccache.*" OR _COMPILER_PATH MATCHES ".*/ccache.*")
+				# checking for "ccache" anywhere in the compiler path might be too strong
+				# more restrictive would be ".*/ccache$", which requires "ccache" at the end
+				message(STATUS "ccache seems to be already in use for ${_LANG}.")
+			else()
+				message(STATUS "Enabling ccache for ${_LANG}.")
+				set(CMAKE_${_LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+			endif()
+			unset(_LANG)
+			unset(_COMPILER_PATH)
+		endforeach()
+	endif()
 endif()
 
 
@@ -169,54 +231,43 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 
 
+# setup Python
+message(STATUS "")
+message(STATUS ">>> Setting up Python.")
+find_package(PYTHON 2.7 REQUIRED)
+set_package_properties(PYTHON
+	PROPERTIES
+	DESCRIPTION "General-purpose, high-level programming language"
+	URL "http://www.python.org"
+	PURPOSE "Provides scripting interface to ROOTPWA classes"
+	TYPE REQUIRED
+	)
+set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
+message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+
+
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 message(STATUS "")
 message(STATUS ">>> Setting up Boost library.")
-set(_BOOST_COMPONENTS "mpi" "serialization" "python" "timer" "system")
+set(Boost_USE_STATIC_LIBS      OFF)
+set(Boost_USE_MULTITHREADED    ON)
+set(Boost_USE_STATIC_RUNTIME   OFF)
+set(Boost_DETAILED_FAILURE_MSG ON)
 # set(Boost_DEBUG 1)
-set(Boost_USE_STATIC_LIBS    OFF)
-set(Boost_USE_MULTITHREADED  ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
 if(     ("$ENV{BOOST_ROOT}"       STREQUAL "")
-		AND ("$ENV{BOOSTROOT}"        STREQUAL "")
-		AND ("$ENV{Boost_DIR}"        STREQUAL "")
-		AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
-		AND ("$ENV{BOOST_LIBRARYDIR}" STREQUAL ""))
+    AND ("$ENV{BOOSTROOT}"        STREQUAL "")
+    AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
+    AND ("$ENV{BOOST_LIBRARYDIR}" STREQUAL ""))
 	set(Boost_NO_SYSTEM_PATHS OFF)
 else()
 	set(Boost_NO_SYSTEM_PATHS ON)
 endif()
-# this is a somewhat ugly hack
-# the problem is that components cannot be defined as optional while
-# at the same time the library is required. the third find_package
-# line is needed in case the components are not found, because
-# Boost_FOUND is set to FALSE.
-find_package(Boost 1.50.0 REQUIRED)
-find_package(Boost 1.50.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
-foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
-	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
-	if(Boost_${_BOOST_COMPONENT}_FOUND)
-		message(STATUS "    Found Boost component ${_BOOST_COMPONENT} at "
-			"'${Boost_${_BOOST_COMPONENT}_LIBRARY}'.")
-	endif()
-endforeach()
-unset(_BOOST_COMPONENT)
-unset(_BOOST_COMPONENTS)
-find_package(Boost 1.50.0 REQUIRED)
-set_package_properties(Boost
-	PROPERTIES
-	DESCRIPTION "C++ Template Library"
-	URL "http://www.boost.org/"
-	TYPE REQUIRED
-	)
+find_package(Boost 1.67.0 REQUIRED COMPONENTS "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" OPTIONAL_COMPONENTS "mpi" "serialization" "system" "timer")
 if(Boost_FOUND)
-	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
-else()
-	message(FATAL_ERROR " !!! Could not find Boost installation. "
-		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please consult README.md.")
+	message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIRS}'.")
+	message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'.")
+	message(STATUS "Using Boost libraries '${Boost_LIBRARIES}'.")
 endif()
 
 
@@ -229,6 +280,7 @@ set_package_properties(Libconfig
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "http://www.hyperrealm.com/libconfig/"
+	PURPOSE "Used for defining partial-wave decay amplitudes via 'key' files"
 	TYPE REQUIRED
 	)
 
@@ -237,11 +289,12 @@ set_package_properties(Libconfig
 # environment variable $YAML_CPP is expected to point to yaml-cpp location
 message(STATUS "")
 message(STATUS ">>> Setting up yaml-cpp library.")
-find_package(YamlCpp 0.5 REQUIRED)
+find_package(YamlCpp 0.6.0 REQUIRED)
 set_package_properties(YamlCpp
 	PROPERTIES
 	DESCRIPTION "Simple C++ library for processing structured configuration files"
 	URL "https://github.com/jbeder/yaml-cpp"
+	PURPOSE "Used for defining analysis parameters"
 	TYPE REQUIRED
 	)
 
@@ -249,36 +302,14 @@ set_package_properties(YamlCpp
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer" "PyROOT")
-find_package(ROOT 5.34.04 REQUIRED ${_ROOT_COMPONENTS})
+find_package(ROOT 6.08.00 REQUIRED "Minuit2" "MathMore" "TreePlayer" "PyROOT")
 set_package_properties(ROOT
 	PROPERTIES
 	DESCRIPTION "C++ HEP analysis framework"
 	URL "http://root.cern.ch/"
+	PURPOSE "Used for data storage and retrieval"
 	TYPE REQUIRED
 	)
-
-
-# setup Python
-message(STATUS "")
-message(STATUS ">>> Setting up Python.")
-find_package(PYTHON 2.6 REQUIRED)
-set_package_properties(PYTHON
-	PROPERTIES
-	DESCRIPTION "General-purpose, high-level programming language"
-	URL "http://www.python.org"
-	PURPOSE "Provides scripting interface to ROOTPWA classes"
-	TYPE REQUIRED
-	)
-# check that Boost.Python library was found
-if(NOT Boost_PYTHON_FOUND)
-	message(FATAL_ERROR " !!! Cannot find Boost.Python library in "
-		"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.Python.")
-endif()
-set(Boost_PYTHON_LIBS "${Boost_PYTHON_LIBRARY}")
-message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
-set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
 
 
 # setup numpy
@@ -292,6 +323,7 @@ set_package_properties(NumPy
 	PURPOSE "Used for handling of multi-dimensional arrays in Python."
 	TYPE REQUIRED
 	)
+add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_8_API_VERSION)
 
 
 # setup pylint (optional)
@@ -344,8 +376,9 @@ else()
 		NO_DEFAULT_PATH)
 	if(NOT CUDA_SAMPLES_INC_DIR)
 		set(USE_CUDA OFF)
-		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. "
-			"Check that environment variable $CUDA_SAMPLES_ROOT_DIR is set correctly. No CUDA components will be generated.")
+		message(STATUS "Found CUDA intallation, but could not find include directory in CUDA samples directory "
+		  "in '$ENV{CUDA_SAMPLES_ROOT_DIR}'. Check that environment variable $CUDA_SAMPLES_ROOT_DIR "
+		  "is set correctly. No CUDA components will be generated.")
 	else()
 		set(USE_CUDA ON)
 		message(STATUS "Using CUDA samples include directory in '${CUDA_SAMPLES_INC_DIR}'.")
@@ -402,7 +435,7 @@ else()
 		if(NOT Boost_${_BOOST_MPI_COMPONENT}_FOUND)
 			set(USE_MPI OFF)
 			message(STATUS "Cannot find Boost.MPI library '${_BOOST_MPI_COMPONENT}' in "
-				"'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.MPI.")
+			  "'${Boost_LIBRARY_DIRS}'. Please consult README.md on how to build Boost.MPI.")
 		else()
 			list(APPEND Boost_MPI_LIBS ${Boost_${_BOOST_MPI_COMPONENT}_LIBRARY})
 		endif()
@@ -414,7 +447,7 @@ else()
 		add_definitions(-DUSE_MPI)
 	else()
 		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly. "
-			"Please consult README.md on how to build Boost.MPI. No MPI components will be generated.")
+		  "Please consult README.md on how to build Boost.MPI. No MPI components will be generated.")
 	endif()
 endif()
 add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
@@ -427,12 +460,13 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up BAT.")
 option(USE_BAT "En/Disables usage of BAT" OFF)
-find_package(BAT 1.0)
+find_package(BAT 1.0.0)
 set_package_properties(BAT
 	PROPERTIES
 	DESCRIPTION "Bayesian Analysis Toolkit"
 	URL "http://mpp.mpg.de/bat/"
 	PURPOSE "Used in the mass-dependent fitter"
+	TYPE OPTIONAL
 	)
 if(NOT BAT_FOUND)
 	set(USE_BAT OFF)
@@ -447,12 +481,14 @@ add_feature_info(Bayesian_Analysis_Toolkit USE_BAT "Allow usage of the Bayesian 
 # setup nlopt (optional)
 message(STATUS "")
 message(STATUS ">>> Setting up NLopt.")
-find_package(NLopt)
+option(USE_NLOPT "En/Disables usage of NLopt" OFF)
+find_package(NLopt 2.4.1)
 set_package_properties(NLopt
 	PROPERTIES
 	DESCRIPTION "Library for nonlinear optimization"
 	URL "http://ab-initio.mit.edu/wiki/index.php/NLopt"
-	TYPE OPTIONAL
+	PURPOSE "Used as a faster alternative to Minuit Migrad in PWA fit"
+	TYPE RECOMMENDED
 	)
 if(NOT NLopt_FOUND)
 	set(USE_NLOPT OFF)
@@ -485,7 +521,7 @@ if(GIT_FOUND)
 	if(NOT _GIT_LOG_RETURN)
 		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
-		message(Warning " ??? Running 'git' did not succeed. Repository hash unknown.")
+		message(Warning "??? Running 'git' did not succeed. Repository hash unknown.")
 	endif()
 endif()
 
@@ -502,7 +538,7 @@ set_package_properties(Doxygen
 	TYPE RECOMMENDED
 	)
 if(NOT DOXYGEN_FOUND)
-	message(WARNING " ??? Cannot find Doxygen. Documentation cannot be generated.")
+	message(WARNING "??? Cannot find Doxygen. Documentation cannot be generated.")
 else()
 	set(DOXYGEN_TARGET  "doxygen")
 	set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
@@ -544,19 +580,19 @@ enable_testing()
 message(STATUS "")
 message(STATUS ">>> Defining include and library paths.")
 set(_SRC_DIRS
-	cuda
-	decayAmplitude
-	fortran
-	generators
-	highLevelInterface
-	nBodyPhaseSpace
-	partialWaveFit
-	particleData
-	pyInterface
-	relativisticAmpCorrections
-	resonanceFit
-	storageFormats
-	utilities
+	"cuda"
+	"decayAmplitude"
+	"fortran"
+	"generators"
+	"highLevelInterface"
+	"nBodyPhaseSpace"
+	"partialWaveFit"
+	"particleData"
+	"pyInterface"
+	"relativisticAmpCorrections"
+	"resonanceFit"
+	"storageFormats"
+	"utilities"
 	)
 # loop over all source directories
 foreach(_SRC_DIR ${_SRC_DIRS})
@@ -566,7 +602,7 @@ foreach(_SRC_DIR ${_SRC_DIRS})
 		set(${_VAR_NAME}_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/${_SRC_DIR}")
 		set(${_VAR_NAME}_LIB "${_LIB_NAME}")
 		message(STATUS ">>> Directory '${_SRC_DIR}' will be compiled into library '${_LIB_NAME}', "
-			"setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
+		  "setting up variables '${_VAR_NAME}_INCLUDE_DIR' and '${_VAR_NAME}_LIB'.")
 		unset(_LIB_NAME)
 	endif()
 	unset(_VAR_NAME)

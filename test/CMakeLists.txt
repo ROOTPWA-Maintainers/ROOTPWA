@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for amplitude library
+#//      build file for tests
 #//
 #//
 #// Author List:
@@ -37,6 +37,25 @@ add_subdirectory(decayAmplitude)
 add_subdirectory(generators)
 add_subdirectory(partialWaveFit)
 add_subdirectory(utilities)
+
+
+# set include directories
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${RPWA_DECAYAMPLITUDE_INCLUDE_DIR}
+	${RPWA_PARTIALWAVEFIT_INCLUDE_DIR}
+	${RPWA_PARTICLEDATA_INCLUDE_DIR}
+	${RPWA_STORAGEFORMATS_INCLUDE_DIR}
+	${RPWA_UTILITIES_INCLUDE_DIR}
+	SYSTEM
+	${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	)
+
+
+# executables
+make_executable(compareFitResultsIntegrals compareFitResultsIntegrals.cc "${RPWA_DECAYAMPLITUDE_LIB}" "${RPWA_PARTIALWAVEFIT_LIB}" "${RPWA_UTILITIES_LIB}")
 
 
 # test functionality of 'pyRootPwa' module

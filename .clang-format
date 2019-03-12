@@ -1,0 +1,82 @@
+---
+Language: Cpp
+
+IndentWidth: 8
+TabWidth: 8
+UseTab: ForIndentation
+
+NamespaceIndentation: All
+
+AccessModifierOffset: -8
+
+BreakConstructorInitializersBeforeComma: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 8
+
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignEscapedNewlinesLeft: true
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: AllDefinitions
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: true
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping: { AfterClass: true,
+                 AfterControlStatement: false,
+                 AfterEnum: true,
+                 AfterFunction: true,
+                 AfterNamespace: true,
+                 AfterStruct: true,
+                 AfterUnion: true,
+                 BeforeCatch: false,
+                 BeforeElse: false,
+                 IndentBraces: false }
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+ColumnLimit: 0
+Cpp11BracedListStyle: true
+DerivePointerBinding: false
+IncludeCategories:
+    - Regex: '^(<|")boost/'  # BOOST
+      Priority: 50
+    - Regex: '^(<|")T'  # ROOT
+      Priority: 90
+    - Regex: '^"'
+      Priority: 10
+IncludeIsMainRegex: "$"
+IndentCaseLabels: false
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+PenaltyBreakBeforeFirstCallParameter: 10000000
+PenaltyBreakComment: 0
+PenaltyBreakFirstLessLess: 1000000
+PenaltyBreakString: 10000000
+PenaltyExcessCharacter: 0
+PenaltyReturnTypeOnItsOwnLine: 0
+PointerAlignment: Left
+ReflowComments: true
+SortIncludes: true
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles:  false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard:        Cpp11
+...

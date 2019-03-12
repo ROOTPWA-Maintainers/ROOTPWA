@@ -3,10 +3,10 @@
 # - the second test is done without these two additional packages
 
 # use Ubuntu 14.04
-sudo: required
 dist: trusty
 
 cache:
+  ccache: true
   directories:
     - deps
 
@@ -41,23 +41,42 @@ required_packages: &required_packages
   - libkrb5-dev
   - libgsl0-dev
   - libqt4-dev
-  - libboost-all-dev
   - libconfig++-dev
-  - libyaml-cpp-dev
+
+# configure custom dependencies
+env:
+    global:
+      - NMB_JOBS=3
+      # number of compilation jobs to run in parallel
+      # at the moment, it seems there is no reliable way to find out the number of cores in the VM
+      # see e.g. https://github.com/travis-ci/travis-ci/issues/4696
+      # according to https://docs.travis-ci.com/user/reference/overview/#virtualisation-environment-vs-operating-system
+      # all Travis VMs have 2 cores
+      - CMAKE_VERSION="3.11.0"
+      # CMake version that comes with Travis' trusty image is only 3.9.2
+      - BOOST_VERSION="1.67.0"
+      # apt package 'libboost-all-dev' in Travis' trusty image has only 1.54.0
+      - YAML_VERSION="0.6.0"
+      # apt package 'libyaml-cpp-dev' in Travis' trusty image has only 0.5.1
+      - ROOT_VERSION="6.08.00"
+      - BAT_VERSION="1.0.0"
 
 matrix:
     include:
-      - env: TRAVIS_RPWA_USE_BAT=1
+      - env: TRAVIS_RPWA_RUN_BUILD=1 TRAVIS_RPWA_USE_BAT=1
         addons:
             apt:
                 packages:
                   - *required_packages
                   - libnlopt-dev
-      - env: TRAVIS_RPWA_USE_BAT=0
+                update: true
+      - env: TRAVIS_RPWA_RUN_BUILD=1
         addons:
             apt:
                 packages:
                   - *required_packages
+                update: true
+      - env: TRAVIS_RPWA_RUN_FORMAT=1
 
 # send mails if a build fails
 notifications:
@@ -67,30 +86,19 @@ notifications:
         on_failure: always
 
 before_install:
+    - ./travisCI/print-system-info.sh
     - pyenv global system
     - pip install --user pylint==1.7.1 numpy
 install:
     - ./travisCI/install-cmake.sh
     - export PATH=${TRAVIS_BUILD_DIR}/deps/cmake/bin:${PATH}
+    - ./travisCI/install-boost.sh
+    - export BOOST_ROOT=${TRAVIS_BUILD_DIR}/deps/boost
+    - ./travisCI/install-yaml.sh
+    - export YAML_CPP=${TRAVIS_BUILD_DIR}/deps/yaml
     - ./travisCI/install-root.sh
-    - . ${TRAVIS_BUILD_DIR}/deps/root/bin/thisroot.sh
-    - if [ ${TRAVIS_RPWA_USE_BAT} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
+    - . "${TRAVIS_BUILD_DIR}"/deps/root/bin/thisroot.sh
+    - if [ ${TRAVIS_RPWA_USE_BAT:-0} -eq 1 ] ; then ./travisCI/install-bat.sh ; export BATINSTALLDIR=${TRAVIS_BUILD_DIR}/deps/bat ; export PATH=${BATINSTALLDIR}/bin:${PATH} ; fi
+    - ./travisCI/clean.sh
 script:
-    # exit immediately if an error is encountered
-    - set -e
-    - cd build
-    - cmake ..
-    # run 'make'
-    - make
-    # - if 'make' was successful, run 'make test'
-    # - if 'make test' was not successful, print the log and fail the build
-    - make test || (cat Testing/Temporary/LastTest.log && false)
-    # - if 'make test' was successful, run 'testMC.sh'
-    - cd ..
-    # set some environment variables
-    - export ROOTPWA=${PWD}
-    - export LD_LIBRARY_PATH=${ROOTPWA}/build/lib:${LD_LIBRARY_PATH}
-    - export PATH=${ROOTPWA}/build/bin:${PATH}
-    - export PYTHONPATH=${ROOTPWA}/build/pyLib:${PYTHONPATH}
-    - cd test
-    - ./testMC.sh
+    - ./travisCI/run.sh

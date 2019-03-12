@@ -25,10 +25,11 @@
 #//      NLopt installation location is defined by environment variable $NLOPT
 #//
 #//      following variables are defined:
-#//      NLopt_DIR              - NLopt installation directory
-#//      NLopt_INCLUDE_DIR      - NLopt header directory
-#//      NLopt_LIBRARY_DIR      - NLopt library directory
-#//      NLopt_LIBS             - NLopt library files
+#//      NLopt_VERSION     - NLopt version
+#//      NLopt_DIR         - NLopt installation directory
+#//      NLopt_INCLUDE_DIR - NLopt header directory
+#//      NLopt_LIBRARY_DIR - NLopt library directory
+#//      NLopt_LIBS        - NLopt library files
 #//
 #//      Example usage:
 #//          find_package(NLopt 1.4 REQUIRED)
@@ -37,106 +38,123 @@
 #//-------------------------------------------------------------------------
 
 
-set(NLopt_FOUND        FALSE)
+set(NLopt_FOUND        TRUE)
 set(NLopt_ERROR_REASON "")
-set(NLopt_DEFINITIONS  "")
-set(NLopt_LIBS)
+
+set(NLopt_VERSION     NOTFOUND)
+set(NLopt_DIR         NOTFOUND)
+set(NLopt_INCLUDE_DIR NOTFOUND)
+set(NLopt_LIBRARY_DIR NOTFOUND)
+set(NLopt_LIBS        NOTFOUND)
 
 
+# try to get the environment variable pointing to the NLopt installation
+# directory
 set(NLopt_DIR $ENV{NLOPT})
-if(NOT NLopt_DIR)
 
-	set(NLopt_FOUND TRUE)
-
-	set(_NLopt_LIB_NAMES "nlopt")
+# find the library
+set(_NLopt_LIBRARY_NAMES "nlopt" "nlopt_cxx")
+if(NLopt_DIR)
+	# search only in NLopt_DIR
 	find_library(NLopt_LIBS
-		NAMES ${_NLopt_LIB_NAMES})
-	if(NOT NLopt_LIBS)
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Cannot find NLopt library '${_NLopt_LIB_NAMES}'.")
-	else()
-		get_filename_component(NLopt_DIR ${NLopt_LIBS} PATH)
-	endif()
-	unset(_NLopt_LIB_NAMES)
-
-	set(_NLopt_HEADER_FILE_NAME "nlopt.hpp")
-	find_file(_NLopt_HEADER_FILE
-		NAMES ${_NLopt_HEADER_FILE_NAME})
-	if(NOT _NLopt_HEADER_FILE)
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Cannot find NLopt header file '${_NLopt_HEADER_FILE_NAME}'.")
-	endif()
-	unset(_NLopt_HEADER_FILE_NAME)
-	unset(_NLopt_HEADER_FILE)
-
-	if(NOT NLopt_FOUND)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} NLopt not found in system directories (and environment variable NLOPT is not set).")
-	endif()
-
-
-
+		NAMES ${_NLopt_LIBRARY_NAMES}
+		PATHS "${NLopt_DIR}/lib"
+		      "${NLopt_DIR}/build"
+		NO_DEFAULT_PATH)
 else()
-
-	set(NLopt_FOUND TRUE)
-
-	set(NLopt_INCLUDE_DIR "${NLopt_DIR}/include")
-	if(NOT EXISTS "${NLopt_INCLUDE_DIR}")
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Directory '${NLopt_INCLUDE_DIR}' does not exist.")
-	endif()
-
-	set(NLopt_LIBRARY_DIR "${NLopt_DIR}/lib")
-	if(NOT EXISTS "${NLopt_LIBRARY_DIR}")
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Directory '${NLopt_LIBRARY_DIR}' does not exist.")
-	endif()
-
-	set(_NLopt_LIB_NAMES "nlopt_cxx")
+	# search system-wide
 	find_library(NLopt_LIBS
-		NAMES ${_NLopt_LIB_NAMES}
-		PATHS ${NLopt_LIBRARY_DIR}
-		NO_DEFAULT_PATH)
-	if(NOT NLopt_LIBS)
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Cannot find NLopt library '${_NLopt_LIB_NAMES}' in '${NLopt_LIBRARY_DIR}'.")
-	endif()
-	unset(_NLopt_LIB_NAMES)
-
-	set(_NLopt_HEADER_FILE_NAME "nlopt.hpp")
-	find_file(_NLopt_HEADER_FILE
-		NAMES ${_NLopt_HEADER_FILE_NAME}
-		PATHS ${NLopt_INCLUDE_DIR}
-		NO_DEFAULT_PATH)
-	if(NOT _NLopt_HEADER_FILE)
-		set(NLopt_FOUND FALSE)
-		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Cannot find NLopt header file '${_NLopt_HEADER_FILE_NAME}' in '${NLopt_INCLUDE_DIR}'.")
-	endif()
-	unset(_NLopt_HEADER_FILE_NAME)
-	unset(_NLopt_HEADER_FILE)
-
+		NAMES ${_NLopt_LIBRARY_NAMES})
 endif()
+if(NLopt_LIBS)
+	get_filename_component(NLopt_LIBRARY_DIR ${NLopt_LIBS} DIRECTORY)
+else()
+	set(NLopt_FOUND FALSE)
+	if(NLopt_DIR)
+		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Did not find NLopt library '${_NLopt_LIBRARY_NAMES}' in directories '${NLopt_DIR}/lib' or '${NLopt_DIR}/build'.")
+	else()
+		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Did not find NLopt library '${_NLopt_LIBRARY_NAMES}' in any standard library directory.")
+	endif()
+endif()
+unset(_NLopt_LIBRARY_NAMES)
 
 
-# make variables changeable
-mark_as_advanced(
-	NLopt_INCLUDE_DIR
-	NLopt_LIBRARY_DIR
-	NLopt_LIBS
-	NLopt_DEFINITIONS
-	)
+# find the include directory
+set(_NLopt_HEADER_FILE_NAME "nlopt.h")
+if(NLopt_DIR)
+	# search only in NLopt_DIR
+	find_path(NLopt_INCLUDE_DIR
+		NAMES ${_NLopt_HEADER_FILE_NAME}
+		PATHS "${NLopt_DIR}/include"
+		      "${NLopt_DIR}/build/src/api"
+		NO_DEFAULT_PATH)
+else()
+	# search system-wide
+	find_path(NLopt_INCLUDE_DIR
+		NAMES ${_NLopt_HEADER_FILE_NAME})
+endif()
+if(NOT NLopt_INCLUDE_DIR)
+	set(NLopt_FOUND FALSE)
+	if(NLopt_DIR)
+		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Did not find NLopt include file '${_NLopt_HEADER_FILE_NAME}' in directories '${NLopt_DIR}/include' or '${NLopt_DIR}/build/src/api'.")
+	else()
+		set(NLopt_ERROR_REASON "${NLopt_ERROR_REASON} Did not find NLopt include file '${_NLopt_HEADER_FILE_NAME}' in any standard include directory.")
+	endif()
+endif()
+unset(_NLopt_HEADER_FILE_NAME)
 
 
-# report result
+# try to get the version from the pkgconfig file
+set(_NLopt_PKG_CONFIG_FILE_NAME "nlopt.pc")
+if(NLopt_DIR)
+	# search only in NLopt_DIR
+	find_file(_NLopt_PC_FILE
+		NAMES ${_NLopt_PKG_CONFIG_FILE_NAME}
+		PATHS "${NLopt_DIR}/lib/pkgconfig"
+		      "${NLopt_DIR}/build"
+		NO_DEFAULT_PATH)
+else()
+	# search system-wide
+	find_file(_NLopt_PC_FILE
+		NAMES ${_NLopt_PKG_CONFIG_FILE_NAME}
+		PATHS "${NLopt_LIBRARY_DIR}/pkgconfig"
+		      "${NLopt_LIBRARY_DIR}")
+endif()
+if(_NLopt_PC_FILE)
+	parse_version_from_pkg_config_file("${_NLopt_PC_FILE}" NLopt_VERSION)
+endif()
+unset(_NLopt_PKG_CONFIG_FILE_NAME)
+unset(_NLopt_PC_FILE)
+
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(NLopt
+	FOUND_VAR NLopt_FOUND
+	REQUIRED_VARS NLopt_VERSION NLopt_INCLUDE_DIR NLopt_LIBRARY_DIR NLopt_LIBS
+	VERSION_VAR NLopt_VERSION)
+# additional reporting
 if(NLopt_FOUND)
-	message(STATUS "Found NLopt in '${NLopt_DIR}'.")
 	message(STATUS "Using NLopt include directory '${NLopt_INCLUDE_DIR}'.")
 	message(STATUS "Using NLopt library '${NLopt_LIBS}'.")
 else()
-	if(NLopt_FIND_REQUIRED)
-		message(FATAL_ERROR "Unable to find requested NLopt installation:${NLopt_ERROR_REASON}")
-	else()
-		if(NOT NLopt_FIND_QUIETLY)
-			message(STATUS "NLopt was not found:${NLopt_ERROR_REASON}")
-		endif()
-	endif()
+	message(STATUS "Unable to find requested NLopt installation:${NLopt_ERROR_REASON}")
+endif()
+
+
+# hide variables from normal GUI
+mark_as_advanced(
+	NLopt_VERSION
+	NLopt_DIR
+	NLopt_INCLUDE_DIR
+	NLopt_LIBRARY_DIR
+	NLopt_LIBS
+	)
+
+
+if(NOT NLopt_FOUND)
+	unset(NLopt_VERSION)
+	unset(NLopt_DIR)
+	unset(NLopt_INCLUDE_DIR)
+	unset(NLopt_LIBRARY_DIR)
+	unset(NLopt_LIBS)
 endif()

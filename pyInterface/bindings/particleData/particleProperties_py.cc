@@ -138,7 +138,7 @@ void rpwa::py::exportParticleProperties()
 		.def(
 			"fillFromDataTable"
 			, &rpwa::particleProperties::fillFromDataTable
-			, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
+			, (bp::arg("name"), bp::arg("warnIfNotExistent") = true)
 		)
 
 		.add_property("nmbDecays", &rpwa::particleProperties::nmbDecays)
