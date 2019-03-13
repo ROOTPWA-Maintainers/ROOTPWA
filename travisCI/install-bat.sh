@@ -32,5 +32,5 @@ else
 	cd "${TRAVIS_BUILD_DIR}"/deps/
 fi
 
-rm bat
+rm -vf bat
 ln -sfn bat-${BAT_VERSION} bat

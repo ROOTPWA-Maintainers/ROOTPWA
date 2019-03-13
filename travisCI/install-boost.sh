@@ -41,12 +41,12 @@ else
 	BOOST_ROOT=boost-${BOOST_VERSION} "${TRAVIS_BUILD_DIR}"/compileBoostLibraries.sh ${NMB_JOBS} FALSE
 
 	# cleanup
-	rm -rf boost.tar.gz
+	rm -vf boost.tar.gz
 	for i in ${LIBS} ${TOOLS} ${EXTRA}
 	do
-		rm -rf ${i}.tar.gz
+		rm -vf ${i}.tar.gz
 	done
 fi
 
-rm boost
+rm -vf boost
 ln -sfn boost-${BOOST_VERSION} boost

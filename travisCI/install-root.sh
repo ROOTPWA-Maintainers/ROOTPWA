@@ -17,8 +17,8 @@ else
 	# extract tarball
 	mkdir root-${ROOT_VERSION}
 	tar -xzf root.tar.gz -C root-${ROOT_VERSION} --strip-components=1
-	rm -rf root.tar.gz
+	rm -vf root.tar.gz
 fi
 
-rm root
+rm -vf root
 ln -sfn root-${ROOT_VERSION} root

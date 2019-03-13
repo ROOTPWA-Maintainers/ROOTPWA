@@ -19,8 +19,8 @@ else
 	# extract tarball
 	mkdir cmake-${CMAKE_VERSION}
 	tar -xzf cmake.tar.gz -C cmake-${CMAKE_VERSION} --strip-components=1
-	rm -rf cmake.tar.gz
+	rm -vf cmake.tar.gz
 fi
 
-rm cmake
+rm -vf cmake
 ln -sfn cmake-${CMAKE_VERSION} cmake
