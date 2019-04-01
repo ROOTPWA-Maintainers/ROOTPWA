@@ -15,6 +15,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", type=str, metavar="configFileName", dest="configFileName", default="./rootpwa.config", help="path to config file (default: './rootpwa.config')")
 	parser.add_argument("-b", type=int, metavar="integralBin", default=-1, dest="integralBin", help="bin to be calculated (default: all)")
 	parser.add_argument("-e", type=str, metavar="eventsType", default="all", dest="eventsType", help="events type to be calculated ('generated' or 'accepted', default: both)")
+	parser.add_argument("-d", metavar="dataset", default=-1, dest="dataset", help="data-set id or data-set label (default: all)")
 	parser.add_argument("-w", type=str, metavar="path", dest="weightsFileName", default="", help="path to MC weight file for de-weighting (default: none)")
 	args = parser.parse_args()
 
@@ -54,16 +55,23 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("Invalid events type given ('" + args.eventsType + "'). Aborting...")
 		sys.exit(1)
 
+	datasets = []
+	if args.dataset == -1:
+		datasets = fileManager.datasetLabels
+	else:
+		datasets = [args.dataset]
+
 	for multiBin in binList:
 		for eventsType in eventsTypes:
-			outputFileName = fileManager.getIntegralFilePath(multiBin, eventsType)
-			eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, eventsType)
-			if not eventAndAmpFileDict:
-				printErr("could not retrieve valid amplitude file list. Aborting...")
-				sys.exit(1)
-			printInfo("calculating integral matrix from " + str(len(eventAndAmpFileDict)) + " amplitude files:")
-			if not pyRootPwa.calcIntegrals(outputFileName, eventAndAmpFileDict, multiBin, args.weightsFileName):
-				printErr("integral calculation failed. Aborting...")
-				sys.exit(1)
-			printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
-				        + "in file '" + outputFileName + "'")
+			for dataset in datasets:
+				outputFileName = fileManager.getIntegralFilePath(multiBin, eventsType, dataset)
+				eventAndAmpFileDict = fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, eventsType, dataset)
+				if not eventAndAmpFileDict:
+					printErr("could not retrieve valid amplitude file list. Aborting...")
+					sys.exit(1)
+				printInfo("calculating integral matrix from " + str(len(eventAndAmpFileDict)) + " amplitude files:")
+				if not pyRootPwa.calcIntegrals(outputFileName, eventAndAmpFileDict, multiBin, args.weightsFileName):
+					printErr("integral calculation failed. Aborting...")
+					sys.exit(1)
+				printSucc("wrote integral to TKey '" + pyRootPwa.core.ampIntegralMatrix.integralObjectName + "' "
+							+ "in file '" + outputFileName + "'")

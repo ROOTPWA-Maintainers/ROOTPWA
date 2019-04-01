@@ -41,8 +41,9 @@ def loadFileManager(path):
 
 class InputFile(object):
 
-	def __init__(self, dataFileName, multibinBoundaries, eventsType, additionalVariables):
+	def __init__(self, dataFileName, datasetLabel, multibinBoundaries, eventsType, additionalVariables):
 		self.dataFileName = dataFileName
+		self.datasetLabel = datasetLabel
 		self.multibinBoundaries = multibinBoundaries
 		self.eventsType = eventsType
 		self.additionalVariables = additionalVariables
@@ -108,8 +109,9 @@ class fileManager(object):
 		self.keyFiles               = collections.OrderedDict() # {<wavename>: <key-filepath>}
 		self._specialAmplitudeFiles = collections.OrderedDict() # {(<events-type>, <eventfile-id>, <wavename>): <amplitude-filepath>}
 		self._mergedAmplitudes      = collections.defaultdict(dict) # {<events-type>: {<tag>: [<wave-name> ...]}}
-		self.integralFiles          = collections.OrderedDict() # {(<bin-id>, <events-type>): <integral-file path>}
+		self.integralFiles          = collections.OrderedDict() # {(<dataset-id>, <bin-id>, <events-type>): <integral-file path>}
 		self.binList = []
+		self.datasetLabels = []
 
 	def __getattribute__(self, name, *args, **kwargs):
 		if name in fileManager._deprecatedMembers:
@@ -141,6 +143,12 @@ class fileManager(object):
 		if not self.eventFiles:
 			pyRootPwa.utils.printErr("no event files found.")
 			return False
+		if not self.datasetLabels:
+			self.datasetLabels = set()
+			for _, eventFiles in self.eventFiles.iteritems():
+				for eventFile in eventFiles:
+					self.datasetLabels.add(eventFile.datasetLabel)
+			self.datasetLabels = sorted(list(self.datasetLabels))
 		if not self.binList:
 			for _, eventFiles in self.eventFiles.iteritems():
 				for eventFile in eventFiles:
@@ -183,8 +191,35 @@ class fileManager(object):
 		pyRootPwa.utils.printInfo("number of integral files: " + str(len(self.integralFiles)))
 		return True
 
+	def _datasetToDatasetID(self, dataset):
+		'''
+		@param dataset: data-set ID or data-set label
+		@return datasetID
+		'''
+		if isinstance(dataset, int):
+			if dataset >=0 and dataset < len(self.datasetLabels):
+				dataset = dataset
+			else:
+				raise pyRootPwa.utils.exception("Data-set id '{0}' out of range!".format(dataset))
+		elif isinstance(dataset, str):
+			if dataset in self.datasetLabels:
+				dataset = self.datasetLabels.index(dataset)
+			else:
+				raise pyRootPwa.utils.exception("Data-set label '{0}' not in list of data-set labels '{1}'!".format(dataset, self.datasetLabels))
+		elif dataset is None: # for backwards compatibility
+			if len(self.datasetLabels) == 1:
+				dataset = 0
+			else:
+				raise pyRootPwa.utils.exception("More the one data-set available. Data-set needs to be defined!")
+		else:
+			raise pyRootPwa.utils.exception("Cannot handle data-set identifier type '{0}'!".format(type(dataset)))
+		return dataset
 
 	def getEventAndAmplitudePairPathsForWave(self, eventsType, waveName):
+		'''
+		@param eventsType: Return EventAndAmplitudePairPaths for this events type
+		@return: List of (eventfilepath, amplitudefilepath) for the given wave, for all all event-field IDs
+		'''
 		eventsType = fileManager.pyEventsType(eventsType)
 		retVal = []
 		if eventsType not in self.eventFiles:
@@ -232,10 +267,13 @@ class fileManager(object):
 		return retval
 
 
-	def getEventAndAmplitudeFilePathsInBin(self, multiBin, eventsType):
-		# returns { "eventFileName" : { "waveName" : "amplitudeFileName" } }
+	def getEventAndAmplitudeFilePathsInBin(self, multiBin, eventsType, dataset = None):
+		'''
+		@return: { "eventFileName" : { "waveName" : "amplitudeFileName" } }
+		'''
 		eventsType = fileManager.pyEventsType(eventsType)
-		eventFileIds = self._getEventFileIdsForIntegralBin(multiBin, eventsType)
+		datasetID = self._datasetToDatasetID(dataset)
+		eventFileIds = self._getEventFileIdsForIntegralBin(multiBin, eventsType, datasetID)
 		if not eventFileIds:
 			pyRootPwa.utils.printWarn("no matching event files found in bin '" + str(multiBin) + "' and events type '" + str(eventsType) + "'.")
 			return collections.OrderedDict()
@@ -249,12 +287,32 @@ class fileManager(object):
 		return retval
 
 
-	def getIntegralFilePath(self, multiBin, eventsType):
+	def getIntegralFilePath(self, multiBin, eventsType, dataset = None):
+		datasetID = self._datasetToDatasetID(dataset)
 		eventsType = fileManager.pyEventsType(eventsType)
-		return self.integralFiles[(self.binList.index(multiBin), eventsType)]
+		return self.integralFiles[(datasetID, self.binList.index(multiBin), eventsType)]
 
 
-	def _getEventFileIdsForIntegralBin(self, multiBin, eventsType):
+	def openIntegralFile(self, multiBin, eventsType, dataset = None):
+		'''
+		@return: integralMatrix, integralMetadata, integralFile
+		'''
+		integralFile = ROOT.TFile.Open(self.getIntegralFilePath(multiBin, eventsType, dataset), "READ")
+		integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
+		integralMatrix = integralMeta.getAmpIntegralMatrix()
+		return integralMatrix, integralMeta, integralFile
+
+
+	def getIntegralMatrix(self, multiBin, eventsType, dataset = None):
+		'''
+		@return: integralMatrix
+		'''
+		integralMatrix, _, integralFile = self.openIntegralFile(multiBin, eventsType, dataset)
+		integralFile.Close()
+		return integralMatrix
+
+
+	def _getEventFileIdsForIntegralBin(self, multiBin, eventsType, datasetID):
 		'''
 		@return: List of all event-field IDs of the given events type that lie within or overlay with the given multibin.
 		'''
@@ -264,7 +322,9 @@ class fileManager(object):
 			return []
 		eventFileIds = []
 		for eventFileId, eventFile in enumerate(self.eventFiles[eventsType]):
-			overlaps = True # event-file bin overlaps with the given multibin
+			overlaps = True
+			if eventFile.datasetLabel != self.datasetLabels[datasetID]:
+				overlaps = False
 			for variableName in eventFile.multibinBoundaries:
 				if variableName in multiBin.boundaries:
 					# if event-file bin is completely below or above the multibin
@@ -356,7 +416,9 @@ class fileManager(object):
 		integralFiles = collections.OrderedDict()
 		for binID, _ in enumerate(self.binList):
 			for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
-				integralFiles[(binID, eventsType)] = self.integralDirectory + "/integral_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+				for datasetID, _ in enumerate(self.datasetLabels):
+					filename = "integral_dataset-"+str(datasetID)+"_binID-" + str(binID) + "_" + str(eventsType) + ".root"
+					integralFiles[(datasetID, binID, eventsType)] = os.path.join(self.integralDirectory, filename)
 		return integralFiles
 
 
@@ -364,22 +426,23 @@ class fileManager(object):
 		dataFileNames = sorted(glob.glob(self.eventDirectory + "/*.root"))
 		eventFiles = {}
 		for dataFileName in dataFileNames:
-			dataFile = ROOT.TFile.Open(dataFileName, "READ")
-			if not dataFile:
+			eventFile = ROOT.TFile.Open(dataFileName, "READ")
+			if not eventFile:
 				pyRootPwa.utils.printErr("could not open event file '" + dataFileName + "'.")
 				return collections.OrderedDict()
-			eventMeta = pyRootPwa.core.eventMetadata.readEventFile(dataFile)
+			eventMeta = pyRootPwa.core.eventMetadata.readEventFile(eventFile)
 			if not eventMeta:
 				pyRootPwa.utils.printErr("could not find metadata in event file '" + dataFileName + "'.")
 				return  collections.OrderedDict()
 			inputFile = InputFile(dataFileName,
+			                      eventMeta.datasetLabel(),
 			                      eventMeta.multibinBoundaries(),
 			                      fileManager.pyEventsType(eventMeta.eventsType()),
 			                      eventMeta.additionalTreeVariableNames())
 			if inputFile.eventsType not in eventFiles:
 				eventFiles[inputFile.eventsType] = []
 			eventFiles[inputFile.eventsType].append(inputFile)
-			dataFile.Close()
+			eventFile.Close()
 		retval =  collections.OrderedDict()
 		for eventsType in sorted(eventFiles):
 			retval[eventsType] = eventFiles[eventsType]
@@ -415,8 +478,8 @@ class fileManager(object):
 	def _getEventFilePaths(self):
 		retval = []
 		for _, eventFiles in self.eventFiles.iteritems():
-			for dataFile in eventFiles:
-				retval.append(dataFile.dataFileName)
+			for eventFile in eventFiles:
+				retval.append(eventFile.dataFileName)
 		return retval
 
 
@@ -434,9 +497,9 @@ class fileManager(object):
 			retStr += waveName + " >> " + self.keyFiles[waveName] + "\n"
 		retStr += "\nDataFiles:\n"
 		for eventsType in self.eventFiles:
-			for dataFile in self.eventFiles[eventsType]:
-				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(dataFile.multibinBoundaries) +
-				           "] >> " + dataFile.dataFileName + "\n")
+			for eventFile in self.eventFiles[eventsType]:
+				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(eventFile.multibinBoundaries) +
+				           "] >> " + eventFile.dataFileName + "\n")
 		retStr += "\nAmpFiles:\n"
 		for eventsType in self.eventFiles:
 			for eventFileId, _ in enumerate(self.eventFiles[eventsType]):
@@ -445,9 +508,11 @@ class fileManager(object):
 					retStr += ("eventsType [" + str(eventsType) + "], eventFileId [" + str(eventFileId) +
 					           "], waveName [" + waveName + "] >> " + amplitudeFiles[(eventsType, eventFileId, waveName_i)] + "\n")
 		retStr += "\nIntFiles:\n"
-		for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
-			for binID, _ in enumerate(self.binList):
-				retStr += "eventsType [" + str(eventsType) + "], binID [" + str(binID) + "] >> " + self.integralFiles[(binID, eventsType)] + "\n"
+		for datasetID, _ in enumerate(self.datasetLabels):
+			for eventsType in [EventsType.GENERATED, EventsType.ACCEPTED]:
+				for binID, _ in enumerate(self.binList):
+					retStr += "datasetID [" + str(datasetID) + "], eventsType [" + str(eventsType) + "], binID [" + str(binID) + "] >> "
+					retStr += self.integralFiles[(datasetID, binID, eventsType)] + "\n"
 		return retStr
 
 

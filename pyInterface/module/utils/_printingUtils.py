@@ -150,3 +150,12 @@ except NameError:
 	printSucc = printSuccClass(printingCounter)
 	printInfo = printInfoClass(printingCounter)
 	printDebug = printDebugClass(printingCounter)
+
+
+class exception(Exception,_printClass):
+	def __init__(self, *args, **kwargs):
+		_printClass.__init__(self)
+		if args:
+			printingCounter[0] += 1
+			self.printFormatted(args[0], "err")
+		Exception.__init__(self, *args, **kwargs)

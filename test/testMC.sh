@@ -154,7 +154,7 @@ testStep "calculation of integrals for phase-space data" "${ROOTPWA}/build/bin/c
 testStep "generation of MC data with weights" \
 "${ROOTPWA}/build/bin/genPseudoData \
 \"./generator_noBeamSimulation.conf\" \ \"${TESTDIR}/reference_fit/bin65_c2pap_bestfits_converged_MASS_1800_1820_N45340.root\" \ \"./weighted_mc_data/weighted_pseudoData_MASS_${MASS}-$((MASS+BINWIDTH))_N_${NMB_PSEUDO_EVENTS}.root\" \
--i \"./ints/integral_binID-0_2.root\" \
+-i \"./ints/integral_dataset-0_binID-0_2.root\" \
 -s ${SEED_PSEUDO} \
 -n ${NMB_PSEUDO_EVENTS} \
 -M ${MASS} \
