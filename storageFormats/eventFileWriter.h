@@ -26,8 +26,10 @@ namespace rpwa {
 		                const eventMetadata::eventsTypeEnum& eventsType,                        // type of events
 		                const std::vector<std::string>&      productionKinematicsParticleNames, // particle names of initial state particles (has to be the same order as the particles appear in the data!)
 		                const std::vector<std::string>&      decayKinematicsParticleNames,      // particle names of final state particles (has to be the same order as the particles appear in the data!)
+		                const std::string&                   datasetLabel,                      // label of the data-set this events belong to
+		                const std::string&                   datasetDescription,                // description of the data-set this events belong to
 		                const rpwa::multibinBoundariesType&  multibinBoundaries,                // multibin boundaries with content "label" -> (lowerBound, upperBound) describing which bin these data belong to
-		                const std::vector<std::string>&      additionalVariableLabels,          // Labels for any additional information which is stored (as double) and can later be used for binning
+		                const std::vector<std::string>&      additionalVariableLabels,          // labels for any additional information which is stored (as double) and can later be used for binning
 		                const int&                           splitlevel = 99,
 		                const int&                           buffsize = 256000);
 

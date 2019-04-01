@@ -27,6 +27,8 @@ rpwa::eventMetadata::eventMetadata()
 	  _eventsType(eventMetadata::OTHER),
 	  _productionKinematicsParticleNames(),
 	  _decayKinematicsParticleNames(),
+	  _datasetLabel(""),
+	  _datasetDescription(""),
 	  _multibinBoundaries(),
 	  _eventTree(0)
 { }
@@ -43,7 +45,11 @@ ostream& rpwa::eventMetadata::print(ostream& out) const
 	    << "    eventsType ...................... '" << getStringForEventsType(_eventsType) << "'" << endl
 	    << "    initial state particle names: ... "  << _productionKinematicsParticleNames  << endl
 	    << "    final state particle names: ..... "  << _decayKinematicsParticleNames       << endl
-	    << "    multi-bin";
+	    << "    data-set: ....................... '" << _datasetLabel << "'"                << endl;
+	if (_datasetDescription.size() > 0) {
+		out << "    data-set description: ........... " << _datasetDescription << endl;
+	}
+	out << "    multi-bin";
 	if(_multibinBoundaries.empty()) {
 		out << " ..................... " << "<empty>" << endl;
 	} else {
@@ -82,6 +88,9 @@ bool rpwa::eventMetadata::operator==(const eventMetadata& rhs) const
 		return false;
 	}
 	if (_decayKinematicsParticleNames != rhs._decayKinematicsParticleNames) {
+		return false;
+	}
+	if (_datasetLabel != rhs._datasetLabel) {
 		return false;
 	}
 	if (_multibinBoundaries != rhs._multibinBoundaries) {
@@ -221,6 +230,14 @@ eventMetadata* rpwa::eventMetadata::merge(const vector<const eventMetadata*>& in
 				strStr << mergee->additionalTreeVariableNames()[i] << "/D";
 				mergee->_eventTree->Branch(mergee->additionalTreeVariableNames()[i].c_str(), &additionalTreeVariables[i], strStr.str().c_str());
 			}
+		}
+		if (mergee->datasetLabel() != metadata->datasetLabel()) {
+			printWarn << "data-set labels differ." << endl;
+			goto mergeFailed;
+		}
+		if (mergee->datasetDescription() != metadata->datasetDescription()) {
+			printWarn << "data-set descriptions differ while the labels agree." << endl;
+			goto mergeFailed;
 		}
 		if (mergeAuxString)
 			mergee->appendToAuxString(metadata->auxString());

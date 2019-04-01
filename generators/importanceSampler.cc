@@ -356,6 +356,8 @@ rpwa::importanceSampler::initializeFileWriter(TFile*             outFile,
 	                                          rpwa::eventMetadata::REAL,
 	                                          prodKinParticleNames,
 	                                          decayKinParticleNames,
+	                                          "not-defined",
+	                                          "",
 	                                          binning,
 	                                          additionalVarLabels);
 

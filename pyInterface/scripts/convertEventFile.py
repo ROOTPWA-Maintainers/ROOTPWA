@@ -24,6 +24,8 @@ if __name__ == "__main__":
 	parser.add_argument("-l", type=str, metavar="string", dest="auxString", help="auxiliary string stored in metadata (default: output file name)")
 	parser.add_argument("-t", type=str, metavar="eventsType", dest="eventsType", help="type of data (can be 'real', 'generated' or 'accepted', default: 'other')")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
+	parser.add_argument("--datasetLabel", type=str, metavar="<label>", dest="datasetLabel", default="not-defined", help="Data-set label (default: 'not-defined')")
+	parser.add_argument("--datasetDescription", type=str, metavar="<description>", dest="datasetDescription", default="", help="Data-set description (default: empty)")
 	args = parser.parse_args()
 
 	prodKinPartNamesObjName = "prodKinParticles"
@@ -69,6 +71,8 @@ if __name__ == "__main__":
 	                      eventTypeTranslation[eventsTypeString],
 	                      initialStateParticleNames,
 	                      finalStateParticleNames,
+	                      args.datasetLabel,
+	                      args.datasetDescription,
 	                      multibinBoundaries,
 	                      additionalVars)
 

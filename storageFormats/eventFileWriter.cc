@@ -40,6 +40,8 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
                                        const eventMetadata::eventsTypeEnum&       eventsType,
                                        const vector<string>&                      productionKinematicsParticleNames,
                                        const vector<string>&                      decayKinematicsParticleNames,
+                                       const string&                              datasetLabel,
+                                       const string&                              datasetDescription,
                                        const multibinBoundariesType&              multibinBoundaries,
                                        const vector<string>&                      additionalVariableNames,
                                        const int&                                 splitlevel,
@@ -59,6 +61,7 @@ bool rpwa::eventFileWriter::initialize(TFile&                                   
 	_nmbProductionKinematicsParticles = productionKinematicsParticleNames.size();
 	_metadata.setDecayKinematicsParticleNames(decayKinematicsParticleNames);
 	_nmbDecayKinematicsParticles = decayKinematicsParticleNames.size();
+	_metadata.setDataset(datasetLabel, datasetDescription);
 	_metadata.setMultibinBoundaries(multibinBoundaries);
 
 	// prepare event tree

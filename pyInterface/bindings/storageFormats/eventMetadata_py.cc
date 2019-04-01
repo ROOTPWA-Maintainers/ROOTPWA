@@ -91,6 +91,8 @@ void rpwa::py::exportEventMetadata() {
 			)
 			.def("__eq__", &::eventMetadata___eq__)
 			.def("__eq__", &rpwa::eventMetadata::operator==)
+			.def("datasetLabel", &rpwa::eventMetadata::datasetLabel, bp::return_value_policy<bp::copy_const_reference>())
+			.def("datasetDescription", &rpwa::eventMetadata::datasetDescription, bp::return_value_policy<bp::copy_const_reference>() )
 			.def("multibinBoundaries", &eventMetadata_multibinBoundaries)
 			.def("productionKinematicsParticleNames", &eventMetadata_productionKinematicsParticleNames)
 			.def("decayKinematicsParticleNames", &eventMetadata_decayKinematicsParticleNames)

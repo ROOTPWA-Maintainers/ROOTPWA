@@ -62,6 +62,8 @@ if __name__ == "__main__":
 	                             pyRootPwa.core.eventMetadata.REAL,
 	                             metaData.productionKinematicsParticleNames(),
 	                             metaData.decayKinematicsParticleNames(),
+	                             metaData.datasetLabel(),
+	                             metaData.datasetDescription(),
 	                             metaData.multibinBoundaries(),
 	                             [ additionalVariableLabel for i, additionalVariableLabel in enumerate(additionalVariableNames)
 	                                                           if i != weightIndex ]):

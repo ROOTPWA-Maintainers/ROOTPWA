@@ -108,6 +108,8 @@ if __name__ == "__main__":
 	parser.add_argument("-b", "--binning", action='append',
 	                    help="declare current bin in the form 'binningVariable;lowerBound;upperBound' (e.g. 'mass;1000;1100')."+
 	                         "You can use the argument multiple times for multiple binning variables")
+	parser.add_argument("--datasetLabel", type=str, metavar="<label>", dest="datasetLabel", default="not-defined", help="Data-set label (default: 'not-defined')")
+	parser.add_argument("--datasetDescription", type=str, metavar="<description>", dest="datasetDescription", default="", help="Data-set description (default: empty)")
 
 	args = parser.parse_args()
 
@@ -154,6 +156,8 @@ if __name__ == "__main__":
 		                                eventsType,
 		                                initialProdNames,
 		                                initialDecayNames,
+		                                args.datasetLabel,
+		                                args.datasetDescription,
 		                                multibinBoundaries,
 		                                [])
 

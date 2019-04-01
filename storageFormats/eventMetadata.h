@@ -38,6 +38,8 @@ namespace rpwa {
 		const std::string& auxString() const { return _auxString; }
 		const std::string& contentHash() const { return _contentHash; }
 		const eventsTypeEnum& eventsType() const { return _eventsType; }
+		const std::string& datasetLabel() const { return _datasetLabel; }
+		const std::string& datasetDescription() const { return _datasetDescription; }
 		const rpwa::multibinBoundariesType& multibinBoundaries() const { return _multibinBoundaries; }
 		const std::vector<std::string>& productionKinematicsParticleNames() const { return _productionKinematicsParticleNames; }
 		const std::vector<std::string>& decayKinematicsParticleNames() const { return _decayKinematicsParticleNames; }
@@ -104,6 +106,7 @@ namespace rpwa {
 		void setProductionKinematicsParticleNames(const std::vector<std::string>& productionKinematicsParticleNames) { _productionKinematicsParticleNames = productionKinematicsParticleNames; }
 		void setDecayKinematicsParticleNames(const std::vector<std::string>& decayKinematicsParticleNames) { _decayKinematicsParticleNames = decayKinematicsParticleNames; }
 		void setAdditionalTreeVariableNames(const std::vector<std::string>& labels) { _additionalTreeVariableNames = labels; }
+		void setDataset(const std::string& label, const std::string& description){ _datasetLabel = label; _datasetDescription = description; }
 
 		void setBinningVariableLabels(const std::vector<std::string>& labels);
 		void setBinningVariableRange(const std::string& label, const rpwa::boundaryType& range) { _multibinBoundaries[label] = range; }
@@ -118,6 +121,8 @@ namespace rpwa {
 		std::vector<std::string> _productionKinematicsParticleNames;
 		std::vector<std::string> _decayKinematicsParticleNames;
 
+		std::string _datasetLabel;
+		std::string _datasetDescription;
 		rpwa::multibinBoundariesType _multibinBoundaries;
 
 		std::vector<std::string> _additionalTreeVariableNames;
@@ -126,7 +131,7 @@ namespace rpwa {
 
 		mutable TTree* _eventTree; //!
 
-		ClassDef(eventMetadata, 4);
+		ClassDef(eventMetadata, 5);
 
 	}; // class eventMetadata
 

@@ -70,6 +70,20 @@
               }";
 
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::eventMetadata"                                                           \
+        source=""                                                                                   \
+        version="[-4]"                                                                              \
+        targetClass="rpwa::eventMetadata"                                                           \
+        target="_datasetLabel, _datasetDescription"                                                 \
+        code="{                                                                                     \
+{                                                                                                   \
+    _datasetLabel = \"not-defined\";                                                                \
+    _datasetDescription = \"Data-set not defined. Default data-set label for backwards compatibility\";\
+}                                                                                                   \
+              }";
+
+
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class std::vector<std::string>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;

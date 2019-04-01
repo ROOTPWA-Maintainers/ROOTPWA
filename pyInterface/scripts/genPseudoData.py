@@ -22,6 +22,8 @@ if __name__ == "__main__":
 	parser.add_argument("outputFile", type=str, metavar="outputFile", help="output root file")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName",
 	                    help="path to config file (default: '%(default)s')")
+	parser.add_argument("--datasetLabel", type=str, metavar="<label>", dest="datasetLabel", default="not-defined", help="Data-set label (default: 'not-defined')")
+	parser.add_argument("--datasetDescription", type=str, metavar="<description>", dest="datasetDescription", default="", help="Data-set description (default: empty)")
 	parser.add_argument("-i", "--integralFile", type=str, metavar="integralFile", help="integral file")
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: %(default)s)")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=0, help="random number generator seed (default: %(default)s)")
@@ -166,6 +168,8 @@ if __name__ == "__main__":
 				                                pyRootPwa.core.eventMetadata.REAL,
 				                                prodKinNames,
 				                                decayKinNames,
+				                                args.datasetLabel,
+				                                args.datasetDescription,
 # TODO: FILL THESE
 				                                { "mass": (massRange[0], massRange[1]) },
 				                                massTPrimeVariables + ["weight"]

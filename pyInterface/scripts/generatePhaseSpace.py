@@ -33,6 +33,8 @@ if __name__ == "__main__":
 	parser.add_argument("--beamfile", type=str, metavar="<beamFile>", dest="beamFileName", help="path to beam file (overrides values from config file)")
 	parser.add_argument("--noRandomBeam", action="store_true", dest="noRandomBeam", help="read the events from the beamfile sequentially")
 	parser.add_argument("--randomBlockBeam", action="store_true", dest="randomBlockBeam", help="like --noRandomBeam but with random starting position")
+	parser.add_argument("--datasetLabel", type=str, metavar="<label>", dest="datasetLabel", default="not-defined", help="Data-set label (default: 'not-defined')")
+	parser.add_argument("--datasetDescription", type=str, metavar="<description>", dest="datasetDescription", default="", help="Data-set description (default: empty)")
 
 	args = parser.parse_args()
 
@@ -140,6 +142,8 @@ if __name__ == "__main__":
 		                                pyRootPwa.core.eventMetadata.GENERATED,
 		                                prodKinNames,
 		                                decayKinNames,
+		                                args.datasetLabel,
+		                                args.datasetDescription,
 		                                massTPrimeRanges,
 		                                massTPrimeVariables,
 		                                )
