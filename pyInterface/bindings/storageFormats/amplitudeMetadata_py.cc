@@ -3,6 +3,7 @@
 #include <vector>
 #include <complex>
 #include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
 
 #include <TPython.h>
 #include <TTree.h>
@@ -11,23 +12,12 @@
 #include "rootConverters_py.h"
 #include "stlContainers_py.h"
 
-#if BOOST_VERSION < 106300
-#include <boost/python/numeric.hpp>
-#else
-#include <boost/python/numpy.hpp>
-namespace np = boost::python::numpy;
-#endif
 
 namespace bp = boost::python;
+namespace np = boost::python::numpy;
 
 
 namespace {
-
-#if BOOST_VERSION < 106300
-	typedef boost::python::numeric::array nparray;
-#else
-	typedef boost::python::numpy::ndarray nparray;
-#endif
 
 	bp::list amplitudeMetadata_eventMetadata(const rpwa::amplitudeMetadata& self)
 	{
@@ -58,7 +48,7 @@ namespace {
 	}
 
 
-	nparray
+	np::ndarray
 	amplitudeMetadata_loadAmplitudes(
 	                                 bp::list& pyAmplitudesFilenames,
 	                                 bp::list& pyWaveNames,
@@ -78,35 +68,19 @@ namespace {
 			bp::throw_error_already_set();
 		}
 		std::vector<std::vector<std::complex<double>>> amps = rpwa::loadAmplitudes(amplitudeFilenames, waveNames, eventFilename, otfBin, maxNmbEvents);
-#if BOOST_VERSION < 106300
-		bp::list data;
-		for (size_t i = 0; i < amps.size(); ++i) {
-			bp::list row;
-			for (size_t j = 0; j < amps[i].size(); ++j) {
-				row.append(amps[i][j]);
-			}
-			data.append(row);
-			amps[i].resize(0);
-		}
-		nparray pyIntMatrix(data);
-#else
-		nparray pyIntMatrix = np::empty(bp::make_tuple(amps.size(), amps[0].size()), np::dtype::get_builtin<std::complex<double>>());
+		np::ndarray pyIntMatrix = np::empty(bp::make_tuple(amps.size(), amps[0].size()), np::dtype::get_builtin<std::complex<double>>());
 		for (unsigned int i = 0; i < amps.size(); ++i) {
 			for (unsigned int j = 0; j < amps[i].size(); ++j) {
 				pyIntMatrix[bp::make_tuple(i, j)] = amps[i][j];
 			}
 			amps[i].resize(0);
 		}
-#endif
 		return pyIntMatrix;
 	}
 }
 
 
 void rpwa::py::exportAmplitudeMetadata() {
-#if BOOST_VERSION < 106300
-	boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
-#endif
 
 	bp::class_<rpwa::amplitudeMetadata, boost::noncopyable>("amplitudeMetadata", bp::no_init)
 		.def(bp::self_ns::str(bp::self))
