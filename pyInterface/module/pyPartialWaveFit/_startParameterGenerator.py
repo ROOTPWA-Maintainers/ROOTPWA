@@ -17,7 +17,7 @@ class StartParameterGenerator(object):
 		'''
 		self.generator = RandomState(seed)
 		self.model = model
-		self.nmbEvetns = self.model.likelihood.nmbEvents
+		self.nmbEvents = np.sum(self.model.likelihood.nmbEvents)
 
 
 	def __call__(self):
@@ -36,13 +36,21 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 	def __call__(self):
 		amplVectors = []
 		for nWavesInSector in self.model.parameterMapping.nmbWavesInSectors:
-			ampl = np.random.uniform(0.01, self.nmbEvetns**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
-			       1j*np.random.uniform(0.01, self.nmbEvetns**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
+			ampl = np.random.uniform(0.01, self.nmbEvents**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
+			       1j*np.random.uniform(0.01, self.nmbEvents**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
 			ampl[0] = np.real(ampl[0])
 			amplVectors.append(ampl)
 
-		# add additional parameters
 		parameters = [amplVectors]
+		# add ratio parameters
+		ratios = np.empty(self.model.nmbDatasets)
+		tot = 1.0
+		for i in xrange(ratios.size):
+			ratios[i] = tot
+			tot -= self.generator.rand()*tot # [0, tot)
+		parameters.append(ratios)
+
+		# add additional parameters
 		for _ in xrange(self.model.parameterMapping.nmbAdditionalParameters):
 			parameters.append(self.generator.rand())
 
@@ -88,7 +96,7 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		realAmplVectorLength = np.sqrt(np.dot(realAmplVector,np.dot(self.realAccMatrix,realAmplVector)))
 
 		# normalize amplitude to the total intensity
-		realAmplVectorNormalized = np.sqrt(self.nmbEvetns)*realAmplVector/realAmplVectorLength
+		realAmplVectorNormalized = np.sqrt(self.nmbEvents)*realAmplVector/realAmplVectorLength
 
 		# transform to complex-valued arrays
 		amplVectors = []
@@ -100,8 +108,17 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 			amplVector = amplVector * np.conj(amplVector[0])/np.abs(amplVector[0])
 			amplVectors.append(amplVector)
 
-		# add additional parameters
 		parameters = [amplVectors]
+		# add ratio parameters
+		ratios = np.empty(self.model.nmbDatasets)
+		tot = 1.0
+		for i in xrange(ratios.size):
+			ratios[i] = tot
+			tot -= self.generator.rand()*tot # [0, tot)
+		ratios = np.array([0.5, 0.25, 0.25])
+		parameters.append(ratios)
+
+		# add additional parameters
 		for _ in xrange(self.model.parameterMapping.nmbAdditionalParameters):
 			parameters.append(self.generator.rand())
 

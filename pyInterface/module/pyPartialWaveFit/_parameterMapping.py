@@ -60,8 +60,6 @@ class ParameterMapping(object):
 		raise NotImplementedError("Needs to be implemented in specialized class!")
 
 
-
-
 class ParameterMappingRpwa(ParameterMapping):
 	'''
 	The fitter parameters are mapped onto the likelihood parameters in the following wave
@@ -88,6 +86,7 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.wavesInSectors = model.wavesInSectors
 		self.nmbWavesInSectors = [ len(wavesInSector) for wavesInSector in self.wavesInSectors ]
 		self.nmbSectors = len(self.nmbWavesInSectors)
+		self.nmbDatasets = model.nmbDatasets
 
 		if realWaves is None:
 			realWaves = [ [] ] * self.nmbSectors
@@ -100,17 +99,20 @@ class ParameterMappingRpwa(ParameterMapping):
 
 		negLlhdFunction = model.clsLikelihood.negLlhd
 		argsNegLlhdFunction = inspect.getargspec(negLlhdFunction).args
-		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -2 # the first one is self, the second one are the transition amplitudes
+		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -3 # the first one is self, the second one are the transition amplitudes, the third one are the data-set ratios
 		self.nmbAmplitudeParameters = np.sum([ 2*n-len(realWaves[i]) for i,n in enumerate(self.nmbWavesInSectors)]) - 2*len(zeroWaves)
-		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbAdditionalParameters
+		self.nmbDatasetRatioParameters = self.nmbDatasets-1
+		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbDatasetRatioParameters + self.nmbAdditionalParameters
 
 
 		# build indices of paraLlhd where a new sector starts
 		self.paraLlhdStartSectors = [0]
 		for i, nWavesInSector in enumerate(self.nmbWavesInSectors):
 			self.paraLlhdStartSectors.append(nWavesInSector + self.paraLlhdStartSectors[i])
+		self.paraLlhdStartDatasetRatios = self.paraLlhdStartSectors[-1]
+		self.paraLlhdStartStartAdditionParameters = self.paraLlhdStartDatasetRatios + self.nmbDatasets
 
-		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbAdditionalParameters
+		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbDatasets + self.nmbAdditionalParameters
 
 		# build index mapping between paraLlhd and paraFitter
 		iFitterPara = 0
@@ -129,6 +131,13 @@ class ParameterMappingRpwa(ParameterMapping):
 				else:
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
+		for iDataset in xrange(self.nmbDatasets):
+			if iDataset == 0:
+				self.indicesRealFitterPara.append(None)
+			else:
+				self.indicesRealFitterPara.append(iFitterPara)
+				iFitterPara += 1
+			self.indicesImagFitterPara.append(None)
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
 			self.indicesRealFitterPara.append(iFitterPara)
 			iFitterPara += 1
@@ -149,6 +158,8 @@ class ParameterMappingRpwa(ParameterMapping):
 					self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
 					if wave not in realWaves[iSector]:
 						self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
+		for iDatasetRatioParameter in xrange(self.nmbDatasetRatioParameters):
+			self.paraNamesFitter.append("r_{0}".format(iDatasetRatioParameter+1))
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
 			self.paraNamesFitter.append(argsNegLlhdFunction[iAdditionalParameter+2])
 
@@ -159,6 +170,9 @@ class ParameterMappingRpwa(ParameterMapping):
 		'''
 		return self.paraLlhdStartSectors[iSector] + iWave
 
+	def indexParaLlhdDatasetRatio(self, iDataset):
+		return self.paraLlhdStartDatasetRatios + iDataset
+
 
 	def paraFitter2Llhd(self, paraFitter):
 		'''
@@ -168,6 +182,8 @@ class ParameterMappingRpwa(ParameterMapping):
 		paraLlhdReal[self.indicesLlhdParaNonNoneReal] = paraFitter[self.indicesRealFitterParaNonNone]
 		paraLlhdImag = np.zeros(self.nmbLlhdParameters)
 		paraLlhdImag[self.indicesLlhdParaNonNoneImag] = paraFitter[self.indicesImagFitterParaNonNone]
+		# set data-set ratio reference
+		paraLlhdReal[self.indexParaLlhdDatasetRatio(0)] = 1.0
 		paraLlhd = paraLlhdReal + 1j*paraLlhdImag
 		return paraLlhd
 
@@ -180,14 +196,15 @@ class ParameterMappingRpwa(ParameterMapping):
 
 	def paraLlhd2negLlhd(self, paraLlhd):
 		'''
-		Split paraLlhd (one long parameter list) into [ [<list of T-vectors in sectors>], <additional parameters>]) for the `negLlhd` function.
+		Split paraLlhd (one long parameter list) into [ [<list of T-vectors in sectors>], <list of likelihood ratios>, <additional parameters>]) for the `negLlhd` function.
 		The complex-valued additional parameters in paraLlhd are mapped to real ones.
 		'''
 		amplitudes = tuple(paraLlhd[self.paraLlhdStartSectors[i]:self.paraLlhdStartSectors[i+1]] for i in range(self.nmbSectors))
-		return [ amplitudes ] + list(np.real(paraLlhd[self.paraLlhdStartSectors[-1]:]))
+		datasetRatios = np.real(paraLlhd[self.paraLlhdStartDatasetRatios:self.paraLlhdStartStartAdditionParameters])
+		return [ amplitudes ] + [datasetRatios] + list(np.real(paraLlhd[self.paraLlhdStartStartAdditionParameters:]))
 
 	def paraNegLlhd2Llhd(self, paraNegLlhd):
-		return np.hstack([np.hstack(paraNegLlhd[0])] + paraNegLlhd[1:])
+		return np.hstack([np.hstack(paraNegLlhd[0])] + [paraNegLlhd[1]] + paraNegLlhd[2:])
 
 
 	def gradLlhd2Fitter(self, gradLlhd, gradFitter):
@@ -217,12 +234,17 @@ class ParameterMappingRpwa(ParameterMapping):
 
 
 	def paraFitter2AmpsForRpwaFitresult(self, paraFitter):
-		return self.paraFitter2Llhd(paraFitter)[:self.nmbLlhdParameters - self.nmbAdditionalParameters]
+		return self.paraFitter2Llhd(paraFitter)[:self.paraLlhdStartSectors[-1]]
 
+	def paraFitter2DatasetRatiosForRpwaFitresult(self, paraFitter):
+		datasetRatioParameters = self.paraLlhd2negLlhd(self.paraFitter2Llhd(paraFitter))[1]
+		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))
+		datasetRatios = np.exp(datasetRatioParameters)/datasetRatiosNorm
+		return datasetRatios
 
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
 		indices = []
-		for i in xrange(self.nmbLlhdParameters - self.nmbAdditionalParameters):
+		for i in xrange(self.paraLlhdStartSectors[-1]):
 			indices.append((self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1,
 			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices

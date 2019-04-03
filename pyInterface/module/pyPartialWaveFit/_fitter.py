@@ -179,8 +179,10 @@ def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valT
 			accIntegralMatrixResult  = None
 			normIntegralsResult = None
 
+		datasetRatios = {label: model.parameterMapping.paraFitter2DatasetRatiosForRpwaFitresult(result['parameters'])[i] for i, label in enumerate(model.datasetLabels)}
+
 		fitResult.fill(
-						model.likelihood.nmbEvents,
+						np.sum(model.likelihood.nmbEvents),
 						1,
 						model.multibin.boundaries,
 						result['negLlhd'],
@@ -193,7 +195,9 @@ def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valT
 						accIntegralMatrixResult,
 						normIntegralsResult,
 						result['success'],
-						hasHessian
+						hasHessian,
+						datasetRatios,
+						{k: -1 for k in datasetRatios.keys()}
 			)
 		tree.Fill()
 	nmbBytes = tree.Write()

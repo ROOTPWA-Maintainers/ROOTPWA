@@ -4,6 +4,7 @@
 
 import numpy as np
 import pyRootPwa
+import pyRootPwa.utils
 
 from _likelihood import LikelihoodConnected
 from _parameterMapping import ParameterMappingConnected
@@ -30,6 +31,8 @@ class Model(object):
 		self.wavesInSectors = []
 		self.nmbWaves = None
 		self.waveNames = None
+		self.nmbDatasets = None
+		self.datasetLabels = []
 
 
 	def amplitudeNames(self):
@@ -47,18 +50,19 @@ class ModelRpwa(Model):
 		self.waveNamesPosRefl = None
 		self.waveNamesNegRefl = None
 		self.waveNamesFixed = None
-		self.integralsPosRefl = None  # tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals)
-		self.integralsNegRefl = None  # tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals)
+		self.integralsPosRefl = None  # list of tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals) one for each data set
+		self.integralsNegRefl = None  # list of tuple of (normIntegralMatrix, accIntegralMatrix, normIntegrals) one for each data set
 		self.multibin = None
 
 
-	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl):
+	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl, datasets = None):
 		'''
 		@param fileManagerOrConfigfile: Can be a fileManager object or a path to the config file
 		@param multiBin: Can be a multibin or the integer bin-id
 		@param waveListFileName: Path to the wavelist file
 		@param rankPosRefl: Rank of positive reflectivity waves
 		@param rankNegRefl: Rank of negative reflectivity waves
+		@param datasets: List of data-sets to be fitted. If None, all data-sets are used.
 		'''
 
 		if isinstance(fileManagerOrConfigfile, str):
@@ -86,28 +90,94 @@ class ModelRpwa(Model):
 			pyRootPwa.utils.printErr("Cannot find multibin (" + str(multiBin) + ") in binlist! Aborting...")
 			raise Exception()
 
-		self.initModelWithFiles(eventAndAmpFileDict=fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL),
-		                        normIntegralFileName=fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED),
-		                        accIntegralFileName=fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.ACCEPTED),
+		if datasets is None:
+			datasets = fileManager.datasetLabels
+		self.nmbDatasets = len(datasets)
+		self.datasetLabels = datasets
+
+		self.initModelWithFiles(eventAndAmpFileDicts=[fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL, d ) for d in datasets],
+		                        normIntegralFileNames=[fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED, d) for d in datasets],
+		                        accIntegralFileNames=[fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.ACCEPTED, d) for d in datasets],
 		                        multiBin=multiBin,
 		                        waveListFileName=waveListFileName,
 		                        waveDescriptions=fileManager.getWaveDescriptions(),
 		                        rankPosRefl=rankPosRefl,
-		                        rankNegRefl=rankNegRefl)
+		                        rankNegRefl=rankNegRefl,
+		                        datasets = datasets)
 
 
 	def initModelWithFiles(self,
-	                       eventAndAmpFileDict,
-	                       normIntegralFileName, accIntegralFileName,
+	                       eventAndAmpFileDicts,
+	                       normIntegralFileNames, accIntegralFileNames,
 	                       multiBin,
 	                       waveListFileName, waveDescriptions,
 	                       rankPosRefl,
-	                       rankNegRefl):
+	                       rankNegRefl,
+	                       datasets):
 
 		self.rankPosRefl = rankPosRefl
 		self.rankNegRefl = rankNegRefl
 		self.multibin = multiBin
 
+		referenceWaves = self._initWaveNames(multiBin, waveListFileName, waveDescriptions)
+
+		normIntegralMatrices = []
+		accIntegralMatrices = []
+		normIntegrals = []
+		decayAmps = []
+		self.integralsPosRefl = []
+		self.integralsNegRefl = []
+		for eventAndAmpFileDict, normIntegralFileName, accIntegralFileName, dataset in zip(eventAndAmpFileDicts, normIntegralFileNames, accIntegralFileNames, datasets):
+			decayAmpsTest = loadAmplitudes(eventAndAmpFileDict, [self.waveNames[0]], multiBin)
+			if decayAmpsTest.shape[1] == 0:
+				pyRootPwa.utils.printWarn("No events to fit in multibin: {0} for dataset {1}".format(multiBin, dataset))
+				self.nmbDatasets -= 1
+				self.datasetLabels.remove(dataset)
+				continue
+			normIntegralMatrices.append(list())
+			accIntegralMatrices.append(list())
+			normIntegrals.append(list())
+			decayAmps.append(list())
+			normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, self.waveNames)
+			for tag, waveNames, rank in zip(['pos', 'neg'], [self.waveNamesPosRefl, self.waveNamesNegRefl], [self.rankPosRefl, self.rankNegRefl]):
+				if not waveNames:
+					continue
+				integrals = (buildSubMatrix(normIntegralMatrixFull, self.waveNames, waveNames),
+							buildSubMatrix(accIntegralMatrixFull, self.waveNames, waveNames),
+							buildSubList(normIntegralsFull, self.waveNames, waveNames))
+				decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
+				if tag == 'pos':
+					self.integralsPosRefl.append(integrals)
+				if tag == 'neg':
+					self.integralsNegRefl.append(integrals)
+
+				for iRank in xrange(rank):
+					decayAmps[-1].append(decayAmpsFull[iRank:])
+					normIntegralMatrices[-1].append(integrals[0][iRank:, iRank:])
+					accIntegralMatrices[-1].append(integrals[1][iRank:, iRank:])
+					normIntegrals[-1].append(integrals[2][iRank:])
+			# add flat wave
+			decayAmps[-1].append(np.ones((1, 1), dtype=np.complex128))
+			normIntegralMatrices[-1].append(np.ones((1, 1), dtype=np.complex128))
+			accIntegralMatrices[-1].append(np.full((1, 1), totAcc, dtype=np.complex128))
+			normIntegrals[-1].append(np.ones((1), dtype=np.float64))
+
+		# needs to be added afterwards as the integral matrices do not know a flat wave
+		self.wavesInSectors.append(["flat"])
+		referenceWaves.append("flat")
+		self.waveNames.append("flat")
+		self.nmbWaves = len(self.waveNames)
+
+
+		# buildParameterMapping
+		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in referenceWaves], self.waveNamesFixed)
+
+		self.likelihood = self.clsLikelihood(decayAmps, accIntegralMatrices, normIntegralMatrices, normIntegrals, self.parameterMapping)
+
+		return True
+
+
+	def _initWaveNames(self, multiBin, waveListFileName, waveDescriptions):
 		waveDescriptionActive, referenceWavesDefinitions = pyRootPwa.utils.getWaveDescriptionActiveFromWavelist(waveListFileName, waveDescriptions, multiBin)
 
 		self.waveNames = [waveName for waveName, _, _ in waveDescriptionActive]
@@ -133,29 +203,10 @@ class ModelRpwa(Model):
 		self.waveNamesFixed = [waveName for waveName, _, isActive in waveDescriptionActive if not isActive ]
 
 		# here we have to distinguish negatives from positives
-		normIntegralMatrices = []
-		accIntegralMatrices = []
-		normIntegrals = []
-		decayAmps = []
 		referenceWaves = []
-
-		normIntegralMatrixFull, accIntegralMatrixFull, normIntegralsFull, totAcc = loadMatrices(normIntegralFileName, accIntegralFileName, self.waveNames)
-
 		for tag, waveNames, rank in zip(['pos', 'neg'], [self.waveNamesPosRefl, self.waveNamesNegRefl], [self.rankPosRefl, self.rankNegRefl]):
 			if not waveNames:
 				continue
-			integrals = (buildSubMatrix(normIntegralMatrixFull, self.waveNames, waveNames),
-			            buildSubMatrix(accIntegralMatrixFull, self.waveNames, waveNames),
-			            buildSubList(normIntegralsFull, self.waveNames, waveNames))
-			decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
-			if decayAmpsFull.shape[1] == 0:
-				pyRootPwa.utils.printErr("No events to fit in multibin: {0}".format(multiBin))
-				raise Exception()
-			if tag == 'pos':
-				self.integralsPosRefl = integrals
-			if tag == 'neg':
-				self.integralsNegRefl = integrals
-
 			for iRank in xrange(rank):
 				self.wavesInSectors.append(waveNames[iRank:])
 				if referenceWavesDefinitions is not None:
@@ -165,29 +216,7 @@ class ModelRpwa(Model):
 						raise Exception()
 				else:
 					referenceWaves.append(self.wavesInSectors[-1][0])
-				decayAmps.append(decayAmpsFull[iRank:])
-				normIntegralMatrices.append(integrals[0][iRank:, iRank:])
-				accIntegralMatrices.append(integrals[1][iRank:, iRank:])
-				normIntegrals.append(integrals[2][iRank:])
-
-		# add flat wave
-		self.wavesInSectors.append(["flat"])
-		referenceWaves.append("flat")
-		decayAmps.append(np.ones((1, 1), dtype=np.complex128))
-		normIntegralMatrices.append(np.ones((1, 1), dtype=np.complex128))
-		accIntegralMatrices.append(np.full((1, 1), totAcc, dtype=np.complex128))
-		normIntegrals.append(np.ones((1), dtype=np.float64))
-
-		self.waveNames.append("flat")
-		self.nmbWaves = len(self.waveNames)
-
-		# buildParameterMapping
-		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in referenceWaves], self.waveNamesFixed)
-
-		self.likelihood = self.clsLikelihood(decayAmps, accIntegralMatrices, normIntegralMatrices, normIntegrals, self.parameterMapping)
-
-		return True
-
+		return referenceWaves
 
 	def amplitudeNames(self):
 		amplitudeNames = []
@@ -204,28 +233,34 @@ class ModelRpwa(Model):
 	def getNormSubmatrices(self):
 		matrices = []
 		if self.integralsPosRefl:
-			matrices += [self.integralsPosRefl[0]]
+			matrices += [np.sum(np.dstack([i[0] for i in self.integralsPosRefl]),axis=2)/len(self.integralsPosRefl)]
 		if self.integralsNegRefl:
-			matrices += [self.integralsNegRefl[0]]
-		return matrices + [self.likelihood.normMatrices[-1]]
+			matrices += [np.sum(np.dstack([i[0] for i in self.integralsNegRefl]),axis=2)/len(self.integralsNegRefl)]
+		return matrices + [np.sum(np.dstack([i[-1] for i in self.likelihood.normMatrices]), axis=2)/len(self.likelihood.normMatrices)]
 
 
 	def getAccSubmatrices(self):
 		matrices = []
 		if self.integralsPosRefl:
-			matrices += [self.integralsPosRefl[1]]
+			matrices += [np.sum(np.dstack([i[1] for i in self.integralsPosRefl]),axis=2)/len(self.integralsPosRefl)]
 		if self.integralsNegRefl:
-			matrices += [self.integralsNegRefl[1]]
-		return matrices + [self.likelihood.accMatrices[-1]]
+			matrices += [np.sum(np.dstack([i[1] for i in self.integralsNegRefl]),axis=2)/len(self.integralsNegRefl)]
+		matrices = matrices + [np.sum(np.dstack([i[-1] for i in self.likelihood.accMatrices]), axis=2)/len(self.likelihood.accMatrices)]
+		if self.nmbDatasets > 1:
+			pyRootPwa.utils.printWarn("Return empty accept matrices because of multiple data sets!")
+			matrices = [0*m for m in matrices]
+		return matrices
 
 
 	def getNormIntegrals(self):
 		matrices = []
 		if self.integralsPosRefl:
-			matrices += [self.integralsPosRefl[2]]
+			matrices += [np.sum(np.dstack([i[2] for i in self.integralsPosRefl]),axis=2)]
 		if self.integralsNegRefl:
-			matrices += [self.integralsNegRefl[2]]
-		return matrices + [self.likelihood.normIntegrals[-1]]
+			matrices += [np.sum(np.dstack([i[2] for i in self.integralsNegRefl]),axis=2)]
+		matrices = matrices + [np.sum(np.dstack([i[-1] for i in self.likelihood.normIntegrals]), axis=2)]
+		matrices = [m.reshape(m.size) for m in matrices]
+		return matrices
 
 
 def findReferenceWave(referenceWavesDefinitions, refl, rank):

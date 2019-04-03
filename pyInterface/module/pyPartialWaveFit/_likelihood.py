@@ -18,35 +18,50 @@ class Likelihood(object):
 
 	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
 		'''
-		@param decayAmplitudes: List of complex-valued matrix of normalized decay amplitudes, one for each incoherent sector
+		@param decayAmplitudes: List of lists of complex-valued matrix of normalized decay amplitudes, one for each data-set and incoherent sector
 								The first index is the wave number, the second index is the event number
-		@param accMatrices: List of integral matrices with acceptance effects, one for each incoherent sector
-		@param normMatrices: List of integral matrices without acceptance effects, one for each incoherent sector
+								decayAmplitudes[<dataset>][<sector>][<wave>,<event>]
+		@param accMatrices: List of lists of integral matrices with acceptance effects, one for each data-set and incoherent sector
+		                    accMatrices[<dataset>][<sector>][<waveA>,<waveB>]
+		@param normMatrices: List of lists of integral matrices without acceptance effects, one for each data-set and for each incoherent sector
+		                     normMatrices[<dataset>][<sector>][<waveA>,<waveB>]
 		'''
 
 		if not decayAmplitudes:
 			raise Exception("No decay amplitudes given")
 
 		if len(decayAmplitudes) != len(accMatrices) or len(decayAmplitudes) != len(normMatrices):
-			raise Exception('Number of sectors not matching!')
+			raise Exception('number of dataset not matching!')
 
-		self.nmbSectors = len(decayAmplitudes)
-		self.nmbEvents = decayAmplitudes[0].shape[1]
+		self.nmbDatasets = len(decayAmplitudes)
+		for iDataset in range(self.nmbDatasets):
+			if len(decayAmplitudes[iDataset]) != len(accMatrices[iDataset]) or len(decayAmplitudes[iDataset]) != len(normMatrices[iDataset]):
+				raise Exception('Number of sectors not matching!')
+
+
+		self.nmbSectors = len(decayAmplitudes[0])
+		self.nmbEvents = [ amps[0].shape[1] for amps in decayAmplitudes ]
 		self.nmbWavesInSectors = []
-		for i, amplitudes in enumerate(decayAmplitudes):
-			if self.nmbEvents != amplitudes.shape[1] and amplitudes.shape[1] != 1:
-				raise Exception('Events not matching')
+		for iDataset in range(self.nmbDatasets):
+			for i, amplitudes in enumerate(decayAmplitudes[iDataset]):
+				if self.nmbEvents[iDataset] != amplitudes.shape[1] and amplitudes.shape[1] != 1:
+					raise Exception('Events not matching')
 
-			if amplitudes.shape[0] !=  accMatrices[i].shape[0] or amplitudes.shape[0] !=  normMatrices[i].shape[0] \
-			   or amplitudes.shape[0] !=  accMatrices[i].shape[1] or amplitudes.shape[0] !=  normMatrices[i].shape[1]:
-				raise Exception('Matrices not matching')
+				if amplitudes.shape[0] !=  accMatrices[iDataset][i].shape[0] or amplitudes.shape[0] !=  normMatrices[iDataset][i].shape[0] \
+				or amplitudes.shape[0] !=  accMatrices[iDataset][i].shape[1] or amplitudes.shape[0] !=  normMatrices[iDataset][i].shape[1]:
+					raise Exception('Matrices not matching')
 
-			self.nmbWavesInSectors.append(amplitudes.shape[0])
+				if iDataset == 0:
+					self.nmbWavesInSectors.append(amplitudes.shape[0])
+				else:
+					if self.nmbWavesInSectors[i] != amplitudes.shape[0]:
+						raise Exception('Data sets have different number of waves')
 
 		self.decayAmplitudes = decayAmplitudes
 		self.accMatrices = accMatrices
 		self.normMatrices = normMatrices
 		self.normIntegrals = normIntegrals
+
 
 		self.parameterMapping = parameterMapping
 
@@ -61,21 +76,24 @@ class Likelihood(object):
 		pass # no parameters for this likelihood class
 
 
-	def negLlhd(self, transitionAmps):
+	def negLlhd(self, transitionAmps, datasetRatioParameters):
 		'''
 		@return Negative log-likelihood for the given set of transition amplitudes
 		'''
+		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))
+		datasetRatiosLog = datasetRatioParameters-np.log(datasetRatiosNorm)
+		negLlhd = 0.0
+		for iDataset in xrange(self.nmbDatasets):
+			nBar = 0.0
+			dataTerm = 0.0
+			for iSector in xrange(self.nmbSectors):
+				nBar = nBar + np.exp(datasetRatiosLog[iDataset])*np.real(np.dot( np.dot( self.accMatrices[iDataset][iSector],np.conj(transitionAmps[iSector]) ), transitionAmps[iSector]))
+				sumOfAmps = np.dot(transitionAmps[iSector],self.decayAmplitudes[iDataset][iSector])
+				dataTerm = dataTerm + np.real(sumOfAmps * np.conj(sumOfAmps))
 
-		nBar = 0.0
-		dataTerm = 0.0
-
-		for i in xrange(self.nmbSectors):
-			nBar = nBar + np.real(np.dot( np.dot( self.accMatrices[i],np.conj(transitionAmps[i]) ), transitionAmps[i]))
-			sumOfAmps = np.dot(transitionAmps[i],self.decayAmplitudes[i])
-			dataTerm = dataTerm + np.real(sumOfAmps * np.conj(sumOfAmps))
-
-		# likelihood calculation
-		return -np.sum( np.log( dataTerm ) ) + nBar
+			# likelihood calculation
+			negLlhd += -np.sum( np.log( dataTerm ) ) + nBar - self.nmbEvents[iDataset]*datasetRatiosLog[iDataset]
+		return negLlhd
 
 
 # pylint: disable=C0103,E1102
@@ -163,8 +181,8 @@ class LikelihoodCauchy(Likelihood):
 			self.sectors = sectors
 
 
-	def negLlhd(self, transitionAmps):
-		negLlhd = Likelihood.negLlhd(self, transitionAmps)
+	def negLlhd(self, transitionAmps, datasetRatios):
+		negLlhd = Likelihood.negLlhd(self, transitionAmps, datasetRatios)
 		for i in self.sectors:
 			absT = np.abs(transitionAmps[i])
 			negLlhd = negLlhd - np.sum(np.log(1.0/(1.0+absT**2/self.width[i]**2)))
