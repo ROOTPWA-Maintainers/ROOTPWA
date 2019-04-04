@@ -90,10 +90,7 @@ make_shared_library(
 add_dependencies(${THIS_LIB} environment)
 
 
-add_custom_command(
-	OUTPUT ${EXECUTABLE_OUTPUT_PATH}/thisROOTPWA.sh
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/thisROOTPWA.sh ${EXECUTABLE_OUTPUT_PATH}/thisROOTPWA.sh
-)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thisROOTPWA.sh.in ${EXECUTABLE_OUTPUT_PATH}/thisROOTPWA.sh @ONLY)
 add_custom_target(
 	thisROOTPWA ALL DEPENDS ${EXECUTABLE_OUTPUT_PATH}/thisROOTPWA.sh
 )

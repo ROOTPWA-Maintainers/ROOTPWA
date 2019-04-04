@@ -2,6 +2,7 @@ import math
 import ast
 import ConfigParser
 import os
+import errno
 
 import pyRootPwa.utils
 
@@ -13,7 +14,7 @@ class rootPwaConfig(object):
 	# general section
 	pdgFileName                            = ""
 	fileManagerPath                        = ""
-	dataDirectory                          = ""
+	eventDirectory                         = ""
 	keyDirectory                           = ""
 	ampDirectory                           = ""
 	intDirectory                           = ""
@@ -34,6 +35,20 @@ class rootPwaConfig(object):
 	phaseSpaceAmpDirectoryName             = ""
 	accCorrPSAmpDirectoryName              = ""
 	weightTreeName                         = ""
+
+	_deprecatedMembers = {'dataDirectory': 'eventDirectory'}
+
+	def __getattribute__(self, name, *args, **kwargs):
+		if name in rootPwaConfig._deprecatedMembers:
+			pyRootPwa.utils.printWarn("'{0}' member is deprecated. Use '{1}'!".format(name, rootPwaConfig._deprecatedMembers[name]))
+			return object.__getattribute__(self, rootPwaConfig._deprecatedMembers[name])
+		return object.__getattribute__(self, name, *args, **kwargs)
+
+	def __setattr__(self, name, *args, **kwargs):
+		if name in rootPwaConfig._deprecatedMembers:
+			pyRootPwa.utils.printWarn("'{0}' member is deprecated. Use '{1}'!".format(name, rootPwaConfig._deprecatedMembers[name]))
+			return object.__setattr__(self, rootPwaConfig._deprecatedMembers[name], *args, **kwargs)
+		return object.__setattr__(self, name, *args, **kwargs)
 
 	def getPathFromConfig(self, category, varName, defaultValue):
 		if self.config.has_option(category, varName):
@@ -64,7 +79,7 @@ class rootPwaConfig(object):
 		try:
 			self.pdgFileName     = self.getPathFromConfig("general", "particleDataTable", os.path.expandvars("$ROOTPWA/particleData/particleDataTable.txt"))
 			self.fileManagerPath = self.getPathFromConfig("general", "fileManagerPath"  , configDir + "/fileManager.pkl")
-			self.dataDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
+			self.eventDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
 			self.keyDirectory    = self.getPathFromConfig("general", "keyFileDirectory" , configDir + "/keyfiles")
 			self.ampDirectory    = self.getPathFromConfig("general", "ampFileDirectory" , configDir + "/amps")
 			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
@@ -95,19 +110,24 @@ class rootPwaConfig(object):
 			pyRootPwa.utils.printErr("a required entry was missing from the config file ('" + str(exc) + "').")
 			return False
 
-		if not os.path.isdir(self.dataDirectory):
-			os.mkdir(self.dataDirectory)
-			pyRootPwa.utils.printInfo("created data directory '" + self.dataDirectory + "'.")
-		if not os.path.isdir(self.keyDirectory):
-			os.mkdir(self.keyDirectory)
-			pyRootPwa.utils.printInfo("created key directory '" + self.keyDirectory + "'.")
-		if not os.path.isdir(self.ampDirectory):
-			os.mkdir(self.ampDirectory)
-			pyRootPwa.utils.printInfo("created amplitude directory '" + self.ampDirectory + "'.")
-		if not os.path.isdir(self.intDirectory):
-			os.mkdir(self.intDirectory)
-			pyRootPwa.utils.printInfo("created integral directory '" + self.intDirectory + "'.")
+		_createDirectory(self.eventDirectory, 'data')
+		_createDirectory(self.keyDirectory, 'key')
+		_createDirectory(self.ampDirectory, 'amplitude')
+		_createDirectory(self.intDirectory, 'integral')
 		return True
+
+
+def _createDirectory(directoryPath, label):
+	if not os.path.isdir(directoryPath):
+		pyRootPwa.utils.printInfo("creating " + label + " directory '" + directoryPath + "'.")
+		try:
+			os.makedirs(directoryPath)
+		except OSError as exception:  # ignore exception if the the directory was created meanwhile
+			if exception.errno == errno.EEXIST and not os.path.isdir(directoryPath):  # this path was created meanwhile, but it is no directory
+				pyRootPwa.utils.printErr("Path '{0}' exists but is no directory!".format(directoryPath))
+				raise exception
+			elif exception.errno != errno.EEXIST:
+				raise exception
 
 
 def _readBinning(binningString):
@@ -120,10 +140,8 @@ def _readBinning(binningString):
 	# Case 3. should be converted to case 2. and case 2. to case 1.
 	#
 	# returns list of bins as in 1. or empty list in case of errors.
-	if binningString.startswith("\""):
-		binningString = binningString[1:]
-	if binningString.endswith("\""):
-		binningString = binningString[:-1]
+	binningString = binningString.rstrip('"')
+	binningString = binningString.lstrip('"')
 	binningString.replace("\\\"", "\"")
 	try:
 		inputVal = ast.literal_eval(binningString)
@@ -132,11 +150,11 @@ def _readBinning(binningString):
 		return []
 	if not inputVal:
 		return []
-	retval = []
+	retVal = []
 	if isinstance(inputVal, list): # case 1.
 		for binningItem in inputVal:
 			try:
-				retval.append(pyRootPwa.utils.multiBin(binningItem))
+				retVal.append(pyRootPwa.utils.multiBin(binningItem))
 			except (TypeError, ValueError):
 				pyRootPwa.utils.printWarn("could not convert entry in binning list to multiBin.")
 				return []
@@ -152,7 +170,7 @@ def _readBinning(binningString):
 			boundaries = {}
 			for i, key in enumerate(keys):
 				boundaries[key] = (inputVal[key][indices[i]-1], inputVal[key][indices[i]])
-			retval.append(pyRootPwa.utils.multiBin(boundaries))
+			retVal.append(pyRootPwa.utils.multiBin(boundaries))
 			indices[0] += 1
 			for metaIndex in xrange(0, len(indices)-1):
 				if indices[metaIndex] == limits[metaIndex]:
@@ -161,12 +179,12 @@ def _readBinning(binningString):
 	else:
 		pyRootPwa.utils.printWarn("binning string is neither a list nor a dict.")
 		return []
-	if retval:
-		for multiBin in retval:
-			if not multiBin.sameBinningVariables(retval[0]):
+	if retVal:
+		for multiBin in retVal:
+			if not multiBin.sameBinningVariables(retVal[0]):
 				pyRootPwa.utils.printWarn("not all bins have the same binning variables.")
 				return []
-	return retval
+	return retVal
 
 
 def _roundToNSignificantDigits(value, significantDigits):
@@ -180,24 +198,24 @@ def _binningInputHandlingForCaseTwoAndThree(inputVal):
 	# return a dictionary which conforms to case 2..
 	for key in inputVal:
 		if not isinstance(key, str):
-			errMsg = "key in binning definition is not of type 'str'."
-			pyRootPwa.utils.printWarn(errMsg)
-			raise TypeError(errMsg)
+			failMsg = "key in binning definition is not of type 'str'."
+			pyRootPwa.utils.printWarn(failMsg)
+			raise TypeError(failMsg)
 		axesPartition = inputVal[key]
 		if not isinstance(axesPartition, (list,tuple)):
-			errMsg = "axes partition for variable '" + key + "' is not of type 'tuple' or 'list'."
-			pyRootPwa.utils.printWarn(errMsg)
-			raise TypeError(errMsg)
+			failMsg = "axes partition for variable '" + key + "' is not of type 'tuple' or 'list'."
+			pyRootPwa.utils.printWarn(failMsg)
+			raise TypeError(failMsg)
 		for i in axesPartition:
 			if not isinstance(i, (float,int)):
-				errMsg = "axes parition for variable '" + key + "' is not a number."
-				pyRootPwa.utils.printWarn(errMsg)
-				raise TypeError(errMsg)
+				failMsg = "axes parition for variable '" + key + "' is not a number."
+				pyRootPwa.utils.printWarn(failMsg)
+				raise TypeError(failMsg)
 		if isinstance(axesPartition, tuple):
 			if len(axesPartition) != 3:
-				errMsg = "axes partition for variable '" + key + "' does not have length 3."
-				pyRootPwa.utils.printWarn(errMsg)
-				raise ValueError(errMsg)
+				failMsg = "axes partition for variable '" + key + "' does not have length 3."
+				pyRootPwa.utils.printWarn(failMsg)
+				raise ValueError(failMsg)
 			expandedBoundaryList = []
 			xMin = float(axesPartition[0])
 			xMax = float(axesPartition[1])
