@@ -79,10 +79,14 @@ class rootPwaConfig(object):
 		try:
 			self.pdgFileName     = self.getPathFromConfig("general", "particleDataTable", os.path.expandvars("$ROOTPWA/particleData/particleDataTable.txt"))
 			self.fileManagerPath = self.getPathFromConfig("general", "fileManagerPath"  , configDir + "/fileManager.pkl")
-			self.eventDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
 			self.keyDirectory    = self.getPathFromConfig("general", "keyFileDirectory" , configDir + "/keyfiles")
 			self.ampDirectory    = self.getPathFromConfig("general", "ampFileDirectory" , configDir + "/amps")
 			self.intDirectory    = self.getPathFromConfig("general", "intFileDirectory" , configDir + "/ints")
+			if self.config.has_option("general", "dataFileDirectory"):
+				pyRootPwa.utils.printWarn("'dataFileDirectory' in category 'general' is deprecated. Use 'eventFileDirectory' instead!")
+				self.eventDirectory   = self.getPathFromConfig("general", "dataFileDirectory", configDir + "/data")
+			else:
+				self.eventDirectory   = self.getPathFromConfig("general", "eventFileDirectory", configDir + "/data")
 
 			if self.config.has_option('general', 'limitFilesPerDir'):
 				pyRootPwa.utils.printWarn("'limitFilesPerDir' options is no longer supported! Ignoring it.")
