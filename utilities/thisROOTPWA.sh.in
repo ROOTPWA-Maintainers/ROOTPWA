@@ -1,0 +1,40 @@
+# source this file to set up ROOTPWA
+
+
+removePath(){
+	eval old_PATH="\$${1}"
+	to_remove="${2}"
+	export ${1}="$(echo "${old_PATH}" | sed -e "s;^${to_remove}:;;g" -e "s;^${to_remove}$;;g" -e "s;:${to_remove}$;;g" -e "s;:${to_remove}:;:;g")"
+}
+
+prependPath(){
+	if eval [ -z \$${1} ]; then
+		export ${1}=${2}
+	else
+		if [  -z "$( eval echo \$${1} | tr : \\n | grep -q ^${2}\$ )" ]; then
+			export ${1}="${2}:`eval echo \\$$1|tr : \\\n|grep -v '^$'|tr \\\n :|sed 's/:$//'`"
+		else
+			export ${1}="${2}:`eval echo \\$$1|tr : \\\n|grep -v '^$' | grep -v "$2" |tr \\\n :|sed 's/:$//'`"
+		fi
+	fi
+}
+
+
+old_ROOTPWA_BUILD="${ROOTPWA_BUILD}"
+if [ -n "${old_ROOTPWA_BUILD}" ]; then
+	removePath PATH "${old_ROOTPWA_BUILD}/bin"
+	removePath LD_LIBRARY_PATH "${old_ROOTPWA_BUILD}/lib"
+	removePath PYTHONPATH "${old_ROOTPWA_BUILD}/pyLib"
+fi
+
+export ROOTPWA_BUILD="@CMAKE_BINARY_DIR@"
+
+export ROOTPWA="@CMAKE_SOURCE_DIR@"
+
+prependPath PATH "${ROOTPWA_BUILD}/bin"
+prependPath LD_LIBRARY_PATH "${ROOTPWA_BUILD}/lib"
+prependPath PYTHONPATH "${ROOTPWA_BUILD}/pyLib"
+
+unset old_ROOTPWA_BUILD
+unset -f removePath
+unset -f prependPath

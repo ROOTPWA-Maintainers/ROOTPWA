@@ -17,7 +17,7 @@ def saveFileManager(fileManagerObject, path):
 			return False
 		return True
 
-	pyRootPwa.utils.printErr("cannot open file manager file '" + path + "'. File already exists.")
+	pyRootPwa.utils.printErr("cannot save file manager file '" + path + "'. File already exists.")
 	return False
 
 
@@ -67,28 +67,68 @@ class EventsType(object):
 
 
 class fileManager(object):
+	'''
+	@brief: This class handles all information about file paths, file-name conventions, defined waves, and other administrative information
 
+	EventFiles: Event files contain trees with kinematic variables, e.g. momenta, and binning variables, e.g. mass and t'.
+	            Events of different events types (real data, generated, accepted) are stored in individual event files.
+	            Event files can contain events only from one kinematic bin. The binning of the event files must not be mixed up
+	            with the binning of the final fit (see `Bins` below).
+	            During the initialization of the file manager, an unique id, the eventFileId, is assigned to each event file.
+
+	KeyFiles: KeyFiles represent key files in which partial waves, e.g. amplitudes are defined
+
+	Amplitudes: Amplitudes represent amplitude files in which precalculated amplitudes for the input events are stored.
+	            By default, the amplitude file names follow the naming scheme '<waveName>_eventFileId-<eventFileId>_<eventsType>.root'.
+	            In addition, special amplitude file names can be defined for each amplitude, event-field id,
+	            and amplitude name individually (see member variable `_specialAmplitudeFiles`)
+	            In addition, one amplitude file can contain more amplitudes of the same event file. The member
+	            variable `_mergedAmplitudes` can contain lists of wave names for each events type. The amplitudes
+	            of all waves in this list are merged in one amplitude file per event file, for all event files.
+	            The tag identifies the merged amplitude file name containing the amplitudes.
+
+	Integrals: Integrals represent integral files in which the precalculated integral matrices for the generated and
+	           accepted Monte Carlo events are stored.
+	           One integral per bin and events type (generated or accepted)
+
+	Bins: `Bins` are the bins in which the fit is performed. Also the integral matrices are calculated in these bins.
+	      The event files have their own binning, which is independent from the binning represented by `bins`.
+
+	'''
+
+	_deprecatedMembers = {'dataDirectory': 'eventDirectory', 'dataFiles': 'eventFiles'}
 
 	def __init__(self):
-		self.dataDirectory      = ""
+		self.eventDirectory     = ""
 		self.keyDirectory       = ""
 		self.amplitudeDirectory = ""
 		self.integralDirectory  = ""
 
-		self.dataFiles              = collections.OrderedDict()
-		self.keyFiles               = collections.OrderedDict()
-		self._specialAmplitudeFiles = collections.OrderedDict()
+		self.eventFiles             = collections.OrderedDict() # {<events-type>: [<event-filepath>]}
+		self.keyFiles               = collections.OrderedDict() # {<wavename>: <key-filepath>}
+		self._specialAmplitudeFiles = collections.OrderedDict() # {(<events-type>, <eventfile-id>, <wavename>): <amplitude-filepath>}
 		self._mergedAmplitudes      = collections.defaultdict(dict) # {<events-type>: {<tag>: [<wave-name> ...]}}
-		self.integralFiles          = collections.OrderedDict()
+		self.integralFiles          = collections.OrderedDict() # {(<bin-id>, <events-type>): <integral-file path>}
 		self.binList = []
 
+	def __getattribute__(self, name, *args, **kwargs):
+		if name in fileManager._deprecatedMembers:
+			pyRootPwa.utils.printWarn("'{0}' member is deprecated. Use '{1}'!".format(name, fileManager._deprecatedMembers[name]))
+			return object.__getattribute__(self, fileManager._deprecatedMembers[name])
+		return object.__getattribute__(self, name, *args, **kwargs)
+
+	def __setattr__(self, name, *args, **kwargs):
+		if name in fileManager._deprecatedMembers:
+			pyRootPwa.utils.printWarn("'{0}' member is deprecated. Use '{1}'!".format(name, fileManager._deprecatedMembers[name]))
+			return object.__setattr__(self, fileManager._deprecatedMembers[name], *args, **kwargs)
+		return object.__setattr__(self, name, *args, **kwargs)
 
 	def initialize(self, configObject):
-		self.dataDirectory      = configObject.dataDirectory
+		self.eventDirectory      = configObject.eventDirectory
 		self.keyDirectory       = configObject.keyDirectory
 		self.amplitudeDirectory = configObject.ampDirectory
 		self.integralDirectory  = configObject.intDirectory
-		pyRootPwa.utils.printInfo("data file dir read from config file: '" + self.dataDirectory + "'.")
+		pyRootPwa.utils.printInfo("event file dir read from config file: '" + self.eventDirectory + "'.")
 		pyRootPwa.utils.printInfo("key file dir read from config file: '" + self.keyDirectory + "'.")
 		pyRootPwa.utils.printInfo("amplitude file dir read from config file: '" + self.amplitudeDirectory + "'.")
 		pyRootPwa.utils.printInfo("integral file dir read from config file: '" + self.integralDirectory + "'.")
@@ -97,19 +137,19 @@ class fileManager(object):
 		if not self.binList:
 			pyRootPwa.utils.printWarn("no bins found, falling back to file binning")
 		pyRootPwa.utils.printInfo("created a list with " + str(len(self.binList)) + " bins from config file.")
-		self.dataFiles = self._openDataFiles()
-		if not self.dataFiles:
+		self.eventFiles = self._openDataFiles()
+		if not self.eventFiles:
 			pyRootPwa.utils.printErr("no event files found.")
 			return False
 		if not self.binList:
-			for _, inputFiles in self.dataFiles.iteritems():
-				for inputFile in inputFiles:
-					pyRootPwa.utils.printInfo("checking bin '" + str(inputFile.multibinBoundaries) + "'.")
+			for _, eventFiles in self.eventFiles.iteritems():
+				for eventFile in eventFiles:
+					pyRootPwa.utils.printInfo("checking bin '" + str(eventFile.multibinBoundaries) + "'.")
 					try:
-						latestBin = pyRootPwa.utils.multiBin(inputFile.multibinBoundaries)
+						latestBin = pyRootPwa.utils.multiBin(eventFile.multibinBoundaries)
 					except (TypeError, ValueError):
 						pyRootPwa.utils.printErr("no binning given in config file and no multibin boundaries" +
-						                         " found in data file '" + str(inputFile.dataFileName) + "'.")
+						                         " found in event file '" + str(eventFile.dataFileName) + "'.")
 						return False
 					alreadyPresent = False
 					for multiBin in self.binList:
@@ -119,25 +159,23 @@ class fileManager(object):
 						elif latestBin.overlap(multiBin, False):
 							pyRootPwa.utils.printWarn("overlap found of bin '" + str(latestBin) + "' and bin '" + str(multiBin) + "'.")
 					if not alreadyPresent:
-						pyRootPwa.utils.printInfo("adding bin '" + str(inputFile.multibinBoundaries) + "'.")
+						pyRootPwa.utils.printInfo("adding bin '" + str(eventFile.multibinBoundaries) + "'.")
 						self.binList.append(latestBin)
 		else:
-			for _, inputFiles in self.dataFiles.iteritems():
-				for inputFile in inputFiles:
+			for _, eventFiles in self.eventFiles.iteritems():
+				for eventFile in eventFiles:
 					for variableName in self.binList[0].boundaries.keys():
-						if variableName not in inputFile.additionalVariables:
+						if variableName not in eventFile.additionalVariables:
 							pyRootPwa.utils.printErr("variable '" + str(variableName) + "' required by binning, but not " +
-							                         "in additional variables of event file '" + inputFile.dataFileName + "' (found " + str(inputFile.additionalVariables) + ").")
+							                         "in additional variables of event file '" + eventFile.dataFileName + "' (found " + str(eventFile.additionalVariables) + ").")
 							return False
 		self.keyFiles = self._openKeyFiles()
 		if not self.keyFiles:
 			pyRootPwa.utils.printErr("error loading keyfiles.")
 			return False
 
-		amplitudeFiles = self._getAmplitudeFilePaths(self.dataFiles.keys(), self.getWaveNameList())
-		# make sure directories exist (create if necessary) and check if they are empty
-		if not os.path.exists(self.amplitudeDirectory):
-			os.makedirs(self.amplitudeDirectory)
+		amplitudeFiles = self._getAmplitudeFilePaths(self.eventFiles.keys(), self.getWaveNameList())
+		# check if amplitude directory is empty
 		if not os.listdir(self.amplitudeDirectory) == []:
 			pyRootPwa.utils.printWarn("directory '" + self.amplitudeDirectory + "' is not empty.")
 		pyRootPwa.utils.printInfo("number of amplitude files: " + str(len(amplitudeFiles)))
@@ -148,20 +186,20 @@ class fileManager(object):
 
 	def getEventAndAmplitudePairPathsForWave(self, eventsType, waveName):
 		eventsType = fileManager.pyEventsType(eventsType)
-		retval = []
-		if eventsType not in self.dataFiles:
+		retVal = []
+		if eventsType not in self.eventFiles:
 			pyRootPwa.utils.printWarn("events type '" + str(eventsType) + "' not found.")
 			return []
 		if waveName not in self.keyFiles:
 			pyRootPwa.utils.printWarn("key file for wave name '" + waveName + "' not found.")
 			return []
 		waveNameIndex = self.keyFiles.keys().index(waveName)
-		eventFiles = self.dataFiles[eventsType]
+		eventFiles = self.eventFiles[eventsType]
 		amplitudeFiles = self._getAmplitudeFilePaths([eventsType], [waveName])
 		for eventFileId, eventFile in enumerate(eventFiles):
 			amplitudeFile = amplitudeFiles[ (eventsType, eventFileId, waveNameIndex) ]
-			retval.append( (eventFile.dataFileName, amplitudeFile) )
-		return retval
+			retVal.append( (eventFile.dataFileName, amplitudeFile) )
+		return retVal
 
 
 	def getKeyFile(self, waveName):
@@ -195,7 +233,7 @@ class fileManager(object):
 
 
 	def getEventAndAmplitudeFilePathsInBin(self, multiBin, eventsType):
-		# returns { "dataFileName" : { "waveName" : "amplitudeFileName" } }
+		# returns { "eventFileName" : { "waveName" : "amplitudeFileName" } }
 		eventsType = fileManager.pyEventsType(eventsType)
 		eventFileIds = self._getEventFileIdsForIntegralBin(multiBin, eventsType)
 		if not eventFileIds:
@@ -204,7 +242,7 @@ class fileManager(object):
 		retval = collections.OrderedDict()
 		amplitudeFiles = self._getAmplitudeFilePaths([eventsType], self.getWaveNameList(), {eventsType: eventFileIds})
 		for eventFileId in eventFileIds:
-			eventFileName = self.dataFiles[eventsType][eventFileId].dataFileName
+			eventFileName = self.eventFiles[eventsType][eventFileId].dataFileName
 			retval[eventFileName] = collections.OrderedDict()
 			for waveName_i, waveName in enumerate(self.getWaveNameList()):
 				retval[eventFileName][waveName] = amplitudeFiles[(eventsType, eventFileId, waveName_i)]
@@ -217,20 +255,24 @@ class fileManager(object):
 
 
 	def _getEventFileIdsForIntegralBin(self, multiBin, eventsType):
+		'''
+		@return: List of all event-field IDs of the given events type that lie within or overlay with the given multibin.
+		'''
 		eventsType = fileManager.pyEventsType(eventsType)
-		if eventsType not in self.dataFiles:
-			pyRootPwa.utils.printWarn("events type '" + str(eventsType) + "' not in data files.")
+		if eventsType not in self.eventFiles:
+			pyRootPwa.utils.printWarn("events type '" + str(eventsType) + "' not in event files.")
 			return []
 		eventFileIds = []
-		for eventFileId, inputFile in enumerate(self.dataFiles[eventsType]):
-			found = True
-			for variableName in inputFile.multibinBoundaries:
+		for eventFileId, eventFile in enumerate(self.eventFiles[eventsType]):
+			overlaps = True # event-file bin overlaps with the given multibin
+			for variableName in eventFile.multibinBoundaries:
 				if variableName in multiBin.boundaries:
-					if (inputFile.multibinBoundaries[variableName][1] < multiBin.boundaries[variableName][0]) or \
-					   (inputFile.multibinBoundaries[variableName][0] > multiBin.boundaries[variableName][1]):
-						found = False
+					# if event-file bin is completely below or above the multibin
+					if (eventFile.multibinBoundaries[variableName][1] < multiBin.boundaries[variableName][0]) or \
+					   (eventFile.multibinBoundaries[variableName][0] > multiBin.boundaries[variableName][1]):
+						overlaps = False
 						break
-			if found:
+			if overlaps:
 				eventFileIds.append(eventFileId)
 		return eventFileIds
 
@@ -243,7 +285,7 @@ class fileManager(object):
 
 
 	def areEventFilesSynced(self):
-		return set(self._getEventFilePaths()) == set(glob.glob(self.dataDirectory + "/*.root"))
+		return set(self._getEventFilePaths()) == set(glob.glob(self.eventDirectory + "/*.root"))
 
 
 	def areKeyFilesSynced(self):
@@ -256,8 +298,8 @@ class fileManager(object):
 
 	def _nmbAmplitudeFiles(self):
 		nmbEventFiles = 0
-		for key in self.dataFiles:
-			nmbEventFiles += len(self.dataFiles[key])
+		for key in self.eventFiles:
+			nmbEventFiles += len(self.eventFiles[key])
 		return nmbEventFiles * len(self.keyFiles)
 
 
@@ -267,32 +309,32 @@ class fileManager(object):
 		@param eventFileIds: Dictionary of {<eventsType>: [<eventFieldID>]. If None, all event-field IDs of the given eventsTypes.
 		'''
 		amplitudeFiles = collections.OrderedDict()
-		if not self.dataFiles:
-			pyRootPwa.utils.printWarn("cannot create amplitude file path collection without data files.")
+		if not self.eventFiles:
+			pyRootPwa.utils.printWarn("cannot create amplitude file path collection without event files.")
 			return collections.OrderedDict()
 		waves = [(self.getWaveIndex(w), w) for w in waveNames]
 
 		for eventsType in eventsTypes:
 			if eventFileIds is None:
-				inputFileIndices = range(len(self.dataFiles[eventsType]))
+				outputEventFileIds = range(len(self.eventFiles[eventsType]))
 			else:
 				if eventsType not in eventFileIds:
 					pyRootPwa.utils.printErr("Events type '{0}' not in dictionary of event-field IDs!".format(eventsType))
 					raise Exception()
-				inputFileIndices = eventFileIds[eventsType]
+				outputEventFileIds = eventFileIds[eventsType]
 
 			if eventsType in self._mergedAmplitudes:
 				wavesWithMergedAmplitudes = list(itertools.chain(*self._mergedAmplitudes[eventsType].values()))
 			else:
 				wavesWithMergedAmplitudes = []
 
-			for inputFile_i in inputFileIndices:
+			for eventFileId in outputEventFileIds:
 				for waveName_i, waveName in waves:
-					key = (eventsType, inputFile_i, waveName_i)
+					key = (eventsType, eventFileId, waveName_i)
 					if key not in self._specialAmplitudeFiles:
 						if waveName not in wavesWithMergedAmplitudes:
 							amplitudeFileName = "{waveName}_eventFileId-{eventsId}_{eventsType}.root".format(waveName=waveName,
-							                                                                                 eventsId=str(inputFile_i),
+							                                                                                 eventsId=str(eventFileId),
 							                                                                                 eventsType=str(eventsType))
 						else:
 							tags = [tag for tag, waveNames in self._mergedAmplitudes[eventsType].iteritems() if waveName in waveNames]
@@ -300,7 +342,7 @@ class fileManager(object):
 								pyRootPwa.utils.printErr("Cannot find unique merge tag for wave '{0}'. Aborting...".format(waveName))
 								raise Exception()
 							amplitudeFileName = "{tag}_eventFileId-{eventsId}_{eventsType}.root".format(tag=tags[0],
-							                                                                            eventsId=str(inputFile_i),
+							                                                                            eventsId=str(eventFileId),
 							                                                                            eventsType=str(eventsType))
 						amplitudeFilePath = os.path.join(self.amplitudeDirectory, amplitudeFileName)
 					else:
@@ -319,8 +361,8 @@ class fileManager(object):
 
 
 	def _openDataFiles(self):
-		dataFileNames = sorted(glob.glob(self.dataDirectory + "/*.root"))
-		inputFiles = {}
+		dataFileNames = sorted(glob.glob(self.eventDirectory + "/*.root"))
+		eventFiles = {}
 		for dataFileName in dataFileNames:
 			dataFile = ROOT.TFile.Open(dataFileName, "READ")
 			if not dataFile:
@@ -334,14 +376,14 @@ class fileManager(object):
 			                      eventMeta.multibinBoundaries(),
 			                      fileManager.pyEventsType(eventMeta.eventsType()),
 			                      eventMeta.additionalTreeVariableNames())
-			if inputFile.eventsType not in inputFiles:
-				inputFiles[inputFile.eventsType] = []
-			inputFiles[inputFile.eventsType].append(inputFile)
+			if inputFile.eventsType not in eventFiles:
+				eventFiles[inputFile.eventsType] = []
+			eventFiles[inputFile.eventsType].append(inputFile)
 			dataFile.Close()
 		retval =  collections.OrderedDict()
-		for eventsType in sorted(inputFiles):
-			retval[eventsType] = inputFiles[eventsType]
-		return inputFiles
+		for eventsType in sorted(eventFiles):
+			retval[eventsType] = eventFiles[eventsType]
+		return eventFiles
 
 
 	def _openKeyFiles(self):
@@ -372,9 +414,9 @@ class fileManager(object):
 
 	def _getEventFilePaths(self):
 		retval = []
-		for _, inputFiles in self.dataFiles.iteritems():
-			for inputFile in inputFiles:
-				retval.append(inputFile.dataFileName)
+		for _, eventFiles in self.eventFiles.iteritems():
+			for dataFile in eventFiles:
+				retval.append(dataFile.dataFileName)
 		return retval
 
 
@@ -391,13 +433,13 @@ class fileManager(object):
 		for waveName in self.keyFiles.keys():
 			retStr += waveName + " >> " + self.keyFiles[waveName] + "\n"
 		retStr += "\nDataFiles:\n"
-		for eventsType in self.dataFiles:
-			for dataFile in self.dataFiles[eventsType]:
+		for eventsType in self.eventFiles:
+			for dataFile in self.eventFiles[eventsType]:
 				retStr += ("eventsType [" + str(eventsType) + "], bin [" + str(dataFile.multibinBoundaries) +
 				           "] >> " + dataFile.dataFileName + "\n")
 		retStr += "\nAmpFiles:\n"
-		for eventsType in self.dataFiles:
-			for eventFileId, _ in enumerate(self.dataFiles[eventsType]):
+		for eventsType in self.eventFiles:
+			for eventFileId, _ in enumerate(self.eventFiles[eventsType]):
 				amplitudeFiles = self._getAmplitudeFilePaths([eventsType], self.getWaveNameList(), {eventsType: [eventFileId]})
 				for waveName_i, waveName in enumerate(self.keyFiles.keys()):
 					retStr += ("eventsType [" + str(eventsType) + "], eventFileId [" + str(eventFileId) +
