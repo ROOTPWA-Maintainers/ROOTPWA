@@ -1,5 +1,6 @@
 #include "fitResult_py.h"
 
+#define BOOST_PYTHON_MAX_ARITY 20
 #include <boost/python.hpp>
 #include <vector>
 #include <list>
@@ -30,7 +31,11 @@ namespace {
 	                      const bp::object&                         pyAcceptedNormIntegral,
 	                      const bp::object&                         pyPhaseSpaceIntegral,
 	                      const bool                                converged,
-	                      const bool                                hasHessian)
+	                      const bool                                hasHessian,
+	                      const bp::object&                         pyDatasetRatios,
+	                      const bp::object&                         pyDatasetRatiosCovMatrixIndices,
+	                      const bp::object&                         pyAdditionalFitParameters,
+	                      const bp::object&                         pyAdditionalFitParametersCovMatrixIndices )
 	{
 		std::vector<std::complex<double> > prodAmps;
 		if(not rpwa::py::convertBPObjectToVector<std::complex<double> >(pyProdAmps, prodAmps)) {
@@ -87,8 +92,30 @@ namespace {
 			}
 		}
 		const rpwa::multibinBoundariesType multibinBoundaries = rpwa::py::convertMultibinBoundariesFromPy(pyMultibinBoundaries);
+
+		std::unique_ptr<std::map<std::string, double>> datasetRatios = nullptr;
+		if (not pyDatasetRatios.is_none()){
+			datasetRatios.reset(new std::map<std::string, double>);
+			rpwa::py::convertBPObjectToMap(pyDatasetRatios, *datasetRatios);
+		}
+		std::unique_ptr<std::map<std::string, int>> datasetRatiosCovMatrixIndices = nullptr;
+		if (not pyDatasetRatiosCovMatrixIndices.is_none()){
+			datasetRatiosCovMatrixIndices.reset(new std::map<std::string, int>);
+			rpwa::py::convertBPObjectToMap(pyDatasetRatiosCovMatrixIndices, *datasetRatiosCovMatrixIndices);
+		}
+		std::unique_ptr<std::map<std::string, double>> additionalFitParameters = nullptr;
+		if (not pyAdditionalFitParameters.is_none()){
+			additionalFitParameters.reset(new std::map<std::string, double>);
+			rpwa::py::convertBPObjectToMap(pyAdditionalFitParameters, *additionalFitParameters);
+		}
+		std::unique_ptr<std::map<std::string, int>> additionalFitParametersCovMatrixIndices = nullptr;
+		if (not pyAdditionalFitParametersCovMatrixIndices.is_none()){
+			additionalFitParametersCovMatrixIndices.reset(new std::map<std::string, int>);
+			rpwa::py::convertBPObjectToMap(pyAdditionalFitParametersCovMatrixIndices, *additionalFitParametersCovMatrixIndices);
+		}
 		self.fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames, fitParCovMatrix,
-		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegralPtr, converged, hasHessian);
+		          fitParCovMatrixIndices, normIntegral, acceptedNormIntegral, phaseSpaceIntegralPtr, converged, hasHessian,
+		          datasetRatios.get(), datasetRatiosCovMatrixIndices.get(), additionalFitParameters.get(), additionalFitParametersCovMatrixIndices.get());
 	}
 
 	void fitResult_fill_2(rpwa::fitResult& self, const rpwa::fitResult& result, const bool fillCovMatrix, const bool fillIntegralMatrices) {
@@ -457,7 +484,24 @@ void rpwa::py::exportFitResult() {
 		.def(bp::init<const rpwa::fitResult&>())
 		.def(bp::self_ns::str(bp::self))
 		.def("reset", &rpwa::fitResult::reset)
-		.def("fill", &fitResult_fill_1)
+		.def("fill", &fitResult_fill_1, (bp::arg("nmbEvents"),
+		                                 bp::arg("normNmbEvents"),
+		                                 bp::arg("pyMultibinBoundaries"),
+		                                 bp::arg("logLikelihood"),
+		                                 bp::arg("rank"),
+		                                 bp::arg("pyProdAmps"),
+		                                 bp::arg("pyProdAmpNames"),
+		                                 bp::arg("pyFitParCovMatrix"),
+		                                 bp::arg("pyFitParCovMatrixIndices"),
+		                                 bp::arg("pyNormIntegral"),
+		                                 bp::arg("pyAcceptedNormIntegral"),
+		                                 bp::arg("pyPhaseSpaceIntegral"),
+		                                 bp::arg("converged"),
+		                                 bp::arg("hasHessian"),
+		                                 bp::arg("pyDatasetRatios") = bp::object(),
+		                                 bp::arg("pyDatasetRatiosCovMatrixIndices") = bp::object(),
+		                                 bp::arg("pyAdditionalFitParameters") = bp::object(),
+		                                 bp::arg("pyAdditionalFitParametersCovMatrixIndices") = bp::object() ))
 		.def("fill", &fitResult_fill_2, (bp::arg("fillCovMatrix") = true, bp::arg("fillIntegralMatrices") = true))
 		.def("fill", &fitResult_fill_3)
 		.def("multibinBoundaries", &::fitResult_multibinBoundaries)
@@ -492,6 +536,8 @@ void rpwa::py::exportFitResult() {
 		.def("prodAmpIndex", &rpwa::fitResult::prodAmpIndex)
 		.def("waveIndicesMatchingPattern", &fitResult_waveIndicesMatchingPattern)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
+		.def("datasetRatio", &rpwa::fitResult::datasetRatio)
+		.def("datasetLabels", &rpwa::fitResult::datasetLabels)
 		.def("prodAmp", &fitResult::prodAmp)
 		.def("prodAmpCov", &fitResult_prodAmpCov_2)
 		.def("prodAmpCov", &fitResult_prodAmpCov_1)

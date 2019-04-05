@@ -149,7 +149,12 @@ namespace rpwa {
 		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
 		          const std::vector<double>*                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
-		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+		          const bool                                hasHessian,              // indicates whether Hessian matrix has been calculated successfully
+		          const std::map<std::string, double>*      datasetRatios = nullptr,                         // ratios between data sets identified by their label
+		          const std::map<std::string, int>*         datasetRatiosCovMatrixIndices = nullptr,         // indices of data set ratio fit parameters in covariance matrix
+		          const std::map<std::string, double>*      additionalFitParameters = nullptr,               // additional fit parameters
+		          const std::map<std::string, int>*         additionalFitParametersCovMatrixIndices = nullptr// indices of additional fit parameters in covariance matrix
+		);
 
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,           // number of events to normalize to
@@ -164,7 +169,12 @@ namespace rpwa {
 		          const rpwa::complexMatrix*                acceptedNormIntegral,    // normalization integral matrix with acceptance
 		          const std::vector<double>*                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
-		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+		          const bool                                hasHessian,              // indicates whether Hessian matrix has been calculated successfully
+		          const std::map<std::string, double>*      datasetRatios = nullptr,                         // ratios between data sets identified by their label
+		          const std::map<std::string, int>*         datasetRatiosCovMatrixIndices = nullptr,         // indices of data set ratio fit parameters in covariance matrix
+		          const std::map<std::string, double>*      additionalFitParameters = nullptr,               // additional fit parameters
+		          const std::map<std::string, int>*         additionalFitParametersCovMatrixIndices = nullptr// indices of additional fit parameters in covariance matrix
+		);
 
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
 		          const unsigned int                        normNmbEvents,           // number of events to normalize to
@@ -179,7 +189,12 @@ namespace rpwa {
 		          const rpwa::complexMatrix&                acceptedNormIntegral,    // normalization integral matrix with acceptance
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
-		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
+		          const bool                                hasHessian,              // indicates whether Hessian matrix has been calculated successfully
+		          const std::map<std::string, double>*      datasetRatios = nullptr,                         // ratios between data sets identified by their label
+		          const std::map<std::string, int>*         datasetRatiosCovMatrixIndices = nullptr,         // indices of data set ratio fit parameters in covariance matrix
+		          const std::map<std::string, double>*      additionalFitParameters = nullptr,               // additional fit parameters
+		          const std::map<std::string, int>*         additionalFitParametersCovMatrixIndices = nullptr// indices of additional fit parameters in covariance matrix
+		);
 
 		/** Fills this fitResult with the content of the given fitResult
 		 * @param result input result
@@ -229,6 +244,8 @@ namespace rpwa {
 		inline std::vector<unsigned int> waveIndicesMatchingPattern(const std::string& waveNamePattern) const;
 
 		double fitParameter(const std::string& parName) const;  ///< returns value of fit parameter with name
+		std::vector<std::string> datasetLabels() const { std::vector<std::string> labels; for(const auto& i: _datasetRatios) labels.push_back(i.first); return labels; }
+		double datasetRatio(const std::string& datasetLabel) const { return _datasetRatios.at(datasetLabel); }
 
 		/// returns production amplitude value at index
 		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }
@@ -400,6 +417,10 @@ namespace rpwa {
 		std::vector<double>                   _phaseSpaceIntegral;        ///< diagonals of phase space integrals (without acceptance)
 		bool                                  _converged;                 ///< indicates whether fit has converged (according to minimizer)
 		bool                                  _hasHessian;                ///< indicates whether Hessian matrix has been calculated successfully
+		std::map<std::string, double>         _datasetRatios;             ///< map of ratios of the different data sets, identified by their label
+		std::map<std::string, Int_t>          _datasetRatiosCovMatrixIndices;///< map data-set labels to the covariance matrix index of the dataset ratio parameter
+		std::map<std::string, double>         _additionalFitParameters;   ///< map of additional fit parameters, identified by their label
+		std::map<std::string, Int_t>          _additionalFitParametersCovMatrixIndices;///< map of additonal fit parameterlabel to the covariance matrix index
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
 
 	public:
@@ -408,7 +429,7 @@ namespace rpwa {
 		void setMultibinBoundaries(const rpwa::multibinBoundariesType& multibinBoundaries) { _multibinBoundaries = multibinBoundaries; } ///< set binning map
 #endif
 
-		ClassDef(fitResult, 7)
+		ClassDef(fitResult, 8)
 
 	};  // class fitResult
 

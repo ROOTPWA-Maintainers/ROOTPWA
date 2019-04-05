@@ -195,17 +195,43 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
                 const complexMatrix*            acceptedNormIntegral,    // normalization integral matrix with acceptance
                 const vector<double>*           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
                 const bool                      converged,
-                const bool                      hasHessian)
+                const bool                      hasHessian,
+                const map<string, double>*      datasetRatios,                // ratios between data sets identified by their label
+                const map<string, int>*         datasetRatiosCovMatrixIndices,
+                const map<string, double>*      additionalFitParameters,      // additonal fit parameters
+                const map<string, int>*         additionalFitParametersCovMatrixIndices )
 {
-	_converged              = converged;
-	_nmbEvents              = nmbEvents;
-	_normNmbEvents          = normNmbEvents;
-	_multibinBoundaries     = multibinBoundaries;
-	_logLikelihood          = logLikelihood;
-	_rank                   = rank;
-	_prodAmps               = prodAmps;
-	_prodAmpNames           = prodAmpNames;
-	_fitParCovMatrixIndices = fitParCovMatrixIndices;
+	_converged                               = converged;
+	_nmbEvents                               = nmbEvents;
+	_normNmbEvents                           = normNmbEvents;
+	_multibinBoundaries                      = multibinBoundaries;
+	_logLikelihood                           = logLikelihood;
+	_rank                                    = rank;
+	_prodAmps                                = prodAmps;
+	_prodAmpNames                            = prodAmpNames;
+	_fitParCovMatrixIndices                  = fitParCovMatrixIndices;
+	if (datasetRatios != nullptr) {
+		_datasetRatios = *datasetRatios;
+		if (datasetRatiosCovMatrixIndices == nullptr) {
+			printErr<< "Cannot fill datasetRatios without datasetRatiosCovMatrixIndices" << endl;
+			throw;
+		}
+		_datasetRatiosCovMatrixIndices = *datasetRatiosCovMatrixIndices;
+	} else {
+		_datasetRatios = {{"not-defined", 1.0}};
+		_datasetRatiosCovMatrixIndices = {{"not-defined", -1}};
+	}
+	if (additionalFitParameters != nullptr) {
+		_additionalFitParameters = *additionalFitParameters;
+		if (additionalFitParametersCovMatrixIndices == nullptr) {
+			printErr<< "Cannot fill additionalFitParameters without additionalFitParametersCovMatrixIndices" << endl;
+			throw;
+		}
+		_additionalFitParametersCovMatrixIndices = *additionalFitParametersCovMatrixIndices;
+	} else {
+		_additionalFitParameters.clear();
+		_additionalFitParametersCovMatrixIndices.clear();
+	}
 
 	if (fitParCovMatrix != nullptr) {
 		_fitParCovMatrix.ResizeTo(fitParCovMatrix->GetNrows(), fitParCovMatrix->GetNcols());
@@ -267,6 +293,14 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 		printWarn << "number of production amplitudes (" << _prodAmps.size() << ") "
 				<< "does not match number of covariance matrix indices "
 				<< "(" << _fitParCovMatrixIndices.size() << ")." << endl;
+	for (const auto& datasetLabel_ratio : _datasetRatios) {
+		if (_datasetRatiosCovMatrixIndices.find(datasetLabel_ratio.first) == _datasetRatiosCovMatrixIndices.end())
+			printWarn<< "Data set label '" << datasetLabel_ratio.first << "' in datasetRatios not in datasetRatiosCovMatrixIndices!" << endl;
+	}
+	for (const auto& label_ratio : _additionalFitParameters) {
+		if (_additionalFitParametersCovMatrixIndices.find(label_ratio.first) == _additionalFitParametersCovMatrixIndices.end())
+			printWarn<< "Additinal fit parameter '" << label_ratio.first << "' not in additionalFitParametersCovMatrixIndices!" << endl;
+	}
 	if (fitParCovMatrix != nullptr){
 		if (_fitParCovMatrix.GetNrows() != _fitParCovMatrix.GetNcols())
 			printWarn << "covariance matrix is not a square matrix "
@@ -286,8 +320,21 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 							<< "entry in covariance matrix outside covariance matrix size "
 							<< "(" << _fitParCovMatrixIndices.size() << ")." << endl;
 			}
+			for(const auto& datasetLabel_index: _datasetRatiosCovMatrixIndices){
+				if (datasetLabel_index.second < -1 or datasetLabel_index.second >= _fitParCovMatrix.GetNrows()) // -1 is not defined
+					printWarn << "datasetRatiosCovMatrixIndex '" << datasetLabel_index.second
+					          << "' of dataset '" << datasetLabel_index.first << "' outside covariance matrix size "
+							<< "(" << _fitParCovMatrix.GetNrows() << ")." << endl;
+			}
+			for(const auto& label_index: _additionalFitParametersCovMatrixIndices){
+				if (label_index.second < -1 or label_index.second >= _fitParCovMatrix.GetNrows()) // -1 is not defined
+					printWarn << "datasetRatiosCovMatrixIndex '" << label_index.second
+					          << "' of additional fit parameter '" << label_index.first << "' outside covariance matrix size "
+							<< "(" << _fitParCovMatrix.GetNrows() << ")." << endl;
+			}
 		}
 	}
+
 	if (normIntegral != nullptr){
 		if (_normIntegral.nRows() != _normIntegral.nCols())
 			printWarn << "normalization integral is not a square matrix "
@@ -356,7 +403,11 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
                 const complexMatrix*            acceptedNormIntegral,    // normalization integral matrix with acceptance
                 const vector<double>*           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
                 const bool                      converged,
-                const bool                      hasHessian)
+                const bool                      hasHessian,
+                const map<string, double>*      datasetRatios,                // ratios between data sets identified by their label
+                const map<string, int>*         datasetRatiosCovMatrixIndices,
+                const map<string, double>*      additionalFitParameters,      // additonal fit parameters
+                const map<string, int>*         additionalFitParametersCovMatrixIndices )
 {
 	// In principle the production amplitudes could be written directly to _prodAmps and an empty prodAmps vector could be given to fill.
 	// This would remove the additional copy of the prodAmps vector.
@@ -366,7 +417,8 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 	for (unsigned int i = 0; i < prodAmps.size(); ++i)
 		prodAmpsT[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
 	fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmpsT, prodAmpNames, fitParCovMatrix, fitParCovMatrixIndices, normIntegral,
-	     acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian);
+	     acceptedNormIntegral, phaseSpaceIntegral, converged, hasHessian,
+	     datasetRatios, datasetRatiosCovMatrixIndices, additionalFitParameters, additionalFitParametersCovMatrixIndices);
 }
 
 void
@@ -383,11 +435,16 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
                 const complexMatrix&            acceptedNormIntegral,    // normalization integral matrix with acceptance
                 const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
                 const bool                      converged,
-                const bool                      hasHessian)
+                const bool                      hasHessian,
+                const map<string, double>*      datasetRatios,                // ratios between data sets identified by their label
+                const map<string, int>*         datasetRatiosCovMatrixIndices,
+                const map<string, double>*      additionalFitParameters,      // additonal fit parameters
+                const map<string, int>*         additionalFitParametersCovMatrixIndices )
 {
 	fill(nmbEvents, normNmbEvents, multibinBoundaries, logLikelihood, rank, prodAmps, prodAmpNames,
 	     &fitParCovMatrix, fitParCovMatrixIndices, &normIntegral, &acceptedNormIntegral, &phaseSpaceIntegral,
-	     converged, hasHessian);
+	     converged, hasHessian,
+	     datasetRatios, datasetRatiosCovMatrixIndices, additionalFitParameters, additionalFitParametersCovMatrixIndices);
 }
 
 
@@ -417,7 +474,9 @@ fitResult::fill(const fitResult& result,
 	     normIntegral,
 	     acceptedNormIntegral,
 	     phaseSpaceIntegral,
-	     result.converged(), result.hasHessian());
+	     result.converged(), result.hasHessian(),
+	     &result._datasetRatios, &result._datasetRatiosCovMatrixIndices,
+	     &result._additionalFitParameters, &result._additionalFitParametersCovMatrixIndices);
 }
 
 
@@ -441,7 +500,9 @@ fitResult::fill(const fitResult& result, bool fillCovMatrix, bool fillIntegralMa
 	     (fillNormIntMatrix)? &result.normIntegralMatrix() : nullptr,
 	     (fillAccNormIntMatrix)? &result.acceptedNormIntegralMatrix() : nullptr,
 	     (fillPhaseSpace)? &result.phaseSpaceIntegralVector() : nullptr,
-	     result.converged(), result.hasHessian());
+	     result.converged(), result.hasHessian(),
+	     &result._datasetRatios, &result._datasetRatiosCovMatrixIndices,
+	     &result._additionalFitParameters, &result._additionalFitParametersCovMatrixIndices);
 }
 
 

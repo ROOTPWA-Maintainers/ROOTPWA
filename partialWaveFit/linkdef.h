@@ -87,4 +87,17 @@
 }                                                                                                   \
               }";
 
+#pragma read                                                                                        \
+        sourceClass="rpwa::fitResult"                                                               \
+        source=""                                                                                   \
+        version="[-7]"                                                                              \
+        targetClass="rpwa::fitResult"                                                               \
+        target="_datasetRatios, _datasetRatiosCovMatrixIndices"                                     \
+        code="{                                                                                     \
+{                                                                                                   \
+    _datasetRatios[\"not-defined\"] = 1.0;                                                          \
+    _datasetRatiosCovMatrixIndices[\"not-defined\"] = -1;                                                          \
+}                                                                                                   \
+              }";
+
 #endif

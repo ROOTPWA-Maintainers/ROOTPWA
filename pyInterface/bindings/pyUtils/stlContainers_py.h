@@ -106,6 +106,33 @@ namespace rpwa {
 			return true;
 		}
 
+		template<typename T, typename U>
+		bool convertBPObjectToMap(const boost::python::object& pyDict, std::map<T,U>& map)
+		{
+			boost::python::extract<boost::python::dict> getDict(pyDict);
+			if(not getDict.check()) {
+				printWarn<<"cannot convert boost::python::object to dict."<<std::endl;
+				return false;
+			}
+			boost::python::dict pyDictDict = getDict();
+			map.clear();
+			boost::python::list pyKeys = pyDictDict.keys();
+			for (int i = 0; i < boost::python::len(pyKeys); ++i) {
+				boost::python::extract<T> getKey(pyKeys[i]);
+				if (not getKey.check()) {
+					PyErr_SetString(PyExc_TypeError, "Got invalid key");
+					boost::python::throw_error_already_set();
+				}
+				boost::python::extract<U> getValue(pyDictDict[pyKeys[i]]);
+				if (not getValue.check()) {
+					PyErr_SetString(PyExc_TypeError, "Got invalid value");
+					boost::python::throw_error_already_set();
+				}
+				map[getKey()] = getValue();
+			}
+			return true;
+		}
+
 		rpwa::multibinBoundariesType convertMultibinBoundariesFromPy(const boost::python::dict& pyMultibinBoundaries);
 		boost::python::dict convertMultibinBoundariesToPy(const rpwa::multibinBoundariesType& multibinBoundaries);
 		/**
