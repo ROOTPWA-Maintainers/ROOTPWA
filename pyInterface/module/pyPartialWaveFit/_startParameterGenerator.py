@@ -32,30 +32,51 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 	'''
 	def __init__(self, model, seed=None):
 		StartParameterGenerator.__init__(self, model, seed=seed)
+		self.scaleToNbar = True
 
 
 	def __call__(self):
 		randomRatios=False
+		parameters = []
 		amplVectors = []
 		amplMax = self.nmbEvents**0.5 / self.approxAcceptance**0.5
 		for nWavesInSector in self.model.parameterMapping.nmbWavesInSectors:
 			ampl = np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
 			       1j*np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
-			ampl[0] = np.real(ampl[0])
 			amplVectors.append(ampl)
+		# this sets the amplitues of real-valued waves (e.g. reference wave) to real
+		paraNegLlhd = [amplVectors, np.array([1]*self.model.nmbDatasets)] + [1]*self.model.parameterMapping.nmbAdditionalParameters
+		paraFitter = self.model.parameterMapping.paraLlhd2Fitter(self.model.parameterMapping.paraNegLlhd2Llhd(paraNegLlhd))
+		paraNegLlh = self.model.parameterMapping.paraLlhd2negLlhd(self.model.parameterMapping.paraFitter2Llhd(paraFitter))
+		amplVectors = paraNegLlh[0]
 
-		parameters = [amplVectors]
-		# add ratio parameters
-		ratios = np.empty(self.model.nmbDatasets)
-		if randomRatios:
-			tot = 1.0
-			for i in xrange(ratios.size-1):
-				ratios[i] = self.generator.rand()*tot # [0, tot)
-				tot -= ratios[i]
-			ratios[-1] = tot
-		else: # from data
-			nmbEvents = self.model.likelihood.nmbEvents
-			ratios[:] = nmbEvents.astype(ratios.dtype)/np.sum(nmbEvents)
+		if not self.scaleToNbar:
+			# add ratio parameters
+			ratios = np.empty(self.model.nmbDatasets)
+			if randomRatios:
+				tot = 1.0
+				for i in xrange(ratios.size-1):
+					ratios[i] = self.generator.rand()*tot # [0, tot)
+					tot -= ratios[i]
+				ratios[-1] = tot
+			else: # from data
+				nmbEvents = self.model.likelihood.nmbEvents
+				ratios[:] = nmbEvents.astype(ratios.dtype)/np.sum(nmbEvents)
+		else:
+			nBars = [] # not the actual n-bar, but estimates using the generated amplitudes (without correct scaling)
+			for iDataset in xrange(self.model.likelihood.nmbDatasets):
+				nBar = 0.0
+				for iSector in xrange(self.model.likelihood.nmbSectors):
+					nBar = nBar + np.real(np.dot( np.dot( self.model.likelihood.accMatrices[iDataset][iSector],np.conj(amplVectors[iSector]) ), amplVectors[iSector]))
+				nBars.append(nBar)
+			nBars = np.array(nBars)
+			scalings = self.model.likelihood.nmbEvents/nBars # scaling factors sucht that nBar[i] == nmbEvents[i]
+			ratios = scalings/np.sum(scalings) # using nmbEvents[i] = r[i] * amplitudeScaling^2 * nBar[i]
+			amplitudeScaling = np.sqrt(np.sum(scalings))
+			amplVectors = [ amplitudeScaling*v for v in amplVectors]
+
+
+		parameters += [amplVectors]
 		datasetRatioParameters = self.model.parameterMapping.datasetDatasetRatios2RatioParameters(ratios)
 		parameters.append(datasetRatioParameters)
 
