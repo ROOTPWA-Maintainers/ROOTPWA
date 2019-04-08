@@ -18,6 +18,7 @@ class StartParameterGenerator(object):
 		self.generator = RandomState(seed)
 		self.model = model
 		self.nmbEvents = np.sum(self.model.likelihood.nmbEvents)
+		self.approxAcceptance = self.model.likelihood.accMatrices[0][-1][0,0].real
 
 
 	def __call__(self):
@@ -34,21 +35,29 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 
 
 	def __call__(self):
+		randomRatios=False
 		amplVectors = []
+		amplMax = self.nmbEvents**0.5 / self.approxAcceptance**0.5
 		for nWavesInSector in self.model.parameterMapping.nmbWavesInSectors:
-			ampl = np.random.uniform(0.01, self.nmbEvents**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
-			       1j*np.random.uniform(0.01, self.nmbEvents**0.5, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
+			ampl = np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
+			       1j*np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
 			ampl[0] = np.real(ampl[0])
 			amplVectors.append(ampl)
 
 		parameters = [amplVectors]
 		# add ratio parameters
 		ratios = np.empty(self.model.nmbDatasets)
-		tot = 1.0
-		for i in xrange(ratios.size):
-			ratios[i] = tot
-			tot -= self.generator.rand()*tot # [0, tot)
-		parameters.append(ratios)
+		if randomRatios:
+			tot = 1.0
+			for i in xrange(ratios.size-1):
+				ratios[i] = self.generator.rand()*tot # [0, tot)
+				tot -= ratios[i]
+			ratios[-1] = tot
+		else: # from data
+			nmbEvents = self.model.likelihood.nmbEvents
+			ratios[:] = nmbEvents.astype(ratios.dtype)/np.sum(nmbEvents)
+		datasetRatioParameters = self.model.parameterMapping.datasetDatasetRatios2RatioParameters(ratios)
+		parameters.append(datasetRatioParameters)
 
 		# add additional parameters
 		for _ in xrange(self.model.parameterMapping.nmbAdditionalParameters):
@@ -127,12 +136,15 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 
 # this is gonna be tricky to realize!!!
 # maybe sampling in fourier-space works better
-class StartParameterGeneratorUniform(StartParameterGenerator):
+class StartParameterGeneratorUniform(object):
 
 
 	def __init__(self, model, seed=None):
-		StartParameterGenerator.__init__(self, model, seed=seed)
-		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(model, seed=int(self.generator.rand() * 999999)) for model in self.model.models]
+		self.generator = RandomState(seed)
+		self.model = model
+		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(subbinModel, seed=1) for subbinModel in self.model.models]
+		for spg in self.startParameterGenerators:
+			spg.generator = self.generator
 
 
 	def __call__(self):

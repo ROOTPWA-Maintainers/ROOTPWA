@@ -40,7 +40,7 @@ class Likelihood(object):
 
 
 		self.nmbSectors = len(decayAmplitudes[0])
-		self.nmbEvents = [ amps[0].shape[1] for amps in decayAmplitudes ]
+		self.nmbEvents = np.array([ amps[0].shape[1] for amps in decayAmplitudes ])
 		self.nmbWavesInSectors = []
 		for iDataset in range(self.nmbDatasets):
 			for i, amplitudes in enumerate(decayAmplitudes[iDataset]):
@@ -80,14 +80,13 @@ class Likelihood(object):
 		'''
 		@return Negative log-likelihood for the given set of transition amplitudes
 		'''
-		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))
-		datasetRatiosLog = datasetRatioParameters-np.log(datasetRatiosNorm)
+		datasetRatios, datasetRatiosLog = self.parameterMapping.datasetRatioParameters2DatasetRatios(datasetRatioParameters)
 		negLlhd = 0.0
 		for iDataset in xrange(self.nmbDatasets):
 			nBar = 0.0
 			dataTerm = 0.0
 			for iSector in xrange(self.nmbSectors):
-				nBar = nBar + np.exp(datasetRatiosLog[iDataset])*np.real(np.dot( np.dot( self.accMatrices[iDataset][iSector],np.conj(transitionAmps[iSector]) ), transitionAmps[iSector]))
+				nBar = nBar + datasetRatios[iDataset]*np.real(np.dot( np.dot( self.accMatrices[iDataset][iSector],np.conj(transitionAmps[iSector]) ), transitionAmps[iSector]))
 				sumOfAmps = np.dot(transitionAmps[iSector],self.decayAmplitudes[iDataset][iSector])
 				dataTerm = dataTerm + np.real(sumOfAmps * np.conj(sumOfAmps))
 
@@ -167,7 +166,7 @@ class LikelihoodCauchy(Likelihood):
 			if not correctAcceptance:
 				self.width = [width] * len(self.decayAmplitudes)
 			else:
-				self.width = [width / np.sqrt(np.abs(accMatrix.diagonal())) for accMatrix in self.accMatrices]
+				self.width = [width / np.sqrt(np.abs(accMatrix.diagonal())) for accMatrix in self.accMatrices[0]]
 		else:
 			self.width = width
 			if correctAcceptance:
@@ -195,7 +194,7 @@ class LikelihoodConnected(object):
 	def __init__(self, likelihoods, binWidths):
 
 		self.likelihoods = likelihoods
-		self.binWidthsNormalization = np.empty((len(likelihoods), likelihoods[0].parameterMapping.nmbLlhdParameters))
+		self.binWidthsNormalization = np.empty((len(likelihoods), likelihoods[0].parameterMapping.nmbLlhdParameters-likelihoods[0].parameterMapping.nmbDatasets))
 		for i in range(self.binWidthsNormalization.shape[0]):
 			self.binWidthsNormalization[i,:] = np.sqrt(1.0/binWidths[i]*0.02)
 
@@ -217,7 +216,8 @@ class LikelihoodConnected(object):
 
 	# make this customizable
 	def _connection(self, paraLlhd):
-		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))
+		paras = np.dstack([np.hstack(self.likelihoods[i].parameterMapping.paraLlhd2negLlhd(self.parameterMapping.paraLlhdOfBin(paraLlhd,i))[0]) for i in xrange(len(self.likelihoods))])
+		paras = paras.reshape((paras.shape[1], paras.shape[2])).transpose()
 		# normalize to 20 MeV bins
 		parasNormed = paras*self.binWidthsNormalization
 		return np.sum(self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2))
@@ -237,7 +237,7 @@ class LikelihoodConnected(object):
 				raise Exception()
 			strengths = np.empty((len(self.likelihoods),np.sum(self.likelihoods[0].nmbWavesInSectors)))
 			for iLikelihood, likelihood in enumerate(self.likelihoods):
-				nmbEventAccCorr = likelihood.nmbEvents/np.abs(likelihood.accMatrices[-1][0,0])
+				nmbEventAccCorr = likelihood.nmbEvents/np.abs(likelihood.accMatrices[0][-1][0,0])
 				strengths[iLikelihood,:] = strength/nmbEventAccCorr
 			self.strength =0.5*(strengths[1:,:]+strengths[0:-1,:])
 		else:

@@ -378,7 +378,7 @@ class ModelConnected(Model):
 		self.models = None # list of cells in the individual bins
 
 
-	def initModelInBins(self, fileManagerOrConfigfile, binIDs, waveListFileName, rankPosRefl, rankNegRefl):
+	def initModelInBins(self, fileManagerOrConfigfile, binIDs, waveListFileName, rankPosRefl, rankNegRefl, datasets = None):
 
 		if isinstance(fileManagerOrConfigfile, str):
 			config = pyRootPwa.rootPwaConfig()
@@ -397,7 +397,7 @@ class ModelConnected(Model):
 		for binID in binIDs:
 			print "Reading in bin: " + str(binID)
 			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
-			model.initModelInBin(fileManager, binID, waveListFileName, rankPosRefl, rankNegRefl)
+			model.initModelInBin(fileManager, binID, waveListFileName, rankPosRefl, rankNegRefl, datasets=datasets)
 			self.models.append(model)
 
 		binWidths = np.array([model.multibin.getBinWidths()['mass'] for model in self.models])

@@ -32,7 +32,7 @@ def main():
 	                    help="Name of the likelihood class to use. Classes are: " + ", ".join(pyRootPwa.pyPartialWaveFit.getLikelihoodClassNames()))
 	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
 	parser.add_argument("--likelihoodModule", metavar="path-to-likelihood-model", default=None, help="Implement the likelihood class not from ROOTPWA but from the given module-file")
-	parser.add_argument("--dataset", action='append', default=None, help="Define data-set to fit via data-set label.")
+	parser.add_argument("--dataset", action='append', dest='datasets', default=None, help="Define data-set to fit via data-set label.")
 	args = parser.parse_args()
 
 	clsModel = pyRootPwa.pyPartialWaveFit.ModelRpwa
@@ -56,7 +56,7 @@ def main():
 	pyRootPwa.utils.printInfo("Using likelihood '{0}' from module '{1}'.".format(clsLikelihood.__name__, likelihoodModule.__file__))
 
 	model = clsModel(clsLikelihood, clsParameterMapping)
-	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.dataset)
+	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.datasets)
 
 	if args.likelihoodParameters is not None:
 		exec("model.likelihood.setParameters({p})".format(p=args.likelihoodParameters))
@@ -75,7 +75,7 @@ def main():
 	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorRpwaUniform(model, args.seed)
 	               )
 
-	fitResults = fitter.fit(args.nAttempts)
+	fitResults = fitter.fit(args.nAttempts, verbosity=2 if args.verbose else 1)
 	if not fitResults:
 		pyRootPwa.utils.printErr("didn't get valid fit result(s). Aborting...")
 		sys.exit(1)

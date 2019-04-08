@@ -59,6 +59,12 @@ class ParameterMapping(object):
 		'''
 		raise NotImplementedError("Needs to be implemented in specialized class!")
 
+	def datasetRatioParameters2DatasetRatios(self, datasetRatioParameters):
+		raise NotImplementedError("Needs to be implemented in specialized class!")
+
+	def datasetDatasetRatios2RatioParameters(self, datasetRatios):
+		raise NotImplementedError("Needs to be implemented in specialized class!")
+
 
 class ParameterMappingRpwa(ParameterMapping):
 	'''
@@ -182,8 +188,6 @@ class ParameterMappingRpwa(ParameterMapping):
 		paraLlhdReal[self.indicesLlhdParaNonNoneReal] = paraFitter[self.indicesRealFitterParaNonNone]
 		paraLlhdImag = np.zeros(self.nmbLlhdParameters)
 		paraLlhdImag[self.indicesLlhdParaNonNoneImag] = paraFitter[self.indicesImagFitterParaNonNone]
-		# set data-set ratio reference
-		paraLlhdReal[self.indexParaLlhdDatasetRatio(0)] = 1.0
 		paraLlhd = paraLlhdReal + 1j*paraLlhdImag
 		return paraLlhd
 
@@ -196,7 +200,7 @@ class ParameterMappingRpwa(ParameterMapping):
 
 	def paraLlhd2negLlhd(self, paraLlhd):
 		'''
-		Split paraLlhd (one long parameter list) into [ [<list of T-vectors in sectors>], <list of likelihood ratios>, <additional parameters>]) for the `negLlhd` function.
+		Split paraLlhd (one long parameter list) into [ [<list of T-arrays in sectors>], <arrayof likelihood ratios>, <additional parameters>, ...]) for the `negLlhd` function.
 		The complex-valued additional parameters in paraLlhd are mapped to real ones.
 		'''
 		amplitudes = tuple(paraLlhd[self.paraLlhdStartSectors[i]:self.paraLlhdStartSectors[i+1]] for i in range(self.nmbSectors))
@@ -238,8 +242,7 @@ class ParameterMappingRpwa(ParameterMapping):
 
 	def paraFitter2DatasetRatiosForRpwaFitresult(self, paraFitter):
 		datasetRatioParameters = self.paraLlhd2negLlhd(self.paraFitter2Llhd(paraFitter))[1]
-		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))
-		datasetRatios = np.exp(datasetRatioParameters)/datasetRatiosNorm
+		datasetRatios, _ = self.datasetRatioParameters2DatasetRatios(datasetRatioParameters)
 		return datasetRatios
 
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
@@ -249,6 +252,14 @@ class ParameterMappingRpwa(ParameterMapping):
 			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices
 
+	def datasetRatioParameters2DatasetRatios(self, datasetRatioParameters):
+		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))
+		datasetRatiosLog = datasetRatioParameters-np.log(datasetRatiosNorm)
+		datasetRatios = np.exp(datasetRatiosLog)
+		return datasetRatios, datasetRatiosLog
+
+	def datasetDatasetRatios2RatioParameters(self, datasetRatios):
+		return np.log(datasetRatios)-np.log(datasetRatios[0])
 
 class ParameterMappingConnected(ParameterMapping):
 
@@ -275,6 +286,18 @@ class ParameterMappingConnected(ParameterMapping):
 		@return fitter parameters of it i'th bin
 		'''
 		return paraFitter[self.offsetsFitterForBins[iBin]:self.offsetsFitterForBins[iBin+1]]
+
+	def individualParaFitter2paraFitter(self, parasFitter):
+		'''
+		@return: complete list of fitter parameter from bin-individual fitter parameters
+		'''
+		if len(parasFitter) != self.nmbModels:
+			raise Exception("Wrong length of `parasFitter`!")
+
+		paraFitter = np.empty(self.nmbParameters)
+		for i in range(self.nmbModels):
+			paraFitter[self.offsetsFitterForBins[i]:self.offsetsFitterForBins[i+1]] = parasFitter[i]
+		return paraFitter
 
 
 	def paraLlhdOfBin(self, paraLlhd, iBin):

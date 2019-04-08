@@ -43,6 +43,7 @@ class Fitter(object):
 			progress = pyRootPwa.utils.progressBar(maximum=nmbAttempts)
 			progress.start()
 
+		tDurationTotal = 0.0
 		for iAttempt in xrange(nmbAttempts):
 			startParameters = self.startParameterGenerator()
 
@@ -55,10 +56,11 @@ class Fitter(object):
 					pyRootPwa.utils.printSucc("Minimization successful (-log(L) = {0:.2f})! ".format(results[iAttempt]["negLlhd"]) + self.getStatus(results[iAttempt]['status']))
 				else:
 					pyRootPwa.utils.printWarn("Minimization NOT successfull! " + self.getStatus(results[iAttempt]['status']))
-				pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds. And "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
+				pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds and "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
 
 			if progress:
 				progress.update(iAttempt)
+			tDurationTotal += tDuration
 
 		iBestAttempt         = np.argmin([r['negLlhd'] for r in results])
 		iBestConvegedAttempt = np.argmin([r['negLlhd'] if r['success'] else 1e300 for r in results])
@@ -88,6 +90,9 @@ class Fitter(object):
 				pyRootPwa.utils.printSucc("{0} fit attempts with valid Hessian matrix.".format(nmbValidHessian))
 			if nmbInvalidHessian > 0:
 				pyRootPwa.utils.printWarn("{0} fit attempts with invalid Hessian matrix.".format(nmbInvalidHessian))
+			pyRootPwa.utils.printInfo("Total time for minimization:    {0} seconds".format(tDurationTotal))
+			pyRootPwa.utils.printInfo("Total number of gradient calls: {0}".format(self.model.likelihood.countFdF))
+
 
 		return results
 
