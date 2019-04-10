@@ -59,7 +59,7 @@ class Fitter(object):
 				pyRootPwa.utils.printInfo("Minimization took "+str(tDuration)+" seconds and "+str(results[iAttempt]['nmbEvals'])+" calls to objective (+gradient) function.")
 
 			if progress:
-				progress.update(iAttempt)
+				progress.update(iAttempt+1)
 			tDurationTotal += tDuration
 
 		iBestAttempt         = np.argmin([r['negLlhd'] for r in results])
