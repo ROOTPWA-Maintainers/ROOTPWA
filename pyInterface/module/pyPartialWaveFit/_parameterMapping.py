@@ -82,10 +82,11 @@ class ParameterMappingRpwa(ParameterMapping):
 		The additional parameters are real-valued, but in paraLlhd, they are complex-valued of an imaginary part of zero
 	'''
 
-	def __init__(self, model, realWaves = None, zeroWaves = None):
+	def __init__(self, model, realWaves = None, zeroWaves = None, zeroDatasetRatios = None):
 		'''
 		@param realWaves: List lists of waves whose amplitude should be fixed to real, i.e. the imaginary part is fixed to zero. One list for each incoherent sector.
 		@param zeroWaves: List of waves whose amplitude should be fixed to zero. Fixing of the reference wave is ignored.
+		@param zeroDatasetRatios: List of data set indices whose ratio should be 0
 		'''
 		ParameterMapping.__init__(self, model)
 
@@ -103,11 +104,19 @@ class ParameterMappingRpwa(ParameterMapping):
 		if zeroWaves is None:
 			zeroWaves = []
 
+		if zeroDatasetRatios is None:
+			zeroDatasetRatios = []
+		if 0 in zeroDatasetRatios:
+			raise ValueError("Cannot set data set ratio of 0th data set to 0!")
+		if zeroDatasetRatios and max(zeroDatasetRatios) >= self.model.nmbDatasets:
+			raise ValueError("Cannot set data set ratio of {0}nd data set to 0! Index out of range!".format(max(zeroDatasetRatios)))
+		self.zeroDatasetRatios = zeroDatasetRatios
+
 		negLlhdFunction = model.clsLikelihood.negLlhd
 		argsNegLlhdFunction = inspect.getargspec(negLlhdFunction).args
 		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -3 # the first one is self, the second one are the transition amplitudes, the third one are the data-set ratios
 		self.nmbAmplitudeParameters = np.sum([ 2*n-len(realWaves[i]) for i,n in enumerate(self.nmbWavesInSectors)]) - 2*len(zeroWaves)
-		self.nmbDatasetRatioParameters = self.nmbDatasets-1
+		self.nmbDatasetRatioParameters = self.nmbDatasets-1-len(self.zeroDatasetRatios)
 		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbDatasetRatioParameters + self.nmbAdditionalParameters
 
 
@@ -138,7 +147,7 @@ class ParameterMappingRpwa(ParameterMapping):
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
 		for iDataset in xrange(self.nmbDatasets):
-			if iDataset == 0:
+			if iDataset == 0 or iDataset in zeroDatasetRatios:
 				self.indicesRealFitterPara.append(None)
 			else:
 				self.indicesRealFitterPara.append(iFitterPara)
@@ -188,6 +197,8 @@ class ParameterMappingRpwa(ParameterMapping):
 		paraLlhdReal[self.indicesLlhdParaNonNoneReal] = paraFitter[self.indicesRealFitterParaNonNone]
 		paraLlhdImag = np.zeros(self.nmbLlhdParameters)
 		paraLlhdImag[self.indicesLlhdParaNonNoneImag] = paraFitter[self.indicesImagFitterParaNonNone]
+		for iDataset in self.zeroDatasetRatios:
+			paraLlhdReal[self.paraLlhdStartDatasetRatios+iDataset] = -np.inf # only for exponential mapping
 		paraLlhd = paraLlhdReal + 1j*paraLlhdImag
 		return paraLlhd
 
@@ -259,7 +270,13 @@ class ParameterMappingRpwa(ParameterMapping):
 		return datasetRatios, datasetRatiosLog
 
 	def datasetDatasetRatios2RatioParameters(self, datasetRatios):
-		return np.log(datasetRatios)-np.log(datasetRatios[0])
+		ratioParameters = np.empty_like(datasetRatios)
+		for i, value in enumerate(datasetRatios):
+			if value != 0.0:
+				ratioParameters[i] = np.log(value)-np.log(datasetRatios[0])
+			else:
+				ratioParameters[i] = - np.inf
+		return ratioParameters
 
 class ParameterMappingConnected(ParameterMapping):
 

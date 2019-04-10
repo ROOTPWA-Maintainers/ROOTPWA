@@ -62,6 +62,7 @@ class Likelihood(object):
 		self.normMatrices = normMatrices
 		self.normIntegrals = normIntegrals
 
+		self.datasetIndecesToProcess = [i for i in range(self.nmbDatasets) if self.nmbEvents[i] > 0]
 
 		self.parameterMapping = parameterMapping
 
@@ -82,7 +83,7 @@ class Likelihood(object):
 		'''
 		datasetRatios, datasetRatiosLog = self.parameterMapping.datasetRatioParameters2DatasetRatios(datasetRatioParameters)
 		negLlhd = 0.0
-		for iDataset in xrange(self.nmbDatasets):
+		for iDataset in self.datasetIndecesToProcess:
 			nBar = 0.0
 			dataTerm = 0.0
 			for iSector in xrange(self.nmbSectors):
@@ -216,8 +217,7 @@ class LikelihoodConnected(object):
 
 	# make this customizable
 	def _connection(self, paraLlhd):
-		paras = np.dstack([np.hstack(self.likelihoods[i].parameterMapping.paraLlhd2negLlhd(self.parameterMapping.paraLlhdOfBin(paraLlhd,i))[0]) for i in xrange(len(self.likelihoods))])
-		paras = paras.reshape((paras.shape[1], paras.shape[2])).transpose()
+		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
 		# normalize to 20 MeV bins
 		parasNormed = paras*self.binWidthsNormalization
 		return np.sum(self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2))

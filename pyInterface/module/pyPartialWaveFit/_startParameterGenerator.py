@@ -70,7 +70,7 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 					nBar = nBar + np.real(np.dot( np.dot( self.model.likelihood.accMatrices[iDataset][iSector],np.conj(amplVectors[iSector]) ), amplVectors[iSector]))
 				nBars.append(nBar)
 			nBars = np.array(nBars)
-			scalings = self.model.likelihood.nmbEvents/nBars # scaling factors sucht that nBar[i] == nmbEvents[i]
+			scalings = self.model.likelihood.nmbEvents/nBars # scaling factors such that nBar[i] == nmbEvents[i]
 			ratios = scalings/np.sum(scalings) # using nmbEvents[i] = r[i] * amplitudeScaling^2 * nBar[i]
 			amplitudeScaling = np.sqrt(np.sum(scalings))
 			amplVectors = [ amplitudeScaling*v for v in amplVectors]

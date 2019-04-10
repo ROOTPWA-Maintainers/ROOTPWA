@@ -120,20 +120,15 @@ class ModelRpwa(Model):
 		self.multibin = multiBin
 
 		referenceWaves = self._initWaveNames(multiBin, waveListFileName, waveDescriptions)
-
+		emptyDatasets = []
 		normIntegralMatrices = []
 		accIntegralMatrices = []
 		normIntegrals = []
 		decayAmps = []
 		self.integralsPosRefl = []
 		self.integralsNegRefl = []
-		for eventAndAmpFileDict, normIntegralFileName, accIntegralFileName, dataset in zip(eventAndAmpFileDicts, normIntegralFileNames, accIntegralFileNames, datasets):
-			decayAmpsTest = loadAmplitudes(eventAndAmpFileDict, [self.waveNames[0]], multiBin)
-			if decayAmpsTest.shape[1] == 0:
-				pyRootPwa.utils.printWarn("No events to fit in multibin: {0} for dataset {1}".format(multiBin, dataset))
-				self.nmbDatasets -= 1
-				self.datasetLabels.remove(dataset)
-				continue
+		for iDataset, (eventAndAmpFileDict, normIntegralFileName, accIntegralFileName, dataset) in \
+		   enumerate(zip(eventAndAmpFileDicts, normIntegralFileNames, accIntegralFileNames, datasets)):
 			normIntegralMatrices.append(list())
 			accIntegralMatrices.append(list())
 			normIntegrals.append(list())
@@ -145,11 +140,14 @@ class ModelRpwa(Model):
 				integrals = (buildSubMatrix(normIntegralMatrixFull, self.waveNames, waveNames),
 							buildSubMatrix(accIntegralMatrixFull, self.waveNames, waveNames),
 							buildSubList(normIntegralsFull, self.waveNames, waveNames))
-				decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
 				if tag == 'pos':
 					self.integralsPosRefl.append(integrals)
 				if tag == 'neg':
 					self.integralsNegRefl.append(integrals)
+				decayAmpsFull = loadAmplitudes(eventAndAmpFileDict, waveNames, multiBin, integrals[2])
+				if decayAmpsFull.shape[1] == 0 and iDataset not in emptyDatasets:
+					pyRootPwa.utils.printWarn("No events to fit in multibin: {0} for dataset {1}".format(multiBin, dataset))
+					emptyDatasets.append(iDataset)
 
 				for iRank in xrange(rank):
 					decayAmps[-1].append(decayAmpsFull[iRank:])
@@ -170,7 +168,7 @@ class ModelRpwa(Model):
 
 
 		# buildParameterMapping
-		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in referenceWaves], self.waveNamesFixed)
+		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in referenceWaves], self.waveNamesFixed, emptyDatasets)
 
 		self.likelihood = self.clsLikelihood(decayAmps, accIntegralMatrices, normIntegralMatrices, normIntegrals, self.parameterMapping)
 
