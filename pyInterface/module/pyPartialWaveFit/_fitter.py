@@ -123,11 +123,8 @@ class Fitter(object):
 		raise NotImplementedError("This method must be implemented in the derived classes")
 
 
-def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valTreeName = "pwa", valBranchName = "fitResult_v2"):
-	'''
-	@param integralsStorageLevel: 0=do not store integrals, 1=store integrals of best and best converged result, 2=store integrals for all results
-	'''
 
+def openTreeForWriteResultsRpwa(outputFileName, valTreeName = "pwa", valBranchName = "fitResult_v2"):
 	if os.path.exists(outputFileName) or os.path.exists(outputFileName+'.root'):
 		pyRootPwa.utils.printErr("Output file already exists! Aborting ...")
 		sys.exit(1)
@@ -135,17 +132,47 @@ def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valT
 	if (not outputFile) or outputFile.IsZombie():
 		pyRootPwa.utils.printErr("cannot open output file '" + outputFileName + "'. Aborting...")
 		sys.exit(1)
-	fitResult = pyRootPwa.core.fitResult()
 	tree = outputFile.Get(valTreeName)
+
 	if not tree:
 		pyRootPwa.utils.printInfo("file '" + outputFileName + "' is empty. "
 				+ "creating new tree '" + valTreeName + "' for PWA result.")
 		tree = pyRootPwa.ROOT.TTree(valTreeName, valTreeName)
+		fitResult = pyRootPwa.core.fitResult()
 		if not fitResult.branch(tree, valBranchName):
 			pyRootPwa.utils.printErr("failed to create new branch '" + valBranchName + "' in file '" + outputFileName + "'.")
 			sys.exit(1)
+	return outputFile, tree
+
+def closeTreeForWriteResultsRpwa(outputFile, tree):
+	nmbBytes = tree.Write()
+	outputFile.Close()
+	if nmbBytes == 0:
+		pyRootPwa.utils.printErr("problems writing fit result to TKey 'fitResult' "
+				+ "in file '" + outputFile.GetName() + "'")
+		sys.exit(1)
 	else:
-		fitResult.setBranchAddress(tree, valBranchName)
+		pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
+				+ "in file '" + outputFile.GetName() + "'")
+
+def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valTreeName = "pwa", valBranchName = "fitResult_v2"):
+	'''
+	@param integralsStorageLevel: 0=do not store integrals, 1=store integrals of best and best converged result, 2=store integrals for all results
+	'''
+
+	outputFile, tree = openTreeForWriteResultsRpwa(outputFileName, valTreeName, valBranchName)
+	writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranchName)
+	closeTreeForWriteResultsRpwa(outputFile, tree)
+
+
+
+def writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranchName = "fitResult_v2"):
+	'''
+	@param integralsStorageLevel: 0=do not store integrals, 1=store integrals of best and best converged result, 2=store integrals for all results
+	'''
+
+	fitResult = pyRootPwa.core.fitResult()
+	fitResult.setBranchAddress(tree, valBranchName)
 
 
 	normIntegralMatrix = buildIntegralMatrixFromSubmatrices(model.getNormSubmatrices())
@@ -205,15 +232,6 @@ def writeResultsRpwa(model, results, outputFileName, integralsStorageLevel, valT
 						{k: -1 for k in datasetRatios.keys()}
 			)
 		tree.Fill()
-	nmbBytes = tree.Write()
-	outputFile.Close()
-	if nmbBytes == 0:
-		pyRootPwa.utils.printErr("problems writing fit result to TKey 'fitResult' "
-				+ "in file '" + outputFileName + "'")
-		sys.exit(1)
-	else:
-		pyRootPwa.utils.printSucc("wrote fit result to TKey 'fitResult' "
-				+ "in file '" + outputFileName + "'")
 
 
 class NLoptFitter(Fitter):

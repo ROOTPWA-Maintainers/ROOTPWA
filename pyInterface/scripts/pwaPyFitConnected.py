@@ -69,6 +69,7 @@ def main():
 	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
 	parser.add_argument("--likelihoodModule", metavar="path-to-likelihood-model", default=None, help="Implement the likelihood class not from ROOTPWA but from the given module-file")
 	parser.add_argument("--dataset", action='append', dest='datasets', default=None, help="Define data-set to fit via data-set label.")
+	parser.add_argument("--store-all-results", dest='storeAllResults', action='store_true', help="Store fit results of all bins instead of only the central bin.")
 	args = parser.parse_args()
 
 	clsModel = pyRootPwa.pyPartialWaveFit.ModelConnected
@@ -113,20 +114,24 @@ def main():
 	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorUniform(model, args.seed)
 	               )
 
-	fitResults = fitter.fit(args.nAttempts)
+	fitResults = fitter.fit(args.nAttempts, verbosity=2 if args.verbose else 1)
 	if not fitResults:
 		pyRootPwa.utils.printErr("didn't get valid fit result(s). Aborting...")
 		sys.exit(1)
 
-	fitResultsCentralBin = []
-	for result in fitResults:
-		result = dict(result)
-		result['parameters'] = model.parameterMapping.paraFitterOfBin(result['parameters'], jCentralBin)
-		fitResultsCentralBin.append(result)
+	binsToStore = [jCentralBin] if not args.storeAllResults else list(range(len(binIndices)))
+	outputFile, outputTree = pyRootPwa.pyPartialWaveFit.openTreeForWriteResultsRpwa(args.outputFileName)
+	for jBinToStore in binsToStore:
+		fitResultsBin = []
+		for result in fitResults:
+			result = dict(result)
+			result['parameters'] = model.parameterMapping.paraFitterOfBin(result['parameters'], jBinToStore)
+			fitResultsBin.append(result)
 
-	if args.saveIntegrals and storageLevel < 1:
-		storageLevel = 1
-	pyRootPwa.pyPartialWaveFit.writeResultsRpwa(fitter.model.models[jCentralBin], fitResultsCentralBin, args.outputFileName, storageLevel)
+			if args.saveIntegrals and storageLevel < 1:
+				storageLevel = 1
+			pyRootPwa.pyPartialWaveFit.writeResultsRpwaToTree(fitter.model.models[jBinToStore], fitResultsBin, outputTree, storageLevel)
+	pyRootPwa.pyPartialWaveFit.closeTreeForWriteResultsRpwa(outputFile, outputTree)
 
 	sys.exit(0)
 
