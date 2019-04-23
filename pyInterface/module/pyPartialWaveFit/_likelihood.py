@@ -191,7 +191,6 @@ class LikelihoodCauchy(Likelihood):
 
 class LikelihoodConnected(object):
 
-
 	def __init__(self, likelihoods, binWidths):
 
 		self.likelihoods = likelihoods
@@ -208,44 +207,13 @@ class LikelihoodConnected(object):
 
 		self.parameterMapping = None
 
-		self.strength = 0.08
-
 		self._connectionValueAndGrad = autograd.value_and_grad(self._connection)
 		self._connectionGrad = autograd.grad(self._connection)
 		self._connectionHessian = autograd.jacobian(self._gradientForConnectionHessian)
 
 
-	# make this customizable
 	def _connection(self, paraLlhd):
-		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
-		# normalize to 20 MeV bins
-		parasNormed = paras*self.binWidthsNormalization
-		return np.sum(self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2))
-# 		return np.sum(self.strength * (np.abs(paras[1:-1] - paras[:-2]) ** 2 + np.abs(paras[1:-1] - paras[2:]) ** 2))
-		# return self.strength * np.log(1. + np.sum( np.abs(paras[1:-1]-paras[:-2])**2 + np.abs(paras[1:-1]-paras[2:])**2) )
-		# return self.strength * np.sum( np.sqrt(0.01+np.abs(paras[1:-1]-paras[:-2])**2) + np.sqrt(0.01+np.abs(paras[1:-1]-paras[2:])**2) )
-
-
-	def setParameters(self, strength=0.08, scaleStrengthByEvents=False, **kwargs):
-		'''
-		@param strength: Strength parameter of the connection term
-		All other keyword arguments are passed to the individual likelihoods
-		'''
-		self.strength = strength
-		if scaleStrengthByEvents:
-			if not isinstance(strength, float):
-				raise Exception()
-			strengths = np.empty((len(self.likelihoods),np.sum(self.likelihoods[0].nmbWavesInSectors)))
-			for iLikelihood, likelihood in enumerate(self.likelihoods):
-				nmbEventAccCorr = likelihood.nmbEvents/np.abs(likelihood.accMatrices[0][-1][0,0])
-				strengths[iLikelihood,:] = strength/nmbEventAccCorr
-			self.strength =0.5*(strengths[1:,:]+strengths[0:-1,:])
-		else:
-			self.strength = strength
-
-		if kwargs:
-			for likelihood in self.likelihoods:
-				likelihood.setParameters(**kwargs)
+		return 0.
 
 
 	def _gradientForConnectionHessian(self, paraLlhd):
@@ -320,3 +288,41 @@ class LikelihoodConnected(object):
 
 		hessianMatrixFitterParameter += self.connectionHessianMatrixFitter(paraFitter)
 		return hessianMatrixFitterParameter
+
+class LikelihoodConnectedGauss(LikelihoodConnected):
+
+	def __init__(self, likelihoods, binWidths, strength = 0.08, scaleStrengthByEvents=False):
+		LikelihoodConnected.__init__(self, likelihoods, binWidths)
+
+		# set connection strength on init
+		self.strength = 0.
+		self.setParameters(strength, scaleStrengthByEvents)
+
+
+	def _connection(self, paraLlhd):
+		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
+		# normalize to 20 MeV bins
+		parasNormed = paras*self.binWidthsNormalization
+		return np.sum(self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2))
+
+
+	def setParameters(self, strength=0.08, scaleStrengthByEvents=False, **kwargs):
+		'''
+		@param strength: Strength parameter of the connection term
+		All other keyword arguments are passed to the individual likelihoods
+		'''
+		self.strength = strength
+		if scaleStrengthByEvents:
+			if not isinstance(strength, float):
+				raise Exception()
+			strengths = np.empty((len(self.likelihoods),np.sum(self.likelihoods[0].nmbWavesInSectors)))
+			for iLikelihood, likelihood in enumerate(self.likelihoods):
+				nmbEventAccCorr = likelihood.nmbEvents/np.abs(likelihood.accMatrices[0][-1][0,0])
+				strengths[iLikelihood,:] = strength/nmbEventAccCorr
+			self.strength =0.5*(strengths[1:,:]+strengths[0:-1,:])
+		else:
+			self.strength = strength
+
+		if kwargs:
+			for likelihood in self.likelihoods:
+				likelihood.setParameters(**kwargs)

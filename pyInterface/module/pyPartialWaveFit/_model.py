@@ -6,8 +6,8 @@ import numpy as np
 import pyRootPwa
 import pyRootPwa.utils
 
-from _likelihood import LikelihoodConnected
-from _parameterMapping import ParameterMappingConnected
+from _likelihood import Likelihood, LikelihoodConnected
+from _parameterMapping import ParameterMappingRpwa, ParameterMappingConnected
 
 
 
@@ -367,12 +367,14 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 class ModelConnected(Model):
 
 
-	def __init__(self, clsLikelihoodInBin, clsParameterMappingInBin):
+	def __init__(self,clsLikelihood = LikelihoodConnected, clsParameterMapping = ParameterMappingConnected, clsLikelihoodInBin = Likelihood, clsParameterMappingInBin = ParameterMappingRpwa):
 		'''
 		@param clsLikelihoodInBin: Likelihood class for the likelihood of the individual bins
 		@param clsParameterMappingInBin: Parameter-mapping class for the parameter mappint in the individual bins
 		'''
-		Model.__init__(self, clsLikelihoodInBin, clsParameterMappingInBin)
+		Model.__init__(self, clsLikelihood, clsParameterMapping)
+		self.clsLikelihoodInBin = clsLikelihoodInBin
+		self.clsParameterMappingInBin = clsParameterMappingInBin
 		self.models = None # list of cells in the individual bins
 
 
@@ -394,13 +396,13 @@ class ModelConnected(Model):
 		self.models = []
 		for binID in binIDs:
 			print "Reading in bin: " + str(binID)
-			model = ModelRpwa(self.clsLikelihood, self.clsParameterMapping)
+			model = ModelRpwa(self.clsLikelihoodInBin, self.clsParameterMappingInBin)
 			model.initModelInBin(fileManager, binID, waveListFileName, rankPosRefl, rankNegRefl, datasets=datasets)
 			self.models.append(model)
 
 		binWidths = np.array([model.multibin.getBinWidths()['mass'] for model in self.models])
-		self.likelihood = LikelihoodConnected([model.likelihood for model in self.models], binWidths)
-		self.parameterMapping = ParameterMappingConnected(self)
+		self.likelihood = self.clsLikelihood([model.likelihood for model in self.models], binWidths)
+		self.parameterMapping = self.clsParameterMapping(self)
 		self.likelihood.parameterMapping = self.parameterMapping
 
 

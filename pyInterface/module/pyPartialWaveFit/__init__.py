@@ -1,7 +1,7 @@
 import _likelihood
 
 
-from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy, LikelihoodConnected
+from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy, LikelihoodConnected, LikelihoodConnectedGauss
 from _parameterMapping import ParameterMapping, ParameterMappingRpwa, ParameterMappingConnected
 from _model import Model, ModelRpwa, ModelConnected
 from _fitter import NLoptFitter, writeResultsRpwa, writeResultsRpwaToTree, openTreeForWriteResultsRpwa, closeTreeForWriteResultsRpwa
