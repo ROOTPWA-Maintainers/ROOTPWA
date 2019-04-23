@@ -119,7 +119,7 @@ class ModelRpwa(Model):
 		self.rankNegRefl = rankNegRefl
 		self.multibin = multiBin
 
-		referenceWaves = self._initWaveNames(multiBin, waveListFileName, waveDescriptions)
+		self.referenceWaves = self._initWaveNames(multiBin, waveListFileName, waveDescriptions)
 		emptyDatasets = []
 		normIntegralMatrices = []
 		accIntegralMatrices = []
@@ -162,13 +162,13 @@ class ModelRpwa(Model):
 
 		# needs to be added afterwards as the integral matrices do not know a flat wave
 		self.wavesInSectors.append(["flat"])
-		referenceWaves.append("flat")
+		self.referenceWaves.append("flat")
 		self.waveNames.append("flat")
 		self.nmbWaves = len(self.waveNames)
 
 
 		# buildParameterMapping
-		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in referenceWaves], self.waveNamesFixed, emptyDatasets)
+		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in self.referenceWaves], self.waveNamesFixed, emptyDatasets)
 
 		self.likelihood = self.clsLikelihood(decayAmps, accIntegralMatrices, normIntegralMatrices, normIntegrals, self.parameterMapping)
 

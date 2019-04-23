@@ -241,7 +241,8 @@ class NLoptFitter(Fitter):
 				xtolRel = 1e-4,
 				ftolAbs = 1e-6,
 				maxeval = 50000,
-				vectorStorage = None):
+				vectorStorage = None,
+				constrainPosReal = True):
 		'''
 		@param xtolRel: Relative tolerance in the parameter space to stop the minimization
 		@param ftolAbs: Absolute tolerance of the log-likelihood to assume to stop the minimization
@@ -251,6 +252,18 @@ class NLoptFitter(Fitter):
 		Fitter.__init__(self, model, checkLevel=checkLevel, storageLevel=storageLevel, startParameterGenerator=startValueGenerator)
 
 		self.opt = nlopt.opt(algorithm, model.parameterMapping.nmbParameters)
+		if constrainPosReal:
+			if hasattr(model.parameterMapping, "indicesReferenceWaveFitterPara"):
+				# no lower constraints as a default
+				lower_bounds = [-float("inf")]*model.parameterMapping.nmbParameters
+
+				# set anchor waves to real AND postive values (-> lower constraint is 0.)
+				for idx in model.parameterMapping.indicesReferenceWaveFitterPara:
+					lower_bounds[idx] = 0.
+
+				# set nlopt lower bounds (in python all of them have to be set)
+				self.opt.set_lower_bounds(lower_bounds)
+
 		self.opt.set_maxeval(maxeval)
 		self.opt.set_xtol_rel(xtolRel)
 		self.opt.set_ftol_abs(ftolAbs)
@@ -303,7 +316,6 @@ class NLoptFitter(Fitter):
 			return "Forced termination."
 		else:
 			raise ValueError("Status code '{0}' not implemented!".format(statuscode))
-
 
 
 def buildIntegralMatrixFromSubmatrices(submatrices):

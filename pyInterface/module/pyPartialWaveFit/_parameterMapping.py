@@ -167,12 +167,23 @@ class ParameterMappingRpwa(ParameterMapping):
 
 		# build parameter names
 		self.paraNamesFitter = []
+
+		self.indicesReferenceWaveFitterPara = []
+
+		idxReferenceWave = 0
 		for iSector, wavesInSector in enumerate(self.wavesInSectors):
 			for wave in wavesInSector:
 				if wave not in zeroWaves:
 					self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
+
+					if wave == self.model.referenceWaves[iSector]:
+						self.indicesReferenceWaveFitterPara.append( idxReferenceWave )
+
+					idxReferenceWave += 1
 					if wave not in realWaves[iSector]:
 						self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
+						idxReferenceWave += 1
+
 		for iDatasetRatioParameter in xrange(self.nmbDatasetRatioParameters):
 			self.paraNamesFitter.append("r_{0}".format(iDatasetRatioParameter+1))
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
@@ -291,9 +302,20 @@ class ParameterMappingConnected(ParameterMapping):
 
 		self.offsetsLlhdForBins = [0]
 		self.offsetsFitterForBins = [0]
+		self.indicesImagFitterPara = []
+		self.indicesRealFitterPara = []
+
+		self.indicesReferenceWaveFitterPara = []
+
 		for parameterMapping in self.parameterMappings:
+			self.indicesImagFitterPara += [idx + self.offsetsFitterForBins[-1] if idx is not None else None for idx in parameterMapping.indicesImagFitterPara]
+			self.indicesRealFitterPara += [idx + self.offsetsFitterForBins[-1] if idx is not None else None for idx in parameterMapping.indicesRealFitterPara]
+
+			self.indicesReferenceWaveFitterPara += [idx + self.offsetsFitterForBins[-1] for idx in parameterMapping.indicesReferenceWaveFitterPara]
+
 			self.offsetsLlhdForBins.append(self.offsetsLlhdForBins[-1] + parameterMapping.nmbLlhdParameters)
 			self.offsetsFitterForBins.append(self.offsetsFitterForBins[-1] + parameterMapping.nmbParameters)
+
 		self.offsetsLlhdForBins = np.array(self.offsetsLlhdForBins, dtype=np.int64)
 		self.offsetsFitterForBins = np.array(self.offsetsFitterForBins, dtype=np.int64)
 

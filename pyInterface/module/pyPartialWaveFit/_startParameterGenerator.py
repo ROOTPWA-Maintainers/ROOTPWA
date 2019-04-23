@@ -30,9 +30,10 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 	'''
 	Draw amplitudes uniformly in the range [-sqrt(nevents), sqrt(nevents)]
 	'''
-	def __init__(self, model, seed=None):
+	def __init__(self, model, seed=None, scaleToNbar = True, constrainPosReal = True):
 		StartParameterGenerator.__init__(self, model, seed=seed)
-		self.scaleToNbar = True
+		self.scaleToNbar = scaleToNbar
+		self.constrainPosReal = constrainPosReal
 
 
 	def __call__(self):
@@ -47,6 +48,13 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 		# this sets the amplitues of real-valued waves (e.g. reference wave) to real
 		paraNegLlhd = [amplVectors, np.array([1]*self.model.nmbDatasets)] + [1]*self.model.parameterMapping.nmbAdditionalParameters
 		paraFitter = self.model.parameterMapping.paraLlhd2Fitter(self.model.parameterMapping.paraNegLlhd2Llhd(paraNegLlhd))
+
+		# change real waves to real AND positive
+		if self.constrainPosReal and hasattr(self.model.parameterMapping, "indicesImagFitterPara"):
+			for i,idxIFP in enumerate(self.model.parameterMapping.indicesImagFitterPara):
+				if idxIFP is None and self.model.parameterMapping.indicesRealFitterPara[i] is not None:
+					paraFitter[self.model.parameterMapping.indicesRealFitterPara[i]] = abs(paraFitter[self.model.parameterMapping.indicesRealFitterPara[i]])
+
 		paraNegLlh = self.model.parameterMapping.paraLlhd2negLlhd(self.model.parameterMapping.paraFitter2Llhd(paraFitter))
 		amplVectors = paraNegLlh[0]
 
@@ -96,6 +104,10 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 	A detailed explanation can be found here: http://www-alg.ist.hokudai.ac.jp/~jan/randsphere.pdf
 	'''
 	def __init__(self, model, seed=None):
+
+		if model.nmbDatasets > 1:
+			raise Exception("Ellipsoid sampler only supports one data set at the moment!")
+
 		StartParameterGenerator.__init__(self, model, seed=seed)
 
 		self.accMatrices = self.model.likelihood.accMatrices
@@ -104,9 +116,10 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		realMatrices = []
 		self.totNmbRealAmplitudes = 0
 		for accMatrix in self.accMatrices:
-			realAccMatrixTemp = np.zeros(shape=(2*accMatrix.shape[0],2*accMatrix.shape[0]),dtype=np.float64)
-			realAccMatrixTemp[:-1:2,:] = accMatrix.view(np.float64)
-			realAccMatrixTemp[1::2,:] = (1.j*accMatrix).view(np.float64)
+			# use accMatrix[0]
+			realAccMatrixTemp = np.zeros(shape=(2*accMatrix[0].shape[0],2*accMatrix[0].shape[0]),dtype=np.float64)
+			realAccMatrixTemp[:-1:2,:] = accMatrix[0].view(np.float64)
+			realAccMatrixTemp[1::2,:] = (1.j*accMatrix[0]).view(np.float64)
 
 			realMatrices.append(realAccMatrixTemp)
 			self.totNmbRealAmplitudes += realAccMatrixTemp.shape[0]
@@ -131,7 +144,8 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# transform to complex-valued arrays
 		amplVectors = []
 		offset = 0
-		for nWavesInSector in [accMatrix.shape[0] for accMatrix in self.accMatrices]:
+		# use accMatrix[0]
+		for nWavesInSector in [accMatrix[0].shape[0] for accMatrix in self.accMatrices]:
 			amplVector =  realAmplVectorNormalized[offset:offset+nWavesInSector*2:2] + 1j*realAmplVectorNormalized[offset+1:offset+nWavesInSector*2+1:2]
 			offset += nWavesInSector*2
 			# rotate phase to zero
@@ -157,13 +171,13 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 
 # this is gonna be tricky to realize!!!
 # maybe sampling in fourier-space works better
-class StartParameterGeneratorUniform(object):
+class StartParameterGeneratorConnected(object):
 
-
-	def __init__(self, model, seed=None):
+	def __init__(self, model, seed=None, clsParameterMapping=StartParameterGeneratorRpwaUniform):
 		self.generator = RandomState(seed)
 		self.model = model
-		self.startParameterGenerators = [StartParameterGeneratorRpwaUniform(subbinModel, seed=1) for subbinModel in self.model.models]
+		self.clsParameterMapping = clsParameterMapping
+		self.startParameterGenerators = [self.clsParameterMapping(subbinModel, seed=1) for subbinModel in self.model.models]
 		for spg in self.startParameterGenerators:
 			spg.generator = self.generator
 
