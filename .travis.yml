@@ -88,7 +88,7 @@ notifications:
 before_install:
     - ./travisCI/print-system-info.sh
     - pyenv global system
-    - pip install --user pylint==1.7.1 numpy
+    - pip install --user pylint==1.7.1 numpy pyyaml==3.12
 install:
     - ./travisCI/install-cmake.sh
     - export PATH=${TRAVIS_BUILD_DIR}/deps/cmake/bin:${PATH}
