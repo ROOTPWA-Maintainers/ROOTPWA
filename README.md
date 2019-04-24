@@ -189,6 +189,14 @@ _NumPy_ (<https://www.numpy.org>) is a Python library that is required in ROOTPW
 
     This should probably be added to your `.profile`.
 
+### PyYaml ###
+
+As YAML parser for PYTHON we use PyYaml available from <https://pyyaml.org/wiki/PyYAML>. Version 3.12 or higher is required.
+
+The easiest way to install PyPaml is pip:
+
+    > pip install pyyaml
+
 
 ### NLopt (optional) ###
 

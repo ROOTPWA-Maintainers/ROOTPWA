@@ -325,6 +325,17 @@ set_package_properties(NumPy
 	)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_8_API_VERSION)
 
+# setup pyyaml
+message(STATUS "")
+message(STATUS ">>> Setting up PyYaml.")
+find_package(PyYaml 3.12 REQUIRED)
+set_package_properties(PyYaml
+	PROPERTIES
+	DESCRIPTION "YAML parser and emitter for Python"
+	URL "http://pyyaml.org/wiki/PyYAML"
+	PURPOSE "Used for defining analysis parameters"
+	TYPE REQUIRED
+	)
 
 # setup pylint (optional)
 message(STATUS "")
