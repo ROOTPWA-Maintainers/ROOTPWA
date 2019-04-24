@@ -1,2 +1,2 @@
 
-from pyRootPwa.libRootPwaPy import *
+from .libRootPwaPy import *

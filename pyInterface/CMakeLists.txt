@@ -84,7 +84,7 @@ foreach(_FILE ${RPWA_PYTHON_PACKAGE_FILES})
 	list(APPEND RPWA_PYTHON_PACKAGE_LINKS "${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}")
 	add_custom_command(
 		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
-		COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/module/${_FILE} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/module/${_FILE} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
 		DEPENDS pyRootPwaPackageDirs
 	)
 	# list of files containing bytecode
@@ -118,7 +118,7 @@ add_custom_target(
 # link the shared library with the python bindings
 add_custom_target(
 	libRootPwaPyLink ALL
-	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}RootPwaPy${CMAKE_SHARED_LIBRARY_SUFFIX} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
+	COMMAND ${CMAKE_COMMAND} -E copy ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}RootPwaPy${CMAKE_SHARED_LIBRARY_SUFFIX} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
 	DEPENDS RootPwaPy pyRootPwaPackageDirs
 )
 
@@ -175,12 +175,12 @@ if(PYLINT_FOUND)
 	# check 'pyRootPwa' module
 	add_test(
 		NAME pyLintPyRootPwa
-		COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc module
+		COMMAND ${PYLINT_EXECUTABLE} --reports=n --rcfile=${CMAKE_CURRENT_SOURCE_DIR}/pylintrc pyRootPwa
 	)
 	set_property(
 		TEST pyLintPyRootPwa
 		APPEND
-		PROPERTY ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}:${PYTHON_LIBRARY_OUTPUT_PATH}:$ENV{PYTHONPATH}"
+		PROPERTY ENVIRONMENT "PYTHONPATH=${PYTHON_LIBRARY_OUTPUT_PATH}:$ENV{PYTHONPATH}"
 	)
 
 	# check scripts

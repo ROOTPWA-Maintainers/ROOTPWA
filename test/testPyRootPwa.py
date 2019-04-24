@@ -57,8 +57,9 @@ def impLib(name):
 	try:
 		import pyRootPwa
 		import pyRootPwa.core
-	except:
+	except Exception as e:
 		print_red("error")
+		print e
 		return False
 	print_green("success")
 	return True
