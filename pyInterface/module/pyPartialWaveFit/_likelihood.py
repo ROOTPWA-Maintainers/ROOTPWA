@@ -14,8 +14,6 @@ class Likelihood(object):
 	'''
 	classdocs
 	'''
-
-
 	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
 		'''
 		@param decayAmplitudes: List of lists of complex-valued matrix of normalized decay amplitudes, one for each data-set and incoherent sector
@@ -72,10 +70,8 @@ class Likelihood(object):
 		self.countFdF = 0 # number of calls to f with gradient
 		self.countF = 0 # number of calls to f without gradient
 
-
 	def setParameters(self):
 		pass # no parameters for this likelihood class
-
 
 	def negLlhd(self, transitionAmps, datasetRatioParameters):
 		'''
@@ -151,7 +147,6 @@ def getLikelihoodClassNames():
 	return likelihoods
 
 
-
 class LikelihoodCauchy(Likelihood):
 	'''
 	Likelihood with cauchy regularization term
@@ -194,6 +189,7 @@ class LikelihoodConnected(object):
 	def __init__(self, likelihoods, binWidths):
 
 		self.likelihoods = likelihoods
+		self.binWidths = binWidths
 		self.binWidthsNormalization = np.empty((len(likelihoods), likelihoods[0].parameterMapping.nmbLlhdParameters-likelihoods[0].parameterMapping.nmbDatasets))
 		for i in range(self.binWidthsNormalization.shape[0]):
 			self.binWidthsNormalization[i,:] = np.sqrt(1.0/binWidths[i]*0.02)
@@ -326,3 +322,45 @@ class LikelihoodConnectedGauss(LikelihoodConnected):
 		if kwargs:
 			for likelihood in self.likelihoods:
 				likelihood.setParameters(**kwargs)
+
+class LikelihoodConnectedFFT(LikelihoodConnected):
+
+	def __init__(self, likelihoods, binWidths, strength=0.08, ran=5):
+
+		if np.sum(np.abs(np.array(binWidths) - binWidths[0]) > 1e-7) != 0:
+			raise Exception("binWidths must all be equal for FFT likelihood!")
+
+		LikelihoodConnected.__init__(self, likelihoods, binWidths)
+
+		# factor of 2 due to artifical periodictiy (compare connection term)
+		self.freq = np.fft.fftfreq(2*len(self.likelihoods), d=self.binWidths[0])
+		# set connection strength on init
+		self.strength = 0.
+		self.ran = 0
+		self.setParameters(strength, ran)
+
+	def setParameters(self, strength=0.08, ran=5, **kwargs):
+		'''
+		@param strength: Strength parameter of the connection term
+		All other keyword arguments are passed to the individual likelihoods
+		'''
+		self.strength = strength
+		self.ran = ran
+
+		if kwargs:
+			for likelihood in self.likelihoods:
+				likelihood.setParameters(**kwargs)
+
+	# suppress frequencies above a certain frequency threshold -> enforce smoothness of the amplitudes
+	# this is trying to connect the amplitudes between bins via a prior/penalty on frequency
+	# the idea is to provide a "backward" version the smooth fits that IFT can produce
+	def _connection(self, paraLlhd):
+		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
+
+		negConnection = 0
+		for i in xrange(paras.shape[1]):
+			# idea by S. Wallner: add mirrored values to prevent problems with DFT periodictiy
+			traf = np.fft.fft(np.concatenate( [paras[:,i],paras[:,i][::-1]],axis=0)  )
+			negConnection = negConnection + np.sum( self.strength*np.abs(traf[np.abs(self.freq) > self.ran])**2 )
+
+		return negConnection
