@@ -94,7 +94,8 @@ def main():
 
 	binIndices, jCentralBin = buildBinRange(args)
 
-	model = clsModel(clsLikelihood, clsParameterMapping)
+	model = clsModel( clsLikelihood = pyRootPwa.pyPartialWaveFit.LikelihoodConnectedGauss,
+                      clsLikelihoodInBin = clsLikelihood, clsParameterMappingInBin = clsParameterMapping)
 	model.initModelInBins(args.configFileName, binIndices, args.waveListFileName, args.rank, args.rank, args.datasets)
 
 	if args.likelihoodParameters is not None:
@@ -111,7 +112,7 @@ def main():
 	                model,
 	                checkLevel,
 	                storageLevel,
-	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorUniform(model, args.seed)
+	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorConnected(model, args.seed)
 	               )
 
 	fitResults = fitter.fit(args.nAttempts, verbosity=2 if args.verbose else 1)

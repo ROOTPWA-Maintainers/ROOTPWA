@@ -85,14 +85,14 @@ foreach(_FILE ${RPWA_PYTHON_PACKAGE_FILES})
 	add_custom_command(
 		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/module/${_FILE} ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
-		DEPENDS pyRootPwaPackageDirs
+		DEPENDS pyRootPwaPackageDirs ${CMAKE_CURRENT_SOURCE_DIR}/module/${_FILE}
 	)
 	# list of files containing bytecode
 	list(APPEND RPWA_PYTHON_PACKAGE_BYTECODES "${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}c")
 	add_custom_command(
 		OUTPUT ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}c
 		COMMAND ${PYTHON_EXECUTABLE} -m py_compile ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
-		DEPENDS pyRootPwaPackageLinks module/${_FILE}
+		DEPENDS pyRootPwaPackageLinks ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/${_FILE}
 	)
 endforeach()
 unset(_DIR)

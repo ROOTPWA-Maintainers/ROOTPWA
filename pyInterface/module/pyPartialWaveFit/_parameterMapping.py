@@ -20,6 +20,7 @@ class ParameterMapping(object):
 
 		self.nmbParameters = None
 		self.model = model
+		self.indicesReferenceWaveFitterPara = []
 
 	def paraFitter2Llhd(self, paraFitter):
 		'''
@@ -130,22 +131,33 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbDatasets + self.nmbAdditionalParameters
 
 		# build index mapping between paraLlhd and paraFitter
+
+		self._buildIndexMapping(zeroWaves, realWaves, zeroDatasetRatios)
+		self._buildParameterNames(zeroWaves, realWaves, argsNegLlhdFunction)
+
+
+	def _buildIndexMapping(self, zeroWaves, realWaves, zeroDatasetRatios):
 		iFitterPara = 0
-		self.indicesRealFitterPara = [] # mapping paraLlhd index -> real value fitter parameter index
-		self.indicesImagFitterPara = [] # mapping paraLlhd index -> imag value fitter parameter index
+		self.indicesRealFitterPara = []  # mapping paraLlhd index -> real value fitter parameter index
+		self.indicesImagFitterPara = []  # mapping paraLlhd index -> imag value fitter parameter index
+		self.indicesReferenceWaveFitterPara = []  # list if fitter parameter indices of the reference waves
 		for iSector, nWavesInSector in enumerate(self.nmbWavesInSectors):
-			for iWave in xrange( nWavesInSector):
+			for iWave in xrange(nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
-					self.indicesRealFitterPara.append(iFitterPara)
+					self.indicesRealFitterPara.append(iFitterPara) # add real part to fitter parameters
+					if self.wavesInSectors[iSector][iWave] in self.model.referenceWaves[iSector]:
+						self.indicesReferenceWaveFitterPara.append(iFitterPara)
 					iFitterPara += 1
+
 					if self.wavesInSectors[iSector][iWave] not in realWaves[iSector]:
-						self.indicesImagFitterPara.append(iFitterPara)
+						self.indicesImagFitterPara.append(iFitterPara) # add imaginary part to fitter parameters
 						iFitterPara += 1
 					else:
 						self.indicesImagFitterPara.append(None)
 				else:
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
+
 		for iDataset in xrange(self.nmbDatasets):
 			if iDataset == 0 or iDataset in zeroDatasetRatios:
 				self.indicesRealFitterPara.append(None)
@@ -153,18 +165,22 @@ class ParameterMappingRpwa(ParameterMapping):
 				self.indicesRealFitterPara.append(iFitterPara)
 				iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
-		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
+
+		for _ in xrange(self.nmbAdditionalParameters):
 			self.indicesRealFitterPara.append(iFitterPara)
 			iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
-		# build list of indices which are not None, i.e. which are real parameters
-		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None], dtype=np.int64)
-		self.indicesLlhdParaNonNoneReal   = np.array([j for j,i in enumerate(self.indicesRealFitterPara) if i is not None], dtype=np.int64)
-		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None], dtype=np.int64)
-		self.indicesLlhdParaNonNoneImag   = np.array([j for j,i in enumerate(self.indicesImagFitterPara) if i is not None], dtype=np.int64)
 
 		assert iFitterPara == self.nmbParameters
 
+		# build list of indices which are not None, i.e. which are real parameters
+		self.indicesRealFitterParaNonNone = np.array([i for i in self.indicesRealFitterPara if i is not None], dtype=np.int64)
+		self.indicesLlhdParaNonNoneReal = np.array([j for j, i in enumerate(self.indicesRealFitterPara) if i is not None], dtype=np.int64)
+		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None], dtype=np.int64)
+		self.indicesLlhdParaNonNoneImag = np.array([j for j, i in enumerate(self.indicesImagFitterPara) if i is not None], dtype=np.int64)
+
+
+	def _buildParameterNames(self, zeroWaves, realWaves, argsNegLlhdFunction):
 		# build parameter names
 		self.paraNamesFitter = []
 		for iSector, wavesInSector in enumerate(self.wavesInSectors):
@@ -173,6 +189,7 @@ class ParameterMappingRpwa(ParameterMapping):
 					self.paraNamesFitter.append("V{s}_{w}_re".format(s=iSector, w=wave))
 					if wave not in realWaves[iSector]:
 						self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
+
 		for iDatasetRatioParameter in xrange(self.nmbDatasetRatioParameters):
 			self.paraNamesFitter.append("r_{0}".format(iDatasetRatioParameter+1))
 		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
@@ -278,8 +295,8 @@ class ParameterMappingRpwa(ParameterMapping):
 				ratioParameters[i] = - np.inf
 		return ratioParameters
 
-class ParameterMappingConnected(ParameterMapping):
 
+class ParameterMappingConnected(ParameterMapping):
 
 	def __init__(self, model):
 		ParameterMapping.__init__(self, model)
@@ -291,9 +308,19 @@ class ParameterMappingConnected(ParameterMapping):
 
 		self.offsetsLlhdForBins = [0]
 		self.offsetsFitterForBins = [0]
+		self.indicesImagFitterPara = []
+		self.indicesRealFitterPara = []
+		self.indicesReferenceWaveFitterPara = []
+
 		for parameterMapping in self.parameterMappings:
+			self.indicesImagFitterPara += [idx + self.offsetsFitterForBins[-1] if idx is not None else None for idx in parameterMapping.indicesImagFitterPara]
+			self.indicesRealFitterPara += [idx + self.offsetsFitterForBins[-1] if idx is not None else None for idx in parameterMapping.indicesRealFitterPara]
+
+			self.indicesReferenceWaveFitterPara += [idx + self.offsetsFitterForBins[-1] for idx in parameterMapping.indicesReferenceWaveFitterPara]
+
 			self.offsetsLlhdForBins.append(self.offsetsLlhdForBins[-1] + parameterMapping.nmbLlhdParameters)
 			self.offsetsFitterForBins.append(self.offsetsFitterForBins[-1] + parameterMapping.nmbParameters)
+
 		self.offsetsLlhdForBins = np.array(self.offsetsLlhdForBins, dtype=np.int64)
 		self.offsetsFitterForBins = np.array(self.offsetsFitterForBins, dtype=np.int64)
 
