@@ -242,27 +242,27 @@ class NLoptFitter(Fitter):
 				ftolAbs = 1e-6,
 				maxeval = 50000,
 				vectorStorage = None,
-				constrainPosReal = True):
+				constrainRefWavesPositive = True):
 		'''
 		@param xtolRel: Relative tolerance in the parameter space to stop the minimization
 		@param ftolAbs: Absolute tolerance of the log-likelihood to assume to stop the minimization
 		@param maxeval: Maximal number of evaluations (-1 means unlimited)
 		@param vectorStorage: Number of gradients to keep for the approximation of the hessian matrix
+		@param constrainRefWavesPositive: Constrain real parts of reference waves to be >= 0
 		'''
 		Fitter.__init__(self, model, checkLevel=checkLevel, storageLevel=storageLevel, startParameterGenerator=startValueGenerator)
 
 		self.opt = nlopt.opt(algorithm, model.parameterMapping.nmbParameters)
-		if constrainPosReal:
-			if hasattr(model.parameterMapping, "indicesReferenceWaveFitterPara"):
-				# no lower constraints as a default
-				lower_bounds = [-float("inf")]*model.parameterMapping.nmbParameters
+		if constrainRefWavesPositive:
+			# no lower constraints as a default
+			lowerBounds = [-float("inf")]*model.parameterMapping.nmbParameters
 
-				# set anchor waves to real AND postive values (-> lower constraint is 0.)
-				for idx in model.parameterMapping.indicesReferenceWaveFitterPara:
-					lower_bounds[idx] = 0.
+			# set anchor waves to real AND positive values (-> lower constraint is 0.)
+			for idx in model.parameterMapping.indicesReferenceWaveFitterPara:
+				lowerBounds[idx] = 0.
 
-				# set nlopt lower bounds (in python all of them have to be set)
-				self.opt.set_lower_bounds(lower_bounds)
+			# set nlopt lower bounds (in python all of them have to be set)
+			self.opt.set_lower_bounds(lowerBounds)
 
 		self.opt.set_maxeval(maxeval)
 		self.opt.set_xtol_rel(xtolRel)

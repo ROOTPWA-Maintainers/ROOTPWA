@@ -208,8 +208,19 @@ class LikelihoodConnected(object):
 		self._connectionHessian = autograd.jacobian(self._gradientForConnectionHessian)
 
 
+	def setParameters(self, **kwargs):
+		'''
+		All keyword arguments are passed to the individual likelihoods
+		'''
+		if kwargs:
+			for likelihood in self.likelihoods:
+				likelihood.setParameters(**kwargs)
+
+
+# pylint: disable=W0613,R0201
 	def _connection(self, paraLlhd):
 		return 0.
+# pylint: enable=W0613,R0201
 
 
 	def _gradientForConnectionHessian(self, paraLlhd):
@@ -285,13 +296,14 @@ class LikelihoodConnected(object):
 		hessianMatrixFitterParameter += self.connectionHessianMatrixFitter(paraFitter)
 		return hessianMatrixFitterParameter
 
+
 class LikelihoodConnectedGauss(LikelihoodConnected):
 
 	def __init__(self, likelihoods, binWidths, strength = 0.08, scaleStrengthByEvents=False):
 		LikelihoodConnected.__init__(self, likelihoods, binWidths)
 
 		# set connection strength on init
-		self.strength = 0.
+		self.strength = None
 		self.setParameters(strength, scaleStrengthByEvents)
 
 
@@ -305,6 +317,7 @@ class LikelihoodConnectedGauss(LikelihoodConnected):
 	def setParameters(self, strength=0.08, scaleStrengthByEvents=False, **kwargs):
 		'''
 		@param strength: Strength parameter of the connection term
+		@param scaleStrengthByEvents: Scale the strength parameter by the number of events in each bin
 		All other keyword arguments are passed to the individual likelihoods
 		'''
 		self.strength = strength
@@ -319,9 +332,8 @@ class LikelihoodConnectedGauss(LikelihoodConnected):
 		else:
 			self.strength = strength
 
-		if kwargs:
-			for likelihood in self.likelihoods:
-				likelihood.setParameters(**kwargs)
+		super(LikelihoodConnectedGauss, self).setParameters(**kwargs)
+
 
 class LikelihoodConnectedFFT(LikelihoodConnected):
 
@@ -335,8 +347,11 @@ class LikelihoodConnectedFFT(LikelihoodConnected):
 		# factor of 2 due to artifical periodictiy (compare connection term)
 		self.freq = np.fft.fftfreq(2*len(self.likelihoods), d=self.binWidths[0])
 		# set connection strength on init
-		self.strength = 0.
-		self.ran = 0
+		'''
+		@todo: please explain this parameters
+		'''
+		self.strength = None
+		self.ran = None
 		self.setParameters(strength, ran)
 
 	def setParameters(self, strength=0.08, ran=5, **kwargs):
@@ -347,9 +362,8 @@ class LikelihoodConnectedFFT(LikelihoodConnected):
 		self.strength = strength
 		self.ran = ran
 
-		if kwargs:
-			for likelihood in self.likelihoods:
-				likelihood.setParameters(**kwargs)
+		super(LikelihoodConnectedFFT, self).setParameters(**kwargs)
+
 
 	# suppress frequencies above a certain frequency threshold -> enforce smoothness of the amplitudes
 	# this is trying to connect the amplitudes between bins via a prior/penalty on frequency

@@ -31,6 +31,7 @@ class Model(object):
 		self.wavesInSectors = []
 		self.nmbWaves = None
 		self.waveNames = None
+		self.referenceWaves = None
 		self.nmbDatasets = None
 		self.datasetLabels = []
 
@@ -367,7 +368,8 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 class ModelConnected(Model):
 
 
-	def __init__(self,clsLikelihood = LikelihoodConnected, clsParameterMapping = ParameterMappingConnected, clsLikelihoodInBin = Likelihood, clsParameterMappingInBin = ParameterMappingRpwa):
+	def __init__(self, clsLikelihood = LikelihoodConnected, clsParameterMapping = ParameterMappingConnected,
+	                   clsLikelihoodInBin = Likelihood, clsParameterMappingInBin = ParameterMappingRpwa):
 		'''
 		@param clsLikelihoodInBin: Likelihood class for the likelihood of the individual bins
 		@param clsParameterMappingInBin: Parameter-mapping class for the parameter mappint in the individual bins

@@ -30,10 +30,16 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 	'''
 	Draw amplitudes uniformly in the range [-sqrt(nevents), sqrt(nevents)]
 	'''
-	def __init__(self, model, seed=None, scaleToNbar = True, constrainPosReal = True):
+	def __init__(self, model, seed=None, scaleToNbar = True, constrainRefWavesPositive = True):
+		'''
+		@param scaleToNbar: Scale transition amplitudes and ratios such that
+		                    the predicted number of events is the measured number of events
+		                    for each data set for the chosen set of transition amplitudes.
+		@param constrainRefWavesPositive: Constrain real parts of reference waves to be >= 0
+		'''
 		StartParameterGenerator.__init__(self, model, seed=seed)
 		self.scaleToNbar = scaleToNbar
-		self.constrainPosReal = constrainPosReal
+		self.constrainRefWavesPositive = constrainRefWavesPositive
 
 
 	def __call__(self):
@@ -49,11 +55,10 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 		paraNegLlhd = [amplVectors, np.array([1]*self.model.nmbDatasets)] + [1]*self.model.parameterMapping.nmbAdditionalParameters
 		paraFitter = self.model.parameterMapping.paraLlhd2Fitter(self.model.parameterMapping.paraNegLlhd2Llhd(paraNegLlhd))
 
-		# change real waves to real AND positive
-		if self.constrainPosReal and hasattr(self.model.parameterMapping, "indicesImagFitterPara"):
-			for i,idxIFP in enumerate(self.model.parameterMapping.indicesImagFitterPara):
-				if idxIFP is None and self.model.parameterMapping.indicesRealFitterPara[i] is not None:
-					paraFitter[self.model.parameterMapping.indicesRealFitterPara[i]] = abs(paraFitter[self.model.parameterMapping.indicesRealFitterPara[i]])
+		# change reference waves to be real and positive
+		if self.constrainRefWavesPositive:
+			for idx in self.model.parameterMapping.indicesReferenceWaveFitterPara:
+				paraFitter[idx] = abs(paraFitter[idx])
 
 		paraNegLlh = self.model.parameterMapping.paraLlhd2negLlhd(self.model.parameterMapping.paraFitter2Llhd(paraFitter))
 		amplVectors = paraNegLlh[0]
