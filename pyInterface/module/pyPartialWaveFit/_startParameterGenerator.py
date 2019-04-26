@@ -2,8 +2,18 @@
 @author: F. Kaspar, S. Wallner
 '''
 
+from __future__ import absolute_import
+from __future__ import division
+
 import numpy as np
 from numpy.random import RandomState
+
+try: # python 2
+# pylint: disable=W0622
+	range = xrange
+# pylint: enable=W0622
+except NameError: # python 3
+	pass
 
 class StartParameterGenerator(object):
 	'''
@@ -68,7 +78,7 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 			ratios = np.empty(self.model.nmbDatasets)
 			if randomRatios:
 				tot = 1.0
-				for i in xrange(ratios.size-1):
+				for i in range(ratios.size-1):
 					ratios[i] = self.generator.rand()*tot # [0, tot)
 					tot -= ratios[i]
 				ratios[-1] = tot
@@ -77,9 +87,9 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 				ratios[:] = nmbEvents.astype(ratios.dtype)/np.sum(nmbEvents)
 		else:
 			nBars = [] # not the actual n-bar, but estimates using the generated amplitudes (without correct scaling)
-			for iDataset in xrange(self.model.likelihood.nmbDatasets):
+			for iDataset in range(self.model.likelihood.nmbDatasets):
 				nBar = 0.0
-				for iSector in xrange(self.model.likelihood.nmbSectors):
+				for iSector in range(self.model.likelihood.nmbSectors):
 					nBar = nBar + np.real(np.dot( np.dot( self.model.likelihood.accMatrices[iDataset][iSector],np.conj(amplVectors[iSector]) ), amplVectors[iSector]))
 				nBars.append(nBar)
 			nBars = np.array(nBars)
@@ -94,7 +104,7 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 		parameters.append(datasetRatioParameters)
 
 		# add additional parameters
-		for _ in xrange(self.model.parameterMapping.nmbAdditionalParameters):
+		for _ in range(self.model.parameterMapping.nmbAdditionalParameters):
 			parameters.append(self.generator.rand())
 
 		return self.model.parameterMapping.paraLlhd2Fitter(self.model.parameterMapping.paraNegLlhd2Llhd(parameters))
@@ -161,14 +171,14 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# add ratio parameters
 		ratios = np.empty(self.model.nmbDatasets)
 		tot = 1.0
-		for i in xrange(ratios.size):
+		for i in range(ratios.size):
 			ratios[i] = tot
 			tot -= self.generator.rand()*tot # [0, tot)
 		ratios = np.array([0.5, 0.25, 0.25])
 		parameters.append(ratios)
 
 		# add additional parameters
-		for _ in xrange(self.model.parameterMapping.nmbAdditionalParameters):
+		for _ in range(self.model.parameterMapping.nmbAdditionalParameters):
 			parameters.append(self.generator.rand())
 
 		return self.model.parameterMapping.paraLlhd2Fitter(self.model.parameterMapping.paraNegLlhd2Llhd(parameters))

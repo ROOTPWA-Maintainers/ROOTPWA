@@ -3,12 +3,22 @@
 '''
 # pylint: disable=E1120,E1101,W0221
 
+from __future__ import absolute_import
+from __future__ import division
+
 import sys
 import inspect
 
 import autograd
 import autograd.numpy as np
-import pyRootPwa
+from .. import utils
+
+try: # python 2
+# pylint: disable=W0622
+	range = xrange
+# pylint: enable=W0622
+except NameError: # python 3
+	pass
 
 class Likelihood(object):
 	'''
@@ -82,7 +92,7 @@ class Likelihood(object):
 		for iDataset in self.datasetIndecesToProcess:
 			nBar = 0.0
 			dataTerm = 0.0
-			for iSector in xrange(self.nmbSectors):
+			for iSector in range(self.nmbSectors):
 				nBar = nBar + datasetRatios[iDataset]*np.real(np.dot( np.dot( self.accMatrices[iDataset][iSector],np.conj(transitionAmps[iSector]) ), transitionAmps[iSector]))
 				sumOfAmps = np.dot(transitionAmps[iSector],self.decayAmplitudes[iDataset][iSector])
 				dataTerm = dataTerm + np.real(sumOfAmps * np.conj(sumOfAmps))
@@ -153,7 +163,7 @@ class LikelihoodCauchy(Likelihood):
 	'''
 	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
 		Likelihood.__init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping)
-		self.sectors = range(len(decayAmplitudes))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
+		self.sectors = list(range(len(decayAmplitudes)))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
 		self.width = [0.5]*len(self.decayAmplitudes)
 
 
@@ -166,12 +176,12 @@ class LikelihoodCauchy(Likelihood):
 		else:
 			self.width = width
 			if correctAcceptance:
-				pyRootPwa.utils.printErr("'widthTimesAcceptance' can only be used with scalar width!")
+				utils.printErr("'widthTimesAcceptance' can only be used with scalar width!")
 				raise Exception()
 
 		if sectors is not None:
 			if True in [ i < 0 or i >= self.nmbSectors for i in sectors]:
-				pyRootPwa.utils.printErr("One of the sectors for the Cauchy regularization is out of range")
+				utils.printErr("One of the sectors for the Cauchy regularization is out of range")
 				raise Exception()
 			self.sectors = sectors
 
@@ -372,7 +382,7 @@ class LikelihoodConnectedFFT(LikelihoodConnected):
 		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
 
 		negConnection = 0
-		for i in xrange(paras.shape[1]):
+		for i in range(paras.shape[1]):
 			# idea by S. Wallner: add mirrored values to prevent problems with DFT periodictiy
 			traf = np.fft.fft(np.concatenate( [paras[:,i],paras[:,i][::-1]],axis=0)  )
 			negConnection = negConnection + np.sum( self.strength*np.abs(traf[np.abs(self.freq) > self.ran])**2 )

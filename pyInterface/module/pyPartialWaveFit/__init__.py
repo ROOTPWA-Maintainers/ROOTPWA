@@ -1,5 +1,3 @@
-import _likelihood
-
 
 from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy, LikelihoodConnected, LikelihoodConnectedGauss, LikelihoodConnectedFFT
 from _parameterMapping import ParameterMapping, ParameterMappingRpwa, ParameterMappingConnected

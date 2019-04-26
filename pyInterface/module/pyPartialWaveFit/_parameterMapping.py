@@ -3,8 +3,19 @@
 '''
 # pylint: disable=E1101
 
+from __future__ import absolute_import
+from __future__ import division
+
 import inspect
 import autograd.numpy as np
+
+try: # python 2
+# pylint: disable=W0622
+	range = xrange
+# pylint: enable=W0622
+except NameError: # python 3
+	pass
+
 
 
 class ParameterMapping(object):
@@ -142,7 +153,7 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.indicesImagFitterPara = []  # mapping paraLlhd index -> imag value fitter parameter index
 		self.indicesReferenceWaveFitterPara = []  # list if fitter parameter indices of the reference waves
 		for iSector, nWavesInSector in enumerate(self.nmbWavesInSectors):
-			for iWave in xrange(nWavesInSector):
+			for iWave in range(nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
 					self.indicesRealFitterPara.append(iFitterPara) # add real part to fitter parameters
 					if self.wavesInSectors[iSector][iWave] in self.model.referenceWaves[iSector]:
@@ -158,7 +169,7 @@ class ParameterMappingRpwa(ParameterMapping):
 					self.indicesRealFitterPara.append(None)
 					self.indicesImagFitterPara.append(None)
 
-		for iDataset in xrange(self.nmbDatasets):
+		for iDataset in range(self.nmbDatasets):
 			if iDataset == 0 or iDataset in zeroDatasetRatios:
 				self.indicesRealFitterPara.append(None)
 			else:
@@ -166,7 +177,7 @@ class ParameterMappingRpwa(ParameterMapping):
 				iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
 
-		for _ in xrange(self.nmbAdditionalParameters):
+		for _ in range(self.nmbAdditionalParameters):
 			self.indicesRealFitterPara.append(iFitterPara)
 			iFitterPara += 1
 			self.indicesImagFitterPara.append(None)
@@ -190,9 +201,9 @@ class ParameterMappingRpwa(ParameterMapping):
 					if wave not in realWaves[iSector]:
 						self.paraNamesFitter.append("V{s}_{w}_im".format(s=iSector, w=wave))
 
-		for iDatasetRatioParameter in xrange(self.nmbDatasetRatioParameters):
+		for iDatasetRatioParameter in range(self.nmbDatasetRatioParameters):
 			self.paraNamesFitter.append("r_{0}".format(iDatasetRatioParameter+1))
-		for iAdditionalParameter in xrange(self.nmbAdditionalParameters):
+		for iAdditionalParameter in range(self.nmbAdditionalParameters):
 			self.paraNamesFitter.append(argsNegLlhdFunction[iAdditionalParameter+2])
 
 
@@ -255,7 +266,7 @@ class ParameterMappingRpwa(ParameterMapping):
 		@param hessianFitter: nmbParameters x nmbParameters real-valued matrix
 		'''
 		indices = []
-		for iFitterPara in xrange(self.nmbParameters):
+		for iFitterPara in range(self.nmbParameters):
 			if iFitterPara in self.indicesRealFitterParaNonNone:
 				indices.append(self.indicesRealFitterPara.index(iFitterPara)*2)
 			elif iFitterPara in self.indicesImagFitterParaNonNone:
@@ -275,7 +286,7 @@ class ParameterMappingRpwa(ParameterMapping):
 
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
 		indices = []
-		for i in xrange(self.paraLlhdStartSectors[-1]):
+		for i in range(self.paraLlhdStartSectors[-1]):
 			indices.append((self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1,
 			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices
@@ -393,7 +404,7 @@ class ParameterMappingConnected(ParameterMapping):
 	def hessianLlhd2Fitter(self, hessianLlhd, hessianFitter):
 		indices = []
 		for iParaMapping, parameterMapping in enumerate(self.parameterMappings):
-			for iFitterPara in xrange(parameterMapping.nmbParameters):
+			for iFitterPara in range(parameterMapping.nmbParameters):
 				if iFitterPara in parameterMapping.indicesRealFitterParaNonNone:
 					indices.append(self.offsetsFitterForBins[iParaMapping] + parameterMapping.indicesRealFitterPara.index(iFitterPara) * 2)
 				elif iFitterPara in parameterMapping.indicesImagFitterParaNonNone:
