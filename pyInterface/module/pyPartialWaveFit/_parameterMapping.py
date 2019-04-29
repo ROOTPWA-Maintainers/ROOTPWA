@@ -27,10 +27,9 @@ class ParameterMapping(object):
 		- The parameters of the likelihood function (paraNegLlhd): List of parameter arrays, specific to the likelihood function
 	'''
 
-	def __init__(self, model):
+	def __init__(self):
 
 		self.nmbParameters = None
-		self.model = model
 		self.indicesReferenceWaveFitterPara = []
 
 	def paraFitter2Llhd(self, paraFitter):
@@ -100,10 +99,10 @@ class ParameterMappingRpwa(ParameterMapping):
 		@param zeroWaves: List of waves whose amplitude should be fixed to zero. Fixing of the reference wave is ignored.
 		@param zeroDatasetRatios: List of data set indices whose ratio should be 0
 		'''
-		ParameterMapping.__init__(self, model)
+		ParameterMapping.__init__(self)
 
 		self.wavesInSectors = model.wavesInSectors
-		self.nmbWavesInSectors = [ len(wavesInSector) for wavesInSector in self.wavesInSectors ]
+		self.nmbWavesInSectors = np.array([ len(wavesInSector) for wavesInSector in self.wavesInSectors ], dtype=np.int64)
 		self.nmbSectors = len(self.nmbWavesInSectors)
 		self.nmbDatasets = model.nmbDatasets
 
@@ -120,34 +119,36 @@ class ParameterMappingRpwa(ParameterMapping):
 			zeroDatasetRatios = []
 		if 0 in zeroDatasetRatios:
 			raise ValueError("Cannot set data set ratio of 0th data set to 0!")
-		if zeroDatasetRatios and max(zeroDatasetRatios) >= self.model.nmbDatasets:
+		if zeroDatasetRatios and max(zeroDatasetRatios) >= model.nmbDatasets:
 			raise ValueError("Cannot set data set ratio of {0}nd data set to 0! Index out of range!".format(max(zeroDatasetRatios)))
-		self.zeroDatasetRatios = zeroDatasetRatios
+		self.zeroDatasetRatios = np.array(zeroDatasetRatios, dtype=np.int64)
 
 		negLlhdFunction = model.clsLikelihood.negLlhd
 		argsNegLlhdFunction = inspect.getargspec(negLlhdFunction).args
 		self.nmbAdditionalParameters = len(argsNegLlhdFunction) -3 # the first one is self, the second one are the transition amplitudes, the third one are the data-set ratios
-		self.nmbAmplitudeParameters = np.sum([ 2*n-len(realWaves[i]) for i,n in enumerate(self.nmbWavesInSectors)]) - 2*len(zeroWaves)
+		self.nmbAmplitudeParameters = int(np.sum([ 2*n-len(realWaves[i]) for i,n in enumerate(self.nmbWavesInSectors)]) - 2*len(zeroWaves))
 		self.nmbDatasetRatioParameters = self.nmbDatasets-1-len(self.zeroDatasetRatios)
 		self.nmbParameters = self.nmbAmplitudeParameters + self.nmbDatasetRatioParameters + self.nmbAdditionalParameters
 
 
 		# build indices of paraLlhd where a new sector starts
 		self.paraLlhdStartSectors = [0]
-		for i, nWavesInSector in enumerate(self.nmbWavesInSectors):
+		for i, nWavesInSector in enumerate(map(int, self.nmbWavesInSectors)):
 			self.paraLlhdStartSectors.append(nWavesInSector + self.paraLlhdStartSectors[i])
 		self.paraLlhdStartDatasetRatios = self.paraLlhdStartSectors[-1]
 		self.paraLlhdStartStartAdditionParameters = self.paraLlhdStartDatasetRatios + self.nmbDatasets
-
 		self.nmbLlhdParameters = self.paraLlhdStartSectors[-1] + self.nmbDatasets + self.nmbAdditionalParameters
+
+		self.paraLlhdStartSectors = np.array(self.paraLlhdStartSectors, dtype=np.int64)
+
 
 		# build index mapping between paraLlhd and paraFitter
 
-		self._buildIndexMapping(zeroWaves, realWaves, zeroDatasetRatios)
+		self._buildIndexMapping(model, zeroWaves, realWaves, zeroDatasetRatios)
 		self._buildParameterNames(zeroWaves, realWaves, argsNegLlhdFunction)
 
 
-	def _buildIndexMapping(self, zeroWaves, realWaves, zeroDatasetRatios):
+	def _buildIndexMapping(self, model, zeroWaves, realWaves, zeroDatasetRatios):
 		iFitterPara = 0
 		self.indicesRealFitterPara = []  # mapping paraLlhd index -> real value fitter parameter index
 		self.indicesImagFitterPara = []  # mapping paraLlhd index -> imag value fitter parameter index
@@ -156,7 +157,7 @@ class ParameterMappingRpwa(ParameterMapping):
 			for iWave in range(nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
 					self.indicesRealFitterPara.append(iFitterPara) # add real part to fitter parameters
-					if self.wavesInSectors[iSector][iWave] in self.model.referenceWaves[iSector]:
+					if self.wavesInSectors[iSector][iWave] in model.referenceWaves[iSector]:
 						self.indicesReferenceWaveFitterPara.append(iFitterPara)
 					iFitterPara += 1
 
@@ -189,6 +190,8 @@ class ParameterMappingRpwa(ParameterMapping):
 		self.indicesLlhdParaNonNoneReal = np.array([j for j, i in enumerate(self.indicesRealFitterPara) if i is not None], dtype=np.int64)
 		self.indicesImagFitterParaNonNone = np.array([i for i in self.indicesImagFitterPara if i is not None], dtype=np.int64)
 		self.indicesLlhdParaNonNoneImag = np.array([j for j, i in enumerate(self.indicesImagFitterPara) if i is not None], dtype=np.int64)
+
+		self.indicesReferenceWaveFitterPara = np.array(self.indicesReferenceWaveFitterPara, dtype=np.int64)
 
 
 	def _buildParameterNames(self, zeroWaves, realWaves, argsNegLlhdFunction):
@@ -309,13 +312,13 @@ class ParameterMappingRpwa(ParameterMapping):
 
 class ParameterMappingConnected(ParameterMapping):
 
-	def __init__(self, model):
-		ParameterMapping.__init__(self, model)
+	def __init__(self, parameterMappings):
+		ParameterMapping.__init__(self)
 
-		self.parameterMappings = [likelihood.parameterMapping for likelihood in self.model.likelihood.likelihoods]
+		self.parameterMappings = parameterMappings
 		self.nmbModels = len(self.parameterMappings)
-		self.nmbParameters = np.sum([pm.nmbParameters for pm in self.parameterMappings])
-		self.nmbLlhdParameters = np.sum([pm.nmbLlhdParameters for pm in self.parameterMappings])
+		self.nmbParameters = int(np.sum([pm.nmbParameters for pm in self.parameterMappings]))
+		self.nmbLlhdParameters = int(np.sum([pm.nmbLlhdParameters for pm in self.parameterMappings]))
 
 		self.offsetsLlhdForBins = [0]
 		self.offsetsFitterForBins = [0]
@@ -331,6 +334,7 @@ class ParameterMappingConnected(ParameterMapping):
 
 			self.offsetsLlhdForBins.append(self.offsetsLlhdForBins[-1] + parameterMapping.nmbLlhdParameters)
 			self.offsetsFitterForBins.append(self.offsetsFitterForBins[-1] + parameterMapping.nmbParameters)
+		self.indicesReferenceWaveFitterPara = np.array(self.indicesReferenceWaveFitterPara, dtype=np.int64)
 
 		self.offsetsLlhdForBins = np.array(self.offsetsLlhdForBins, dtype=np.int64)
 		self.offsetsFitterForBins = np.array(self.offsetsFitterForBins, dtype=np.int64)

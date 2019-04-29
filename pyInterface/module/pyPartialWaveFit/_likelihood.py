@@ -201,7 +201,7 @@ class LikelihoodCauchy(Likelihood):
 
 class LikelihoodConnected(object):
 
-	def __init__(self, likelihoods, binWidths):
+	def __init__(self, likelihoods, binWidths, parameterMapping):
 
 		self.likelihoods = likelihoods
 		self.binWidths = binWidths
@@ -216,7 +216,7 @@ class LikelihoodConnected(object):
 		self.nmbEvents = np.sum([likelihood.nmbEvents for likelihood in self.likelihoods])
 		self.nmbParameters = np.sum([likelihood.parameterMapping.nmbParameters for likelihood in self.likelihoods])
 
-		self.parameterMapping = None
+		self.parameterMapping = parameterMapping
 
 		self._connectionValueAndGrad = autograd.value_and_grad(self._connection)
 		self._connectionGrad = autograd.grad(self._connection)
@@ -314,8 +314,8 @@ class LikelihoodConnected(object):
 
 class LikelihoodConnectedGauss(LikelihoodConnected):
 
-	def __init__(self, likelihoods, binWidths, strength = 0.08, scaleStrengthByEvents=False):
-		LikelihoodConnected.__init__(self, likelihoods, binWidths)
+	def __init__(self, likelihoods, binWidths, parameterMapping, strength = 0.08, scaleStrengthByEvents=False):
+		LikelihoodConnected.__init__(self, likelihoods, binWidths, parameterMapping)
 
 		# set connection strength on init
 		self.strength = None
@@ -349,15 +349,27 @@ class LikelihoodConnectedGauss(LikelihoodConnected):
 
 		super(LikelihoodConnectedGauss, self).setParameters(**kwargs)
 
+	def _getDumpData(self):
+		dumpData = LikelihoodConnected._getDumpData(self)
+		dumpData['strength'] = self.strength
+		return dumpData
+
+
+	@classmethod
+	def _fromDumpData(cls, likelihoods, dumpData):
+		likelihood = super(LikelihoodConnectedGauss, cls)._fromDumpData(likelihoods, dumpData)
+		likelihood.strength = dumpData['strength']
+		return likelihood
+
 
 class LikelihoodConnectedFFT(LikelihoodConnected):
 
-	def __init__(self, likelihoods, binWidths, strength=0.08, ran=5):
+	def __init__(self, likelihoods, binWidths, parameterMapping, strength=0.08, ran=5):
 
 		if np.sum(np.abs(np.array(binWidths) - binWidths[0]) > 1e-7) != 0:
 			raise Exception("binWidths must all be equal for FFT likelihood!")
 
-		LikelihoodConnected.__init__(self, likelihoods, binWidths)
+		LikelihoodConnected.__init__(self, likelihoods, binWidths, parameterMapping)
 
 		# factor of 2 due to artifical periodictiy (compare connection term)
 		self.freq = np.fft.fftfreq(2*len(self.likelihoods), d=self.binWidths[0])

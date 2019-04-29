@@ -403,9 +403,8 @@ class ModelConnected(Model):
 			self.models.append(model)
 
 		binWidths = np.array([model.multibin.getBinWidths()['mass'] for model in self.models])
-		self.likelihood = self.clsLikelihood([model.likelihood for model in self.models], binWidths)
-		self.parameterMapping = self.clsParameterMapping(self)
-		self.likelihood.parameterMapping = self.parameterMapping
+		self.parameterMapping = self.clsParameterMapping([model.likelihood.parameterMapping for model in self.models])
+		self.likelihood = self.clsLikelihood([model.likelihood for model in self.models], binWidths, self.parameterMapping)
 
 
 	def amplitudeNames(self):
