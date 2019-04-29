@@ -1,13 +1,15 @@
 '''
 @author: F. Kaspar, S. Wallner
 '''
-# pylint: disable=E1101
+# pylint: disable=E1101,W0212
 
 from __future__ import absolute_import
 from __future__ import division
 
+import copy
 import inspect
 import autograd.numpy as np
+import yaml
 
 try: # python 2
 # pylint: disable=W0622
@@ -75,6 +77,35 @@ class ParameterMapping(object):
 
 	def datasetDatasetRatios2RatioParameters(self, datasetRatios):
 		raise NotImplementedError("Needs to be implemented in specialized class!")
+
+
+	def _prepareToYaml(self):
+		for key, attribute in self.__dict__.items():
+			if isinstance(attribute, np.ndarray):
+				self.__dict__[key] = map(int, list(attribute))
+
+	def _recoverAfterYaml(self):
+		for key, attribute in self.__dict__.items():
+			if isinstance(attribute, list) and all([isinstance(i, int) for i in attribute]):
+				self.__dict__[key] = np.array(attribute, dtype=np.int64)
+
+	def toYaml(self):
+		'''
+		@return: String representing the parameter mapping in YAML format
+		'''
+		obj = copy.deepcopy(self)
+		obj._prepareToYaml()
+		return yaml.dump(obj)
+
+	@classmethod
+	def fromYaml(cls, yamlString):
+		'''
+		@return: ParameterMapping from the given YAML string
+		@rtype: ParameterMapping
+		'''
+		parameterMapping = yaml.load(yamlString, Loader = yaml.FullLoader)
+		parameterMapping._recoverAfterYaml()
+		return parameterMapping
 
 
 class ParameterMappingRpwa(ParameterMapping):
@@ -338,6 +369,16 @@ class ParameterMappingConnected(ParameterMapping):
 
 		self.offsetsLlhdForBins = np.array(self.offsetsLlhdForBins, dtype=np.int64)
 		self.offsetsFitterForBins = np.array(self.offsetsFitterForBins, dtype=np.int64)
+
+	def _prepareToYaml(self):
+		ParameterMapping._prepareToYaml(self)
+		for parameterMapping in self.parameterMappings:
+			parameterMapping._prepareToYaml()
+
+	def _recoverAfterYaml(self):
+		ParameterMapping._recoverAfterYaml(self)
+		for parameterMapping in self.parameterMappings:
+			parameterMapping._recoverAfterYaml()
 
 	def paraFitterOfBin(self, paraFitter, iBin):
 		'''

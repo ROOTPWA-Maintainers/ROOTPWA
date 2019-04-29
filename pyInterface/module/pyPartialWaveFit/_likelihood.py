@@ -1,17 +1,22 @@
 '''
 @author: F. Kaspar, S. Wallner
 '''
-# pylint: disable=E1120,E1101,W0221
+# pylint: disable=E1120,E1101,W0221,W0122
 
 from __future__ import absolute_import
 from __future__ import division
 
 import sys
+import os
 import inspect
+import collections
+import glob
 
 import autograd
 import autograd.numpy as np
+
 from .. import utils
+from ._parameterMapping import ParameterMapping
 
 try: # python 2
 # pylint: disable=W0622
@@ -19,6 +24,7 @@ try: # python 2
 # pylint: enable=W0622
 except NameError: # python 3
 	pass
+
 
 class Likelihood(object):
 	'''
@@ -82,6 +88,76 @@ class Likelihood(object):
 
 	def setParameters(self):
 		pass # no parameters for this likelihood class
+
+
+	def _getDumpData(self):
+		'''
+		@return: Dictionary with data dumped to file for `dumpToFile`
+		'''
+		dumpData = {}
+		for varName in ['decayAmplitudes', 'accMatrices', 'normMatrices', 'normIntegrals']:
+			for i, data in enumerate(getattr(self, varName)):
+				for j, amps in enumerate(data):
+					key = "{varName}_{i}_{j}".format(varName=varName, i=i, j=j)
+					dumpData[key] = amps
+		dumpData['parameterMapping'] = self.parameterMapping.toYaml()
+		return dumpData
+
+
+	def dumpToFile(self, filepath):
+		'''
+		Dump the current likelihood object to the given file
+		@param filepath: Path to the output file, which must not exist
+		'''
+		if os.path.exists(filepath):
+			utils.printErr("'{0}' exists already!".format(filepath))
+			raise IOError()
+		dumpData = self._getDumpData()
+		dumpData['__class__'] = self.__class__.__name__
+		np.savez(filepath, **dumpData)
+
+
+	@classmethod
+	def _fromDumpData(cls, dumpData):
+		'''
+		@return: Likelihood object from dump data
+		'''
+		kwargs = collections.defaultdict(list)
+		for varName in ['decayAmplitudes', 'accMatrices', 'normMatrices', 'normIntegrals']:
+			for key in sorted([f for f in dumpData.files if varName in f]):
+				i, j = map(int, key.split('_')[1:])
+				if i >= len(kwargs[varName]):
+					kwargs[varName].append([])
+				kwargs[varName][i].append(dumpData[key])
+				assert len(kwargs[varName]) == i+1
+				assert len(kwargs[varName][i]) == j+1
+		parameterMappingStr = "{0}".format(dumpData['parameterMapping'].astype(str))
+		kwargs['parameterMapping'] = ParameterMapping.fromYaml(parameterMappingStr)
+		likelihood = cls(**kwargs)
+		return likelihood
+
+
+	@classmethod
+	def fromFile(cls, filepath):
+		'''
+		@param filepath: Path to the input file
+		@return: Likelihood object from the information dumped to the file
+		@rtype: Likelihood
+		'''
+		if not os.path.exists(filepath):
+			utils.printErr("'{0}' does not exist!".format(filepath))
+			raise IOError()
+		dumpData = np.load(filepath)
+		clsLikelihood = None
+
+		clsLikelihoodName = "{0}".format(dumpData['__class__'].astype(str))
+		varOut = {}
+		exec("clsLikelihood = {0}".format(clsLikelihoodName), globals(), varOut)
+		clsLikelihood = varOut['clsLikelihood']
+# pylint: disable=W0212
+		return clsLikelihood._fromDumpData(dumpData)
+# pylint: enable=W0212
+
 
 	def negLlhd(self, transitionAmps, datasetRatioParameters):
 		'''
@@ -167,6 +243,23 @@ class LikelihoodCauchy(Likelihood):
 		self.width = [0.5]*self.nmbSectors
 
 
+	def _getDumpData(self):
+		dumpData = Likelihood._getDumpData(self)
+		for iSector, widths in enumerate(self.width):
+			key = "width_{0}".format(iSector)
+			dumpData[key] = np.array(widths)
+		dumpData['sectors'] = np.array(self.sectors, dtype=np.int64)
+		return dumpData
+
+
+	@classmethod
+	def _fromDumpData(cls, dumpData):
+		likelihood = super(LikelihoodCauchy, cls)._fromDumpData(dumpData)
+		for iSector in range(likelihood.nmbSectors):
+			key = "width_{0}".format(iSector)
+			likelihood.width[iSector] = dumpData[key]
+		likelihood.sectors = dumpData['sectors']
+		return likelihood
 
 
 	def setParameters(self, width, correctAcceptance=False, sectors= None):
@@ -230,6 +323,75 @@ class LikelihoodConnected(object):
 		if kwargs:
 			for likelihood in self.likelihoods:
 				likelihood.setParameters(**kwargs)
+
+
+	def _getDumpData(self):
+		'''
+		@return: Dictionary with data dumped to file for `dumpToFolder`
+		'''
+		dumpData = {}
+		dumpData['binWidths'] = np.array(self.binWidths)
+		dumpData['parameterMapping'] = self.parameterMapping.toYaml()
+		return dumpData
+
+
+	def dumpToFolder(self, folderpath):
+		'''
+		Dump the current likelihood object to the given folder
+		@param folderpath: Path to the output folder, which must not exist
+		'''
+		if os.path.exists(folderpath):
+			utils.printErr("'{0}' exists already!".format(folderpath))
+			raise IOError()
+		os.makedirs(folderpath)
+		dumpData = self._getDumpData()
+		dumpData['__class__'] = self.__class__.__name__
+		np.savez(os.path.join(folderpath, 'connected_data.npz'), **dumpData)
+		for iBin, likelihood in enumerate(self.likelihoods):
+			filepath = os.path.join(folderpath, "bin{0:04d}_data.npz".format(iBin))
+			likelihood.dumpToFile(filepath)
+
+
+	@classmethod
+	def _fromDumpData(cls, likelihoods, dumpData):
+		'''
+		@return: Likelihood object from dump data
+		'''
+		kwargs = {}
+		kwargs['likelihoods'] = likelihoods
+		kwargs['binWidths'] = dumpData['binWidths']
+		parameterMappingStr = "{0}".format(dumpData['parameterMapping'].astype(str))
+		kwargs['parameterMapping'] = ParameterMapping.fromYaml(parameterMappingStr)
+		likelihood = cls(**kwargs)
+		return likelihood
+
+
+	@classmethod
+	def fromFolder(cls, folderpath):
+		'''
+		@param folderpath: Path to the input folder
+		@return: Likelihood object from the information dumped to the folder
+		@rtype: Likelihood
+		'''
+		if not os.path.exists(folderpath):
+			utils.printErr("'{0}' does not exist!".format(folderpath))
+			raise IOError()
+		likelihoods = []
+		for iBin, likelihoodDumpFile in enumerate(sorted(glob.glob(os.path.join(folderpath, "bin????_data.npz")))):
+			iBinFromFile = int(os.path.basename(likelihoodDumpFile).split('_')[0].lstrip('bin'))
+			if iBin != iBinFromFile:
+				utils.printErr("Bin index and filename for likelihood dump does not agree!")
+				raise Exception()
+			likelihoods.append(Likelihood.fromFile(likelihoodDumpFile))
+		clsLikelihood = None
+		dumpData = np.load(os.path.join(folderpath, 'connected_data.npz'))
+		clsLikelihoodName = "{0}".format(dumpData['__class__'].astype(str))
+		varOut = {}
+		exec("clsLikelihood = {0}".format(clsLikelihoodName), globals(), varOut)
+		clsLikelihood = varOut['clsLikelihood']
+# pylint: disable=W0212
+		return clsLikelihood._fromDumpData(likelihoods, dumpData)
+# pylint: enable=W0212
 
 
 # pylint: disable=W0613,R0201
@@ -405,3 +567,11 @@ class LikelihoodConnectedFFT(LikelihoodConnected):
 			negConnection = negConnection + np.sum( self.strength*np.abs(traf[np.abs(self.freq) > self.ran])**2 )
 
 		return negConnection
+
+	def _getDumpData(self):
+		raise NotImplementedError("Needs to be implemented")
+
+
+	@classmethod
+	def _fromDumpData(cls, likelihoods, dumpData):
+		raise NotImplementedError("Needs to be implemented")
