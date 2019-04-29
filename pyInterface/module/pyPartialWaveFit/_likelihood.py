@@ -163,21 +163,26 @@ class LikelihoodCauchy(Likelihood):
 	'''
 	def __init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping):
 		Likelihood.__init__(self, decayAmplitudes, accMatrices, normMatrices, normIntegrals, parameterMapping)
-		self.sectors = list(range(len(decayAmplitudes)))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
-		self.width = [0.5]*len(self.decayAmplitudes)
+		self.sectors = list(range(self.nmbSectors))[:-1] # apply regularization to all but the last one, which corresponds to the flat wave usually
+		self.width = [0.5]*self.nmbSectors
+
+
 
 
 	def setParameters(self, width, correctAcceptance=False, sectors= None):
 		if isinstance(width, float):
 			if not correctAcceptance:
-				self.width = [width] * len(self.decayAmplitudes)
+				self.width = [width] * len(self.nmbSectors)
 			else:
 				self.width = [width / np.sqrt(np.abs(accMatrix.diagonal())) for accMatrix in self.accMatrices[0]]
 		else:
-			self.width = width
+			if len(self.width) != self.nmbSectors:
+				utils.printErr("Wrong number of sectors in Cauchy width!")
+				raise Exception()
 			if correctAcceptance:
 				utils.printErr("'widthTimesAcceptance' can only be used with scalar width!")
 				raise Exception()
+			self.width = width
 
 		if sectors is not None:
 			if True in [ i < 0 or i >= self.nmbSectors for i in sectors]:
