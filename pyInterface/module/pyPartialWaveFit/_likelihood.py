@@ -205,6 +205,12 @@ class Likelihood(object):
 		gradient = self._grad(paraLlhd)
 		return np.ravel(np.column_stack((np.real(gradient), - np.imag(gradient))))
 
+	def valueAndGradient(self, paraLlhd):
+		negLL, gradLlhd = self._valueAndGrad(paraLlhd)
+		gradLlhd = np.conj(gradLlhd)
+		return negLL, gradLlhd
+
+
 	def hessian(self, paraLlhd):
 		'''
 		@return: Hessian matrix of the complex-valued likelihood parameters
