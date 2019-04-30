@@ -303,6 +303,7 @@ def _loadMatrix(integralFileName, waveNames):
 		for j, wavej in enumerate(waveNames):
 			jMatrix = integralMatrixRpwa.waveIndex(wavej)
 			integralMatrix[i, j] = integralMatrixRpwa.element(iMatrix, jMatrix)
+	integralMatrixRpwa.clear()
 	integralFile.Close()
 	return integralMatrix, nmbEvents
 
