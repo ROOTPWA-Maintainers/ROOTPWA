@@ -242,7 +242,7 @@ class NLoptFitter(Fitter):
 				ftolAbs = 1e-6,
 				maxeval = 50000,
 				vectorStorage = None,
-				constrainRefWavesPositive = True):
+				constrainRefWavesPositive = False):
 		'''
 		@param xtolRel: Relative tolerance in the parameter space to stop the minimization
 		@param ftolAbs: Absolute tolerance of the log-likelihood to assume to stop the minimization
