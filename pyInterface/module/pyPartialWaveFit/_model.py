@@ -291,40 +291,32 @@ def findReferenceWave(referenceWavesDefinitions, refl, rank):
 
 	return foundReferences[0]
 
+def _loadMatrix(integralFileName, waveNames):
+	integralFile = pyRootPwa.ROOT.TFile.Open(integralFileName)
+	integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
+	integralMatrixRpwa = integralMeta.getAmpIntegralMatrix()
+	nmbEvents = integralMatrixRpwa.nmbEvents()
+	integralMatrix = np.empty((len(waveNames), len(waveNames)), dtype=np.complex128)
+
+	for i, wavei in enumerate(waveNames):
+		iMatrix = integralMatrixRpwa.waveIndex(wavei)
+		for j, wavej in enumerate(waveNames):
+			jMatrix = integralMatrixRpwa.waveIndex(wavej)
+			integralMatrix[i, j] = integralMatrixRpwa.element(iMatrix, jMatrix)
+	integralFile.Close()
+	return integralMatrix, nmbEvents
 
 def loadMatrices(normIntegralFileName, accIntegralFileName, waveNames):
 	'''
 	@return: Normalized norm and acceptance-corrected integral matrices for the given waves
 	'''
 	pyRootPwa.utils.printInfo("Load integral matrices")
+
 	# load matrices
-	normIntegralFile = pyRootPwa.ROOT.TFile.Open(normIntegralFileName)
-	accIntegralFile = pyRootPwa.ROOT.TFile.Open(accIntegralFileName)
+	normIntegralMatrix, normIntegralNmbEvents = _loadMatrix(normIntegralFileName, waveNames)
+	accIntegralMatrix, accIntegralNmbEvents = _loadMatrix(accIntegralFileName, waveNames)
 
-	normIntegralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(normIntegralFile)
-	accIntegralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(accIntegralFile)
-
-	normIntegralMatrixRpwa = normIntegralMeta.getAmpIntegralMatrix()
-	accIntegralMatrixRpwa = accIntegralMeta.getAmpIntegralMatrix()
-
-	totAcc = accIntegralMatrixRpwa.nmbEvents() * 1. / normIntegralMatrixRpwa.nmbEvents()
-
-	normIntegralMatrix = np.empty((len(waveNames), len(waveNames)), dtype=np.complex128)
-	accIntegralMatrix = np.empty((len(waveNames), len(waveNames)), dtype=np.complex128)
-
-	for i, wavei in enumerate(waveNames):
-		iMatrix = normIntegralMatrixRpwa.waveIndex(wavei)
-		for j, wavej in enumerate(waveNames):
-			jMatrix = normIntegralMatrixRpwa.waveIndex(wavej)
-			normIntegralMatrix[i, j] = normIntegralMatrixRpwa.element(iMatrix, jMatrix)
-	for i, wavei in enumerate(waveNames):
-		iMatrix = accIntegralMatrixRpwa.waveIndex(wavei)
-		for j, wavej in enumerate(waveNames):
-			jMatrix = accIntegralMatrixRpwa.waveIndex(wavej)
-			accIntegralMatrix[i, j] = accIntegralMatrixRpwa.element(iMatrix, jMatrix)
-
-	normIntegralFile.Close()
-	accIntegralFile.Close()
+	totAcc = accIntegralNmbEvents * 1. / normIntegralNmbEvents
 
 	# get PS matrix diag elements
 	normIntegrals = np.real(np.copy(normIntegralMatrix.diagonal()))
