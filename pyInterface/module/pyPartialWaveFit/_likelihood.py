@@ -468,7 +468,6 @@ class LikelihoodConnected(object):
 
 
 	def valueAndGradient(self, paraLlhd):
-
 		negLL = 0
 		grads = []
 		for iLikelihood, likelihood in enumerate(self.likelihoods):
@@ -477,6 +476,15 @@ class LikelihoodConnected(object):
 			negLL += negLLBin
 			grads.append(gradBin)
 		return negLL, np.hstack(grads)
+
+
+	def value(self, paraLlhd):
+		negLL = 0
+		for iLikelihood, likelihood in enumerate(self.likelihoods):
+			paraLlhdBin = self.parameterMapping.paraLlhdOfBin(paraLlhd, iLikelihood)
+			negLLBin = likelihood._negLlhd(paraLlhdBin)
+			negLL += negLLBin
+		return negLL
 
 
 	def hessianMatrixFitter(self, paraFitter):
