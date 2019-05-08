@@ -1,7 +1,7 @@
 '''
 @author: F. Kaspar, S. Wallner
 '''
-# pylint: disable=E1120,E1101,W0221,W0122
+# pylint: disable=E1120,E1101,W0221,W0122,W0212
 
 from __future__ import absolute_import
 from __future__ import division
@@ -154,9 +154,7 @@ class Likelihood(object):
 		varOut = {}
 		exec("clsLikelihood = {0}".format(clsLikelihoodName), globals(), varOut)
 		clsLikelihood = varOut['clsLikelihood']
-# pylint: disable=W0212
 		return clsLikelihood._fromDumpData(dumpData)
-# pylint: enable=W0212
 
 
 	def negLlhd(self, transitionAmps, datasetRatioParameters):
@@ -395,9 +393,7 @@ class LikelihoodConnected(object):
 		varOut = {}
 		exec("clsLikelihood = {0}".format(clsLikelihoodName), globals(), varOut)
 		clsLikelihood = varOut['clsLikelihood']
-# pylint: disable=W0212
 		return clsLikelihood._fromDumpData(likelihoods, dumpData)
-# pylint: enable=W0212
 
 
 # pylint: disable=W0613,R0201
