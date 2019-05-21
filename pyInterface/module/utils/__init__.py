@@ -6,7 +6,7 @@ from _multibinBoundariesFromArgList import multibinBoundariesFromArgList
 from _binning import multiBin
 from _fileUtils import openEventFile
 from _fitTreeUtils import getFitResultFromFile, getBestFitResultsFromFile, getBestFitResultFromFile, getFitResultsFromFile, getFitResultsFromFiles
-from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList, getWaveDescriptionActiveFromWavelist
+from _waveDescThresUtils import getWaveDescThresFromFitResult, getWaveDescThresFromWaveList, getWaveDescriptionActiveFromWavelist, readWavelist
 
 import _root
 ROOT = _root.ROOT
