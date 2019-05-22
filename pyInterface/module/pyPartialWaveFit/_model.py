@@ -323,8 +323,9 @@ def loadMatrices(normIntegralFileName, accIntegralFileName, waveNames):
 	normIntegrals = np.real(np.copy(normIntegralMatrix.diagonal()))
 
 	# normalize matrices
-	normIntegralMatrix = normIntegralMatrix / np.outer(np.sqrt(normIntegrals), np.sqrt(normIntegrals))
-	accIntegralMatrix = totAcc * accIntegralMatrix / np.outer(np.sqrt(normIntegrals), np.sqrt(normIntegrals))
+	nonZeroNormalization = np.outer(normIntegrals != 0, normIntegrals != 0)
+	accIntegralMatrix[nonZeroNormalization] = totAcc * accIntegralMatrix[nonZeroNormalization] / np.outer(np.sqrt(normIntegrals), np.sqrt(normIntegrals))[nonZeroNormalization]
+	normIntegralMatrix[nonZeroNormalization] = normIntegralMatrix[nonZeroNormalization] / np.outer(np.sqrt(normIntegrals), np.sqrt(normIntegrals))[nonZeroNormalization]
 
 	return normIntegralMatrix, accIntegralMatrix, normIntegrals, totAcc
 
@@ -353,7 +354,10 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 
 	if normIntegrals is not None:
 		for i in xrange(amps.shape[0]):
-			amps[i, :] /= np.sqrt(normIntegrals[i])
+			if normIntegrals[i] != 0:
+				amps[i, :] /= np.sqrt(normIntegrals[i])
+			else:
+				assert np.sum(amps[i,:]) == 0.0
 
 	return amps
 
