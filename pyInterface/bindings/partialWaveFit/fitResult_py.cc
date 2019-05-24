@@ -537,6 +537,7 @@ void rpwa::py::exportFitResult() {
 		.def("waveIndicesMatchingPattern", &fitResult_waveIndicesMatchingPattern)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
 		.def("datasetRatio", &rpwa::fitResult::datasetRatio)
+		.def("datasetRatioUnc", &rpwa::fitResult::datasetRatioUnc)
 		.def("datasetLabels", &rpwa::fitResult::datasetLabels)
 		.def("prodAmp", &fitResult::prodAmp)
 		.def("prodAmpCov", &fitResult_prodAmpCov_2)

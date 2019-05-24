@@ -246,6 +246,7 @@ namespace rpwa {
 		double fitParameter(const std::string& parName) const;  ///< returns value of fit parameter with name
 		std::vector<std::string> datasetLabels() const { std::vector<std::string> labels; for(const auto& i: _datasetRatios) labels.push_back(i.first); return labels; }
 		double datasetRatio(const std::string& datasetLabel) const { return _datasetRatios.at(datasetLabel); }
+		double datasetRatioUnc(const std::string& datasetLabel) const;
 
 		/// returns production amplitude value at index
 		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }

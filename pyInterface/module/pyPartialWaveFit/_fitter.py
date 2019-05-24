@@ -193,6 +193,8 @@ def writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranc
 
 		if result['hessian'] is not None:
 			cov = np.linalg.inv(result['hessian'])
+			jacobian = model.parameterMapping.paraFitterJacobianMatrixForRpwa(result['parameters'])
+			cov = np.dot(jacobian, np.dot(cov, jacobian.T))
 			fitparcovMatrix = pyRootPwa.ROOT.TMatrixD(cov.shape[0], cov.shape[0])
 			for i in xrange(cov.shape[0]):
 				for j in xrange(cov.shape[1]):
@@ -212,6 +214,7 @@ def writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranc
 			normIntegralsResult = None
 
 		datasetRatios = {label: model.parameterMapping.paraFitter2DatasetRatiosForRpwaFitresult(result['parameters'])[i] for i, label in enumerate(model.datasetLabels)}
+		datasetRatiosCovMatrixIndices = {label: model.parameterMapping.paraFitterCovMatrixIndicesOfDatasetRatiosForRpwaFitresult()[i] for i, label in enumerate(model.datasetLabels)}
 
 		fitResult.fill(
 						np.sum(model.likelihood.nmbEvents),
@@ -229,7 +232,7 @@ def writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranc
 						result['success'],
 						hasHessian,
 						datasetRatios,
-						{k: -1 for k in datasetRatios.keys()}
+		                datasetRatiosCovMatrixIndices
 			)
 		tree.Fill()
 

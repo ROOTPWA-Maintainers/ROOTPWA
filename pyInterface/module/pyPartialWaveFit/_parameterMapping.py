@@ -318,12 +318,44 @@ class ParameterMappingRpwa(ParameterMapping):
 		datasetRatios, _ = self.datasetRatioParameters2DatasetRatios(datasetRatioParameters)
 		return datasetRatios
 
+
+	def paraFitterCovMatrixIndicesOfDatasetRatiosForRpwaFitresult(self):
+		indices = []
+		for i in range(self.paraLlhdStartDatasetRatios, self.paraLlhdStartStartAdditionParameters):
+			indices.append(self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1)
+		return indices
+
+
 	def paraFitterCovMatrixIndicesForRpwaFitresult(self):
 		indices = []
 		for i in range(self.paraLlhdStartSectors[-1]):
 			indices.append((self.indicesRealFitterPara[i] if self.indicesRealFitterPara[i] is not None else -1,
 			                self.indicesImagFitterPara[i] if self.indicesImagFitterPara[i] is not None else -1))
 		return indices
+
+	def paraFitterJacobianMatrixForRpwa(self, paraFitter):
+		'''
+		@return: Jacobian matrix J[i,j] from Rpwa parameters (i) to fitter parameter (j)
+		'''
+		jacobian = np.zeros((self.nmbParameters, self.nmbParameters))
+		np.fill_diagonal(jacobian, 1.0)
+
+		# build transformation for data set ratios
+		indices = []
+		mappingIndex2DatasetRatioIndex = {}
+		for iLlhd in range(self.paraLlhdStartDatasetRatios, self.paraLlhdStartStartAdditionParameters):
+			if self.indicesRealFitterPara[iLlhd] is not None:
+				indices.append(self.indicesRealFitterPara[iLlhd])
+				mappingIndex2DatasetRatioIndex[indices[-1]] = iLlhd-self.paraLlhdStartDatasetRatios
+		datasetRatios = self.paraFitter2DatasetRatiosForRpwaFitresult(paraFitter)
+		for i in indices:
+			ratioI = datasetRatios[mappingIndex2DatasetRatioIndex[i]]
+			for j in indices:
+				ratioJ = datasetRatios[mappingIndex2DatasetRatioIndex[j]]
+				jacobian[i,j] = -ratioJ*ratioI
+			jacobian[i,i] += ratioI
+		return jacobian
+
 
 	def datasetRatioParameters2DatasetRatios(self, datasetRatioParameters):
 		datasetRatiosNorm = np.sum(np.exp(datasetRatioParameters))

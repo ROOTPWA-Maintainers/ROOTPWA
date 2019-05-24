@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <set>
+#include <stdexcept>
 
 #include <boost/multi_array.hpp>
 
@@ -758,6 +759,38 @@ fitResult::fitParameter(const string& parName) const
 			return prodAmp(index).imag();
 	}
 	return 0;  // not found
+}
+
+
+double
+fitResult::datasetRatioUnc(const string& label) const
+{
+
+	if (_datasetRatiosCovMatrixIndices.find(label) == _datasetRatiosCovMatrixIndices.end()) {
+		printErr<< "Cannot find label '" << label << "'." << endl;
+		throw std::out_of_range("");
+	}
+	const int index = _datasetRatiosCovMatrixIndices.at(label);
+	if (index >=0) {
+		return sqrt(_fitParCovMatrix(index,index));
+	} else if (datasetRatio(label) > 0.0 ) { // this is the ratio that was not free in the fit
+		double cov = 0.0;
+		for(const auto& labelI: datasetLabels()) {
+			if ( labelI == label ) continue;
+			const int i = _datasetRatiosCovMatrixIndices.at(labelI);
+			if (i < 0 ) continue;
+			for(const auto& labelJ: datasetLabels()) {
+				if ( labelJ == label ) continue;
+				const int j = _datasetRatiosCovMatrixIndices.at(labelJ);
+				if (j < 0 ) continue;
+				cov += _fitParCovMatrix(i,j);
+			}
+		}
+		return sqrt(cov);
+	} else {
+		return 0.0;
+	}
+
 }
 
 
