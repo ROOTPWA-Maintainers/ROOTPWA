@@ -34,6 +34,7 @@
 #ifndef PHYSUTILS_H
 #define PHYSUTILS_H
 
+#include <stdexcept>
 
 #include <TLorentzVector.h>
 
@@ -248,7 +249,7 @@ namespace rpwa {
 		default:
 			printDebug << "calculation of Blatt-Weisskopf barrier factor is not (yet) implemented for L = "
 			           << spinQn(L) << ". returning 0." << std::endl;
-			return 0;
+			throw std::range_error("calculation of Blatt-Weisskopf barrier factor is not (yet) implemented for L = 7");
 		}
 		if (debug)
 			printDebug << "squared Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
