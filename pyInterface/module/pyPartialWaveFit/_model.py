@@ -2,6 +2,7 @@
 @author: F. Kaspar, S. Wallner
 '''
 
+import os
 import numpy as np
 import pyRootPwa
 import pyRootPwa.utils
@@ -292,7 +293,7 @@ def findReferenceWave(referenceWavesDefinitions, refl, rank):
 	return foundReferences[0]
 
 def _loadMatrix(integralFileName, waveNames):
-	integralFile = pyRootPwa.ROOT.TFile.Open(integralFileName)
+	integralFile = pyRootPwa.ROOT.TFile.Open(os.path.realpath(integralFileName))
 	integralMeta = pyRootPwa.core.ampIntegralMatrixMetadata.readIntegralFile(integralFile)
 	integralMatrixRpwa = integralMeta.getAmpIntegralMatrix()
 	nmbEvents = integralMatrixRpwa.nmbEvents()
@@ -348,7 +349,7 @@ def loadAmplitudes(eventAndAmpFileDict, waveNames, multibin, normIntegrals=None)
 	pyRootPwa.utils.printInfo("\t" + str(multibin))
 	amps = []
 	for eventFileName, amplitudeFilenames in eventAndAmpFileDict.iteritems():
-		ampsInEventfile = pyRootPwa.core.loadAmplitudes([amplitudeFilenames[w] for w in waveNames], waveNames, eventFileName, multibin.boundaries)
+		ampsInEventfile = pyRootPwa.core.loadAmplitudes([os.path.realpath(amplitudeFilenames[w]) for w in waveNames], waveNames, os.path.realpath(eventFileName), multibin.boundaries)
 		amps.append(ampsInEventfile)
 	amps = np.hstack(amps)
 
