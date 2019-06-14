@@ -131,7 +131,7 @@ def main():
 
 			if args.saveIntegrals and storageLevel < 1:
 				storageLevel = 1
-			pyRootPwa.pyPartialWaveFit.writeResultsRpwaToTree(fitter.model.models[jBinToStore], fitResultsBin, outputTree, storageLevel)
+		pyRootPwa.pyPartialWaveFit.writeResultsRpwaToTree(fitter.model.models[jBinToStore], fitResultsBin, outputTree, storageLevel)
 	pyRootPwa.pyPartialWaveFit.closeTreeForWriteResultsRpwa(outputFile, outputTree)
 
 	sys.exit(0)
