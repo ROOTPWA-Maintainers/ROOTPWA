@@ -66,6 +66,8 @@ def main():
 	parser.add_argument("-v", "--verbose", help="verbose; print debug output (default: false)", action="store_true")
 	parser.add_argument("-L", "--likelihood", metavar="classname", default=None,
 	                    help="Name of the likelihood class to use. Classes are: " + ", ".join(pyRootPwa.pyPartialWaveFit.getLikelihoodClassNames()))
+	parser.add_argument("--likelihoodConnected", metavar="classname", default=None,
+	                    help="Name of the connection likelihood class to use. Classes are: " + ", ".join(pyRootPwa.pyPartialWaveFit.getLikelihoodClassNames()))
 	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
 	parser.add_argument("--likelihoodModule", metavar="path-to-likelihood-model", default=None, help="Implement the likelihood class not from ROOTPWA but from the given module-file")
 	parser.add_argument("--dataset", action='append', dest='datasets', default=None, help="Define data-set to fit via data-set label.")
@@ -76,6 +78,7 @@ def main():
 	clsLikelihood = pyRootPwa.pyPartialWaveFit.Likelihood
 	clsParameterMapping = pyRootPwa.pyPartialWaveFit.ParameterMappingRpwa
 	clsFitter = pyRootPwa.pyPartialWaveFit.NLoptFitter
+	clsLikelihoodConnected = pyRootPwa.pyPartialWaveFit.LikelihoodConnectedGauss
 
 	likelihoodModule = pyRootPwa.pyPartialWaveFit
 	if args.likelihoodModule is not None:
@@ -90,11 +93,14 @@ def main():
 	if args.likelihood is not None:
 		exec("clsLikelihood = likelihoodModule.{l}".format(l=args.likelihood))
 
+	if args.likelihoodConnected is not None:
+		exec("clsLikelihoodConnected = likelihoodModule.{l}".format(l=args.likelihoodConnected))
+
 	pyRootPwa.utils.printInfo("Using likelihood '{0}' from module '{1}'.".format(clsLikelihood.__name__, likelihoodModule.__file__))
 
 	binIndices, jCentralBin = buildBinRange(args)
 
-	model = clsModel( clsLikelihood = pyRootPwa.pyPartialWaveFit.LikelihoodConnectedGauss,
+	model = clsModel( clsLikelihood =clsLikelihoodConnected,
                       clsLikelihoodInBin = clsLikelihood, clsParameterMappingInBin = clsParameterMapping)
 	model.initModelInBins(args.configFileName, binIndices, args.waveListFileName, args.rank, args.rank, args.datasets)
 

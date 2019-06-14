@@ -538,10 +538,45 @@ class LikelihoodConnectedGauss(LikelihoodConnected):
 		dumpData['strength'] = self.strength
 		return dumpData
 
-
 	@classmethod
 	def _fromDumpData(cls, likelihoods, dumpData):
 		likelihood = super(LikelihoodConnectedGauss, cls)._fromDumpData(likelihoods, dumpData)
+		likelihood.strength = dumpData['strength']
+		return likelihood
+
+
+class LikelihoodConnectedCauchy(LikelihoodConnected):
+
+	def __init__(self, likelihoods, binWidths, parameterMapping, strength = 0.08):
+		LikelihoodConnected.__init__(self, likelihoods, binWidths, parameterMapping)
+
+		# set connection strength on init
+		self.strength = None
+		self.setParameters(strength)
+
+	def _connection(self, paraLlhd):
+		paras = np.reshape(paraLlhd, (len(self.likelihoods), -1))[:,:self.likelihoods[0].parameterMapping.paraLlhdStartSectors[-1]]
+		# normalize to 20 MeV bins
+		parasNormed = paras*self.binWidthsNormalization
+		return np.sum(np.log(1.0+self.strength * (np.abs(parasNormed[1:] - parasNormed[:-1]) ** 2)))
+
+	def setParameters(self, strength=0.08, **kwargs):
+		'''
+		@param strength: Strength parameter of the connection term
+		@param scaleStrengthByEvents: Scale the strength parameter by the number of events in each bin
+		All other keyword arguments are passed to the individual likelihoods
+		'''
+		self.strength = strength
+		super(LikelihoodConnectedCauchy, self).setParameters(**kwargs)
+
+	def _getDumpData(self):
+		dumpData = LikelihoodConnected._getDumpData(self)
+		dumpData['strength'] = self.strength
+		return dumpData
+
+	@classmethod
+	def _fromDumpData(cls, likelihoods, dumpData):
+		likelihood = super(LikelihoodConnectedCauchy, cls)._fromDumpData(likelihoods, dumpData)
 		likelihood.strength = dumpData['strength']
 		return likelihood
 
