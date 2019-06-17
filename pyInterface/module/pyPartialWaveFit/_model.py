@@ -3,8 +3,8 @@
 '''
 
 import os
-import numpy as np
 import time
+import numpy as np
 import pyRootPwa
 import pyRootPwa.utils
 
@@ -369,13 +369,13 @@ def _realpath(filename):
 	Try multiple times to resolve symlinks
 	@return result of os.path.realpath(filename)
 	'''
-	exception = None
+	exception = IOError("Cannot get real path of file '{0}'".format(filename))
 	for _ in range(4):
 		try:
 			realPath = os.path.realpath(filename)
 			return realPath
-		except Exception as e:
-			exception = e
+		except IOError as ioexception:
+			exception = ioexception
 		time.sleep(1)
 	raise exception
 
