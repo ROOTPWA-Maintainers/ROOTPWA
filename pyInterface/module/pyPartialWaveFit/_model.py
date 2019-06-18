@@ -58,7 +58,7 @@ class ModelRpwa(Model):
 		self.multibin = None
 
 
-	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl, datasets = None):
+	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl, datasets = None, addFlatWave = True):
 		'''
 		@param fileManagerOrConfigfile: Can be a fileManager object or a path to the config file
 		@param multiBin: Can be a multibin or the integer bin-id
@@ -106,7 +106,8 @@ class ModelRpwa(Model):
 		                        waveDescriptions=fileManager.getWaveDescriptions(),
 		                        rankPosRefl=rankPosRefl,
 		                        rankNegRefl=rankNegRefl,
-		                        datasets = datasets)
+		                        datasets = datasets,
+		                        addFlatWave = addFlatWave)
 
 
 	def initModelWithFiles(self,
@@ -116,7 +117,8 @@ class ModelRpwa(Model):
 	                       waveListFileName, waveDescriptions,
 	                       rankPosRefl,
 	                       rankNegRefl,
-	                       datasets):
+	                       datasets,
+	                       addFlatWave = True):
 
 		self.rankPosRefl = rankPosRefl
 		self.rankNegRefl = rankNegRefl
@@ -157,17 +159,18 @@ class ModelRpwa(Model):
 					normIntegralMatrices[-1].append(integrals[0][iRank:, iRank:])
 					accIntegralMatrices[-1].append(integrals[1][iRank:, iRank:])
 					normIntegrals[-1].append(integrals[2][iRank:])
-			# add flat wave
-			decayAmps[-1].append(np.ones((1, 1), dtype=np.complex128))
-			normIntegralMatrices[-1].append(np.ones((1, 1), dtype=np.complex128))
-			accIntegralMatrices[-1].append(np.full((1, 1), totAcc, dtype=np.complex128))
-			normIntegrals[-1].append(np.ones((1), dtype=np.float64))
+			if addFlatWave:
+				# needs to be added afterwards as the integral matrices do not know a flat wave
+				decayAmps[-1].append(np.ones((1, 1), dtype=np.complex128))
+				normIntegralMatrices[-1].append(np.ones((1, 1), dtype=np.complex128))
+				accIntegralMatrices[-1].append(np.full((1, 1), totAcc, dtype=np.complex128))
+				normIntegrals[-1].append(np.ones((1), dtype=np.float64))
 
-		# needs to be added afterwards as the integral matrices do not know a flat wave
-		self.wavesInSectors.append(["flat"])
-		self.referenceWaves.append("flat")
-		self.waveNames.append("flat")
-		self.nmbWaves = len(self.waveNames)
+		if addFlatWave:
+			self.wavesInSectors.append(["flat"])
+			self.referenceWaves.append("flat")
+			self.waveNames.append("flat")
+			self.nmbWaves = len(self.waveNames)
 
 
 		# buildParameterMapping

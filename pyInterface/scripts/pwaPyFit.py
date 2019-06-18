@@ -33,6 +33,7 @@ def main():
 	parser.add_argument("--likelihoodParameters", metavar="parameter-string", default=None, help="Parameter string given to the likelihood.setParameters(<parameter-string>) function")
 	parser.add_argument("--likelihoodModule", metavar="path-to-likelihood-model", default=None, help="Implement the likelihood class not from ROOTPWA but from the given module-file")
 	parser.add_argument("--dataset", action='append', dest='datasets', default=None, help="Define data-set to fit via data-set label.")
+	parser.add_argument("--drop-flatwave", action='store_true', dest='dropFlatwave', default=False, help="Do not include incoherent flat wave into the fit.")
 	args = parser.parse_args()
 
 	clsModel = pyRootPwa.pyPartialWaveFit.ModelRpwa
@@ -56,7 +57,7 @@ def main():
 	pyRootPwa.utils.printInfo("Using likelihood '{0}' from module '{1}'.".format(clsLikelihood.__name__, likelihoodModule.__file__))
 
 	model = clsModel(clsLikelihood, clsParameterMapping)
-	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.datasets)
+	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.datasets, addFlatWave=not args.dropFlatwave)
 
 	if args.likelihoodParameters is not None:
 		exec("model.likelihood.setParameters({p})".format(p=args.likelihoodParameters))
