@@ -379,6 +379,8 @@ def _realpath(filename):
 			return realPath
 		except IOError as ioexception:
 			exception = ioexception
+		except OSError as ioexception:
+			exception = ioexception
 		time.sleep(1)
 	raise exception
 
