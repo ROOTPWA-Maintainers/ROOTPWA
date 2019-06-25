@@ -170,7 +170,7 @@ class ModelRpwa(Model):
 			self.wavesInSectors.append(["flat"])
 			self.referenceWaves.append("flat")
 			self.waveNames.append("flat")
-			self.nmbWaves = len(self.waveNames)
+		self.nmbWaves = len(self.waveNames)
 
 
 		# buildParameterMapping
