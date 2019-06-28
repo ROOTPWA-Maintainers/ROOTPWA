@@ -134,6 +134,8 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# use first an ONLY dataset: accMatrices[0]
 		for accMatrix in self.accMatrices[0]:
 			realAccMatrixTemp = np.zeros(shape=(2*accMatrix.shape[0],2*accMatrix.shape[0]),dtype=np.float64)
+
+			# build a real valued matrix that respects the complex product ( the .view() expands the complex nxn matrix in a real nx2n matrix )
 			realAccMatrixTemp[:-1:2,:] = accMatrix.view(np.float64)
 			realAccMatrixTemp[1::2,:] = (1.j*accMatrix).view(np.float64)
 
