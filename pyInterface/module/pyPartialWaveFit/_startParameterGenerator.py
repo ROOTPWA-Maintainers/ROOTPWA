@@ -130,11 +130,12 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# build real-valued integral matrix over all sectors
 		realMatrices = []
 		self.totNmbRealAmplitudes = 0
-		for accMatrix in self.accMatrices:
-			# use accMatrix[0]
-			realAccMatrixTemp = np.zeros(shape=(2*accMatrix[0].shape[0],2*accMatrix[0].shape[0]),dtype=np.float64)
-			realAccMatrixTemp[:-1:2,:] = accMatrix[0].view(np.float64)
-			realAccMatrixTemp[1::2,:] = (1.j*accMatrix[0]).view(np.float64)
+
+		# use first an ONLY dataset: accMatrices[0]
+		for accMatrix in self.accMatrices[0]:
+			realAccMatrixTemp = np.zeros(shape=(2*accMatrix.shape[0],2*accMatrix.shape[0]),dtype=np.float64)
+			realAccMatrixTemp[:-1:2,:] = accMatrix.view(np.float64)
+			realAccMatrixTemp[1::2,:] = (1.j*accMatrix).view(np.float64)
 
 			realMatrices.append(realAccMatrixTemp)
 			self.totNmbRealAmplitudes += realAccMatrixTemp.shape[0]
@@ -159,8 +160,8 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# transform to complex-valued arrays
 		amplVectors = []
 		offset = 0
-		# use accMatrix[0]
-		for nWavesInSector in [accMatrix[0].shape[0] for accMatrix in self.accMatrices]:
+		# use first an ONLY dataset: accMatrices[0]
+		for nWavesInSector in [accMatrix.shape[0] for accMatrix in self.accMatrices[0]]:
 			amplVector =  realAmplVectorNormalized[offset:offset+nWavesInSector*2:2] + 1j*realAmplVectorNormalized[offset+1:offset+nWavesInSector*2+1:2]
 			offset += nWavesInSector*2
 			# rotate phase to zero
