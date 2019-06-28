@@ -58,8 +58,8 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 		amplVectors = []
 		amplMax = self.nmbEvents**0.5 / self.approxAcceptance**0.5
 		for nWavesInSector in self.model.parameterMapping.nmbWavesInSectors:
-			ampl = np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
-			       1j*np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
+			ampl = self.generator.uniform(0.01, amplMax, nWavesInSector)*(2*self.generator.randint(0,2, size=nWavesInSector)-1) + \
+			       1j*self.generator.uniform(0.01, amplMax, nWavesInSector)*(2*self.generator.randint(0,2, size=nWavesInSector)-1)
 			amplVectors.append(ampl)
 		# this sets the amplitues of real-valued waves (e.g. reference wave) to real
 		paraNegLlhd = [amplVectors, np.array([1]*self.model.nmbDatasets)] + [1]*self.model.parameterMapping.nmbAdditionalParameters
@@ -150,7 +150,7 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 
 
 	def __call__(self):
-		realAmplVector = np.random.multivariate_normal(np.zeros(self.totNmbRealAmplitudes), self.inverseRealAccMatrix)
+		realAmplVector = self.generator.multivariate_normal(np.zeros(self.totNmbRealAmplitudes), self.inverseRealAccMatrix)
 		realAmplVectorLength = np.sqrt(np.dot(realAmplVector,np.dot(self.realAccMatrix,realAmplVector)))
 
 		# normalize amplitude to the total intensity
