@@ -58,8 +58,8 @@ class StartParameterGeneratorRpwaUniform(StartParameterGenerator):
 		amplVectors = []
 		amplMax = self.nmbEvents**0.5 / self.approxAcceptance**0.5
 		for nWavesInSector in self.model.parameterMapping.nmbWavesInSectors:
-			ampl = np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1) + \
-			       1j*np.random.uniform(0.01, amplMax, nWavesInSector)*(2*np.random.randint(0,2, size=nWavesInSector)-1)
+			ampl = self.generator.uniform(0.01, amplMax, nWavesInSector)*(2*self.generator.randint(0,2, size=nWavesInSector)-1) + \
+			       1j*self.generator.uniform(0.01, amplMax, nWavesInSector)*(2*self.generator.randint(0,2, size=nWavesInSector)-1)
 			amplVectors.append(ampl)
 		# this sets the amplitues of real-valued waves (e.g. reference wave) to real
 		paraNegLlhd = [amplVectors, np.array([1]*self.model.nmbDatasets)] + [1]*self.model.parameterMapping.nmbAdditionalParameters
@@ -130,11 +130,14 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# build real-valued integral matrix over all sectors
 		realMatrices = []
 		self.totNmbRealAmplitudes = 0
-		for accMatrix in self.accMatrices:
-			# use accMatrix[0]
-			realAccMatrixTemp = np.zeros(shape=(2*accMatrix[0].shape[0],2*accMatrix[0].shape[0]),dtype=np.float64)
-			realAccMatrixTemp[:-1:2,:] = accMatrix[0].view(np.float64)
-			realAccMatrixTemp[1::2,:] = (1.j*accMatrix[0]).view(np.float64)
+
+		# use first an ONLY dataset: accMatrices[0]
+		for accMatrix in self.accMatrices[0]:
+			realAccMatrixTemp = np.zeros(shape=(2*accMatrix.shape[0],2*accMatrix.shape[0]),dtype=np.float64)
+
+			# build a real valued matrix that respects the complex product ( the .view() expands the complex nxn matrix in a real nx2n matrix )
+			realAccMatrixTemp[:-1:2,:] = accMatrix.view(np.float64)
+			realAccMatrixTemp[1::2,:] = (1.j*accMatrix).view(np.float64)
 
 			realMatrices.append(realAccMatrixTemp)
 			self.totNmbRealAmplitudes += realAccMatrixTemp.shape[0]
@@ -150,7 +153,7 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 
 
 	def __call__(self):
-		realAmplVector = np.random.multivariate_normal(np.zeros(self.totNmbRealAmplitudes), self.inverseRealAccMatrix)
+		realAmplVector = self.generator.multivariate_normal(np.zeros(self.totNmbRealAmplitudes), self.inverseRealAccMatrix)
 		realAmplVectorLength = np.sqrt(np.dot(realAmplVector,np.dot(self.realAccMatrix,realAmplVector)))
 
 		# normalize amplitude to the total intensity
@@ -159,8 +162,8 @@ class StartParameterGeneratorRpwaEllipsoid(StartParameterGenerator):
 		# transform to complex-valued arrays
 		amplVectors = []
 		offset = 0
-		# use accMatrix[0]
-		for nWavesInSector in [accMatrix[0].shape[0] for accMatrix in self.accMatrices]:
+		# use first an ONLY dataset: accMatrices[0]
+		for nWavesInSector in [accMatrix.shape[0] for accMatrix in self.accMatrices[0]]:
 			amplVector =  realAmplVectorNormalized[offset:offset+nWavesInSector*2:2] + 1j*realAmplVectorNormalized[offset+1:offset+nWavesInSector*2+1:2]
 			offset += nWavesInSector*2
 			# rotate phase to zero
