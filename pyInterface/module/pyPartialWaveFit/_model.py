@@ -240,7 +240,7 @@ class ModelRpwa(Model):
 			matrices += [np.sum(np.dstack([i[0] for i in self.integralsPosRefl]),axis=2)/len(self.integralsPosRefl)]
 		if self.integralsNegRefl:
 			matrices += [np.sum(np.dstack([i[0] for i in self.integralsNegRefl]),axis=2)/len(self.integralsNegRefl)]
-		if self.wavesInSectors[-1] == 'flat':
+		if self.wavesInSectors[-1] == ['flat']:
 			matrices += [np.sum(np.dstack([i[-1] for i in self.likelihood.normMatrices]), axis=2)/len(self.likelihood.normMatrices)]
 		return matrices
 
@@ -251,7 +251,7 @@ class ModelRpwa(Model):
 			matrices += [np.sum(np.dstack([i[1] for i in self.integralsPosRefl]),axis=2)/len(self.integralsPosRefl)]
 		if self.integralsNegRefl:
 			matrices += [np.sum(np.dstack([i[1] for i in self.integralsNegRefl]),axis=2)/len(self.integralsNegRefl)]
-		if self.wavesInSectors[-1] == 'flat':
+		if self.wavesInSectors[-1] == ['flat']:
 			matrices += [np.sum(np.dstack([i[-1] for i in self.likelihood.accMatrices]), axis=2)/len(self.likelihood.accMatrices)]
 		if self.nmbDatasets > 1:
 			pyRootPwa.utils.printWarn("Return empty accept matrices because of multiple data sets!")
@@ -265,7 +265,7 @@ class ModelRpwa(Model):
 			matrices += [np.sum(np.dstack([i[2] for i in self.integralsPosRefl]),axis=2)]
 		if self.integralsNegRefl:
 			matrices += [np.sum(np.dstack([i[2] for i in self.integralsNegRefl]),axis=2)]
-		if self.wavesInSectors[-1] == 'flat':
+		if self.wavesInSectors[-1] == ['flat']:
 			matrices += [np.sum(np.dstack([i[-1] for i in self.likelihood.normIntegrals]), axis=2)]
 		matrices = [m.reshape(m.size) for m in matrices]
 		return matrices
