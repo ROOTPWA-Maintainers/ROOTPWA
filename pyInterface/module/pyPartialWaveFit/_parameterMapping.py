@@ -33,6 +33,7 @@ class ParameterMapping(object):
 
 		self.nmbParameters = None
 		self.indicesReferenceWaveFitterPara = []
+		self.indicesReferenceWaveInSectors = []
 
 	def paraFitter2Llhd(self, paraFitter):
 		'''
@@ -183,13 +184,15 @@ class ParameterMappingRpwa(ParameterMapping):
 		iFitterPara = 0
 		self.indicesRealFitterPara = []  # mapping paraLlhd index -> real value fitter parameter index
 		self.indicesImagFitterPara = []  # mapping paraLlhd index -> imag value fitter parameter index
-		self.indicesReferenceWaveFitterPara = []  # list if fitter parameter indices of the reference waves
+		self.indicesReferenceWaveFitterPara = []  # list of fitter parameter indices of the reference waves
+		self.indicesReferenceWaveInSectors = []   # list of paraNegLlhd indices in sectors of the reference waves
 		for iSector, nWavesInSector in enumerate(self.nmbWavesInSectors):
 			for iWave in range(nWavesInSector):
 				if self.wavesInSectors[iSector][iWave] not in zeroWaves:
 					self.indicesRealFitterPara.append(iFitterPara) # add real part to fitter parameters
-					if self.wavesInSectors[iSector][iWave] in model.referenceWaves[iSector]:
+					if self.wavesInSectors[iSector][iWave] == model.referenceWaves[iSector]:
 						self.indicesReferenceWaveFitterPara.append(iFitterPara)
+						self.indicesReferenceWaveInSectors.append(iWave)
 					iFitterPara += 1
 
 					if self.wavesInSectors[iSector][iWave] not in realWaves[iSector]:
@@ -311,7 +314,14 @@ class ParameterMappingRpwa(ParameterMapping):
 
 
 	def paraFitter2AmpsForRpwaFitresult(self, paraFitter):
-		return self.paraFitter2Llhd(paraFitter)[:self.paraLlhdStartSectors[-1]]
+		paraNegLlhd = self.paraLlhd2negLlhd(self.paraFitter2Llhd(paraFitter))
+		# flip reference waves to positive
+		for iSector in range(self.nmbSectors):
+			iRef = self.indicesReferenceWaveInSectors[iSector]
+			if paraNegLlhd[0][iSector][iRef] < 0.0:
+				ampsInSector = paraNegLlhd[0][iSector]
+				ampsInSector *= -1
+		return self.paraNegLlhd2Llhd(paraNegLlhd)[:self.paraLlhdStartSectors[-1]]
 
 	def paraFitter2DatasetRatiosForRpwaFitresult(self, paraFitter):
 		datasetRatioParameters = self.paraLlhd2negLlhd(self.paraFitter2Llhd(paraFitter))[1]
