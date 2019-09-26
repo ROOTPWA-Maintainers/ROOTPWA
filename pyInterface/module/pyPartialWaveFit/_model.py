@@ -58,7 +58,7 @@ class ModelRpwa(Model):
 		self.multibin = None
 
 
-	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl, datasets = None, addFlatWave = True):
+	def initModelInBin(self, fileManagerOrConfigfile, multiBin, waveListFileName, rankPosRefl, rankNegRefl, datasets = None, addFlatWave = True, noAcceptance = False):
 		'''
 		@param fileManagerOrConfigfile: Can be a fileManager object or a path to the config file
 		@param multiBin: Can be a multibin or the integer bin-id
@@ -66,6 +66,7 @@ class ModelRpwa(Model):
 		@param rankPosRefl: Rank of positive reflectivity waves
 		@param rankNegRefl: Rank of negative reflectivity waves
 		@param datasets: List of data-sets to be fitted. If None, all data-sets are used.
+		@param noAcceptance: Do not acceptance integral matrix, use normalization integral matrix instead, i.e. use generated MC events
 		'''
 
 		if isinstance(fileManagerOrConfigfile, str):
@@ -98,9 +99,11 @@ class ModelRpwa(Model):
 		self.nmbDatasets = len(datasets)
 		self.datasetLabels = datasets
 
+		accIntegralFileNamesEventType = pyRootPwa.core.eventMetadata.GENERATED if noAcceptance else pyRootPwa.core.eventMetadata.ACCEPTED
+
 		self.initModelWithFiles(eventAndAmpFileDicts=[fileManager.getEventAndAmplitudeFilePathsInBin(multiBin, pyRootPwa.core.eventMetadata.REAL, d ) for d in datasets],
 		                        normIntegralFileNames=[fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.GENERATED, d) for d in datasets],
-		                        accIntegralFileNames=[fileManager.getIntegralFilePath(multiBin, pyRootPwa.core.eventMetadata.ACCEPTED, d) for d in datasets],
+		                        accIntegralFileNames=[fileManager.getIntegralFilePath(multiBin, accIntegralFileNamesEventType, d) for d in datasets],
 		                        multiBin=multiBin,
 		                        waveListFileName=waveListFileName,
 		                        waveDescriptions=fileManager.getWaveDescriptions(),
