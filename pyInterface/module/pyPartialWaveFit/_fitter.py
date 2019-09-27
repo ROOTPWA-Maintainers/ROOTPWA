@@ -177,7 +177,7 @@ def writeResultsRpwaToTree(model, results, tree, integralsStorageLevel, valBranc
 
 	normIntegralMatrix = buildIntegralMatrixFromSubmatrices(model.getNormSubmatrices())
 	accIntegralMatrix = buildIntegralMatrixFromSubmatrices(model.getAccSubmatrices())
-	normIntegrals = list(np.hstack(model.getNormIntegrals()))
+	normIntegrals = list(np.sqrt(np.hstack(model.getNormIntegrals()))) # for what ever reason, the sqrt of the norm integral is stored in the fit result
 
 	if model.waveNamesPosRefl and model.waveNamesNegRefl and model.rankPosRefl != model.rankNegRefl:
 		pyRootPwa.utils.printWarn("Cannot store different ranks for positve and negative reflectivity in fit result. Using rank of positive reflectivity sector")

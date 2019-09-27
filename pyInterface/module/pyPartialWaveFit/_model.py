@@ -265,11 +265,11 @@ class ModelRpwa(Model):
 	def getNormIntegrals(self):
 		matrices = []
 		if self.integralsPosRefl:
-			matrices += [np.sum(np.dstack([i[2] for i in self.integralsPosRefl]),axis=2)]
+			matrices += [np.sum(np.dstack([i[2] for i in self.integralsPosRefl]),axis=2)/len(self.integralsPosRefl)]
 		if self.integralsNegRefl:
-			matrices += [np.sum(np.dstack([i[2] for i in self.integralsNegRefl]),axis=2)]
+			matrices += [np.sum(np.dstack([i[2] for i in self.integralsNegRefl]),axis=2)/len(self.integralsNegRefl)]
 		if self.wavesInSectors[-1] == ['flat']:
-			matrices += [np.sum(np.dstack([i[-1] for i in self.likelihood.normIntegrals]), axis=2)]
+			matrices += [np.sum(np.dstack([i[-1] for i in self.likelihood.normIntegrals]), axis=2)/len(self.likelihood.normIntegrals)]
 		matrices = [m.reshape(m.size) for m in matrices]
 		return matrices
 

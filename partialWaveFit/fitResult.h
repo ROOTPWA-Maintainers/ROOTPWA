@@ -363,7 +363,7 @@ namespace rpwa {
 		const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices          () const { return _fitParCovMatrixIndices; }
 		const rpwa::complexMatrix&                   normIntegralMatrix        () const { return _normIntegral;           }
 		const rpwa::complexMatrix&                   acceptedNormIntegralMatrix() const { return _acceptedNormIntegral;   }
-		const std::vector<double>&                   phaseSpaceIntegralVector  () const { return _phaseSpaceIntegral;     }
+		const std::vector<double>&                   phaseSpaceIntegralVector  () const { return _phaseSpaceIntegral;     } // !!! sqrt !!!
 		const std::map<Int_t, Int_t>&                normIntIndexMap           () const { return _normIntIndexMap;        }
 
 		inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
