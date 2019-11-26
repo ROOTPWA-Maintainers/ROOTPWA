@@ -35,6 +35,10 @@ def main():
 	parser.add_argument("--dataset", action='append', dest='datasets', default=None, help="Define data-set to fit via data-set label.")
 	parser.add_argument("--drop-flatwave", action='store_true', dest='dropFlatwave', default=False, help="Do not include incoherent flat wave into the fit.")
 	parser.add_argument("--noAcceptance", help="do not take acceptance into account (default: false)", action="store_true")
+	parser.add_argument("--nEvents", type=int, metavar="#", dest="nEvents", default=None,
+	                    help="Do not fit the complete data set but include only the given number of events (choosen randomly)")
+	parser.add_argument("--ratioOfEvents", type=float, metavar="#", dest="ratioOfEvents", default=None,
+	                    help="Do not fit the complete data set but include only the given ratio w.r.t. the total number of events (choosen randomly)")
 	args = parser.parse_args()
 
 	clsModel = pyRootPwa.pyPartialWaveFit.ModelRpwa
@@ -64,6 +68,18 @@ def main():
 	if args.likelihoodParameters is not None:
 		exec("model.likelihood.setParameters({p})".format(p=args.likelihoodParameters))
 
+	startParameterGenerator = pyRootPwa.pyPartialWaveFit.StartParameterGeneratorRpwaUniform(model, args.seed)
+
+	if args.ratioOfEvents is not None:
+		if args.nEvents is not None:
+			pyRootPwa.utils.printErr("Cannot use `--ratioOfEvents` and `--nEvents` at the same time!")
+			sys.exit(1)
+		args.nEvents = int(round(args.ratioOfEvents*model.likelihood.nmbEvents.sum()))
+
+	if args.nEvents is not None:
+		model.likelihood.useNEvents(args.nEvents, startParameterGenerator.generator)
+		pyRootPwa.utils.printInfo("Use {0} events in the fit.".format(model.likelihood.nmbEvents.sum()))
+
 	checkLevel = 0 if args.saveSpace else 1
 	if args.checkHessian:
 		checkLevel = 2
@@ -75,7 +91,7 @@ def main():
 	                model,
 	                checkLevel,
 	                storageLevel,
-	                pyRootPwa.pyPartialWaveFit.StartParameterGeneratorRpwaUniform(model, args.seed)
+	                startParameterGenerator
 	               )
 
 	fitResults = fitter.fit(args.nAttempts, verbosity=2 if args.verbose else 1)

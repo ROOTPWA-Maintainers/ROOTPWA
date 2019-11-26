@@ -227,6 +227,36 @@ class Likelihood(object):
 		self.parameterMapping.hessianLlhd2Fitter(hessianMatrix, hessianMatrixFitterParameter)
 		return hessianMatrixFitterParameter
 
+	def useNEvents(self, nmbEventsTotal, generator):
+		'''
+		Use only nEvents of the given set of data events.
+		The nEvents are distributed over the data sets according to the initial data-set ratio.
+		The nEvents are drawn for each data set from the data set using the given random-number generator.
+		The order of the events is shuffled.
+		@param nmbEventsTotal: Total number of events (all data sets) that should be used
+		@param generator: Random number generator that is used
+		'''
+		nmbEventsOrig = self.nmbEvents
+		if np.sum(nmbEventsOrig) < nmbEventsTotal:
+			utils.printErr("Cannot set {0} events for likelihood when there are only {1} events".format(nmbEventsTotal, np.sum(nmbEventsOrig)))
+			raise Exception()
+		ratios = nmbEventsOrig/np.sum(nmbEventsOrig)
+
+		nmbEvents = np.around(ratios * nmbEventsTotal).astype(int)
+		nmbEvents[-1] = nmbEventsTotal - np.sum(nmbEvents[:-1]) # to have exactly nmbEventsTotal events
+		nmbEvents = np.maximum(nmbEvents, 0)
+
+		self.nmbEvents = nmbEvents
+		self.datasetIndecesToProcess = [i for i in range(self.nmbDatasets) if self.nmbEvents[i] > 0]
+		for iDataset, datasetAmplitudes in enumerate(self.decayAmplitudes):
+			eventIndices = generator.randint(0, nmbEventsOrig[iDataset], nmbEvents[iDataset])
+			for iSector, sectorAmplitudesOrig in enumerate(datasetAmplitudes):
+				if sectorAmplitudesOrig.shape[1] == 1 and eventIndices.size > 0: # the decay amplitudes of all events have the same vale (e.g. flat wave)
+					continue
+				sectorAmplitudes = np.empty((sectorAmplitudesOrig.shape[0], eventIndices.size), dtype=sectorAmplitudesOrig.dtype)
+				sectorAmplitudes[:,:] = sectorAmplitudesOrig[:,eventIndices]
+				datasetAmplitudes[iSector] = sectorAmplitudes
+
 
 def getLikelihoodClassNames():
 	likelihoods = []
