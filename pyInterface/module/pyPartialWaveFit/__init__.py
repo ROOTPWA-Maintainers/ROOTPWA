@@ -1,7 +1,7 @@
 
 from _likelihood import getLikelihoodClassNames, Likelihood, LikelihoodCauchy, LikelihoodConnected, LikelihoodConnectedGauss, LikelihoodConnectedFFT, LikelihoodConnectedCauchy
 from _parameterMapping import ParameterMapping, ParameterMappingRpwa, ParameterMappingConnected
-from _model import Model, ModelRpwa, ModelConnected
+from _model import Model, ModelRpwa, ModelConnected, NoDataException
 from _fitter import NLoptFitter, writeResultsRpwa, writeResultsRpwaToTree, openTreeForWriteResultsRpwa, closeTreeForWriteResultsRpwa
 from _startParameterGenerator import StartParameterGeneratorRpwaEllipsoid, StartParameterGeneratorRpwaUniform, StartParameterGeneratorConnected
 

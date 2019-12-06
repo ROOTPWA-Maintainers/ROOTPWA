@@ -62,8 +62,12 @@ def main():
 	pyRootPwa.utils.printInfo("Using likelihood '{0}' from module '{1}'.".format(clsLikelihood.__name__, likelihoodModule.__file__))
 
 	model = clsModel(clsLikelihood, clsParameterMapping)
-	model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.datasets,
-	                     addFlatWave=not args.dropFlatwave, noAcceptance=args.noAcceptance)
+	try:
+		model.initModelInBin(args.configFileName, args.integralBin, args.waveListFileName, args.rank, args.rank, args.datasets,
+		                     addFlatWave=not args.dropFlatwave, noAcceptance=args.noAcceptance)
+	except pyRootPwa.pyPartialWaveFit.NoDataException:
+		pyRootPwa.utils.printWarn("All data sets are empty. Do nothing!")
+		sys.exit(0)
 
 	if args.likelihoodParameters is not None:
 		exec("model.likelihood.setParameters({p})".format(p=args.likelihoodParameters))

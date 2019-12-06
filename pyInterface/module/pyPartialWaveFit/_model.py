@@ -175,6 +175,9 @@ class ModelRpwa(Model):
 			self.waveNames.append("flat")
 		self.nmbWaves = len(self.waveNames)
 
+		if len(emptyDatasets) == len(datasets):
+			raise NoDataException("Empty data sets: " + " ".join(datasets))
+
 
 		# buildParameterMapping
 		self.parameterMapping = self.clsParameterMapping(self, [[w] for w in self.referenceWaves], self.waveNamesFixed, emptyDatasets)
@@ -436,3 +439,11 @@ class ModelConnected(Model):
 
 	def amplitudeNames(self):
 		raise Exception("Must be implemented")
+
+
+class NoDataException(Exception):
+	'''
+	Exception if all data sets are empty.
+	'''
+	def __init__(self, *args, **kwargs):
+		Exception.__init__(self, *args, **kwargs)
