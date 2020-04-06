@@ -56,6 +56,8 @@ namespace rpwa {
 		fsVertex(const fsVertex& vert);
 		virtual ~fsVertex();
 
+		fsVertex& operator=(const fsVertex&) = default;
+
 		fsVertexPtr clone(const bool cloneInParticles  = false,
 		                  const bool                   = false) const  ///< creates deep copy of final state vertex; must not be virtual
 		{ return fsVertexPtr(doClone(cloneInParticles, false)); }

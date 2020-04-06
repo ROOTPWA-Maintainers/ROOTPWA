@@ -57,6 +57,7 @@ namespace rpwa {
 	public:
 
 		amplitudeTreeLeaf();
+		amplitudeTreeLeaf(const amplitudeTreeLeaf& amp) = default;
 		virtual ~amplitudeTreeLeaf();
 
 		void clear();  ///< clears all subamps and subamp labels
