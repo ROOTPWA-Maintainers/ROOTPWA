@@ -1,34 +1,26 @@
-
-#include "phaseSpaceIntegral.h"
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
 #include <boost/algorithm/string.hpp>
 
-#include<TClonesArray.h>
-#include<TDirectory.h>
-#include<TF1.h>
-#include<TFile.h>
-#include<TGraphErrors.h>
-#include<TObjString.h>
-#include<TTree.h>
+#include <TClonesArray.h>
+#include <TDirectory.h>
+#include <TF1.h>
+#include <TFile.h>
+#include <TGraphErrors.h>
+#include <TObjString.h>
+#include <TTree.h>
 
-#include"factorial.hpp"
-#include"isobarHelicityAmplitude.h"
-#include"mathUtils.hpp"
-#include"nBodyPhaseSpaceGenerator.h"
-#include"physUtils.hpp"
-#include"waveDescription.h"
+#include "factorial.hpp"
+#include "isobarHelicityAmplitude.h"
+#include "mathUtils.hpp"
+#include "nBodyPhaseSpaceGenerator.h"
+#include "phaseSpaceIntegral.h"
+#include "physUtils.hpp"
+#include "progress_display.hpp"
+#include "waveDescription.h"
+
 
 using namespace std;
 using namespace rpwa;
+
 
 phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
 

@@ -31,33 +31,24 @@
 //-------------------------------------------------------------------------
 
 
-#include <fstream>
 #include <cassert>
+#include <fstream>
 
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-
-#include "TTree.h"
 #include "TClonesArray.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TStopwatch.h"
+#include "TTree.h"
 
-#include "mathUtils.hpp"
-#include "fileUtils.hpp"
-#include "reportingUtilsEnvironment.h"
-#include "particleDataTable.h"
-#include "waveDescription.h"
-#include "isobarHelicityAmplitude.h"
 #include "evtTreeHelper.h"
+#include "fileUtils.hpp"
+#include "isobarHelicityAmplitude.h"
+#include "mathUtils.hpp"
+#include "particleDataTable.h"
+#include "progress_display.hpp"
+#include "reportingUtilsEnvironment.h"
+#include "waveDescription.h"
 
 
 using namespace std;

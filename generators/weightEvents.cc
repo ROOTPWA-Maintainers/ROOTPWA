@@ -45,28 +45,19 @@
 
 #include <vector>
 
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-
 #include <TFile.h>
 #include <TROOT.h>
-#include <TString.h>
 #include <TStopwatch.h>
+#include <TString.h>
 #include <TTree.h>
 
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
-#include "fitResult.h"
 #include "fileUtils.hpp"
+#include "fitResult.h"
 #include "partialWaveFitHelper.h"
+#include "progress_display.hpp"
 #include "reportingUtilsEnvironment.h"
 
 

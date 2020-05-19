@@ -1,38 +1,22 @@
-
-#include<TH2D.h>
-#include<TCanvas.h>
-#include<TApplication.h>
-#include<physUtils.hpp>
-#include<complex>
-#include<TSystem.h>
-
-
+#include <complex>
 #include <iostream>
 #include <sstream>
-#include <complex>
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
 
 #include "TApplication.h"
-#include "TSystem.h"
-#include "TGraph.h"
 #include "TCanvas.h"
 #include "TEllipse.h"
 #include "TF1.h"
-#include "TLorentzVector.h"
+#include "TGraph.h"
 #include "TH2.h"
+#include "TH2D.h"
+#include "TLorentzVector.h"
+#include "TSystem.h"
 
-#include "physUtils.hpp"
 #include "particleDataTable.h"
+#include "physUtils.hpp"
+#include "progress_display.hpp"
 #include "waveDescription.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // computes relativistic Breit-Wigner amplitude with mass-dependent

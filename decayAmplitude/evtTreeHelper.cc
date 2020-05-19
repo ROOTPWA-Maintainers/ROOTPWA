@@ -32,40 +32,32 @@
 //-------------------------------------------------------------------------
 
 
+#include <algorithm>
+#include <cassert>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
-#include <cassert>
-#include <algorithm>
-#include <map>
 
-#include <boost/tokenizer.hpp>
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-#include <boost/bimap.hpp>
 #include <boost/assign/list_inserter.hpp>
+#include <boost/bimap.hpp>
+#include <boost/tokenizer.hpp>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TTreePerfStats.h"
 #include "TChain.h"
 #include "TClonesArray.h"
+#include "TFile.h"
 #include "TObjString.h"
+#include "TTree.h"
+#include "TTreePerfStats.h"
 #include "TVector3.h"
 
-#include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
-#include "particleDataTable.h"
+#include "evtTreeHelper.h"
 #include "isobarDecayTopology.h"
 #include "isobarHelicityAmplitude.h"
-#include "evtTreeHelper.h"
+#include "particleDataTable.h"
+#include "progress_display.hpp"
+#include "reportingUtilsRoot.hpp"
 
 
 using namespace std;

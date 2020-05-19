@@ -1,21 +1,10 @@
-
-#include "eventMetadata.h"
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-
 #include <TClonesArray.h>
 #include <TFile.h>
 #include <TTree.h>
 
+#include "eventMetadata.h"
 #include "hashCalculator.h"
+#include "progress_display.hpp"
 #include "reportingUtils.hpp"
 
 

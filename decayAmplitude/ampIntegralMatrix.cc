@@ -31,31 +31,23 @@
 //-------------------------------------------------------------------------
 
 
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
 #include <boost/numeric/conversion/cast.hpp>
 
+#include "TBuffer.h"
 #include "TClass.h"
 #include "TFile.h"
 #include "TKey.h"
-#include "TTree.h"
 #include "TROOT.h"
-#include "TBuffer.h"
+#include "TTree.h"
 
-#include "reportingUtils.hpp"
-#include "fileUtils.hpp"
-#include "sumAccumulators.hpp"
-#include "amplitudeTreeLeaf.h"
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
+#include "amplitudeTreeLeaf.h"
 #include "eventMetadata.h"
+#include "fileUtils.hpp"
+#include "progress_display.hpp"
+#include "reportingUtils.hpp"
+#include "sumAccumulators.hpp"
 
 
 using namespace std;

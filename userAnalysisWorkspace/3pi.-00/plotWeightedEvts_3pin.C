@@ -10,39 +10,33 @@
  * Also for each massbin create a directory and create the same filenames for each variable
  */
 
+
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-
-#include <TClonesArray.h>
-#include <TFile.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <THStack.h>
-#include <TKey.h>
-#include <TLorentzRotation.h>
-#include <TLorentzVector.h>
-#include <TMath.h>
-#include <TROOT.h>
-#include <TStopwatch.h>
-#include <TTree.h>
+#include "TClonesArray.h"
+#include "TFile.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "THStack.h"
+#include "TKey.h"
+#include "TLorentzRotation.h"
+#include "TLorentzVector.h"
+#include "TMath.h"
+#include "TROOT.h"
+#include "TStopwatch.h"
+#include "TTree.h"
 
 #ifndef __CINT__
-#include <particleDataTable.h>
-#endif // __CINT__
-#include <reportingUtils.hpp>
+#include "particleDataTable.h"
+#endif  // __CINT__
+#include "progress_display.hpp"
+#include "reportingUtils.hpp"
+
 
 using namespace std;
+
 
 const int    HISTLIMITS_COSTHETA_BINS = 100;
 const double HISTLIMITS_COSTHETA_MAX  =   1.;

@@ -1,29 +1,21 @@
-
-#include "amplitudeMetadata.h"
-
 #include <algorithm>
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
 
 #include <TFile.h>
 #include <TTree.h>
 
+#include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "hashCalculator.h"
+#include "progress_display.hpp"
 #include "reportingUtils.hpp"
+
 
 using namespace rpwa;
 using namespace std;
 
+
 const std::string rpwa::amplitudeMetadata::amplitudeLeafName = "amplitude";
+
 
 rpwa::amplitudeMetadata::amplitudeMetadata()
 	: _contentHash(""),

@@ -1,21 +1,11 @@
-
-#include "calcAmplitude.h"
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 107200)
-#include <boost/timer/progress_display.hpp>
-using boost::timer::progress_display;
-#else
-#include <boost/progress.hpp>
-using boost::progress_display;
-#endif
-
-
 #include <TClonesArray.h>
 #include <TTree.h>
 #include <TTreePerfStats.h>
 
-#include <reportingUtils.hpp>
+#include "calcAmplitude.h"
+#include "progress_display.hpp"
+#include "reportingUtils.hpp"
+
 
 using namespace std;
 using namespace rpwa;
