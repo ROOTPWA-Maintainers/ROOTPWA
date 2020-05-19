@@ -62,14 +62,17 @@ if(PYLINT_EXECUTABLE)
 endif()
 
 
+if(PYLINT_ERROR_REASON AND NOT PYLINT_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested pylint installation:${PYLINT_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PYLINT
 	FOUND_VAR PYLINT_FOUND
 	REQUIRED_VARS PYLINT_EXECUTABLE PYLINT_VERSION
 	VERSION_VAR PYLINT_VERSION)
 # additional reporting
-if(NOT PYLINT_FOUND)
-	message(STATUS "Unable to find requested pylint installation:${PYLINT_ERROR_REASON}")
+if(PYLINT_FOUND AND NOT PYLINT_FIND_QUIETLY)
+	message(STATUS "Using pylint executable at '${PYLINT_EXECUTABLE}'")
 endif()
 
 

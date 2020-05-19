@@ -198,6 +198,9 @@ if(PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND)
 endif()
 
 
+if(PYTHON_ERROR_REASON AND NOT PYTHON_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested PYTHON installation:${PYTHON_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PYTHON
 	FOUND_VAR PYTHON_FOUND
@@ -208,12 +211,10 @@ if(NOT PYTHON_FOUND)
 	set(PYTHONLIBS_FOUND   FALSE)
 endif()
 # additional reporting
-if(PYTHONLIBS_FOUND)
+if(PYTHONLIBS_FOUND AND NOT PYTHON_FIND_QUIETLY)
 	message(STATUS "Found Python libraries version ${PYTHONLIBS_VERSION}.")
 	message(STATUS "Using Python libraries '${PYTHON_LIBRARIES}'.")
 	message(STATUS "Using Python include directory '${PYTHON_INCLUDE_DIRS}'.")
-else()
-	message(STATUS "Unable to find requested PYTHON installation:${PYTHON_ERROR_REASON}")
 endif()
 
 

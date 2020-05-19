@@ -132,17 +132,18 @@ endif()
 unset(_YamlCpp_PC_FILE)
 
 
+if(YamlCpp_ERROR_REASON AND NOT YamlCpp_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested YamlCpp installation:${YamlCpp_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(YamlCpp
 	FOUND_VAR YamlCpp_FOUND
 	REQUIRED_VARS YamlCpp_VERSION YamlCpp_INCLUDE_DIR YamlCpp_LIBRARY_DIR YamlCpp_LIBS
 	VERSION_VAR YamlCpp_VERSION)
 # additional reporting
-if(YamlCpp_FOUND)
+if(YamlCpp_FOUND AND NOT YamlCpp_FIND_QUIETLY)
 	message(STATUS "Using yaml-cpp include directory '${YamlCpp_INCLUDE_DIR}'.")
 	message(STATUS "Using yaml-cpp library '${YamlCpp_LIBS}'.")
-else()
-	message(STATUS "Unable to find requested YamlCpp installation:${YamlCpp_ERROR_REASON}")
 endif()
 
 

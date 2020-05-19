@@ -127,17 +127,18 @@ unset(_NLopt_PKG_CONFIG_FILE_NAME)
 unset(_NLopt_PC_FILE)
 
 
+if(NLopt_ERROR_REASON AND NOT NLopt_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested NLopt installation:${NLopt_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NLopt
 	FOUND_VAR NLopt_FOUND
 	REQUIRED_VARS NLopt_VERSION NLopt_INCLUDE_DIR NLopt_LIBRARY_DIR NLopt_LIBS
 	VERSION_VAR NLopt_VERSION)
 # additional reporting
-if(NLopt_FOUND)
+if(NLopt_FOUND AND NOT NLopt_FIND_QUIETLY)
 	message(STATUS "Using NLopt include directory '${NLopt_INCLUDE_DIR}'.")
 	message(STATUS "Using NLopt library '${NLopt_LIBS}'.")
-else()
-	message(STATUS "Unable to find requested NLopt installation:${NLopt_ERROR_REASON}")
 endif()
 
 

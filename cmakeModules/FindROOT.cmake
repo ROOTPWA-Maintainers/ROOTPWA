@@ -45,8 +45,12 @@
 #//      ROOT_LIBRARY_DIR       - ROOT library directory
 #//      ROOT_LIBRARIES         - linker flags for ROOT libraries
 #//      ROOT_AUX_LIBRARIES     - linker flags for auxiliary libraries
-#//      ROOTCINT_EXECUTABLE    - path to rootcint program
 #//      ROOT_LIBS              - list of ROOT library files
+#//      ROOTCINT_EXECUTABLE    - path to rootcint program
+#//      RLIBMAP_EXECUTABLE     - path to rlibmap program
+#//          ROOTCINT_EXECUTABLE and RLIBMAP_EXECUTABLE are only defined for ROOT versions < 5.99
+#//      ROOTCLING_EXECUTABLE   - path to rootcling program
+#//          ROOTCLING_EXECUTABLE is only defined for ROOT versions >= 5.99
 #//
 #//      Example usage:
 #//          find_package(ROOT 5.26 REQUIRED Minuit2)
@@ -90,9 +94,11 @@ set(ROOT_BIN_DIR           NOTFOUND)
 set(ROOT_INCLUDE_DIR       NOTFOUND)
 set(ROOT_LIBRARY_DIR       NOTFOUND)
 set(ROOT_LIBRARIES         NOTFOUND)
+set(ROOT_LIBS              "")
 set(ROOT_AUX_LIBRARIES     NOTFOUND)
 set(ROOTCINT_EXECUTABLE    NOTFOUND)
-set(ROOT_LIBS              "")
+set(RLIBMAP_EXECUTABLE     NOTFOUND)
+set(ROOTCLING_EXECUTABLE   NOTFOUND)
 
 
 find_program(ROOT_CONFIG_EXECUTABLE root-config)
@@ -100,32 +106,25 @@ if(NOT ROOT_CONFIG_EXECUTABLE)
 	set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config executable in path. Make sure ROOT is setup correctly.")
 else()
 
-	set(ROOT_FOUND TRUE)
-
+	# obtain all information from root-config
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix
 		OUTPUT_VARIABLE ROOTSYS
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --arch
 		OUTPUT_VARIABLE ROOT_TARGET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --f77
 		OUTPUT_VARIABLE ROOT_F77
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cc
 		OUTPUT_VARIABLE ROOT_CC
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cxx
 		OUTPUT_VARIABLE ROOT_CPP
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
 		OUTPUT_VARIABLE ROOT_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	# either get the SVN revision or the GIT revision
 	# only one of the options is known to 'root-config', however some version
 	# of 'root-config' do not know either
@@ -140,35 +139,30 @@ else()
 			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 	endif()
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --bindir
 		OUTPUT_VARIABLE ROOT_BIN_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_BIN_DIR}")
-		set(ROOT_FOUND FALSE)
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory '${ROOT_BIN_DIR}' does not exist.")
+		set(ROOT_BIN_DIR NOTFOUND)
 	endif()
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --incdir
 		OUTPUT_VARIABLE ROOT_INCLUDE_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_INCLUDE_DIR}")
-		set(ROOT_FOUND FALSE)
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory '${ROOT_INCLUDE_DIR}' does not exist.")
+		set(ROOT_INCLUDE_DIR NOTFOUND)
 	endif()
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --libdir
 		OUTPUT_VARIABLE ROOT_LIBRARY_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_LIBRARY_DIR}")
-		set(ROOT_FOUND FALSE)
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory '${ROOT_LIBRARY_DIR}' does not exist.")
+		set(ROOT_LIBRARY_DIR NOTFOUND)
 	endif()
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --noauxlibs --glibs
 		OUTPUT_VARIABLE ROOT_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
 		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -181,35 +175,19 @@ else()
 	string(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+).*" "\\1"
 		ROOT_PATCH_VERSION "${ROOT_VERSION}")
 	set(ROOT_VERSION "${ROOT_MAJOR_VERSION}.${ROOT_MINOR_VERSION}.${ROOT_PATCH_VERSION}")
-	# compare version
-	if(ROOT_FIND_VERSION_EXACT)
-		if(NOT ROOT_VERSION VERSION_EQUAL ROOT_FIND_VERSION)
-			set(ROOT_FOUND FALSE)
-			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION}.")
-		endif()
-	else()
-		if(ROOT_VERSION VERSION_LESS ROOT_FIND_VERSION)
-			set(ROOT_FOUND FALSE)
-			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION}.")
-		endif()
-	endif()
 
 	if(ROOT_VERSION VERSION_LESS 5.99)
 		find_program(ROOTCINT_EXECUTABLE rootcint)
 		if(NOT ROOTCINT_EXECUTABLE)
-			set(ROOT_FOUND FALSE)
 			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint. Make sure ROOT is setup correctly.")
 		endif()
-
 		find_program(RLIBMAP_EXECUTABLE rlibmap)
 		if(NOT RLIBMAP_EXECUTABLE)
-			set(ROOT_FOUND FALSE)
 			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rlibmap. Make sure ROOT is setup correctly.")
 		endif()
 	else()
 		find_program(ROOTCLING_EXECUTABLE rootcling)
 		if(NOT ROOTCLING_EXECUTABLE)
-			set(ROOT_FOUND FALSE)
 			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcling. Make sure ROOT is setup correctly.")
 		endif()
 	endif()
@@ -218,7 +196,7 @@ endif()
 
 
 # generate list of ROOT libraries
-if(ROOT_FOUND)
+if(ROOT_LIBRARIES)
 
 	# create list of internal libraries from root-config output
 	set(_LIBRARY_NAMES)
@@ -249,13 +227,14 @@ if(ROOT_FOUND)
 	list(REMOVE_DUPLICATES _LIBRARY_NAMES)
 
 	# check whether libraries exist
+	set(_ALL_LIBS_FOUND TRUE)
 	foreach(_LIBNAME ${_LIBRARY_NAMES})
 		find_library(_ROOT_LIB_${_LIBNAME}
 			NAMES ${_LIBNAME}
 			PATHS "${ROOT_LIBRARY_DIR}"
 			NO_DEFAULT_PATH)
 		if(NOT _ROOT_LIB_${_LIBNAME})
-			set(ROOT_FOUND FALSE)
+			set(_ALL_LIBS_FOUND FALSE)
 			set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}' in '${ROOT_LIBRARY_DIR}'.")
 		else()
 			list(APPEND ROOT_LIBS ${_ROOT_LIB_${_LIBNAME}})
@@ -283,7 +262,7 @@ if(ROOT_FOUND)
 			find_library(_AUX_LIB_${_LIBNAME}
 				NAMES ${_LIBNAME})
 			if(NOT _AUX_LIB_${_LIBNAME})
-				set(ROOT_FOUND FALSE)
+				set(_ALL_LIBS_FOUND FALSE)
 				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}'.")
 			else()
 				list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
@@ -295,11 +274,36 @@ if(ROOT_FOUND)
 	endforeach()
 	unset(_LIBRARY)
 
+	if(NOT _ALL_LIBS_FOUND)
+		set(ROOT_LIBRARIES NOTFOUND)
+		set(ROOT_LIBS      "")
+	endif()
+	unset(_ALL_LIBS_FOUND)
+
 endif()
 
 
-# report result
-if(ROOT_FOUND)
+if(ROOT_ERROR_REASON AND NOT ROOT_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested ROOT installation:${ROOT_ERROR_REASON}")
+endif()
+set(_DICT_EXECUTABLES_FOUND NOTFOUND)
+if(ROOT_VERSION VERSION_LESS 5.99)
+	if(ROOTCINT_EXECUTABLE AND RLIBMAP_EXECUTABLE)
+		set(_DICT_EXECUTABLES_FOUND FOUND)
+	endif()
+else()
+	if(ROOTCLING_EXECUTABLE)
+		set(_DICT_EXECUTABLES_FOUND FOUND)
+	endif()
+endif()
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ROOT
+	FOUND_VAR ROOT_FOUND
+	REQUIRED_VARS ROOT_CONFIG_EXECUTABLE ROOTSYS ROOT_TARGET ROOT_CC ROOT_CPP ROOT_VERSION ROOT_MAJOR_VERSION ROOT_MINOR_VERSION ROOT_PATCH_VERSION ROOT_BIN_DIR ROOT_INCLUDE_DIR ROOT_LIBRARY_DIR ROOT_LIBRARIES ROOT_AUX_LIBRARIES ROOT_LIBS _DICT_EXECUTABLES_FOUND
+	VERSION_VAR ROOT_VERSION)
+unset(_DICT_EXECUTABLES_FOUND)
+# additional reporting
+if(ROOT_FOUND AND NOT ROOT_FIND_QUIETLY)
 	if(ROOT_GIT_REVISION)
 		message(STATUS "Found ROOT version ${ROOT_VERSION} (${ROOT_GIT_REVISION}) in '${ROOTSYS}'.")
 	elseif(ROOT_SVN_REVISION)
@@ -311,14 +315,6 @@ if(ROOT_FOUND)
 	message(STATUS "Using ROOT library directory '${ROOT_LIBRARY_DIR}'.")
 	message(STATUS "Using ROOT libraries ${ROOT_LIBRARIES}.")
 	message(STATUS "Using ROOT additional components '${ROOT_FIND_COMPONENTS}'.")
-else()
-	if(ROOT_FIND_REQUIRED)
-		message(FATAL_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
-	else()
-		if(NOT ROOT_FIND_QUIETLY)
-			message(STATUS "ROOT version ${ROOT_FIND_VERSION}+ was not found:${ROOT_ERROR_REASON}")
-		endif()
-	endif()
 endif()
 
 
@@ -341,8 +337,10 @@ mark_as_advanced(
 	ROOT_LIBRARY_DIR
 	ROOT_LIBRARIES
 	ROOT_AUX_LIBRARIES
-	ROOTCINT_EXECUTABLE
 	ROOT_LIBS
+	ROOTCINT_EXECUTABLE
+	RLIBMAP_EXECUTABLE
+	ROOTCLING_EXECUTABLE
 	)
 
 
@@ -364,8 +362,10 @@ if(NOT ROOT_FOUND)
 	unset(ROOT_LIBRARY_DIR)
 	unset(ROOT_LIBRARIES)
 	unset(ROOT_AUX_LIBRARIES)
-	unset(ROOTCINT_EXECUTABLE)
 	unset(ROOT_LIBS)
+	unset(ROOTCINT_EXECUTABLE)
+	unset(RLIBMAP_EXECUTABLE)
+	unset(ROOTCLING_EXECUTABLE)
 endif()
 
 
