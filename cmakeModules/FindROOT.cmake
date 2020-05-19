@@ -437,16 +437,14 @@ function(root_generate_dictionary DICT_FILE)
 	# build name of ROOT map
 	set(_LIB_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${ARG_MODULE}${CMAKE_SHARED_LIBRARY_SUFFIX})
 	set(_MAP_FILE ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${ARG_MODULE}.rootmap)
-
 	if(ROOT_VERSION VERSION_LESS 5.99)
 		# add dictionary header file to output files
 		string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1.h" _DICT_HEADER "${DICT_FILE}")
 		set(OUTPUT_FILES ${DICT_FILE} ${_DICT_HEADER})
 		unset(_DICT_HEADER)
 		if(DEBUG_OUTPUT)
-			message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+			message(STATUS "root_generate_dictionary will create output file(s) '${OUTPUT_FILES}'")
 		endif()
-
 		add_custom_command(OUTPUT ${OUTPUT_FILES}
 			COMMAND ${ROOTCINT_EXECUTABLE}
 			ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}
@@ -455,12 +453,8 @@ function(root_generate_dictionary DICT_FILE)
 		if(DEBUG_OUTPUT)
 			message(STATUS "root_generate_dictionary will execute "
 				"'${ROOTCINT_EXECUTABLE} -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}'")
+			message(STATUS "root_generate_dictionary will create output file(s) '${_MAP_FILE}'")
 		endif()
-
-		if(DEBUG_OUTPUT)
-			message(STATUS "root_generate_dictionary will create output files '${_MAP_FILE}'")
-		endif()
-
 		add_custom_command(OUTPUT ${_MAP_FILE}
 			COMMAND ${RLIBMAP_EXECUTABLE}
 			ARGS -o ${_MAP_FILE} -l ${_LIB_NAME} -c ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_LINKDEF}
@@ -476,12 +470,11 @@ function(root_generate_dictionary DICT_FILE)
 		set(OUTPUT_FILES ${DICT_FILE} ${_DICT_PCM} ${_MAP_FILE})
 		unset(_DICT_PCM)
 		if(DEBUG_OUTPUT)
-			message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+			message(STATUS "root_generate_dictionary will create output file(s) '${OUTPUT_FILES}'")
 		endif()
-
 		add_custom_command(OUTPUT ${OUTPUT_FILES}
 			COMMAND ${ROOTCLING_EXECUTABLE}
-			ARGS -f ${DICT_FILE} -s  ${LIBRARY_OUTPUT_PATH}/${_LIB_NAME} -rml ${_LIB_NAME} -rmf ${_MAP_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}
+			ARGS -f ${DICT_FILE} -s  ${LIBRARY_OUTPUT_PATH}/${_LIB_NAME} -rml ${_LIB_NAME} -rmf ${_MAP_FILE} -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}
 			DEPENDS ${HEADER_FILES} ${ARG_LINKDEF}
 			)
 		if(DEBUG_OUTPUT)
@@ -490,10 +483,9 @@ function(root_generate_dictionary DICT_FILE)
 				"-s ${LIBRARY_OUTPUT_PATH}/${_LIB_NAME} "
 				"-rml ${_LIB_NAME} "
 				"-rmf ${_MAP_FILE} "
-				"-c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}'")
+				"-DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${ARG_LINKDEF}'")
 		endif()
 	endif()
-
 	unset(_DEFINITIONS)
 	unset(_INCLUDES)
 	unset(_HEADERS)
