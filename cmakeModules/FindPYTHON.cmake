@@ -167,7 +167,6 @@ if(PYTHONINTERP_FOUND)
 		parse_version_from_file("${_PYTHON_INCLUDE_DIR}/patchlevel.h" "#define[ \t]+PY_VERSION[ \t]+" PYTHONLIBS_VERSION)
 		# cut release candidate number, i.e. 4th version number, from PYTHONLIBS_VERSION
 		STRING(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(\\.[0-9]+)*$" "\\1.\\2.\\3" PYTHONLIBS_VERSION ${PYTHONLIBS_VERSION})
-		message("!!! ${PYTHONLIBS_VERSION}")
 		if(NOT PYTHONLIBS_VERSION VERSION_EQUAL PYTHON_VERSION)
 			list(APPEND _NO_PATCHLEVELH_PYTHON_INCLUDE_DIRS "${_PYTHON_INCLUDE_DIR}")
 		endif()
