@@ -33,7 +33,15 @@
 
 #include <fstream>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include "TVector3.h"
 #include "TLorentzRotation.h"
@@ -347,8 +355,8 @@ main()
 					printErr << "problems initializing input data. Aborting..." << endl;
 					exit(1);
 				}
-				const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-				                              : nmbEventsChain);
+				const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+				                                               : nmbEventsChain);
 				progress_display progressIndicator(nmbEvents);
 				timer.Reset();
 				timer.Start();

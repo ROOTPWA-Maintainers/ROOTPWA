@@ -1,7 +1,15 @@
 
 #include "eventMetadata.h"
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include <TClonesArray.h>
 #include <TFile.h>
@@ -139,7 +147,7 @@ bool rpwa::eventMetadata::updateHashor(hashCalculator& hashor, const bool& print
 			return false;
 		}
 	}
-	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_eventTree->GetEntries(), cout, "") : 0;
+	progress_display* progressIndicator = printProgress ? new progress_display(_eventTree->GetEntries(), cout, "") : 0;
 	for(long eventNumber = 0; eventNumber < _eventTree->GetEntries(); ++eventNumber) {
 		_eventTree->GetEntry(eventNumber);
 		if(progressIndicator) {

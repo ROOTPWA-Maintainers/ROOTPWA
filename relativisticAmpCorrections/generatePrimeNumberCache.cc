@@ -1,7 +1,14 @@
 
 #include <iostream>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
 
 #include <TFile.h>
 #include <TTree.h>
@@ -64,7 +71,7 @@ int main(int argc, char** argv)
 	tree->Fill();
 	entry = 3;
 	size_t nmbFoundPrimes = 1;
-	boost::progress_display progressIndicator(cacheSize, cout, "");
+	progress_display progressIndicator(cacheSize, cout, "");
 	while(nmbFoundPrimes < cacheSize) {
 		if(rpwa::primeNumbers::isPrimeNumber(entry)) {
 			tree->Fill();

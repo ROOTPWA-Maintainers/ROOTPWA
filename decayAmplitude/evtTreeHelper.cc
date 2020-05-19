@@ -40,7 +40,15 @@
 #include <map>
 
 #include <boost/tokenizer.hpp>
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 #include <boost/bimap.hpp>
 #include <boost/assign/list_inserter.hpp>
 
@@ -358,7 +366,7 @@ namespace rpwa {
 		long int fileLength = inEvt.tellg();
 		inEvt.seekg(0, ios::beg);
 		progress_display* progressIndicator = (not debug) ? new progress_display(fileLength, cout, "") : 0;
-		streampos         lastPos           = inEvt.tellg();
+		streampos lastPos = inEvt.tellg();
 		while (inEvt.good()) {
 			string line;
 
@@ -548,8 +556,8 @@ namespace rpwa {
 		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta);
 
 		// loop over events
-		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                       : nmbEventsTree);
+		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                               : nmbEventsTree);
 		progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
@@ -675,10 +683,10 @@ namespace rpwa {
 			printWarn << "problems initializing input data. cannot read input data." << endl;
 			return false;
 		}
-		const long int    nmbEventsTree     = tree.GetEntries();
-		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                       : nmbEventsTree);
-		bool              success           = true;
+		const long int nmbEventsTree = tree.GetEntries();
+		const long int nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                                   : nmbEventsTree);
+		bool           success       = true;
 		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)

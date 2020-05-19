@@ -14,7 +14,15 @@
 #include <string>
 #include <vector>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include <TClonesArray.h>
 #include <TFile.h>
@@ -716,7 +724,7 @@ createWeightedPlots(const std::string& dataFileName,
 		const long int nmbEvents = tree->GetEntries();
 		double maxweight = 0;
 		double avweight = 0;
-		boost::progress_display progressIndicator(nmbEvents, cout, "");
+		progress_display progressIndicator(nmbEvents, cout, "");
 		for (long int i = 0; i < nmbEvents; ++i) {
 			++progressIndicator;
 			tree->GetEntry(i);

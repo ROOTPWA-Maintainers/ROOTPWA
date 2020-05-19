@@ -3,7 +3,15 @@
 
 #include <algorithm>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include <TFile.h>
 #include <TTree.h>
@@ -42,7 +50,7 @@ string rpwa::amplitudeMetadata::recalculateHash(const bool& printProgress) const
 		printWarn << "could not set address for branch '" << rpwa::amplitudeMetadata::amplitudeLeafName << "'." << endl;
 		return "";
 	}
-	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_amplitudeTree->GetEntries(), cout, "") : 0;
+	progress_display* progressIndicator = printProgress ? new progress_display(_amplitudeTree->GetEntries(), cout, "") : 0;
 	for(long eventNumber = 0; eventNumber < _amplitudeTree->GetEntries(); ++eventNumber) {
 		_amplitudeTree->GetEntry(eventNumber);
 		if(progressIndicator) {

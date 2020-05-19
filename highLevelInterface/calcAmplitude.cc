@@ -1,7 +1,15 @@
 
 #include "calcAmplitude.h"
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include <TClonesArray.h>
 #include <TTree.h>
@@ -60,10 +68,10 @@ rpwa::hli::calcAmplitude(const eventMetadata&      eventMeta,
 		printWarn << "problems initializing input data. cannot read input data." << endl;
 		return retval;
 	}
-	const long nmbEventsTree     = tree->GetEntries();
-	const long nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-	                                : nmbEventsTree);
-	boost::progress_display* progressIndicator = (printProgress) ? new boost::progress_display(nmbEvents, cout, "") : 0;
+	const long nmbEventsTree = tree->GetEntries();
+	const long nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+	                                               : nmbEventsTree);
+	progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		if(progressIndicator) {
 			++(*progressIndicator);

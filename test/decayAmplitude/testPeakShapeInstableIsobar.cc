@@ -2,7 +2,15 @@
 #include <sstream>
 #include <complex>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include "TApplication.h"
 #include "TSystem.h"
@@ -561,7 +569,7 @@ main()
 		printInfo << psGen << endl;
 		TH2F* hDalitz = new TH2F("hDalitz", "Dalitz Plot;m_{01}^{2} [(GeV/c^{2})^{2}];m_{12}^{2} [(GeV/c^{2})^{2}]",
 		                         100, 0, 1.2, 100, 0, 1.2);
-		boost::progress_display progressIndicator(nmbEv, cout, "");
+		progress_display progressIndicator(nmbEv, cout, "");
 		for (unsigned int i = 0; i < nmbEv; ++i) {
 			++progressIndicator;
 			psGen.generateDecayAccepted(parent);

@@ -34,7 +34,15 @@
 #include <fstream>
 #include <cassert>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include "TTree.h"
 #include "TClonesArray.h"
@@ -110,8 +118,8 @@ calcNewAmps(const string&             rootInFileName,
 			printErr << "problems initializing input data. skpping." << endl;
 			continue;
 		}
-		const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-		                              : nmbEventsChain);
+		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+		                                               : nmbEventsChain);
 		progress_display progressIndicator(nmbEvents);
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			++progressIndicator;

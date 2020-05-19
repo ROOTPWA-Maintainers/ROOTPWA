@@ -1,7 +1,15 @@
 
 #include "phaseSpaceIntegral.h"
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 #include <boost/algorithm/string.hpp>
 
 #include<TClonesArray.h>
@@ -284,7 +292,7 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 		samples.resize(nEvents, 0.);
 	}
 
-	boost::progress_display progressIndicator(nEvents, cout, "");
+	progress_display progressIndicator(nEvents, cout, "");
 	for(unsigned int i = 0; i < nEvents; ++i) {
 		const double weight = psGen.generateDecay(parent);
 		TClonesArray prodKinMom("TVector3", 1);

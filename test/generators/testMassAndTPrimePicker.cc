@@ -4,7 +4,15 @@
 #include<iostream>
 #include<unistd.h>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include<TFile.h>
 #include<TH1D.h>
@@ -90,7 +98,7 @@ int main(int argc, char** argv)
 	const Setting& rootS = reactConf2.getRoot();
 	picker->init(rootS["t_and_m_dependence"]["settings"]);
 
-	boost::progress_display* progressIndicator = new boost::progress_display(nEvents, cout, "");
+	progress_display* progressIndicator = new progress_display(nEvents, cout, "");
 
 	for(unsigned int i = 0; i < nEvents; ++i) {
 

@@ -11,7 +11,15 @@
 #include <sstream>
 #include <complex>
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 
 #include "TApplication.h"
 #include "TSystem.h"
@@ -351,7 +359,7 @@ int main() {
 	}
 
 	const int nBins = h1[0]->GetNbinsX() * h1[0]->GetNbinsY();
-	boost::progress_display* progressIndicator = new boost::progress_display(nBins, std::cout, "");
+	progress_display* progressIndicator = new progress_display(nBins, std::cout, "");
 
 	const double isobarMass          = 0.7665;
 	const double isobarWidth         = 0.1502;

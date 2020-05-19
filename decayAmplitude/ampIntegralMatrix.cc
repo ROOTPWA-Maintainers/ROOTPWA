@@ -31,7 +31,15 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 107200)
+#include <boost/timer/progress_display.hpp>
+using boost::timer::progress_display;
+#else
 #include <boost/progress.hpp>
+using boost::progress_display;
+#endif
+
 #include <boost/numeric/conversion/cast.hpp>
 
 #include "TClass.h"
@@ -407,8 +415,8 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	// process weight file and amplitudes
 	vector<vector<complex<double> > > amps(_nmbWaves);
 	progress_display progressIndicator(_nmbEvents, cout, "");
-	bool             success      = true;
-	unsigned long    eventCounter = 0;
+	bool          success      = true;
+	unsigned long eventCounter = 0;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
 
