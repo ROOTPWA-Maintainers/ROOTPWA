@@ -38,7 +38,7 @@ bool rpwa::amplitudeFileWriter::initialize(TFile&                             ou
                                            const int&                         buffsize)
 {
 	if(_initialized) {
-		printWarn << "trying to initialized when already initialized." << endl;
+		printWarn << "trying to initialize while already initialized." << endl;
 		return false;
 	}
 

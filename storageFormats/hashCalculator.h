@@ -2,9 +2,11 @@
 #ifndef HASHCALCULATOR_H
 #define HASHCALCULATOR_H
 
+
 #include <complex>
 
 #include <TMD5.h>
+
 
 class TVector3;
 
@@ -18,11 +20,10 @@ namespace rpwa {
 		hashCalculator()
 			: TMD5() { }
 
-		void Update(const double& value);
+		void Update(const double&               value);
 		void Update(const std::complex<double>& value);
-		void Update(const TVector3& vector);
-
-		void Update(const std::string& value);
+		void Update(const TVector3&             vector);
+		void Update(const std::string&          value);
 
 		std::string hash() {
 			TMD5::Final();
@@ -40,4 +41,5 @@ namespace rpwa {
 
 } // namespace rpwa
 
-#endif
+
+#endif  // HASHCALCULATOR_H
