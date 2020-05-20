@@ -32,22 +32,26 @@
 //-------------------------------------------------------------------------
 
 #include "diffractiveDissVertex.h"
-#include "nonInteractionVertex.h"
 #include "isobarDecayTopology.h"
+#include "nonInteractionVertex.h"
 #include "particleDataTable.h"
 #include "spinUtils.hpp"
 
-namespace {
-	// Returns a list with all possible permutations of all groups of particles
-	// groupsExt is a vector of groups where each group is a vector of particle ids that belong to that group ( [<group>][<particleInGroup>] )
-	// The return value is a list of all permutations where each permutation is a list of groups
-	// where each group is a vector of particle ids that belong to that group ( [<permutation>][<group>][<particleInGroup>] )
-	std::vector< std::vector< std::vector<unsigned int> > > getAllGroupPermutations(const std::vector< std::vector<unsigned int> >& groupsExt);
-}
 
 using namespace std;
 using namespace boost;
 using namespace rpwa;
+
+
+namespace {
+
+	vector< vector<unsigned int> >	getFsParticleGroupsByJPI(const vector<particlePtr>& fsParts);
+
+	vector< vector< vector<unsigned int> > > getAllGroupPermutations(const vector< vector<unsigned int> >& groupsExt);
+
+	std::string	permMapString(const vector<unsigned int>& permMap);
+
+}
 
 
 bool isobarDecayTopology::_debug = false;
@@ -273,7 +277,7 @@ isobarDecayTopology::calcIsobarCharges(const bool warnIfNotExistent)
 	// loop over isobar decay vertices and propagate charges from final-state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		const particlePtr& isobar = _isobarVertices[i]->parent();
-		if (_debug && warnIfNotExistent)
+		if (_debug and warnIfNotExistent)
 			printDebug << "calculating charge of parent isobar '"
 			           << isobar->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
@@ -502,159 +506,125 @@ isobarDecayTopology::getIsospinSymmetrization()
 {
 	const vector<particlePtr> fsParts = fsParticles();
 
-	// Get a vector of groups of particles which have to be permutated.
-	//
-	// The group is defined as all particles with the same J, P and I. A group
-	// consists of a vector where the indices of all particles belonging to the
-	// group are saved.
-	vector< vector<unsigned int> > groups;
-	for(unsigned int i = 0; i < fsParts.size(); ++i) {
-		const particlePtr& particle = fsParts[i];
-		bool inserted = false;
-		for(unsigned int j = 0; j < groups.size(); ++j) {
-			const particlePtr& compPart = fsParts.at(groups[j][0]);
-			if(particle->isospin() == compPart->isospin() &&
-			   particle->J() == compPart->J() &&
-			   particle->P() == compPart->P())
-			{
-				groups[j].push_back(i);
-				inserted = true;
-			}
-		}
-		if(!inserted) {
-			groups.push_back(vector<unsigned int>(1,i));
-		}
-	}
+	// Construct a vector of groups of indices of final-state particles that have the same J, P, and I.
+	const vector< vector<unsigned int> > groups = getFsParticleGroupsByJPI(fsParts);
 
-	if(_debug) {
-		printDebug << "Found isospin symmetrization groups:" << endl;
-		for(unsigned int i = 0; i < groups.size(); ++i) {
-			printDebug << "Group " << i << endl;
-			for(unsigned int j = 0; j < groups[i].size(); ++j) {
-				printDebug << j << ": " << groups[i][j]
-				           << " (" << fsParts.at(groups[i][j])->name() << ")" << endl;
-			}
-		}
-	}
-
-	// Saving all the isospins z-projections.
-	//
+	// Saving the z-projections of all isospins .
 	// Needed to reset everything as it was at the end.
 	vector<int> isospinProjs;
-	for(unsigned int j = 0; j < fsParts.size(); ++j) {
-		isospinProjs.push_back(fsParts[j]->isospinProj());
+	for(unsigned int i = 0; i < fsParts.size(); ++i) {
+		isospinProjs.push_back(fsParts[i]->isospinProj());
 	}
 
 	// A vector to save the found permutations and their Clebsch-Gordans
 	vector<symTermMap> symAmplitudes;
 
 	// Permuting all the particles and checking if the permutation makes sense
-	//
-	const std::vector< std::vector< std::vector<unsigned int> > > permutations = getAllGroupPermutations(groups);
-	for(unsigned int i_permutation = 0; i_permutation < permutations.size(); ++i_permutation){
-		const std::vector< std::vector<unsigned int> >& permutation = permutations[i_permutation];
-		std::vector<unsigned int> map(fsParts.size());
-
-		for(unsigned int i_group = 0; i_group < groups.size(); ++i_group){
-			for(unsigned int i_group_entry = 0; i_group_entry < groups[i_group].size(); ++i_group_entry){
-				map[ groups[i_group][i_group_entry] ] = permutation[i_group][i_group_entry];
+	const vector< vector< vector<unsigned int> > > permutations = getAllGroupPermutations(groups);
+	for(unsigned int i_permutation = 0; i_permutation < permutations.size(); ++i_permutation) {
+		const vector< vector<unsigned int> >& permutation = permutations[i_permutation];
+		vector<unsigned int> permMap(fsParts.size());
+		for(unsigned int i_group = 0; i_group < groups.size(); ++i_group) {
+			for(unsigned int i_groupEntry = 0; i_groupEntry < groups[i_group].size(); ++i_groupEntry) {
+				permMap[ groups[i_group][i_groupEntry] ] = permutation[i_group][i_groupEntry];
 			}
 		}
+		// check that the to-be-added permutation permMap is not equivalent to identity
+		// and not identical to any of the already added permutations
+		// assumes that first permMap is the identity
 		if(_debug) {
-			printDebug << "Processing permutation '";
-			for(unsigned int i = 0; i < map.size(); ++i) cout << map[i];
-			cout << "'." << std::endl;
+			printDebug << "processing permutation " << permMapString(permMap) << endl;
 		}
-		// Some first checks if the permutation makes sense.
-		bool breaking = false;
-		for(std::vector<symTermMap>::const_iterator symAmp = symAmplitudes.begin(); symAmp != symAmplitudes.end(); ++symAmp) {
-			for(unsigned int j = 0; j < map.size(); ++j) {
+		bool discardPermutation = false;
+		for(vector<symTermMap>::const_iterator symAmp = symAmplitudes.begin(); symAmp != symAmplitudes.end(); ++symAmp) {
 
-				if (symAmp->fsPartPermMap[j] == map[j]) {
-					continue; // particle j was not swapped -> go on with check of next particle
+			if(_debug) {
+				cout << "    ... checking against permutation " << permMapString(symAmp->fsPartPermMap) << endl;
+			}
+
+			for(unsigned int i = 0; i < permMap.size(); ++i) {
+
+				if (symAmp->fsPartPermMap[i] == permMap[i]) {
+					continue; // particle i was not swapped -> go on with check of next particle
 				}
 
 				// Make sure we are not swapping two indistinguishable particles.
-				if(fsParts.at(symAmp->fsPartPermMap[j])->name() == fsParts.at(map[j])->name()) {
-					breaking = true;
+				if(fsParts.at(symAmp->fsPartPermMap[i])->name() == fsParts.at(permMap[i])->name()) {
+					discardPermutation = true;
 					break;
 				}
 
 				// Check if two particles from the same isobar are being swapped.
-				for(unsigned int k = j + 1; k < map.size(); ++k) {
-					if (symAmp->fsPartPermMap[k] == map[k]) {
+				for(unsigned int j = i + 1; j < permMap.size(); ++j) {
+					if (symAmp->fsPartPermMap[j] == permMap[j]) {
 						continue;
 					}
-					if(    fromVertex(fsParts.at(symAmp->fsPartPermMap[j])) == fromVertex(fsParts.at(symAmp->fsPartPermMap[k]))
-					   and fromVertex(fsParts.at(symAmp->fsPartPermMap[j])) == fromVertex(fsParts.at(map[j]))
-					   and fromVertex(fsParts.at(map[j]))                   == fromVertex(fsParts.at(map[k]))) {
-						breaking = true;
+					if(    fromVertex(fsParts.at(symAmp->fsPartPermMap[i])) == fromVertex(fsParts.at(symAmp->fsPartPermMap[j]))
+					   and fromVertex(fsParts.at(symAmp->fsPartPermMap[i])) == fromVertex(fsParts.at(permMap[i]))
+					   and fromVertex(fsParts.at(permMap[i]))               == fromVertex(fsParts.at(permMap[j]))) {
+						discardPermutation = true;
 						break;
 					}
 				}
-				if(breaking) {
+				if(discardPermutation) {
 					break;
 				}
 			}
-			if(breaking) {
+			if(discardPermutation) {
 				break;
 			}
 		}
 
-		if(breaking) { // check next permutation
+		if(discardPermutation) { // check next permutation
 			continue;
 		}
 
 		// Set the isospin of the final-state particles as given by the permutation.
-		for(unsigned int j = 0; j < map.size(); ++j) {
-			fsParts.at(j)->setIsospinProj(isospinProjs.at(map[j]));
+		for(unsigned int i = 0; i < permMap.size(); ++i) {
+			fsParts.at(i)->setIsospinProj(isospinProjs.at(permMap[i]));
 		}
 		calcIsobarCharges(false);
 
 		// Check for isospin consistency in all vertices.
-		for(unsigned int j = 0; j < _isobarVertices.size(); ++j) {
-			const particlePtr d1 = _isobarVertices[j]->daughter1();
-			const particlePtr d2 = _isobarVertices[j]->daughter2();
-			const particlePtr p  = _isobarVertices[j]->parent();
+		for(unsigned int i = 0; i < _isobarVertices.size(); ++i) {
+			const particlePtr d1 = _isobarVertices[i]->daughter1();
+			const particlePtr d2 = _isobarVertices[i]->daughter2();
+			const particlePtr p  = _isobarVertices[i]->parent();
 			if(not spinStatesCanCouple(d1->isospin(), d1->isospinProj(),
-			       d2->isospin(), d2->isospinProj(),
-			       p->isospin(),  p->isospinProj())) {
-				breaking = true;
+			                           d2->isospin(), d2->isospinProj(),
+			                            p->isospin(),  p->isospinProj())) {
+				discardPermutation = true;
 			}
 		}
 
-		// If something is amiss, reset everything and proceed to the next permutation.
-		if(breaking) {
-			for(unsigned int j = 0; j < fsParts.size(); ++j) {
-				fsParts[j]->setIsospinProj(isospinProjs.at(j));
+		// If something is amiss, reset isospin projections and proceed to the next permutation.
+		if(discardPermutation) {
+			for(unsigned int i = 0; i < fsParts.size(); ++i) {
+				fsParts[i]->setIsospinProj(isospinProjs.at(i));
 			}
 			calcIsobarCharges();
 			continue;
 		}
 
-		// Survived all the criteria, saving to be returned
-		symTermMap symTerm(getIsospinClebschGordanProduct(), map);
+		// Save permutation that survived all criteria
+		symTermMap symTerm(getIsospinClebschGordanProduct(), permMap);
 		symAmplitudes.push_back(symTerm);
 
 		if(_debug) {
-			printDebug << "Found valid permutation: ";
-			for(unsigned int j = 0; j < map.size(); ++j) {
-				cout << map[j];
+			cout << "    ... found valid permutation: " << permMapString(permMap) << " = (";
+			for(unsigned int i = 0; i < permMap.size(); ++i) {
+				cout << fsParts.at(i)->name();
 			}
-			cout << " (";
-			for(unsigned int j = 0; j < map.size(); ++j) {
-				cout << fsParts.at(j)->name();
-			}
-			cout << "), clebsch-gordan=" << getIsospinClebschGordanProduct() << endl;
+			cout << "), Clebsch-Gordan = " << getIsospinClebschGordanProduct() << endl;
 		}
 
-		// Resetting isospins for the next permutation
-		for(unsigned int j = 0; j < fsParts.size(); ++j) {
-			fsParts[j]->setIsospinProj(isospinProjs.at(j));
+		// Resetisospin projections for the next permutation
+		for(unsigned int i = 0; i < fsParts.size(); ++i) {
+			fsParts[i]->setIsospinProj(isospinProjs.at(i));
 		}
 		calcIsobarCharges();
 
-	} // End of the loop over the permutations
+	}  // End of the loop over the permutations
 
 	for(unsigned int i = 0; i < symAmplitudes.size(); ++i) {
 		symAmplitudes[i].factor /= sqrt(symAmplitudes.size());
@@ -870,37 +840,79 @@ isobarDecayTopology::findIsobarBoseSymVertices() const
 
 
 namespace {
+
+	// Constructs a vector of groups of indices of particles which have to be permutated.
+	// A group is a vector of indices of those final-state particles that have the same J, P, and I.
+	vector< vector<unsigned int> >
+	getFsParticleGroupsByJPI(const vector<particlePtr>& fsParts)
+	{
+		vector< vector<unsigned int> > groups;
+		for(unsigned int i = 0; i < fsParts.size(); ++i) {
+			const particlePtr& particle = fsParts[i];
+			bool addedToGroup = false;
+			for(unsigned int j = 0; j < groups.size(); ++j) {
+				const particlePtr& compPart = fsParts.at(groups[j][0]);
+				if(    particle->isospin() == compPart->isospin()
+				   and particle->J()       == compPart->J()
+				   and particle->P()       == compPart->P())
+				{
+					groups[j].push_back(i);
+					addedToGroup = true;
+				}
+			}
+			if(not addedToGroup) {
+				// create a new group
+				groups.push_back(vector<unsigned int>(1, i));
+			}
+		}
+
+		if(isobarDecayTopology::debug()) {
+			printDebug << "found isospin symmetrization groups:" << endl;
+			for(unsigned int i = 0; i < groups.size(); ++i) {
+				cout << "    ... group " << i << ":" << endl;
+				for(unsigned int j = 0; j < groups[i].size(); ++j) {
+					cout << "        ... " << j << ": " << groups[i][j]
+						<< " (" << fsParts.at(groups[i][j])->name() << ")" << endl;
+				}
+			}
+		}
+
+		return groups;
+	}
+
+
 	// Returns a list with all possible permutations of all groups of particles
 	// groupsExt is a vector of groups where each group is a vector of particle ids that belong to that group ( [<group>][<particleInGroup>] )
 	// The return value is a list of all permutations where each permutation is a list of groups
-    // where each group is a vector of particle ids that belong to that group ( [<permutation>][<group>][<particleInGroup>] )
-	std::vector< std::vector< std::vector<unsigned int> > > getAllGroupPermutations(const std::vector< std::vector<unsigned int> >& groupsExt){
+	// where each group is a vector of particle ids that belong to that group ( [<permutation>][<group>][<particleInGroup>] )
+	vector< vector< vector<unsigned int> > >
+	getAllGroupPermutations(const vector< vector<unsigned int> >& groupsExt)
+	{
+		vector< vector< vector<unsigned int> > > permutations;
 
-		std::vector< std::vector< std::vector<unsigned int> > > permutations;
-
-		std::vector< std::vector<unsigned int> > subGroups(groupsExt.size() - 1);
+		vector< vector<unsigned int> > subGroups(groupsExt.size() - 1);
 		for (size_t i = 0; i < groupsExt.size() - 1; ++i) {
 			subGroups[i] = groupsExt[i];
 		}
 
-		std::vector<unsigned int> curGroup = groupsExt[groupsExt.size()-1];
+		vector<unsigned int> curGroup = groupsExt[groupsExt.size()-1];
 		// make sure that the cur_group is sorted such that next_permutation works
 		std::sort(curGroup.begin(), curGroup.end());
 
 		if(subGroups.empty()){ // this is the lowest group
 			do{
-				std::vector< std::vector<unsigned int> > lastElement(1, curGroup);
+				vector< vector<unsigned int> > lastElement(1, curGroup);
 				permutations.push_back(lastElement);
 			} while(next_permutation(curGroup.begin(), curGroup.end()));
 
 		} else { // build all permutation, take into account all permutations of all subgroups
 
 			// get all permutations of all subgroups
-			const std::vector< std::vector< std::vector<unsigned int> > > subPermutations = getAllGroupPermutations(subGroups);
+			const vector< vector< vector<unsigned int> > > subPermutations = getAllGroupPermutations(subGroups);
 
 			do{
 				for(unsigned int i_subPermutation = 0; i_subPermutation < subPermutations.size(); ++i_subPermutation){
-					std::vector< std::vector< unsigned int> > permutation(subPermutations[i_subPermutation]);
+					vector< vector< unsigned int> > permutation(subPermutations[i_subPermutation]);
 					permutation.push_back(curGroup);
 					permutations.push_back(permutation);
 				}
@@ -908,6 +920,18 @@ namespace {
 		}
 
 		return permutations;
-
 	}
+
+
+	// converts permutation index map into string
+	std::string
+	permMapString(const vector<unsigned int>& permMap)
+	{
+		stringstream s;
+		for(unsigned int i = 0; i < permMap.size(); ++i) {
+			s << permMap[i];
+		}
+		return s.str();
+	}
+
 }
