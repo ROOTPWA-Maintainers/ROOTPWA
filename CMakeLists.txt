@@ -262,6 +262,7 @@ if(     ("$ENV{BOOST_ROOT}"       STREQUAL "")
 	set(Boost_NO_SYSTEM_PATHS OFF)
 else()
 	set(Boost_NO_SYSTEM_PATHS ON)
+	set(Boost_NO_BOOST_CMAKE  ON)  # required starting from Boost 1.70.0 on
 endif()
 find_package(Boost 1.67.0 REQUIRED COMPONENTS "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}" OPTIONAL_COMPONENTS "mpi" "serialization" "system" "timer")
 if(Boost_FOUND)

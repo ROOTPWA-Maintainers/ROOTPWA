@@ -10,31 +10,33 @@
  * Also for each massbin create a directory and create the same filenames for each variable
  */
 
+
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <boost/progress.hpp>
-
-#include <TClonesArray.h>
-#include <TFile.h>
-#include <TH1D.h>
-#include <TH2D.h>
-#include <THStack.h>
-#include <TKey.h>
-#include <TLorentzRotation.h>
-#include <TLorentzVector.h>
-#include <TMath.h>
-#include <TROOT.h>
-#include <TStopwatch.h>
-#include <TTree.h>
+#include "TClonesArray.h"
+#include "TFile.h"
+#include "TH1D.h"
+#include "TH2D.h"
+#include "THStack.h"
+#include "TKey.h"
+#include "TLorentzRotation.h"
+#include "TLorentzVector.h"
+#include "TMath.h"
+#include "TROOT.h"
+#include "TStopwatch.h"
+#include "TTree.h"
 
 #ifndef __CINT__
-#include <particleDataTable.h>
-#endif // __CINT__
-#include <reportingUtils.hpp>
+#include "particleDataTable.h"
+#endif  // __CINT__
+#include "progress_display.hpp"
+#include "reportingUtils.hpp"
+
 
 using namespace std;
+
 
 const int    HISTLIMITS_COSTHETA_BINS = 100;
 const double HISTLIMITS_COSTHETA_MAX  =   1.;
@@ -716,7 +718,7 @@ createWeightedPlots(const std::string& dataFileName,
 		const long int nmbEvents = tree->GetEntries();
 		double maxweight = 0;
 		double avweight = 0;
-		boost::progress_display progressIndicator(nmbEvents, cout, "");
+		progress_display progressIndicator(nmbEvents, cout, "");
 		for (long int i = 0; i < nmbEvents; ++i) {
 			++progressIndicator;
 			tree->GetEntry(i);

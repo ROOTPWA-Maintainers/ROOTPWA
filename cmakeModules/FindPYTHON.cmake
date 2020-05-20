@@ -165,10 +165,13 @@ if(PYTHONINTERP_FOUND)
 	foreach(_PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_DIRS})
 		# get library version from patchlevel.h
 		parse_version_from_file("${_PYTHON_INCLUDE_DIR}/patchlevel.h" "#define[ \t]+PY_VERSION[ \t]+" PYTHONLIBS_VERSION)
+		# cut release candidate number, i.e. 4th version number, from PYTHONLIBS_VERSION
+		STRING(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(\\.[0-9]+)*$" "\\1.\\2.\\3" PYTHONLIBS_VERSION ${PYTHONLIBS_VERSION})
 		if(NOT PYTHONLIBS_VERSION VERSION_EQUAL PYTHON_VERSION)
 			list(APPEND _NO_PATCHLEVELH_PYTHON_INCLUDE_DIRS "${_PYTHON_INCLUDE_DIR}")
 		endif()
 	endforeach()
+	unset(_PYTHON_INCLUDE_DIR)
 	if(_NO_PATCHLEVELH_PYTHON_INCLUDE_DIRS)
 		list(REMOVE_ITEM PYTHON_INCLUDE_DIRS ${_NO_PATCHLEVELH_PYTHON_INCLUDE_DIRS})
 	endif()
@@ -195,6 +198,9 @@ if(PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND)
 endif()
 
 
+if(PYTHON_ERROR_REASON AND NOT PYTHON_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested PYTHON installation:${PYTHON_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PYTHON
 	FOUND_VAR PYTHON_FOUND
@@ -205,12 +211,10 @@ if(NOT PYTHON_FOUND)
 	set(PYTHONLIBS_FOUND   FALSE)
 endif()
 # additional reporting
-if(PYTHONLIBS_FOUND)
+if(PYTHONLIBS_FOUND AND NOT PYTHON_FIND_QUIETLY)
 	message(STATUS "Found Python libraries version ${PYTHONLIBS_VERSION}.")
 	message(STATUS "Using Python libraries '${PYTHON_LIBRARIES}'.")
 	message(STATUS "Using Python include directory '${PYTHON_INCLUDE_DIRS}'.")
-else()
-	message(STATUS "Unable to find requested PYTHON installation:${PYTHON_ERROR_REASON}")
 endif()
 
 

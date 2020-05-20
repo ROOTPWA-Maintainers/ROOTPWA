@@ -1,21 +1,21 @@
-
-#include "amplitudeMetadata.h"
-
 #include <algorithm>
-
-#include <boost/progress.hpp>
 
 #include <TFile.h>
 #include <TTree.h>
 
+#include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
 #include "hashCalculator.h"
+#include "progress_display.hpp"
 #include "reportingUtils.hpp"
+
 
 using namespace rpwa;
 using namespace std;
 
+
 const std::string rpwa::amplitudeMetadata::amplitudeLeafName = "amplitude";
+
 
 rpwa::amplitudeMetadata::amplitudeMetadata()
 	: _contentHash(""),
@@ -42,7 +42,7 @@ string rpwa::amplitudeMetadata::recalculateHash(const bool& printProgress) const
 		printWarn << "could not set address for branch '" << rpwa::amplitudeMetadata::amplitudeLeafName << "'." << endl;
 		return "";
 	}
-	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_amplitudeTree->GetEntries(), cout, "") : 0;
+	progress_display* progressIndicator = printProgress ? new progress_display(_amplitudeTree->GetEntries(), cout, "") : 0;
 	for(long eventNumber = 0; eventNumber < _amplitudeTree->GetEntries(); ++eventNumber) {
 		_amplitudeTree->GetEntry(eventNumber);
 		if(progressIndicator) {

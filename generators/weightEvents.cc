@@ -45,20 +45,19 @@
 
 #include <vector>
 
-#include <boost/progress.hpp>
-
 #include <TFile.h>
 #include <TROOT.h>
-#include <TString.h>
 #include <TStopwatch.h>
+#include <TString.h>
 #include <TTree.h>
 
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
 #include "amplitudeTreeLeaf.h"
-#include "fitResult.h"
 #include "fileUtils.hpp"
+#include "fitResult.h"
 #include "partialWaveFitHelper.h"
+#include "progress_display.hpp"
 #include "reportingUtilsEnvironment.h"
 
 

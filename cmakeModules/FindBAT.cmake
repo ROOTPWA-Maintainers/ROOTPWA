@@ -152,6 +152,9 @@ string(STRIP "${BAT_CXX_FLAGS}" BAT_CXX_FLAGS)
 string(STRIP "${BAT_LINKER_FLAGS}" BAT_LINKER_FLAGS)
 
 
+if(BAT_ERROR_REASON AND NOT BAT_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested BAT installation:${BAT_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(BAT
 	FOUND_VAR BAT_FOUND
@@ -163,8 +166,6 @@ if(BAT_FOUND AND NOT BAT_FIND_QUIETLY)
 	message(STATUS "Using BAT libraries '${BAT_LIBRARIES}'.")
 	message(STATUS "Using extra CXX_FLAGS for BAT '${BAT_CXX_FLAGS}'.")
 	message(STATUS "Using extra LINKER_FLAGS for BAT '${BAT_LINKER_FLAGS}'.")
-elseif(NOT BAT_FOUND)
-	message(STATUS "Unable to find requested BAT installation:${BAT_ERROR_REASON}")
 endif()
 
 

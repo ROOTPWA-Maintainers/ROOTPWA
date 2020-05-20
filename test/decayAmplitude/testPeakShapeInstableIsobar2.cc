@@ -1,30 +1,22 @@
-
-#include<TH2D.h>
-#include<TCanvas.h>
-#include<TApplication.h>
-#include<physUtils.hpp>
-#include<complex>
-#include<TSystem.h>
-
-
+#include <complex>
 #include <iostream>
 #include <sstream>
-#include <complex>
-
-#include <boost/progress.hpp>
 
 #include "TApplication.h"
-#include "TSystem.h"
-#include "TGraph.h"
 #include "TCanvas.h"
 #include "TEllipse.h"
 #include "TF1.h"
-#include "TLorentzVector.h"
+#include "TGraph.h"
 #include "TH2.h"
+#include "TH2D.h"
+#include "TLorentzVector.h"
+#include "TSystem.h"
 
-#include "physUtils.hpp"
 #include "particleDataTable.h"
+#include "physUtils.hpp"
+#include "progress_display.hpp"
 #include "waveDescription.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // computes relativistic Breit-Wigner amplitude with mass-dependent
@@ -351,7 +343,7 @@ int main() {
 	}
 
 	const int nBins = h1[0]->GetNbinsX() * h1[0]->GetNbinsY();
-	boost::progress_display* progressIndicator = new boost::progress_display(nBins, std::cout, "");
+	progress_display* progressIndicator = new progress_display(nBins, std::cout, "");
 
 	const double isobarMass          = 0.7665;
 	const double isobarWidth         = 0.1502;

@@ -1,10 +1,8 @@
-
-#include <boost/progress.hpp>
-
-#include <TMath.h>
+#include "TMath.h"
 
 #include "ampIntegralMatrix.h"
 #include "parameterSpace.h"
+#include "progress_display.hpp"
 #include "reportingUtils.hpp"
 
 

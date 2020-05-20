@@ -1,23 +1,22 @@
+#include <complex>
 #include <iostream>
 #include <sstream>
-#include <complex>
-
-#include <boost/progress.hpp>
 
 #include "TApplication.h"
-#include "TSystem.h"
-#include "TGraph.h"
 #include "TCanvas.h"
 #include "TEllipse.h"
 #include "TF1.h"
-#include "TLorentzVector.h"
+#include "TGraph.h"
 #include "TH2.h"
+#include "TLorentzVector.h"
+#include "TSystem.h"
 
-#include "physUtils.hpp"
-#include "particleDataTable.h"
-#include "waveDescription.h"
 #include "nBodyPhaseSpaceGen.h"
+#include "particleDataTable.h"
+#include "physUtils.hpp"
+#include "progress_display.hpp"
 #include "randomNumberGenerator.h"
+#include "waveDescription.h"
 
 
 using namespace std;
@@ -561,7 +560,7 @@ main()
 		printInfo << psGen << endl;
 		TH2F* hDalitz = new TH2F("hDalitz", "Dalitz Plot;m_{01}^{2} [(GeV/c^{2})^{2}];m_{12}^{2} [(GeV/c^{2})^{2}]",
 		                         100, 0, 1.2, 100, 0, 1.2);
-		boost::progress_display progressIndicator(nmbEv, cout, "");
+		progress_display progressIndicator(nmbEv, cout, "");
 		for (unsigned int i = 0; i < nmbEv; ++i) {
 			++progressIndicator;
 			psGen.generateDecayAccepted(parent);

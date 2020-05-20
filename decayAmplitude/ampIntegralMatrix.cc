@@ -31,23 +31,23 @@
 //-------------------------------------------------------------------------
 
 
-#include <boost/progress.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
+#include "TBuffer.h"
 #include "TClass.h"
 #include "TFile.h"
 #include "TKey.h"
-#include "TTree.h"
 #include "TROOT.h"
-#include "TBuffer.h"
+#include "TTree.h"
 
-#include "reportingUtils.hpp"
-#include "fileUtils.hpp"
-#include "sumAccumulators.hpp"
-#include "amplitudeTreeLeaf.h"
 #include "ampIntegralMatrix.h"
 #include "amplitudeMetadata.h"
+#include "amplitudeTreeLeaf.h"
 #include "eventMetadata.h"
+#include "fileUtils.hpp"
+#include "progress_display.hpp"
+#include "reportingUtils.hpp"
+#include "sumAccumulators.hpp"
 
 
 using namespace std;
@@ -407,8 +407,8 @@ ampIntegralMatrix::integrate(const vector<const amplitudeMetadata*>& ampMetadata
 	// process weight file and amplitudes
 	vector<vector<complex<double> > > amps(_nmbWaves);
 	progress_display progressIndicator(_nmbEvents, cout, "");
-	bool             success      = true;
-	unsigned long    eventCounter = 0;
+	bool          success      = true;
+	unsigned long eventCounter = 0;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
 

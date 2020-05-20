@@ -148,17 +148,18 @@ unset(_Libconfig_HEADER_FILE)
 unset(_Libconfig_HEADER_FILE_NAME)
 
 
+if(Libconfig_ERROR_REASON AND NOT Libconfig_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested Libconfig installation:${Libconfig_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Libconfig
 	FOUND_VAR Libconfig_FOUND
 	REQUIRED_VARS Libconfig_VERSION Libconfig_INCLUDE_DIR Libconfig_LIBRARY_DIR Libconfig_LIBS
 	VERSION_VAR Libconfig_VERSION)
 # additional reporting
-if(Libconfig_FOUND)
+if(Libconfig_FOUND AND NOT Libconfig_FIND_QUIETLY)
 	message(STATUS "Using Libconfig include directory '${Libconfig_INCLUDE_DIR}'.")
 	message(STATUS "Using Libconfig library '${Libconfig_LIBS}'.")
-else()
-	message(STATUS "Unable to find requested Libconfig installation:${Libconfig_ERROR_REASON}")
 endif()
 
 

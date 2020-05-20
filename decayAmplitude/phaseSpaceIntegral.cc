@@ -1,26 +1,26 @@
-
-#include "phaseSpaceIntegral.h"
-
-#include <boost/progress.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include<TClonesArray.h>
-#include<TDirectory.h>
-#include<TF1.h>
-#include<TFile.h>
-#include<TGraphErrors.h>
-#include<TObjString.h>
-#include<TTree.h>
+#include <TClonesArray.h>
+#include <TDirectory.h>
+#include <TF1.h>
+#include <TFile.h>
+#include <TGraphErrors.h>
+#include <TObjString.h>
+#include <TTree.h>
 
-#include"factorial.hpp"
-#include"isobarHelicityAmplitude.h"
-#include"mathUtils.hpp"
-#include"nBodyPhaseSpaceGenerator.h"
-#include"physUtils.hpp"
-#include"waveDescription.h"
+#include "factorial.hpp"
+#include "isobarHelicityAmplitude.h"
+#include "mathUtils.hpp"
+#include "nBodyPhaseSpaceGenerator.h"
+#include "phaseSpaceIntegral.h"
+#include "physUtils.hpp"
+#include "progress_display.hpp"
+#include "waveDescription.h"
+
 
 using namespace std;
 using namespace rpwa;
+
 
 phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
 
@@ -284,7 +284,7 @@ integralTablePoint integralTableContainer::evalInt(const double& M, const unsign
 		samples.resize(nEvents, 0.);
 	}
 
-	boost::progress_display progressIndicator(nEvents, cout, "");
+	progress_display progressIndicator(nEvents, cout, "");
 	for(unsigned int i = 0; i < nEvents; ++i) {
 		const double weight = psGen.generateDecay(parent);
 		TClonesArray prodKinMom("TVector3", 1);

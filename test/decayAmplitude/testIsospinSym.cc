@@ -31,25 +31,24 @@
 //-------------------------------------------------------------------------
 
 
-#include <fstream>
 #include <cassert>
+#include <fstream>
 
-#include <boost/progress.hpp>
-
-#include "TTree.h"
 #include "TClonesArray.h"
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TStopwatch.h"
+#include "TTree.h"
 
-#include "mathUtils.hpp"
-#include "fileUtils.hpp"
-#include "reportingUtilsEnvironment.h"
-#include "particleDataTable.h"
-#include "waveDescription.h"
-#include "isobarHelicityAmplitude.h"
 #include "evtTreeHelper.h"
+#include "fileUtils.hpp"
+#include "isobarHelicityAmplitude.h"
+#include "mathUtils.hpp"
+#include "particleDataTable.h"
+#include "progress_display.hpp"
+#include "reportingUtilsEnvironment.h"
+#include "waveDescription.h"
 
 
 using namespace std;
@@ -110,8 +109,8 @@ calcNewAmps(const string&             rootInFileName,
 			printErr << "problems initializing input data. skpping." << endl;
 			continue;
 		}
-		const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-		                              : nmbEventsChain);
+		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+		                                               : nmbEventsChain);
 		progress_display progressIndicator(nmbEvents);
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			++progressIndicator;

@@ -96,14 +96,17 @@ if(PYTHON_EXECUTABLE)
 endif()
 
 
+if(NumPy_ERROR_REASON AND NOT NumPy_FIND_QUIETLY)
+	message(STATUS "Problems while finding the requested NumPy installation:${NumPy_ERROR_REASON}")
+endif()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NumPy
 	FOUND_VAR NumPy_FOUND
 	REQUIRED_VARS NumPy_INCLUDE_DIR NumPy_VERSION
 	VERSION_VAR NumPy_VERSION)
 # additional reporting
-if(NOT NumPy_FOUND)
-	message(STATUS "Unable to find requested NumPy installation:${NumPy_ERROR_REASON}")
+if(NumPy_FOUND AND NOT NumPy_FIND_QUIETLY)
+	message(STATUS "Using NumPy include directory '${NumPy_INCLUDE_DIR}'.")
 endif()
 
 

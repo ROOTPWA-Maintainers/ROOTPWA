@@ -32,32 +32,32 @@
 //-------------------------------------------------------------------------
 
 
+#include <algorithm>
+#include <cassert>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
-#include <cassert>
-#include <algorithm>
-#include <map>
 
-#include <boost/tokenizer.hpp>
-#include <boost/progress.hpp>
-#include <boost/bimap.hpp>
 #include <boost/assign/list_inserter.hpp>
+#include <boost/bimap.hpp>
+#include <boost/tokenizer.hpp>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TTreePerfStats.h"
 #include "TChain.h"
 #include "TClonesArray.h"
+#include "TFile.h"
 #include "TObjString.h"
+#include "TTree.h"
+#include "TTreePerfStats.h"
 #include "TVector3.h"
 
-#include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
-#include "particleDataTable.h"
+#include "evtTreeHelper.h"
 #include "isobarDecayTopology.h"
 #include "isobarHelicityAmplitude.h"
-#include "evtTreeHelper.h"
+#include "particleDataTable.h"
+#include "progress_display.hpp"
+#include "reportingUtilsRoot.hpp"
 
 
 using namespace std;
@@ -358,7 +358,7 @@ namespace rpwa {
 		long int fileLength = inEvt.tellg();
 		inEvt.seekg(0, ios::beg);
 		progress_display* progressIndicator = (not debug) ? new progress_display(fileLength, cout, "") : 0;
-		streampos         lastPos           = inEvt.tellg();
+		streampos lastPos = inEvt.tellg();
 		while (inEvt.good()) {
 			string line;
 
@@ -548,8 +548,8 @@ namespace rpwa {
 		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta);
 
 		// loop over events
-		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                       : nmbEventsTree);
+		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                               : nmbEventsTree);
 		progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
@@ -675,10 +675,10 @@ namespace rpwa {
 			printWarn << "problems initializing input data. cannot read input data." << endl;
 			return false;
 		}
-		const long int    nmbEventsTree     = tree.GetEntries();
-		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                       : nmbEventsTree);
-		bool              success           = true;
+		const long int nmbEventsTree = tree.GetEntries();
+		const long int nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                                   : nmbEventsTree);
+		bool           success       = true;
 		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)

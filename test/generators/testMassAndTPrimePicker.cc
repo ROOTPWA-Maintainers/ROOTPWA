@@ -1,16 +1,13 @@
-
-
 #include<cstdlib>
 #include<iostream>
 #include<unistd.h>
-
-#include <boost/progress.hpp>
 
 #include<TFile.h>
 #include<TH1D.h>
 #include<TH2D.h>
 
 #include "generatorPickerFunctions.h"
+#include "progress_display.hpp"
 #include "randomNumberGenerator.h"
 #include "reportingUtils.hpp"
 
@@ -90,7 +87,7 @@ int main(int argc, char** argv)
 	const Setting& rootS = reactConf2.getRoot();
 	picker->init(rootS["t_and_m_dependence"]["settings"]);
 
-	boost::progress_display* progressIndicator = new boost::progress_display(nEvents, cout, "");
+	progress_display* progressIndicator = new progress_display(nEvents, cout, "");
 
 	for(unsigned int i = 0; i < nEvents; ++i) {
 

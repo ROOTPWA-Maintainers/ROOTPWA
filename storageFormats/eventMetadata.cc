@@ -1,13 +1,10 @@
-
-#include "eventMetadata.h"
-
-#include <boost/progress.hpp>
-
 #include <TClonesArray.h>
 #include <TFile.h>
 #include <TTree.h>
 
+#include "eventMetadata.h"
 #include "hashCalculator.h"
+#include "progress_display.hpp"
 #include "reportingUtils.hpp"
 
 
@@ -139,7 +136,7 @@ bool rpwa::eventMetadata::updateHashor(hashCalculator& hashor, const bool& print
 			return false;
 		}
 	}
-	boost::progress_display* progressIndicator = printProgress ? new boost::progress_display(_eventTree->GetEntries(), cout, "") : 0;
+	progress_display* progressIndicator = printProgress ? new progress_display(_eventTree->GetEntries(), cout, "") : 0;
 	for(long eventNumber = 0; eventNumber < _eventTree->GetEntries(); ++eventNumber) {
 		_eventTree->GetEntry(eventNumber);
 		if(progressIndicator) {
