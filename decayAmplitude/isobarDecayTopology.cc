@@ -542,26 +542,26 @@ isobarDecayTopology::getIsospinSymmetrization()
 				cout << "    ... checking against permutation " << permMapString(symAmp->fsPartPermMap) << endl;
 			}
 
-			for(unsigned int i = 0; i < permMap.size(); ++i) {
+			for(unsigned int i_particle = 0; i_particle < permMap.size(); ++i_particle) {
 
-				if (symAmp->fsPartPermMap[i] == permMap[i]) {
+				if (symAmp->fsPartPermMap[i_particle] == permMap[i_particle]) {
 					continue; // particle i was not swapped -> go on with check of next particle
 				}
 
 				// Make sure we are not swapping two indistinguishable particles.
-				if(fsParts.at(symAmp->fsPartPermMap[i])->name() == fsParts.at(permMap[i])->name()) {
+				if(fsParts.at(symAmp->fsPartPermMap[i_particle])->name() == fsParts.at(permMap[i_particle])->name()) {
 					discardPermutation = true;
 					break;
 				}
 
 				// Check if two particles from the same isobar are being swapped.
-				for(unsigned int j = i + 1; j < permMap.size(); ++j) {
-					if (symAmp->fsPartPermMap[j] == permMap[j]) {
+				for(unsigned int j_particle = i_particle + 1; j_particle < permMap.size(); ++j_particle) {
+					if (symAmp->fsPartPermMap[j_particle] == permMap[j_particle]) {
 						continue;
 					}
-					if(    fromVertex(fsParts.at(symAmp->fsPartPermMap[i])) == fromVertex(fsParts.at(symAmp->fsPartPermMap[j]))
-					   and fromVertex(fsParts.at(symAmp->fsPartPermMap[i])) == fromVertex(fsParts.at(permMap[i]))
-					   and fromVertex(fsParts.at(permMap[i]))               == fromVertex(fsParts.at(permMap[j]))) {
+					if(    fromVertex(fsParts.at(symAmp->fsPartPermMap[i_particle])) == fromVertex(fsParts.at(symAmp->fsPartPermMap[j_particle]))
+					   and fromVertex(fsParts.at(symAmp->fsPartPermMap[i_particle])) == fromVertex(fsParts.at(permMap[i_particle]))
+					   and fromVertex(fsParts.at(permMap[i_particle]))               == fromVertex(fsParts.at(permMap[j_particle]))) {
 						discardPermutation = true;
 						break;
 					}
