@@ -1,6 +1,7 @@
 #ifndef AMPLITUDEFILEWRITER_H
 #define AMPLITUDEFILEWRITER_H
 
+
 #include <complex>
 
 #include "amplitudeMetadata.h"
@@ -8,6 +9,7 @@
 
 
 class TFile;
+
 
 namespace rpwa {
 
@@ -38,15 +40,15 @@ namespace rpwa {
 
 	  private:
 
-		bool _initialized;
-		TFile* _outputFile;
-		rpwa::amplitudeMetadata _metadata;
+		bool                     _initialized;
+		TFile*                   _outputFile;
+		rpwa::amplitudeMetadata  _metadata;
 		rpwa::amplitudeTreeLeaf* _ampTreeLeaf;
-		hashCalculator _hashCalculator;
+		hashCalculator           _hashCalculator;
 
 	};
 
 }
 
 
-#endif
+#endif  // AMPLITUDEFILEWRITER_H

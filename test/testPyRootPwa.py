@@ -1013,7 +1013,7 @@ def iDTTestgetBoseSym():
 do_test(iDTTestgetBoseSym, "Testing isobarDecayTopology.getBoseSymmetrization()")
 
 def iDTTestgetIsoSym():
-	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.7071067811865475+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.7071067811865475+0j)}]
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.1767766952966369+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.1767766952966369+0j)}]
 	retval = consistentIsobarTopo.getIsospinSymmetrization()
 	for itemlist in [retval, testval]:
 		for item in itemlist:

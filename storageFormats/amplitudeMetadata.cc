@@ -33,6 +33,10 @@ string rpwa::amplitudeMetadata::recalculateHash(const bool& printProgress) const
 {
 	amplitudeTreeLeaf* ampTreeLeaf = 0;
 	hashCalculator hashor;
+	for(unsigned int i = 0; i < _eventMetadata.size(); ++i) {
+		hashor.Update(_eventMetadata[i].contentHash());
+	}
+	hashor.Update(_keyfileContent);
 	if(not _amplitudeTree) {
 		printWarn << "input tree not found in metadata." << endl;
 		return "";

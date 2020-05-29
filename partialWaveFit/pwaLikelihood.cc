@@ -126,7 +126,7 @@ template<typename complexT>
 void
 pwaLikelihood<complexT>::setQuiet(const bool flag)
 {
-	_debug = !flag;
+	_debug = not flag;
 }
 
 
@@ -813,7 +813,7 @@ pwaLikelihood<complexT>::Hessian
 					continue;
 				if (_parameters[r1].fixed())
 					continue;
-				assert(i1 < 0 || not _parameters[i1].fixed());
+				assert(i1 < 0 or not _parameters[i1].fixed());
 
 				for (unsigned int jRank = 0; jRank < _rank; ++jRank) {
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
@@ -826,14 +826,14 @@ pwaLikelihood<complexT>::Hessian
 								continue;
 							if (_parameters[r2].fixed())
 								continue;
-							assert(i2 < 0 || not _parameters[i2].fixed());
+							assert(i2 < 0 or not _parameters[i2].fixed());
 
 							hessianMatrix[r1][r2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][0];
 							if (i2 >= 0) // real/imaginary derivative
 								hessianMatrix[r1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][1];
 							if (i1 >= 0) // imaginary/real derivative
 								hessianMatrix[i1][r2] = hessian[jRank][jRefl][jWave][iRank][iRefl][iWave][1];
-							if (i1 >= 0 && i2 >= 0) // imaginary/imaginary derivative
+							if (i1 >= 0 and i2 >= 0) // imaginary/imaginary derivative
 								hessianMatrix[i1][i2] = hessian[iRank][iRefl][iWave][jRank][jRefl][jWave][2];
 						}
 					}
@@ -1238,21 +1238,50 @@ pwaLikelihood<complexT>::addAmplitude(const vector<const amplitudeMetadata*>& am
 	// get normalization
 	const complexT normInt = _normMatrix[refl][waveIndex][refl][waveIndex];
 
+	// keep track whether the production amplitudes corresponding to the current
+	// wave/(decay) amplitude file need to be fixed to zero: zero decay
+	// amplitudes might appear for a number of reasons (binned amplitudes, ...),
+	// if an amplitude is zero for all events, and also the elements of the
+	// normalization matrix with acceptance corresponding to this wave are zero,
+	// the corresponding parameters have no impact on the quantities calculated
+	// during the fit, spoiling the errors of (at least) Minuit
+	bool fixPar = (_accMatrix[refl][waveIndex][refl][waveIndex] == (value_type)0.);
+
 	// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 	// this index scheme ensures a more linear memory access pattern in the likelihood function
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 		if (_useNormalizedAmps) {  // normalize data, if option is switched on
-			if (normInt == (value_type)0. && amps[iEvt] != (value_type)0.) {
-				printErr << "normalization integral for wave '" << waveName << "' is zero, but the amplitude is not. Aborting...";
+			if (normInt == (value_type)0. and amps[iEvt] != (value_type)0.) {
+				printErr << "normalization integral for wave '" << waveName << "' is zero, but the amplitude is not. Aborting..." << endl;
 				return false;
 			}
 			if (normInt != (value_type)0.)
 				amps[iEvt] /= sqrt(normInt.real());  // rescale decay amplitude
 		}
+
+		if(amps[iEvt] != (value_type)0.)
+			fixPar = false;
+
 		_decayAmps[refl][iEvt][waveIndex] = amps[iEvt];
 	}
 
-	_waveAmpAdded[refl][waveIndex] = true; // note that this amplitude has been added to the likelihood
+	if (fixPar) {
+		bool printed = false;
+		for (fitParameter& par : _parameters) {
+			if (par.waveName() != waveName)
+				continue;
+
+			if (not par.fixed()) {
+				if (not printed) {
+					printWarn << "all amplitudes of wave '" << waveName << "' are zero, fixing its production amplitudes to zero." << endl;
+					printed = true;
+				}
+				par.fix(true);
+			}
+		}
+	}
+
+	_waveAmpAdded[refl][waveIndex] = true;  // note that this amplitude has been added to the likelihood
 
 	printInfo << "read decay amplitudes of " << totalEvents << " events for wave '" << waveName << "' into memory" << endl;
 	return true;
@@ -1301,7 +1330,8 @@ pwaLikelihood<complexT>::finishInit()
 		// set diagonal elements of normalization matrix
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-				_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
+				if (_normMatrix[iRefl][iWave][iRefl][iWave] != (value_type)0)
+					_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
 		if (_debug) {
 			printDebug << "normalized integral matrices" << endl;
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1363,6 +1393,10 @@ bool
 pwaLikelihood<complexT>::setOnTheFlyBinning(const multibinBoundariesType&       multibinBoundaries,
                                             const vector<const eventMetadata*>& evtMetas)
 {
+	typedef multibinBoundariesType::const_iterator multibinItType;
+	for(multibinItType it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it) {
+		printInfo << "use bin in '" << it->first << "' with range " << it->second << endl;
+	}
 	for (size_t metaIndex = 0; metaIndex < evtMetas.size(); ++metaIndex) {
 		const eventMetadata* evtMeta = evtMetas[metaIndex];
 		if (not evtMeta) {
@@ -1376,9 +1410,8 @@ pwaLikelihood<complexT>::setOnTheFlyBinning(const multibinBoundariesType&       
 		}
 		const string& evtHash = evtMeta->contentHash();
 		map<string, double> binningVariables;
-		typedef multibinBoundariesType::const_iterator it_type;
-		for(it_type iterator = multibinBoundaries.begin(); iterator != multibinBoundaries.end(); ++iterator) {
-			const string& additionalVar = iterator->first;
+		for(multibinItType it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it) {
+			const string& additionalVar = it->first;
 			binningVariables[additionalVar] = 0.;
 			evtTree->SetBranchAddress(additionalVar.c_str(), &binningVariables[additionalVar]);
 		}
@@ -1386,10 +1419,10 @@ pwaLikelihood<complexT>::setOnTheFlyBinning(const multibinBoundariesType&       
 		for (long eventIndex = 0; eventIndex < evtTree->GetEntriesFast(); ++eventIndex) {
 			evtTree->GetEntry(eventIndex);
 			bool useEvent = true;
-			for(it_type iterator = multibinBoundaries.begin(); iterator != multibinBoundaries.end(); ++iterator) {
-				const string& additionalVar = iterator->first;
-				const double& lowerBound = iterator->second.first;
-				const double& upperBound = iterator->second.second;
+			for(multibinItType it = multibinBoundaries.begin(); it != multibinBoundaries.end(); ++it) {
+				const string& additionalVar = it->first;
+				const double& lowerBound = it->second.first;
+				const double& upperBound = it->second.second;
 				const double& binVarValue = binningVariables[additionalVar];
 				if (binVarValue < lowerBound or binVarValue >= upperBound) {
 					useEvent = false;
@@ -1424,7 +1457,7 @@ pwaLikelihood<complexT>::readWaveList(const vector<waveDescThresType>& waveDescT
 		const string waveName  = boost::get<0>(waveDescThres[i]);
 		const double threshold = boost::get<2>(waveDescThres[i]);
 
-		assert(refl == -1 || refl == +1);
+		assert(refl == -1 or refl == +1);
 		if (refl > 0) {
 			++_nmbWavesRefl[1];  // positive reflectivity
 			waveNames      [1].push_back(waveName);
@@ -1492,7 +1525,7 @@ pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank,
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				bool fixed = false;
-				if (_waveThresholds[iRefl][iWave] != 0 && _waveThresholds[iRefl][iWave] >= massBinCenter) {
+				if (_waveThresholds[iRefl][iWave] != 0 and _waveThresholds[iRefl][iWave] >= massBinCenter) {
 					fixed = true;
 				}
 				if (iWave < iRank)  // production amplitude is zero

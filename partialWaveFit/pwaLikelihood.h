@@ -129,6 +129,8 @@ namespace rpwa {
 				        and _fixed == rhs.fixed() and _realPart == rhs.realPart());
 			}
 
+			void fix(const bool fixed) { _fixed = fixed; }
+
 			const std::string& waveName () const { return _waveName;  }
 			unsigned int       rank     () const { return _rank;      }
 			double             threshold() const { return _threshold; }

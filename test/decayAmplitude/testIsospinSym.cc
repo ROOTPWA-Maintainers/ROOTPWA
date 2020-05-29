@@ -189,6 +189,9 @@ main()
 	printCompilerInfo();
 	printGitHash();
 
+	// switch on debug output
+	isobarDecayTopology::setDebug(true);
+
 	const long int maxNmbEvents = 1000;
 	//const long int maxNmbEvents = 1;
 

@@ -1,9 +1,8 @@
+#include "TVector3.h"
 
 #include "hashCalculator.h"
-
-#include <TVector3.h>
-
 #include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 
 
 using namespace std;
@@ -23,6 +22,9 @@ void rpwa::hashCalculator::Update(const double& value) {
 
 void rpwa::hashCalculator::Update(const complex<double>& value)
 {
+	if(_debug) {
+		printDebug << "updating with complex value " << value << "." << endl;
+	}
 	Update(value.real());
 	Update(value.imag());
 }
@@ -30,9 +32,17 @@ void rpwa::hashCalculator::Update(const complex<double>& value)
 
 void rpwa::hashCalculator::Update(const TVector3& vector) {
 	if(_debug) {
-		printDebug << "updating with TVector3(" << vector.X() << ", " << vector.Y() << ", " << vector.Z() << ")." << endl;
+		printDebug << "updating with TVector3" << vector << "." << endl;
 	}
 	Update(vector.X());
 	Update(vector.Y());
 	Update(vector.Z());
+}
+
+
+void rpwa::hashCalculator::Update(const string& value) {
+	if(_debug) {
+		printDebug << "updating with string '" << value << "'." << endl;
+	}
+	TMD5::Update(reinterpret_cast<const UChar_t*>(value.data()), value.size());
 }

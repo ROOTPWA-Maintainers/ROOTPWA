@@ -38,7 +38,7 @@ bool rpwa::amplitudeFileWriter::initialize(TFile&                             ou
                                            const int&                         buffsize)
 {
 	if(_initialized) {
-		printWarn << "trying to initialized when already initialized." << endl;
+		printWarn << "trying to initialize while already initialized." << endl;
 		return false;
 	}
 
@@ -48,9 +48,13 @@ bool rpwa::amplitudeFileWriter::initialize(TFile&                             ou
 	vector<eventMetadata> eventMetaObjects;
 	for(unsigned int i = 0; i < eventMeta.size(); ++i) {
 		eventMetaObjects.push_back(*(eventMeta[i]));
+		_hashCalculator.Update(eventMeta[i]->contentHash());
 	}
 	_metadata.setEventMetadata(eventMetaObjects);
+
 	_metadata.setKeyfileContent(keyfileContent);
+	_hashCalculator.Update(keyfileContent);
+
 	_metadata.setRootpwaGitHash(gitHash());
 	_metadata.setObjectBaseName(objectBaseName);
 
