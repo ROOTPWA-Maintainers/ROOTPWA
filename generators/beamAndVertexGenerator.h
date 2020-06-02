@@ -2,16 +2,18 @@
  * @{
  */
 
-#ifndef TPRIMARYVERTEXGEN_HH
-#define TPRIMARYVERTEXGEN_HH
+#ifndef BEAMANDVERTEXGENERATOR_HH
+#define BEAMANDVERTEXGENERATOR_HH
+
 
 #include <string>
 
 #include <boost/shared_ptr.hpp>
 
-#include <TVector3.h>
-#include <TLorentzVector.h>
-#include <TMatrixDSym.h>
+#include "TLorentzVector.h"
+#include "TMatrixDSym.h"
+#include "TVector3.h"
+
 
 class TFile;
 class TTree;
@@ -132,6 +134,7 @@ namespace rpwa {
 
 	};
 
+
 	inline std::ostream& operator<< (std::ostream& out, const beamAndVertexGenerator& beamAndVertGen)
 	{
 		return beamAndVertGen.print(out);
@@ -139,5 +142,5 @@ namespace rpwa {
 
 }
 
-#endif
+#endif  // BEAMANDVERTEXGENERATOR_HH
 /* @} **/
