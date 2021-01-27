@@ -34,7 +34,7 @@ CMake is a cross-platform, open-source build system available from <https://cmak
 *   <https://www.cmake.org/cmake/help/runningcmake.html>
 *   <https://www.cmake.org/cmake/help/syntax.html>
 *   <https://www.cmake.org/Wiki/CMake>
-*   <https://rachid.koucha.free.fr/tech_corner/cmake_manual.html>
+*   <http://www.rkoucha.fr/tech_corner/cmake_manual.html>
 *   <https://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started>
 
 The minimum required CMake version is 3.11.0. In case your system offers only outdated packages (check CMake version by running `cmake --version`), you can either quite easily compile and install CMake yourself:
